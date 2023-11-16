@@ -20,6 +20,7 @@
  */
 
 #include "common/random.h"
+#include "common/config-manager.h"
 
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/sound.h"
@@ -32,7 +33,17 @@
 namespace Nancy {
 namespace Action {
 
-void PlayDigiSound::readData(Common::SeekableReadStream &stream) {
+void SetVolume::readData(Common::SeekableReadStream &stream) {
+	channel = stream.readUint16LE();
+	volume = stream.readUint16LE();
+}
+
+void SetVolume::execute() {
+	g_nancy->_sound->setVolume(channel, volume);
+	_isDone = true;
+}
+
+void PlaySound::readData(Common::SeekableReadStream &stream) {
 	_sound.readDIGI(stream);
 
 	if (g_nancy->getGameType() >= kGameTypeNancy3) {
@@ -51,7 +62,7 @@ void PlayDigiSound::readData(Common::SeekableReadStream &stream) {
 	stream.skip(2); // VIDEO_STOP_RENDERING, VIDEO_CONTINUE_RENDERING
 }
 
-void PlayDigiSound::execute() {
+void PlaySound::execute() {
 	switch (_state) {
 	case kBegin:
 		g_nancy->_sound->loadSound(_sound, &_soundEffect);
@@ -82,40 +93,85 @@ void PlayDigiSound::execute() {
 	}
 }
 
-Common::String PlayDigiSound::getRecordTypeName() const {
-	return g_nancy->getGameType() <= kGameTypeNancy2 ? "PlayDigiSoundAndDie" : "PlayDigiSound";
-}
-
-void PlayDigiSoundCC::readData(Common::SeekableReadStream &stream) {
-	PlayDigiSound::readData(stream);
-
-	uint16 textSize = stream.readUint16LE();
-	if (textSize) {
-		char *strBuf = new char[textSize];
-		stream.read(strBuf, textSize);
-		assembleTextLine(strBuf, _ccText, textSize);
-		delete[] strBuf;
+Common::String PlaySound::getRecordTypeName() const {
+	if (g_nancy->getGameType() <= kGameTypeNancy2) {
+		return "PlayDigiSoundAndDie";
+	} else if (g_nancy->getGameType() <= kGameTypeNancy5) {
+		return "PlayDigiSound";
+	} else {
+		return "PlaySound";
 	}
 }
 
-void PlayDigiSoundCC::execute() {
-	if (_state == kBegin) {
+void PlaySoundCC::readData(Common::SeekableReadStream &stream) {
+	PlaySound::readData(stream);
+	readCCText(stream, _ccText);
+}
+
+void PlaySoundCC::execute() {
+	if (_state == kBegin && _ccText.size() && ConfMan.getBool("subtitles", ConfMan.getActiveDomainName())) {
 		NancySceneState.getTextbox().clear();
 		NancySceneState.getTextbox().addTextLine(_ccText);
 	}
-	PlayDigiSound::execute();
+	PlaySound::execute();
 }
 
-void PlaySoundPanFrameAnchorAndDie::readData(Common::SeekableReadStream &stream) {
+void PlaySoundCC::readCCText(Common::SeekableReadStream &stream, Common::String &out) {
+	int16 textSize = stream.readUint16LE();
+
+	if (textSize > 0) {
+		char *strBuf = new char[textSize];
+		stream.read(strBuf, textSize);
+		assembleTextLine(strBuf, out, textSize);
+		delete[] strBuf;
+	} else if (textSize == -1) {
+		// Text is in Autotext chunk
+		Common::String key;
+		readFilename(stream, key);
+		const CVTX *autotext = (const CVTX *)g_nancy->getEngineData("AUTOTEXT");
+		assert(autotext);
+
+		out = autotext->texts[key];
+	}
+}
+
+Common::String PlaySoundCC::getRecordTypeName() const {
+	if (g_nancy->getGameType() <= kGameTypeNancy5) {
+		return "PlayDigiSoundCC";
+	} else {
+		return "PlaySoundCC";
+	}
+}
+
+void PlaySoundTerse::readData(Common::SeekableReadStream &stream) {
+	_sound.readTerse(stream);
+	_changeSceneImmediately = stream.readByte();
+	_sceneChange.sceneID = stream.readUint16LE();
+
+	_sceneChange.continueSceneSound = kContinueSceneSound;
+	_soundEffect = new SoundEffectDescription;
+
+	readCCText(stream, _ccText);
+}
+
+void PlaySoundFrameAnchor::readData(Common::SeekableReadStream &stream) {
 	_sound.readDIGI(stream);
 	stream.skip(2);
 	_sound.isPanning = true;
 }
 
-void PlaySoundPanFrameAnchorAndDie::execute() {
+void PlaySoundFrameAnchor::execute() {
 	g_nancy->_sound->loadSound(_sound);
 	g_nancy->_sound->playSound(_sound);
 	_isDone = true;
+}
+
+Common::String PlaySoundFrameAnchor::getRecordTypeName() const {
+	if (g_nancy->getGameType() <= kGameTypeNancy2) {
+		return "PlaySoundPanFrameAnchorAndDie";
+	} else {
+		return "PlaySoundFrameAnchor";
+	}
 }
 
 void PlaySoundMultiHS::readData(Common::SeekableReadStream &stream) {
@@ -128,7 +184,7 @@ void PlaySoundMultiHS::readData(Common::SeekableReadStream &stream) {
 		stream.skip(2);
 	} else {
 		_flag.label = kEvNoEvent;
-		_sceneChange.sceneID = 9999;
+		_sceneChange.sceneID = kNoScene;
 	}
 
 	uint16 numHotspots = stream.readUint16LE();
@@ -184,7 +240,7 @@ void PlayRandomSound::readData(Common::SeekableReadStream &stream) {
 	uint16 numSounds = stream.readUint16LE();
 	readFilenameArray(stream, _soundNames, numSounds - 1);
 
-	PlayDigiSound::readData(stream);
+	PlaySound::readData(stream);
 	_soundNames.push_back(_sound.name);
 }
 
@@ -193,18 +249,44 @@ void PlayRandomSound::execute() {
 		_sound.name = _soundNames[g_nancy->_randomSource->getRandomNumber(_soundNames.size() - 1)];
 	}
 
-	PlayDigiSound::execute();
+	PlaySound::execute();
+}
+
+void PlayRandomSoundTerse::readData(Common::SeekableReadStream &stream) {
+	uint16 numSounds = stream.readUint16LE();
+	readFilenameArray(stream, _soundNames, numSounds - 1);
+
+	PlaySoundTerse::readData(stream);
+
+	// The call above will have read the last sound name and the first cc text
+	_soundNames.push_back(_sound.name);
+	_ccTexts.push_back(_ccText);
+
+	for (int i = 0; i < numSounds - 1; ++i) {
+		_ccTexts.push_back(Common::String());
+		readCCText(stream, _ccTexts.back());
+	}
+}
+
+void PlayRandomSoundTerse::execute() {
+	if (_state == kBegin) {
+		uint16 randomID = g_nancy->_randomSource->getRandomNumber(_soundNames.size() - 1);
+		_sound.name = _soundNames[randomID];;
+		_ccText = _ccTexts[randomID];
+	}
+
+	PlaySoundCC::execute();
 }
 
 void TableIndexPlaySound::readData(Common::SeekableReadStream &stream) {
 	_tableIndex = stream.readUint16LE();
-	PlayDigiSound::readData(stream); // Data does NOT contain captions, so we call the PlayDigiSound version
+	PlaySound::readData(stream); // Data does NOT contain captions, so we call the PlaySound version
 }
 
 void TableIndexPlaySound::execute() {
 	TableData *playerTable = (TableData *)NancySceneState.getPuzzleData(TableData::getTag());
 	assert(playerTable);
-	const TABL *tabl = (const TABL *)g_nancy->getEngineData("TABL");
+	auto *tabl = GetEngineData(TABL);
 	assert(tabl);
 
 	if (_lastIndexVal != playerTable->currentIDs[_tableIndex - 1]) {
@@ -215,7 +297,7 @@ void TableIndexPlaySound::execute() {
 		_ccText = tabl->strings[playerTable->currentIDs[_tableIndex - 1] - 1];
 	}
 
-	PlayDigiSoundCC::execute();
+	PlaySoundCC::execute();
 }
 
 } // End of namespace Action

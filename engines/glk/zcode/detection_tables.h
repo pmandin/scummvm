@@ -20,7 +20,6 @@
  */
 
 #include "engines/game.h"
-#include "common/gui_options.h"
 #include "common/language.h"
 
 namespace Glk {
@@ -57,12 +56,12 @@ const PlainGameDescriptor INFOCOM_GAME_LIST[] = {
 	{ "hollywoodhijinx",    "Hollywood Hijinx" },
 	{ "hypochondriac",      "Hypochondriac" },
 	{ "infidel",            "Infidel" },
-	{ "infocomsampler1b",   "Infocom Sampler 1B" },
-	{ "infocomsampler1z",   "Infocom Sampler 1Z" },
-	{ "infocomsampler2zt",  "Infocom Sampler 2ZT" },
-	{ "infocomsampler3zpi", "Infocom Sampler 3ZPI" },
-	{ "infocomsampler3ztl", "Infocom Sampler 3ZTL" },
-	{ "infocomsampler4zpiw", "Infocom Sampler 4ZPIW" },
+	{ "infocomsample1b",    "Infocom Sampler 1B" },
+	{ "infocomsample1z",    "Infocom Sampler 1Z" },
+	{ "infocomsample2zt",   "Infocom Sampler 2ZT" },
+	{ "infocomsample3zpi",  "Infocom Sampler 3ZPI" },
+	{ "infocomsample3ztl",  "Infocom Sampler 3ZTL" },
+	{ "infocomsample4zpiw", "Infocom Sampler 4ZPIW" },
 	{ "journey",            "Journey" },
 	{ "lgop",               "Leather Goddesses of Phobos" },
 	{ "lurkinghorror",      "The Lurking Horror" },
@@ -104,33 +103,30 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "zcode",              "Unknown Z-code game" },
 
 	// English games
-	{ "15minutes",          "Fifteen Minutes" },
 	{ "404life",            "404 - Life Not Found" },
 	{ "43",                 "43" },
-	{ "5minutes",           "5 Minutes To Burn Something!" },
 	{ "69105keys",          "69,105 Keys" },
 	{ "7doctors",           "The Seven Doctors" },
 	{ "7kids",              "The Wolf and the Seven Kids" },
 	{ "905",                "9:05" },
 	{ "9dancers",           "The Nine Dancers" },
-	{ "a1rl0ck",            "A1RL0CK" },
 	{ "aasmasters",         "AAS Masters" },
 	{ "aaaaaaaa",           "A AAAAA AAAAAAAAA" },
 	{ "accuse",             "Accuse" },
 	{ "acheton",            "Acheton" },
-	{ "acidrain",           "Acid Rain" },
 	{ "acorncourt",         "The Acorn Court" },
 	{ "acrobat",            "The Mysterious Case of the Acrobat and His Peers" },
 	{ "acrossstars",        "Across the Stars" },
 	{ "acrossstarsclues",   "Across the Stars: InvisiClues" },
 	{ "acrossstarshints",   "Across the Stars: InvisiHints" },
+	{ "aciftotorial",       "Adam Cadre’s IF Tutorial" },
 	{ "addendum",           "Flawed Addendum" },
 	{ "adv",                "Adventure, Colossal Cave" },
-	{ "adv350",             "Adventure, 350 Point Colossal Cave" },
+	{ "adv350_zcode",       "Adventure, 350 Point Colossal Cave" },
 	{ "adv440",             "Adventure II, 440 Point Colossal Cave" },
 	{ "adv550",             "Adventure 3, 550 Point Colossal Cave" },
 	{ "adv551",             "Adventure 6, 551 Point Colossal Cave" },
-	{ "adventurelandzcode", "Adventureland" },
+	{ "adventland",         "Adventureland" },
 	{ "adventurelobjan",    "Adventure (Lobjan translation)" },
 	{ "adventuretime",      "Adventure Time" },
 	{ "adverbum",           "Ad Verbum" },
@@ -140,28 +136,24 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "aisle",              "Aisle" },
 	{ "alienextraction",    "Alien Extraction" },
 	{ "alice",              "Alice Through the Looking Glass" },
-	{ "allroads",           "All Roads" },
 	{ "alongtheriver",      "Along the River" },
 	{ "alpha",              "Journey to Alpha Centauri (In Real Time)" },
 	{ "amazingmaze",        "The Amazing Maze" },
-	{ "ambassadorsdaughter", "The Ambassador''s Daughter" },
+	{ "ambassadorsdaught",  "The Ambassador Daughter" },
 	{ "amish",              "Amishville" },
 	{ "amiss",              "Amissville" },
 	{ "anchor",             "Anchorhead" },
 	{ "andrewplotkin",      "Being Andrew Plotkin" },
-	{ "andromedaawakeningz", "Andromeda Awakening" },
 	{ "andromedagenesis",   "Andromeda Genesis" },
 	{ "anotherterminal",    "Another Terminal Beach" },
-	{ "animals",            "Animals 1.1" },
+	{ "animals",            "Animals" },
 	{ "annoy",              "Annoyotron" },
 	{ "aotyrz",             "Attack of the Yeti Robot Zombies" },
 	{ "aphasiaquest",       "Aphasia Quest" },
-	{ "apollo11z",          "Apollo 11" },
-	{ "appall",             "Appallatron: Annoyotron 3" },
+	{ "apollo11b",          "Apollo 11 (by B)" },
 	{ "arc3h",              "Alien Research Centre 3: Footprints in the Snow" },
 	{ "argument",           "The Argument-Winner's Ghost" },
 	{ "aridandpale",        "Arid and Pale" },
-	{ "arthurdayout",       "Arthur's Day Out" },
 	{ "asylum",             "Asylum" },
 	{ "atrocitron",         "Atrocitron" },
 	{ "ats",                "A Tight Spot" },
@@ -169,18 +161,17 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "aug4",               "Augmented Fourth" },
 	{ "avon",               "Avon" },
 	{ "awakening",          "The Awakening" },
-	{ "awakeningzcode",     "Awakening" },
+	{ "awakeningpg",        "Awakening (by Pete Gardner)" },
 	{ "awitl",              "A Week in the Life" },
 	{ "ayac",               "Are You a Chef?" },
 	{ "azteca",             "Azteca" },
-	{ "b2demo",             "Pick up the Phone Booth and Die, Part 2" },
 	{ "b7snare",            "Snare" },
 	{ "babytree",           "Baby Tree" },
 	{ "backtowakeup",       "Back to WakeUp" },
 	{ "backup",             "Backup" },
 	{ "badguys",            "Bad Guys" },
-	{ "bakingwithlizzie",   "Baking with Lizzie" },
-	{ "balances",           "Balances" },
+	{ "bakingwithlizzie",   "Baking With Lizzie" },
+	{ "balances_zcode",     "Balances" },
 	{ "baldersdeath",       "Balder's Death" },
 	{ "ballerina102",       "Not Just an Ordinary Ballerina" },
 	{ "balt24",             "Baltimore:24" },
@@ -195,54 +186,42 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "beginning",          "A Beginning" },
 	{ "beingsteve",         "Being Steve" },
 	{ "beneathtransform",   "BENEATH: A Transformation" },
-	{ "beyond",             "Beyond" },
-	{ "bibleretold1",       "The Bible Retold: The Bread and the Fishes" },
+	{ "beyond_zcode",       "Beyond" },
 	{ "bicon",              "BiCon" },
 	{ "bignose",            "Big Nose on the Big Pyramid" },
 	{ "biscuit",            "Biscuit" },
-	{ "bishoes",            "Buried In Shoes" },
 	{ "bj",                 "Blow Job Drifter" },
-	{ "blacklily",          "The Black Lily" },
 	{ "blair",              "Tales From the College Presents a Breath of Fresh Blair" },
-	{ "bloodless",          "Bloodless on the Orient Express" },
-	{ "blorp",              "Blorp!" },
-	{ "bluechairs",         "Blue Chairs" },
-	{ "bodybargain",        "Body Bargain" },
-	{ "bofh",               "The Bastard Operator from Hell" },
 	{ "bomber",             "The Mad Bomber" },
+	{ "bonesaw",            "The Unstoppable Vengeance of Doctor Bonesaw" },
 	{ "bookvol",            "Book and Volume" },
 	{ "booth",              "Pick up the Phone Booth and Die" },
 	{ "boothdye",           "Pick up the Phone Booth and Dye" },
 	{ "boxes",              "Boxes" },
 	{ "brandx",             "BrandX" },
-	{ "breakin",            "Break-In" },
+	{ "breakin",            "Break-in" },
 	{ "briantimmons",       "The Surprising Case of Brian Timmons" },
 	{ "bronze",             "Bronze" },
 	{ "bryantcollection",   "The Bryant Collection" },
 	{ "bse",                "BSE" },
-	{ "buccaneerscache",    "Buccaneer's Cache" },
 	{ "building",           "Building" },
-	{ "bureaucrocy",        "Bureaucrocy" },                                                // Not Working (2.8.0git)
+	{ "bureaucrocy_zcode",  "Bureaucrocy" },
 	{ "burglar",            "Burglar!" },
 	{ "burnkoran",          "Burn The Koran and Die" },
 	{ "burnsnightsupper",   "Burns Night Supper" },
 	{ "busted",             "Busted" },
 	{ "byod",               "BYOD" },
-	{ "byzantineperspect",  "Byzantine Perspective" },
 	{ "cabal",              "The Cabal" },
 	{ "cacharensdilemma",   "Cacharens Dilemma" },
 	{ "cacophony",          "Cacophony" },
 	{ "calendar",           "Calendar, An Inform 7 Abuse" },
 	{ "calmmutemoving",     "Calm, Mute, Moving" },
 	{ "calypso",            "Calypso" },
-	{ "canamicah",          "Cana According to Micah" },
 	{ "candy",              "Candy" },
-	{ "captaincutters",     "Captain Cutter's Treasure" },
 	{ "capturesanta",       "Capture Santa!" },
 	{ "carpathianvampire",  "Carpathian Vampire" },
 	{ "cars",               "ASCII Cars!!!" },
 	{ "casting",            "Casting" },
-	{ "castleadventure",    "Castle Adventure!" },
 	{ "castleredprince",    "Castle of the Red Prince" },
 	{ "catcherintherye",    "Catcher in the Rye" },
 	{ "catseye",            "Miniventure #2: Cat's Eye" },
@@ -253,26 +232,20 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "cavetrip",           "The Spelunking Trip" },
 	{ "ccake",              "Arthur Yahtzee: The Curse of Hell's Cheesecake" },
 	{ "cco",                "Construction Cancellation Order" },
-	{ "cenriccurse",        "The Cenric Family Curse" },
 	{ "charactercreation",  "Character Creator" },
 	{ "chaos",              "Chaos" },
 	{ "chaosgame",          "Chaos (by Bloodbath)" },
 	{ "cheater",            "Cheater" },
-	{ "checkered",          "A Checkered Haunting" },
-	{ "cheesedoff",         "Cheesed Off!" },
+	{ "checkerhaunt",       "A Checkered Haunting" },
+	{ "cheesedoff_zcode",   "Cheesed Off!" },
 	{ "cheeseshop",         "Cheeseshop" },
-	{ "cheshirecat",        "Save the Cheshire Cat!" },
-	{ "chickenunder",       "The Chicken Under the Window" },
+	{ "cheshirecat_zcode",  "Save the Cheshire Cat!" },
 	{ "chico",              "Chico and I Ran" },
-	{ "childsplay",         "Child’s Play, a Child, a Toy, and a Rival" },
+	{ "childsplay",         "Child’s Play" },
 	{ "chix",               "Chicks Dig Jerks" },
 	{ "christminster",      "Christminster" },
-	{ "cia",                "CIA Adventure" },
-	{ "civil",              "Civil Seeming Drivel Dreaming" },
-	{ "civilmimic",         "Civil Mimic" },
+	{ "cia",                "C.I.A. Adventure" },
 	{ "classchallenge",     "Class Challenge" },
-	{ "claw",               "Wearing the Claw" },
-	{ "clean",              "A Clean Getaway" },
 	{ "cleanair",           "Clean Air" },
 	{ "cliffedge",          "Edge of the Cliff" },
 	{ "cockandbull",        "A Cock and Bull Story" },
@@ -281,7 +254,6 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "cogs",               "The Cogs of Westminster" },
 	{ "cointoss",           "Coin Toss" },
 	{ "coke",               "Coke Is It!" },
-	{ "coldiron",           "Cold Iron" },
 	{ "colonists",          "Colonists" },
 	{ "coloromc",           "Color of Milk Coffee" },
 	{ "coloursexploration", "An Exploration of Colour" },
@@ -291,13 +263,13 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "countdown1",         "Countdown 1 - The Body" },
 	{ "countdown2",         "Countdown 2 - The Soul" },
 	{ "countdown3",         "Countdown 3 - The Mind" },
-	{ "cove",               "The Cove" },
 	{ "crabhat",            "Oh No, Mr Crab Stole Your Hat!" },
+	{ "cragnemanor_zcode",  "Cragne Manor" },
 	{ "crazydiaper",        "The Tale of the Crazy Diaper Man" },
 	{ "craverlyheights",    "Craverly Heights" },
-	{ "creepydemo",         "A Day in the Creepy Life of Bob" },
 	{ "crimescene",         "A Crime Scene" },
-	{ "criticalbreach",     "Critical Breach" },
+	{ "critbreach",         "Critical Breach" },
+	{ "criticalhit",        "Critical Hit" },
 	{ "crobe",              "Crobe" },
 	{ "cryptographer",      "Cryptographer" },
 	{ "csbb",               "Crystal and Stone Beetle and Bone" },
@@ -305,39 +277,30 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "cubicle",            "In the Cubicle" },
 	{ "curses",             "Curses" },
 	{ "curves",             "Dangerous Curves" },
-	{ "cycles",             "Vicious Cycles" },
 	{ "cyclops",            "The Land of the Cyclops" },
-	{ "damnatiomemoriae",   "Damnatio Memoriae" },
+	{ "damnmemoriae_zcode", "Damnatio Memoriae" },
 	{ "dancebeat",          "Dance to the Beat of the Earth" },
-	{ "dannydipstick",      "Danny Dipstick" },
-	{ "darkiss1",           "Darkiss! Wrath of the Vampire - Chapter 1: The Awakening" },
-	{ "darkiss2",           "Darkiss! Wrath of the Vampire - Chapter 2: Journey to Hell" },
+	{ "darkiss1_zcode",     "Darkiss! Wrath of the Vampire - Chapter 1: The Awakening" },
+	{ "darkiss2_zcode",     "Darkiss! Wrath of the Vampire - Chapter 2: Journey to Hell" },
 	{ "dashslapney",        "Dash Slapney, Patrol Leader" },
+	{ "daycreepylife",      "A Day in the Creepy Life of Bob" },
 	{ "dayinlife",          "A Day in Life" },
 	{ "dayishothitler",     "The Day I Shot Hitler" },
 	{ "dd4",                "Dutch Dapper IV: The Final Voyage" },
 	{ "dday",               "D-Day" },
 	{ "deadmeat",           "Dead Meat in the Pit" },
-	{ "deadpavane",         "Dead Pavane for a Princess" },
 	{ "deadreckoning",      "Dead Reckoning" },
-	{ "deadsville",         "Deadsville" },
 	{ "death",              "Death to my Enemies" },
 	{ "debate",             "Debate" },
 	{ "deephome",           "Deephome" },
 	{ "deformuseum",        "Deformuseum" },
 	{ "degeneracy",         "Degeneracy" },
-	{ "dejavuz",            "Deja Vu" },
+	{ "dejavugn",           "Deja Vu (by Graham Nelson)" },
 	{ "deliciousbreakfast", "Delicious Breakfast" },
-	{ "delusions",          "Delusions" },
-	{ "desertz",            "Desert Adventure" },
+	{ "desert_zcode",       "Desert Adventure" },
 	{ "detective",          "Detective" },
 	{ "detention",          "Detention" },
-	{ "devildoit",          "The Devil Made Me Do It" },
-	{ "devours",            "All Things Devours" },
 	{ "dewdrops",           "Within a Wreath of Dewdrops" },
-	{ "dirk",               "Dirk" },
-	{ "djinniotr",          "Djinn on the Rocks" },
-	{ "djinni",             "The Djinni Chronicles" },
 	{ "dogshow",            "Dog Show" },
 	{ "dogslife",           "It's a Dog's Life" },
 	{ "dontgo",             "Don't Go" },
@@ -348,86 +311,64 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "downthematrix",      "Down The Matrix" },
 	{ "downtowntokyo",      "Downtown Tokyo Present Day" },
 	{ "dpod",               "Dracula - Prince of Darkness" },
-	{ "dracula1",           "Dracula: Part 1, The First Night" },
-	{ "dracula2",           "Dracula: Part 2, The Arrival" },
-	{ "dragon",             "Dragon Adventure" },
-	{ "dragonflies",        "Dragon Flies Like Labradorite" },
+	{ "dracula1_zcode",     "Dracula: Part 1, The First Night" },
+	{ "dracula2_zcode",     "Dracula: Part 2, The Arrival" },
+	{ "dragon_zcode",       "Dragon Adventure" },
 	{ "dragontroll",        "The Dragon and the Troll" },
-	{ "dreamcorruptor",     "Corrupter of Dreams" },
 	{ "dramaclass",         "Drama Class" },
 	{ "dreamhold",          "The Dreamhold" },
 	{ "dreamtooreal",       "A Dream Too Real" },
 	{ "dreamtrap",          "The Dream-Trap of Zzar" },
-	{ "dual",               "Dual Transform" },
 	{ "dumont",             "Dr. Dumont's Wild P.A.R.T.I" },
-	{ "eas",                "Earth and Sky" },
-	{ "edifice",            "The Edifice" },
 	{ "egcpc",              "EGC Paper Chase" },
-	{ "elephantsafterlife", "Elephants and the Afterlife" },
+	{ "eggstraordadv",      "Eggstraordinary Adventure" },
+	{ "electricpuppet",     "The Electric Puppet" },
 	{ "elephants1",         "When I Was Shot By Elephants" },
 	{ "elephants2",         "When I Was Shot By Elephants 2: Super Elephants" },
 	{ "elephants3",         "When I Was Shot By Elephants 3" },
 	{ "elephantsdecision",  "When I Was Shot By Elephants Conclusion: The Decision" },
 	{ "elephantsde",        "When I Was Shot By Elephants Definitive Edition" },
-	{ "eleven",             "Film at Eleven" },
 	{ "elfenmaiden",        "The Elfen Maiden: A Comedy of Error Messages" },
 	{ "eliza",              "Eliza" },
 	{ "emptyroom",          "The Empty Room" },
 	{ "endofearth",         "The End of Earth" },
 	{ "enemies",            "Enemies" },
-	{ "enigma",             "Enigma" },
 	{ "enigmasd",           "Enigma (by Simon Deimel)" },
-	{ "enigmamanor",        "The Enigma of the Old Manor House" },
 	{ "enterprise",         "The Enterprise Incidents" },
 	{ "entropy",            "Entropy" },
 	{ "epyk",               "Eypk" },
-	{ "erden",              "Travels in the Land of Erden: In Quest of the Adventure" },
 	{ "eric",               "Eric The Power-Mad Dungeon Master" },
 	{ "escapade",           "Escapade!" },
 	{ "escape",             "Escape!" },
-	{ "escaperemember",     "An Escape To Remember" },
+	{ "escaperemember",     "An Escape to Remember" },
 	{ "eto",                "ETO" },
-	{ "eurydice",           "Eurydice" },
 	{ "everydaysamedream",  "Every Day the Same Dream" },
-	{ "extromnivore",       "Extreme Omnivore: Text Edition" },
 	{ "f209",               "Apartment 209" },
 	{ "fable",              "A Fable" },
 	{ "faculty",            "The Care and Feeding of Adjuncts" },
 	{ "fade",               "Fade to Black" },
-	{ "faetttiw",           "Fætt Tiw" },
 	{ "failsafe",           "FailSafe" },
 	{ "fairyland",          "Fairyland" },
-	{ "faithfulcomp",       "Faithful Companion" },
 	{ "fajfeta",            "Fajfeta Sur la Luno" },
 	{ "fallingpieces",      "Falling to Pieces" },
-	{ "fantasydimension",   "The Fantasy Dimension" },
 	{ "farm",               "The Farmer's Daughter" },
-	{ "fate",               "Fate" },
-	{ "fff",                "Fox, Fowl and Feed" },
 	{ "fifthcontinent",     "The Fifth Continent" },
 	{ "figaro",             "Figaro" },
 	{ "figueres",           "Figueres in My Basement" },
-	{ "finalselection",     "Final Selection" },
-	{ "finalexam",          "Final Exam" },
-	{ "findesick",          "Fin de sickleburg" },
+	{ "findesick",          "Fin de Sickleburg" },
 	{ "findthemouse",       "Finding the Mouse" },
 	{ "findthebed",         "Find the Bed" },
-	{ "finetuned",          "Fine-Tuned" },
 	{ "fingertipsfriend",   "Fingertips: I Found a New Friend" },
 	{ "fingertipsmilk",     "Fingertips: Please Pass the Milk Please" },
 	{ "firstday",           "The First Day of My New Life" },
-	{ "firstparish",        "Below the First Parish Cemetery" },
 	{ "flat",               "Flat" },
 	{ "flowers",            "Flowers for Algernon" },
 	{ "fmvpoker",           "Frobozz Magic Video Poker" },
-	{ "forachange",         "For a Change" },
-	{ "forestdemo",         "Forest" },
+	{ "forest",             "Forest" },
 	{ "forgottengirls",     "The Forgotten Girls" },
 	{ "fork",               "Fork: The Great Underground Dining Room" },
-	{ "forms",              "Of Forms Unknown" },
 	{ "fractalz",           "Fractalz" },
-	{ "fracture",           "Fractured Metamorphoses" },
-	{ "fracturezcode",      "Fracture" },
+	{ "fracturemeta",       "Fractured Metamorphoses" },
 	{ "fragileshells",      "Fragile Shells" },
 	{ "frankie",            "Frankenstein Adventure" },
 	{ "freefall",           "Free Fall" },
@@ -439,108 +380,91 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "ga",                 "Geocaching Adventure" },
 	{ "galatea",            "Galatea" },
 	{ "gamer",              "Gamer" },
-	{ "gamlet",             "Gamlet" },
 	{ "gardening",          "Gardening for Beginners" },
 	{ "garliccage",         "The Garlic Cage" },
-	{ "gatoron",            "GATOR-ON, Friend to Wetlands!" },
 	{ "gaucho",             "Gaucho" },
 	{ "gbvb",               "Grandma Bethlinda's Variety Box" },
 	{ "gd",                 "Goodbye Doggy" },
-	{ "geb",                "Goose, Egg, Badger" },
 	{ "geist",              "Geist" },
 	{ "gerbilriot",         "Gerbil Riot" },
 	{ "ghandi",             "The Day I Hugged Ghandi" },
-	{ "ghost",              "The Ghost Train" },
+	{ "ghosttrain",         "The Ghost Train" },
 	{ "ghostmountain",      "Ghost Mountain" },
-	{ "glass",              "Glass" },
+	{ "glass_zcode",        "Glass" },
 	{ "glik1",              "Glik I" },
 	{ "gnuzoo",             "Gnu in the Zoo" },
-	{ "godot",              "Looking For Godot" },
+	{ "godot",              "Looking for Godot" },
 	{ "goldilocks",         "Goldilocks is a Fox!" },
 	{ "golf",               "Textfire Golf" },
-	{ "gossip",             "Gossip" },
-	{ "gostak",             "The Gostak" },
-	{ "gourmet",            "Gourmet" },
 	{ "gourmetgaffe",       "Gourmet Gaffe" },
 	{ "gowest",             "Go West" },
 	{ "greaterthan",        "> by @" },
 	{ "greatpancake",       "The Great Pancake Detectives - Case #27" },
-	{ "greatxavio",         "The Great Xavio" },
 	{ "greenrain",          "A Green Rain" },
 	{ "greensboro",         "Greensboro Sit-In" },
 	{ "growingup",          "Growing Up" },
-	{ "guard",              "Guard Duty" },
-	{ "guess",              "Guess The Verb!" },
 	{ "guestreet",          "Life on Gue Street" },
 	{ "gumshoe",            "Gumshoe" },
 	{ "gussdeath",          "Guss's Death" },
+	{ "hadeanlands_zcode",  "Hadean Lands" },
 	{ "halloweve",          "Hallow Eve" },
 	{ "hamhouse",           "In the House of Professor Evil: The HAM HOUSE" },
 	{ "hamil",              "Hamil" },
 	{ "hangar22",           "Hangar 22" },
 	{ "happyeverafter",     "Happy Ever After" },
+	{ "hauntedhouse",       "Haunted House" },
 	{ "hauntings",          "Hauntings" },
 	{ "headcase",           "Head Case" },
 	{ "heidi",              "Heidi" },
 	{ "heist",              "Heist: The Crime of the Century" },
 	{ "heliopause",         "Hoist Sail for the Heliopause and Home" },
-	{ "hellosword",         "Hello Sword: The journey" },
 	{ "hellsbasement",      "Hell's Basement" },
 	{ "henribeauchamp",     "The Gallery of Henri Beauchamp" },
-	{ "heroes",             "Heroes" },
 	{ "heroinesmantle",     "Heroine's Mantle" },
 	{ "hibernated1",        "Hibernated 1 - This Place is Death (Director's Cut)" },
 	{ "hiddennazi",         "The Game Formerly Known as Hidden Nazi Mode" },
 	{ "hiddenverbiage",     "Hidden Verbiage" },
 	{ "hidepachyderm",      "Hide a Pachyderm!" },
-	{ "hipponewyear",       "And A Hippo New Year" },
+	{ "hippoelmstr_zcode",  "Hippo on Elm Street" },
+	{ "hipponewyear",       "And a Hippo New Year" },
 	{ "hlainform",          "HLA Adventure" },
-	{ "hobbittruestory",    "The Hobbit - The True Story - Redux, Director's Cut" },
+	{ "hobbitredux_zcode",  "The Hobbit - The True Story - Redux, Director's Cut" },
 	{ "homecoming",         "Homecoming" },
 	{ "home",               "Home" },
 	{ "hoosegow",           "Hoosegow" },
 	{ "horatio",            "Horatio’s Story" },
-	{ "horriblepyra",       "The Horrible Pyramid" },
 	{ "hors",               "Hors Catégorie" },
 	{ "house",              "The House" },
 	{ "housedream",         "House of Dream of Moon" },
 	{ "housekey1",          "Housekey, Part I" },
 	{ "houseoffear",        "The House of Fear" },
-	{ "hummingbird",        "Flight of the Hummingbird" },
 	{ "humongouscave",      "Adventure in Humongous Cave" },
 	{ "humongouscavehints", "Humongous Cave Hints" },
-	{ "hunterdark",         "Hunter, In Darkness" },
 	{ "hyperrpg",           "Hyper RPG Game!" },
 	{ "i0",                 "I-0" },
 	{ "ibo",                "Ibo" },
 	{ "icebreaker",         "Icebreaker" },
 	{ "iceprincess",        "The Ice Princess" },
 	{ "iceweb",             "Iceweb" },
-	{ "identity",           "Identity" },
 	{ "ifaquarium",         "IF Aquarium" },
 	{ "ifplayer",           "Interactive Fiction Player" },
 	{ "ifquake",            "Text Adventure Quake Level 1" },
 	{ "ifwhispers5",        "IF Whispers 5" },
 	{ "ill",                "I'll" },
 	{ "imiagination",       "Imiagination" },
-	{ "impossiblestairs",   "The Impossible Stairs" },
 	{ "inamanor",           "In a Manor of Speaking" },
-	{ "inevita",            "Inevitable" },
-	{ "informatory",        "Informatory" },
 	{ "informschool",       "Inform School" },
 	{ "inhumane",           "Inhumane: An Infralogic Massacre" },
 	{ "insidewoman",        "Inside Woman" },
 	{ "insight",            "Insight" },
 	{ "intangible",         "Intangible" },
-	{ "interviewrockstar",  "Interview with a Rock Star" },
+	{ "interviewrockstar",  "Interview With a Rock Star" },
 	{ "inthenavy",          "In the Navy" },
 	{ "intruder",           "Intruder" },
-	{ "invisibleman",       "The Believable Adventures of an Invisible Man" },
 	{ "iraqiinvasion",      "Iraqi Invasion: A Text Misadventure" },
 	{ "island",             "The Island" },
 	{ "islandsfaraway",     "Islands Far Away" },
 	{ "jayisponies",        "Jay Is Ponies" },
-	{ "janitor",            "Janitor" },
 	{ "jetblue",            "Jet-Blue" },
 	{ "jewelalithia",       "The Jewel of Alithia" },
 	{ "jewelofknowledge",   "The Jewel of Knowledge" },
@@ -556,9 +480,8 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "kierkegaardsspider", "Kierkegaard's Spider" },
 	{ "kiiwii",             "Kii!Wii! A Tiny Friend to Brighten Your Day" },
 	{ "killingthedoctor",   "Killing the Doctor" },
-	{ "kingsball",          "The King's Ball" },
 	{ "kirby",              "The X-Child, Kevin Johnson Residence Hall Saga 2" },
-	{ "kitten",             "robotfindskitten" },
+	{ "kitten",             "Robot Finds Kitten" },
 	{ "kooku",              "Kook U" },
 	{ "lackofvision",       "Lack of Vision" },
 	{ "lambs",              "Silence of the Lambs" },
@@ -566,18 +489,18 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "largemachine",       "Large Machine" },
 	{ "lash",               "Local Asynchronous Satellite Hookup" },
 	{ "ldodoom",            "Last Days of Doom" },
-	{ "leaptime",           "Leap Time" },
 	{ "lecture",            "Lecture Feature" },
 	{ "legacy",             "The Family Legacy" },
+	{ "legendmisshat",      "The Legend of the Missing Hat" },
 	{ "lex",                "LeX" },
-	{ "librarian",          "Life of A Librarian" },
-	{ "libraryfront",       "All Quiet on the Library Front" },
+	{ "librarian",          "Life of a Librarian" },
+	{ "lifewithocd",        "Life With OCD" },
 	{ "lifeordeath",        "Life or Death" },
 	{ "limp",               "Limp" },
 	{ "lionskin",           "In the Skin of a Lion Quest: Caravaggio's Journey" },
 	{ "livejoseph",         "LiveJoseph" },
 	{ "llr3",               "A Little Like Rogue" },
-	{ "lmstvg",             "LMS The Video Game" },
+	{ "lmstvg_zcode",       "LMS The Video Game" },
 	{ "lobsteronaplane",    "Lobsters on a Plane" },
 	{ "lockeddoor1",        "Locked Door I" },
 	{ "lockeddoor2",        "Locked Door II" },
@@ -588,19 +511,16 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "lockeddoor7",        "Locked Door VII" },
 	{ "lockeddoor8",        "Locked Door VIII" },
 	{ "lockeddoor9",        "Locked Door IX" },
+	{ "lockedroom",         "The Locked Room" },
 	{ "lookingtothesky",    "Looking to the Sky" },
-	{ "lostpigandplace",    "Lost Pig And Place Under Ground" },
+	{ "lostpigandplace",    "Lost Pig and Place Under Ground" },
 	{ "lostspellmaker",     "The Lost Spellmaker" },
-	{ "lucidnight",         "Lucid Night" },
 	{ "ludicorp",           "The Ludicorp Mystery" },
 	{ "magicmirror",        "Magic Mirror" },
 	{ "magicmuffin",        "Magic Muffin - The Desert" },
-	{ "magictoyshop",       "The Magic Toyshop" },
 	{ "makeitgood",         "Make it Good" },
 	{ "mansion",            "Mansion" },
-	{ "mariewaits",         "Marie Waits" },
 	{ "martyquest",         "Back to the Future - Marty Quest" },
-	{ "masquerade",         "Masquerade" },
 	{ "medusa",             "Medusa" },
 	{ "meetingrobb",        "Meeting Robb Sherwin" },
 	{ "memorylane",         "Memory Lane" },
@@ -610,30 +530,23 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "mhpquest",           "Quest for the Magic Healing Plant" },
 	{ "micropuzzle",        "Micropuzzle" },
 	{ "midpoints",          "Midpoints" },
-	{ "mimesis",            "Sins Against Mimesis" },
-	{ "mindelectric",       "The Mind Electric" },
 	{ "mines",              "Mines" },
 	{ "minimalistgame",     "The Minimalist Game" },
 	{ "minimalistgame2",    "The Minimalist Game 2" },
-	{ "misdirection",       "The Act Of Misdirection" },
+	{ "misdirection",       "The Act of Misdirection" },
 	{ "missinggrandpa",     "Missing Grandpa: Lost in Time" },
-	{ "mite",               "Mite" },
-	{ "mobius",             "Möbius" },
+	{ "monkeybear",         "Monkey and Bear" },
 	{ "monstermaker",       "Monster Maker" },
 	{ "monzasphantom",      "Monza's Phantom" },
 	{ "moonglow",           "Miniventure #1: Moonglow" },
-	{ "moongoon",           "Moon Goon" },
 	{ "moonshaped",         "Moon-Shaped" },
 	{ "moonwrecked",        "Moonwrecked" },
 	{ "mornelune",          "Morne Lune" },
-	{ "more",               "More" },
-	{ "morris",             "Morris" },
+	{ "mortalkombat",       "Mortal Kombat: Fire and Ice" },
 	{ "mortlakemanor",      "Mortlake Manor" },
 	{ "motelcalifornia",    "Motel California" },
-	{ "motherloose",        "Mother Loose" },
 	{ "mountain",           "Mountain" },
 	{ "mousequest",         "Mouse Quest Chapter 1 - The Arrival of Winter" },
-	{ "mrp",                "The Story of Mr. P." },
 	{ "mrscrabtree",        "Mrs. Crabtree's Geography Class" },
 	{ "mst3k1",             "Mystery Science Theater 3000 Presents 'Detective'" },
 	{ "mst3k2",             "Mystery Science Theater 3000 Presents 'A Fable'" },
@@ -643,20 +556,17 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "mulldoon",           "The Mulldoon Legacy" },
 	{ "mulldoonmurders",    "The Mulldoon Murders" },
 	{ "murdac",             "Murdac" },
-	{ "murdererleft",       "What The Murderer Had Left" },
-	{ "muse",               "Muse: An Autumn Romance" },
+	{ "murdererleft",       "What the Murderer Had Left" },
 	{ "musician",           "The Musician" },
-	{ "myangel",            "My Angel" },
 	{ "mylastduchess",      "My Last Duchess" },
 	{ "mymagictirehoax",    "My Magic Tire Hoax" },
+	{ "mysterywinch",       "The Mystery of Winchester High" },
 	{ "myunclegeorge",      "My Uncle George" },
 	{ "nameless",           "Endless, Nameless" },
 	{ "nascarexperience",   "The Realistic Nascar eXperience" },
-	{ "navigatio",          "Navigatio" },
 	{ "nemeanlion",         "The Nemean Lion" },
 	{ "nemesismacana",      "Nemesis Macana" },
-	{ "neverplayed",        "So, You've Never Played a Text Adventure Before, Huh?" },
-	{ "newday",             "A New Day" },
+	{ "neverplayed_zcode",  "So, You've Never Played a Text Adventure Before, Huh?" },
 	{ "nidus",              "Nidus" },
 	{ "nightbunnies",       "The Night of the Vampire Bunnies" },
 	{ "nightchristmas",     "An Abbreviated Night Before Christmas" },
@@ -664,7 +574,6 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "nihilism",           "The Abyss" },
 	{ "ninepoints",         "Nine Points" },
 	{ "niney",              "Niney" },
-	{ "ninjasfate",         "Ninja's Fate" },
 	{ "njag",               "Not Just a Game" },
 	{ "njag2",              "Not Just a Game 2" },
 	{ "noroom",             "No Room" },
@@ -673,30 +582,23 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "nostrils",           "Nostrils of Flesh and Clay" },
 	{ "notinvenice",        "Not in Venice" },
 	{ "nudistsgonewild",    "Nudists Gone Wild" },
-	{ "oad",                "Only After Dark" },
-	{ "oceantower",         "Love, Hate and the Mysterious Ocean Tower" },
 	{ "odieus",             "Odieus's Quest for the Magic Flingshot" },
 	{ "ogisoas",            "One Game in Search of a Story" },
 	{ "omniquest",          "Omniquest" },
 	{ "once",               "Once" },
-	{ "onceuponwinter",     "Once Upon a Winter Night, the Ragman Came Singing Under Your Window" },
 	{ "onegirl",            "One Girl" },
 	{ "onlywar",            "Only War - Warhammer 40.000" },
 	{ "onyourback",         "On Your Back" },
 	{ "openthatvein",       "Open That Vein" },
-	{ "orevore",            "Orevore Courier" },
-	{ "orion",              "The Orion Agenda" },
-	{ "ottumwa",            "PDFA Ottumwa" },
-	{ "out",                "Out" },
+	{ "ottumwa_zcode",      "PDFA Ottumwa" },
 	{ "outofthepit",        "Out of the Pit" },
 	{ "paddlingmania",      "Total Paddling Mania" },
-	{ "paint",              "Paint and Corners" },
+	{ "paintandcorners",    "Paint and Corners" },
 	{ "palimpsest",         "Palimpsest" },
-	{ "paperbagprincess",   "The Paper Bag Princess" },
+	{ "paperbagprinc",      "The Paper Bag Princess" },
 	{ "paperchase",         "Paper Chase" },
 	{ "parallel",           "Parallel" },
 	{ "paranoia",           "Paranoia" },
-	{ "parasites",          "Parasites" },
 	{ "parc",               "Parc" },
 	{ "pasdedeux",          "Pas De Deux" },
 	{ "pathway",            "Pathway to Destruction" },
@@ -705,113 +607,96 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "penury",             "The Algophilists' Penury" },
 	{ "perilousmagic",      "Perilous Magic" },
 	{ "perrysworld",        "Perry's World" },
-	{ "pfrank",             "PROFESSOR FRANK" },
 	{ "philosophersstone",  "The Quest for the Philosopher's Stone" },
 	{ "phlegm",             "Phlegm" },
-	{ "phobias",            "Face Your Fears" },
 	{ "phoenix",            "Phoenix's Landing: Destiny" },
+	{ "phoneboothp2",       "Pick up the Phone Booth and Die II" },
 	{ "photograph",         "Photograph" },
-	{ "photopia",           "Photopia" },
+	{ "photopia_zcode",     "Photopia" },
 	{ "piece",              "Piece of Mind" },
 	{ "pigpancake",         "Pigpancake" },
 	{ "piracy2",            "Piracy 2.0 - A Text Adventure in Space" },
 	{ "piraterailroad",     "Pirate Railroad" },
-	{ "pleasehelpme",       "Please Help Me" },
 	{ "ponderances",        "Ponderances" },
 	{ "praser5",            "Praser 5" },
 	{ "pressedon",          "I Pressed On, Being Chased by a Stapler With My Name on It" },
 	{ "priceoffreedom",     "The Price of Freedom" },
-	{ "primer",             "Primer" },
 	{ "primrose",           "The Primrose Path" },
 	{ "prize",              "The Prize" },
 	{ "probing",            "Offensive Probing" },
 	{ "progressive1",       "IF Progressive One" },
 	{ "promoted",           "Promoted!" },
-	{ "psyops",             "Psyops, Yo" },
 	{ "pueblofantasma",     "Pueblo Fantasma" },
 	{ "puerto",             "The Board Game Puerto Rico" },
 	{ "punkpoints",         "Punk Points" },
 	{ "puppetman",          "The Puppet-Man" },
-	{ "putpbaa",            "Pick Up the Phone Booth and Aisle" },
+	{ "putpbaa",            "Pick up the Phone Booth and Aisle" },
 	{ "puzzle",             "Puzzle" },
-	{ "pytho",              "Pytho's Mask" },
+	{ "pytho_zcode",        "Pytho's Mask" },
 	{ "quidditch1954",      "The Quidditch Final of 1954" },
-	{ "quietevening",       "A Quiet Evening at Home" },
 	{ "quitequeer",         "Quite Queer Night Near" },
 	{ "rachaelbadday",      "Rachel Has a Bad Day" },
 	{ "ralph",              "Ralph" },
-	{ "rameses",            "Rameses, a Tale of Heroes" },
+	{ "rameses",            "Rameses" },
 	{ "ranshints",          "RANS Hints" },
 	{ "rans",               "RANS" },
 	{ "readinginmay",       "A Reading in May" },
 	{ "reddex",             "Reddex" },
 	{ "relief",             "The Hunt for Relief" },
-	{ "reorsbushcave",      "Reor's Bush-Cave (The Sprout Pouch pt 4)" },
+	{ "reorbushcave_zcode", "Reor's Bush-Cave (The Sprout Pouch pt 4)" },
 	{ "reser",              "Rock'Em Sock'Em Robots" },
 	{ "resident",           "The Resident" },
 	{ "returncastle",       "Return to the Castle" },
-	{ "revengebabes",       "Revenge of the Killer Surf Nazi Robot Babes from Hell" },
-	{ "revenger",           "Revenger" },
+	{ "revengebabes",       "Revenge of the Killer Surf Nazi Robot Babes From Hell" },
 	{ "reverb",             "Reverberations" },
 	{ "reverzi",            "Reverzi" },
 	{ "ribbons",            "Ribbons" },
 	{ "risenecropolis",     "Rise of the Necropolis" },
-	{ "risorg",             "Risorgimento Represso" },
+	{ "risorg_zcode",       "Risorgimento Represso" },
 	{ "robodud",            "Robodud" },
-	{ "robotempire",        "Holy Robot Empire" },
 	{ "robotgardening",     "Robot Gardening" },
 	{ "robots",             "Robots - Another Abuse of the Z-Machine" },
-	{ "rogue",              "Rogue" },
+	{ "rockinghorse",       "RockingHorse" },
+	{ "rogue",              "zROGUE" },
 	{ "roomserial",         "Room Serial" },
-	{ "roofed",             "Roofed" },
 	{ "robopuppyredux",     "Robopuppy Redux" },
 	{ "rota",               "The Reliques of Tolti-Aph" },
 	{ "rpn",                "RPN" },
 	{ "rtdoom",             "Return to Doom" },
-	{ "ruins",              "Ruins" },
 	{ "sabotage",           "Sabotage" },
-	{ "safezcode",          "Safe" },
+	{ "safe_zcode",         "Safe" },
 	{ "samegame",           "SameGame, Another Episode in the Z-Machine Abuse Saga" },
 	{ "samhain",            "Samhain: Pick Up the Jack O' Lantern and Die" },
 	{ "samurai",            "Samurai Tea Room" },
-	{ "sanddancer",         "Sand-dancer" },
+	{ "sanddancer_zcode",   "Sand-dancer" },
 	{ "sangraal",           "Sangraal" },
 	{ "santassleighride",   "Santa's Sleigh Ride" },
-	{ "sauguslibrary",      "Late Night in the Saugus Public Library" },
+	{ "sauguslibrary",      "Saugus.net HSC 2002: Late Night in the Saugus Public Library" },
+	{ "saugusfirstparish",  "Saugus.net HSC 2003: Below the First Parish Cemetery" },
 	{ "saveprinceton",      "Save Princeton" },
 	{ "savoirfaire",        "Savoir-Faire" },
 	{ "scald",              "Scald" },
 	{ "schooldays",         "Schooldays" },
-	{ "scopa",              "Scopa" },                                                      // Not Working (2.8.0git)
-	{ "scurvy",             "A Scurvy of Wonders" },
-	{ "seacoral",           "Sea Coral" },
-	{ "seeksorrow",         "Starry Seeksorrow" },
-	{ "segapark",           "El SegaPark" },
+	{ "scopa",              "Scopa" },
 	{ "semid",              "Semi Intelligent Design" },
-	{ "sfiction",           "Speculative Fiction: Beginner's Lessons" },
 	{ "sgtguffysday",       "Sergeant Guffy's Day" },
-	{ "shade",              "Shade" },
-	{ "shadowgatez",        "Shadowgate" },
+	{ "shadowgate_dg",      "Shadowgate (by David Griffith)" },
 	{ "shadowofmemories",   "Shadow of Memories" },
 	{ "shadowsoldiers",     "Shadow Soldiers" },
 	{ "shallow",            "Shallow" },
 	{ "shattmem",           "Shattered Memory" },
-	{ "sherbet",            "The Meteor, the Stone and a Long Glass of Sherbet" },
 	{ "sherlock1",          "Sherlock Gamebook #1: Murder at the Diogenes Club" },
 	{ "sherlock2",          "Sherlock Gamebook #2: The Black River Emerald" },
 	{ "sherlock3",          "Sherlock Gamebook #3: Death at Appledore Towers" },
 	{ "sherlock4",          "Sherlock Gamebook #4: The Crown vs Dr. Watson" },
 	{ "shrapnel",           "Shrapnel" },
-	{ "siliconcastle",      "Silicon Castles" },
 	{ "simpletheft2",       "A Simple Theft 2: A Simple Theftier" },
-	{ "sixgrayrats",        "Six Gray Rats Crawl Up the Pillow" },
 	{ "slackerx",           "Slacker X" },
 	{ "sleepcycle",         "Sleep Cycle" },
 	{ "smallroom",          "Trapped in a Small Room" },
 	{ "smallsimple",        "A Small & Simple Text Adventure" },
 	{ "snafufun",           "The Adventure" },
 	{ "snowedin",           "Snowed In" },
-	{ "snowquest",          "Snowquest" },
 	{ "sofar",              "So Far" },
 	{ "softporn",           "Softporn Adventure" },
 	{ "solitary",           "Solitary" },
@@ -821,7 +706,6 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "spacestation",       "Space Station" },
 	{ "spadventure",        "SpAdventure" },
 	{ "spiderandweb",       "Spider and Web" },
-	{ "spiral",             "Spiral" },
 	{ "spiritwrak",         "SpiritWrak" },
 	{ "sporkery1",          "Sporkery 1: There Will Be Sporking" },
 	{ "spotlight",          "The Spotlight" },
@@ -829,29 +713,21 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "spring",             "She's Got a Thing For a Spring" },
 	{ "spring2020",         "Spring 2020" },
 	{ "spycatcher",         "Spycatcher" },
-	{ "squeaky",            "Squeaky on the Moon" },
-	{ "stale",              "The Fox, The Dragon, and the Stale Loaf of Bread" },
 	{ "starborn",           "Starborn" },
 	{ "stargods",           "The Star Gods" },
-	{ "starlightz",         "Starlight" },
-	{ "starrydepths",       "Secret of the Starry Depths" },
+	{ "starlight_zcode",    "Starlight" },
+	{ "starrydepths_zcode", "Secret of the Starry Depths" },
 	{ "starshit",           "Starshit" },
-	{ "stealthy",           "Stealthy" },
 	{ "steine",             "Steine" },
 	{ "stewgoing",          "You've Got a Stew Going!" },
 	{ "stiffmst",           "Stiffy Makane: Mystery Science Theater 3000" },
 	{ "stiffy",             "The Incredible Erotic Adventures of Stiffy Makane!" },
 	{ "stinkorswim",        "Stink or Swim" },
 	{ "stonecave",          "The Stone Cave" },
-	{ "stormcellar",        "Storm Cellar" },
 	{ "strainedtea",        "Strained Tea" },
 	{ "strangeworld",       "Strange World" },
-	{ "strikeforce",        "Strike Force" },
-	{ "submarinesabotage",  "Submarine Sabotage" },
 	{ "suicide",            "Suicide" },
-	{ "summerland",         "Escape from Summerland" },
-	{ "sunburn",            "Sunburn" },
-	{ "sunburst",           "Sunburst: A C64 Science Fiction Adventure Game" },               // Not Working (2.8.0git)
+	{ "sunburst",           "Sunburst: A C64 Science Fiction Adventure Game" },
 	{ "sundayafternoon",    "Sunday Afternoon" },
 	{ "surfboard",          "Surfboard" },
 	{ "survive",            "Survive" },
@@ -860,22 +736,17 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "swineback",          "Swineback Ridge" },
 	{ "sycamoratree",       "Sycamora Tree" },
 	{ "taipan",             "Taipan!" },
-	{ "takethedogout",      "Take the Dog Out" },
-	{ "talemorning",        "The Mundane Tale of the Morning After" },
 	{ "tatctae",            "Time: All Things Come to an End" },
 	{ "tauntingdonut",      "Taunting Donut" },
-	{ "tblw",               "The Blood Lust Warrior" },
+	{ "tblw_zcode",         "The Blood Lust Warrior" },
 	{ "tcomremake",         "The Colour of Magic Remake" },
 	{ "tcoty",              "The Citizen of the Year" },
 	{ "teacherfeature",     "Teacher Feature" },
-	{ "teachinghertodance", "Teaching Her to Dance" },
-	{ "teaceremony",        "Tea Ceremony" },
+	{ "teachher2dance",     "Teaching Her to Dance" },
 	{ "telling",            "Whom the Telling Changed" },
 	{ "terribleoldmanse",   "The Terrible Old Manse: 8bit Fun in 7bit ASCII" },
 	{ "terrortabby",        "Attack of the Terror Tabby!" },
 	{ "tesseract",          "Beyond the Tesseract" },
-	{ "testisready",        "The Test is Now READY" },
-	{ "tethered",           "Tethered" },
 	{ "tgm",                "The Great Machine - A Fragment" },
 	{ "thanet",             "From Thanet to New Romney" },
 	{ "thatdamnelevator",   "That Damn Elevator" },
@@ -884,25 +755,20 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "theatre",            "Theatre" },
 	{ "thebaron",           "The Baron" },
 	{ "thecomputerlady",    "The Computer Lady" },
-	{ "thecubecavern",      "The Cube in the Cavern" },
 	{ "theenchantedcastle", "The Enchanted Castle" },
-	{ "thegrandquest",      "The Grand Quest" },
 	{ "thegrandtour",       "The Grand Tour" },
 	{ "thegreat",           "The Great" },
-	{ "theguardian",        "The Guardian" },
 	{ "theinvestment",      "The Investment" },
-	{ "thejob",             "The Job" },
 	{ "thelighthousemm",    "The Lighthouse (by Marius Muller)" },
 	{ "themall",            "The Mall" },
+	{ "thesnowman",         "The Snowman" },
 	{ "thesproutpouch",     "Reor's Bush-Cave: The Sprout Pouch" },
-	{ "thetemple",          "The Temple" },
 	{ "thewedding",         "The Wedding" },
 	{ "thorn",              "The Thorn" },
 	{ "threecows",          "Three Cows and Two Doors" },
 	{ "threediopolis",      "Threediopolis" },
-	{ "threemore",          "Three More Visitors" },
+	{ "timedwarves",        "Time and Dwarves" },
 	{ "timefortea",         "Time For Tea: A Game of Tea, Cakes, and Deadly Secrets" },
-	{ "timezcode",          "Time and Dwarves" },
 	{ "tirehoax",           "My Magic Tire Hoax" },
 	{ "tk1",                "Time Killer #1: Claustrophobia" },
 	{ "tkatc",              "The King and the Crown, Special Edition" },
@@ -918,81 +784,64 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "trunspecified",      "Treasures of an Unspecified Region or District" },
 	{ "trw",                "Tull Road Warrior" },
 	{ "trystoffate",        "Tryst of Fate" },
-	{ "tubetrouble",        "Tube Trouble" },
 	{ "tundra",             "Tundra" },
 	{ "tutorial",           "Tutorial" },
 	{ "tutorialhotel",      "Hotel Tutorial" },
 	{ "tuuli",              "Tuuli" },
 	{ "txtadv",             "Txt Adventure" },
-	{ "typo",               "Typo!" },
-	{ "uhohdemo",           "Uh-Oh!" },
-	{ "umw",                "UMW" },
-	{ "uxmulbrufyuz",       "Uxmulbrufyuz" },
+	{ "uhoh",               "Uh-Oh!" },
+	{ "umw_zcode",          "UMW" },
 	{ "underdoos",          "The Underoos That Ate New York!" },
-	{ "undergroundz",       "Underground" },
+	{ "underground_zcode",  "Underground" },
 	{ "underthebed",        "Under the Bed" },
 	{ "ungodlyhour",        "Ungodly Hour" },
 	{ "unicornpool",        "The Unicorn Pool" },
-	{ "uninvited",          "Uninvited" },
+	{ "uninvited",          "UNINVITED" },
 	{ "vacation",           "Vacation Gone Awry" },
 	{ "vagueness",          "What Happens in Vagueness" },
 	{ "vampiresun",         "House of the Midnight Sun" },
 	{ "varicella",          "Varicella" },
-	{ "varronismuseum",     "Varronis Museum" },
 	{ "vengeance",          "Vengeance" },
 	{ "vergingpaths",       "The Garden of Verging Paths" },
-	{ "veryvile",           "Very Vile Fairy File" },
-	{ "vespers",            "Vespers" },
-	{ "vestiges",           "Vestiges" },
+	{ "veryvile_zcode",     "Prime Pro-Rhyme Row #1: Very Vile Fairy File" },
 	{ "vigilance",          "Internal Vigilance" },
 	{ "vindaloo",           "Vindaloo" },
-	{ "violet",             "Violet" },
-	{ "virtuality",         "Virtuality" },
-	{ "virtualgrandnational", "The Virtual Grand National" },
+	{ "virtualgrandnation", "The Virtual Grand National" },
 	{ "visualizing",        "Visualizing" },
-	{ "voices",             "Voices" },
 	{ "vosr",               "Voices of Spoon River" },
-	{ "wadewar3",           "The WadeWars Book III" },
-	{ "wakeup",             "Wake Up" },
-	{ "walkamongus",        "Walk Among Us" },
-	{ "walkinthepark",      "A Walk in the Park" },
-	{ "wallpaper",          "Delightful Wallpaper" },
+	{ "wadewar2",           "The WadeWars Book II: Niska" },
+	{ "wadewar3",           "The WadeWars Book III: Askin" },
 	{ "warblersnest",       "The Warbler's Nest" },
 	{ "warp",               "Warp!" },
 	{ "weapon",             "The Weapon" },
 	{ "weareunfinished",    "We Are Unfinished" },
-	{ "wearyeerieway",      "Weary Eerie Way" },
-	{ "weather",            "A Change in the Weather" },
 	{ "weirdcity",          "Weird City Interloper" },
 	{ "weirdness",          "Weirdness" },
+	{ "welcome",            "Welcome" },
 	{ "welcometohell",      "Welcome to Hell" },
 	{ "welcometopuerto",    "Welcome to Puerto Rico" },
 	{ "wernersquest1",      "Werner's Quest 1: The Black Ladder" },
 	{ "wernersquest2",      "Werner's Quest 2: Revenge of the Thing-Fish" },
 	{ "wernersquest3",      "Werner's Quest 3: Rance the Dungeonkeeper" },
 	{ "wernersquest4",      "Werner's Quest 4: Unchanter" },
-	{ "whenhelp",           "When Help Collides" },
 	{ "whispers",           "The Corn Identity" },
-	{ "whoahcubswoe",       "Whoah Cubs Woe" },
 	{ "wildflowers",        "Wildflowers" },
 	{ "williamtell",        "William Tell" },
 	{ "winchester",         "Winchester's Nightmare" },
 	{ "windhall",           "The Path to Fortune" },
 	{ "winterwonder",       "Winter Wonderland" },
 	{ "wir1",               "When in Rome 1: Accounting for Taste" },
-	{ "wir2",               "When in Rome 2: Far from Home" },
+	{ "wir2",               "When in Rome 2: Far From Home" },
 	{ "wireless",           "Get Magazine. Open Magazine. Read Article" },
 	{ "wizardscastle",      "Wizard's Castle" },
 	{ "wizardsmagic",       "Wizards Magic" },
 	{ "worldupsidedown",    "The World Turned Upside Down" },
-	{ "wossname",           "Spodgeville Murphy and The Jewelled Eye of Wossname" },
 	{ "wsp",                "Weishaupt Scholars: Prologue" },
-	{ "wump2ka",            "Wumpus 2000, The Virulent Labyrinth Of Yob-Shuggoth" },
+	{ "wump2ka",            "Wumpus 2000, The Virulent Labyrinth of Yob-Shuggoth" },
 	{ "wumpus",             "Hunt the Wumpus" },
 	{ "wurm",               "Wurm" },
 	{ "wwwanderer",         "Werewolves and Wanderer" },
 	{ "xenophobia",         "Xenophobia" },
-	{ "yagwad",             "YAGWAD: Yes, Another Game With a Dragon!" },
 	{ "yakshaving",         "Yak Shaving for Kicks and Giggles!" },
 	{ "yomomma",            "Raising the Flag on Mount Yo Momma" },
 	{ "zassball",           "ZassBall, Another Abuse of the Z-Machine" },
@@ -1006,13 +855,11 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "zegro",              "Zegrothenus" },
 	{ "zenon",              "Escape From the Starship Zenon" },
 	{ "zenspeak",           "Zen Speaks!" },
-	{ "zigamus",            "Zigamus: Zombies at Vigamus" },
 	{ "zlife",              "Z-Life" },
 	{ "zokoban",            "Z-Machine Sokoban" },
 	{ "zombies",            "Zombies, Yet Another Abuse of the Z-Machine" },
 	{ "zork285",            "Zork 285 Points Replica" },
 	{ "zorkianstories1",    "Zorkian Stories 1: G.U.E" },
-	{ "zorklxix",           "Zork LXIX: The Great Underground Hot Dog" },
 	{ "zorknplus9",         "Zork N Plus 9" },
 	{ "zpegasus",           "Pegasus" },
 	{ "zracer",             "ZRacer" },
@@ -1037,7 +884,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	// Converted Scott Adams Classic Adventures games
 	{ "adventurelandi5",    "S.A.C.A. #1: Adventureland" },
 	{ "pirateadventurei5",  "S.A.C.A. #2: Pirate Adventure" },
-	{ "missionimpossiblei5", "S.A.C.A. #3: Mission Impossible" },
+	{ "missionimpossibli5", "S.A.C.A. #3: Mission Impossible" },
 	{ "voodoocastlei5",     "S.A.C.A. #4: Voodoo Castle" },
 	{ "thecounti5",         "S.A.C.A. #5: The Count" },
 	{ "strangeodysseyi5",   "S.A.C.A. #6: Strange Odyssey" },
@@ -1047,10 +894,10 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "savageisland1i5",    "S.A.C.A. #10: Savage Island, Part I" },
 	{ "savageisland2i5",    "S.A.C.A. #11: Savage Island, Part II" },
 	{ "goldenvoyagei5",     "S.A.C.A. #12: The Golden Voyage" },
-	{ "sorcererclaycastlei5", "S.A.C.A. #13: Sorcerer of Claymorgue Castle" },
+	{ "sorcererclaycstli5", "S.A.C.A. #13: Sorcerer of Claymorgue Castle" },
 	{ "returnpirteislei5",  "S.A.C.A. #14A: Return to Pirate's Isle" },
 	{ "buckaroobanzaii5",   "S.A.C.A. #14B: Buckaroo Banzai" },
-	{ "adventurelandsmpleri5", "S.A.C.A.: Adventureland Sampler" },
+	{ "adventlandsmpleri5", "S.A.C.A.: Adventureland Sampler" },
 	{ "marveladventurei5",  "S.A.C.A.: The Hulk" },
 	{ "questprobe2i5",      "S.A.C.A.: Spiderman" },
 
@@ -1059,7 +906,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "timemachinei5",      "Mysterious Adventures #02: The Time Machine" },
 	{ "arrowofdeath1i5",    "Mysterious Adventures #03: Arrow of Death Part 1" },
 	{ "arrowofdeath2i5",    "Mysterious Adventures #04: Arrow of Death Part 2" },
-	{ "pulsar7i5",          "Mysterious Adventures #05: Escape from Pulsar 7" },
+	{ "pulsar7i5",          "Mysterious Adventures #05: Escape From Pulsar 7" },
 	{ "circusi5",           "Mysterious Adventures #06: Circus" },
 	{ "feasibilityi5",      "Mysterious Adventures #07: Feasibility Experiment" },
 	{ "akyrzi5",            "Mysterious Adventures #08: The Wizard of Akyrz" },
@@ -1067,26 +914,21 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "10indiansi5",        "Mysterious Adventures #10: Ten Little Indians" },
 	{ "waxworksi5",         "Mysterious Adventures #11: Waxworks" },
 
-	// 1992 album Apollo 18+20, by They Might be Giants
+	// Apollo 18+20: The IF Tribute Album
 	{ "apollo1",            "Apollo 18+20 #01: Dig My Grave" },
 	{ "apollo2",            "Apollo 18+20 #02: I Palindrome I" },
-	{ "apollo3",            "Apollo 18+20 #03: She's Actual Size" },
 	{ "apollo4",            "Apollo 18+20 #04: My Evil Twin" },
 	{ "apollo5",            "Apollo 18+20 #05: Mammal" },
 	{ "apollo6",            "Apollo 18+20 #06: The Statue Got Me High" },
 	{ "apollo7",            "Apollo 18+20 #07: Spider" },
 	{ "apollo8",            "Apollo 18+20 #08: The Guitar(The Lion Sleeps Tonight)" },
 	{ "apollo9",            "Apollo 18+20 #09: Dinner Bell" },
-	{ "apollo10",           "Apollo 18+20 #10: Narrow Your Eyes" },
 	{ "apollo11",           "Apollo 18+20 #11: Hall of Heads" },
-	{ "apollo12",           "Apollo 18+20 #12: Which Describes How You're Feeling" },
 	{ "apollo13",           "Apollo 18+20 #13: See the Constellation" },
 	{ "apollo14",           "Apollo 18+20 #14: If I Wasn't Shy" },
-	{ "apollo15",           "Apollo 18+20 #15: Turn Around" },
 	{ "apollo16",           "Apollo 18+20 #16: Hypnotist of Ladies" },
 	{ "apollo17",           "Apollo 18+20 #17: Fingertips - Everything Is Catching on Fire" },
 	{ "apollo18",           "Apollo 18+20 #18: Fingertips - Fingertips" },
-	{ "apollo19",           "Apollo 18+20 #19: Fingertips - I Hear the Wind Blow" },
 	{ "apollo20",           "Apollo 18+20 #20: Fingertips - Hey Now, Everybody" },
 	{ "apollo21",           "Apollo 18+20 #21: Fingertips - Who's That Standing Out the Window" },
 	{ "apollo22",           "Apollo 18+20 #22: Fingertips - I Found a New Friend" },
@@ -1100,448 +942,446 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "apollo30",           "Apollo 18+20 #30: Fingertips - Something Grabbed Ahold of My Hand" },
 	{ "apollo31",           "Apollo 18+20 #31: Fingertips - I Don't Understand You" },
 	{ "apollo32",           "Apollo 18+20 #32: Fingertips - I Heard a Sound" },
-	{ "apollo33",           "Apollo 18+20 #33: Fingertips - Mysterious Whisper" },
 	{ "apollo34",           "Apollo 18+20 #34: Fingertips - The Day That Love Came to Play" },
 	{ "apollo35",           "Apollo 18+20 #35: Fingertips - I'm Having a Heart Attack" },
 	{ "apollo36",           "Apollo 18+20 #36: Fingertips - Fingertips(Reprise)" },
 	{ "apollo37",           "Apollo 18+20 #37: Fingertips - I Walk Along Darkened Corridors" },
 	{ "apollo38",           "Apollo 18+20 #38: Space Suit" },
 
-	// The 1995 Annual Interactive Fiction Competition
-	{ "if95_weather",       "A Change in the Weather" },                                                //  1st Place
-	{ "if95_mindelectric",  "The Mind Electric" },                                                      //  2nd Place
-	{ "if95_magictoyshop",  "The Magic Toyshop" },                                                      //  3rd Place
-	{ "if95_mst3k1",        "Mystery Science Theater 3000 Presents 'Detective'" },                      //  4th Place
-	{ "if95_libraryfront",  "All Quiet on the Library Front" },                                         //  5th Place
-	{ "if95_tubetrouble",   "Tube Trouble" },                                                           //  6th Place
+	// IFComp 1995
+	{ "if95_weather",       "A Change in the Weather" },                                                //    1st Place
+	{ "if95_mindelectric",  "The Mind Electric" },                                                      //    2nd Place
+	{ "if95_magictoyshop",  "The Magic Toyshop" },                                                      //    3rd Place
+	{ "if95_mst3k1",        "Mystery Science Theater 3000 Presents 'Detective'" },                      //    4th Place
+	{ "if95_libraryfront",  "All Quiet on the Library Front" },                                         //    5th Place
+	{ "if95_tubetrouble",   "Tube Trouble" },                                                           //    6th Place
 
-	// The 1996 Annual Interactive Fiction Competition
-	{ "if96_sherbet",       "The Meteor, the Stone and a Long Glass of Sherbet" },                      //  1st Place
-	{ "if96_tapestry",      "Tapestry" },                                                               //  2nd Place
-	{ "if96_delusions",     "Delusions" },                                                              //  3rd Place
-	{ "if96_fear",          "Fear" },                                                                   //  6th Place
-	{ "if96_claw",          "Wearing the Claw" },                                                       //  8th Place
-	{ "if96_lists",         "Lists and Lists" },                                                        // 11th Place
-	{ "if96_ralph",         "Ralph" },                                                                  // 12th Place
-	{ "if96_reverb",        "Reverberations" },                                                         // 13th Place
-	{ "if96_intheend",      "In the End" },                                                             // 15th Place
-	{ "if96_piece",         "Piece of Mind" },                                                          // 16th Place
-	{ "if96_phlegm",        "Phlegm" },                                                                 // 17th Place
-	{ "if96_stargaze",      "Stargazer" },                                                              // 19th Place
-	{ "if96_forms",         "Of Forms Unknown" },                                                       // 20th Place
-	{ "if96_stalkerzcode",  "House of the Stalker" },                                                   // 23rd Place
-	{ "if96_ripflesh",      "Rippled Flesh" },                                                          // 24th Place
-	{ "if96_liquid",        "Punkirita Quest 1: Liquid" },                                              // 25th Place
+	// IFComp 1996
+	{ "if96_sherbet",       "The Meteor, the Stone and a Long Glass of Sherbet" },                      //    1st Place
+	{ "if96_tapestry",      "Tapestry" },                                                               //    2nd Place
+	{ "if96_delusions",     "Delusions" },                                                              //    3rd Place
+	{ "if96_fear",          "Fear" },                                                                   //    6th Place
+	{ "if96_claw",          "Wearing the Claw" },                                                       //    8th Place
+	{ "if96_lists",         "Lists and Lists" },                                                        //   11th Place
+	{ "if96_ralph",         "Ralph" },                                                                  //   12th Place
+	{ "if96_reverb",        "Reverberations" },                                                         //   13th Place
+	{ "if96_intheend",      "In the End" },                                                             //   15th Place
+	{ "if96_piece",         "Piece of Mind" },                                                          //   16th Place
+	{ "if96_phlegm",        "Phlegm" },                                                                 //   17th Place
+	{ "if96_stargaze",      "Stargazer" },                                                              //   19th Place
+	{ "if96_forms",         "Of Forms Unknown" },                                                       //   20th Place
+	{ "if96_housestalker",  "House of the Stalker" },                                                   //   23rd Place
+	{ "if96_ripflesh",      "Rippled Flesh" },                                                          //   24th Place
+	{ "if96_liquid",        "Punkirita Quest 1: Liquid" },                                              //   25th Place
 	{ "comp96",             "IF Competition '96 Unofficial FE Game" },
 
-	// The 1997 Annual Interactive Fiction Competition
-	{ "if97_edifice",       "The Edifice" },                                                            // 	1st Place
-	{ "if97_spring",        "She's Got a Thing For a Spring" },                                         // 	4th Place
-	{ "if97_bear",          "A Bear's Night Out" },                                                     // 	5th Place
-	{ "if97_lostspellmaker", "The Lost Spellmaker" },                                                   // 	8th Place
-	{ "if97_mimesis",       "Sins Against Mimesis" },                                                   //	9th Place
-	{ "if97_newday",        "A New Day" },                                                              // 10th Place
-	{ "if97_erden",         "Travels in the Land of Erden: In Quest of the Adventure" },                // 14th Place
-	{ "if97_friday",        "Friday Afternoon" },                                                       // 16th Place
-	{ "if97_estrange",      "Madame L'Estrange and the Troubled Spirit" },                              // 17th Place
-	{ "if97_sylenius",      "Sylenius Mysterium" },                                                     // 18th Place
-	{ "if97_pizza",         "Phred Phontious and the Quest for Pizza" },                                // 19th Place
-	{ "if97_agb",           "A Good Breakfast" },                                                       // 23rd Place
-	{ "if97_tdragon",       "Town Dragon" },                                                            // 24th Place
-	{ "if97_thetempest",    "The Tempest" },                                                            // 25th Place
-	{ "if97_pintown",       "Pintown" },                                                                // 28th Place
-	{ "if97_congrats",      "Congratulations!" },                                                       // 30th Place
-	{ "if97_cask",          "Cask" },                                                                   // 31st Place
-	{ "if97_symetry",       "Symetry" },                                                                // 32nd Place
-	{ "if97_auntnancy",     "Aunt Nancy's House" },                                                     // 33rd Place
-	{ "if97_cominghome",    "Coming Home" },                                                            // 34th Place
+	// IFComp 1997
+	{ "if97_edifice",       "The Edifice" },                                                            //    1st Place
+	{ "if97_spring",        "She's Got a Thing For a Spring" },                                         //    4th Place
+	{ "if97_bear",          "A Bear's Night Out" },                                                     // 	  5th Place
+	{ "if97_lostspellmake", "The Lost Spellmaker" },                                                    //    8th Place
+	{ "if97_mimesis",       "Sins Against Mimesis" },                                                   //	  9th Place
+	{ "if97_newday",        "A New Day" },                                                              //   10th Place
+	{ "if97_erden",         "Travels in the Land of Erden: In Quest of the Adventure" },                //   14th Place
+	{ "if97_friday",        "Friday Afternoon" },                                                       //   16th Place
+	{ "if97_estrange",      "Madame L'Estrange and the Troubled Spirit" },                              //   17th Place
+	{ "if97_sylenius",      "Sylenius Mysterium" },                                                     //   18th Place
+	{ "if97_pizza",         "Phred Phontious and the Quest for Pizza" },                                //   19th Place
+	{ "if97_agb",           "A Good Breakfast" },                                                       //   23rd Place
+	{ "if97_tdragon",       "Town Dragon" },                                                            //   24th Place
+	{ "if97_thetempest",    "The Tempest" },                                                            //   25th Place
+	{ "if97_pintown",       "Pintown" },                                                                //   28th Place
+	{ "if97_congrats",      "Congratulations!" },                                                       //   30th Place
+	{ "if97_cask",          "Cask" },                                                                   //   31st Place
+	{ "if97_symetry",       "Symetry" },                                                                //   32nd Place
+	{ "if97_auntnancy",     "Aunt Nancy's House" },                                                     //   33rd Place
+	{ "if97_cominghome",    "Coming Home" },                                                            //   34th Place
 	{ "comp97",             "IF Competition '97 Unofficial FE Game" },
 
-	// The 1998 Annual Interactive Fiction Competition
-	{ "if98_photopia",      "Photopia" },                                                               // 	1st Place
-	{ "if98_muse",          "Muse: An Autumn Romance" },                                                //  2nd Place
-	{ "if98_enlighte",      "Enlightenment" },                                                          // 	5th Place
-	{ "if98_motherloose",   "Mother Loose" },                                                           // 	6th Place
-	{ "if98_bluemen",       "Little Blue Men" },                                                        // 	7th Place
-	{ "if98_dilly",         "Trapped in a One-Room Dilly" },                                            // 	8th Place
-	{ "if98_downtowntokyo", "Downtown Tokyo Present Day" },                                             // 10th Place
-	{ "if98_informatory",   "Informatory" },                                                            // 11th Place
-	{ "if98_ritualpurification", "Ritual of Purification" },                                            // 12th Place
-	{ "if98_city",          "The City" },                                                               // 13th Place
-	{ "if98_evildwells",    "Where Evil Dwells" },                                                      // 14th Place
-	{ "if98_purple",        "Purple" },                                                                 // 15th Place
-	{ "if98_research",      "Research Dig" },                                                           // 17th Place
-	{ "if98_spacestation",  "Space Station: Based on Planetfall Example Transcript" },                  // 19th Place
-	{ "if98_cattusatrox",   "Cattus Atrox" },                                                           // 20th Place
-	{ "if98_spotlite",      "In the Spotlight" },                                                       // 21st Place
-	{ "if98_acidwhiplash",  "Acid Whiplash" },                                                          // 23rd Place
-	{ "if98_fifteen",       "Fifteen" },                                                                // 25th Place
-	{ "if98_hrs",           "Human Resources Stories" },                                                // 27th Place
+	// IFComp 1998
+	{ "if98_photopia",      "Photopia" },                                                               //    1st Place
+	{ "if98_muse",          "Muse: An Autumn Romance" },                                                //    2nd Place
+	{ "if98_enlighte",      "Enlightenment" },                                                          // 	  5th Place
+	{ "if98_motherloose",   "Mother Loose" },                                                           // 	  6th Place
+	{ "if98_bluemen",       "Little Blue Men" },                                                        // 	  7th Place
+	{ "if98_dilly",         "Trapped in a One-Room Dilly" },                                            // 	  8th Place
+	{ "if98_downtowntokyo", "Downtown Tokyo Present Day" },                                             //   10th Place
+	{ "if98_informatory",   "Informatory" },                                                            //   11th Place
+	{ "if98_ritualpurific", "Ritual of Purification" },                                                 //   12th Place
+	{ "if98_city",          "The City" },                                                               //   13th Place
+	{ "if98_evildwells",    "Where Evil Dwells" },                                                      //   14th Place
+	{ "if98_purple",        "Purple" },                                                                 //   15th Place
+	{ "if98_research",      "Research Dig" },                                                           //   17th Place
+	{ "if98_spacestation",  "Space Station" },                                                          //   19th Place
+	{ "if98_cattusatrox",   "Cattus Atrox" },                                                           //   20th Place
+	{ "if98_spotlite",      "In the Spotlight" },                                                       //   21st Place
+	{ "if98_acidwhiplash",  "Acid Whiplash" },                                                          //   23rd Place
+	{ "if98_fifteen",       "Fifteen" },                                                                //   25th Place
+	{ "if98_hrs",           "Human Resources Stories" },                                                //   27th Place
 	{ "comp98",             "IF Competition '98 Unofficial FE Game" },
 
-	// The 1999 Annual Interactive Fiction Competition
-	{ "if99_winterwonder",  "Winter Wonderland" },                                                      // 	1st Place
-	{ "if99_forachange",    "For a Change" },                                                           //  2nd Place
-	{ "if99_softfood",      "A Day for Soft Food" },                                                    // 	4th Place
-	{ "if99_halo",          "Halothane" },                                                              //  5th Place
-	{ "if99_hunterdark",    "Hunter, In Darkness" },                                                    // 	8th Place
-	{ "if99_beatdevil",     "Beat the Devil" },                                                         //  9th Place
-	{ "if99_jacks",         "Jacks or Better to Murder, Aces to Win" },                                 // 10th Place
-	{ "if99_oad",           "Only After Dark" },                                                        // 17th Place
-	{ "if99_lomalow",       "Lomalow" },                                                                // 21st Place
-	{ "if99_calliope",      "Calliope" },                                                               // 23rd Place
-	{ "if99_museduction",   "Music Education" },                                                        // 24th Place
-	{ "if99_wossname",      "Spodgeville Murphy and the Jewelled Eye of Wossname" },                    // 25th Place
-	{ "if99_thorfinn",      "Thorfinn's Realm" },                                                       // 28th Place
-	{ "if99_death",         "Death to my Enemies" },                                                    // 29th Place
-	{ "if99_chix",          "Chicks Dig Jerks" },                                                       // 31st Place
-	{ "if99_passbanana",    "Pass the Banana" },                                                        // 33th Place
-	{ "if99_outsided",      "Outsided" },                                                               // 34th Place
-	{ "if99_ludite",        "Lurk. Unite. Die. Invent. Think. Expire." },                               // 35th Place
-	{ "if99_guard",         "Guard Duty" },                                                             // 36th Place
+	// IFComp 1999
+	{ "if99_winterwonder",  "Winter Wonderland" },                                                      //    1st Place
+	{ "if99_forachange",    "For a Change" },                                                           //    2nd Place
+	{ "if99_softfood",      "A Day for Soft Food" },                                                    // 	  4th Place
+	{ "if99_halo",          "Halothane" },                                                              //    5th Place
+	{ "if99_hunterdark",    "Hunter, In Darkness" },                                                    // 	  8th Place
+	{ "if99_beatdevil",     "Beat the Devil" },                                                         //    9th Place
+	{ "if99_jacks",         "Jacks or Better to Murder, Aces to Win" },                                 //   10th Place
+	{ "if99_oad",           "Only After Dark" },                                                        //   17th Place
+	{ "if99_lomalow",       "Lomalow" },                                                                //   21st Place
+	{ "if99_calliope",      "Calliope" },                                                               //   23rd Place
+	{ "if99_museduction",   "Music Education" },                                                        //   24th Place
+	{ "if99_wossname",      "Spodgeville Murphy and the Jewelled Eye of Wossname" },                    //   25th Place
+	{ "if99_thorfinn",      "Thorfinn's Realm" },                                                       //   28th Place
+	{ "if99_death",         "Death to my Enemies" },                                                    //   29th Place
+	{ "if99_chix",          "Chicks Dig Jerks" },                                                       //   31st Place
+	{ "if99_passbanana",    "Pass the Banana" },                                                        //   33th Place
+	{ "if99_outsided",      "Outsided" },                                                               //   34th Place
+	{ "if99_ludite",        "Lurk. Unite. Die. Invent. Think. Expire." },                               //   35th Place
+	{ "if99_guard",         "Guard Duty" },                                                             //   36th Place
 	{ "comp99",             "IF Competition '99 Unofficial FE Game" },
 
-	// The 2000 Annual Interactive Fiction Competition
-	{ "if00_metamorphoses", "Metamorphoses" },                                                          //  2nd Place
-	{ "if00_andrewplotkin", "Being Andrew Plotkin" },                                                   //  3rd Place
-	{ "if00_adverbum",      "Ad Verbum" },                                                              //  4th Place
-	{ "if00_transfer",      "Transfer" },                                                               //  5th Place
-	{ "if00_myangel",       "My Angel" },                                                               // 	6th Place
-	{ "if00_nevermore",     "Nevermore" },                                                              //  7th Place
-	{ "if00_masquerade",    "Masquerade" },                                                             //  8th Place
-	{ "if00_yagwad",        "YAGWAD: Yes, Another Game With a Dragon!" },                               //  9th Place
-	{ "if00_shade",         "Shade" },                                                                  // 10th Place
-	{ "if00_guess",         "Guess The Verb!" },                                                        // 11th Place
-	{ "if00_letters",       "Letters From Home" },                                                      // 12th Place
-	{ "if00_rameses",       "Rameses, A Tale of Heroes" },                                              // 13th Place
-	{ "if00_djinni",        "The Djinni Chronicles" },                                                  // 14th Place
-	{ "if00_bestman",       "The Best Man" },                                                           // 15th Place
-	{ "if00_atwctw",        "And the Waves Choke the Wind" },                                           // 16th Place
-	{ "if00_dinner",        "Dinner with Andre" },                                                      // 18th Place
-	{ "if00_bigmama",       "The Big Mama" },                                                           // 20th Place
-	{ "if00_punkpoints",    "Punk Points" },                                                            // 22th Place
-	{ "if00_enlisted",      "Enlisted" },                                                               // 23rd Place
-	{ "if00_rtzas",         "Return to Zork: Another Story" },                                          // 26rd Place
-	{ "if00_gotid",         "Got ID?" },                                                                // 29th Place
-	{ "if00_castleamnos",   "Castle Amnos" },                                                           // 30th Place
-	{ "if00_masque",        "Masque of the Last Faeries" },                                             // 31st Place
-	{ "if00_ppocket",       "The Pickpocket" },                                                         // 32nd Place
-	{ "if00_happyeverafter", "Happy Ever After" },                                                      // 34th Place
-	{ "if00_prodly",        "Prodly the Puffin" },                                                      // 35th Place
-	{ "if00_withdraw",      "Withdrawal Symptoms" },                                                    // 36th Place
-	{ "if00_123",           "1-2-3..." },                                                               // 42nd Place
-	{ "if00_kitty",         "Stupid Kittens" },                                                         // 44th Place
-	{ "if00_comp00tr",      "Comp00ter Game" },                                                         // 49th Place
-	{ "if00_asendent",      "Asendent" },                                                               // 51st Place
-	{ "if00_whatif",        "What-IF?" },                                                               // 52nd Place
+	// IFComp 2000
+	{ "if00_metamorphoses", "Metamorphoses" },                                                          //    2nd Place
+	{ "if00_andrewplotkin", "Being Andrew Plotkin" },                                                   //    3rd Place
+	{ "if00_adverbum",      "Ad Verbum" },                                                              //    4th Place
+	{ "if00_transfer",      "Transfer" },                                                               //    5th Place
+	{ "if00_myangel",       "My Angel" },                                                               //    6th Place
+	{ "if00_nevermore",     "Nevermore" },                                                              //    7th Place
+	{ "if00_masquerade",    "Masquerade" },                                                             //    8th Place
+	{ "if00_yagwad",        "YAGWAD: Yes, Another Game With a Dragon!" },                               //    9th Place
+	{ "if00_shade",         "Shade" },                                                                  //   10th Place
+	{ "if00_guess",         "Guess The Verb!" },                                                        //   11th Place
+	{ "if00_letters",       "Letters From Home" },                                                      //   12th Place
+	{ "if00_rameses",       "Rameses" },                                                                //   13th Place
+	{ "if00_djinni",        "The Djinni Chronicles" },                                                  //   14th Place
+	{ "if00_bestman",       "The Best Man" },                                                           //   15th Place
+	{ "if00_atwctw",        "And the Waves Choke the Wind" },                                           //   16th Place
+	{ "if00_dinner",        "Dinner With Andre" },                                                      //   18th Place
+	{ "if00_bigmama",       "The Big Mama" },                                                           //   20th Place
+	{ "if00_punkpoints",    "Punk Points" },                                                            //   22th Place
+	{ "if00_enlisted",      "Enlisted" },                                                               //   23rd Place
+	{ "if00_rtzas",         "Return to Zork: Another Story" },                                          //   26rd Place
+	{ "if00_gotid",         "Got ID?" },                                                                //   29th Place
+	{ "if00_castleamnos",   "Castle Amnos" },                                                           //   30th Place
+	{ "if00_masque",        "Masque of the Last Faeries" },                                             //   31st Place
+	{ "if00_ppocket",       "The Pickpocket" },                                                         //   32nd Place
+	{ "if00_happyeveraft",  "Happy Ever After" },                                                       //   34th Place
+	{ "if00_prodly",        "Prodly the Puffin" },                                                      //   35th Place
+	{ "if00_withdraw",      "Withdrawal Symptoms" },                                                    //   36th Place
+	{ "if00_123",           "1-2-3..." },                                                               //   42nd Place
+	{ "if00_kitty",         "Stupid Kittens" },                                                         //   44th Place
+	{ "if00_comp00tr",      "Comp00ter Game" },                                                         //   49th Place
+	{ "if00_asendent",      "Asendent" },                                                               //   51st Place
+	{ "if00_whatif",        "What-IF?" },                                                               //   52nd Place
 	{ "comp00",             "IF Competition '00 Unofficial FE Game" },
 
-	// The 2001 Annual Interactive Fiction Competition
-	{ "if01_allroads",      "All Roads" },                                                              //  1st Place
-	{ "if01_moments",       "Moments Out of Time" },                                                    //  2nd Place
-	{ "if01_heroes",        "Heroes" },                                                                 //  3rd Place
-	{ "if01_cycles",        "Vicious Cycles" },                                                         //  6th Place
-	{ "if01_eas",           "Earth and Sky" },                                                          //  8th Place
-	{ "if01_eleven",        "Film at Eleven" },                                                         // 10th Place
-	{ "if01_prized",        "Prized Possession" },                                                      // 11th Place
-	{ "if01_finetuned",     "Fine-Tuned" },                                                             // 18th Place
-	{ "if01_evil",          "The Evil Sorcerer" },                                                      // 20th Place
-	{ "if01_gostak",        "The Gostak" },                                                             // 21nd Place
-	{ "if01_crusadezcode",  "Crusade" },                                                                // 23rd Place
-	{ "if01_urhere",        "You Are Here" },                                                           // 25th Place
-	{ "if01_elements",      "Elements" },                                                               // 26th Place
-	{ "if01_banebuilders",  "Bane of the Builders" },                                                   // 28th Place
-	{ "if01_colours",       "Colours" },                                                                // 32nd Place
-	{ "if01_siliconcastle", "Silicon Castles" },                                                        // 32nd Place
-	{ "if01_timeout",       "Timeout" },                                                                // 35th Place
-	{ "if01_schroed",       "Schroedinger's Cat" },                                                     // 39th Place
-	{ "if01_jump",          "Jump" },                                                                   // 41th Place
-	{ "if01_newcomer",      "The Newcomer" },                                                           // 49th Place
+	// IFComp 2001
+	{ "if01_allroads",      "All Roads" },                                                              //    1st Place
+	{ "if01_moments",       "Moments Out of Time" },                                                    //    2nd Place
+	{ "if01_heroes",        "Heroes" },                                                                 //    3rd Place
+	{ "if01_cycles",        "Vicious Cycles" },                                                         //    6th Place
+	{ "if01_eas",           "Earth and Sky" },                                                          //    8th Place
+	{ "if01_eleven",        "Film at Eleven" },                                                         //   10th Place
+	{ "if01_prized",        "Prized Possession" },                                                      //   11th Place
+	{ "if01_finetuned",     "Fine-Tuned" },                                                             //   18th Place
+	{ "if01_evil",          "The Evil Sorcerer" },                                                      //   20th Place
+	{ "if01_gostak",        "The Gostak" },                                                             //   21nd Place
+	{ "if01_crusadejg",     "Crusade (by John Gorenfeld)" },                                            //   23rd Place
+	{ "if01_urhere",        "You Are Here" },                                                           //   25th Place
+	{ "if01_elements",      "Elements" },                                                               //   26th Place
+	{ "if01_banebuilders",  "Bane of the Builders" },                                                   //   28th Place
+	{ "if01_colours",       "Colours" },                                                                //   32nd Place
+	{ "if01_siliconcastle", "Silicon Castles" },                                                        //   32nd Place
+	{ "if01_timeout",       "Timeout" },                                                                //   35th Place
+	{ "if01_schroed",       "Schroedinger's Cat" },                                                     //   39th Place
+	{ "if01_jump",          "Jump" },                                                                   //   41th Place
+	{ "if01_newcomer",      "The Newcomer" },                                                           //   49th Place
 	{ "comp01",             "IF Competition '01 Unofficial FE Game" },
 
-	// The 2002 Annual Interactive Fiction Competition
-	{ "if02_photograph",    "Photograph" },                                                             //  3rd Place
-	{ "if02_moonlittower",  "The Moonlit Tower" },                                                      //  4th Place
-	{ "if02_janitor",       "Janitor" },                                                                //  5th Place
-	{ "if02_tookiessong",   "TOOKiE'S SONG" },                                                          //  7th Place
-	{ "if02_ftaegea",       "Fort Aegea" },                                                             //  8th Place
-	{ "if02_thetemple",     "The Temple" },                                                             //  9th Place
-	{ "if02_jane",          "Jane" },                                                                   // 10th Place
-	{ "if02_mythtale",      "MythTale" },                                                               // 11th Place
-	{ "if02_idthief",       "Identity Thief" },                                                         // 13th Place
-	{ "if02_rentaspy",      "Rent-A-Spy" },                                                             // 15th Place
-	{ "if02_whenhelp",      "When Help Collides" },                                                     // 18th Place
-	{ "if02_constraints",   "Constraints" },                                                            // 19th Place
-	{ "if02_hell0",         "Hell: A Comedy of Errors" },                                               // 23th Place
-	{ "if02_bofh",          "The Bastard Operator from Hell" },                                         // 26th Place
-	{ "if02_samuelgregor",  "The Case of Samuel Gregor" },                                              // 27th Place
-	{ "if02_screen",        "Screen" },                                                                 // 29th Place
-	{ "if02_shamulet",      "Scary House Amulet" },                                                     // 31st Place
-	{ "if02_koan",          "KOAN" },                                                                   // 35th Place
-	{ "if02_ramandjona",    "Ramón and Jonathan" },                                                     // 36th Place
+	// IFComp 2002
+	{ "if02_photograph",    "Photograph" },                                                             //    3rd Place
+	{ "if02_moonlittower",  "The Moonlit Tower" },                                                      //    4th Place
+	{ "if02_janitor",       "Janitor" },                                                                //    5th Place
+	{ "if02_tookiessong",   "TOOKiE'S SONG" },                                                          //    7th Place
+	{ "if02_ftaegea",       "Fort Aegea" },                                                             //    8th Place
+	{ "if02_thetemple",     "The Temple" },                                                             //    9th Place
+	{ "if02_jane",          "Jane" },                                                                   //   10th Place
+	{ "if02_mythtale",      "MythTale" },                                                               //   11th Place
+	{ "if02_idthief",       "Identity Thief" },                                                         //   13th Place
+	{ "if02_rentaspy",      "Rent-A-Spy" },                                                             //   15th Place
+	{ "if02_whenhelp",      "When Help Collides" },                                                     //   18th Place
+	{ "if02_constraints",   "Constraints" },                                                            //   19th Place
+	{ "if02_hell0",         "Hell: A Comedy of Errors" },                                               //   23th Place
+	{ "if02_bofh",          "The Bastard Operator From Hell" },                                         //   26th Place
+	{ "if02_samuelgregor",  "The Case of Samuel Gregor" },                                              //   27th Place
+	{ "if02_screen",        "Screen" },                                                                 //   29th Place
+	{ "if02_shamulet",      "Scary House Amulet" },                                                     //   31st Place
+	{ "if02_koan",          "KOAN" },                                                                   //   35th Place
+	{ "if02_ramandjona",    "Ramón and Jonathan" },                                                     //   36th Place
 	{ "comp02",             "IF Competition '02 Unofficial FE Game" },
 
-	// The 2003 Annual Interactive Fiction Competition
-	{ "if03_slouchingbedlam", "Slouching Towards Bedlam" },                                             //  1st Place
-	{ "if03_risorg",        "Risorgimento Represso" },                                                  //  2nd Place
-	{ "if03_gourmet",       "Gourmet" },                                                                //  5th Place
-	{ "if03_baluthar",      "Baluthar" },                                                               //  9th Place
-	{ "if03_atomicheart",   "The Atomic Heart" },                                                       // 10th Place
-	{ "if03_papermoon",     "A Paper Moon" },                                                           // 12th Place
-	{ "if03_caffeination",  "Caffeination" },                                                           // 14th Place
-	{ "if03_adoo",          "Adoo's Stinky Story" },                                                    // 17th Place
-	{ "if03_domicile",      "Domicile" },                                                               // 18th Place
-	{ "if03_internaldocs",  "Internal Documents" },                                                     // 19th Place
-	{ "if03_noroom",        "No Room" },                                                                // 22th Place
-	{ "if03_lardo",         "The Fat Lardo and the Rubber Ducky" },                                     // 29th Place
+	// IFComp 2003
+	{ "if03_slouchbedlam",  "Slouching Towards Bedlam" },                                               //    1st Place
+	{ "if03_risorg",        "Risorgimento Represso" },                                                  //    2nd Place
+	{ "if03_gourmet",       "Gourmet" },                                                                //    5th Place
+	{ "if03_baluthar",      "Baluthar" },                                                               //    9th Place
+	{ "if03_atomicheart",   "The Atomic Heart" },                                                       //   10th Place
+	{ "if03_papermoon",     "A Paper Moon" },                                                           //   12th Place
+	{ "if03_caffeination",  "Caffeination" },                                                           //   14th Place
+	{ "if03_adoo",          "Adoo's Stinky Story" },                                                    //   17th Place
+	{ "if03_domicile",      "Domicile" },                                                               //   18th Place
+	{ "if03_internaldocs",  "Internal Documents" },                                                     //   19th Place
+	{ "if03_noroom",        "No Room" },                                                                //   22th Place
+	{ "if03_lardo",         "The Fat Lardo and the Rubber Ducky" },                                     //   29th Place
 	{ "comp03",             "IF Competition '03 Unofficial FE Game" },
 
-	// The 2004 Annual Interactive Fiction Competition
-	{ "if04_bluechairs",    "Blue Chairs" },                                                            //  2nd Place
-	{ "if04_devours",       "All Things Devours" },                                                     //  3rd Place
-	{ "if04_stingwasp",     "Sting of the Wasp" },                                                      //  4th Place
-	{ "if04_orion",         "The Orion Agenda" },                                                       //  6th Place
-	{ "if04_mingsheng",     "MingSheng" },                                                              //  7th Place
-	{ "if04_splashdown",    "Splashdown" },                                                             //  8th Place
-	{ "if04_gamlet",        "Gamlet" },                                                                 //  9th Place
-	{ "if04_greatxavio",    "The Great Xavio" },                                                        // 11th Place
-	{ "if04_geb",           "Goose, Egg, Badger" },                                                     // 12th Place
-	{ "if04_bigscoop",      "The Big Scoop" },                                                          // 13th Place
-	{ "if04_identity",      "Identity" },                                                               // 15th Place
-	{ "if04_murderaeroclub", "Murder at the Aero Club" },                                               // 16th Place
-	{ "if04_bellclap",      "Bellclap" },                                                               // 17th Place
-	{ "if04_typo",          "Typo!" },                                                                  // 19th Place
-	{ "if04_blink",         "Blink" },                                                                  // 21nd Place
-	{ "if04_playtorn",      "Chronicle Play Torn" },                                                    // 22nd Place
-	{ "if04_order00",       "Order" },                                                                  // 24th Place
-	{ "if04_bluesky",       "Blue Sky" },                                                               // 26th Place
-	{ "if04_stackoverflow", "Stack Overflow" },                                                         // 29th Place
+	// IFComp 2004
+	{ "if04_bluechairs",    "Blue Chairs" },                                                            //    2nd Place
+	{ "if04_devours",       "All Things Devours" },                                                     //    3rd Place
+	{ "if04_stingwasp",     "Sting of the Wasp" },                                                      //    4th Place
+	{ "if04_orion",         "The Orion Agenda" },                                                       //    6th Place
+	{ "if04_mingsheng",     "MingSheng" },                                                              //    7th Place
+	{ "if04_splashdown",    "Splashdown" },                                                             //    8th Place
+	{ "if04_gamlet",        "Gamlet" },                                                                 //    9th Place
+	{ "if04_greatxavio",    "The Great Xavio" },                                                        //   11th Place
+	{ "if04_geb",           "Goose, Egg, Badger" },                                                     //   12th Place
+	{ "if04_bigscoop",      "The Big Scoop" },                                                          //   13th Place
+	{ "if04_identity",      "Identity" },                                                               //   15th Place
+	{ "if04_murderaeroclb", "Murder at the Aero Club" },                                                //   16th Place
+	{ "if04_bellclap",      "Bellclap" },                                                               //   17th Place
+	{ "if04_typo",          "Typo!" },                                                                  //   19th Place
+	{ "if04_blink",         "Blink" },                                                                  //   21nd Place
+	{ "if04_playtorn",      "Chronicle Play Torn" },                                                    //   22nd Place
+	{ "if04_order00",       "Order" },                                                                  //   24th Place
+	{ "if04_bluesky",       "Blue Sky" },                                                               //   26th Place
+	{ "if04_stackoverflow", "Stack Overflow" },                                                         //   29th Place
 	{ "comp04",             "IF Competition '04 Unofficial FE Game" },
 
-	// The 2005 Annual Interactive Fiction Competition
-	{ "if05_vespers",       "Vespers" },                                                                //  1st Place
-	{ "if05_beyond",        "Beyond" },                                                                 //  2nd Place
-	{ "if05_anewlife",      "A New Life" },                                                             //  3rd Place
-	{ "if05_toughbeans",    "Tough Beans" },                                                            //  5th Place
-	{ "if05_colourpink",    "The Colour Pink" },                                                        //  6th Place
-	{ "if05_unforgotten",   "Unforgotten" },                                                            //  7th Place
-	{ "if05_snatches",      "Snatches" },                                                               //  8th Place
-	{ "if05_vigilance",     "Internal Vigilance" },                                                     // 10th Place
-	{ "if05_historyrepeating", "History Repeating" },                                                   // 11th Place
-	{ "if05_soa",           "Son of a..." },                                                            // 15th Place
-	{ "if05_psycheslament", "Psyche's Lament" },                                                        // 21st Place
-	{ "if05_onoptimism",    "On Optimism" },                                                            // 24th Place
-	{ "if05_neonnirvana",   "Neon Nirvana" },                                                           // 27th Place
-	{ "if05_swordofmalice", "The Sword of Malice" },                                                    // 28th Place
-	{ "if05_drearylands",   "Dreary Lands" },                                                           // 29th Place
-	{ "if05_hellosword",    "Hello Sword: The Journey" },                                               // 30th Place
-	{ "if05_phantomcaverns", "Phantom: Caverns of the killer" },                                        // 31st Place
-	{ "if05_futuregame",    "FutureGame" },                                                             // 33rd Place
+	// IFComp 2005
+	{ "if05_vespers",       "Vespers" },                                                                //    1st Place
+	{ "if05_beyond_zcode",  "Beyond" },                                                                 //    2nd Place
+	{ "if05_anewlife",      "A New Life" },                                                             //    3rd Place
+	{ "if05_toughbeans",    "Tough Beans" },                                                            //    5th Place
+	{ "if05_colourpink",    "The Colour Pink" },                                                        //    6th Place
+	{ "if05_unforgotten",   "Unforgotten" },                                                            //    7th Place
+	{ "if05_snatches",      "Snatches" },                                                               //    8th Place
+	{ "if05_vigilance",     "Internal Vigilance" },                                                     //   10th Place
+	{ "if05_historyrepeat", "History Repeating" },                                                      //   11th Place
+	{ "if05_soa",           "Son of a..." },                                                            //   15th Place
+	{ "if05_psycheslament", "Psyche's Lament" },                                                        //   21st Place
+	{ "if05_onoptimism",    "On Optimism" },                                                            //   24th Place
+	{ "if05_neonnirvana",   "Neon Nirvana" },                                                           //   27th Place
+	{ "if05_swordofmalice", "The Sword of Malice" },                                                    //   28th Place
+	{ "if05_drearylands",   "Dreary Lands" },                                                           //   29th Place
+	{ "if05_hellosword",    "Hello Sword: The Journey" },                                               //   30th Place
+	{ "if05_phantomcavern", "Phantom: Caverns of the killer" },                                         //   31st Place
+	{ "if05_futuregame",    "FutureGame" },                                                             //   33rd Place
 	{ "comp05",             "IF Competition '05 Unofficial FE Game" },
 
-	// The 2006 Annual Interactive Fiction Competition
-	{ "if06_floatpointz",   "Floatpoint" },                                                             //  1st Place
-	{ "if06_primrose",      "The Primrose Path" },                                                      //  2nd Place
-	{ "if06_moonshaped",    "Moon-Shaped" },                                                            //  5th Place
-	{ "if06_wallpaper",     "Delightful Wallpaper" },                                                   //  6th Place
-	{ "if06_legion",        "Legion" },                                                                 //  7th Place
-	{ "if06_madamspider",   "Madam Spider's Web" },                                                     //  8th Place
-	{ "if06_mobius",        "Möbius" },                                                                 //  9th Place
-	{ "if06_gameproducer",  "Game Producer!" },                                                         // 11th Place
-	{ "if06_starcity",      "Star City" },                                                              // 13th Place
-	{ "if06_strangegeometry", "Strange Geometries" },                                                   // 14th Place
-	{ "if06_towerofelephant", "The Tower of the Elephant" },                                            // 15th Place
-	{ "if06_labyrinth",     "Labyrinth" },                                                              // 18th Place
-	{ "if06_cdst",          "Carmen Devine: Supernatural Troubleshooter" },                             // 20th Place
-	{ "if06_bibleretold1",  "The Bible Retold: The Bread and the Fishes" },                             // 21st Place
-	{ "if06_anothergoddamn", "Another Goddamn Escape the Locked Room Game" },                           // 22nd Place
-	{ "if06_fightorflight", "Fight or Flight" },                                                        // 23rd Place
-	{ "if06_manalive1",     "Manlive I - Enigma" },                                                    // 24th Place
-	{ "if06_hedge",         "Hedge" },                                                                  // 25th Place
-	{ "if06_polendina",     "Polendina" },                                                              // 27th Place
-	{ "if06_manalive2",     "Manlive II" },                                                            // 29th Place
-	{ "if06_pathfinder",    "Pathfinder" },                                                             // 30th Place
-	{ "if06_apocalypseclock", "The Apocalypse Clock" },                                                 // 31st Place
-	{ "if06_sisyphus",      "Sisyphus" },                                                               // 39th Place
+	// IFComp 2006
+	{ "if06_primrose",      "The Primrose Path" },                                                      //    2nd Place
+	{ "if06_moonshaped",    "Moon-Shaped" },                                                            //    5th Place
+	{ "if06_wallpaper",     "Delightful Wallpaper" },                                                   //    6th Place
+	{ "if06_legion",        "Legion" },                                                                 //    7th Place
+	{ "if06_madamspider",   "Madam Spider's Web" },                                                     //    8th Place
+	{ "if06_mobius",        "Möbius" },                                                                 //    9th Place
+	{ "if06_gameproducer",  "Game Producer!" },                                                         //   11th Place
+	{ "if06_starcity",      "Star City" },                                                              //   13th Place
+	{ "if06_strangegeo",    "Strange Geometries" },                                                     //   14th Place
+	{ "if06_towerelephant", "The Tower of the Elephant" },                                              //   15th Place
+	{ "if06_labyrinth",     "Labyrinth" },                                                              //   18th Place
+	{ "if06_cdst",          "Carmen Devine: Supernatural Troubleshooter" },                             //   20th Place
+	{ "if06_bibleretold1",  "The Bible Retold: The Bread and the Fishes" },                             //   21st Place
+	{ "if06_anothergodamn", "Another Goddamn Escape the Locked Room Game" },                            //   22nd Place
+	{ "if06_fightorflight", "Fight or Flight" },                                                        //   23rd Place
+	{ "if06_manalive1",     "Manalive I - Enigma" },                                                    //   24th Place
+	{ "if06_hedge",         "Hedge" },                                                                  //   25th Place
+	{ "if06_polendina",     "Polendina" },                                                              //   27th Place
+	{ "if06_manalive2",     "Manalive II" },                                                            //   29th Place
+	{ "if06_pathfinder",    "Pathfinder" },                                                             //   30th Place
+	{ "if06_apocalypclock", "The Apocalypse Clock" },                                                   //   31st Place
+	{ "if06_sisyphus",      "Sisyphus" },                                                               //   39th Place
 	{ "comp06",             "IF Competition '06 Unofficial FE Game" },
 
-	// The 2007 Annual Interactive Fiction Competition
-	{ "if07_lostpig",       "Lost Pig" },                                                               //  1st Place
-	{ "if07_actofmurder",   "An Act of Murder" },                                                       //  2nd Place
-	{ "if07_bellwater",     "Lord Bellwater's Secret" },                                                //  3rd Place
-	{ "if07_acrossthestars", "Across the Stars" },                                                      //  4th Place
-	{ "if07_orevore",       "Orevore Courier" },                                                        //  8th Place
-	{ "if07_jackmills",     "My Name is Jack Mills" },                                                  //  9th Place
-	{ "if07_deadlinenchanter", "Deadline Enchanter" },                                                  // 12th Place
-	{ "if07_fff",           "Fox, Fowl and Feed" },                                                     // 16th Place
-	{ "if07_wish",          "Wish" },                                                                   // 17th Place
-	{ "if07_packrat",       "Packrat" },                                                                // 18th Place
-	{ "if07_beneathtransform", "BENEATH: A Transformation" },                                           // 21st Place
-	{ "if07_theimmortal",   "The Immortal" },                                                           // 22nd Place
-	{ "if07_eduardseminarist", "Eduard the Seminarist" },                                               // 23rd Place
-	{ "if07_pets",          "Press [Escape] to Save" },                                                 // 24th Place
+	// IFComp 2007
+	{ "if07_lostpig",       "Lost Pig" },                                                               //    1st Place
+	{ "if07_actofmurder",   "An Act of Murder" },                                                       //    2nd Place
+	{ "if07_bellwater",     "Lord Bellwater's Secret" },                                                //    3rd Place
+	{ "if07_acrossstars",   "Across the Stars" },                                                       //    4th Place
+	{ "if07_orevore",       "Orevore Courier" },                                                        //    8th Place
+	{ "if07_jackmills",     "My Name is Jack Mills" },                                                  //    9th Place
+	{ "if07_deadlinenchan", "Deadline Enchanter" },                                                     //   12th Place
+	{ "if07_fff",           "Fox, Fowl and Feed" },                                                     //   16th Place
+	{ "if07_wish",          "Wish" },                                                                   //   17th Place
+	{ "if07_packrat",       "Packrat" },                                                                //   18th Place
+	{ "if07_beneathtransf", "BENEATH: A Transformation" },                                              //   21st Place
+	{ "if07_theimmortal",   "The Immortal" },                                                           //   22nd Place
+	{ "if07_eduardseminar", "Eduard the Seminarist" },                                                  //   23rd Place
+	{ "if07_pets",          "Press [Escape] to Save" },                                                 //   24th Place
 	{ "comp07",             "IF Competition '07 Unofficial FE Game" },
 
-	// The 2008 Annual Interactive Fiction Competition
-	{ "if08_violet",        "Violet" },                                                                 //  1st Place
-	{ "if08_afflicted",     "Afflicted" },                                                              //  2nd Place
-	{ "if08_piracy2",       "Piracy 2.0 - A Text Adventure in Space" },                                 //  3rd Place
-	{ "if08_snacktime",     "Snack Time!" },                                                            //  6th Place
-	{ "if08_openingnight",  "Opening Night" },                                                          //  7th Place
-	{ "if08_minionunderworld", "Escape from the Underworld" },                                          // 12th Place
-	{ "if08_bishoes",       "Buried in Shoes" },                                                        // 13th Place
-	{ "if08_grief",         "Grief" },                                                                  // 16th Place
-	{ "if08_trein",         "Trein" },                                                                  // 17th Place
-	{ "if08_redmoonz",      "Red Moon" },                                                               // 19th Place
-	{ "if08_draculascrypt", "Dracula's Underground Crypt" },                                            // 20th Place
-	{ "if08_anachronist",   "Anachronist" },                                                            // 22nd Place
-	{ "if08_whenmachinesattack", "wHen mAchines aTtack" },                                              // 23rd Place
-	{ "if08_thelucubrator", "The Lucubrator" },                                                         // 23rd Place
-	{ "if08_freedom",       "Freedom" },                                                                // 30th Place
-	{ "if08_riverside",     "Riverside" },                                                              // 31st Place
-	{ "if08_thelighthouse", "The Lighthouse" },                                                         // 34th Place
-	{ "if08_absoluteworstgame", "The Absolute Worst IF Game in History" },                              // 35th Place
+	// IFComp 2008
+	{ "if08_violet",        "Violet" },                                                                 //    1st Place
+	{ "if08_afflicted",     "Afflicted" },                                                              //    2nd Place
+	{ "if08_piracy2",       "Piracy 2.0 - A Text Adventure in Space" },                                 //    3rd Place
+	{ "if08_snacktime",     "Snack Time!" },                                                            //    6th Place
+	{ "if08_openingnight",  "Opening Night" },                                                          //    7th Place
+	{ "if08_escunderworld", "Escape From the Underworld" },                                             //   12th Place
+	{ "if08_bishoes",       "Buried in Shoes" },                                                        //   13th Place
+	{ "if08_grief",         "Grief" },                                                                  //   16th Place
+	{ "if08_trein",         "Trein" },                                                                  //   17th Place
+	{ "if08_redmoon",       "Red Moon" },                                                               //   19th Place
+	{ "if08_draculascrypt", "Dracula's Underground Crypt" },                                            //   20th Place
+	{ "if08_anachronist",   "Anachronist" },                                                            //   22nd Place
+	{ "if08_whenmachsatt",  "wHen mAchines aTtack" },                                                   //   23rd Place
+	{ "if08_thelucubrator", "The Lucubrator" },                                                         //   23rd Place
+	{ "if08_freedom",       "Freedom" },                                                                //   30th Place
+	{ "if08_riverside",     "Riverside" },                                                              //   31st Place
+	{ "if08_thelighthouse", "The Lighthouse" },                                                         //   34th Place
+	{ "if08_absworstgame",  "The Absolute Worst IF Game in History" },                                  //   35th Place
 	{ "comp08",             "IF Competition '08 Unofficial FE Game" },
 
-	// The 2009 Annual Interactive Fiction Competition
-	{ "if09_snowquest",     "Snowquest" },                                                              //  3rd Place
-	{ "if09_duelthatspanned", "The Duel that Spanned the Ages" },                                       //  4th Place
-	{ "if09_duelinsnow",    "The Duel in the Snow" },                                                   //  6th Place
-	{ "if09_interface",     "Interface" },                                                              //  8th Place
-	{ "if09_byzantineperspect", "Byzantine Perspective" },                                              //  9th Place
-	{ "if09_condemned",     "Condemned" },                                                              // 12th Place
-	{ "if09_eruption",      "Eruption" },                                                               // 13th Place
-	{ "if09_betatester",    "Beta Tester" },                                                            // 14th Place
-	{ "if09_spelunkersquest", "Spelunker's Quest" },                                                    // 16th Place
-	{ "if09_invisibleman",  "The Believable Adventures of an Invisible Man" },                          // 17th Place
-	{ "if09_thegrandquest", "The Grand Quest" },                                                        // 18th Place
-	{ "if09_starhunter",    "Star Hunter" },                                                            // 19th Place
-	{ "if09_gatoron",       "GATOR-ON, Friend to Wetlands!" },                                          // 20th Place
-	{ "if09_gleamingtheverb", "Gleaming the Verb" },                                                    // 21st Place
-	{ "if09_zorkburiedchaos", "Welcome to Zork, Buried Chaos" },                                        // 22nd Place
+	// IFComp 2009
+	{ "if09_snowquest",     "Snowquest" },                                                              //    3rd Place
+	{ "if09_duelspanned",   "The Duel that Spanned the Ages" },                                         //    4th Place
+	{ "if09_duelinsnow",    "The Duel in the Snow" },                                                   //    6th Place
+	{ "if09_interface",     "Interface" },                                                              //    8th Place
+	{ "if09_byzantinpersp", "Byzantine Perspective" },                                                  //    9th Place
+	{ "if09_condemned",     "Condemned" },                                                              //   12th Place
+	{ "if09_eruption",      "Eruption" },                                                               //   13th Place
+	{ "if09_betatester",    "Beta Tester" },                                                            //   14th Place
+	{ "if09_spelunkquest",  "Spelunker's Quest" },                                                      //   16th Place
+	{ "if09_invisibleman",  "The Believable Adventures of an Invisible Man" },                          //   17th Place
+	{ "if09_thegrandquest", "The Grand Quest" },                                                        //   18th Place
+	{ "if09_starhunter",    "Star Hunter" },                                                            //   19th Place
+	{ "if09_gatoron",       "GATOR-ON, Friend to Wetlands!" },                                          //   20th Place
+	{ "if09_gleamingverb",  "Gleaming the Verb" },                                                      //   21st Place
+	{ "if09_zorkburychaos", "Welcome to Zork, Buried Chaos" },                                          //   22nd Place
 	{ "comp09",             "IF Competition '09 Unofficial FE Game" },
 
-	// The 2010 Annual Interactive Fiction Competition
-	{ "if10_deathoffthecuffz", "Death Off The Cuff" },                                                  //  5th Place
-	{ "if10_mite",          "Mite" },                                                                   //  6th Place
-	{ "if10_gloriousrevolution", "The People's Glorious Revolutionary Text Adventure Game" },           //  7th Place
-	{ "if10_hummingbird",   "Flight of the Hummingbird" },                                              //  8th Place
-	{ "if10_warblersnest",  "The Warbler's Nest" },                                                     //  9th Place
-	{ "if10_asgard",        "The 12:54 to Asgard" },                                                    // 17th Place
-	{ "if10_penandpaint",   "Pen and Paint" },                                                          // 17th Place
-	{ "if10_bibleretold2",  "The Bible Retold: The Lost Sheep" },                                       // 19th Place
-	{ "if10_heated",        "Heated" },                                                                 // 20th Place
-	{ "if10_ninjasfate",    "Ninja's Fate" },                                                           // 21th Place
-	{ "if10_eastgrovehills", "East Grove Hills" },                                                      // 23rd Place
-	{ "if10_quietevening",  "A Quiet Evening at Home" },                                                // 25th Place
-	{ "if10_chronicler0",   "The Chronicler" },                                                         // 26th Place
+	// IFComp 2010
+	{ "if10_deathofftc",    "Death off the Cuff" },                                                     //    5th Place
+	{ "if10_mite",          "Mite" },                                                                   //    6th Place
+	{ "if10_gloriousrevol", "The People's Glorious Revolutionary Text Adventure Game" },                //    7th Place
+	{ "if10_hummingbird",   "Flight of the Hummingbird" },                                              //    8th Place
+	{ "if10_warblersnest",  "The Warbler's Nest" },                                                     //    9th Place
+	{ "if10_asgard",        "The 12:54 to Asgard" },                                                    //   17th Place
+	{ "if10_penandpaint",   "Pen and Paint" },                                                          //   17th Place
+	{ "if10_bibleretold2",  "The Bible Retold: The Lost Sheep" },                                       //   19th Place
+	{ "if10_heated",        "Heated" },                                                                 //   20th Place
+	{ "if10_ninjasfate",    "Ninja's Fate" },                                                           //   21th Place
+	{ "if10_eastgrovehill", "East Grove Hills" },                                                       //   23rd Place
+	{ "if10_quietevening",  "A Quiet Evening at Home" },                                                //   25th Place
+	{ "if10_chronicler0",   "The Chronicler" },                                                         //   26th Place
 	{ "comp10",             "IF Competition '10 Unofficial FE Game" },
 
-	// The 2011 Annual Interactive Fiction Competition
-	{ "if11_santaland",     "Escape from Santaland" },                                                  //  4th Place
-	{ "if11_canamicah",     "Cana According To Micah" },                                                //  9th Place
-	{ "if11_comedyerror",   "A Comedy of Error Messages" },                                             // 10th Place
-	{ "if11_tenthplague",   "Tenth Plague" },                                                           // 12th Place
-	{ "if11_coldiron",      "Cold Iron" },                                                              // 15th Place
-	{ "if11_andromedaawakeningz", "Andromeda Awakening" },                                              // 17th Place
-	{ "if11_keepsake",      "Keepsake" },                                                               // 18th Place
-	{ "if11_theguardian",   "The Guardian" },                                                           // 21st Place
-	{ "if11_lastdaysummer", "Last Day of Summer" },                                                     // 25th Place
-	{ "if11_shipofwhimsy",  "Ship of Whimsy" },                                                         // 32th Place
-	{ "if11_pfrank",        "Professor Frank" },                                                        // 34th Place
-	{ "if11_vestiges",      "Vestiges" },                                                               // 38th Place
+	// IFComp 2011
+	{ "if11_santaland",     "Escape From Santaland" },                                                  //    4th Place
+	{ "if11_canamicah",     "Cana According to Micah" },                                                //    9th Place
+	{ "if11_comedyerror",   "A Comedy of Error Messages" },                                             //   10th Place
+	{ "if11_tenthplague",   "Tenth Plague" },                                                           //   12th Place
+	{ "if11_coldiron",      "Cold Iron" },                                                              //   15th Place
+	{ "if11_androawake",    "Andromeda Awakening" },                                                    //   17th Place
+	{ "if11_keepsake",      "Keepsake" },                                                               //   18th Place
+	{ "if11_theguardian",   "The Guardian" },                                                           //   21st Place
+	{ "if11_lastdaysummer", "Last Day of Summer" },                                                     //   25th Place
+	{ "if11_shipofwhimsy",  "Ship of Whimsy" },                                                         //   32th Place
+	{ "if11_pfrank",        "Professor Frank" },                                                        //   34th Place
+	{ "if11_vestiges",      "Vestiges" },                                                               //   38th Place
 	{ "comp11",             "IF Competition '11 Unofficial FE Game" },
 
-	// The 2012 Annual Interactive Fiction Competition
-	{ "if12_eurydice",      "Eurydice" },                                                               //  2nd Place
-	{ "if12_guildedyouth",  "Guilded Youth" },                                                          //  3rd Place
-	{ "if12_changes",       "Changes" },                                                                //  4th Place
-	{ "if12_sundayafternoon", "Sunday Afternoon" },                                                     //  5th Place
-	{ "if12_spiral",        "Spiral" },                                                                 //  6th Place
-	{ "if12_bodybargain",   "Body Bargain" },                                                           //  8th Place
-	{ "if12_fishbowl",      "Fish Bowl" },                                                              // 12th Place
-	{ "if12_summerland",    "Escape from Summerland" },                                                 // 13th Place
-	{ "if12_lunarbase1",    "Lunar Base 1" },                                                           // 14th Place
-	{ "if12_murphyslaw",    "Murphy's Law" },                                                           // 15th Place
-	{ "if12_testisready",   "The Test is Now READY" },                                                  // 15th Place
-	{ "if12_castleadventure", "Castle Adventure!" },                                                    // 23rd Place
+	// IFComp 2012
+	{ "if12_eurydice",      "Eurydice" },                                                               //    2nd Place
+	{ "if12_guildedyouth",  "Guilded Youth" },                                                          //    3rd Place
+	{ "if12_changes",       "Changes" },                                                                //    4th Place
+	{ "if12_sundayafterno", "Sunday Afternoon" },                                                       //    5th Place
+	{ "if12_spiral",        "Spiral" },                                                                 //    6th Place
+	{ "if12_bodybargain",   "Body Bargain" },                                                           //    8th Place
+	{ "if12_fishbowl",      "Fish Bowl" },                                                              //   12th Place
+	{ "if12_summerland",    "Escape From Summerland" },                                                 //   13th Place
+	{ "if12_lunarbase1",    "Lunar Base 1" },                                                           //   14th Place
+	{ "if12_murphyslaw",    "Murphy's Law" },                                                           //   15th Place
+	{ "if12_testisready",   "The Test is Now READY" },                                                  //   15th Place
+	{ "if12_castleadvent",  "Castle Adventure!" },                                                      //   23rd Place
 	{ "comp12",             "IF Competition '12 Unofficial FE Game" },
 
-	// The 2013 Annual Interactive Fiction Competition
-	{ "if13_threediopolis", "Threediopolis" },                                                          //  7th Place
-	{ "if13_paperbagprincess", "The Paper Bag Princess" },                                              // 17th Place
-	{ "if13_furtherz",      "Further" },                                                                // 21st Place
-	{ "if13_9lives",        "9Lives" },                                                                 // 30th Place
+	// IFComp 2013
+	{ "if13_threediopolis", "Threediopolis" },                                                          //    7th Place
+	{ "if13_paperbagprinc", "The Paper Bag Princess" },                                                 //   17th Place
+	{ "if13_further_zcode", "Further" },                                                                //   21st Place
+	{ "if13_9lives",        "9Lives" },                                                                 //   30th Place
 
-	// The 2014 Annual Interactive Fiction Competition
-	{ "if14_15minutes",     "Fifteen Minutes" },                                                        //  6th Place
-	{ "if14_teaceremony",   "Tea Ceremony" },                                                           // 10th Place
-	{ "if14_enigmasd",      "Enigma (by Simon Deimel)" },                                                // 12th Place
-	{ "if14_blacklily",     "The Black Lily" },                                                         // 16th Place
-	{ "if14_tower",         "Tower" },                                                                  // 21th Place
-	{ "if14_excelsior",     "Excelsior" },                                                              // 35th Place
+	// IFComp 2014
+	{ "if14_15minutes",     "Fifteen Minutes" },                                                        //    6th Place
+	{ "if14_teaceremony",   "Tea Ceremony" },                                                           //   10th Place
+	{ "if14_enigmasd",      "Enigma (by Simon Deimel)" },                                               //   12th Place
+	{ "if14_blacklily",     "The Black Lily" },                                                         //   16th Place
+	{ "if14_tower",         "Tower" },                                                                  //   21th Place
+	{ "if14_excelsior",     "Excelsior" },                                                              //   35th Place
 
-	// The 2015 Annual Interactive Fiction Competition
-	{ "if15_finalexam",     "Final Exam" },                                                             //  9th Place
-	{ "if15_darkiss1",      "Darkiss! Wrath of the Vampire I: The Awakening" },                         // 12th Place
-	{ "if15_lifeonmars",    "Life on Mars?" },                                                          // 13th Place
-	{ "if15_gbvb",          "Grandma Bethlinda's Variety Box" },                                        // 21st Place
-	{ "if15_5minutes",      "5 Minutes To Burn Something!" },                                           // 32nd Place
-	{ "if15_kingcrown",     "The King and the Crown" },                                                 // 42nd Place
-	{ "if15_pitcondemned",  "Pit of the Condemned" },                                                   // 45th Place
+	// IFComp 2015
+	{ "if15_finalexam",     "Final Exam" },                                                             //    9th Place
+	{ "if15_darkiss1",      "Darkiss! Wrath of the Vampire - Chapter 1: The Awakening" },               //   12th Place
+	{ "if15_lifeonmars",    "Life on Mars?" },                                                          //   13th Place
+	{ "if15_gbvb",          "Grandma Bethlinda's Variety Box" },                                        //   21st Place
+	{ "if15_5minutes",      "5 Minutes To Burn Something!" },                                           //   32nd Place
+	{ "if15_kingcrown",     "The King and the Crown" },                                                 //   42nd Place
+	{ "if15_pitcondemned",  "Pit of the Condemned" },                                                   //   45th Place
 
-	// The 2016 Annual Interactive Fiction Competition
-	{ "if16_insidefacility", "Inside the Facility" },                                                   // 13th Place
-	{ "if16_darkiss2",      "Darkiss! Wrath of the Vampire II: Journey to Hell" },                      // 17th Place
-	{ "if16_zigamus",       "Zigamus: Zombies at Vigamus" },                                            // 31th Place
-	{ "if16_slickercity",   "Slicker City" },                                                           // 39th Place
-	{ "if16_youarestanding", "You Are Standing in a Cave..." },                                         // 48th Place
-	{ "if16_toiletworld",   "Toiletworld" },                                                            // 58th Place
+	// IFComp 2016
+	{ "if16_insidefacility", "Inside the Facility" },                                                   //   13th Place
+	{ "if16_darkiss2",      "Darkiss! Wrath of the Vampire - Chapter 2: Journey to Hell" },             //   17th Place
+	{ "if16_zigamus_zcode", "Zigamus: Zombies at Vigamus!" },                                            //   31th Place
+	{ "if16_slickercity",   "Slicker City" },                                                           //   39th Place
+	{ "if16_youarestand",   "You Are Standing in a Cave..." },                                          //   48th Place
+	{ "if16_toiletworld",   "Toiletworld" },                                                            //   58th Place
 
-	// The 2017 Annual Interactive Fiction Competition
-	{ "if17_tuuli",         "Tuuli" },                                                                  // 16th Place
-	{ "if17_thecubecavern", "The Cube in the Cavern" },                                                 // 39th Place
-	{ "if17_squirrel",      "Goodbye Cruel Squirrel" },                                                 // 42th Place
-	{ "if17_grue",          "Grue" },                                                                   // 54th Place
-	{ "if17_richardmines",  "The Richard Mines" },                                                      // 55th Place
-	{ "if17_onewayout",     "One Way Out" },                                                            // 56th Place
-	{ "if17_inevitamp",     "Inevitable (by Matthew Pfeiffer)" },                                        // 60th Place
-	{ "if17_walkinthepark", "A Walk in the Park" },                                                     // 68th Place
+	// IFComp 2017
+	{ "if17_tuuli",         "Tuuli" },                                                                  //   16th Place
+	{ "if17_thecubecavern", "The Cube in the Cavern" },                                                 //   39th Place
+	{ "if17_squirrel",      "Goodbye Cruel Squirrel" },                                                 //   42th Place
+	{ "if17_grue",          "Grue" },                                                                   //   54th Place
+	{ "if17_richardmines",  "The Richard Mines" },                                                      //   55th Place
+	{ "if17_onewayout",     "One Way Out" },                                                            //   56th Place
+	{ "if17_inevitamp",     "Inevitable (by Matthew Pfeiffer)" },                                       //   60th Place
+	{ "if17_walkinthepark", "A Walk in the Park" },                                                     //   68th Place
 
-	// The 2018 Annual Interactive Fiction Competition
-	{ "if18_tethered",      "Tethered" },                                                               // 23th Place
+	// IFComp 2018
+	{ "if18_tethered",      "Tethered" },                                                               //   23th Place
 
-	// The 2019 Annual Interactive Fiction Competition
-	{ "if19_out",           "Out" },                                                                    // 25th Place
-	{ "if19_oldjim",        "Old Jim's Convenience Store" },                                            // 34th Place
-	{ "if19_extromnivore",  "Extreme Omnivore: Text Edition" },                                         // 74th Place
+	// IFComp 2019
+	{ "if19_out",           "Out" },                                                                    //   25th Place
+	{ "if19_oldjim",        "Old Jim's Convenience Store" },                                            //   34th Place
+	{ "if19_extromnivore",  "Extreme Omnivore: Text Edition" },                                         //   74th Place
 
-	// The 2020 Annual Interactive Fiction Competition
-	{ "if20_impossiblebottle", "The Impossible Bottle" },                                               //  1st Place
-	{ "if20_entangled",     "Entangled" },                                                              // 26th Place
-	{ "if20_drego",         "Dr Ego and the Egg of ManToomba" },                                        // 44th Place
-	{ "if20_sheepcrossing", "Sheep Crossing" },                                                         // 88th Place
+	// IFComp 2020
+	{ "if20_impossbottle",  "The Impossible Bottle" },                                                  //    1st Place
+	{ "if20_entangled",     "Entangled" },                                                              //   26th Place
+	{ "if20_drego",         "Dr Ego and the Egg of ManToomba" },                                        //   44th Place
+	{ "if20_sheepcrossing", "Sheep Crossing" },                                                         //   88th Place
 
-	// The 2021 Annual Interactive Fiction Competition
-	{ "if21_darkun",        "D'Arkun" },                                                                // 21st Place
-	{ "if21_codexsadistica", "Codex Sadistica: A Heavy-Metal Minigame" },                               // 41st Place
-	{ "if21_fourbyfourian", "Fourbyfourian Quarryin'" },                                                // 45th Place
-	{ "if21_bravebear",     "Brave Bear" },                                                             // 46th Place
+	// IFComp 2021
+	{ "if21_darkun",        "D'Arkun" },                                                                //   21st Place
+	{ "if21_codexsadistic", "Codex Sadistica: A Heavy-Metal Minigame" },                                //   41st Place
+	{ "if21_fourbyfourian", "Fourbyfourian Quarryin'" },                                                //   45th Place
+	{ "if21_bravebear",     "Brave Bear" },                                                             //   46th Place
 
-	// The 2022 Annual Interactive Fiction Competition
-	{ "if22_intosun",       "Into the Sun" },                                                           // 25th Place
-	{ "if22_lowkey",        "Low-Key Learny Jokey Journey" },                                           // 41st Place
-	{ "if22_campusinvaders", "Campus Invaders" },                                                       // 45th Place
-	{ "if22_zerochance",    "Zero Chance of Recovery" },                                                // 52nd Place
+	// IFComp 2022
+	{ "if22_intosun",       "Into the Sun" },                                                           //   25th Place
+	{ "if22_lowkey",        "Prime Pro-Rhyme Row #3: Low-Key Learny Jokey Journey" },                   //   41st Place
+	{ "if22_campusinvader", "Campus Invaders" },                                                        //   45th Place
+	{ "if22_zerochance",    "Zero Chance of Recovery" },                                                //   52nd Place
 
-	// Marnie Parker's "Spring 1999 IF Art Show"
+	// Spring IF Art Show 1999
 	{ "ifas_tpold",         "The Possibility of Life's Destruction" },
 
-	// Marnie Parker's "Summer 1999 IF Art Show"
+	// Summer IF Art Show 1999
 	{ "ifas_statuedac",     "Statue" },
-	{ "ifas_wheelzcode",    "Wheel" },
+	{ "ifas_wheel",         "Wheel" },
 
-	// Marnie Parker's "2000 IF Art Show"
+	// IF Art Show 2000
 	{ "ifas_custard",       "Custard" },
 	{ "ifas_galatea",       "Galatea" },
 	{ "ifas_guitar",        "Guitar of the Immortal Bard" },
@@ -1551,78 +1391,78 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "ifas_visitor",       "The Visitor" },
 	{ "ifas_words",         "Words Get Twisted Round and Tumble Down" },
 
-	// Marnie Parker's "2001 IF Art Show"
+	// IF Art Show 2001
 	{ "ifas_esgarden",      "English Suburban Garden" },
 	{ "ifas_lagoon",        "La Lagune de Montaigne" },
 	{ "ifas_ribbons",       "Ribbons" },
 
-	// Marnie Parker's "2003 IF Art Show"
+	// IF Art Show 2003
 	{ "ifas_stopnight",     "A Stop for the Night" },
 	{ "ifas_queen",         "Queen of Swords" },
 	{ "ifas_redeem",        "Redemption" },
 
-	// Marnie Parker's "2004 IF Art Show"
+	// IF Art Show 2004
 	{ "ifas_flametop",      "Flametop" },
 	{ "ifas_swanglass",     "Swanglass" },
 	{ "ifas_firetower",     "The Fire Tower" },
 
-	// Marnie Parker's "2007 IF Art Show"
+	// IF Art Show 2007
 	{ "ifas_rendition",     "Rendition" },
 	{ "ifas_engine",        "The Symbolic Engine" },
-	{ "ifas_varronismuseum", "Varronis Museum" },
+	{ "ifas_varronismuseu", "Varronis Museum" },
 
 	// The Mystery House Taken Over project
-	{ "mhp",                "Mystery House Possessed" },
-	{ "wherethere",         "Where There's a Will" },
+	{ "mhto1mhp",           "Mystery House Taken Over Ep. 1: House Possessed" },
+	{ "mhto2shiovitz",      "Mystery House Taken Over Ep. 2: Where There's a Will" },
 
-	// "IF Arcade" Competition
-	{ "ifa_rox",            "Rox" },                                                                    // Episode 1
-	{ "ifa_centipede",      "Centipede" },                                                              // Episode 2
-	{ "ifa_donkeykong",     "Donkey Kong" },                                                            // Episode 4
-	{ "ifa_driver",         "Night Driver" },                                                           // Episode 5
-	{ "ifa_galaxian",       "Galaxian" },                                                               // Episode 6
-	{ "ifa_invaders",       "Invaders" },                                                               // Episode 7
-	{ "ifa_joust",          "Joust" },                                                                  // Episode 9
-	{ "ifa_loderunner",     "Lode Runner" },                                                            // Episode 10
-	{ "ifa_marble",         "Marble Madness" },                                                         // Episode 11
-	{ "ifa_pacman",         "Pac-Man" },                                                                // Episode 12
+	// Arcade Collection
+	{ "ifa_rox",            "Rox" },                                                                    //   Episode  1
+	{ "ifa_centipede",      "Centipede" },                                                              //   Episode  2
+	{ "ifa_donkeykong",     "Donkey Kong" },                                                            //   Episode  4
+	{ "ifa_driver",         "Night Driver" },                                                           //   Episode  5
+	{ "ifa_galaxian",       "Galaxian" },                                                               //   Episode  6
+	{ "ifa_invaders",       "Invaders" },                                                               //   Episode  7
+	{ "ifa_joust",          "Joust" },                                                                  //   Episode  9
+	{ "ifa_loderunner",     "Lode Runner" },                                                            //   Episode 10
+	{ "ifa_marble",         "Marble Madness" },                                                         //   Episode 11
+	{ "ifa_pacman",         "Pac-Man" },                                                                //   Episode 12
 
 	// Casual Gameplay Design Competition #7
-	{ "cgdc7_hoosegow",     "Hoosegow" },                                                               //  1st Place
-	{ "cgdc7_fragileshells", "Fragile Shells" },                                                        //  2nd Place
-	{ "cgdc7_dual",         "Dual Transform" },                                                         //  3rd Place
-	{ "cgdc7_partyfoul",    "Party Foul" },                                                             //  4th Place
-	{ "cgdc7_roofed",       "Roofed" },                                                                 //  5th Place
-	{ "cgdc7_ka",           "Ka" },                                                                     //  6th Place
-	{ "cgdc7_monday",       "Monday, 16:30" },                                                          //  7th Place
-	{ "cgdc7_theusher",     "The Usher" },                                                              //  8th Place
-	{ "cgdc7_intoopensky",  "Into the Open Sky" },                                                      //  9th Place
-	{ "cgdc7_luriddreams",  "Lurid Dreaming" },                                                         // 10th Place
-	{ "cgdc7_containment",  "Containment" },                                                            // 11th Place
-	{ "cgdc7_thecube",      "The Cube" },                                                               // 12th Place
-	{ "cgdc7_blueprint",    "The Blueprint" },                                                          // 13th Place
-	{ "cgdc7_criticalbreach", "Critical Breach" },                                                      // 14th Place
-	{ "cgdc7_themanorwhitby", "The Manor at Whitby" },                                                  // 15th Place
-	{ "cgdc7_heavenly",     "Heavenly" },                                                               // 16th Place
-	{ "cgdc7_iexpectyoutodie", "I Expect You to Die" },                                                 // 17th Place
-	{ "cgdc7_virtuality",   "Virtuality" },                                                             // 18th Place
-	{ "cgdc7_dramaqueen",   "Drama Queen 7 - Mother Knows Best" },                                      // 19th Place
-	{ "cgdc7_terminal",     "Terminal" },                                                               // 20th Place
-	{ "cgdc7_couchofdoom",  "Couch of Doom" },                                                          // 21st Place
-	{ "cgdc7_basictraining", "Basic Train-ing" },                                                       // 22nd Place
-	{ "cgdc7_paintzcode",   "Paint" },                                                                  // 23rd Place
-	{ "cgdc7_goldenshadow", "Golden Shadow" },                                                          // 24th Place
-	{ "cgdc7_escapeinthedark", "Escape in the Dark" },                                                  // 25th Place
-	{ "cgdc7_escapefiction", "Escape Into Fiction" },                                                   // 26th Place
-	{ "cgdc7_zeroeth",      "A Zeroeth Dimension" },                                                    // 27th Place
-	{ "cgdc7_openfield",    "An Open Field" },                                                          // 28th Place
-	{ "cgdc7_survive",      "Survive" },                                                                // 29th Place
-	{ "cgdc7_zegro",        "Zegrothenus" },                                                            // 30th Place
+	{ "cgdc7_hoosegow",     "Hoosegow" },                                                               //    1st Place
+	{ "cgdc7_fragileshell", "Fragile Shells" },                                                         //    2nd Place
+	{ "cgdc7_dual",         "Dual Transform" },                                                         //    3rd Place
+	{ "cgdc7_partyfoul",    "Party Foul" },                                                             //    4th Place
+	{ "cgdc7_roofed",       "Roofed" },                                                                 //    5th Place
+	{ "cgdc7_ka",           "Ka" },                                                                     //    6th Place
+	{ "cgdc7_monday",       "Monday, 16:30" },                                                          //    7th Place
+	{ "cgdc7_theusher",     "The Usher" },                                                              //    8th Place
+	{ "cgdc7_intoopensky",  "Into the Open Sky" },                                                      //    9th Place
+	{ "cgdc7_luriddreams",  "Lurid Dreaming" },                                                         //   10th Place
+	{ "cgdc7_containment",  "Containment" },                                                            //   11th Place
+	{ "cgdc7_thecube",      "The Cube" },                                                               //   12th Place
+	{ "cgdc7_blueprint",    "The Blueprint" },                                                          //   13th Place
+	{ "cgdc7_critbreach",   "Critical Breach" },                                                        //   14th Place
+	{ "cgdc7_manorwhitby",  "The Manor at Whitby" },                                                    //   15th Place
+	{ "cgdc7_heavenly",     "Heavenly" },                                                               //   16th Place
+	{ "cgdc7_expecttodie",  "I Expect You to Die" },                                                    //   17th Place
+	{ "cgdc7_virtuality",   "Virtuality" },                                                             //   18th Place
+	{ "cgdc7_dramaqueen",   "Drama Queen 7 - Mother Knows Best" },                                      //   19th Place
+	{ "cgdc7_terminal",     "Terminal" },                                                               //   20th Place
+	{ "cgdc7_couchofdoom",  "Couch of Doom" },                                                          //   21st Place
+	{ "cgdc7_basictrain",   "Basic Train-ing" },                                                        //   22nd Place
+	{ "cgdc7_paint",        "Paint" },                                                                  //   23rd Place
+	{ "cgdc7_goldenshadow", "Golden Shadow" },                                                          //   24th Place
+	{ "cgdc7_escapeindark", "Escape in the Dark" },                                                     //   25th Place
+	{ "cgdc7_escapefict",   "Escape Into Fiction" },                                                    //   26th Place
+	{ "cgdc7_zeroeth",      "A Zeroeth Dimension" },                                                    //   27th Place
+	{ "cgdc7_openfield",    "An Open Field" },                                                          //   28th Place
+	{ "cgdc7_survive",      "Survive" },                                                                //   29th Place
+	{ "cgdc7_zegro",        "Zegrothenus" },                                                            //   30th Place
 
-	// Adam Cadre's "Chicken Competition"
-	{ "cc_chknmt",          "Are you Too Chicken to Make a Deal?" },
+	// Chicken Competition
+	{ "cc_chknmt",          "Are You Too Chicken to Make a Deal?" },
 	{ "cc_behavior",        "Behavior" },
-	{ "cc_chickenzcode",    "Chicken!" },
+	{ "cc_chicken",         "Chicken!" },
 	{ "cc_chickenegg",      "Chicken and Egg" },
 	{ "cc_chickenunder",    "The Chicken Under the Window" },
 	{ "cc_chickendist",     "Chickens of Distinction" },
@@ -1634,75 +1474,23 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "cc_saied",           "Saied" },
 	{ "cc_xchicken",        "The X Chicken" },
 
-	// Adam Cadre's "2002 Spring Comp"
-	{ "stc02_blues",        "Tinseltown Blues" },
-
-	// Adam Cadre's "2003 Spring Comp"
-	{ "stc03_inevita",      "Inevitable" },
-	{ "stc03_cofire",       "The Cross of Fire" },
-
-	// Greg Boettcher's "2005 Interactive Fiction Spring Thing Competition"
-	{ "stc05_authority",    "Authority" },
-	{ "stc05_flatfeet",     "Flat Feet" },
-	{ "stc05_telling",      "Whom the Telling Changed" },
-
-	// Greg Boettcher's "2006 Interactive Fiction Spring Thing Competition"
-	{ "stc06_debaron",      "De Baron" },
-	{ "stc06_thebaron",     "The Baron" },
-
-	// Greg Boettcher's "2007 Interactive Fiction Spring Thing Competition"
-	{ "stc07_fate",         "Fate" },
-
-	// Greg Boettcher's "2008 Interactive Fiction Spring Thing Competition"
-	{ "stc08_pascal",       "Pascal's Wager" },
-
-	// Greg Boettcher's "2009 Interactive Fiction Spring Thing Competition"
-	{ "stc09_milkparadise", "The Milk of Paradise" },
-
-	// Greg Boettcher's "2012 Interactive Fiction Spring Thing Competition"
-	{ "stc12_rocketman",    "The Rocket Man from the Sea" },
-
-	// Aaron Reed's "2014 Interactive Fiction Spring Thing Competition"
-	{ "stc14_mrp",          "The Story of Mr. P." },
-
-	// Aaron Reed's "2016 Interactive Fiction Spring Thing Competition"
-	{ "stc16_harmonic",     "Harmonic Time-Bind Ritual Symphony" },
-
-	// Aaron Reed's "2017 Interactive Fiction Spring Thing Competition"
-	{ "stc17_enlightened",  "Enlightened Master" },
-
-	// Aaron Reed's "2018 Interactive Fiction Spring Thing Competition"
-	{ "stc18_gopher",       "Best Gopher Ever" },
-	{ "stc18_murderbig",    "Murder on the Big Nothing" },
-
-	// Aaron Reed's "2019 Interactive Fiction Spring Thing Competition"
-	{ "stc19_69105keys",    "69,105 Keys" },
-	{ "stc19_pca",          "Porte Cave Adventure" },
-
-	// Aaron Reed's "2021 Interactive Fiction Spring Thing Competition"
-	{ "stc21_takethedogout", "Take the Dog Out" },
-
-	// Aaron Reed's "2022 Interactive Fiction Spring Thing Competition"
-	{ "stc22_hypercubic",   "Hypercubic Time Warp All-go-rhythmic Synchrony" },
-	{ "stc22_wry",          "Wry" },
-
-	// Dave Bernazzani's "Commodore 32 Z-Machine Competition"
-	{ "c32_endgame",        "Endgame" },                                                                //  1st Place
-	{ "c32_turningpoint",   "Turning Point" },                                                          //  2nd Place
-	{ "c32_amusementpark",  "Amusement Park" },                                                         //  3rd Place
-	{ "c32_downtowntrain",  "Downtown Train" },                                                         //  4th Place
-	{ "c32_zombiescl",      "Zombies!" },                                                               //  5th Place
-	{ "c32_paparazzi",      "Paparazzi" },                                                              //  6th Place
+	// Commodore 32 Z-Machine Competition
+	{ "c32_endgame",        "Endgame" },                                                                //    1st Place
+	{ "c32_turningpoint",   "Turning Point" },                                                          //    2nd Place
+	{ "c32_amusementpark",  "Amusement Park" },                                                         //    3rd Place
+	{ "c32_downtowntrain",  "Downtown Train" },                                                         //    4th Place
+	{ "c32_zombiescl",      "Zombies!" },                                                               //    5th Place
+	{ "c32_paparazzi",      "Paparazzi" },                                                              //    6th Place
 	{ "c32",                "C32 Contest 2004" },
 
-	// Sam Kabo Ashwell's "Cover Stories Game-Jam"
+	// Cover Stories Game-Jam
 	{ "cs_antifascista",    "Antifascista" },
 	{ "cs_leaves",          "Leaves" },
-	{ "cs_legendmissinghat", "The Legend of the Missing Hat" },
+	{ "cs_legendmisshat",   "The Legend of the Missing Hat" },
 	{ "cs_monkeybusiness",  "Monkey Business" },
 	{ "cs_offering",        "Offering" },
 	{ "cs_sloth",           "Sloth on a Stroller" },
-	{ "cs_subtropicservroom", "The Subtropical Server Room" },
+	{ "cs_subtropservroom", "The Subtropical Server Room" },
 
 	// Dinosaur Mini-Competition
 	{ "dino_rowr",          "Rowr!" },
@@ -1713,7 +1501,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "dino_adno",          "A Dino's Night Out" },
 	{ "dino_olddog",        "Very Old Dog" },
 	{ "dino_revenger",      "Revenger" },
-	{ "dino_dinnertimez",   "Dinosaur Dinnertime!" },
+	{ "dino_dinnertime",    "Dinosaur Dinnertime!" },
 	{ "dino_appoint",       "An Important Appointment" },
 
 	// Dragon Mini-Competition
@@ -1724,192 +1512,225 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "dr_herebe",          "Here Be Dragons!!!" },
 	{ "dr_lastlaugh",       "The Last Laugh" },
 
-	// Duncan Bowsman's "2011 Ectocomp"
-	{ "ec11_bloodless",     "Bloodless on the Orient Express" },                                        //  1st Place
-	{ "ec11_blue",          "Blue" },                                                                   //  3rd Place
-	{ "ec11_dashslapney",   "Dash Slapney, Patrol Leader" },                                            //  5th Place
+	// Ectocomp 2011
+	{ "ec11_bloodless",     "Bloodless on the Orient Express" },                                        //    1st Place
+	{ "ec11_blue",          "Blue" },                                                                   //    3rd Place
+	{ "ec11_dashslapney",   "Dash Slapney, Patrol Leader" },                                            //    5th Place
 
-	// Duncan Bowsman's "2012 Ectocomp"
-	{ "ec12_ghosteringtonnightz", "Ghosterington Night" },                                              //  1st Place
-	{ "ec12_littlegirls",   "What Are Little Girls Made Of" },                                          //  2nd Place
-	{ "ec12_parasites",     "Parasites" },                                                              //  4th Place
+	// Ectocomp 2012
+	{ "ec12_ghosternight",  "Ghosterington Night" },                                                    //    1st Place
+	{ "ec12_littlegirls",   "What Are Little Girls Made Of" },                                          //    2nd Place
+	{ "ec12_parasites",     "Parasites" },                                                              //    4th Place
 
-	// Duncan Bowsman's "2013 Ectocomp"
-	{ "ec13_horriblepyra",  "The Horrible Pyramid" },                                                   //  1st Place
-	{ "ec13_headlesshapless", "Headless, Hapless" },                                                    //  3rd Place
-	{ "ec13_faithfulcomp",  "Faithful Companion" },                                                     //  4th Place
-	{ "ec13_deadpavane",    "Dead Pavane for a Princess" },                                             //  5th Place
-	{ "ec13_icehouse",      "Ice House of Horrors" },                                                   //  6th Place
-	{ "ec13_blackness",     "Blackness" },                                                              //  9th Place
-	{ "ec13_argument",      "The Argument-Winner's Ghost" },                                            // 11th Place
-	{ "ec13_fishdreams",    "Fish Dreams" },                                                            // 13th Place
-	{ "ec13_cursedeagle",   "The Tale of the Cursed Eagle" },                                           // 14th Place
-	{ "ec13_cenriccurse",   "The Cenric Family Curse" },                                                // 15th Place
-	{ "ec13_nessaslasher",  "The Nessa Springs Slasher" },                                              // 18th Place
-	{ "ec13_cratercreek",   "Crater Creek" },                                                           // 19th Place
-	{ "ec13_hillofsouls",   "Hill of Souls" },                                                          // 22nd Place
-	{ "ec13_wisp",          "Wisp" },                                                                   // 23th Place
+	// Ectocomp 2013
+	{ "ec13_horpyr_zcode",  "The Horrible Pyramid" },                                                   //    1st Place
+	{ "ec13_headleshaples", "Headless, Hapless" },                                                      //    3rd Place
+	{ "ec13_faithfulcomp",  "Faithful Companion" },                                                     //    4th Place
+	{ "ec13_deadpavane",    "Dead Pavane for a Princess" },                                             //    5th Place
+	{ "ec13_icehouse",      "Ice House of Horrors" },                                                   //    6th Place
+	{ "ec13_blackness",     "Blackness" },                                                              //    9th Place
+	{ "ec13_argument",      "The Argument-Winner's Ghost" },                                            //   11th Place
+	{ "ec13_fishdreams",    "Fish Dreams" },                                                            //   13th Place
+	{ "ec13_cursedeagle",   "The Tale of the Cursed Eagle" },                                           //   14th Place
+	{ "ec13_cenriccurse",   "The Cenric Family Curse" },                                                //   15th Place
+	{ "ec13_nessaslasher",  "The Nessa Springs Slasher" },                                              //   18th Place
+	{ "ec13_cratercreek",   "Crater Creek" },                                                           //   19th Place
+	{ "ec13_hillofsouls",   "Hill of Souls" },                                                          //   22nd Place
+	{ "ec13_wisp",          "Wisp" },                                                                   //   23th Place
 
-	// Duncan Bowsman's "2014 Ectocomp"
-	{ "ec14_weddingday",    "Wedding Day" },
-	{ "ec14_lime",          "Lime Ergot" },
-	{ "ec14_candyrushsaga", "Candy Rush Saga" },
-	{ "ec14_flywall",       "A Fly on the Wall" },
-	{ "ec14_monstermaker",  "Monster Maker" },
+	// Ectocomp 2014
+	{ "ec14_weddingday",    "Wedding Day" },                                                            //    5th Place
+	{ "ec14_limeergot",     "Lime Ergot" },                                                             //    6th Place
+	{ "ec14_candyrushsaga", "Candy Rush Saga" },                                                        //    8th Place
+	{ "ec14_flywall",       "A Fly on the Wall" },                                                      //   11th Place
+	{ "ec14_monstermaker",  "Monster Maker" },                                                          //   16th Place
 
-	// Duncan Bowsman's "2015 Ectocomp - La Petite Mort"
-	{ "ec15_openthatvein",  "Open That Vein" },                                                         //  1st Place
-	{ "ec15_oldesthangover", "The Oldest Hangover on Earth" },                                          //  2nd Place
-	{ "ec15_heezypark",     "Heezy Park" },                                                             //  3rd Place
-	{ "ec15_storyshinoboo", "The Story of the Shinoboo" },                                              //  4th Place
-	{ "ec15_ghostship",     "The Ghost Ship" },                                                         //  7th Place
-	{ "ec15_physiognomist", "The Physiognomist's Office" },                                             //  8th Place
+	// Ectocomp 2015 - La Petite Mort
+	{ "ec15_openthatvein",  "Open That Vein" },                                                         //    1st Place
+	{ "ec15_oldhangover",   "The Oldest Hangover on Earth" },                                           //    2nd Place
+	{ "ec15_heezypark",     "Heezy Park" },                                                             //    3rd Place
+	{ "ec15_storyshinoboo", "The Story of the Shinoboo" },                                              //    4th Place
+	{ "ec15_ghostship",     "The Ghost Ship" },                                                         //    7th Place
+	{ "ec15_physiognomist", "The Physiognomist's Office" },                                             //    8th Place
 
-	// Duncan Bowsman's "2015 Ectocomp - Le Grand Guignol"
-	{ "ec15_ninelives",     "Nine Lives" },                                                             //  3rd Place
+	// Ectocomp 2015 - Le Grand Guignol
+	{ "ec15_ninelives",     "Nine Lives" },                                                             //    3rd Place
 
-	// Duncan Bowsman's "2016 Ectocomp - La Petite Mort"
-	{ "ec16_lightdarkness", "Light into Darkness" },                                                    //  4th Place
-	{ "ec16_bonesaw",       "The Unstoppable Vengeance of Doctor Bonesaw" },                            //  6th Place
-	{ "ec16_checkeredhaunting", "A Checkered Haunting" },                                               // 10th Place
+	// Ectocomp 2016 - La Petite Mort
+	{ "ec16_lightdarkness", "Light into Darkness" },                                                    //    4th Place
+	{ "ec16_bonesaw",       "The Unstoppable Vengeance of Doctor Bonesaw" },                            //    6th Place
+	{ "ec16_checkerhaunt",  "A Checkered Haunting" },                                                   //   10th Place
 
-	// David Fisher's "EnvComp"
+	// Ectocomp 2017 - La Petite Mort
+	{ "ec17_primer",        "Primer" },                                                                 //    1st Place
+	{ "ec17_dreamcorrupt",  "Corrupter of Dreams" },                                                    //    4th Place
+	{ "ec17_uxmulbrufyuz",  "Uxmulbrufyuz" },                                                           //   10th Place
+	{ "ec17_civilmimic",    "Civil Mimic" },                                                            //   12th Place
+
+	// Ectocomp 2018 - La Petite Mort
+	{ "ec18_moongoon",      "Moon Goon" },                                                              //       Winner
+	{ "ec18_wakeup_zcode",  "Wake Up" },                                                                //      Entrant
+	{ "ec18_whoahcubswoe",  "Whoah Cubs Woe" },                                                         //      Entrant
+
+	// Ectocomp 2018 - Le Grand Guignol
+	{ "ec18_plshel_zcode",  "Please Help Me" },                                                         //      Entrant
+	{ "ec18_walkamongus",   "Walk Among Us" },                                                          //      Entrant
+
+	// Ectocomp 2019 - La Petite Mort
+	{ "ec19_quitequeer",    "Prime Pro-Rhyme Row #2: Quite Queer Night Near" },                         //    9th Place
+
+	// Ectocomp 2019 - Le Grand Guignol
+	{ "ec19_onceuponwint",  "Once Upon a Winter Night, the Ragman Came Singing Under Your Window" },    //    9th Place
+
+	// Ectocomp 2020 - La Petite Mort
+	{ "ec20_fracture",      "Fracture" },                                                               //    8th Place
+
+	// Ectocomp 2021 - La Petite Mort
+	{ "ec21_wearyeerie",    "Weary Eerie Way" },
+	{ "ec21_psyops",        "Psyops, Yo" },
+
+	// Ectocomp 2022 - La Petite Mort
+	{ "ec22_enigmamanor",   "The Enigma of the Old Manor House" },                                      //    1st Place
+	{ "ec22_thosedare",     "Prime Pro-Rhyme Row #5: There Those Dare Doze" },                          //   17th Place
+
+	// Ectocomp 2022 - Le Grand Guignol
+	{ "ec22_civil",         "Prime Pro-Rhyme Row #4: Civil Seeming Drivel Dreaming" },                  //   15th Place
+
+	// EnvComp
 	{ "ec_laseine",         "La Seine" },
 
-	// David Fisher's "GameplayComp 2009"
-	{ "gc_fantasticfinaleiv", "Fantastic Finale IV" },
+	// GameplayComp 2009
+	{ "gc_fantafinaleiv",   "Fantastic Finale IV" },
 
-	// Stephen Granade's "1998 IF Fan Fest"
-	{ "ff_ite2",            "In the End II" },
+	// Ghost Town Redux
+	{ "gtr_ghosttowntlt",   "Ghost Town: The Lost Treasure" },
 
-	// Scott Adams' Ghost Town Redux
-	{ "gtr_ghosttownzcode", "Ghost Town: The Lost Treasure" },
-
-	// Graeme Porter's "HighlandComp"
+	// HighlandComp
 	{ "hc_highland",        "Highland Chef" },
 	{ "hc_roots",           "Roots" },
 
-	// "24 Hours of Inform" Comp
+	// 24 Hours of Inform Competition
 	{ "24h_aesthetic",      "Aesthetic Deletions" },
 	{ "24h_dastardly",      "Dastardly" },
-	{ "24h_defra",          "The Man from DEFRA" },
+	{ "24h_defra",          "The Man From DEFRA" },
 	{ "24h_borgaris",       "Escape From the SS Borgaris" },
 	{ "24h_ghostship",      "Ghost Ship" },
 
-	// "2008 IFBeginnersComp"
+	// IFBeginnersComp 2008
 	{ "ifb_connect",        "Connect" },
 	{ "ifb_limelight",      "Limelight" },
 
-	// Jason Dyer's "Imaginary Games From Imaginary Universes Jam"
+	// IF Fan Fest 1998
+	{ "ff_ite2",            "In the End II" },
+
+	// Imaginary Games From Imaginary Universes Jam
 	{ "ig_garbage",         "Garbage Collection" },
 
-	// Neil deMause's "2002 IntroComp"
-	{ "ic02_timetrap",      "TimeTrap" },
-	{ "ic02_waterhouse",    "The Waterhouse Women" },
+	// IntroComp 2002
+	{ "ic02_waterhouse",    "The Waterhouse Women" },                                                   // 3° Runner-Up
+	{ "ic02_timetrap",      "TimeTrap" },                                                               //      Entrant
 
-	// Jacqueline Lott's "2003 IntroComp"
-	{ "ic03_agency",        "Agency" },
-	{ "ic03_harlequin",     "Harlequin Girl" },
-	{ "ic03_harringtonhouse", "Harrington House" },
-	{ "ic03_realend",       "Reality's End" },
-	{ "ic03_statue",        "The Mage Wars: Statue" },
+	// IntroComp 2003
+	{ "ic03_statue",        "The Mage Wars: Statue" },                                                  //       Winner
+	{ "ic03_realend",       "Reality's End" },                                                          // 1° Runner-Up
+	{ "ic03_agency",        "Agency" },                                                                 // 2° Runner-Up
+	{ "ic03_harlequin",     "Harlequin Girl" },                                                         //      Entrant
+	{ "ic03_harringthouse", "Harrington House" },                                                       //      Entrant
 
-	// Jacqueline Lott's "2004 IntroComp"
-	{ "ic04_auden",         "Auden's Eden" },
-	{ "ic04_jbbrwkyi",      "Intro to Jabberwocky" },
-	{ "ic04_cross",         "On the Cross" },
-	{ "ic04_passenger",     "Passenger" },
-	{ "ic04_runes",         "Runes" },
+	// IntroComp 2004
+	{ "ic04_jbbrwkyi",      "Intro to Jabberwocky" },                                                   //    1st Place
+	{ "ic04_auden",         "Auden's Eden" },                                                           // 1° Runner-Up
+	{ "ic04_passenger",     "Passenger" },                                                              // 2° Runner-Up
+	{ "ic04_cross",         "On the Cross" },                                                           //      Entrant
+	{ "ic04_runes",         "Runes" },                                                                  //      Entrant
 
-	// Jacqueline Lott's "2005 IntroComp"
-	{ "ic05_deadsville",    "Deadsville" },
-	{ "ic05_stale",         "The Fox, The Dragon, and the Stale Loaf of Bread" },
-	{ "ic05_hobbit",        "The Hobbit" },
-	{ "ic05_somewhen",      "Somewhen" },
-	{ "ic05_wscholars",     "Weishaupt Scholars" },
+	// IntroComp 2005
+	{ "ic05_deadsville",    "Deadsville" },                                                             //    1st Place
+	{ "ic05_wscholars",     "Weishaupt Scholars" },                                                     // 1° Runner-Up
+	{ "ic05_stale",         "The Fox, The Dragon, and the Stale Loaf of Bread" },                       // 2° Runner-Up
+	{ "ic05_hobbit",        "The Hobbit" },                                                             //      Entrant
+	{ "ic05_somewhen",      "Somewhen" },                                                               //      Entrant
 
-	// Jacqueline Lott's "2006 IntroComp"
-	{ "ic06_artdeception",  "The Art of Deception" },
-	{ "ic06_childsplay7",   "Child's Play" },
-	{ "ic06_mechs",         "Mechs" },
-	{ "ic06_sabotage",      "Sabotage" },
-	{ "ic06_southerngothic", "Southern Gothic" },
-	{ "ic06_ufury",         "Unyielding Fury" },
+	// IntroComp 2006
+	{ "ic06_southerngoth",  "Southern Gothic" },                                                        //       Winner
+	{ "ic06_childsplay",    "Child's Play" },                                                           // 1° Runner-Up
+	{ "ic06_artdeception",  "The Art of Deception" },                                                   //      Entrant
+	{ "ic06_mechs",         "Mechs" },                                                                  // Hon. Mention
+	{ "ic06_sabotage",      "Sabotage" },                                                               // Hon. Mention
+	{ "ic06_ufury",         "Unyielding Fury" },                                                        // Hon. Mention
 
-	// Jacqueline Lott's "2007 IntroComp"
-	{ "ic07_jackbox",       "Jack in the Box" },
-	{ "ic07_jacobst",       "Jacob's Travels" },
-	{ "ic07_shredspatches", "The King of Shreds and Patches" },
-	{ "ic07_trainstopping", "Trainstopping" },
+	// IntroComp 2007
+	{ "ic07_shredspatches", "The King of Shreds and Patches" },                                         //       Winner
+	{ "ic07_jacobst",       "Jacob's Travels" },                                                        // 2° Runner-Up
+	{ "ic07_jackbox",       "Jack in the Box" },                                                        // Hon. Mention
+	{ "ic07_trainstopping", "Trainstopping" },                                                          // Hon. Mention
 
-	// Jacqueline Lott's "2008 IntroComp"
-	{ "ic08_fiendishzoo",   "Fiendish Zoo" },
-	{ "ic08_stormcellar",   "Storm Cellar" },
-	{ "ic08_bedtimestory",  "Bedtime Story" },
-	{ "ic08_ninetenths",    "Nine-tenths of the Law" },
+	// IntroComp 2008
+	{ "ic08_stormcellar",   "Storm Cellar" },                                                           // 1° Runner-Up
+	{ "ic08_bedtimestory",  "Bedtime Story" },                                                          // Hon. Mention
+	{ "ic08_fiendishzoo",   "Fiendish Zoo" },                                                           // Hon. Mention
+	{ "ic08_ninetenths",    "Nine-tenths of the Law" },                                                 // Hon. Mention
 
-	// Jacqueline Lott's "2009 IntroComp"
-	{ "ic09_gossip",        "Gossip" },
-	{ "ic09_obituary",      "Obituary" },
-	{ "ic09_selves",        "Selves" },
+	// IntroComp 2009
+	{ "ic09_obituary",      "Obituary" },                                                               //       Winner
+	{ "ic09_gossip",        "Gossip" },                                                                 // 1° Runner-Up
+	{ "ic09_selves",        "Selves" },                                                                 // 2° Runner-Up
 
-	// Jacqueline Lott's "2010 IntroComp"
-	{ "ic10_touristtrap",   "Tourist Trap" },
-	{ "ic10_moratori",      "A Fleeting Case of Self-Possession, or, Memento Moratori" },
-	{ "ic10_plan6",         "Plan 6 from Inner Earth" },
-	{ "ic10_waker",         "Waker" },
+	// IntroComp 2010
+	{ "ic10_touristtrap",   "Tourist Trap" },                                                           //       Winner
+	{ "ic10_moratori",      "A Fleeting Case of Self-Possession, or, Memento Moratori" },               // 1° Runner-Up
+	{ "ic10_plan6",         "Plan 6 From Inner Earth" },                                                // 2° Runner-Up
+	{ "ic10_waker",         "Waker" },                                                                  // Hon. Mention
 
-	// Jacqueline Lott's "2011 IntroComp"
-	{ "ic11_bender",        "Bender" },
-	{ "ic11_despondencyindex", "The Despondency Index" },
-	{ "ic11_parthenon",     "Parthenon" },
-	{ "ic11_sfiction",      "Speculative Fiction: Beginner's Lessons" },
-	{ "ic11_stallingtime",  "Stalling for Time" },
+	// IntroComp 2011
+	{ "ic11_sfiction",      "Speculative Fiction: Beginner's Lessons" },                                //    2nd Place
+	{ "ic11_bender",        "Bender" },                                                                 // Hon. Mention
+	{ "ic11_despondenidx",  "The Despondency Index" },                                                  // Hon. Mention
+	{ "ic11_parthenon",     "Parthenon" },                                                              // Hon. Mention
+	{ "ic11_stallingtime",  "Stalling for Time" },                                                      // Hon. Mention
 
-	// Jacqueline Lott's "2013 IntroComp"
-	{ "ic13_thechickensexer", "The Example of the Chicken Sexer" },
+	// IntroComp 2013
+	{ "ic13_chickensexer",  "The Example of the Chicken Sexer" },                                       // Hon. Mention
 
-	// Jacqueline Lott's "2014 IntroComp"
-	{ "ic14_talessoulthief", "Tales of the Soul Thief" },
+	// IntroComp 2014
+	{ "ic14_talesoulthief", "Tales of the Soul Thief" },                                                // Hon. Mention
 
-	// Jacqueline Lott's "2016 IntroComp"
-	{ "ic16_grubbyville",   "Grubbyville" },
+	// IntroComp 2016
+	{ "ic16_grubbyville",   "Grubbyville" },                                                            //    3nd Place
 
-	// Xalavier Nelson Jr's "2018 IntroComp"
-	{ "ic18_napier",        "Napier’s Cache" },
+	// IntroComp 2018
+	{ "ic18_napier",        "Napier’s Cache" },                                                         // Hon. Mention
 
-	// Xalavier Nelson Jr's "2019 IntroComp"
-	{ "ic19_homeland",      "Homeland" },
+	// IntroComp 2019
+	{ "ic19_homeland",      "Homeland" },                                                               // Hon. Mention
 
-	// David Cornelson's "2003 IF Library Competitions"
+	 // IntroComp 2020
+	{ "ic20_navigatio",     "Navigatio" },                                                              //    3rd Place
+
+	// IF Library Competition 2003
 	{ "lc_serve",           "Serving Your Country" },
 	{ "lc_trappedschool",   "Trapped in School" },
 
-	// David Cornelson's "MCDream Competition"
+	// IF Logic Puzzle Mini-Competition
+	{ "lp_logicpuz",        "Logic Puzzle Sampler" },
+	{ "lp_traffic",         "The Traffic Light" },
+
+	// LOTECH Competition 2001
+	{ "lo01_doghouse",      "The Dog/House" },
+
+	// LOTECH Competition 2005
+	{ "lo05_stormy",        "A Dark and Stormy Entry" },                                                //    2nd Place
+	{ "lo05_knapsack",      "The Knapsack Problem" },                                                   //    6th Place
+
+	// Manos Mini-Competition
+	{ "ma_manoz",           "ManoZ" },
+
+	// MCDream Competition
 	{ "mc_dreadwine",       "Dreadwine" },
 	{ "mc_nofamous",        "No Famous" },
 	{ "mc_retreat",         "The Retreat" },
 
-	// David Cornelson's "Segment Mini-Comp"
-	{ "snowmanzcode2",      "Snowman Sextet Part II" },
-	{ "kaboot",             "Kaboot's Story" },
-	{ "snowmanzcode",       "Fran and Bart Want a Snowman!" },
-
-	// Andrew Plotkin's "IF Logic Puzzle Mini-Competition"
-	{ "lp_logicpuz",        "Logic Puzzle Sampler" },
-	{ "lp_traffic",         "The Traffic Light" },
-
-	// Mark Silcox's "2001 LOTECH Competition"
-	{ "lo01_doghouse",      "The Dog/House" },
-
-	// Mark Silcox's "2005 LOTECH Competition"
-	{ "lo05_stormy",        "A Dark and Stormy Entry" },                                                //  2nd Place
-	{ "lo05_knapsack",      "The Knapsack Problem" },                                                   //  6th Place
-
-	// Admiral Jota's "Manos Mini-Competition"
-	{ "ma_manoz",           "ManoZ" },
-
-	// 2009 Metafilter IF Competition
+	// Metafilter IF Competition 2009
 	{ "me09_bunt",          "Bunt" },
 	{ "me09_downout",       "Down and Out at the Big Creepy House on the Poison Lake" },
 	{ "me09_underpig",      "Down With the Underpig" },
@@ -1918,57 +1739,62 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "me09_burndown",      "Let Us Burn Down Science" },
 	{ "me09_rockrider",     "Rockrider" },
 
-	// 2010 Metafilter IF Competition
+	// Metafilter IF Competition 2010
 	{ "me10_greatrent",     "The Great Rent Money Adventure" },
 
-	// Lucian Smith's "1998 IF Mini-Competition"
+	// IF Mini-Competition 1998
 	{ "mc98_bloodline",     "Bloodline" },
 	{ "mc98_inherit",       "Inherit!" },
 	{ "mc98_sumbunny",      "Something About the Bunny" },
 
-	// Ben Caplan's "Minigames Minicomp"
+	// Minigames Minicomp
 	{ "mm_hamhall",         "Hamilton Hall" },
 	{ "mm_insider",         "Insider Information" },
 
-	// Marius Müller's "Neinth Annual New Year's Mincomp"
+	// 9th Annual New Year's Mincomp
 	{ "ny09_egyptianwalk",  "Egyptian Walking Simulator" },
 
-	// Marius Müller's "Eleventh Annual New Year's Mincomp"
+	// 11th Annual New Year's Mincomp
 	{ "ny11_halflife",      "Half-Life 3 Confirmed" },
 
-	// Michael Gentry's "1999 No-Inventory-Competition"
+	// No-Inventory-Competition 1999
 	{ "ni_annoyedundead",   "Annoyed Undead" },
 	{ "ni_camping",         "Camping" },
 
-	// 2002 One Room Game Competition
+	// One Room Game Competition 2002
 	{ "1r02_artif",         "L'Artificiere" },
-	{ "1r02_sottomarinogiallo", "Il Sottomarino Giallo" },
+	{ "1r02_sottogiallo",   "Il Sottomarino Giallo" },
 
-	// 2003 One Room Game Competition
+	// One Room Game Competition 2003
 	{ "1r03_floppy",        "Due Dischetti, Un Incubo" },
 	{ "1r03_successo",      "Successo: Non Aprite Quella Porta!" },
 
-	// 2006 One Room Game Competition
-	{ "1r06_finalselection", "Final Selection" },
+	// One Room Game Competition 2006
+	{ "1r06_finalselect",   "Final Selection" },
 	{ "1r06_sforacchiato",  "Lo Sforacchiato Giallo" },
-	{ "1r06_venicezcode",   "Il Diavolo a Venezia" },
+	{ "1r06_devilatvenice", "Il Diavolo a Venezia" },
 	{ "1r06_galeotto",      "Galeotto Fu il Canotto" },
 	{ "1r06_easter",        "It's Easter, Peeps!" },
-	{ "1r06_lazyjonescrostata", "Lazy Jones e l’Ultima Crostata" },
+	{ "1r06_lazyjonescrst", "Lazy Jones e l’Ultima Crostata" },
 	{ "1r06_dereditu",      "De Reditu" },
 	{ "1r06_frankenstein3", "Frankenstein III" },
 
-	// 2007 One Room Game Competition
+	// One Room Game Competition 2007
 	{ "1r07_dreimp",        "A Dream Imprint" },
 	{ "1r07_kinesis",       "Kinesis" },
 	{ "1r07_necromante",    "Il Necromante" },
 	{ "1r07_suvehnux",      "Suveh Nux" },
 	{ "1r07_urbanconflict", "Urban Conflict" },
 
-	// Storme Winfield's "2002 RomanceNovelComp"
+	// RomanceNovelComp 2002
 	{ "rnc_chooseromance",  "Choose Your Own Romance" },
 
-	// Sam Kabo Ashwell's "2014 Shufflecomp Competition"
+	// Segment Mini-Comp
+	{ "snowmansp2",         "Snowman Sextet Part II" },
+	{ "kaboot",             "Kaboot's Story" },
+	{ "fandbsnowman",       "Fran and Bart Want a Snowman!" },
+
+	// Shufflecomp Competition 2014
 	{ "sh14_50shades",      "50 Shades of Jilting" },
 	{ "sh14_flotsam",       "Flotsam & Driftwood" },
 	{ "sh14_robotempire",   "Holy Robot Empire" },
@@ -1980,12 +1806,12 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sh14_truth",         "Truth" },
 	{ "sh14_whitehouses",   "White Houses" },
 
-	// Neil Butters's "ShuffleComp: Disc 2 Competition"
+	// ShuffleComp: Disc 2 Competition
 	{ "shd_everythinggame", "Everything We Do Is Games" },
 	{ "shd_headingeast",    "Heading East" },
-	{ "shd_starryseeksorrow", "Starry Seeksorrow" },
+	{ "shd_seeksorrow",     "Starry Seeksorrow" },
 
-	// Emily Short's "SmoochieComp 2001"
+	// SmoochieComp 2001
 	{ "sc_1981",            "1981" },
 	{ "sc_august",          "August" },
 	{ "sc_deadofwinter",    "Dead of Winter" },
@@ -2045,7 +1871,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_pantsless",      "Pantsless in Seattle" },
 
 	// SpeedIF 9 Competition
-	{ "sif_darknesszcode",  "Under Cover of Darkness" },
+	{ "sif_ucodarkness",    "Under Cover of Darkness" },
 
 	// SpeedIF 10 Competition
 	{ "sif_deathx4",        "Death Death Death Death" },
@@ -2053,7 +1879,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 
 	// SpeedIF 10^-9 Competition
 	{ "sif_krakatoa",       "Krakatoa Tuna Melt" },
-	{ "sif_roaddestruction", "The Road to Destruction (featuring Bob Hope)" },
+	{ "sif_roadestruction", "The Road to Destruction (featuring Bob Hope)" },
 
 	// SpeedIF 11 Competition
 	{ "sif_spiders",        "EPISODE 2: Revenge of the Mutant Spiders" },
@@ -2064,14 +1890,14 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_plaque",          "Plaque" },
 
 	// SpeedIF 13 Competition
-	{ "sif_elephantsafterlife", "Elephants and the Afterlife" },
+	{ "sif_elephantaflife", "Elephants and the Afterlife" },
 	{ "sif_garden",         "Garden of the Dragon" },
 	{ "sif_inspector",      "Health Inspector" },
 	{ "sif_potstick",       "Potsticker" },
-	{ "sif_service",        "Service with a Smile" },
+	{ "sif_service",        "Service With a Smile" },
 
 	// SpeedIF 14 Competition
-	{ "sif_halloweenzcode", "Hallowe'en" },
+	{ "sif_halloween",      "Hallowe'en" },
 	{ "sif_bbp",            "The Blair Bee Project" },
 	{ "sif_pcontest",       "The Pumpkin Contest" },
 	{ "sif_worm",           "Worm" },
@@ -2090,7 +1916,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_2604",           "2604" },
 	{ "sif_roof",           "A Stroll on the Roof" },
 	{ "sif_123102",         "December 31, 2002" },
-	{ "sif_speedif17",      "Tooth Ow Zunden Too" },
+	{ "sif_speedif17",      "Tooth Ow Zunden Won!" },
 
 	// SpeedIF 18 Competition
 	{ "sif_fishspaceships", "Fish and Spaceships" },
@@ -2116,32 +1942,32 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_literacy",       "Literacy" },
 	{ "sif_woodencat",      "WOODEN CAT vs. ROBOT MONKEY" },
 
-	// David Cornelson's "18th Anniversary SpeedIF Competition"
-	{ "sif_farout",         "Far-Out Space Freaks" },
-
 	// SpeedIF 2000 Competition
 	{ "sif_ritual",         "The Great Ritual" },
 
 	// SpeedIF 2001 Competition
 	{ "sif_battleplanets",  "Battle of the Planets" },
-	{ "sif_destinychihuahua", "Destiny of the Chihuahua" },
+	{ "sif_destinychihuah", "Destiny of the Chihuahua" },
 	{ "sif_infiltrt",       "Infiltration on Io" },
 	{ "sif_inspiration",    "Inspiration" },
 	{ "sif_moonjupiter",    "Moon Over Jupiter" },
 	{ "sif_crescent",       "The Crescent City at the Edge of Disaster" },
 	{ "sif_crouton",        "The Crouton Caper" },
-	{ "sif_speedif17v1",    "Tooth Ow Zunden Too" },
+	{ "sif_speedif17v1",    "Tooth Ow Zunden Won!" },
 
-	// Eleventh Anniversary SpeedIF Competition
-	{ "sif_nqaa",           "Not Quite an Anniversary" },
-	{ "sif_reptile",        "Reptile" },
-	{ "sif_teachinghertodance", "Teaching Her to Dance" },
-
-	// Third Anniversary SpeedIF Competition
+	// SpeedIF 3rd Anniversary Competition
 	{ "sif_henry",          "Finding Henry" },
 
-	// Fifth Anniversary SpeedIF Competition
+	// SpeedIF 5th Anniversary Competition
 	{ "sif_coughcough",     "**COUGH COUGH**" },
+
+	// SpeedIF 11th Anniversary Competition
+	{ "sif_nqaa",           "Not Quite an Anniversary" },
+	{ "sif_reptile",        "Reptile" },
+	{ "sif_teachher2dance", "Teaching Her to Dance" },
+
+	// SpeedIF 18th Anniversary Competition
+	{ "sif_farout",         "Far-Out Space Freaks" },
 
 	// SpeedIF Argonaut Competition
 	{ "sif_asciargo",       "ASCII and the Argonauts" },
@@ -2157,12 +1983,12 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 
 	// SpeedIF Copyright Competition
 	{ "sif_piratescaribou", "Pirates of the Caribou" },
-	{ "sif_sharingalltheway", "Sharing All the Way to the Bank" },
+	{ "sif_sharingallway",  "Sharing All the Way to the Bank" },
 
 	// SpeedIF Crinkle Cut Competition
 	{ "sif_travels",        "The Travels of Fitzwilliam Pound" },
 
-	// Douglas Adams Tribute SpeedIF Competition
+	// SpeedIF Douglas Adams Tribute Competition
 	{ "sif_nightmilliways", "A Night at Milliways" },
 	{ "sif_deadlinebda",    "Deadline, or, Being Douglas Adams" },
 	{ "sif_howmany",        "How Many Roads Must a Man Walk Down?" },
@@ -2183,9 +2009,9 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 
 	// SpeedIF Halloween 2002 Competition
 	{ "sif_losing",         "Losing Your Step" },
-	{ "sif_oldsherwoodcemetary", "The Old Sherwood Cemetary" },
+	{ "sif_oldsherwoodcem", "The Old Sherwood Cemetary" },
 
-	// Jacqueline Lott's "Indigo New Language Speed IF competition"
+	// SpeedIF Indigo New Language Competition
 	{ "sif_hauntedhouse",    "Haunted House" },
 
 	// SpeedIF Introcomp
@@ -2193,7 +2019,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_alcohol",        "Alcohol Solves Everything" },
 	{ "sif_djibouti",       "Djibouti Dirigible Discombobulation" },
 	{ "sif_faetttiw",       "Fætt Tiw" },
-	{ "sif_velocitasfictus", "In Search of Velocitas Fictus" },
+	{ "sif_velocitasficts", "In Search of Velocitas Fictus" },
 	{ "sif_baptist",        "The Twelve Heads of St. John the Baptist" },
 	{ "sif_zefrench",       "Ze French Countryside Is Full of Fresh Air" },
 
@@ -2243,72 +2069,22 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_expedition",     "Expedition" },
 	{ "sif_speedifnockle",  "Revenge of the Nockle : A Speed IF" },
 
-	// 2007 SpeedIF New Year's Speed Competition
+	// SpeedIF New Year's Speed Competition 2007
 	{ "sif_nazimice",       "Nazi Mice" },
 	{ "sif_notsameols",     "Not the Same Old Lang Syne" },
 	{ "sif_shothitler",     "The Day I Shot Hitler" },
 	{ "sif_newyearswar",    "The War on New Year’s" },
 
-	// 2008 SpeedIF New Year's Speed Competition
+	// SpeedIF New Year's Speed Competition 2008
 	{ "sif_leaptime",       "Leap Time" },
 	{ "sif_mauled",         "The Day I Mauled Mao!" },
 	{ "sif_escapist",       "The Escapist" },
 
-	// 2009 SpeedIF New Year's Speed Competition
+	// SpeedIF New Year's Speed Competition 2009
 	{ "sif_dullegriet",     "Dulle Griet and the Antenorian Icebox" },
 	{ "sif_stabbed",        "The Day I Stabbed Stalin" },
 
-	// 2013 SpeedIF New Year's Speed Competition
-	{ "sif_faithfulcompv2", "Faithful Companion" },
-	{ "sif_talemorning",    "The Mundane Tale of the Morning After" },
-	{ "sif_thedayicameback", "The Day I Came Back" },
-	{ "sif_youhavetoputthebaby", "You Have to Put the Baby New Year in the Champagne Bottle" },
-
-	// 2014 SpeedIF New Year's Speed Competition
-	{ "sif_youwerehere",    "You Were Here" },
-
-	// SpeedIF O Competition
-	{ "sif_speedo",         "A SpeedIF O Entry" },
-	{ "sif_eschew",         "Eschew As If You Were She" },
-	{ "sif_getting",        "Getting to Know the General" },
-	{ "sif_astrology",      "Practical Astrology" },
-
-	// David Cornelson's "SpeedIF PAX East 2010"
-	{ "sif_wizshop",        "A Wizard Goes Shopping" },
-	{ "sif_apoptosis",      "Apoptosis" },
-	{ "sif_foodmagic",      "Food Magic" },
-	{ "sif_lobsteronaplane", "Lobsters on a Plane" },
-	{ "sif_mango",          "Mango" },
-	{ "sif_midairmadness",  "Midair Madness" },
-	{ "sif_paxeast",        "PAX East 2010 Speed-IF" },
-	{ "sif_queuelty",       "Queuelty" },
-	{ "sif_safehouse",      "Safehouse" },
-	{ "sif_vortex2305",     "Vortex 2305" },
-
-	// David Cornelson's "SpeedIF PAX East 2011"
-	{ "sif_scurvy",         "A Scurvy of Wonders" },
-	{ "sif_helpfulmanzcode", "A Shadow of Helpfulman" },
-	{ "sif_boredladders",   "Bored Ladders" },
-	{ "sif_brainnightguest", "Brain of the Night Guest" },
-	{ "sif_delusionsagain", "Delusions Again" },
-	{ "sif_diggingzcode",   "Digging Time!" },
-	{ "sif_merk",           "Merk" },
-	{ "sif_therighttool",   "The Right Tool" },
-
-	// SpeedIF Orange Competition
-	{ "sif_appall",         "Appallatron: Annoyotron 3" },
-	{ "sif_descent",        "Descent of Man" },
-
-	// Pi-Theta-Aleph-Parallax SpeedIF Competition
-	{ "sif_parallaxdream",  "A Parallax Dream" },
-	{ "sif_pethertheta",    "Peter Theta Fixes the Holodeck" },
-	{ "sif_putiap",         "Pick Up the IF-Archive and Pi" },
-	{ "sif_squeaky",        "Squeaky on the Moon" },
-	{ "sif_ptap",           "The Grade 3 Parallax" },
-	{ "sif_moonbar",        "The Parallax Moon Bar Conspiracy" },
-	{ "sif_thpoint",        "The Theta Point" },
-
-	// 2011 New Year's Speed IF - The penultimate not numbered New Year's Speed IF Competition
+	// SpeedIF New Year's Speed Competition 2011
 	{ "sif_beingendbeg",    "Being the Ending of the Beginning" },
 	{ "sif_birthmind",      "Birth of Mind" },
 	{ "sif_dashslapney",    "Dash Slapney, Patrol Leader" },
@@ -2319,7 +2095,57 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_silencegods",    "The Silence of the Gods" },
 	{ "sif_threemore",      "Three More Visitors" },
 
-	// `R*IF` Spam SpeedIF Competition
+	// SpeedIF New Year's Speed Competition 2013
+	{ "sif_faithfulcompv2", "Faithful Companion" },
+	{ "sif_talemorning",    "The Mundane Tale of the Morning After" },
+	{ "sif_dayicameback",   "The Day I Came Back" },
+	{ "sif_youhavetoput",   "You Have to Put the Baby New Year in the Champagne Bottle" },
+
+	// SpeedIF New Year's Speed Competition 2014
+	{ "sif_youwerehere",    "You Were Here" },
+
+	// SpeedIF O Competition
+	{ "sif_speedo",         "A SpeedIF O Entry" },
+	{ "sif_eschew",         "Eschew As If You Were She" },
+	{ "sif_getting",        "Getting to Know the General" },
+	{ "sif_astrology",      "Practical Astrology" },
+
+	// SpeedIF PAX East 2010
+	{ "sif_wizshop",        "A Wizard Goes Shopping" },
+	{ "sif_apoptosis",      "Apoptosis" },
+	{ "sif_foodmagic",      "Food Magic" },
+	{ "sif_lobsteronplane", "Lobsters on a Plane" },
+	{ "sif_mango",          "Mango" },
+	{ "sif_midairmadness",  "Midair Madness" },
+	{ "sif_paxeast",        "PAX East 2010 Speed-IF" },
+	{ "sif_queuelty",       "Queuelty" },
+	{ "sif_safehouse",      "Safehouse" },
+	{ "sif_vortex2305",     "Vortex 2305" },
+
+	// SpeedIF PAX East 2011
+	{ "sif_scurvy",         "A Scurvy of Wonders" },
+	{ "sif_shhelpfulman",   "A Shadow of Helpfulman" },
+	{ "sif_boredladders",   "Bored Ladders" },
+	{ "sif_brainightguest", "Brain of the Night Guest" },
+	{ "sif_delusionsagain", "Delusions Again" },
+	{ "sif_diggingtime",    "Digging Time!" },
+	{ "sif_merk",           "Merk" },
+	{ "sif_therighttool",   "The Right Tool" },
+
+	// SpeedIF Orange Competition
+	{ "sif_appall",         "Appallatron: Annoyotron 3" },
+	{ "sif_descent",        "Descent of Man" },
+
+	// SpeedIF Pi-Theta-Aleph-Parallax Competition
+	{ "sif_parallaxdream",  "A Parallax Dream" },
+	{ "sif_pethertheta",    "Peter Theta Fixes the Holodeck" },
+	{ "sif_putiap",         "Pick up the IF-Archive and Pi" },
+	{ "sif_squeaky",        "Squeaky on the Moon" },
+	{ "sif_ptap",           "The Grade 3 Parallax" },
+	{ "sif_moonbar",        "The Parallax Moon Bar Conspiracy" },
+	{ "sif_thpoint",        "The Theta Point" },
+
+	// SpeedIF `R*IF` Spam Competition
 	{ "sif_htp",            "HTP" },
 
 	// SpeedIF Scenario 1 Competition
@@ -2336,12 +2162,12 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	// SpeedIF That Dare Not Speak Its Number Competition
 	{ "sif_soitgoes",       "And So It Goes" },
 	{ "sif_antioch",        "Jobs for Antioch!" },
-	{ "sif_twilightzcode",  "Twilight of the Dogs" },
+	{ "sif_twilight",       "Twilight of the Dogs" },
 
 	// SpeedIF Thanksgiving Competition
 	{ "sif_dragonflies",    "Dragon Flies Like Labradorite" },
 	{ "sif_crystalpalace",  "The Crystal Palace" },
-	{ "sif_extraordinaryevents", "The Extraordinary Events of the Last Day of Professor Mangleworth" },
+	{ "sif_extraordevents", "The Extraordinary Events of the Last Day of Professor Mangleworth" },
 	{ "sif_youareaturkey",  "You Are a Turkey!" },
 
 	// SpeedIF ToasterComp II Competition
@@ -2354,13 +2180,13 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_cheatingdeath",  "Cheating Death" },
 	{ "sif_rrr",            "Reality Railroad" },
 
-	// Ultimate not numbered New Year's Speed IF Competition
+	// SpeedIF Ultimate not numbered New Year's Competition
 	{ "sif_shortof",        "Short of Sushi" },
-	{ "sif_disenchantmentbay", "Disenchantment Bay" },
+	{ "sif_disenchantbay",  "Disenchantment Bay" },
 	{ "sif_thedayidied",    "The Day I Died" },
 
 	// SpeedIF Without Number Competition
-	{ "sif_sushi",          "A Day For Fresh Sushi" },
+	{ "sif_sushi",          "A Day for Fresh Sushi" },
 	{ "sif_anotherday",     "Another Day, Another Sea Monster" },
 	{ "sif_lobster",        "The Lobster" },
 	{ "sif_grape",          "Triumphant Return of the Evil Sea Grape" },
@@ -2371,7 +2197,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "sif_tragedy",        "Tragedy Strikes at the XYZZY Awards!" },
 
 	// SpeedIF Y Competition
-	{ "sif_bananapocalaypse", "Banana Apocalypse and the Rocket Pants of Destiny" },
+	{ "sif_bananapocalayp", "Banana Apocalypse and the Rocket Pants of Destiny" },
 	{ "sif_barton",         "Barton" },
 	{ "sif_bearsx3",        "Bears, Bears, Bears" },
 	{ "sif_flexible",       "Flexible Pants" },
@@ -2385,24 +2211,24 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	// SpeedIF Zombie Competition
 	{ "sif_speedifzombie",  "SpeedIF Zombie" },
 
-	// Bouchercomp SpeedIF Competition
-	{ "sif_lowellzcode",    "Lowell’s Paradise" },
-	{ "sif_putpbad",        "Pick Up the Pine Box and Die" },
+	// SpeedIF Bouchercomp Competition
+	{ "sif_lowellparadise", "Lowell’s Paradise" },
+	{ "sif_putpbad",        "Pick up the Pine Box and Die" },
 	{ "sif_seekingsolace",  "Seeking Solace" },
 	{ "sif_wideopengate",   "The Wide-Open Gate" },
 
-	// Emily Short's "Swash Comp"
+	// Swash Comp
 	{ "swa_seacaptains",    "Sea Captains" },
 
-	// Mark Musante's "Toaster Competition"
+	// Toaster Competition
 	{ "toa_burnttoast",     "Burnt Toast" },
-	{ "toa_friarbaconstreet", "Friar Bacon's Secret" },
+	{ "toa_friarbaconstr",  "Friar Bacon's Secret" },
 	{ "toa_gottoast",       "Got Toast?" },
 	{ "toa_spittingcrumbs", "Spitting Crumbs" },
 	{ "toa_shrinkingwoman", "The Incredible Shrinking Woman, Too!" },
 	{ "toa_tommytoaster",   "Tommy the Toaster" },
 
-	// Jack Welch's "TWIFcomp"
+	// TWIFcomp
 	{ "twif_putpbat",       "Putpbat" },
 	{ "twif_sin1",          "Sin 1" },
 	{ "twif_sin2",          "Sin 2" },
@@ -2414,15 +2240,75 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "twif_sin8",          "Sin 8" },
 	{ "twif_war",           "War" },
 
-	// Emily Short's "Walkthrough Competition"
+	// Walkthrough Competition
 	{ "wlk_wtf",            "A Walk Through Forever" },
 	{ "wlk_dreams",         "Dreams Run Solid" },
 	{ "wlk_fit",            "Fit for a Queen" },
 	{ "wlk_jigsaw2",        "Jigsaw 2" },
 	{ "wlk_exile",          "Twilight in the Garden of Exile" },
 
-	//  David A. Cornelson's "1999 XComp"
+	// XComp 1999
 	{ "xco_sixfoot",        "The Six-Foot-Tall Man-Eating Chicken" },
+
+	// Spring Thing 2002
+	{ "stc02_blues",        "Tinseltown Blues" },                                                       //       Winner
+
+	// Spring Thing 2003
+	{ "stc03_inevita",      "Inevitable" },                                                             //    Runner-Up
+	{ "stc03_cofire",       "The Cross of Fire" },                                                      //      Entrant
+
+	// Spring Thing 2005
+	{ "stc05_telling",      "Whom the Telling Changed" },                                               //    1st Place
+	{ "stc05_flatfeet",     "Flat Feet" },                                                              //    4th Place
+	{ "stc05_authority",    "Authority" },                                                              //    6th Place
+
+	// Spring Thing 2006
+	{ "stc06_debaron",      "De Baron" },                                                               //    1st Place
+	{ "stc06_thebaron",     "The Baron" },                                                              //    1st Place
+
+	// Spring Thing 2007
+	{ "stc07_fate",         "Fate" },                                                                   //    1st Place
+
+	// Spring Thing 2008
+	{ "stc08_pascal",       "Pascal's Wager" },                                                         //    1st Place
+
+	// Spring Thing 2009
+	{ "stc09_milkparadise", "The Milk of Paradise" },                                                   //    4th Place
+
+	// Spring Thing 2012
+	{ "stc12_rocketman",    "The Rocket Man From the Sea" },                                            //    1st Place
+
+	// Spring Thing 2014
+	{ "stc14_mrp",          "The Story of Mr. P." },                                                    //    7th Place
+
+	// Spring Thing 2015 - Back Garden
+	{ "stc15_dirk",         "Dirk" },                                                                   //      Entrant
+
+	// Spring Thing 2016
+	{ "stc16_harmonic",     "Harmonic Time-Bind Ritual Symphony" },                                     //      Entrant
+
+	// Spring Thing 2017 - Back Garden
+	{ "stc17_enlightened",  "Enlightened Master" },                                                     //      Entrant
+
+	// Spring Thing 2018 - Main Festival
+	{ "stc18_gopher",       "Best Gopher Ever" },                                                       //      Entrant
+	{ "stc18_murderbig",    "Murder on the Big Nothing" },                                              //      Entrant
+
+	// Spring Thing 2019 - Main Festival
+	{ "stc19_pca",          "Porte Cave Adventure" },                                                   //      Entrant
+
+	// Spring Thing 2019 - Back Garden
+	{ "stc19_69105keys",    "69,105 Keys" },                                                            //      Entrant
+
+	// Spring Thing 2021 - Main Festival
+	{ "stc21_takethedogout", "Take the Dog Out" },                                                      //      Entrant
+
+	// Spring Thing 2022 - Main Festival
+	{ "stc22_hypercubic",   "Hypercubic Time Warp All-go-rhythmic Synchrony" },                         //      Entrant
+	{ "stc22_wry",          "Wry" },                                                                    //      Entrant
+
+	// Spring Thing 2023 - Main Festival
+	{ "stc23_mariewaits",   "Marie Waits" },                                                            //      Entrant
 
 	// Danish games
 	{ "nissen",             "Pa Loftet Sidder Nissen" },
@@ -2438,6 +2324,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "ascenseur",          "Ascenseur" },
 	{ "aventure",           "Aventure" },
 	{ "balcon",             "Sorciere au Balcon" },
+	{ "brume",              "Brume" },
 	{ "castelrous",         "Castelrous" },
 	{ "caverne",            "La Caverne des Morlocks" },
 	{ "championbasketball", "Champion de Basket-ball" },
@@ -2445,12 +2332,12 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "ciafr",              "C.I.A. Aventure" },
 	{ "citeeaux",           "La Cité des Eaux" },
 	{ "citronille",         "Citronille" },
-	{ "donjon",             "Le Donjon de BatteMan" },
 	{ "enfant",             "Un Jeu d'Enfant" },
 	{ "escaperoom",         "Escape Room: La pièce Vide" },
 	{ "espions",            "Les Espions Ne Meurent Jamais" },
 	{ "etoiles",            "Celui qui Voulait Décrocher les Etoiles" },
 	{ "femme",              "La Femme Qui Ne Supportait pas Les Ordinateurs" },
+	{ "fenetre",            "Fenêtre sur ma Cour" },
 	{ "filaments",          "Filaments" },
 	{ "grosscarabee",       "Mon Voisin Est un Gros Scarabée" },
 	{ "histoire",           "Une Histoire" },
@@ -2461,366 +2348,449 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "jourdechance",       "Jour de Chance" },
 	{ "katana",             "Le Scarabee et le Katana" },
 	{ "kheper",             "Kheper" },
-	{ "lieuxcommuns",       "Lieux Communs" },
+	{ "lieuxcommuns_zcode", "Lieux Communs" },
 	{ "lifeonmarsfr",       "Life on Mars?" },
 	{ "livraisonexpress",   "Livraison Express" },
 	{ "lmpsd",              "La Mort Pour Seul Destin" },
-	{ "lupercalia",         "Lupercalia" },
+	{ "lupercalia_zcode",   "Lupercalia" },
 	{ "magicien",           "Escape Room: Le Magicien" },
 	{ "memelespommes",      "Même les Pommes de Terre Ont des Yeux!" },
 	{ "mortblue",           "La Mort Bleue" },
 	{ "ombre",              "Ombre" },
+	{ "pantinelectrique",   "Le Pantin Electrique: Prologue" },
 	{ "paranoiafr",         "Paranoia" },
-	{ "petitgnome",         "Petit Gnome" },
+	{ "petitgnome_zcode",   "Petit Gnome" },
 	{ "plicploc",           "Plic Ploc" },
 	{ "princesse",          "Ma Princesse Adoree" },
 	{ "quetedubaal",        "La Quête du Baal" },
 	{ "rats",               "Rats" },
 	{ "recitsdegrandpere",  "Récits de Grand-Père" },
 	{ "routedesvins",       "La Route es Vins" },
-	{ "sarvegne",           "Sarvegne" },
+	{ "sarvegne_zcode",     "Sarvegne" },
 	{ "sdlc",               "Sortir de la Chambre" },
 	{ "secrets",            "Secrets de Pêcheurs" },
 	{ "sorciereaubalcon",   "Sorcière au Balcon, Apprenti en Déraison!" },
 	{ "spoutnik",           "Spoutnik" },
-	{ "stationspatial",     "Station spatiale S16%*&$: Prologue" },
 	{ "sueursfroides",      "Sueurs Froides à l’Institut François-Marie Raoult" },
 	{ "templedefeu",        "Le Temple de Feu" },
 	{ "templenaga",         "Le Temple Nâga" },
 	{ "terres",             "Terres Etrangères" },
 	{ "tristam",            "L'Ile Tristam" },
+	{ "valleemysterieuse",  "La Vallée Mystérieuse" },
 	{ "verdeterre",         "Le Butin du Capitaine Verdeterre" },
 	{ "vindaloofr",         "Vindaloo" },
 
-	// French Comp 2005
-	{ "frc_cercledesgros",  "Le Cercle des Gros Geeks Disparus" },
-	{ "frc_dreamlands",     "Echappee Belle Dans Les Contrees du Reve" },
-	{ "frc_templedefeu",    "Le Temple de Feu" },
+	// French games: French Comp 2005
+	{ "frc_cercledesgros",  "Le Cercle des Gros Geeks Disparus" },                                      //    1st Place
+	{ "frc_dreamlands",     "Echappee Belle Dans Les Contrees du Reve" },                               //    2nd Place
+	{ "frc_templedefeu",    "Le Temple de Feu" },                                                       //    3rd Place
 
-	// French Comp 2006
-	{ "frc_citeeaux",       "La Cité des Eaux" },
-	{ "frc_sarvegne",       "Sarvegne" },
+	// French games: French Comp 2006
+	{ "frc_citeeaux",       "La Cité des Eaux" },                                                       //    1st Place
+	{ "frc_sarvegne",       "Sarvegne" },                                                               //    2nd Place
 
-	// French Comp 2007
-	{ "frc_heuresduvent",   "Heures Du Vent" },
-	{ "frc_divinebonace",   "Divine Bonace" },
-	{ "frc_brrr",           "Brrr!" },
-	{ "frc_phareabandonne", "L'Ile du Phare Abandonné" },
+	// French games: French Comp 2007
+	{ "frc_heuresduvent",   "Heures Du Vent" },                                                         //    1st Place
+	{ "frc_divinebonace",   "Divine Bonace" },                                                          //    2nd Place
+	{ "frc_brrr",           "Brrr!" },                                                                  //    3rd Place
+	{ "frc_ilephare_zcode", "L'Ile du Phare Abandonné" },                                               //    5th Place
 
-	// French Comp 2008
-	{ "frc_brume", "Brume" },
-	{ "frc_lettresvolees",  "Les Lettres Volées" },
-	{ "frc_louplachevre",   "Le Loup, la Chèvre, et la Salade" },
+	// French games: French Comp 2008
+	{ "frc_brume",          "Brume" },                                                                  //    1st Place
+	{ "frc_lettresvolees",  "Les Lettres Volées" },                                                     //    2nd Place
+	{ "frc_louplachevre",   "Le Loup, la Chèvre, et la Salade" },                                       //    4th Place
 
-	// French Comp 2009
-	{ "frc_catapole",       "Catapole" },
-	{ "frc_chambresyrion",  "La Chambre de Syrion" },
-	{ "frc_mechants",       "Les Méchants Meurent au Moins deux Fois" },
+	// French games: French Comp 2009
+	{ "frc_catapole",       "Catapole" },                                                               //    1st Place
+	{ "frc_chambresyrion",  "La Chambre de Syrion" },                                                   //    2nd Place
+	{ "frc_mechants",       "Les Méchants Meurent au Moins deux Fois" },                                //    3rd Place
 
-	// French Comp 2011
-	{ "frc_aventureszeus",  "Les Aventures de Zeus" },
-	{ "frc_dardenfer",      "Dard d'Enfer" },
-	{ "frc_terreciel",      "Entre Terre et Ciel" },
-	{ "frc_astrologue",     "La Grande Prédiction ou l'Astrologue Etourdi" },
-	{ "frc_homelandsec",    "Homeland Security" },
+	// French games: French Comp 2011
+	{ "frc_aventureszeus",  "Les Aventures de Zeus" },                                                  //    1st Place
+	{ "frc_dardenfer",      "Dard d'Enfer" },                                                           //    2nd Place
+	{ "frc_terreciel",      "Entre Terre et Ciel" },                                                    //    3rd Place
+	{ "frc_astrologue",     "La Grande Prédiction ou l'Astrologue Etourdi" },                           //    4th Place
+	{ "frc_homelandsec",    "Homeland Security" },                                                      //    5th Place
 
-	// French Comp 2013
-	{ "frc_lifeonmarsfr",   "Life on Mars?" },
-	{ "frc_sourcedezig",    "La Source de Zig" },
-	{ "frc_trac",           "Trac" },
+	// French games: French Comp 2013
+	{ "frc_lifeonmarsfr",   "Life on Mars?" },                                                          //    1st Place
+	{ "frc_sourcedezig",    "La Source de Zig" },                                                       //    3rd Place
+	{ "frc_trac",           "Trac" },                                                                   //    4th Place
 
-	// French Comp 2015
-	{ "frc_envol",          "L'Envol" },
+	// French games: French Comp 2015
+	{ "frc_envol",          "L'Envol" },                                                                //    1st Place
 
-	// French Comp 2016
-	{ "frc_tipelau",        "Tipelau" },
-	{ "frc_diamantblanc",   "Le Diamant Blanc" },
+	// French games: French Comp 2016
+	{ "frc_tipelau",        "Tipelau" },                                                                //    2nd Place
+	{ "frc_diamantblanc",   "Le Diamant Blanc" },                                                       //    3rd Place
 
-	// French Comp 2018
-	{ "frc_exil",           "L'Exil" },
+	// French games: French Comp 2018
+	{ "frc_exil",           "L'Exil" },                                                                 //    5th Place
+
+	// French games: French Comp 2021
+	{ "frc_donjon",          "Le Donjon de BatteMan" },                                                 //      Entrant
+	{ "frc_stationspatial",  "Station Spatiale S16: Prologue" },                                        //      Entrant
 
 	// German games
 	{ "abenteuer",          "Abenteuer" },
-	{ "absturzmomente",     "Absturzmomente" },
-	{ "ausgerechnet",       "Ausgerechnet Mamph Pamph!" },
 	{ "bearg",              "Ein Bar Geht Aus" },
-	{ "bewerbung",          "Die Bewerbung" },
 	{ "dasspiel",           "Das Spiel, Zuvor Bekannt als Verborgener Nazi-Modus" },
 	{ "debaron",            "De Baron" },
 	{ "deklinator",         "Object Declination Tool" },
-	{ "die5",               "Die 5. Kammer" },
-	{ "dieakte",            "Die Akte Paul Bennet" },
-	{ "dieerstenacht",      "Die Erste Nacht" },
+	{ "dermantel",          "Der Mantel der Finsternis" },
 	{ "diegerechtenricht",  "Die Gerechten Richter" },
-	{ "eden",               "Eden" },
-	{ "emilia",             "Der Tag an dem Emilia W. Verschwand" },
 	{ "eskmausden",         "Es Kam aus den Alpen" },
-	{ "felleisen",          "Das Felleisen" },
-	{ "fischstaebchen",     "Fischstaebchen" },
-	{ "gennorden",          "Gen Norden" },
-	{ "gorgonir",           "Gorgonir" },
 	{ "halb2",              "Halb Zwei" },
-	{ "hausaufgabe",        "Die Hausaufgabe" },
 	{ "herr",               "Die Geschichte des Herrn P. von Hannes Schuller" },
-	{ "jazteg",             "Jazz auf Tegemis" },
 	{ "karisma",            "Klub Karisma" },
 	{ "kleine",             "Der Kleine Halbling" },
 	{ "knack",              "Knack!" },
-	{ "kopialbuch",         "Das Kopialbuch" },
-	{ "lilie",              "Die Schwarze Lilie" },
-	{ "linear",             "Linear" },
 	{ "mchatton",           "Tutorial Eine Einfuhrung in Textadventures von Cooper McHatton" },
 	{ "o",                  "O" },
-	{ "schief",             "Schief" },
+	{ "schiebefehl",        "Schiebefehl" },
 	{ "seestrasse",         "Seestraße" },
-	{ "seite",              "Mein Leben für Seite Drei" },
 	{ "starrider",          "Star Rider" },
 	{ "trampelviecher",     "Trampelvieche: Eine Halloween-Kurzgeschichte" },
-	{ "unterwelt",          "Unterwelt" },
 	{ "wasserhasser",       "Wasser-Hasser" },
 	{ "wichtel",            "Wichtel" },
 
+	// German games: Textfire Grand Prix 2002
+	{ "tgp_eden",           "Eden" },                                                                   //    1st Place
+	{ "tgp_bewerbung",      "Die Bewerbung" },                                                          //    3rd Place
+	{ "tgp_seite",          "Mein Leben für Seite Drei" },                                              //    4th Place
+
+	// German games: Textfire Grand Prix 2003
+	{ "tgp_linear",         "Linear" },                                                                 //    1st Place
+
+	// German games: Textfire Grand Prix 2004
+	{ "tgp_jazteg",         "Jazz auf Tegemis" },                                                       //    1st Place
+	{ "tgp_spater",         "Zwei Jahre später" },                                                      //    4th Place
+	{ "tgp_unterwelt",      "Unterwelt" },                                                              //    5th Place
+	{ "tgp_die5",           "Die 5 Kammer" },                                                           //    8th Place
+	{ "tgp_dichter",        "Dichter" },                                                                //    9th Place
+
+	// German games: Textfire Grand Prix 2005
+	{ "tgp_kopialbuch",     "Das Kopialbuch" },                                                         //    1st Place
+
+	// German games: Textfire Grand Prix 2006
+	{ "tgp_felleisen",      "Das Felleisen" },                                                          //    1st Place
+	{ "tgp_pmason",         "P. Mason und der Schlitzerhans und die Busenkathi" },                      //    2nd Place
+
+	// German games: Textfire Grand Prix 2010
+	{ "tgp_hausaufgabe",    "Die Hausaufgabe" },                                                        //    3rd Place
+	{ "tgp_absturzmomente", "Absturzmomente" },                                                         //    4th Place
+
+	// German games: Textfire Grand Prix 2011
+	{ "tgp_gorgonir",       "Gorgonir" },                                                               //    2nd Place
+	{ "tgp_ausgerechnet",   "Ausgerechnet Mamph Pamph!" },                                              //    4th Place
+
+	// German games: IF Grand Prix 2015
+	{ "tgp_dieakte",        "Die Akte Paul Bennet" },                                                   //    1st Place
+	{ "tgp_lilie",          "Die Schwarze Lilie" },                                                     //    1st Place
+
+	// German games: IF Grand Prix 2016
+	{ "tgp_emilia",         "Der Tag an dem Emilia W. Verschwand" },                                    //    3rd Place
+
+	// German games: IF Grand Prix 2022
+	{ "tgp_schief",         "Schief" },                                                                 //    1st Place
+	{ "tgp_dieerstenacht",  "Die Erste Nacht" },                                                        //    2nd Place
+
+	// German games: IF Grand Prix 2023
+	{ "tgp_fischstaebchen", "Fischstaebchen" },                                                         //    3rd Place
+	{ "tgp_gennorden",      "Gen Norden" },                                                             //    4th Place
+
 	// Italian games
-	{ "aldila",             "Beyond" },
+	{ "africanescape",      "African Escape" },
+	{ "anello",             "L'Anello" },
 	{ "armando",            "L'Armando" },
-	{ "ayon",               "Nel Mondo di Ayon" },
-	{ "darkiss1ita",        "Darkiss! Il bacio del Vampiro - Capitolo 1: Il Risveglio" },
-	{ "darkiss2ita",        "Darkiss! Il bacio del Vampiro - Capitolo 2: Viaggio all'Inferno" },
+	{ "attentiombra",       "Attenti a quell'Ombra" },
+	{ "ayon_zcode",         "Nel Mondo di Ayon" },
+	{ "beyondita_zcode",    "Beyond" },
+	{ "bustadimenticata",   "La Busta Dimenticata" },
+	{ "campusinvad_zcode",  "Campus Invaders" },
+	{ "casamisteriosa",     "Quella Casa Misteriosa Laggiù nella Palude" },
+	{ "cosmic",             "Cosmic Adventure" },
+	{ "darkiss1ita_zcode",  "Darkiss! Il Bacio del Vampiro - Capitolo 1: Il Risveglio" },
+	{ "darkiss2ita_zcode",  "Darkiss! Il Bacio del Vampiro - Capitolo 2: Viaggio all'Inferno" },
+	{ "enigma_zcode",       "Enigma" },
 	{ "filamit",            "Filaments" },
 	{ "flamel",             "Flamel" },
-	{ "giardino",           "Il Giardino Incantato" },
+	{ "fugacropoli_zcode",  "Fuga dall'Acropoli" },
+	{ "giardino_zcode",     "Il Giardino Incantato" },
+	{ "hellosword_ita",     "Hello Sword: Il Viaggio" },
+	{ "intrappola",         "In Trappola" },
+	{ "isolakiller",        "L'Isola del Killer" },
+	{ "jibbidu",            "Jibbidu" },
 	{ "kangourou",          "Kangourou dell'Informatica 2013" },
+	{ "katzrfun",           "Katz R FuN" },
+	{ "killer",             "The Killer His or Her..." },
 	{ "koohinoor",          "Kooh-I-Noor" },
 	{ "lazyjones",          "Lazy Jones e il Meritato Riposo" },
-	{ "luna",               "La Pietra della Luna" },
+	{ "littlefalls_zcode",  "Little Falls" },
+	{ "lucifinanza_zcode",  "Luci della Finanza" },
 	{ "marconi",            "Visita al Marconi" },
+	{ "noalpitour",         "No Alpitour" },
+	{ "noavventura",        "Non Sarà un'Avventura" },
 	{ "oldwest1",           "Pecos Town, Old West Episode I" },
-	{ "poesia",             "Manca Solo un Verso a Quella Poesia" },
+	{ "ordinedragone",      "L'Ordine del Dragone" },
+	{ "paosqura",           "Pasqua Oscura" },
+	{ "pietraluna_zcode",   "La Pietra della Luna" },
+	{ "poesia_zcode",       "Manca Solo un Verso a Quella Poesia" },
+	{ "roccatuono",         "Guilhern di Ob: Ritorno a Rocca del Tuono" },
 	{ "rovo",               "Il Rovo" },
 	{ "scarafaggio",        "Lo Scarafaggio" },
 	{ "sfida",              "Sfida all'Ignoto" },
-	{ "sognodisangue",      "Sogno di Sangue" },
+	{ "sognosangue_zcode",  "Sogno di Sangue" },
+	{ "sparviero",          "Lo Sparviero" },
+	{ "sparviero2",         "Lo Sparviero II: Festa a Blanchefort" },
 	{ "strega",             "La Strega di Maughn" },
-	{ "stregatto",          "Salvate lo Stregatto" },
+	{ "stregatto_zcode",    "Salvate lo Stregatto!" },
 	{ "terkhen",            "Ogul e lo Scettro di Terkhen" },
-	{ "tesla",              "In Cerca di Tesla" },
-	{ "villamorgana",       "Villa Morgana" },
+	{ "tesla_zcode",        "In Cerca di Tesla" },
+	{ "toyshop",            "Toyshop: Negozio di Giocattoli" },
+	{ "trincea",            "Trincea" },
+	{ "villamorgana_zcode", "Villa Morgana" },
+	{ "vita_zcode",         "La Vita? Non Venitemi a Parlare della Vita" },
+	{ "volonta_zcode",      "La Volontà dei Morti" },
 	{ "zazie",              "Zazie, Una Lettura Interattiva" },
 	{ "zenfactorspa",       "ZenFactor Spa" },
-	{ "zigamusita",         "Zigamus: Zombi al Vigamus" },
+	{ "zigamusita_zcode",   "Zigamus: Zombi al Vigamus!" },
 	{ "zombie",             "Uno Zombie a Deadville" },
 	{ "zorkita",            "Zork I: Il Grande Impero Sotterraneo" },
+
+	// Italian games: Marmellata d'Avventura 2018
+	{ "ma_lastprigioniero", "I Cinque Feudi" },
+	{ "ma_skepto",          "Skepto!" },
+	{ "ma_dejavu_zcode",    "Déjà Vu" },
+	{ "ma_lazystranocaso",  "Lazy Jones e lo Strano Caso" },
+	{ "ma_pilastri",        "Sigehao - I Quattro Pilastri" },
+
+	// Italian games: Marmellata d'Avventura 2019
+	{ "ma_salagamescastle", "La Sala dei Giochi del Castello del Signore di Ylourgne in Averoigne" },
+	{ "ma_tesorosalagames", "Il Tesoro della Sala Giochi" },
+	{ "ma_lazysalagiochi",  "Lazy Jones e la Sala Giochi" },
+	{ "ma_5feudi",          "I Cinque Feudi" },
+
+	// Russian games
+	{ "allroads_rus",       "All Roads" },
+	{ "bluechairs_rus",     "Blue Chairs" },
+	{ "metamorphoses_rus",  "Metamorphoses" },
+	{ "photopia_rus",       "Photopia" },
+	{ "spiderandweb_rus",   "Spider and Web" },
 
 	// Slovenian games
 	{ "zenin",              "Zenin na Begu" },
 
 	// Spanish games
-	{ "030307",             "Unidad 030307" },
-	{ "abalanzate",         "Abalanzate" },
 	{ "abismo",             "El Abismo" },
-	{ "aciegas",            "A Ciegas" },
 	{ "acuario",            "Acuario" },
 	{ "adso",               "Adso de Melk" },
-	{ "afuera",             "Afuera" },
-	{ "alemanes",           "Golpe a Los Nazis" },
 	{ "alicia",             "A Trves del Espejo" },
-	{ "amanda",             "Amanda" },
 	{ "anillo",             "El Anillo" },
-	{ "aod",                "Antes o Despuses" },
-	{ "aparato",            "El Aparato" },
-	{ "aque1",              "Aquelarre" },
-	{ "array",              "Array" },
-	{ "asesinato",          "Asesinato en el Continental" },
-	{ "aveces",             "A veces..." },
 	{ "avent",              "Aventurilandia" },
 	{ "aventura",           "Aventura" },
-	{ "aventuraespacial",   "Aventura Espacial" },
-	{ "azul",               "Azul Fuerte" },
-	{ "b1",                 "B1" },
 	{ "bicho",              "El Bicho" },
-	{ "boxman",             "Boxman" },
 	{ "busqueda",           "Busqueda Desperada" },
 	{ "byodspa",            "BYOD" },
 	{ "casarisa",           "La Casa de la Risa" },
-	{ "casi",               "Casi Muerto" },
-	{ "castillosilencio",   "El Castillo del Silencio" },
 	{ "cavernad",           "La Caverna del Drgon de Bronce" },
-	{ "celos",              "Un Asunto de Celos" },
-	{ "cerillera",          "La Pequena Cerillera" },
-	{ "ch3ch2oh",           "CH3-CH2-OH" },
-	{ "churro",             "Churro Patatero" },
-	{ "conrumbozcode",      "Con Rumbo" },
+	{ "corto",              "Corto" },
 	{ "cronicasparaiso",    "Cronicas del Paraiso" },
 	{ "cruzado",            "El Cruzado" },
-	{ "cubo",               "Cubo" },
-	{ "cuentoch",           "Un Cuento Chino" },
 	{ "cueva",              "La Oscura Cueva" },
-	{ "ddddddcrj",          "Cirith Ungol" },
-	{ "decolor",            "Decolor" },
 	{ "despert",            "El Despertar" },
-	{ "diana",              "Diana" },
-	{ "domador",            "El Caso del Misterioso Asesinato del Domador" },
-	{ "draculasp2",         "Dracula: Episodio 2, La Llegada" },
 	{ "draculasp",          "Dracula: Episodio 1, La Primera Noche" },
-	{ "dwight",             "Undeath: El caso de Randolph Dwight" },
 	{ "ecss",               "es.comp.sistemas.sinclair" },
 	{ "edaylobo",           "Eda y el Lobo" },
 	{ "elcontinente",       "El Continente" },
 	{ "ellibro",            "El Libro" },
-	{ "elprotector",        "El Protector" },
-	{ "elultimohogar",      "Misterio en el Ultimo Hogar" },
-	{ "emmy",               "Museo Poetico Emmy" },
 	{ "encierro",           "Encierro" },
-	{ "ergotdelima",        "Lime Ergot" },
-	{ "errordecopia",       "Error de Copia" },
+	{ "ergotdelima_zcode",  "Ergot de Lima" },
 	{ "estacion",           "Secuestro" },
 	{ "excessus",           "Excessus" },
-	{ "faro",               "A lo Lejos, Un Faro" },
 	{ "forrajeo",           "Forrajeo" },
-	{ "fotones",            "Fotones Perdidos" },
 	{ "fotopia",            "Fotopia" },
-	{ "gambito",            "El Gambito Slagar" },
 	{ "geo",                "Geo" },
-	{ "gorbag",             "El Regalo de Gorbag" },
 	{ "gorron",             "El Gorron del Tren" },
-	{ "goteras",            "Goteras" },
-	{ "gusano",             "El Sentir del Gusano" },
 	{ "hampa",              "Historias del Hampa" },
 	{ "heredar",            "Heredar!" },
 	{ "heresville",         "Heresville" },
-	{ "hhorcus",            "Homo Homini Orcus" },
-	{ "hierbacristal",      "Hierba Tras el Cristal" },
 	{ "imposibl",           "Imposible" },
 	{ "islamisteriosa",     "La Isla Misteriosa" },
-	{ "islas",              "El Archipielago" },
 	{ "juguete",            "Jugueteria" },
-	{ "jugueteria",         "La Jugueteria del Mago Zacarias" },
-	{ "kerulen",            "Ke Rulen los Petas, Por Grendelkhan" },
 	{ "laberinto",          "Un Laberinto Acordado" },
-	{ "lamansion",          "La Mansion" },
-	{ "libroaburria",       "El Libro que se Aburría" },
-	{ "lldc",               "La Llamada de Cthulhu" },
 	{ "logicinv",           "Lógica Inversa" },
-	{ "macetas",            "Macetas" },
 	{ "maquina",            "Maquina" },
-	{ "marcopolo",          "Marco Polo" },
 	{ "marsmenace",         "Mars Menace From Outer Space" },
-	{ "mausoleo",           "Yuriko in the Mausoleo" },
-	{ "meeva",              "La Mediana Evasion" },
-	{ "megara",             "Los Placeres de Megara" },
-	{ "memorias",           "Memorias de reXXe" },
-	{ "mimoso",             "The Mimoso Adventure" },
-	{ "modusvivendi",       "An Ancient Roman Tale" },
+	{ "memorias_zcode",     "Memorias de reXXe" },
 	{ "mpdroidone",         "Operacion MPDroid1" },
-	{ "mushahierba",        "Musha Hierba" },
-	{ "navidad",            "Una Pequena Historia de Navidad" },
-	{ "necedad",            "Por la Necedad Humana" },
-	{ "ocaso",              "Ocaso Mortal I: The Bug" },
-	{ "oculta",             "La Cara Oculta de la Luna" },
-	{ "olvido",             "Olvido Mortal" },
-	{ "osito",              "La Intrepida Noche del Osito" },
-	{ "paee",               "Paee" },
-	{ "panajo",             "Pan de Ajo (by Incanus)" },
-	{ "panico",             "Pánico a la Caída" },
-	{ "papi",               "Papi, ¡Cómprame una PlayStation" },
 	{ "paraiso",            "Llave Hacia el Paraíso" },
 	{ "perseo",             "Perseo y Andromeda" },
 	{ "peso",               "Una Cuestión de Peso" },
-	{ "pincoya",            "Ofrenda a La Pincoya" },
 	{ "playera",            "En la Playa" },
-	{ "pozo",               "Al Fondo del Pozo" },
 	{ "premios",            "II Concurso de Mini-Aventuras" },
 	{ "pyramid",            "Piramide de la Perdicion" },
 	{ "quenoche",           "Qué noche!" },
+	{ "quovadis",           "Un Ejemplo de QuoVadis" },
 	{ "raro",               "Raro" },
 	{ "redencionmomificad", "Redención Momificada" },
 	{ "reflejos",           "Reflejos Blancos" },
 	{ "regalo",             "El Regalo de Gorbag" },
-	{ "regentezcode",       "El Anillo Regente" },
-	{ "regreso",            "El Regreso" },
-	{ "remi",               "ReminiscenciaRol" },
-	{ "resaca",             "Resaca" },
 	{ "roleando",           "Roleando" },
 	{ "saee",               "Saee" },
-	{ "senten",             "La Sentencia" },
-	{ "sinclairdemo",       "Sinclair y el Misterio de Glen Quaich" },
+	{ "sgw_zcode",          "Test Para SGW" },
+	{ "sinclairmisterio",   "Sinclair y el Misterio de Glen Quaich" },
 	{ "sinrumbo",           "Sin Rumbo" },
-	{ "sm1pesadillavoraz",  "Serie Minúscula #1: Pesadilla Voraz" },
-	{ "sm2konix",           "Serie Minúscula #2: Konix" },
-	{ "sm3absolutos",       "Serie Minúscula #3: Los Sonidos Absolutos" },
-	{ "sm4culpatuya",       "Serie Minúscula #4: No es Culpa Tuya Maria" },
-	{ "sm6ascenso",         "Serie Minúscula #6: El Ascenso de Kunelar" },
-	{ "sobrevive",          "Sobrevive" },
-	{ "sombras",            "Sombras de Moria" },
-	{ "sonrisas",           "Sonrisas... Y Lagrimas" },
 	{ "tiros",              "Un Día Duro en la Sala de Tiro" },
-	{ "tokland",            "La Isla de Tokland" },
 	{ "toma",               "Toma el Telfono y di E" },
-	{ "torre",              "Misterio en la Torre" },
 	{ "trapero",            "El Trapero Cantando" },
 	{ "tribu",              "La TrIbU" },
-	{ "trono",              "El Trono de Inglaterra" },
-	{ "umami",              "El Día del Umami" },
 	{ "varenna",            "Varenna Quest I: El Castillo de la Rosa Negra" },
-	{ "venenariusverborum", "Venenarius Verborum" },
-	{ "visitantes",         "Visitantes" },
 	{ "waxworksspa",        "Adventura de Misterio #11: Museo de Cera" },
 	{ "zipi",               "Zipi" },
 	{ "zna",                "Zna No es una Aventura" },
 
-	// Spanish games; "BreveComp2" Competition
-	{ "bc2_castillo",       "El Castillo de los Lamentos" },
-	{ "bc2_cubo",           "Cubo" },
-	{ "bc2_libroaburria",   "El Libro que se Aburría" },
-	{ "bc2_lunasp",         "La Sombra de la Luna Negra" },
-	{ "bc2_mimoso",         "The Mimoso Adventure" },
-	{ "bc2_rural",          "Rural" },
+	// Spanish games: Ectocomp 2017 - Le Grand Guignol
+	{ "ec17_decolor",       "Decolor" },                                                                //    3rd Place
 
-	// Spanish games; "FIComp2008" Competition
-	{ "fic_macetas",        "Macetas" },
+	// Spanish games: Ectocomp 2022 - Le Grand Guignol
+	{ "ec22_estadop_zcode", "Estado Profundo" },                                                        //    2nd Place
 
-	// Spanish games; "MedievoComp" Competition
-	{ "mc_bardo",           "La Canción del Bardo" },
-	{ "mc_trono",           "El Trono de Inglaterra" },
+	// Spanish games: Premios Hispanos 2000
+	{ "ph00_abalanzate",    "Abalanzate" },
+	{ "ph00_alemanes",      "Golpe a Los Nazis" },
+	{ "ph00_aparato",       "El Aparato" },
+	{ "ph00_aque1",         "Aquelarre" },
+	{ "ph00_b1",            "B1" },
+	{ "ph00_casi",          "Casi Muerto" },
+	{ "ph00_csa",           "Cacahuetes, Sal y Aceite" },
+	{ "ph00_cuentoch",      "Cuento Chino" },
+	{ "ph00_faro00",        "A lo Lejos, Un Faro" },
+	{ "ph00_fotones",       "Fotones Perdidos" },
+	{ "ph00_gusano",        "El Sentir del Gusano" },
+	{ "ph00_olvido_zcode",  "Olvido Mortal" },
+	{ "ph00_papi",          "Papi, ¡Cómprame una PlayStation" },
+	{ "ph00_senten",        "La Sentencia" },
+	{ "ph00_torre",         "Misterio en la Torre" },
+	{ "ph00_tokland",       "La Isla de Tokland" },
 
-	// Spanish games; "NanoComp I" Competition
-	{ "csa",                "Cacahuetes, Sal y Aceite" },
+	// Spanish games: Premios Hispanos 2001
+	{ "ph01_aciegas",       "A Ciegas" },
+	{ "ph01_celos",         "Un Asunto de Celos" },
+	{ "ph01_ch3ch2oh",      "CH3-CH2-OH" },
+	{ "ph01_churro",        "Churro Patatero" },
+	{ "ph01_conrumb_zcode", "Con Rumbo" },
+	{ "ph01_lldc",          "La Llamada de Cthulhu" },
+	{ "ph01_necedad",       "Por la Necedad Humana" },
+	{ "ph01_ocaso",         "Ocaso Mortal I: The Bug" },
+	{ "ph01_segapark",      "Aventurero en el Segapark" },
 
-	// Spanish games; "NanoComp III" Competition
-	{ "n3_aveces",          "A veces..." },
-	{ "n3_cv",              "Curriculum Vitae" },
-	{ "n3_declina",         "Declinación Mortal" },
-	{ "n3_ligue",           "Ligue en Ciutat la Nit" },
-	{ "n3_obituario",       "Obituario" },
-	{ "n3_pruebafisica",    "Prueba Física" },
+	// Spanish games: Premios Hispanos 2002
+	{ "ph02_asesinato",     "Asesinato en el Continental" },
+	{ "ph02_aveces",        "A Veces..." },
+	{ "ph02_cv",            "Curriculum Vitae" },
+	{ "ph02_ddddddcrj",     "Cirith Ungol" },
+	{ "ph02_declina",       "Declinación Mortal" },
+	{ "ph02_jugueteria",    "La Jugueteria del Mago Zacarias" },
+	{ "ph02_ligue",         "Ligue en Ciutat la Nit" },
+	{ "ph02_meeva",         "La Mediana Evasion" },
+	{ "ph02_obituario",     "Obituario" },
+	{ "ph02_osito",         "La Intrepida Noche del Osito" },
+	{ "ph02_pruebafisica",  "Prueba Física" },
+	{ "ph02_regente_zcode", "El Anillo Regente" },
+	{ "ph02_sombras",       "Sombras de Moria" },
+	{ "ph02_ultimohogar",   "Misterio en el Ultimo Hogar" },
 
-	// Spanish games; "NanoComp IV" Competition
-	{ "n4_aluzine",         "Aluzine" },
-	{ "n4_domador",         "El Caso del Misterioso Asesinato del Domador" },
-	{ "n4_otrpalab",        "En Otras Palabras" },
+	// Spanish games: Premios Hispanos 2003
+	{ "ph03_aluzine",       "Aluzine" },
+	{ "ph03_array",         "Array" },
+	{ "ph03_castillo",      "El Castillo de los Lamentos" },
+	{ "ph03_cubo",          "Cubo" },
+	{ "ph03_domador",       "El Caso del Misterioso Asesinato del Domador" },
+	{ "ph03_dwight_zcode",  "El Extraño Caso de Randolph Dwight" },
+	{ "ph03_libroaburria",  "El Libro que se Aburría" },
+	{ "ph03_lunasp",        "La Sombra de la Luna Negra" },
+	{ "ph03_mimoso",        "The Mimoso Adventure" },
+	{ "ph03_otrpalab",      "En Otras Palabras" },
+	{ "ph03_rural",         "La Aventura Rural" },
 
-	// Spanish games; "RetroComp 2004" Competition
-	{ "rc04_remi",          "ReminiscenciaRol" },
+	// Spanish games: Premios Hispanos 2004
+	{ "ph04_islas",         "El Archipielago" },
+	{ "ph04_lamansion",     "La Mansion" },
+	{ "ph04_navidad",       "Una Pequena Historia de Navidad" },
+	{ "ph04_oculta",        "La Cara Oculta de la Luna" },
+	{ "ph04_remi",          "ReminiscenciaRol" },
 
-	// Spanish games; "RetroComp 2006" Competition
-	{ "rc06_elgatocheko",   "El Gato Cheko" },
+	// Spanish games: Premios Hispanos 2005
+	{ "ph05_castilsilenco", "El Castillo del Silencio" },
+	{ "ph05_pozo",          "Al Fondo del Pozo" },
+	{ "ph05_elprotector",   "El Protector" },
+	{ "ph05_leminscata",    "Leminscata" },
+	{ "ph05_bardo",         "La Canción del Bardo" },
+	{ "ph05_trono",         "El Trono de Inglaterra" },
+	{ "ph05_romanfredo",    "Romanfredo" },
 
-	// Spanish games; "XComp 2005" Competition
-	{ "xc05_lemniscata",    "Lemniscata" },
-	{ "xc05_romanfredo",    "Romanfredo" },
+	// Spanish games: Premios Hispanos 2006
+	{ "ph06_draculasp2",    "Dracula: Episodio 2, La Llegada" },
+	{ "ph06_elgatocheko",   "El Gato Cheko" },
+	{ "ph06_goteras",       "Goteras" },
+	{ "ph06_paee_zcode",    "Paee" },
+	{ "ph06_regreso",       "El Regreso" },
+	{ "ph06_resaca",        "Resaca" },
 
-	// Spanish games; "XComp 2008" Competition
-	{ "xc08_sm4culpatuya",  "Serie Minúscula #4: No es Culpa Tuya Maria" },
-	{ "xc08_pronto",        "Pronto" },
+	// Spanish games: into Premios Hispanos 2007
+	{ "ph07_030307",        "Unidad 030307" },
+	{ "ph07_afuera",        "Afuera" },
+	{ "ph07_aod",           "Antes o Despuses" },
+	{ "ph07_boxman",        "Boxman" },
+	{ "ph07_edc_zcode",     "Error de Copia" },
+	{ "ph07_faro07",        "A lo Lejos, Un Faro" },
+	{ "ph07_htec_zcode",    "Hierba Tras el Cristal" },
+	{ "ph07_macetas",       "Macetas" },
+	{ "ph07_marcopolo",     "Marco Polo" },
+	{ "ph07_mausoleo",      "Yuriko in the Mausoleo" },
+	{ "ph07_umami",         "El Día del Umami" },
+
+	// Spanish games: Premios Hispanos 2008
+	{ "ph08_diana_zcode",   "Diana" },
+	{ "ph08_emmy",          "Museo Poetico Emmy" },
+	{ "ph08_gambito",       "El Gambito Slagar" },
+	{ "ph08_mushahierba",   "Musha Hierba" },
+	{ "ph08_pincoya",       "Ofrenda a La Pincoya" },
+	{ "ph08_pronto",        "Pronto" },
+	{ "ph08_sm1pesadilla",  "Serie Minúscula #1: Pesadilla Voraz" },
+	{ "ph08_sm2konix",      "Serie Minúscula #2: Konix" },
+	{ "ph08_sm3absolutos",  "Serie Minúscula #3: Los Sonidos Absolutos" },
+	{ "ph08_sm4culpatuya",  "Serie Minúscula #4: No es Culpa Tuya Maria" },
+	{ "ph08_sonrisas",      "Sonrisas... Y Lagrimas" },
+	{ "ph08_venenaverbo",   "Venenarius Verborum" },
+
+	// Spanish games: Premios Hispanos 2009
+	{ "ph09_amanda",        "Amanda" },
+	{ "ph09_gorbag",        "El Regalo de Gorbag" },
+	{ "ph09_hhorcus_zcode", "Homo Homini Orcus" },
+	{ "ph09_kerulen",       "Ke Rulen los Petas" },
+	{ "ph09_lae_zcode",     "La Aventura Espacial" },
+	{ "ph09_megara",        "Los Placeres de Megara" },
+	{ "ph09_panajo",        "Pan de Ajo" },
+	{ "ph09_sm6ascenso",    "Serie Minúscula #6: El Ascenso de Kunelar" },
+	{ "ph09_visitantes",    "Visitantes" },
+
+	// Spanish games: Premios Hispanos 2010
+	{ "ph10_azul",          "Azul Fuerte" },
+	{ "ph10_lpc_zcode",     "La Pequena Cerillera" },
+	{ "ph10_modusvivendi",  "Modus Vivendi" },
+	{ "ph10_panico",        "Pánico a la Caída" },
+	{ "ph10_sobrevive",     "Sobrevive" },
 
 	// Swedish games
 	{ "aventyr",            "Aventyr" },
-	{ "drakmagi",           "Drakmagi" },
+	{ "drakmagi_zcode",     "Drakmagi" },
 	{ "hotellet",           "Hotel Noir" },
 	{ "pangnyheten",        "Pangnyheten" },
 	{ "storforsen",         "Storforsen" },
 	{ "stuga",              "Stuga" },
-	{ "vanyar",             "Vanyar" },
+	{ "vanyar_zcode",       "Vanyar" },
 
 	// Playfic games
 	{ "1hour52min15sec",    "1 Hour, 52 Minutes, 15 Seconds" },
@@ -2835,67 +2805,143 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "1948",               "1948" },
 	{ "1984",               "1984" },
 	{ "2084",               "2084" },
+	{ "a221",               "A-221" },
+	{ "abandonedneigh",     "The Abandoned Neighborhood" },
+	{ "abandonhospital_ms", "Abandoned Hospital (by Michelle Santiago)" },
+	{ "abandonhospital_an", "Abandoned Hospital (by Anonymous)" },
+	{ "aboringroom",        "A Boring Room" },
+	{ "abramelin",          "Abramelin" },
+	{ "acadecwars",         "Acadec Wars" },
+	{ "accusations",        "Accusations!" },
+	{ "achangeofheart",     "A Change of Heart" },
+	{ "achilles",           "Achilles" },
+	{ "aclutteredroom",     "A Cluttered Room" },
 	{ "acoldfrostymorning", "A Cold Frosty Morning" },
 	{ "aconversation",      "A Conversation" },
+	{ "adamsplashes",       "Adam Splashes" },
 	{ "adayforspelling",    "A Day for Spelling" },
 	{ "adayinthealex",      "A Day in the Alex" },
+	{ "adayintheoffice",    "A Day in the Office" },
 	{ "adaylifejeymarlowe", "A Day in the Life of Joey Marlowe" },
 	{ "adayinthelife",      "A Day in the Life of a Teenage Wizard" },
-	{ "adventcrowther",     "Will Crowther’s Adventure" },
-	{ "aforgottenworld",    "A Forgotten World" },
-	{ "agenerallybadday",   "A Generally Bad Day" },
-	{ "agrovegame",         "A Grove Game" },
-	{ "ahorrificadvcomedy", "A Horrific Adventure in Comedy" },
-	{ "aknightsquest",      "A Knight's Quest" },
-	{ "amatteroftiming",    "A Matter of Timing" },
-	{ "ameadow",            "A Meadow" },
-	{ "amodestproposal",    "A Modest Proposal" },
-	{ "amurdermystery",     "A Murder Mystery" },
-	{ "anotsonormaltemple", "A Not-So-Normal Temple" },
-	{ "aperfectdayforit",   "A Perfect Day for It" },
-	{ "arainynight",        "A Rainy Night" },
-	{ "aseparatepeace",     "A Separate Peace" },
-	{ "aslowdayatwork",     "A Slow Day at Work" },
-	{ "astrangesdventure",  "A Strange Adventure" },
-	{ "ataleofbarizan",     "A Tale of Barizan" },
-	{ "atourofthelouvre",   "A Tour of the Louvre" },
-	{ "atriptoucla",        "A Trip to UCLA" },
-	{ "averybadjoke",       "A Very Bad Joke" },
-	{ "averyniceman",       "A Very Nice Man" },
-	{ "awarning",           "A Warning, and Then Silence" },
-	{ "a221",               "A-221" },
-	{ "abandonedhospital",  "Abandoned Hospital" },
-	{ "abramelin",          "Abramelin" },
-	{ "achilles",           "Achilles" },
-	{ "adamsplashes",       "Adam Splashes" },
 	{ "advancedastronomy",  "Advanced Astronomy and Grief Counseling" },
+	{ "adventcrowther",     "Will Crowther’s Adventure" },
+	{ "adventurapf",        "Adventura" },
+	{ "adventurenews",      "Adventure News" },
+	{ "adventurerback",     "An Adventurer's Backyard" },
 	{ "adventuresinspace",  "Adventures in Space" },
+	{ "adventuresww",       "Adventures at WebWise" },
+	{ "adwenturesprincess", "Adwentures of Princess" },
+	{ "afairytaleoddity",   "A Fairytale Oddity" },
+	{ "aforgottenmurder",   "A Forgotten Murder" },
+	{ "aforgottenworld",    "A Forgotten World" },
 	{ "againsthingsending", "Against All Things Ending" },
-	{ "alchemistgold",      "Alchemist's Gold" },
+	{ "agame",              "A Game" },
+	{ "agameaboutyou",      "A Game About You" },
+	{ "agameoffiefs",       "A Game of Fiefs" },
+	{ "agenerallybadday",   "A Generally Bad Day" },
+	{ "agescat1stadv",      "AGES: Cat's First Adventure" },
+	{ "agrovegame",         "A Grove Game" },
+	{ "ahole",              "A Hole" },
+	{ "ahorrificadvcomedy", "A Horrific Adventure in Comedy" },
+	{ "ahouse",             "A House" },
+	{ "ahousetour",         "A House Tour" },
+	{ "ajourney2paradise",  "A Journey to Paradise" },
+	{ "aknighthisquest",    "A Knight and His Quest" },
+	{ "aknightsquest",      "A Knight's Quest" },
+	{ "akonpliayiti",       "Akonpli Ayiti" },
+	{ "alexeivsevilpeps",   "Alexei versus the Evil Peps" },
 	{ "aliceintwistedland", "Alice in Twistedland" },
 	{ "alienabductescape",  "Alien Abduction Escape" },
+	{ "alilaboratoryroom",  "Ali Laboratory Room" },
+	{ "allaboard",          "All Aboard!" },
+	{ "allerton",           "Allerton" },
+	{ "alleywaypossums",    "Alleyway Possums" },
 	{ "alloneneedscarrot",  "All One Needs Is a Carrot" },
+	{ "alone",              "Alone" },
+	{ "alonglayover",       "A Long Layover" },
+	{ "alostmemory",        "A Lost Memory" },
+	{ "alternianforest",    "Alternian Forest" },
 	{ "almostadream",       "Almost a Dream" },
-	{ "amnesiazcode",       "Amnesia" },
+	{ "amatteroftiming",    "A Matter of Timing" },
+	{ "amazetwistypass",    "A Maze of Twisty Passages" },
+	{ "ameadow",            "A Meadow" },
+	{ "amnesiapf",          "Amnesia" },
+	{ "amnesie",            "Amnesie" },
+	{ "amodestproposal",    "A Modest Proposal" },
+	{ "amrnecklace",        "AMR Necklace" },
+	{ "amurder",            "A Murder" },
+	{ "amurdermystery",     "A Murder Mystery" },
 	{ "analchemicaladvent", "An Alchemical Adventure" },
+	{ "anadventurertale",   "An Adventurer's Tale" },
+	{ "anaponthebeach",     "A Nap on The Beach" },
 	{ "anartistneeds",      "An Artist Needs Supplies" },
+	{ "angeldustartgal",    "Angel Dust Art Gallery" },
+	{ "animalapocalypse",   "Animal Apocalypse" },
+	{ "animalfarm",         "Animal Farm" },
+	{ "annoyathon",         "Annoyathon" },
+	{ "anormalday",         "A Normal Day" },
+	{ "anotherartgallery",  "Another Art Gallery" },
 	{ "anotherolddude",     "Another Old Dude From the 80’s" },
+	{ "anotsonormaltemple", "A Not-So-Normal Temple" },
 	{ "ant129finalproject", "ANT129 Final Project" },
+	{ "antidotes",          "Antidotes" },
+	{ "aperfectdayforit",   "A Perfect Day for It" },
 	{ "apocalypse",         "Apocalypse" },
-	{ "apocalypsech12",     "Apocalypse Now - Chapters 1 + 2" },
 	{ "apocalypsech1",      "Apocalypse Now - Chapters 1: Just Another Day" },
+	{ "apocalypsech12",     "Apocalypse Now - Chapters 1 + 2" },
+	{ "apocalypserising",   "Apocalypse Rising" },
 	{ "applemansion",       "Apple Mansion" },
+	{ "applestwoapples",    "Apples, Two Apples" },
 	{ "apprenticeschg",     "Apprentice's Challenge" },
+	{ "arainynight",        "A Rainy Night" },
+	{ "arcadeescape",       "Arcade Escape" },
+	{ "arealbeach",         "A Real Beach" },
+	{ "areaone",            "Area One" },
 	{ "arlocompendiumch1",  "Arlo & the Compendium: Chapter 1 - Hunger Pains" },
 	{ "arlocompendiumch2",  "Arlo & the Compendium: Chapter 2 - The Search for Shock Fruit" },
+	{ "armorsandbuffs",     "Armors and Buffs" },
+	{ "aroundthehouse",     "Around the House" },
 	{ "artiststhenewdeal",  "Artists in the New Deal" },
+	{ "aseparatepeace",     "A Separate Peace" },
+	{ "ash",                "Ash" },
+	{ "ashorti7demo",       "A Short I7 Demonstration" },
+	{ "aslowdayatwork",     "A Slow Day at Work" },
+	{ "assasin",            "Assasin" },
 	{ "assessmentmatters",  "Assessment Matters" },
+	{ "astrangesdventure",  "A Strange Adventure" },
+	{ "asurpriseparty",     "A Surprise Party" },
+	{ "asylumpf",           "Asylum" },
+	{ "ataleofbarizan",     "A Tale of Barizan" },
+	{ "atestgame",          "A Test Game" },
+	{ "atlantic",           "Atlantic" },
+	{ "atob",               "A to B" },
+	{ "atomicmeat",         "Atomic Meat" },
+	{ "atourofthelouvre",   "A Tour of the Louvre" },
+	{ "atrailhead",         "A Trailhead" },
+	{ "atraingame",         "A Train Game" },
+	{ "atriptoucla",        "A Trip to UCLA" },
+	{ "attackkillerjarod",  "Attack of the Killer Jarod in a Care Bear Suit" },
+	{ "atthelibrary",       "At the Library" },
+	{ "audeldesapparences", "Au-Del Des Apparences" },
+	{ "audioguide",         "Audioguide" },
+	{ "augh",               "Augh!" },
+	{ "austinhyattlivedie", "Austin and Hyatt's Live or Die" },
+	{ "averybadjoke",       "A Very Bad Joke" },
+	{ "averyimpstory",      "A Very Important Story" },
+	{ "averyniceman",       "A Very Nice Man" },
 	{ "averysmissingtrain", "Avery's Missing Train" },
+	{ "averystupidgame",    "A Very Stupid Game" },
+	{ "awake",              "Awake" },
+	{ "awakeningpf",        "Awakening" },
+	{ "awarriorcatsmm",     "A Warrior Cats MM!" },
+	{ "awarning",           "A Warning, and Then Silence" },
+	{ "awayout",            "A Way Out" },
 	{ "babysteps",          "Baby Steps" },
 	{ "babytroubles",       "Baby Troubles" },
 	{ "bakerbonanza",       "Baker Bonanza" },
 	{ "bananaquest",        "Banana Quest" },
-	{ "barroombrawlzcode",  "Barroom Brawl" },
+	{ "barroombrawl_zcode", "Barroom Brawl" },
 	{ "base0",              "Base 0" },
 	{ "bearsadventure",     "Bear's Adventure" },
 	{ "beepboopboopbop",    "Beep Boop Boop Bop" },
@@ -2915,7 +2961,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "candyland",          "Candy Land" },
 	{ "cannibals",          "Cannibals" },
 	{ "cardinal",           "Cardina!" },
-	{ "castlezcode",        "Castle" },
+	{ "castle",             "Castle" },
 	{ "caveescape",         "Cave Escape" },
 	{ "ceremony",           "Ceremony" },
 	{ "chaldeabuffet",      "Chaldea Buffet" },
@@ -2928,6 +2974,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "coffeetime",         "Coffee Time!" },
 	{ "coffinofchaos",      "Coffin of Chaos" },
 	{ "colbysunusualday",   "Colby's Unusual Day" },
+	{ "coleandmichael",     "Cole and Michael" },
 	{ "colinexplore1984",   "Colin Explore 1984" },
 	{ "colonialproject",    "Colonial Project" },
 	{ "complimentarypean",  "Complimentary Peanuts" },
@@ -2952,12 +2999,13 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "dayoff",             "Day Off" },
 	{ "daythyme",           "Day Thyme" },
 	{ "dcblues",            "DC Blues" },
-	{ "demiddeleeuwen",     "De Middeleeuwen" },
-	{ "deadmansgrave",      "Dead Man's Grave: A Tell Don't Show Mystery" },
-	{ "deadsprint",         "Dead Sprint" },
 	{ "deadication",        "Dead-ication" },
-	{ "demonhunterzcode",   "Demon Hunter" },
+	{ "deadmansgrave",      "Dead Man's Grave" },
+	{ "deadsprint",         "Dead Sprint" },
+	{ "decisionsdecisions", "Decisions, Decisions" },
+	{ "demiddeleeuwen",     "De Middeleeuwen" },
 	{ "demonetization",     "Demonetization" },
+	{ "demonhunterpf",      "Demon Hunter" },
 	{ "deoxiousevent2015",  "Deoxious Event 2015" },
 	{ "depressed",          "Depressed" },
 	{ "detectiveconan",     "Detective Conan" },
@@ -3004,15 +3052,17 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "escapethewizcastle", "Escape the Wizard's Castle" },
 	{ "escapedprisoner",    "Escaped Prisoner" },
 	{ "escapingprison",     "Escaping Prison" },
-	{ "experimentzcode",    "Experiment" },
+	{ "experimentpf",       "Experiment" },
 	{ "exploratriceperdue", "L'Exploratrice Perdue" },
 	{ "exterminsim2014",    "Exterminator Simulator 2014" },
 	{ "faction11",          "Faction 11" },
 	{ "fairyring",          "Fairy Ring" },
 	{ "finallythefestival", "Finally the Festival" },
+	{ "findairplanekey",    "Find the Airplane Key" },
 	{ "findjoker",          "Find Joker" },
 	{ "findmealiger",       "Find Me a Liger!" },
 	{ "findmystethoscope",  "Find My Stethoscope" },
+	{ "findpurplesteve",    "Find Purple Steve" },
 	{ "findthatchinchilla", "Find That Chinchilla" },
 	{ "findthecookie",      "Find the Cookie" },
 	{ "findyourjuprof",     "Find Your JU Professor" },
@@ -3029,7 +3079,9 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "freeparking",        "Free Parking" },
 	{ "freighterraphus",    "Freighter Raphus" },
 	{ "fridayafteroffice",  "Friday Afternoon in the Office" },
-	{ "fungus",             "Fungus, a Super Mario Interactive Fan Fiction" },
+	{ "fromportlandxoxo",   "From Portland Get XOXO" },
+	{ "fungus",             "Fungus" },
+	{ "futurebookshop",     "#futurebookshop" },
 	{ "galisancommence",    "Galisan, Le Commencement" },
 	{ "gamerstereotypes",   "Gamer Stereotypes" },
 	{ "generations",        "Generations" },
@@ -3039,6 +3091,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "getoutofthehouse",   "Get Out of the House" },
 	{ "getthatcat",         "Get That Cat!" },
 	{ "getyourlifeback",    "Get Your Life Back" },
+	{ "ghosttownpf",        "Ghost Town" },
 	{ "gilberttheelephant", "Gilbert the Elephant and Albert the Fish" },
 	{ "giornogiovannas",    "Giorno Giovanna's Worst Dream" },
 	{ "gotakeashower",      "Go Take a Shower" },
@@ -3071,14 +3124,16 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "houseoflafayette",   "House of Lafayette Street" },
 	{ "howlsmovingcastle",  "Howl's Moving Castle" },
 	{ "hungoverinbelfast",  "Hungover in Belfast" },
+	{ "idontevenknow",      "I Don't Even Know" },
 	{ "iliketrains",        "I Like Trains" },
 	{ "illusion",           "Illusion" },
 	{ "imprieteneasca",     "Imprieteneasca - Chapter 1: INCEPE" },
 	{ "inthebasement",      "In the Basement" },
 	{ "inception",          "Inception" },
 	{ "inferno",            "Inferno" },
+	{ "infiltrator",        "The Infiltrator Present Within our Midst" },
 	{ "infinitydestiny",    "Infinity Destiny" },
-	{ "inheritancezcode",   "Inheritance" },
+	{ "inheritancepf",      "Inheritance" },
 	{ "insaneasylum",       "Insane Asylum" },
 	{ "isthisacowfantasy",  "Is This a Cow or Just Fantasy" },
 	{ "isiscrisis",         "ISIS Crisis" },
@@ -3093,6 +3148,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "juliuscaesar",       "Julius Caesar" },
 	{ "junglesearch",       "Jungle Search" },
 	{ "keepingdido",        "Keeping Dido" },
+	{ "killthedisease",     "Kill the Disease!" },
 	{ "kingheartbuildraft", "Kingdom Hearts: Building the Raft" },
 	{ "kingheartdangerous", "Kingdom Hearts: It's Dangerous to Go Alone" },
 	{ "kingdomofamphibia",  "Kingdom of Amphibia" },
@@ -3108,9 +3164,9 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "leosrage",           "Leo's Rage" },
 	{ "lesgaleriemaudites", "Les Galeries Maudites" },
 	{ "lieblingshause",     "Lieblings Hause" },
-	{ "lifezcode",          "Life" },
 	{ "lifeaftertesting",   "Life After Testing" },
 	{ "lifegoals",          "Life Goals" },
+	{ "lifepf",             "Life" },
 	{ "limbo",              "Limbo" },
 	{ "lines",              "Lines" },
 	{ "littleharmoniclab",  "Little Harmonic Labyrinth" },
@@ -3123,6 +3179,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "lookingforfulton",   "Looking for Fulton" },
 	{ "lostandafraid",      "Lost and Afraid" },
 	{ "lostaxe",            "Lost Axe" },
+	{ "lostchicken",        "Lost Chicken" },
 	{ "lostduck",           "Lost Duck" },
 	{ "lostintheforest",    "Lost in the Forest" },
 	{ "lostinthejungle",    "Lost in the Jungle" },
@@ -3144,7 +3201,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "mcmansion",          "McMansion" },
 	{ "medievaljailbreak",  "Medieval Jail Break" },
 	{ "meetingtime",        "Meeting Time!" },
-	{ "memorieszcode",      "Memories" },
+	{ "memoriespf",           "Memories" },
 	{ "micasa",             "Mi Casa" },
 	{ "middeleeuwsdrama",   "Een Middeleeuws Drama" },
 	{ "midnightlibrary",    "Midnight Library" },
@@ -3166,10 +3223,12 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "murderincourtyard",  "Murder in the Courtyard" },
 	{ "murdermystery",      "Murder Mystery" },
 	{ "murderspicemansion", "A Murder at the Spice Mansion" },
+	{ "mushrooms",          "Mushrooms" },
 	{ "myjapanesemyth",     "My Japanese Myth" },
-	{ "mysterymanorzcode",  "Mystery Manor" },
+	{ "mysterymanorpf",     "Mystery Manor" },
+	{ "mysteriousadv",      "The Mysterious Adventure" },
 	{ "mysterysottomarin",  "Mystery of the Sottomarin" },
-	{ "nautilisia",         "Nautilisia" },
+	{ "nautilisia_zcode",   "Nautilisia" },
 	{ "needingawee",        "Needing a Wee" },
 	{ "neithersense",       "Neither Sense Nor Sensibility" },
 	{ "newdealhitman",      "New Deal Hitman" },
@@ -3191,15 +3250,16 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "piecethingtogether", "Piecing Things Together" },
 	{ "piratesofhighseas",  "Pirates of the High Seas" },
 	{ "pitchblack",         "Pitch Black" },
-	{ "playwithrocco",      "Play with Rocco" },
+	{ "playwithrocco",      "Play With Rocco" },
 	{ "playfictutorial",    "Playfic Tutorial" },
 	{ "ploc",               "PLOC" },
 	{ "poisoned",           "Poisoned" },
 	{ "policyhobo",         "Policy Hobo" },
+	{ "powerkeys",          "The Power of the Keys" },
 	{ "prankken",           "Prank Ken" },
 	{ "presidentialrace",   "Presidential Race!" },
 	{ "princtextfghturbo",  "Princess Text Fighter Turbo" },
-	{ "prisonbreakzcode",   "Prison Break" },
+	{ "prisonbreakpf",      "Prison Break" },
 	{ "prisonescape",       "Prison Escape" },
 	{ "prisonerdrunkenera", "Prisoner of the Drunken Era" },
 	{ "projetinform",       "Projet Inform" },
@@ -3299,7 +3359,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "suicideprevention",  "Suicide Prevention" },
 	{ "summertimeshy",      "Summertime Shy" },
 	{ "sunrise",            "Sunrise" },
-	{ "survivalrun",        "Survival: Run from the Zombies" },
+	{ "survivalrun",        "Survival: Run From the Zombies" },
 	{ "survival",           "Survival!" },
 	{ "survivemathclass",   "Survive Math Class" },
 	{ "survseafoamisle4",   "Survivor Seafoam Islands IV: Three Tribes, Three Shibes" },
@@ -3317,6 +3377,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "theanniversary",     "The Anniversary" },
 	{ "thebabysitter",      "The Babysitter" },
 	{ "thebambooheist",     "The Bamboo Heist" },
+	{ "thebasement",        "The Basement" },
 	{ "thebieberfevprob",   "The Bieber Fever Problem" },
 	{ "thebiter",           "The Biter" },
 	{ "thebumblebeeband",   "The Bumblebee and the Bandaid" },
@@ -3340,11 +3401,11 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "theheist",           "The Heist" },
 	{ "thehideworldmathew", "The Hidden World of Matthew Ford" },
 	{ "theinnermostproj",   "The Innermost Project" },
-	{ "theislandzcode",     "The Island" },
+	{ "theislandpf",        "The Island" },
 	{ "thejewelheist",      "The Jewel Heist" },
 	{ "thejourneylifetime", "The Journey of a Life Time" },
-	{ "thelabyrinthzcode",  "The Labyrinth" },
-	{ "thelibraryzcode",    "The Library" },
+	{ "thelabyrinthpf",     "The Labyrinth" },
+	{ "thelibrarypf",       "The Library" },
 	{ "thelightprince",     "The Light Prince" },
 	{ "themachine",         "The Machine" },
 	{ "themafiagenerator",  "The Mafia Generator" },
@@ -3393,6 +3454,7 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "trainofthought",     "Train of Thought" },
 	{ "treasurehunting",    "Treasure Hunting" },
 	{ "tvdream",            "TV Dream" },
+	{ "twilightmansion",    "Twilight Mansion" },
 	{ "un1015lostsoul",     "UN 1015 Lost Soul" },
 	{ "un1015tminus59min",  "UN1015 T-Minus 59 Minutes" },
 	{ "undercoop",          "Undercoop" },
@@ -3414,13 +3476,59 @@ const PlainGameDescriptor ZCODE_GAME_LIST[] = {
 	{ "witchcamebridge",    "Witch Camebridge" },
 	{ "wohingehstdu",       "Wohin Gehst Du?" },
 	{ "wrenchedanddivine",  "Wrenched and Divine" },
-	{ "wrenlaw",            "Wrenlaw" },
+	{ "wrenlaw_zcode",      "Wrenlaw" },
 	{ "yemagykqueste",      "Ye Magyk Queste" },
 	{ "youhavefreemanatee", "You Have to Free the Manatee" },
 	{ "yourang",            "You Rang" },
-	{ "youvegotastewgoing", "You've Got a Stew Going!" },
 	{ "yourgovneedsyou",    "Your Government Needs You" },
 	{ "zombiefacuacademy",  "Zombies @Faculty Academy" },
+
+	// ParserComp 2015
+	{ "pc15_sixgrayrats",   "Six Gray Rats Crawl Up the Pillow" },                                      //      Entrant
+	{ "pc15_sunburn",       "Sunburn" },                                                                //      Entrant
+
+	// ParserComp 2021
+	{ "pc21_acidrain",      "Acid Rain" },                                                              //    8th Place
+	{ "pc21_fivebyfivia",   "Fivebyfivia Delenda Est" },                                                //    9th Place
+	{ "pc21_dannydipstick", "Danny Dipstick" },                                                         //   13th Place
+
+	// ParserComp 2022
+	{ "pc22_imposstairs",   "The Impossible Stairs" },                                                  //    1st Place
+	{ "pc22_alchemistgold", "Alchemist's Gold" },                                                       //    6th Place
+	{ "pc22_yougetback",    "You Won’t Get Her Back" },                                                 //    9th Place
+
+	// ParserComp 2023
+	{ "pc23_searchlostark", "Search for the Lost Ark" },                                                //    1st Place
+	{ "pc23_xou",           "Xenophobic Opposites, Unite!" },                                           //    7th Place
+
+	// PunyJam #1
+	{ "pj1_captaincutters", "Captain Cutter's Treasure" },                                              //    1st Place
+	{ "pj1_djinniotr",      "Djinn on the Rocks" },                                                     //    2nd Place
+	{ "pj1_pubhubbub",      "Pub Hubbub" },                                                             //    3rd Place
+	{ "pj1_deathnumber4",   "Death Number Four" },                                                      //    4th Place
+	{ "pj1_pubadventure",   "Pub Adventure!" },                                                         //    5th Place
+	{ "pj1_arthurdayout",   "Arthur's Day Out" },                                                       //    7th Place
+	{ "pj1_buccaneercache", "Buccaneer's Cache" },                                                      //    8th Place
+	{ "pj1_thejob",         "The Job" },                                                                //      Entrant
+
+	// PunyJam #2
+	{ "pj2_morris",         "Morris" },                                                                 //    1st Place
+	{ "pj2_opportunity",    "A Once in a Lifetime Opportunity" },                                       //    2nd Place
+	{ "pj2_phobias",        "Face Your Fears" },                                                        //    3rd Place
+
+	// PunyJam #3
+	{ "pj3_submarinesabot", "Submarine Sabotage" },                                                     //    1st Place
+	{ "pj3_a1rl0ck",        "A1RL0CK" },                                                                //    2nd Place
+	{ "pj3_strikeforce",    "Strike Force" },                                                           //    3rd Place
+	{ "pj3_lucidnight",     "Lucid Night" },                                                            //    4th Place
+	{ "pj3_fallingpieces",  "Falling to Pieces" },                                                      //    5th Place
+	{ "pj3_blorp",          "Blorp!" },                                                                 //    6th Place
+	{ "pj3_seacoral",       "Sea Coral" },                                                              //    7th Place
+	{ "pj3_cleangetaway",   "A Clean Getaway" },                                                        //    8th Place
+	{ "pj3_fantadimension", "The Fantasy Dimension" },                                                  //      Entrant
+
+	// SeedComp! 2023
+	{ "kingsball",          "The King's Ball" },                                                        //      Entrant
 
 	{ nullptr, nullptr }
 };
@@ -3469,7 +3577,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("deadline", "28-850129", "5118a80c51407f741ecb8c8aec286124", 108420),
 	ENTRY0("enchanter", "15-999999", "31dc4b6d146d0dbef02c81ffdf44425c", 109230),
 	ENTRY0("enchanter", "10-830810", "7b41d915b4c2e31423d99925e9438aa4", 109126),
-	ENTRY0("enchanter", "r15-s831107.", "e70f21aad650dd196fa3601cab5e0fc5", 109230),
+	ENTRY0("enchanter", "15-831107", "e70f21aad650dd196fa3601cab5e0fc5", 109230),
 	ENTRY0("enchanter", "16-831118", "4de3468f358f88ad188c08ad213adefa", 109234),
 	ENTRY0("enchanter", "16-840518-MAC", "7665971d211d70954a651bcb109db231", 109332),
 	ENTRY0("enchanter", "24-851118", "9e84697a6b1141f7d6f10cf781b180b2", 108638),
@@ -3494,16 +3602,16 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("hypochondriac", "11-870225", "a05a1e4b23d107cf3999fae25116ff49", 52376),
 	ENTRY0("infidel", "22-830916", "38f713e53af720624434529ea780040c", 93556),
 	ENTRY0("infidel", "22-840522-MAC", "1e5279c762c2521ff95dca6eea2177c0", 94144),
-	ENTRY0("infocomsampler1z", "15-840330", "0dea0c4d7e87b18a97c5bee0c61ac857", 62326),
-	ENTRY0("infocomsampler3zpi", "5-840512", "a72086f6e7c10aff5cdd199efca32f93", 105196),
-	ENTRY0("infocomsampler4zpiw", "24-840627", "1ba87ecd487866c4fd7775665dd383a8", 112478),
-	ENTRY0("infocomsampler4zpiw", "26-840731", "5483febc51abd55fb5e04c4c97a0b260", 112610),
-	ENTRY0("infocomsampler4zpiw", "52-850402", "239897f0eb9ba5995e9978684829047b", 126976),
-	ENTRY0("infocomsampler4zpiw", "53-850407", "47b8b8394e25faec870a798145529688", 126708),
-	ENTRY0("infocomsampler4zpiw", "55-850823", "05d9d1a1c3c73fce9e24ab695ece16c8", 126902),
-	ENTRY0("infocomsampler1b", "8-870119", "1fb0738cbf5d620cf8625ba9d9904f3b", 55472),
-	ENTRY0("infocomsampler2zt", "8-870601", "148ea96bfd110c87a96cb011007f0825", 106094),
-	ENTRY0("infocomsampler3ztl", "97-870601", "201fa230a942df5aa75bb5b5f609e8ce", 125314),
+	ENTRY0("infocomsample1z", "15-840330", "0dea0c4d7e87b18a97c5bee0c61ac857", 62326),
+	ENTRY0("infocomsample3zpi", "5-840512", "a72086f6e7c10aff5cdd199efca32f93", 105196),
+	ENTRY0("infocomsample4zpiw", "24-840627", "1ba87ecd487866c4fd7775665dd383a8", 112478),
+	ENTRY0("infocomsample4zpiw", "26-840731", "5483febc51abd55fb5e04c4c97a0b260", 112610),
+	ENTRY0("infocomsample4zpiw", "52-850402", "239897f0eb9ba5995e9978684829047b", 126976),
+	ENTRY0("infocomsample4zpiw", "53-850407", "47b8b8394e25faec870a798145529688", 126708),
+	ENTRY0("infocomsample4zpiw", "55-850823", "05d9d1a1c3c73fce9e24ab695ece16c8", 126902),
+	ENTRY0("infocomsample1b", "8-870119", "1fb0738cbf5d620cf8625ba9d9904f3b", 55472),
+	ENTRY0("infocomsample2zt", "8-870601", "148ea96bfd110c87a96cb011007f0825", 106094),
+	ENTRY0("infocomsample3ztl", "97-870601", "201fa230a942df5aa75bb5b5f609e8ce", 125314),
 	ENTRY0("journey", "46-880603-DEV", "7bc3d57b3b6bf01788c07b2c4f007643", 280472),
 	ENTRY0("journey", "142-890205-DEV", "2327731ae4a2f2c058ed88f9bfeb493c", 281088),
 	ENTRY0("journey", "2-890303", "490df9e507aacba8fd113baabefb6e58", 280936),
@@ -3696,10 +3804,8 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("ztuu", "ztuu-970828", "3a55991be19943a13da58a91cd3615eb", 102524),
 
 	// English games
-	ENTRY0("15minutes", "141021", "8f99e176b2fd4387219b808515c75d0e", 402308),
 	ENTRY0("404life", "110524", "a4ee7ba2cb611e0ae3e413a6eb9dc4da", 506770),
 	ENTRY0("43", "100409", "d90d274327032d1f1c5396cdbbcdffcc", 140288),
-	ENTRY0("5minutes", "151002", "de02600e870ea20f6666921d9bc6c61d", 528346),
 	ENTRY0("69105keys", "090302/z5", "decb7dd967b358c54f63c3777e4e86f6", 76800),
 	ENTRY0("69105keys", "090302/zblorb", "bc343936e0e9d79a3736b200eadfc6ee", 195162),
 	ENTRY0("7doctors", "981219", "b0c9a1205401b578dd245ce3920b296c", 124928),
@@ -3707,14 +3813,11 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("905", "160430", "d46825116a6f56e14076713230ada85d", 87552),
 	ENTRY0("905", "120724", "885acc1cf4ae18428d8a1998d57f2925", 87040),
 	ENTRY0("9dancers", "040718", "8a7faee46b0d6f35cb0cbeb7ac8631b2", 99328),
-	ENTRY0("a1rl0ck", "230225", "c41cdba49309a60aaafb79238e814726", 86528),
-	ENTRY0("a1rl0ck", "230317", "11c071867ac8bb4f3a104069fb6c9c3d", 82432 ),
-	ENTRY0("a1rl0ck", "230402", "b0685da79e0c783b69a3944658ea34f6", 83456),
 	ENTRY0("aaaaaaaa", "080817", "ead4d097d838d8ca05463ae61babc95d", 131072),
 	ENTRY0("aasmasters", "030410", "bb6645f33130c7881da72ff0bfb6fb5b", 68608),
 	ENTRY0("accuse", "070321", "3a1098524f8d6964a5d7a2579e9367f1", 129528),
 	ENTRY0("acheton", "111115", "5abc5f815b7f4f6031781a3e6126ef03", 250880),
-	ENTRY0("acidrain", "210701", "69376ad4a9d4d5d5a161b230911cb4af", 148480),
+	ENTRY0("aciftotorial", "151031", "5111132f57b4c882051a122525bed51c", 100352),
 	ENTRY0("acorncourt", "970904", "119dc6466da205261efc1ef8e00d26d1", 55296),
 	ENTRY0("acrobat", "090111", "adaf3516d405d7dc65cbff1986f41af2", 2068718),
 	ENTRY0("acrossstars", "100329", "ef910f930a01ac4d24051b8fce549180", 524288),
@@ -3722,17 +3825,17 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("acrossstarshints", "070929", "32904e85480632a1764f4654b8f561f6", 121344),
 	ENTRY0("addendum", "080611", "e6ec3704b04d638f53aaf5f082efb424", 199420),
 	ENTRY0("adv", "150118", "c776a1a9a8122967160fb51a39485113", 431616),
-	ENTRY0("adv350", "951220", "2c90badea5a69c4dfb702f2722f5e675", 94208),
-	ENTRY0("adv350", "961209", "c31773e62d01b51af2c633d212ac5b4a", 97280),
-	ENTRY0("adv350", "011123", "5d4867b23e904d22453f031c87d6dcf0", 118272),
-	ENTRY0("adv350", "060321", "d00c3717a46734c2ae96fb8d2ad0a226", 138240),
-	ENTRY0("adv350", "151001", "88fe704848a77346d196a46f7cfb3b38", 66414),
-	ENTRY0("adv350", "160307", "5f800280865d57cbfeb66695e79dc9b9", 147456),
+	ENTRY0("adv350_zcode", "951220", "2c90badea5a69c4dfb702f2722f5e675", 94208),
+	ENTRY0("adv350_zcode", "961209", "c31773e62d01b51af2c633d212ac5b4a", 97280),
+	ENTRY0("adv350_zcode", "011123", "5d4867b23e904d22453f031c87d6dcf0", 118272),
+	ENTRY0("adv350_zcode", "060321", "d00c3717a46734c2ae96fb8d2ad0a226", 138240),
+	ENTRY0("adv350_zcode", "151001", "88fe704848a77346d196a46f7cfb3b38", 66414),
+	ENTRY0("adv350_zcode", "160307", "5f800280865d57cbfeb66695e79dc9b9", 147456),
 	ENTRY0("adv440", "160307", "af1ab807e8c438d0e548c6b4903c33a1", 193536),
 	ENTRY0("adv550", "160307", "631ab32f7370e1c1e5b4e9fe6ad539fb", 231424),
 	ENTRY0("adv551", "160307", "14f0d78e0a1c447cdf8ad6daf4d22a5b", 334336),
 	ENTRY0("adv551", "171110", "24449bf1875c0b75491173ba4243bc99", 334848),
-	ENTRY0("adventurelandzcode", "961111", "21f1bd1815a8b3ba5730fe168ff88e59", 49152),
+	ENTRY0("adventland", "961111", "21f1bd1815a8b3ba5730fe168ff88e59", 49152),
 	ENTRY0("adventurelobjan", "961209", "e8cdbc003c5bc0965ad2f04a4a7806db", 147968),
 	ENTRY0("adventuretime", "110111", "b6e0e55780b699e37411f0eb176f7496", 359368),
 	ENTRY0("adverbum", "060905", "e5c04bcadb953ad0a280b541f7510338", 138240),
@@ -3742,30 +3845,26 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("aisle", "990528", "a7af83193b4139f65c020ac49ff30447", 122368),
 	ENTRY0("alice", "030501", "ce25288e736c1c420a990b609943a990", 86528),
 	ENTRY0("alienextraction", "060921", "73b2a47c648afccbc784f412c3cedae6", 121344),
-	ENTRY0("allroads", "011119", "84ce94d8c6c77452537511f14739b612", 172032),
 	ENTRY0("alongtheriver", "100630", "1b670d231c4b0cc10b51ba60196c6a68", 198144),
 	ENTRY0("alpha", "981017", "f8fbbc64455efc259f9b41517d82b4ab", 51200),
 	ENTRY0("amazingmaze", "200415", "0f881bf71c7c401367c0adb52d496fff", 169984),
 	ENTRY0("amazingmaze", "201015", "bc1657b2778d09829102af96105eaa61", 169984),
-	ENTRY0("ambassadorsdaughter", "150525", "d415de88a7a756be04f5203f8b4668ee", 255488),
+	ENTRY0("ambassadorsdaught", "150525", "d415de88a7a756be04f5203f8b4668ee", 255488),
 	ENTRY0("amish", "020603", "d4194b4de41c9663f464bb33f1917a7d", 50688),
 	ENTRY0("amiss", "020409", "fa22d754f2b9daedc232bfbc6b28b6d1", 143872),
 	ENTRY0("anchor", "990206", "2bc49d98d980bfefa064ae76f4a217e5", 520192),
 	ENTRY0("andrewplotkin", "080423", "9679960dde743ff1f506c12db29c5214", 366740),
 	ENTRY0("andromedagenesis", "130701", "3dc7a53837dfcfed4895aad148b78f27", 245248),
-	ENTRY0("andromedaawakeningz", "111019", "7d82fa4cbcc943aefb3ddc65a38a0b7d", 527028),
 	ENTRY0("animals", "071201", "98e57ff531a97d26d16418b343d9682d", 32768),
 	ENTRY0("animals", "150314", "d5e0c7c6641709eeb5c4c0797519962c", 32768),
 	ENTRY0("annoy", "990127", "0383c40a28c606ddf8bfba3a66469055", 71168),
 	ENTRY0("anotherterminal", "110724", "4ecb1f83a4ba8b797488bc32025a5bde", 324588),
 	ENTRY0("aotyrz", "060825", "d9264cedc9cb438eedf67f611dbdbb3e", 159232),
 	ENTRY0("aphasiaquest", "150426", "ee480b0a0983e636649777a745a8f6f0", 233896),
-	ENTRY0("apollo11z", "080712", "00fa17987dec69c1b1a3927b23aeffd9", 150400),
-	ENTRY0("appall", "020422", "3c33d5639fa341829dde7c4b9b1875fd", 52736),
+	ENTRY0("apollo11b", "080712", "00fa17987dec69c1b1a3927b23aeffd9", 150400),
 	ENTRY0("arc3h", "201129", "b01104b86019675398ec40d44b24a3bb", 52224),
 	ENTRY0("argument", "170327", "7acb2206d9ca8afcc734e2c6dc7ef782", 330198),
 	ENTRY0("aridandpale", "090501", "d18d5d2b8ceef04234f64373958097e5", 199400),
-	ENTRY0("arthurdayout", "210430", "9404cfa00a0e0dc3ea1dfefbcd8ded4d", 38400),
 	ENTRY0("asylum", "090721", "1fcf07b963cd664cf11660882de99e47", 135680),
 	ENTRY0("atrocitron", "161215", "6798fc939e1c6a92eb8e356e359a0ee4", 91648),
 	ENTRY0("ats", "000001", "accd04838197c1e4937bac253349b623", 387072),
@@ -3774,19 +3873,19 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("aug4", "200401", "d537c469fe6cc008286bf071045c66a7", 364544),
 	ENTRY0("avon", "111115", "82a3d640af8cb7707a1b4301192679b1", 104960),
 	ENTRY0("awakening", "980726", "66181a19b3316f6644c20a9ee18be40f", 99328),
-	ENTRY0("awakeningzcode", "091102", "a5f6a578fb1fc57423936707c07b2029", 268288),
+	ENTRY0("awakeningpg", "091102", "a5f6a578fb1fc57423936707c07b2029", 268288),
 	ENTRY0("awitl", "980215", "8cf72be55d75137cc435ab25f479c123", 56320),
 	ENTRY0("ayac", "010107", "b503a9f2817ce97480160e454e470c58", 68608),
 	ENTRY0("azteca", "070117", "e30320818aa935f1bff66fcaa862fd9f", 123904),
-	ENTRY0("b2demo", "961017/Demo", "28d166262aa22fb55fdb9685a5a124ef", 65024),
 	ENTRY0("b7snare", "150118", "5e1057596f6fe7d0efb100f80ae65f27", 284672),
 	ENTRY0("babytree", "120512", "79e230657b07b2e8fa45ffbe4635d03f", 294352),
 	ENTRY0("backtowakeup", "080313", "73ada6a69651bea315206d7994164b95", 640246),
 	ENTRY0("backup", "091204", "52d1d40ff557c21b7d4464e12b6d646c", 429188),
 	ENTRY0("badguys", "971113", "41fe87f9853672ab269ce0ab91de9046", 55800),
 	ENTRY0("ballerina102", "991128", "9f92c9d90a536f62d7a535e7026c28bc", 508928),
+	ENTRY0("bakingwithlizzie", "170813", "946db43fb6f8da8b6eefd61dc0c6a774", 451602),
 	ENTRY0("bakingwithlizzie", "170924", "d289b6eb29982127b83e2f4254636e27", 380928),
-	ENTRY0("balances", "961216", "2b740e4bf08e64580085640b40a0ead8", 75264),
+	ENTRY0("balances_zcode", "961216", "2b740e4bf08e64580085640b40a0ead8", 75264),
 	ENTRY0("baldersdeath", "111107", "cec997b2ba4917a2dab2640f276f1c7c", 254404),
 	ENTRY0("balt24", "970706", "7c45c1ea2780a5eed643f35fb44dccda", 58368),
 	ENTRY0("barber", "070830", "e19a510ad01afaf98ef72c9c59602d21", 180224),
@@ -3800,22 +3899,15 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("beginning", "200714", "557d3dccf7eb0bc223935f45a6d2f77a", 87552),
 	ENTRY0("beingsteve", "060519", "a446f37fcd5945428797573295acbe03", 124810),
 	ENTRY0("beneathtransform", "080107", "8e53f4d65b0b68ef92fb2fbd3592dcc5", 176128),
-	ENTRY0("beyond", "100115", "61bd0b7eae9e81c7d01496d623a497e1", 336982),
-	ENTRY0("beyond", "210810", "099c2b33efce521b811f3dc5287dc5e8", 336752),
-	ENTRY0("bibleretold1", "102283", "158f9c1818f7a80607a3b8281a9bc140", 169472),
+	ENTRY0("beyond_zcode", "100115", "61bd0b7eae9e81c7d01496d623a497e1", 336982),
+	ENTRY0("beyond_zcode", "210810", "099c2b33efce521b811f3dc5287dc5e8", 336752),
 	ENTRY0("bicon", "101006", "2f2d993faf161318c4b4c5ee0957e288", 366836),
 	ENTRY0("bignose", "220405", "83c13edb932c08753e0ffc98c1ed47d0", 316392),
 	ENTRY0("biscuit", "010310", "e4d8262dbeeab8e340e522e5cef740a8", 137728),
-	ENTRY0("bishoes", "090513", "05c6dae3ea1896e756ce54bae26564ae", 85504),
 	ENTRY0("bj", "981103", "2787b18265a5bceccd0a4d311f94d97a", 158720),
-	ENTRY0("blacklily", "150318", "f74981accbff8eaa36e07bb175640ea2", 199124),
 	ENTRY0("blair", "971119", "39a811c3280594ef64942d73ab11f7d4", 83456),
-	ENTRY0("bloodless", "111217", "bf633d44d9ae34fb006aa1c135d24fe2", 188928),
-	ENTRY0("blorp", "230419", "f6172926a3de43e1dbd1d756dbcc91ab", 58368),
-	ENTRY0("bluechairs", "041229", "4ebedbd54fc2eae27fc7d867cadb37c3", 241152),
-	ENTRY0("bodybargain", "121021", "cf2fc83e9230a45317fdff11c3ee3fc5", 400000),
-	ENTRY0("bofh", "030202", "c43d7674558043729cf3916f7e1bfe4d", 101376),
 	ENTRY0("bomber", "971123", "1c1740d9770d53d7a18cf56006e8d88b", 3584),
+	ENTRY0("bonesaw", "180405", "cb4195df6cf1b44786d5edf81287a26a", 342016),
 	ENTRY0("bookvol", "051225", "c949b9db879b10faea5cfca45ee6a657", 225792),
 	ENTRY0("booth", "960409", "953578eeec2b85c92fd54d87f3e9c7fb", 44544),
 	ENTRY0("boothdye", "345678", "772134a9ceb8c7dc5f2b10d6d139aa0d", 51712),
@@ -3823,37 +3915,31 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("brandx", "111115", "2937e62eefe4f059ea9d8d85f4fd55a0", 112128),
 	ENTRY0("breakin", "000926", "0cc04d377f04ba75f647c9a21688b9b6", 208896),
 	ENTRY0("briantimmons", "130114", "94545a75f7c9f0bc33a171a925f49af6", 544936),
-	ENTRY0("bronze", "060503", "ef5b57f69601b8f5944699a6b31bc58d", 492472),
 	ENTRY0("bronze", "101025", "ae7671168ced4412cc6307d106e1b23a", 538040),
 	ENTRY0("bryantcollection", "090401", "2c331a7c183ef29ea13b68075a58c73b", 528620),
 	ENTRY0("bse", "970110", "d260f722540f8c24a8c5b88778c76261", 89088),
-	ENTRY0("buccaneerscache", "210502", "0fc979bfee360e4e966d361aa815ed54", 33792),
-	ENTRY0("buccaneerscache", "210522", "7ba7e32110ac3ca97db5e20e3f167bf3", 34304),
 	ENTRY0("building", "030706", "cc5ab40754fde9739113ef2524ef66b5", 253440),
-	ENTRY0("bureaucrocy", "141113", "7dcbbc724b7416ad0b80b3159c7e3525", 387606),
+	ENTRY0("bureaucrocy_zcode", "141113", "7dcbbc724b7416ad0b80b3159c7e3525", 387606),
 	ENTRY0("burglar", "010925", "ca9ae17d983afb2d79aad60486a5a859", 71680),
 	ENTRY0("burnkoran", "101128", "216f61842ba2024b291b4e0ae7769500", 222746),
 	ENTRY0("burnsnightsupper", "120124", "a1153aab71b7a3bc4bd1aa056f3145e8", 251342),
 	ENTRY0("busted", "941223", "e164cfeed308fd25bc102a18b3c8f15c", 82944),
 	ENTRY0("byod", "200928", "90b19dc00264bc1ae97c1338d5ea0bca", 549618),
-	ENTRY0("byzantineperspect", "091119", "61dcb1e79885f76f9f5f5c62ce2c7e8d", 1727208),
+	ENTRY0("byod", "201106", "fdcb10f14d32060c016b509ee40dae13", 550642),
+	ENTRY0("byod", "230325", "16d57e585acf6de2b1aa6cd20a7959fa", 551154),
 	ENTRY0("cabal", "041127", "b8f7f30bef898f4ed1814b0094c40b1e", 178176),
 	ENTRY0("cacharensdilemma", "090526", "dd1531291506c98fa2e3f6ab25314a67", 346112),
 	ENTRY0("cacophony", "091209", "a612e786ee256ecf14580bd7e922b27a", 364032),
 	ENTRY0("calendar", "070805", "8f8f6f45daa40e640805b83279196cfe", 137728),
 	ENTRY0("calmmutemoving", "110712", "c4f0e45605825341e566bbd4a1d52522", 173056),
 	ENTRY0("calypso", "140421", "5fadae3572711526d7b61c90bab58087", 97792),
-	ENTRY0("canamicah", "111013", "0fb93ce7d872ba0f0f0dc948d5d249a4", 364544),
 	ENTRY0("candy", "970621", "322249ca0d96df20c010d8c2226cf0f2", 59392),
-	ENTRY0("captaincutters", "210503/z3", "02e6b574267034d10bb0cdeacb124cb4", 84992),
-	ENTRY0("captaincutters", "210503/z5", "b7b85a17256237b07bb988a6df924873", 88064),
 	ENTRY0("capturesanta", "071220", "bb02e0523374a703007fecf42c8e05c3", 172432),
 	ENTRY0("carpathianvampire", "220501/z3", "814489495640eceb65dddcb169c13114", 73216),
 	ENTRY0("carpathianvampire", "220501/z5", "364754e505409cfb703209ec26ec10ca", 75776),
 	ENTRY0("cars", "980923", "c857ca87a713ac8d3ae13a49ea05f994", 57344),
 	ENTRY0("cars", "981010", "b6d057301718325b393e7e8e99bf09e6", 57344),
 	ENTRY0("casting", "050707", "11ec0ca3c23c327e77a83985305c17f4", 247808),
-	ENTRY0("castleadventure", "121207", "7119fd8068a8e467e3e34c66cbee005b", 243200),
 	ENTRY0("castleredprince", "130227", "1dc1bc1337931b25d57594e566152772", 362880),
 	ENTRY0("catcherintherye", "060611", "0bb71366efbf85f9a4700c6f121e7972", 198550),
 	ENTRY0("catseye", "041018", "7ff8e2d98b56e7f79508f6e22d6383ae", 10239),
@@ -3864,40 +3950,33 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("cavetrip", "041225", "5f0668876d3f8b03e62bd53d3ab276f3", 117760),
 	ENTRY0("ccake", "000311", "2f0745fb253ef799472afb4e7e7f13a9", 80384),
 	ENTRY0("cco", "220331", "214207a5cbdf28bc45cb2de95c059d29", 51200),
-	ENTRY0("cenriccurse", "131218", "4fa3db6430e3a54f88962a75857ebb2f", 289096),
 	ENTRY0("chaos", "090801", "ede5478e9a87906205d784181b33e8aa", 96768),
 	ENTRY0("charactercreation", "141030", "a78d006b26941821fb9b2f8f32ebdf7c", 227840),
 	ENTRY0("chaosgame", "090526", "0b902ce73efd76e5c57230a25e27f364", 176004),
 	ENTRY0("cheater", "960920", "69753e7cb886a003615b8aa415702135", 48640),
-	ENTRY0("checkered", "211209", "24920f69ad800a977555b5404c86d515", 261210),
-	ENTRY0("cheesedoff", "160724", "f22a5e611479057236e0a8af31b62e70", 448080),
-	ENTRY0("cheeseshop", "021230", "88329068474b92abf4b4363c177f6971", 85504),
-	ENTRY0("cheshirecat", "140803", "69dced03ab92e1efeae0ea4a496743d5", 78848),
-	ENTRY0("cheshirecat", "141012", "0a8c570fb7499bcc35109fdf7320132b", 79872),
-	ENTRY0("cheshirecat", "150918", "97f1096761d27951a1715c627390b6ba", 76800),
-	ENTRY0("chickenunder", "980728", "6655312edc32a1115b3e66f6c50293f9", 52736),
+	ENTRY0("checkerhaunt", "211209", "24920f69ad800a977555b5404c86d515", 261210),
+	ENTRY0("cheesedoff_zcode", "160724", "f22a5e611479057236e0a8af31b62e70", 448080),
+	ENTRY0("cheeseshop", "021230/v1", "88329068474b92abf4b4363c177f6971", 85504),
+	ENTRY0("cheeseshop", "021230/v2", "cbf746a948b66ae8d2a65e52134654b4", 85504),
+	ENTRY0("cheshirecat_zcode", "140803", "69dced03ab92e1efeae0ea4a496743d5", 78848),
+	ENTRY0("cheshirecat_zcode", "141012", "0a8c570fb7499bcc35109fdf7320132b", 79872),
+	ENTRY0("cheshirecat_zcode", "150918/z5", "97f1096761d27951a1715c627390b6ba", 76800),
 	ENTRY0("chico", "000413", "b46bc30a1495c8cc9b1f9399f0ac5ed5", 162304),
 	ENTRY0("childsplay", "080129", "d21a117c5a40afcbdb04a08aa109da57", 535396),
-	ENTRY0("chix", "991124", "760b7fb0fcd9c99ae1295c06ff52529d", 206848),
 	ENTRY0("christminster", "961117", "86e6349dfa3ef6153cd1c0ecb9b4fc6a", 228352),
 	ENTRY0("cia", "961218", "2cdacedf416e7a575de47412e1d164f8", 54784),
-	ENTRY0("civil", "221122", "6dff9f0c6b642590a41daed3642a6ae7", 339172),
-	ENTRY0("civil", "221212", "b9384e68587e6bec4890d62c40f47a5d", 339684),
-	ENTRY0("civilmimic", "171031", "3e56399f54b6e0ae2c85f72ef3cc23a8", 305086),
 	ENTRY0("classchallenge", "190724", "d6caad7ab6a6964f0526f5b4c7a41316", 163840),
 	ENTRY0("classchallenge", "201112", "cf1cc6017a784a8f52daaaa7c617772a", 163840),
-	ENTRY0("claw", "970327", "4d3992e95530a301ca58939a197c6b1b", 130048),
-	ENTRY0("clean", "230430", "d10bd839564e6c737b674c35ab518baf", 53760),
 	ENTRY0("cleanair", "190608", "3e5a972edf102956f6973c9fc7a8d388", 410302),
 	ENTRY0("cliffedge", "111030", "2bcba042a3b56fb010c9ab0e64cecad5", 324608),
 	ENTRY0("cockandbull", "170401", "6036a188e9def979678697ce7be14171", 895024),
 	ENTRY0("clockwork", "200725", "e7a388799d227c9b8b114a4b398b500a", 40344),
 	ENTRY0("codenamesilver", "170619", "8250de9dd95418d6cfa1b5f323254ac4", 357888),
+	ENTRY0("codenamesilver", "220622", "dc5dc0208b955cf35f5c5c352745f737", 357888),
 	ENTRY0("cogs", "201116", "70a02efa75d49fface1f3577e90278db", 176128),
 	ENTRY0("cogs", "201113", "b4da5e421dca6932f2a39311fab8809b", 176128),
 	ENTRY0("cointoss", "150217", "e19c6d27ccdae1fee28136f8efb829ec", 314426),
 	ENTRY0("coke", "990331", "8ee8282eceb70c6bb6b9c427d1e01aff", 107008),
-	ENTRY0("coldiron", "111119", "82f24d7b6d66e76871c64ea47b4a6f5e", 230400),
 	ENTRY0("colonists", "130911", "2f5bfc75a420df67718f542d67e9c118", 534020),
 	ENTRY0("coloromc", "120110", "95a3d47250d6cdacfb2c9aa334ae71db", 194560),
 	ENTRY0("coloursexploration", "980116", "8f8b4508b4f2e6633ceeac22942fdd19", 55296),
@@ -3908,13 +3987,14 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("countdown1", "061219", "a4a901a3cb0dcc2c7440e344a8e12822", 128512),
 	ENTRY0("countdown2", "070110", "45adfc3347ba01e5bad33a848fd9bba4", 133120),
 	ENTRY0("countdown3", "070110", "08be83ed93d1504f3dab14b8ec80beb2", 144384),
-	ENTRY0("cove", "000525", "a84f448606c1b271a41b225244ef43a9", 130048),
 	ENTRY0("crabhat", "130216", "c7ccd1b68fd860cbaec5ee721e0a06e4", 154112),
+	ENTRY0("cragnemanor_zcode", "180804", "f3553639e91a43a12f3dc083ebee67a9", 381952),
+	ENTRY0("cragnemanor_zcode", "180812", "67d46450a8833c34d3231673a1f3dca9", 378880),
 	ENTRY0("craverlyheights", "140414", "91e0e3f0e2a6393c7674f5cd3ddf3c52", 264192),
 	ENTRY0("crazydiaper", "120430", "16f632238939474b22c96b3ec19b5f84", 220748),
-	ENTRY0("creepydemo", "100317/Demo", "e211ed2eef47d78f72330d98e0f9503f", 150016),
 	ENTRY0("crimescene", "130123", "508196f1cd974f789fdc2af69767a1d1", 320916),
-	ENTRY0("criticalbreach", "130817", "348fc7ef47cab92d0b7f286da3c3ab90", 268800),
+	ENTRY0("critbreach", "130817", "348fc7ef47cab92d0b7f286da3c3ab90", 268800),
+	ENTRY0("criticalhit", "091002", "87f825b236785d94302e1293791b9daa", 311296),
 	ENTRY0("crobe", "111115", "d8b138a87f6226b8283c33c50c6f254c", 92160),
 	ENTRY0("cryptographer", "071216", "5c306d5f1cee2d4eabf199012a354ff8", 40448),
 	ENTRY0("csbb", "090625", "30bd815bc7d5943a0c8725e3b31ec373", 489984),
@@ -3929,144 +4009,112 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("curses", "950522", "ff96fe6908dbb52d09ede64260885aca", 254464),
 	ENTRY0("curses", "951024", "636ca27c82d3af77142ea92e6522b9ba", 259072),
 	ENTRY0("curves", "010613", "c80a64ffb0a19c5cb89108fb36485d04", 524288),
-	ENTRY0("cycles", "020222", "cfe1bb9275f72a63e6b4d96fb39907b3", 121344),
 	ENTRY0("cyclops", "020505", "f4ab4dc7f8f8e0fc1f716b3a43273b58", 78336),
-	ENTRY0("damnatiomemoriae", "060503", "451e8c94438a3add4b16a24ed7e1127e", 388188),
-	ENTRY0("damnatiomemoriae", "061008", "c69e98feed6b49dcecc040a6babab455", 166474),
-	ENTRY0("damnatiomemoriae", "101025", "a2b94a1f955a125d19a230b247b99ee3", 427100),
-	ENTRY0("damnatiomemoriae", "201217", "bcb03ab5af1dce02d5c9a9764a761d26", 634578),
+	ENTRY0("damnmemoriae_zcode", "060503", "451e8c94438a3add4b16a24ed7e1127e", 388188),
+	ENTRY0("damnmemoriae_zcode", "061008", "c69e98feed6b49dcecc040a6babab455", 166474),
+	ENTRY0("damnmemoriae_zcode", "101025", "a2b94a1f955a125d19a230b247b99ee3", 427100),
+	ENTRY0("damnmemoriae_zcode", "201217", "bcb03ab5af1dce02d5c9a9764a761d26", 634578),
 	ENTRY0("dancebeat", "100923", "22361c0cb0047fad69d285ca9b51da4e", 240564),
-	ENTRY0("dannydipstick", "210701", "cfbd17cf1e4f16c61577c5a5b1df8a41", 114176),
-	ENTRY0("darkiss1", "160130", "8c8f759915eedbf014b1c8d8ecc282db", 134144),
-	ENTRY0("darkiss1", "160130/Fixed", "a05a25ebb25ade67ec9c7dcc09c10ab1", 134144),
-	ENTRY0("darkiss2", "161016", "bc35bf57cc74c18113386fc5bb0f2e82", 155136),
-	ENTRY0("darkiss2", "161016/Fixed", "bc35bf57cc74c18113386fc5bb0f2e82", 155136),
+	ENTRY0("darkiss1_zcode", "160130/z5/Fixed", "8c8f759915eedbf014b1c8d8ecc282db", 134144),
+	ENTRY0("darkiss1_zcode", "160130/z5", "a05a25ebb25ade67ec9c7dcc09c10ab1", 134144),
+	ENTRY0("darkiss2_zcode", "161016/z5", "bc35bf57cc74c18113386fc5bb0f2e82", 155136),
 	ENTRY0("dashslapney", "120510", "d934c25530f689c8c25ce71bf184b82a", 338426),
+	ENTRY0("daycreepylife", "100317/Demo", "e211ed2eef47d78f72330d98e0f9503f", 150016),
 	ENTRY0("dayinlife", "080406", "ad0b46d14e3a8d577a58f0d93d700f4f", 173558),
 	ENTRY0("dd4", "030207", "c5921ad782bc25cbd7e3f8c8b1412a4a", 163328),
 	ENTRY0("dday", "110720", "897fbdf9cb2468b09c30961524d36ae5", 266364),
 	ENTRY0("deadmeat", "170527", "c0f127f032ade1f46267028371e68e5b", 252374),
 	ENTRY0("deadmeat", "170617", "beed7ee4185f9ddf31f3b94db8ff4ec0", 252374),
-	ENTRY0("deadpavane", "131204", "cf0f923ae3b079c29608770aecdefdf1", 269270),
 	ENTRY0("deadreckoning", "030730", "1232dc599a00548bcc2d6453a01c5e50", 87040),
-	ENTRY0("deadsville", "081105", "58ddf8bfbd4a78aa722127193f6f54f5", 120320),
 	ENTRY0("death", "030309", "4e013a77c165338cbf2662ba04465a9b", 120320),
 	ENTRY0("debate", "070412", "bc1c6db5b5fe43d6d11982907debeed4", 162816),
 	ENTRY0("deephome", "991210", "d30357d2b08ab21e8f2da0e74a3c87d7", 133120),
 	ENTRY0("deformuseum", "051024", "cc7d7754d1f3e326e0ffbb1c08eaef12", 139264),
 	ENTRY0("degeneracy", "010331", "d42d960bcfc2a8e1fadc809b31c96f02", 167424),
-	ENTRY0("dejavuz", "930921", "ece489ece5cffa0b8575f44e094a115e", 22500),
+	ENTRY0("dejavugn", "930921", "ece489ece5cffa0b8575f44e094a115e", 22500),
 	ENTRY0("deliciousbreakfast", "111015", "393e71995dbb13c23a1b5dd5403341d7", 152852),
-	ENTRY0("delusions", "971121", "8e78eef73d07048d99514bab624fb9aa", 193024),
-	ENTRY0("desertz", "070909", "3e23d39ba4cec9f14fb8b5c63396259b", 23040),
+	ENTRY0("desert_zcode", "070909", "3e23d39ba4cec9f14fb8b5c63396259b", 23040),
 	ENTRY0("detective", "000715", "c09fde6c6777c2c422de18668cf986a2", 108032),
 	ENTRY0("detention", "130827", "c2361faf8bbc8996fc0db8e71ef001da", 244684),
-	ENTRY0("devildoit", "000724", "c4c97ca9af421dc9a14849355e7f7a1f", 60416),
-	ENTRY0("devours", "050325", "f9be89a5a26be53b52c08b6cea0ed3d1", 160768),
 	ENTRY0("dewdrops", "050115", "32e07656bbfbc7b4d0b5fe8fd4d1ca7d", 109056),
-	ENTRY0("dirk", "150416", "b2d0a81eaf7008fa9a1c8654fdc5578d", 362462),
-	ENTRY0("djinni", "001117", "107f0d7432596234db354dbe3cbb4b68", 105472),
-	ENTRY0("djinniotr", "210519/z5", "c99e6e3182a1d25c7deb0cf28361a0d8", 96256),
-	ENTRY0("djinniotr", "210519/zblorb", "9f526cada9b557ee72b06984e475176f", 514430),
 	ENTRY0("dogshow", "101130", "6476e788310c44c52d5249a66d07d037", 712070),
 	ENTRY0("dogslife", "981015", "e6f0adca898d757c49c9d81a67d3b6cc", 67584),
 	ENTRY0("dontgo", "120119", "5b153263f946a6013d80d07fa1573dbf", 195584),
+	ENTRY0("dontpeeyourself", "131107", "1eb2f9ebe332d9bdb3b6468b1fdab833", 298222),
 	ENTRY0("dontpeeyourself", "150807", "ffbdd3b0860e5a5b5ffbbdbb6ac4fc46", 211968),
-	ENTRY0("dontpeeyourself", "150924", "1eb2f9ebe332d9bdb3b6468b1fdab833", 298222),
 	ENTRY0("dontpushthemailbox", "191228", "d8fcacf89d5a5f1ec1b877775d137598", 332288),
 	ENTRY0("dorm", "230319", "2c93e859a58d2e41e89a660d6baff06b", 129536),
 	ENTRY0("dotd", "050619", "48b47df16c2d32612fe2f09f234d99dd", 245248),
 	ENTRY0("downthematrix", "120521", "291d6e004fe0ace1dbaf79434fbd5403", 319976),
 	ENTRY0("downtowntokyo", "000615", "8d9ef45f2bc4fdb8eccf7d9991a2c76b", 107520),
 	ENTRY0("dpod", "051012", "b573b31e2df3f90b396a6ddaf27e120e", 303104),
-	ENTRY0("dracula1", "070424", "42b5559ca5f01f7ef63ef4573d71326b", 87552),
-	ENTRY0("dracula2", "080819", "446564750ebe364539c27f89a520bb08", 108544),
-	ENTRY0("dragon", "040211", "744c35647fddfb830594596b4b350b71", 145408),
-	ENTRY0("dragonflies", "111130", "ff692bffb014fe109c3bfe2e072ac98b", 565060),
+	ENTRY0("dracula1_zcode", "070424", "42b5559ca5f01f7ef63ef4573d71326b", 87552),
+	ENTRY0("dracula2_zcode", "080819", "446564750ebe364539c27f89a520bb08", 108544),
+	ENTRY0("dragon_zcode", "040211", "744c35647fddfb830594596b4b350b71", 145408),
 	ENTRY0("dragontroll", "070120", "44e48cb9689e156d322a1de0a14d420e", 3584),
 	ENTRY0("dramaclass", "120521", "3b7d6bcecc2adf6921562d56217f07ac", 250324),
 	ENTRY0("dreamhold", "041231", "78eb852b88f9424647a4e18caa4c6707", 386560),
-	ENTRY0("dreamcorruptor", "171029", "1f4f956de3054621f928204c0e6b0d6d", 429160),
 	ENTRY0("dreamtrap", "130521", "d3d036c2895fd097b4c11efc6ad7e44d", 314368),
 	ENTRY0("dreamtooreal", "061128", "ac2bc1ebcfd2c8b5eed405c4f7fcb10c", 138124),
-	ENTRY0("dual", "100109", "dbee7f9e8c76d4810d2e8a99752bd9d0", 367526),
 	ENTRY0("dumont", "990223", "c5b6b0c7dcf3e771207bc44a7a3eaa0b", 224768),
-	ENTRY0("eas", "011204", "5dffcdadd1f24333aa6cb03fefce22fe", 183296),
-	ENTRY0("edifice", "980206", "e2fd79d86f7e77659ef60519d2423856", 181760),
 	ENTRY0("egcpc", "100408", "ab75fb61ae23aff72c1dcd104e651766", 353280),
+	ENTRY0("eggstraordadv", "160813", "80ddef3cc800e2ad11d00cb1172f8341", 293528),
 	ENTRY0("eldariasurvival", "130213", "ffdd78885e5883dc86291294c8cd45b4", 156672),
+	ENTRY0("electricpuppet", "080425", "9a98f65333d8efe621cb5e3688e60bf9", 188416),
 	ENTRY0("elephants1", "120407", "c2594ae4986d460f5f47ec38d3759a24", 151040),
 	ENTRY0("elephants2", "120407", "70263b9eee2e0c03111c3ebc529de760", 156672),
 	ENTRY0("elephants3", "120409", "6e9cbdf3128079d42abef931964ed835", 236032),
 	ENTRY0("elephantsdecision", "120409", "7bd2a483fa9a0338260273b813266f68", 157696),
 	ENTRY0("elephantsde", "120501", "3c939fe13cc217530fd1db46841d41c7", 152576),
-	ENTRY0("elephantsafterlife", "000729", "4de2b50d8f115693a1cfb3a17de51463", 53760),
-	ENTRY0("eleven", "001231", "a573abd0e05318d72502e2ff3b48f5fa", 214528),
 	ENTRY0("elfenmaiden", "110923", "039b1f8a3f6a210a165913cad05fe881", 375782),
 	ENTRY0("eliza", "990207", "293e7e1e2790af326547cd7be6c44d92", 7680),
 	ENTRY0("emptyroom", "100813", "9b3b2c5ae701ef457baaf3db6e2aa06e", 320960),
 	ENTRY0("endofearth", "101201", "859cd2e3f72011202b1bf999c9438712", 154112),
 	ENTRY0("enemies", "990115", "ff9fc17bf66ffbfba125d9a7c20c2c60", 289280),
-	ENTRY0("enigmasd", "141020", "5f933e199785495bc884d003a4579b9b", 415396),
 	ENTRY0("enigmasd", "160202", "743b7440094810ebe9b9d86d994ef07b", 418468),
-	ENTRY0("enigmamanor", "221121", "43b8411bc971e5aa83801099f7826044", 769044),
 	ENTRY0("enterprise", "020428", "791a68da0a0da75307ce60bcf6f07f55", 156672),
 	ENTRY0("entropy", "090516", "2acf5da303368989679bbb8ee71da5ea", 125440),
 	ENTRY0("epyk", "091111", "2d14b9b9499bc87ecad01215009fa2c7", 236988),
-	ENTRY0("erden", "980131", "6125e83116854253240b489a22e83b9f", 348160),
 	ENTRY0("eric", "000001", "6ed92a1deef039921701441bc371883a", 116224),
-	ENTRY0("errordecopia", "070831", "3c4b4c9963fbcf69d858f6d16d9b584b", 126464),
 	ENTRY0("escapade", "100111", "64f5e34efe18300476ea6e2dba0e4f81", 678318),
 	ENTRY0("escape", "130210", "988b6899f8d3c9bc4bbd3153ce1ab31f", 275358),
 	ENTRY0("escaperemember", "060705", "57b062c6f3e42cac8cb0775265c33c42", 284810),
 	ENTRY0("eto", "040123", "3ac8b0a5ee2f69c86a34008f92da2c13", 74752),
 	ENTRY0("everydaysamedream", "100619", "0c4486b71b7a19e2220c85e055caf43f", 163840),
-	ENTRY0("extromnivore", "190928", "e7a93522643ad1e1921fb13046ccc620", 428066),
-	ENTRY0("eurydice", "121206", "1f4112cdff2e5c924e54bfe06181ff49", 845206),
 	ENTRY0("f209", "970806", "98d739b8f6f5df78cbdc338dd50f89c5", 56832),
 	ENTRY0("fable", "000715", "603d4573ad89adabb7bf8d0b031705c0", 95744),
 	ENTRY0("faculty", "080116", "8998ea6435611921f97bb67fff0dd130", 218612),
 	ENTRY0("fade", "040228", "5ac4f6787fe3d57e9c0e2292f248bf4f", 42938),
-	ENTRY0("faetttiw", "070825", "2c4c1da83791e33977b6cd355a40001c", 149768),
 	ENTRY0("failsafe", "001218", "05293830576ae81e9a61f38cab731d38", 78336),
 	ENTRY0("fairyland", "190815", "b2dbb1186a00f46f7029df2278c7591a", 163328),
-	ENTRY0("faithfulcomp", "131031", "eea6302f434a68e7951ced18b385e2a2", 311716),
 	ENTRY0("fajfeta", "020101", "284de92bd57df8398562dd2c659fef35", 51712),
 	ENTRY0("fallingpieces", "180713", "6493ae5c940165d185ac17e2efce4eaa", 45056),
-	ENTRY0("fantasydimension", "230313", "2281e7a74333a7730ac44fd233d4f9b3", 60416),
-	ENTRY0("fantasydimension", "230508", "2eb8729675b9e461b7bbf3449f3538d8", 62464),
 	ENTRY0("farm", "020101", "9838d582cdd87814598eff791775a53d", 135168),
-	ENTRY0("fate", "070304", "03b02750dac39a92ef6dccf2bc1ced4f", 434568),
-	ENTRY0("fate", "070910", "a659ea01a268760a28bd9a990c8bfb73", 503138),
-	ENTRY0("fff", "080121", "c29786d16b5498656e19f06eb3d58d94", 100864),
 	ENTRY0("fifthcontinent", "190816", "69d659a6910d04332a1f517d5630b01a", 172544),
 	ENTRY0("fifthcontinent", "201104", "b8749102dd7be7e2ef31dcd8cbacd69a", 171520),
+	ENTRY0("figaro", "070430", "1c70432445689cd4cd2a196285cb1aea", 136192),
 	ENTRY0("figaro", "070910/z5", "4e661efb3a2aa9d1913b662b5c29a756", 151552),
 	ENTRY0("figaro", "070910/zblorb", "fdab59d4bb51e64c1376b9bab4de94b0", 152932),
 	ENTRY0("figaro", "100911", "b696b4578c9d4044edb137e3a87b0f50", 406596),
 	ENTRY0("figueres", "1", "c0d9ff83a9ff5eba8938934a339aee6d", 277992),
-	ENTRY0("finalexam", "151101", "4e23b49e141f724f71e5e5bf0e1afc81", 177152),
-	ENTRY0("finalselection", "061009", "2dd1a94db68abf9626f55e8bd6fa91a7", 151040),
 	ENTRY0("findesick", "180802", "ccb98f2fa05f747e00c883c47e8ba31f", 331776),
 	ENTRY0("findthebed", "100708", "02d3f5a2fba50f42c750a902f04f54c8", 289224),
 	ENTRY0("findthemouse", "090810", "6703a5f5ffee588f2dc0ce216a545e83", 147456),
-	ENTRY0("finetuned", "020520", "354ff8d5758cd27f054d5f575dd37742", 293888),
+	ENTRY0("fingertipsfriend", "120514", "e8c7de7a01feaa665d97db2501160eb0", 386560),
 	ENTRY0("fingertipsfriend", "140106", "44cad06c5c79a7f99e53974a7d08c273", 423480),
-	ENTRY0("fingertipsmilk", "140312", "01d3504181777b30f96de20dfedda359", 278664),
+	ENTRY0("fingertipsmilk", "120515", "a908551dd98ef7df4436f674116a48d4", 370688),
+	ENTRY0("fingertipsmilk", "140312/z8", "cbba526456d9305f3691408dd64f4340", 190464),
+	ENTRY0("fingertipsmilk", "140312/zblorb", "01d3504181777b30f96de20dfedda359", 278664),
 	ENTRY0("firstday", "110119", "58c46cbeeaf96c3302515cb3e9aedcec", 454606),
-	ENTRY0("firstparish", "031113", "4006f8f809c69a21f730dc2203b50795", 103936),
 	ENTRY0("flat", "020922", "00e8daaacb7651adb9db0dd91e02bfd5", 78336),
 	ENTRY0("flowers", "980301", "c948c03dc3b25f784f822cb623d5bffb", 47616),
 	ENTRY0("fmvpoker", "000913", "3f4ee585aa91660d5483ef2f132fb1d3", 19456),
 	ENTRY0("fmvpoker", "001227", "0d7bec942838ba2d42af2f836e2a8fc5", 24064),
-	ENTRY0("forachange", "990930", "6cd6f17ea26ed42d56afc367b90de115", 91648),
-	ENTRY0("forestdemo", "121216/Demo", "f629bfa6755cd36f45dbc3fe12b97936", 243130),
+	ENTRY0("forest", "121216/Demo", "f629bfa6755cd36f45dbc3fe12b97936", 243130),
 	ENTRY0("forgottengirls", "120817", "421e83ead89a7a0f2fd05791f9b87db7", 410034),
 	ENTRY0("fork", "071205", "cc07f97369a7f20da06eabf4fa8f2e4a", 201728),
-	ENTRY0("forms", "970206", "7de27dd6539ed6ef1c6176ab030510dd", 91136),
 	ENTRY0("fractalz", "000714", "847523b3d366b2621d593ee260f4d9a6", 6144),
-	ENTRY0("fracture", "010306/Demo", "d684caf97f01d447b37376ef7c708a85", 111104),
-	ENTRY0("fracturezcode", "201031", "84d04db287befa9c46fbc94591b31bb2", 345600),
+	ENTRY0("fracturemeta", "010306/Demo", "d684caf97f01d447b37376ef7c708a85", 111104),
 	ENTRY0("fragileshells", "100204", "1eb855145d3016bcf2f7a415fd9a9a01", 546586),
 	ENTRY0("fragileshells", "111109", "6232ef15b7508aab6072a85afb86908c", 547610),
 	ENTRY0("frankie", "040304", "1ce64a1c5a2d928cfb48b4d760246972", 91648),
@@ -4079,62 +4127,53 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("ga", "120510", "ec52eee6bc32f783edc18088b6abf943", 177664),
 	ENTRY0("galatea", "040208", "7d2f6474d49625ff3537f594f17d2469", 441992),
 	ENTRY0("gamer", "120415", "f5cdd32b3c0c1f09fe7c659103317365", 293356),
-	ENTRY0("gamlet", "041223", "c434581d222f89b85e67bea37aa702af", 260608),
 	ENTRY0("gardening", "080412", "2d9ff32f10bc569977984c9042afee4f", 394156),
 	ENTRY0("garliccage", "120209", "04a598fea9264a290e2c34f0b63f8042", 176640),
-	ENTRY0("gatoron", "091116", "00ddc82b9268ea0968084e215057f21b", 123904),
 	ENTRY0("gaucho", "120805", "3ec2942af85d52ecd22c6ee3decf9b8b", 176640),
 	ENTRY0("gbvb", "191106", "57f38d735b654bc24d20b9aeb7005442", 470478),
 	ENTRY0("gd", "010806", "5be045c6983f16f2d44e660f9f0192a2", 50176),
-	ENTRY0("geb", "051028", "8b731db0410993b8421e06dd7f3e37b2", 165376),
-	ENTRY0("geist", "r20/140115", "859ad972bac98e666c813f2390357e2a", 243712),
-	ENTRY0("geist", "r21/140115", "96f54aaa29ddd0bbfa5db914150633a5", 244736),
+	ENTRY0("geist", "140115/v1", "859ad972bac98e666c813f2390357e2a", 243712),
+	ENTRY0("geist", "140115/v2", "96f54aaa29ddd0bbfa5db914150633a5", 244736),
 	ENTRY0("gerbilriot", "000513", "69d3926fdd11464a3a79bc10c03cd324", 79360),
 	ENTRY0("ghandi", "110603", "1f276ccb870b63c4c287d8dadd8b8aac", 177664),
-	ENTRY0("ghost", "290912", "3e737617d1eb7f551d858e1b9ad5dd3f", 210944),
+	ENTRY0("ghosttrain", "290912", "3e737617d1eb7f551d858e1b9ad5dd3f", 210944),
 	ENTRY0("ghostmountain", "210417", "9528c0c0996c41dd210bd023a6e1e28d", 43008),
 	ENTRY0("ghostmountain", "210509", "3c09bc59d5d38fd11f3523cf330045a0", 43520),
-	ENTRY0("glass", "060503", "94f15a91234bbc9f48f50e478363442c", 378420),
-	ENTRY0("glass", "061008", "f687986dab7bd4e2f61d3f282c1ded4d", 373812),
-	ENTRY0("glass", "101025", "059ca93ef8e309470b7e12325a43a52b", 412212),
+	ENTRY0("glass_zcode", "060503", "94f15a91234bbc9f48f50e478363442c", 378420),
+	ENTRY0("glass_zcode", "061008", "f687986dab7bd4e2f61d3f282c1ded4d", 373812),
+	ENTRY0("glass_zcode", "101025", "059ca93ef8e309470b7e12325a43a52b", 412212),
 	ENTRY0("glik1", "111211", "1cfc3dd21b01fa968d36b6d58fe80862", 353620),
 	ENTRY0("gnuzoo", "160331", "1f9274506529a4c934f09cfe06cda804", 478060),
 	ENTRY0("godot", "960599", "953905ec43f6e595d1634adb37ed879e", 49152),
 	ENTRY0("golf", "010114", "5dd8638e40d97806c5eb9c05618db775", 195584),
 	ENTRY0("goldilocks", "090410", "1e2b32a419bfc9703dda529f40c01782", 217600),
-	ENTRY0("gossip", "090918", "5b0be1c76155882fb0d1d9eac3339255", 148480),
-	ENTRY0("gostak", "020305", "06a39a234ada7e57733e1ab442909170", 88064),
 	ENTRY0("gourmetgaffe", "120624", "0c59f0c03fd36303ec02d370cee9b650", 257156),
 	ENTRY0("gourmetgaffe", "120625", "e8b68d14298ab4e921985667ae74417d", 257156),
-	ENTRY0("gourmet", "031116/z5", "b7a2d1ce038c5ccc983fc3cec4cac682", 190464),
-	ENTRY0("gourmet", "031116/zblorb", "6a78f4aa50d962668a2bf7b0e788bafe", 360808),
+	ENTRY0("gowest", "110823", "26da8324bd67fa93bd25c4234f51073f", 251476),
 	ENTRY0("gowest", "120425", "2c1e329d9cde395785f8323a740a361e", 251988),
 	ENTRY0("greatpancake", "180117", "9f4e359b40bc53631937c2c44ee5082c", 264268),
 	ENTRY0("greaterthan", "100415", "f7e6e82cda24f2e6f8f06f74323aa19f", 232844),
-	ENTRY0("greatxavio", "041204", "3725be7347d460cc3661b0268db55db5", 177664),
 	ENTRY0("greenrain", "100611", "f28e8e500d4fbc94d59f5bfdb9cf7f4d", 275516),
 	ENTRY0("greensboro", "080712", "dd7bd20aa69092b009f9f5503c01f124", 141714),
 	ENTRY0("growingup", "110825", "9bada495ce70bfcae2566f01b844d20a", 267720),
-	ENTRY0("guard", "991231", "db56b6f0f381ba32f30749530ebdc25f", 410624),
-	ENTRY0("theguardian", "111006", "e36bb34945160c5651d4539218bfad5e", 260096),
-	ENTRY0("guess", "001210", "df6dcaadb7f2d25cbbeb1b357c716a32", 235008),
 	ENTRY0("guestreet", "100031", "2637075afb748532ebf851310158017e", 12800),
 	ENTRY0("gumshoe", "960331", "935eabe90b3904a0cde9811a463fcc39", 143360),
 	ENTRY0("gussdeath", "040131", "1c3d12957d1ecf3ce28b7fe36cb34111", 41472),
+	ENTRY0("hadeanlands_zcode", "101116/Demo", "45ea9ca4ec326344f73e4dc2be26d3b8", 651964),
 	ENTRY0("halloweve", "111028", "0a209a7dc47242f906d8b782e4efb887", 324608),
+	ENTRY0("halloweve", "110403", "925323f2e14cd53574f60c9f8bde87a4", 379392),
 	ENTRY0("hamhouse", "081124", "068b91ec4a227760e08f1ba48acaeb7a", 238080),
 	ENTRY0("hamil", "111115", "3c6f7131752edfd7b78252112b3a6e66", 81920),
 	ENTRY0("hangar22", "110617", "a96bff6dae1e76771688f73e6570550e", 152064),
 	ENTRY0("happyeverafter", "130114", "921e9eec1c4049b630b0a00379bd7d5b", 121856),
+	ENTRY0("hauntedhouse", "170103", "6d1a6caced27d901c09896ac74de6022", 400078),
 	ENTRY0("hauntings", "111109", "931b910ab47044e8792c4d5adc5163e3", 225792),
 	ENTRY0("headcase", "230310", "d05d6cef1edfa94fe52b76f25477b7f7", 613492),
 	ENTRY0("heidi", "051112", "0b13ec8dec91b35662a62c7a60b54ddb", 83456),
 	ENTRY0("heist", "990217", "d37eab3288f34d5673f72d8697835e8e", 358400),
 	ENTRY0("heliopause", "100703", "423b5192b31eb0705a928b3900b6b208", 389388),
-	ENTRY1("hellosword", "060113", "7c5289ab479a5aace75a5518969fedf3", 153600, Common::EN_ANY),
 	ENTRY0("hellsbasement", "140826", "749bad5b6169b1cee259b9f21cfee75b", 275890),
 	ENTRY0("henribeauchamp", "080621", "d9088b3260fdaf30fa81cde478472eca", 179712),
-	ENTRY0("heroes", "011130", "1bfe7f301e15816e46c60edfae9030a5", 204800),
 	ENTRY0("heroinesmantle", "001211", "4beb00dfd7abed53bb529946662fc252", 523776),
 	ENTRY0("hibernated1", "220625", "6b64251594ac07e042bde09689a388c1", 94208),
 	ENTRY0("hibernated1", "220814/z3", "a97e01c8d4545660ff4522bf2640f3af", 91136),
@@ -4143,44 +4182,41 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("hiddenverbiage", "181127", "736af995f8cb87601fe170695efa7180", 477130),
 	ENTRY0("hidepachyderm", "140705", "5e46b32c2897c46097b379f2eef7f5fa", 215040),
 	ENTRY0("hidepachyderm", "151011", "304cbcbdbd9338fc60872270905ed6f0", 215040),
+	ENTRY0("hippoelmstr_zcode", "151031", "89805c07c2dfbb27acd9995aaf380eaf", 346112),
+	ENTRY0("hipponewyear", "130108", "e71635f90b99d1d3362ff0ff9f91e43c", 376832),
 	ENTRY0("hipponewyear", "130210", "b226fcbf871613684d8d2c7941e02e82", 317440),
+	ENTRY0("hipponewyear", "140109/z8", "1c802115295be8d62863ec4c199a3fc3", 317440),
+	ENTRY0("hipponewyear", "140109/zblorb", "e2b6f957b2f24874b7550181f655cad0", 493172),
 	ENTRY0("hlainform", "050715", "e919e8ca4e2358b010d3a758a98609c8", 168960),
-	ENTRY0("hobbittruestory", "170420", "758273f92c520f56c727d9aa390d007e", 451072),
-	ENTRY0("hobbittruestory", "170421", "6ba4bb0546c1e7fb3024da8041f7852d", 413780),
-	ENTRY0("hobbittruestory", "170425", "5964f6951be8da16fb350b9d0982c89e", 374272),
-	ENTRY0("hobbittruestory", "170601", "037bdb4c4518a9335f86b71a11a673e9", 414292),
+	ENTRY0("hobbitredux_zcode", "170420", "758273f92c520f56c727d9aa390d007e", 451072),
+	ENTRY0("hobbitredux_zcode", "170421", "6ba4bb0546c1e7fb3024da8041f7852d", 413780),
+	ENTRY0("hobbitredux_zcode", "170425", "5964f6951be8da16fb350b9d0982c89e", 374272),
+	ENTRY0("hobbitredux_zcode", "170601", "037bdb4c4518a9335f86b71a11a673e9", 414292),
 	ENTRY0("home", "110204", "454bbecf0847b69f17748a04e225fca6", 156672),
 	ENTRY0("homecoming", "140903", "b3987678e4d9fcc95fa9718c3f9ce7a8", 1089176),
 	ENTRY0("hoosegow", "130320", "5d8d2858bb803b227ac923a654dd367c", 2024678),
 	ENTRY0("horatio", "120430", "374c64e310683d236e050d9700a1cd16", 249942),
-	ENTRY0("horriblepyra", "131201", "b3dfa0f543f7ca3343ca62cc5ec7847f", 365004),
 	ENTRY0("hors", "071125", "9f08fc42729ab3b74f82c0536605d5e6", 95232),
 	ENTRY0("house", "070714", "4b146b3d5b81a3b3359ed3f3059910ab", 468830),
 	ENTRY0("housedream", "071204", "64709099677209a81c9edd196ef3e266", 312320),
 	ENTRY0("housekey1", "080112", "ddc18dd2a69887dec6c1d4d994d35a8e", 134144),
 	ENTRY0("houseoffear", "121023", "134026b9f6aa92ef0bec67307d8ce726", 544646),
 	ENTRY0("houseoffear", "141121", "86812b0b8866038dcce67ba265e5bd5e", 572530),
-	ENTRY0("hummingbird", "110101", "1b48ec7b38899b5747ad4a16be029889", 775268),
 	ENTRY0("humongouscave", "000001", "4d0a5a75192c8343315855f881874515", 332800),
 	ENTRY0("humongouscavehints", "000001", "d6581a6fcf31851267e1acc00c466e4b", 124928),
-	ENTRY0("hunterdark", "991119", "3c3288e7023f07e525d7301bb84ffba1", 116224),
 	ENTRY0("hyperrpg", "090630", "46d18c446800ea7cdaa7f1d370ab7c05", 198628),
 	ENTRY0("i0", "140603", "878cd0b3cb05340b49cf18999ba59fab", 219136),
 	ENTRY0("ibo", "120109", "b592aa3222e86ee1baaa45107cca6f83", 196608),
 	ENTRY0("icebreaker", "950912", "089919770f1b094dfdb111ca64ee7489", 49152),
 	ENTRY0("iceprincess", "960901", "f00f7e3f96670613ee73ec51ef2b2957", 84480),
 	ENTRY0("iceweb", "160229", "b4f294ede4bcf5134a49d3a8d47cd2a0", 506932),
-	ENTRY0("identity", "041121", "72fe1d48259be82d586bb4eb48ccaff9", 126976),
 	ENTRY0("ifaquarium", "100515", "5f99b211f5bef1c1d1e89762dd451cac", 235088),
 	ENTRY0("ifplayer", "130325", "d471621d98969c2c3050586af788a88f", 251826),
 	ENTRY0("ifquake", "040812", "4c75b746abbae0e869ede0b06501f823", 133120),
 	ENTRY0("ifwhispers5", "120312", "ebdd62f2484dc87955055cb1093d9359", 326144),
 	ENTRY0("ill", "000218", "34f194a208f828c4c77d3954082d75a7", 73216),
 	ENTRY0("imiagination", "110608", "df766ac578a86f0b9d7231bddac5b09b", 252886),
-	ENTRY0("impossiblestairs", "220706", "ab5d27c9b35e52e34e2c5300680e7aa7", 243320),
 	ENTRY0("inamanor", "180117", "65b795d35855bb12e8914eeedd522c2c", 506996),
-	ENTRY0("inevita", "030428", "6152b19bbf3eb3dd4334004e7094dbe8", 213504),
-	ENTRY0("informatory", "981211", "c9eb276f103f83b8e7044c1f3930264b", 141312),
 	ENTRY0("informschool", "991217", "388c8e73dd3611e67ed335b6234f4e2e", 241664),
 	ENTRY0("inhumane", "950817", "e07f6bde81912a655468010fa13ed9f9", 68096),
 	ENTRY0("insidewoman", "090628", "c9505d9dc5badfd95a6be7b4b4edc2a8", 478720),
@@ -4189,12 +4225,10 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("interviewrockstar", "120223", "559b8521d944c959739095fc3f0e06b7", 243226),
 	ENTRY0("inthenavy", "040907", "065f26efdd214bad13d229db02441969", 103936),
 	ENTRY0("intruder", "990210", "c42924c9879af8cb682d490aaf9841b0", 175104),
-	ENTRY0("invisibleman", "100130", "f42de996030f1caeb1695c6923db2249", 336896),
 	ENTRY0("iraqiinvasion", "080131/z8", "c3ba7d2b115625e962e0614a5c381f4d", 259072),
 	ENTRY0("iraqiinvasion", "080131/zblorb", "427ff378923f675915b95993b5858704", 260780),
 	ENTRY0("island", "130226", "6ee80981b5921ad6f159ed740b54dd1a", 354882),
 	ENTRY0("islandsfaraway", "100426", "67a890cf7b6bc8c2b40ff101a3a69784", 262616),
-	ENTRY0("janitor", "021210", "00750a8e1dc8c0e157be3465704b426e", 147456),
 	ENTRY0("jayisponies", "120519", "bc418f85264a240f4aed02f7dadaf762", 239104),
 	ENTRY0("jetblue", "051012", "e1b0f957e0a4967a0f5d66f9e7313944", 209920),
 	ENTRY0("jewelalithia", "160621", "954b12ddba17e471ab708720d0f53ad4", 2378714),
@@ -4214,33 +4248,32 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("kentishplover", "200213", "2c93242398a841ad069e81fa3b2c80f1", 163328),
 	ENTRY0("kidnapsea", "110608", "ddcf23cb530746544e0f416337dcf6bc", 191488),
 	ENTRY0("kierkegaardsspider", "120413", "19f457515033fd938856e6507b8a6bc1", 254414),
-	ENTRY0("kiiwii", "141113", "091ab4e450db053a419fb4a8ffe87a22", 255488),
+	ENTRY0("kiiwii", "141113/z5", "091ab4e450db053a419fb4a8ffe87a22", 255488),
+	ENTRY0("kiiwii", "141113/z8", "cd3a8e87c86044c8b75368aa8b1ef61f", 214016),
 	ENTRY0("killingthedoctor", "010221", "6370cf6b47fee82e75f1edb6e4b7f7b0", 57344),
-	ENTRY0("kingsball", "230301/z3", "d2f342061077926cc7be238a25af016e", 70144),
-	ENTRY0("kingsball", "230301/z5", "546eea1e3d47cf5139a51188916f9c39", 72704 ),
 	ENTRY0("kirby", "062776", "7750af7ab62cb01dd04e5b665d299d1e", 143360),
 	ENTRY0("kitten", "130320", "a55520ba5084b68bfb3d1ba9346dd2d6", 45056),
 	ENTRY0("kitten", "220120", "716e5185056b4371ee5f3c6ebb4cb3a9", 46592),
 	ENTRY0("kooku", "971119", "68dc431ab53ff87af1a3bc037122667e", 94208),
 	ENTRY0("lackofvision", "980412", "25a2830653906a2225742505e1fd7cac", 47616),
-	ENTRY0("lambs2", "021230", "2f6596397a42fdd83407cb2520cffaea", 59904),
 	ENTRY0("lambs", "971010", "39b487be161e229f56badbec69466a5c", 47104),
+	ENTRY0("lambs2", "021230", "2f6596397a42fdd83407cb2520cffaea", 59904),
 	ENTRY0("largemachine", "010905", "abd265d7c2622ff6d9ca9ff5266cb802", 160768),
 	ENTRY0("lash", "000806", "1ff1bffe7386b44fc4d34a34fc59ed3e", 370176),
 	ENTRY0("ldodoom", "000801", "b4a663fc9adf6b344b7b64eb58ceff1f", 200192),
-	ENTRY0("leaptime", "081230", "aa7363833f61f3b5ac21d2d681ab74bb", 233984),
 	ENTRY0("lecture", "140813", "b8f9441556f6e785fade1e41d75458d3", 493520),
 	ENTRY0("lecture", "200414", "3fac793cf1a93f0f061dc6ca508315f5", 493520),
 	ENTRY0("legacy", "971011", "1ff3c36992bb7d1961305942e7c13625", 228864),
+	ENTRY0("legendmisshat", "140109", "8b83ea3984edc9d979be31e8c9562a9f", 383088),
 	ENTRY0("lex", "120830", "29de1a490f09a9c756b28c00bcc95230", 368060),
 	ENTRY0("librarian", "130211", "ff40eb307c9ec5b015531201cb0bcf00", 247754),
-	ENTRY0("libraryfront", "951204", "e54ca81e93629a6e8ab2dbc84a6712b4", 72704),
 	ENTRY0("lifeordeath", "980702", "aa820dffedafe40d7d3f895ec8f30840", 51200),
+	ENTRY0("lifewithocd", "160814", "63997ca4dd1fcb724d9027f9467847d3", 292562),
 	ENTRY0("limp", "980517", "9e36e35b17cbdebcd9d348de156b51df", 47104),
 	ENTRY0("lionskin", "121106", "dfdc63b480603baf62a2ccb34533bf0a", 325570),
 	ENTRY0("livejoseph", "111227", "08e7c0024e7735cc4ef7e8cf0e04c112", 264782),
 	ENTRY0("llr3", "070314", "4c2e6391bf678f0563fee5492c7e73c7", 164864),
-	ENTRY0("lmstvg", "081227", "971bdd7f99e59ea1afe0629c2adaa9f4", 189508),
+	ENTRY0("lmstvg_zcode", "081227", "971bdd7f99e59ea1afe0629c2adaa9f4", 189508),
 	ENTRY0("lobsteronaplane", "100403", "e1cc80a0d0358a13dd390b26c15508e9", 264704),
 	ENTRY0("lockeddoor1", "220116", "a3a7abc23d5688baed0e0ffbf4ee5d15", 597074),
 	ENTRY0("lockeddoor2", "220118", "09d6443dad4bb757a9adc0d183e940c6", 624882),
@@ -4251,83 +4284,72 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("lockeddoor7", "220125", "81b489d13287d8d164acc3206b60a2ad", 705484),
 	ENTRY0("lockeddoor8", "220126", "4fd859c247b554185eb7cb9a5c6bd7e0", 739832),
 	ENTRY0("lockeddoor9", "220129", "912afeac21d21582db34073450ff8643", 711602),
+	ENTRY0("lockedroom", "230523", "14178f6fe9cca08ef5c99511afd30c68", 29184),
 	ENTRY0("lookingtothesky", "110313", "c83056d3ad3775af870fab9ef800a00e", 379738),
 	ENTRY0("lostpigandplace", "080406/z8", "400ab3efad70e5b454452e89bf0625e5", 285184),
 	ENTRY0("lostpigandplace", "080406/zblorb", "f7ede4fcda5d7ee1fd8831e7f8fd2256", 390256),
 	ENTRY0("lostspellmaker", "980116", "f569560e28e57b0cc15abe69292ddb63", 128000),
-	ENTRY0("lucidnight", "230226", "6544a782cfb772d929d6f8eb61e54db3", 64512),
-	ENTRY0("lucidnight", "230320", "7e82fcf268692a811cffd60661f85798", 67072),
 	ENTRY0("ludicorp", "031010", "65250e5c5cfcb403f9fb870ac7e30041", 101888),
 	ENTRY0("magicmirror", "190817", "7b0e556a7a85d6da09d10bb1b1771e9d", 16384),
 	ENTRY0("magicmuffin", "120505", "b68fdf687db87217caef5e6c9de65f4a", 208660),
-	ENTRY0("magictoyshop", "951018", "68d597fc1a7b22419033628967dad19f", 73216),
 	ENTRY0("makeitgood", "090921", "1f4feb2361e05361ee27bf82f8a3c559", 512606),
 	ENTRY0("makeitgood", "091227", "061af5747715511a5ac5a3476278a914", 495616),
 	ENTRY0("mansion", "010505", "cb310588d3ebdfe419b16ed29f5bc8df", 107008),
 	ENTRY0("mansion", "220406", "0bef5d345f25200423aa4828ab6e15c6", 108544),
 	ENTRY0("marconi", "150606", "5bd573961828acb20766ed203d373f60", 137728),
-	ENTRY0("mariewaits", "230402", "8d6e47991a8eff1925acb14f918eb2dd", 105472),
 	ENTRY0("martyquest", "120430", "80b274b7feb7c19ee0aeba85dac0d688", 268272),
-	ENTRY0("masquerade", "010122", "a88a4f7cc20883249db3aaae1aad871c", 225280),
 	ENTRY0("medusa", "030314", "f9e93b13a6f940ef0d25cfef559e36c8", 109056),
 	ENTRY0("meetingrobb", "190928", "b3fb96f61f8c5a01f637cdbfe582612e", 464290),
+	ENTRY0("meetingrobb", "191002", "9eb2560176aaaaa2f7fd820944891ec3", 464290),
 	ENTRY0("memorylane", "230311/z3", "34a1ce5f414e01c3e0a97c723cbca4d0", 104960),
 	ENTRY0("memorylane", "230311/z5", "33ca0166735982befe7ca3569df99389", 108544),
 	ENTRY0("mercy", "980217", "865d53d9764636ddf1bcaa2b703673a6", 97792),
 	ENTRY0("mercurytrucking", "990424", "d4e2a55d878dec5878e4cf9d43361d9b", 150016),
 	ENTRY0("metamorphoses", "020222", "cb23d62a4dce52afd6104683aface9f6", 177664),
 	ENTRY0("mhpquest", "960613", "58b0832c491d961426b73a6b989e905a", 52736),
-	ENTRY0("micropuzzle", "150128", "b10ce858dcaf942a8300a89205055a43", 784384),
+	ENTRY0("micropuzzle", "200511", "b10ce858dcaf942a8300a89205055a43", 784384),
 	ENTRY0("midpoints", "010330", "1004502d7dea284be6c6298316c5f9c8", 94720),
-	ENTRY0("mimesis", "980110", "abd66d64b98d47ebc88f69d35816fdf8", 90112),
-	ENTRY0("mindelectric", "941008", "900aae2e5ef17d957e26e8bc0ef90b86", 70656),
 	ENTRY0("mines", "101029", "fb2d0e729e8b50d7d10f71b06317b3b3", 65536),
 	ENTRY0("minimalistgame", "101102", "4ea052eed3e86283912bff5e817151fb", 151040),
 	ENTRY0("minimalistgame2", "101123", "ab0c93fce76a6009cd4060dd912ef3b1", 160768),
 	ENTRY0("misdirection", "060304", "39a12ab5997240cf406f3c67001685fe", 221184),
 	ENTRY0("missinggrandpa", "120319", "3e315935045c1cdd15bb37a8e8700cc1", 590198),
-	ENTRY0("mobius", "061119", "ffafe18502f8c83789f904dde63f9938", 427364),
+	ENTRY0("monkeybear", "070417", "e4222987e97eee25e85fb8b1d55cd3a7", 656838),
 	ENTRY0("monstermaker", "171027", "6c2dbae638ed97060c789718906ce506", 352768),
 	ENTRY0("mornelune", "100525", "280074bfad86ecaa56cf6813e3a031f4", 182784),
 	ENTRY0("monzasphantom", "070219", "b5f91ecd114f3257ad269f1afb64b64e", 116092),
 	ENTRY0("moonglow", "041011", "3ee29824d9875a4ae21e82b88813990e", 10239),
-	ENTRY0("moongoon", "181029", "55fc4e3ccf26bdf636316220a77ffb10", 433662),
 	ENTRY0("moonshaped", "080710", "1cfa040aace3a4cb249818684fb43b9f", 447840),
 	ENTRY0("moonwrecked", "110309", "1cc71e3087cb4f92fc244a5c72b8a078", 264668),
-	ENTRY0("more", "140604", "6e3ec8554b9c877c088fa586c965d896", 315392),
-	ENTRY0("morris", "211121", "72c139095c2664c9162a1321d8694e19", 66048),
+	ENTRY0("mortalkombat", "210130", "f5da05b7cdca8a72866ecf97cb14f8a9", 160768),
 	ENTRY0("mortlakemanor", "120304", "80d317fd404451e436e9c36de5445de8", 261632),
 	ENTRY0("motelcalifornia", "110329", "67a1855ce59354e8eeff4f2a684811bc", 331712),
-	ENTRY0("motherloose", "981128", "87de736abcf52f27a00d09b74cfda240", 206336),
 	ENTRY0("mountain", "030317", "b84bb15597f7aa53ae407e2d996c0c6c", 103424),
 	ENTRY0("mousequest", "100509", "2993b235743e6a6a4d69063e80c187d9", 325062),
-	ENTRY0("mrp", "140620", "974627f05fc3e1c2260925a78171d73a", 175288),
 	ENTRY0("mrscrabtree", "130225", "3ce7aebc7cdad846e1bdc8f46823f4b3", 235520),
-	ENTRY0("mst3k1", "960831", "362107be49493f6ed1ca7664d7884a66", 105984),
 	ENTRY0("mst3k1", "000715", "0a0748937d23bf380cd139de874df32d", 141312),
 	ENTRY0("mst3k2", "981104", "55dc31376ee9e99700e4ad144c5670af", 83456),
 	ENTRY0("mst3k2", "000715", "cf16a0b763735b06cebef3cd5fdf2c78", 121344),
 	ENTRY0("muffinquest", "120326", "58eedaa233021cbd8f90ea503b0c3fc1", 438082),
 	ENTRY0("muffinquest2", "120428", "7125b6d59ce97674dd075510de6168b6", 442200),
 	ENTRY0("muffinquest3", "120505", "41462801e25ca195c377ad34ee080c9c", 439162),
-	ENTRY0("mulldoonmurders", "020214", "1dfc1e3605f6eebfca49e8fca17e957b", 231424),
 	ENTRY0("mulldoon", "000724", "84ef2f5f00c06d6cad6b0817844fade5", 468992),
+	ENTRY0("mulldoonmurders", "020214", "1dfc1e3605f6eebfca49e8fca17e957b", 231424),
 	ENTRY0("murdac", "111115", "790b5e8cf9677615d17ee75e89a99d4a", 78336),
 	ENTRY0("murdererleft", "120117", "cb99b94b046bd7b7db8912617f3da9c5", 196608),
-	ENTRY0("muse", "990922", "4dd315769b9d4c4782adaac1d42d0283", 175104),
 	ENTRY0("musician", "070820", "0b5aabdb180fdf0199f7779baab3e354", 142848),
-	ENTRY0("myangel", "001218", "f478be18002189fe31df1c499ceab89f", 257536),
 	ENTRY0("mylastduchess", "140510", "82cd30149bdfec0ae3a149b1f612dfa9", 258998),
 	ENTRY0("mymagictirehoax", "071224", "32940eaab8162a8a878bcff5dbe5c441", 227722),
+	ENTRY0("mysterywinch", "230531/z3", "c159a01c46e81ee8a6faf540d68f8c97", 81408),
+	ENTRY0("mysterywinch", "230531/z5", "2102dd60c7c7f94dc0284f81b21ccb7f", 84480),
 	ENTRY0("myunclegeorge", "090714", "dbdf7f0ea10c10ae2654d58e6ab9d1a4", 179090),
 	ENTRY0("nameless", "131206", "197a58d317be0e6060c490bd40baf8a1", 472064),
 	ENTRY0("nascarexperience", "130827", "d45dc3ab1f9898cf85a09854db0a6b17", 152576),
-	ENTRY0("navigatio", "200613", "0a841691a8b7d704abf7b125b76e1b39", 457746),
 	ENTRY0("nemeanlion", "081113", "c298fdabefb085ca297f0f0917e2fd4e", 77824),
-	ENTRY0("nemesismacana", "120503", "8f5ab052cc4f4f808a40add1be324c3b", 356352),
+	ENTRY0("nemesismacana", "120503/z8", "8f5ab052cc4f4f808a40add1be324c3b", 356352),
+	ENTRY0("nemesismacana", "120503/zblorb", "d24a6aaa2d9430b668fb7bda7caf9b42", 397226),
 	ENTRY0("nemesismacana", "120507", "5b60522a5845aa318f15387ae628f882", 397738),
-	ENTRY0("neverplayed", "140327", "69d214a7a657a8ea7f2cb951b8bc3edd", 980260),
-	ENTRY0("newday", "560827", "c43124915cd5677e0c2e89f081586e8b", 125440),
+	ENTRY0("neverplayed_zcode", "140327/zblorb", "69d214a7a657a8ea7f2cb951b8bc3edd", 980260),
 	ENTRY0("nidus", "140416", "8eefda240f46c6b5516a3a1fdfa53497", 117248),
 	ENTRY0("nightbunnies", "971205", "6a2cc6996865a4d1520ae467a5a802fd", 78848),
 	ENTRY0("nightchristmas", "061224", "e4eea0aa89a8cb9a614c1e8122498425", 124894),
@@ -4335,37 +4357,29 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("nihilism", "151001", "9157c2d79e12924a91ed2fd4b3bb490a", 317952),
 	ENTRY0("ninepoints", "961127", "278e64924fed8e10b89819c0433daeb2", 74752),
 	ENTRY0("niney", "170329", "28fef576ae455e19c73666a40745a3ae", 624574),
-	ENTRY0("njag2", "000319", "b566c2127fdd479ae4afdb5f2d019403", 147456),
 	ENTRY0("njag", "210603", "313bcf0f118737b34ab2507928e1f47c", 174080),
+	ENTRY0("njag2", "000319", "b566c2127fdd479ae4afdb5f2d019403", 147456),
 	ENTRY0("noroom", "112358", "5a99c89364f0d2bb624461a44ef0b071", 60416),
 	ENTRY0("northnorth", "141114", "447ba8bf4e026bd1c6995a3d9306d207", 347136),
 	ENTRY0("noseguard", "991212", "fdb20e1cc77aedb8350a54b68ca0ea92", 54784),
 	ENTRY0("nostrils", "090402", "8155559fca293c99957ba4e18a651640", 454284),
 	ENTRY0("notinvenice", "120117", "191d800215e21a764394ec46efe9a728", 194560),
 	ENTRY0("nudistsgonewild", "120425", "5f98bc9a14ff9a8c2cabd78238fafcb3", 180224),
-	ENTRY0("oad", "000913", "c4d1e88c95803bb9ae0e669c575feb67", 78336),
-	ENTRY0("oceantower", "110510", "27e6ac7767ac9dfe5f0082765f6a21b7", 306962),
 	ENTRY0("odieus", "941021/Beta", "b75120eda34c37c87201405426329892", 50176),
 	ENTRY0("ogisoas", "101102", "673a5bb3476d15e3d54ddba3176d9568", 155648),
 	ENTRY0("omniquest", "040127", "6d246b048e071dca1c2f47e64e76f10d", 95744),
 	ENTRY0("once", "980324", "4ef97819cbc6adab0487ca1256ee6ddf", 55296),
-	ENTRY0("onceuponwinter", "191030", "0df83d2e0c56c3afabfdfacb22a9b34d", 613468),
 	ENTRY0("onegirl", "020113", "7ff5749ec2881b1343c06fc5950f928e", 173568),
 	ENTRY0("onlywar", "210331", "58dd2a0d423e51ed2b923bc153195dfe", 410568),
 	ENTRY0("onyourback", "130506", "c942e2c31131f799481e61ebd878b4f2", 173056),
 	ENTRY0("openthatvein", "080126", "8f83ab59d09f5f490e3fc1ec5f04e525", 449548),
-	ENTRY0("orevore", "071116", "fc4d75670412a50ffdc98e483adfaf5f", 415744),
-	ENTRY0("orion", "041123", "16995ce9a4abe4a4670471beda078611", 204288),
-	ENTRY0("ottumwa", "021409", "7bf33289ff4c6fbdfd467b387534b309", 123904),
-	ENTRY0("out", "191112", "b297d0506353e2791d314399b52516f9", 392704),
+	ENTRY0("ottumwa_zcode", "021409", "7bf33289ff4c6fbdfd467b387534b309", 123904),
 	ENTRY0("outofthepit", "110515", "dc78b694b2ca682084ac7efd769acd9d", 276932),
 	ENTRY0("paddlingmania", "314159", "8e995f6fdfcf7e96ee9cf6a142bc5053", 54784),
-	ENTRY0("paee", "000720", "8fb185a1f581a1cc9a2bb78f2f783345", 26112),
-	ENTRY0("paint", "980316", "2028550b59c1b2f0892e90545ba15adb", 9216),
+	ENTRY0("paintandcorners", "980316", "2028550b59c1b2f0892e90545ba15adb", 9216),
 	ENTRY0("palimpsest", "200909", "0326e9b599e96f7d8ddcc36febce0620", 163328),
-	ENTRY0("paperbagprincess", "150818", "fdf4a244b41e4a314cfa189ba85453cb", 398848),
+	ENTRY0("paperbagprinc", "150818", "fdf4a244b41e4a314cfa189ba85453cb", 398848),
 	ENTRY0("paperchase", "950503", "dd421533f35d62d0da704958e5b33d51", 57344),
-	ENTRY0("parasites", "130303", "55eadf4edd9aeeb680841bb6cf112ade", 168448),
 	ENTRY0("parallel", "080219", "b50ce87302a473152ae9d556dc5f9419", 158720),
 	ENTRY0("parallel", "140414", "2e50a0ce61383d3c28c23f2b142a0f03", 210900),
 	ENTRY0("paranoia", "981208", "1309a1b60d62af820d17ee812b0f8a61", 80384),
@@ -4379,38 +4393,30 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("penury", "120528/zblorb", "5d0cb16db2d9e72ce9f27d3764a375a9", 250436),
 	ENTRY0("perilousmagic", "990821", "56901ae08078fc15fb74a50e48101bbf", 66560),
 	ENTRY0("perrysworld", "070501", "6466fe74c657f960521237d5a3274b05", 124300),
-	ENTRY0("pfrank", "111103", "6e34d4ed01ef9548c960675e80de7f10", 351744),
 	ENTRY0("philosophersstone", "427301", "3684b64c0b5972908af83893ab662bf1", 93696),
-	ENTRY0("phlegm", "970804", "2f6f7667a3c2782aa0f24eeef7c7fec0", 70656),
-	ENTRY0("phobias", "211121", "95e7a65e33211b7d4699740e5d35a470", 48640),
 	ENTRY0("phoenix", "080430", "d0c50e5cff1098009fbb9f893e7dc75e", 890884),
+	ENTRY0("phoneboothp2", "961017/Demo", "28d166262aa22fb55fdb9685a5a124ef", 65024),
 	ENTRY0("photograph", "040827", "0949e8e4d3e1e035913fc75112f40459", 264012),
-	ENTRY0("photopia", "981223", "7c86e1a9aa2cf27b16b7b60e30d5b584", 194048),
-	ENTRY0("photopia", "980914", "e07246e6a3961b7905e927dc5afe9601", 187904),
-	ENTRY0("photopia", "120416", "3e9ea30956eb3e9494e6e5d9881a1307", 239616),
-	ENTRY0("piece", "970819", "5703a209e660a58f456b0ec99707c3fd", 105984),
+	ENTRY0("photopia_zcode", "120416", "3e9ea30956eb3e9494e6e5d9881a1307", 239616),
 	ENTRY0("pigpancake", "110410", "7e6e0b1c90a9a01b4fbaea21ad729d55", 236446),
 	ENTRY0("piracy2", "100408", "86e2ed40f55413f29fa97bd6e4c31260", 249856),
 	ENTRY0("piraterailroad", "110920", "20d019cd1654f5d9d3c1bcffdbded2cc", 333500),
-	ENTRY0("pleasehelpme", "180923", "d9a47f9750f47d9c08fdd800e450cb89", 342016),
 	ENTRY0("ponderances", "160220", "58c4f08222dfc27cab23036e9e37a6ea", 371214),
 	ENTRY0("praser5", "050509", "d7f86984c2a35d0304a48989f56cb0aa", 35328),
 	ENTRY0("pressedon", "130323", "26ece4d715035234a5d6d8275bd4de85", 246968),
 	ENTRY0("priceoffreedom", "120919", "589c7d77bae5aaa502807021e506fb6b", 178072),
-	ENTRY0("primer", "171025", "744648014bb7291f42eae31a79410d59", 255430),
 	ENTRY0("primrose", "091222", "47b4978d4709f5783a674de899e2d73e", 620384),
 	ENTRY0("prize", "120827", "9dc341cb340b6950602c52bd8ef76305", 408786),
 	ENTRY0("probing", "990919", "f7cbdd49ae15d380f66ab247c118f17d", 73216),
 	ENTRY0("progressive1", "090623", "b734369549d094a71cb4fd0b3ffe8bb0", 278488),
 	ENTRY0("promoted", "1.1", "b5ef006c83dcf2e2f175aebb64c7870a", 124928),
-	ENTRY0("psyops", "211030", "fac6e93acb93bdd6420f49918f20267c", 374812),
 	ENTRY0("punkpoints", "010108", "ffb32fb83c4480a3109755572819623a", 136704),
 	ENTRY0("puppetman", "040803", "ad3143a695c3406e7ede1f39dfb6ba63", 110080),
 	ENTRY0("putpbaa", "010618", "458a35f2318afa617fe4679f8c0ec9a5", 132096),
 	ENTRY0("puzzle", "200714", "d83d896abaa1b8f8883fb61b203fcd9e", 89600),
-	ENTRY0("pytho", "020223", "a5e3d0ebd1f81ca341cf93a721f6ed3c", 293376),
+	ENTRY0("pytho_zcode", "020223", "a5e3d0ebd1f81ca341cf93a721f6ed3c", 293376),
 	ENTRY0("quidditch1954", "121022", "ae9626ce114047e0d1247d226cd9cc4a", 330710),
-	ENTRY0("quitequeer", "191030", "d09302a713495016a0376fc8ce7d7237", 329686),
+	ENTRY0("quitequeer", "221122", "ad2599a939b3e8dbca5d6236e3a10a81", 374742),
 	ENTRY0("rachaelbadday", "070328", "3147589b43da574303bffb26c5f317ba", 269312),
 	ENTRY0("ralph", "040309", "ff6d29e293d82c49b4a5f4b21ce96655", 78848),
 	ENTRY0("rameses", "061023", "6ea654d98a64cb50eff35d7a613cdfb1", 167166),
@@ -4419,78 +4425,64 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("readinginmay", "120109", "9ae7c7c4f4162262ea3fdfe49c30c0e7", 196096),
 	ENTRY0("reddex", "200124", "c393172b2250524493ff34ac767baac6", 379392),
 	ENTRY0("relief", "000820", "91046311f44a670f51738fcf5dc5a6cd", 94720),
-	ENTRY0("remi", "050107", "9c91d2d67a112caa5f51aae4dfc6d4f9", 102912),
-	ENTRY0("reorsbushcave", "170406", "f84a6d0aaebc242b5b12fdf3f9315a33", 1058880),
-	ENTRY0("reorsbushcave", "170416", "1d010db82d499b06e27c28375f867fcb", 329216),
+	ENTRY0("reorbushcave_zcode", "170406", "f84a6d0aaebc242b5b12fdf3f9315a33", 1058880),
+	ENTRY0("reorbushcave_zcode", "170416", "1d010db82d499b06e27c28375f867fcb", 329216),
+	ENTRY0("reorbushcave_zcode", "170610/v1", "3ba501733bc953188c91e58f98f821db", 947240),
+	ENTRY0("reorbushcave_zcode", "170610/v2", "a06d903aed0ff68b7e03498bc44889dd", 1047792),
 	ENTRY0("robopuppyredux", "071115", "f91a4a15c2ffe365e2e49b4869deade0", 181606),
 	ENTRY0("reser", "050209", "ba7e7d973ce19279d7eacf9c5ef80136", 90112),
 	ENTRY0("resident", "970908", "ae5612cc75ac734de51d864c9e8d9976", 136704),
 	ENTRY0("returncastle", "201201", "ce8e19d4c40d620ed94dd32aff6e45aa", 51712),
 	ENTRY0("revengebabes", "980318", "90207f5d68da1c2ef6cbc9bb8f2653aa", 52736),
-	ENTRY0("revenger", "000403", "1f658ebcb395be17154e732cc6306dc9", 88064),
 	ENTRY0("reverb", "990110", "fb3d80d0f92857286a4fd7e6c2892293", 106496),
 	ENTRY0("reverzi", "991218", "31252071da0fb3dde08ae45f74a768f9", 9728),
-	ENTRY0("ribbons", "010702", "7c45bffcbbd611a499e0803805fa87ea", 110080),
 	ENTRY0("risenecropolis", "171208", "c01ccee1f849be82cccc85a1ab62d52b", 473566),
-	ENTRY0("risorg", "060308", "f0110f1b749d2d82ca415585eaaeefb4", 428544),
-	ENTRY0("risorg", "171024", "2fc1be68cc542a2ad0dd073626d88674", 442880),
-	ENTRY0("risorg", "171114", "e6e6c0e75711a28aac39afe185bea1f6", 475616),
+	ENTRY0("risorg_zcode", "060308", "f0110f1b749d2d82ca415585eaaeefb4", 428544),
+	ENTRY0("risorg_zcode", "171024", "2fc1be68cc542a2ad0dd073626d88674", 442880),
+	ENTRY0("risorg_zcode", "171114", "e6e6c0e75711a28aac39afe185bea1f6", 475616),
 	ENTRY0("robodud", "031129", "0fdecf906b44be43436c548b22c4e22b", 84480),
 	ENTRY0("robotgardening", "060604", "418ec7e179334b9bad657a0873bf226e", 126464),
-	ENTRY0("robotempire", "140601", "0be65fa2571465799544009bbf9cc083", 431986),
 	ENTRY0("robots", "980115", "0f9ad287635965ae521c62d29329eb2d", 6144),
+	ENTRY0("rockinghorse", "120703", "a593bd476ac50764125377f29c89adda", 254886),
 	ENTRY0("rogue", "980706", "c4e104c4dec6381ee1a8943aa4e008e5", 116736),
-	ENTRY0("roofed", "100201", "95f065bfc0203324e161127f9a182830", 292352),
 	ENTRY0("roomserial", "120627", "9470b6e7a2cdcb43422e75deba20b864", 302080),
 	ENTRY0("roomserial", "120628", "1429eade57830627054e3fad32f6f3f8", 252416),
 	ENTRY0("rota", "060430", "ca0f6e049bf7b17407e28a3f88e19416", 671830),
 	ENTRY0("rpn", "090531", "d74a5da655a81e03447b4a241c1b5b21", 142720),
 	ENTRY0("rtdoom", "000831", "5a8494839033e8c4dd036b6875e1641e", 179200),
-	ENTRY0("ruins", "", "eaa31d111bb030109a2cef31f0e70022", 100352),
 	ENTRY0("ruinsremixed", "191201", "0da3f262dc221b4207bc697b55ade56a", 156672),
 	ENTRY0("ruinsremixed", "159609", "25922952a8f45381870345cc2967c1f4", 158208),
-	ENTRY0("sabotage", "070107", "5ea8fbaf07b5704b79b412dbe06ac256", 108544),
-	ENTRY0("safezcode", "120520", "a1da1ff07495f0af679652f4841a89a4", 195044),
+	ENTRY0("safe_zcode", "120520", "a1da1ff07495f0af679652f4841a89a4", 195044),
 	ENTRY0("samegame", "980731", "ffe1011cf0a3cae333825fcda58153da", 7168),
 	ENTRY0("samhain", "001021", "9cb11fc72283939161b456c1592b00d0", 69120),
 	ENTRY0("samurai", "050712", "177a4b89c1b08bd1edb3f07743342e75", 61440),
-	ENTRY0("sanddancer", "200913", "bc633ea28dcfabd62385e3ab4151adfd", 215232),
-	ENTRY0("sanddancer", "201004", "51f0263ed2ddc4916bedf7df03a316b3", 2157434),
+	ENTRY0("sanddancer_zcode", "200913", "bc633ea28dcfabd62385e3ab4151adfd", 215232),
+	ENTRY0("sanddancer_zcode", "201004", "51f0263ed2ddc4916bedf7df03a316b3", 2157434),
 	ENTRY0("sangraal", "111115", "b663b3dd73ca57b4ddd6fafe7ec4ac0d", 150016),
 	ENTRY0("santassleighride", "081227", "a4b5276e5885ed3e93f1ae0319488404", 441730),
 	ENTRY0("sauguslibrary", "020905", "04054a1d02d24a1374662b9fbb676c46", 71680),
+	ENTRY0("saugusfirstparish", "031113", "4006f8f809c69a21f730dc2203b50795", 103936),
 	ENTRY0("saveprinceton", "041125", "13f9e45a4cbf39d541dea08b774377d1", 288256),
 	ENTRY0("savoirfaire", "040205", "eb122ee416ee8fa1e6f909b6de6ad9c0", 442212),
 	ENTRY0("scald", "180206", "07fb2e2748c3835bf4d1aaba70a708c7", 194048),
 	ENTRY0("schooldays", "092800", "2c3334c637e37b1b80ea089d6911477a", 192000),
 	ENTRY0("scopa", "110321", "621b223a5f02c7e49d18ae0d6b588d19", 101376),
-	ENTRY0("scurvy", "110313", "1345c0f052db46981d21dfca1f61164e", 266224),
-	ENTRY0("scurvy", "110316", "6fbeb4d7013e53830db77aed351a7715", 267760),
-	ENTRY0("seacoral", "230225", "4f5db746459926ac273390c2424872d5", 69120),
-	ENTRY0("seeksorrow", "160602", "6108059cd52dc1aba9112b554d6aee0f", 1365918),
-	ENTRY0("segapark", "010506", "2d02fd8559b885868aac6a4adcc09198", 75776),
 	ENTRY0("semid", "091103", "992482407f66e006ad5c23eaee627a66", 237056),
-	ENTRY0("sfiction", "120706", "662d83be00d1a832e37bdedc565c1a71", 275968),
 	ENTRY0("sueursfroides", "090104", "14609bd3ad9bd0b7b88c438ee57932b3", 173056),
 	ENTRY0("sgtguffysday", "200613", "f4843d92f702814b2a043d857b3cb8a3", 127488),
-	ENTRY0("shade", "001127", "e9ef7c17a40a4d0a30bb30c37ae1e4c5", 108544),
-	ENTRY0("shadowgatez", "040616", "9015104db32c046798870273f0754d3c", 141824),
+	ENTRY0("shadowgate_dg", "040616", "9015104db32c046798870273f0754d3c", 141824),
 	ENTRY0("shadowofmemories", "061124", "07b4c14e309c00f8adec901afbc0e58b", 179094),
 	ENTRY0("shadowsoldiers", "070625", "985406d500afb5e29a3b174b28b1f21e", 150418),
 	ENTRY0("shallow", "121109", "cc2d82b5453ec921e69a80c04e1f1ad7", 245696),
 	ENTRY0("shattmem", "010928", "613eea3491158279446fe932eb9ef46d", 85504),
 	ENTRY0("shattmem", "011007", "370921da26efd668774fa51f7ac5990b", 10752),
-	ENTRY0("sherbet", "961216", "46a865c6f01a800536463ffe93fb3d9d", 174592),
 	ENTRY0("sherlock1", "021024", "97577dc5e6be837277acd5c134620d92", 230912),
 	ENTRY0("sherlock2", "021101", "b4e67e63abe681449d5cc727b161e4ea", 285794),
 	ENTRY0("sherlock3", "021114", "605303b5dfddc04e590e6f060369463f", 220672),
 	ENTRY0("sherlock4", "021231", "7b231c7acafc9a4959c859b68578d528", 217600),
 	ENTRY0("dayishothitler", "081206", "2bb145727b016ab76c35acfae729293e", 175616),
 	ENTRY0("shrapnel", "000212", "cce4edfddaa7ce948cacdb0fde52fb2d", 98304),
-	ENTRY0("siliconcastle", "011119", "51d94f5e8684cae443e28c16e3e04fea", 211456),
 	ENTRY0("simpletheft2", "110601", "21c13d6583c2ce9714e9bdc31adcab82", 357818),
-	ENTRY0("sixgrayrats", "150214", "822ebf1958e10ee5a9ba779a1edb0842", 427520),
-	ENTRY0("sixgrayrats", "150331", "1a2b10729ebb83a08a38f0c80020a34d", 428544),
 	ENTRY0("slackerx", "971009", "c7014f074407ddebc685dcd7bce5bd37", 55296),
 	ENTRY0("sleepcycle", "101217", "5c9c1b6c46c057099cdc6ad04f30407d", 253892),
 	ENTRY0("smallroom", "100805", "5102ac48e17b26b69ab8737ceb00b3d5", 154112),
@@ -4500,7 +4492,6 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("snowedin", "220601", "5e4956166d28daa7cd438101c7f9f261", 105472),
 	ENTRY0("snowedin", "220610", "3538f77fdd09a1850752e90385e01ca4", 105472),
 	ENTRY0("snowedin", "220809", "7de852ea444ca4bd21ab07ea41ccfd42", 105984),
-	ENTRY0("snowquest", "100127", "2442363dd6f7f2ee6a6ca840ca9d9881", 1034206),
 	ENTRY0("sofar", "961218", "026e1c0b7ef555011df2a9f72a2db574", 300032),
 	ENTRY0("softporn", "971018", "6624ea7bffdef1e14e28f57a90b621b0", 105984),
 	ENTRY0("solitary", "040607", "18011f0b8e3cf6aa6403313bdec2df0e", 97280),
@@ -4510,7 +4501,6 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("spacestation", "040130", "1bcf00508a8054c366d07dd507f81b22", 137216),
 	ENTRY0("spadventure", "971030", "93e10542f7a30aaf4380de9209572aed", 154112),
 	ENTRY0("spiderandweb", "980226", "2bac499c020fcdd75b9c4b65e4c1d85d", 221184),
-	ENTRY0("spiral", "121106", "c9af41ec32033424b58f08e5798fe86b", 348160),
 	ENTRY0("spiritwrak", "960606", "bfa367d09a262d4efc83cb1ba1a99efc", 260096),
 	ENTRY0("sporkery1", "080111", "eebd7008071529686b367b6641b9c52b", 147968),
 	ENTRY0("spot", "021025", "0f1feec607bd423d9f1a95748dbd1245", 55296),
@@ -4518,64 +4508,52 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("spring", "080207", "e74ccd9b57ee13df8ad2d20c14cb76b4", 330240),
 	ENTRY0("spring2020", "200414", "a06ded7137168b94844ab002ee7aa7e8", 320000),
 	ENTRY0("spycatcher", "111115", "628c860890e6393f22d81af5c96e9bcb", 126464),
-	ENTRY0("squeaky", "010722", "7c50ba3f388d57e96afeabbc6fbd46c0", 51200),
-	ENTRY0("stale", "060113", "a813af22024cbc8f6113eb293c6d0287", 123904),
 	ENTRY0("starborn", "110116", "0f22fb91edc9e64ad292fd6a7ca39f2e", 418624),
 	ENTRY0("starborn", "110129/z8", "2d73288c422d3b676aff42a0990c9732", 242176),
 	ENTRY0("starborn", "110129/zblorb", "0b0bc6b79220ced866c672aa4b166ba0", 421696),
 	ENTRY0("stargods", "111216", "92a0b939e5d12178f74b3e23ece89ca1", 268288),
-	ENTRY0("starlightz", "130802/z8", "86c1069f38ca76dad28c10d05dbdf59b", 359936),
-	ENTRY0("starlightz", "130802/zblorb", "a8e0e1a9fb1cecddde690342e01b6fba", 452000),
-	ENTRY0("starrydepths", "202005", "db40ba5514b49fbb835621c8577da56b", 92672),
+	ENTRY0("starlight_zcode", "130802/z8", "86c1069f38ca76dad28c10d05dbdf59b", 359936),
+	ENTRY0("starlight_zcode", "130802/zblorb", "a8e0e1a9fb1cecddde690342e01b6fba", 452000),
+	ENTRY0("starrydepths_zcode", "202005", "db40ba5514b49fbb835621c8577da56b", 92672),
 	ENTRY0("starshit", "120614", "c2d72febb61a9365d6c6b35f597bcf7e", 394688),
-	ENTRY0("stealthy", "161222", "6daa42b7ae7f933fcf2fa441e702ea70", 424914),
 	ENTRY0("steine", "030831", "224de592a0fa832195e78b74f17635a0", 72192),
+	ENTRY0("stewgoing", "120218", "0192783d5ba404a4876570dd19dc3c49", 324608),
 	ENTRY0("stewgoing", "130422", "f7af48ec219fa3703d194f8fd8e82eb0", 378696),
 	ENTRY0("stewgoing", "150410", "93fdaa375c1db772b27918f096f43f53", 1604582),
 	ENTRY0("stiffmst", "690609", "33746a619e4ac30a1b9be82349187062", 82432),
 	ENTRY0("stiffy", "059105", "285b8bb966075fc33a51bd842202f1b1", 91136),
 	ENTRY0("stinkorswim", "090105", "7ed52b7400c044b4c3b47fa44154b5bb", 232448),
 	ENTRY0("stonecave", "091103", "87858ce7d11ae814029c5b550682c255", 220672),
-	ENTRY0("stormcellar", "081022", "c38434a33b97a9616956ce48a7d69404", 384600),
 	ENTRY0("strainedtea", "120407", "628f7a272a28c825314fd207e50913b6", 166400),
 	ENTRY0("strangeworld", "091012", "d7c09eadf30d77858c88dc0f6706ceaa", 247230),
-	ENTRY0("strikeforce", "230227", "721affab23af57a324a59046a32206bc", 76800),
-	ENTRY0("submarinesabotage", "230512/z3", "9f4843bb85c7c5dbfc06bbe09ad4bf7f", 65536),
-	ENTRY0("submarinesabotage", "230512/z5", "5cc0529faba276319dce0ccf0a3681fc", 68608),
 	ENTRY0("suicide", "101103", "a936b12bd8f8c80e5948f6035e1eb86b", 343040),
-	ENTRY0("summerland", "121011", "fc9152c7eefa6f12d99f94a7916481eb", 426542),
-	ENTRY0("sunburn", "150214", "598cc42e8184a840bab2d38c6d6dece0", 471332),
 	ENTRY0("sunburst", "070222", "9f1eee6db8dce7cfb803e5c430fe942a", 65532),
 	ENTRY0("sundayafternoon", "121213", "73d9c96d54922bcd58781aff41e449ed", 347136),
 	ENTRY0("surfboard", "201027", "b3e4c1784465d78111b3eda7b7969647", 180224),
 	ENTRY0("survive", "120116", "5391b23b5d02a9ff853ef93f76bb73f6", 89088),
 	ENTRY0("sutwin", "970402", "b4fe3b29aab816470906ce3ae0613ba4", 31744),
-	ENTRY0("suvehnux", "071226", "e82d434c1c0a73a8755a9394a7c2e088", 248320),
 	ENTRY0("suvehnux", "150314", "c085af56acb090e7e4c8af6f69ed216f", 248320),
 	ENTRY0("swineback", "060422", "853342a5b088a2998201123b0c5faa73", 111104),
 	ENTRY0("swineback", "060507", "da84d38e1f95b22268be89780f4b7392", 135680),
 	ENTRY0("sycamoratree", "980107", "335cb583a295cfd8a3de4e9cd2a267ee", 54272),
 	ENTRY0("taipan", "020520", "0bd7a62517400c66fc961908688d1671", 37888),
-	ENTRY0("takethedogout", "210328", "3cc6fd155953f3a5321f6e762ff2cd19", 434112),
-	ENTRY0("talemorning", "140109", "234a6da218d56ca47410f7e03c2b89a8", 286756),
 	ENTRY0("tatctae", "970521", "21cf40691e0ba92d8e699b0fa3e18728", 378368),
 	ENTRY0("tauntingdonut", "080612", "4d8443e896e7f294cc4a250c6090f6cf", 167482),
-	ENTRY0("tblw", "121030", "4b6744d2b13fd85db5020788e0888f0d", 295424),
+	ENTRY0("tblw_zcode", "121030/z8", "4b6744d2b13fd85db5020788e0888f0d", 295424),
 	ENTRY0("tcomremake", "121103/z5", "2fd621df080f2b8c5fbe78ca99dc00c4", 176640),
 	ENTRY0("tcomremake", "121103/zblorb", "aa9995de3edd044db0f10fee2ba0f3ba", 256500),
 	ENTRY0("tcoty", "060908", "8bff4a19b0c1b9aa661f6e00d86df3b4", 471950),
 	ENTRY0("teacherfeature", "071126", "be559856dd11f6b1fa5c5ed10f83f90a", 118784),
-	ENTRY0("teachinghertodance", "110603", "2ec7574f9fab0c9f85b6bdaf3605eb21", 162816),
-	ENTRY0("telling", "060518", "cfcbfc5d4a7faad9724f7bae961ee71b", 316014),
+	ENTRY0("teachher2dance", "110603", "2ec7574f9fab0c9f85b6bdaf3605eb21", 162816),
 	ENTRY0("terribleoldmanse", "100819", "518a610437203e063fa550d5c240e664", 891570),
+	ENTRY0("terribleoldmanse", "100822", "6cefab1d2c3e2ba2e95e5e541b617ac4", 892080),
 	ENTRY0("terrortabby", "080514", "86d448c209e93f1caa12a319406313fa", 204800),
 	ENTRY0("tesseract", "031227", "583899fe706bd1367e31ad5a9f1c8ed2", 93696),
-	ENTRY0("testisready", "121004", "f23aa28f71f47cdc0c5b024eb4270b16", 514196),
-	ENTRY0("tethered", "191125", "1e15d092a3729b88bb886625445a7f3f", 404064),
 	ENTRY0("tgm", "050330", "e345e2527801880bffc74981571875c9", 44544),
 	ENTRY0("thanet", "200313", "48029d6809ec3d3ddb5d6c69f8e88bb1", 176128),
 	ENTRY0("thanet", "201113", "d0dfcc5c81ac97509731211b5733fdee", 176128),
-	ENTRY0("thatdamnelevator", "160710", "4986a2629b35b9092b5bddf40df5417b", 415184),
+	ENTRY0("thatdamnelevator", "160710/v1", "4986a2629b35b9092b5bddf40df5417b", 415184),
+	ENTRY0("thatdamnelevator", "160710/v2", "825f9b4e3e5957a9ba1b36ed87c91a8f", 346034),
 	ENTRY0("thatdamnremote", "091214", "2b10cdcc7a83f6e82d3909838e5b439f", 251490),
 	ENTRY0("the5continent", "190719", "945907c269cf9e20a7584544df8db671", 171520),
 	ENTRY0("theatre", "951203", "8b3db2f9039696ffa0114d55ac219ab9", 185856),
@@ -4584,34 +4562,27 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("thecomputerlady", "190702", "025908635a0028671f099b10e0ad5141", 165376),
 	ENTRY0("thecomputerlady", "190715", "fd554c7932f724331a04754a4623b2b2", 166912),
 	ENTRY0("thecomputerlady", "200804", "bddc350598549850e99c61484e711dfb", 166912),
-	ENTRY0("thecubecavern", "171115", "c5f97f8958bf6f58705234f8612421e3", 300286),
 	ENTRY0("theenchantedcastle", "190527", "d06c767152545fc81b06ac004389afbb", 455630),
-	ENTRY0("thegrandquest", "091209", "3fd8b15a0282e9eb9ef642776bbd916e", 181760),
 	ENTRY0("thegrandtour", "190512", "d651655f0500e4f6997599d25bd23c2a", 159232),
 	ENTRY0("thegreat", "010902", "285ad766a386886e814e6c22ed990a7f", 91648),
 	ENTRY0("theinvestment", "200916", "d2375e3e699726214174dfe656894a02", 34664),
-	ENTRY0("thejob", "210608", "dc2167b524b00040e7540251b1eec08d", 44032),
-	ENTRY0("thejob", "210930/z5", "4714cd741c5f5be68f1dece71361e11e", 44032),
-	ENTRY0("thejob", "210930/z3", "1ef1bba228e38a1bd6fb2fde4a8b634c", 42496),
 	ENTRY0("thelighthousemm", "091027", "7faade2abcd89e46142aeb6f0c7e004f", 246784),
 	ENTRY0("themall", "190718", "c63d87266eb12e24308d9046da2aab22", 87552),
+	ENTRY0("thesnowman", "080301", "ae3a9c15dee678e85e3569582a4522df", 367516),
 	ENTRY0("thesproutpouch", "170462", "70d182102f3544fdb72968f942ccf73c", 1057454),
-	ENTRY0("thetemple", "021118", "1592469a7f1f503789443d2f56f5113f", 107008),
 	ENTRY0("thewedding", "970602", "40b0b13d420f894ebac54106f0e92ff8", 151552),
 	ENTRY0("thewedding", "100221", "b3749fb3d3999331bcd4415969cb6602", 255940),
 	ENTRY0("thewitch", "230529", "9e02d2f514734c0553e55887091ac4cb", 167424),
 	ENTRY0("thorn", "030701", "63faf28ec7cad962816e9ed3a7310a74", 75776),
 	ENTRY0("threecows", "120208", "449fd20d3b0981ba6f8a7d929e56c820", 153088),
-	ENTRY0("threediopolis", "140817", "76929b10a1fddcbba4e704b9d7fecdc0", 584032),
-	ENTRY0("threemore", "120110", "d89d23f3cacd8541df1b1792362b206b", 155136),
+	ENTRY0("threediopolis", "160814", "cc601a569e19166cfd3b379e7f6dc2f3", 590176),
 	ENTRY0("timefortea", "100617", "af469380d1ace75480a80f578091ac4f", 313344),
-	ENTRY0("timezcode", "200714", "743e66961a9f4ada8ad4a31181009f25", 93184),
+	ENTRY0("timedwarves", "200714", "743e66961a9f4ada8ad4a31181009f25", 93184),
 	ENTRY0("tirehoax", "080104", "09b696f73a1d2d37ee376fac97a2c406", 228746),
 	ENTRY0("tk1", "950925", "7c93a305295c891ba9de5cad4c190f8c", 52224),
 	ENTRY0("tkatc", "151121", "cecca5aa05f7ea35550b473b90c3766e", 408576),
 	ENTRY0("toask", "130614", "1491b55bbcb2a0e7b1bfe99b94a9d387", 524288),
 	ENTRY0("tok", "100227", "1b3b24c4616bf7e47e99eacca7308153", 241590),
-	ENTRY0("tower", "141012", "1c315beb9fe8447acb05a99b9fb7db9e", 390644),
 	ENTRY0("tower", "151228", "04de5c49bb3eecb4e4d1cb0fd5ea4a93", 391156),
 	ENTRY0("towersofhanoi", "220627", "49724abc6310ba9fa5f5cc32cf1c0b38", 354412),
 	ENTRY0("townmusicians", "120125", "35624466eb61b2dcbc408cd6c75a6ab9", 414042),
@@ -4619,27 +4590,21 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("trampelviecher", "090611", "4d7871da10dd418a9b4ed3e00fab97c9", 207360),
 	ENTRY0("trapped", "110413", "b05f8909d1bbedb97f6c50eac19d6b2a", 254362),
 	ENTRY0("tristamisland", "200925/Demo", "6fc31da7d0afb034f05b12da56d075a8", 56320),
-	ENTRY0("tristamisland", "220107/Demo", "a0b1f6d3aa9167bb2c8039fe9e4c69c0", 56832),
+	ENTRY0("tristamisland", "220107", "a0b1f6d3aa9167bb2c8039fe9e4c69c0", 56832),
 	ENTRY0("troll", "980518", "3e0f69e678dd289cd32bf41b2be58bd6", 64000),
 	ENTRY0("trunspecified", "101224", "cc1ee9ddc4b64f0e5a2b6b91bcf8f363", 273920),
 	ENTRY0("trw", "021229", "1fdb2baeefcabb635ddbbb3433b1b125", 126464),
 	ENTRY0("trystoffate", "970629", "7f7eb7e7df03025b9046139d042dd363", 165888),
-	ENTRY0("tubetrouble", "950901", "478a208e21def77097309c2b152a968e", 50176),
 	ENTRY0("tundra", "980127", "fd6f3bc3b4083ddbc7a090842bae2a9f", 73216),
 	ENTRY0("tutorial", "111030", "36147ba605eb49902f9d514a08638cd1", 468142),
 	ENTRY0("tutorialhotel", "100713", "2d57f52f53fa0845eb19ea97a29005fa", 154624),
-	ENTRY0("tuuli", "171008", "dbdcb2acfa69c6eb352343eb556f5d2b", 591756),
-	ENTRY0("tuuli", "r3/180501", "0ee525701efafda124902b1b26f84bdf", 611734),
-	ENTRY0("tuuli", "r4/180501", "0b7e2bb3f6887f30fb98b54230acf039", 611734),
 	ENTRY0("txtadv", "051019", "c8bae5d42c33802db953d2ffb45216b0", 86016),
-	ENTRY0("typo", "041119", "549875ea83b4230896fa7d3fa18ba0a3", 100864),
-	ENTRY0("uhohdemo", "980218/Demo", "4e8b90354c96760f36bfbfa2ba4fc04c", 176640),
-	ENTRY0("umw", "201215", "24c7e6f775b9c10d9579f2a77be872fd", 167936),
-	ENTRY0("uxmulbrufyuz", "171029", "85ee9e7844c6be74b26c1707255f110a", 236760),
+	ENTRY0("uhoh", "980218/Demo", "4e8b90354c96760f36bfbfa2ba4fc04c", 176640),
+	ENTRY0("umw_zcode", "201215", "24c7e6f775b9c10d9579f2a77be872fd", 167936),
 	ENTRY0("underdoos", "970329", "3ef9b348b4223b901bdfacb854fee16e", 58880),
-	ENTRY0("undergroundz", "190730", "18c3cc7098f9e613e6c108e84c8947df", 368128),
-	ENTRY0("undergroundz", "191215/zblorb", "c7eef6e46e4b4868fd140c0ec06f3e7d", 3458170),
-	ENTRY0("undergroundz", "191215/z8", "6d2d883d5cf75db5e026ebbf4988d663", 416256),
+	ENTRY0("underground_zcode", "190730", "18c3cc7098f9e613e6c108e84c8947df", 368128),
+	ENTRY0("underground_zcode", "191215/zblorb", "c7eef6e46e4b4868fd140c0ec06f3e7d", 3458170),
+	ENTRY0("underground_zcode", "191215/z8", "6d2d883d5cf75db5e026ebbf4988d663", 416256),
 	ENTRY0("underthebed", "120522", "96659568d70385c022a9ecc41fd6219c", 246272),
 	ENTRY0("ungodlyhour", "140302", "a8ac75f3bd1b7ea4a367d56b1c6e8793", 333874),
 	ENTRY0("ungodlyhour", "140927", "d91b088567ff78a3caaa863cfc6db7b0", 333874),
@@ -4652,35 +4617,24 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("vagueness", "080825", "6d3641b71d42516e573ff0cff90cd40e", 298402),
 	ENTRY0("vampiresun", "020405", "3364b9d9d1a754e1e3bab61a96957ed2", 254464),
 	ENTRY0("varicella", "990831", "f5791cd7d8ebfd568928eb2b888a5264", 501760),
-	ENTRY0("varronismuseum", "070602", "a6a8fdd36ad5bb4e390361738b86d8a9", 509148),
 	ENTRY0("vengeance", "000000", "cf68c5b27e9275a0962b622ed4662108", 83968),
 	ENTRY0("verge", "120523", "c7e60b875d240ee83dfac37596cce177", 267776),
 	ENTRY0("vergingpaths", "151027", "c6df1e824df593e8c4995502e6704571", 1131672),
-	ENTRY0("veryvile", "190928", "14f7780e689e0cf4c321904332238970", 490998),
-	ENTRY0("vespers", "051128", "35377bb25ea1f3038377c8fb51795d6c", 309760),
-	ENTRY0("vestiges", "111005", "aadd8e8c1d72d67ce2edb9a260099113", 268230),
+	ENTRY0("veryvile_zcode", "190928", "14f7780e689e0cf4c321904332238970", 490998),
 	ENTRY0("vigilance", "070106", "97364e2e3f4197bf9dcfeef8fa6e6ee9", 183296),
 	ENTRY0("vindaloo", "960613", "d4e69f29f435b55dff5057a1d0d5bd45", 53248),
-	ENTRY0("violet", "081123", "0941c8db96a7ef82ebf10fe6cdd1859e", 601262),
-	ENTRY0("virtuality", "100131", "a68fe31bf3cce9b3dea7da0d733f45b0", 397244),
-	ENTRY0("virtualgrandnational", "200426", "e8f662bdd08fa0f7520e8ef5615c12b5", 175104),
+	ENTRY0("virtualgrandnation", "200426", "e8f662bdd08fa0f7520e8ef5615c12b5", 175104),
 	ENTRY0("visualizing", "000218", "81458ba52d6deb8b30ee2628b45976dc", 97792),
-	ENTRY0("voices", "010504", "9a78da996a62281db9047c9998cce0a2", 84992),
 	ENTRY0("vosr", "060925", "73746a1dd6938ca4b034eb424936ffe7", 267776),
+	ENTRY0("wadewar2", "000806", "5a6370665b128e4688b810fae4393232", 124928),
 	ENTRY0("wadewar3", "020512", "458b5b368a71329dcfc59223c449cf88", 143872),
-	ENTRY0("wakeup", "181006", "c0ea31ea66528b08ef090813267c417e", 337920),
-	ENTRY0("walkamongus", "181031", "5b6b726c28b897d299d4add5fcd3943e", 2292016),
-	ENTRY0("walkamongus", "181202", "0a79a4dec57d44b6ee09fec8e868ea8e", 780152),
-	ENTRY0("walkinthepark", "100213", "d116d7a9a5160fc336b36f7e8a077a42", 145408),
-	ENTRY0("wallpaper", "061117", "b25d80417e7b783bdc377302a3b53138", 344978),
 	ENTRY0("warblersnest", "131221", "147d80b524cf8ee812459c0a7426cb87", 863268),
 	ENTRY0("warp", "640101", "3554d76096e5d06d9417e20a21e95ea0", 70144),
 	ENTRY0("weapon", "010706", "b28a2d2ab4a2ba54e5c5d980764c26a4", 142336),
 	ENTRY0("weareunfinished", "160419", "28d307b40b627af2708c71aaf43a64d5", 413298),
-	ENTRY0("weather", "960613", "00f90d5b28604243708ad41cc6a7dcea", 93696),
-	ENTRY0("wearyeerieway", "211030", "f8e693a21ccb457a9c5b58251b635060", 188824),
 	ENTRY0("weirdness", "030922", "e98bc679d94c0c1c6a241737f7c8ae28", 89600),
 	ENTRY0("weirdcity", "140613", "0a434b5011389e47b391b707ccf6611a", 339786),
+	ENTRY0("welcome", "160213", "71a3316b000ce44a1b0e2ecc4eaa96a0", 160256),
 	ENTRY0("welcometohell", "980816", "1c7493e0ca533b9cc04097d90b112b24", 51200),
 	ENTRY0("welcometopuerto", "050101", "11a2ac552be710a810ce0f41862c40f4", 62976),
 	ENTRY0("wernersquest1", "020225", "e158f13e9f55eef58a0f7a6affec180e", 52736),
@@ -4691,10 +4645,8 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("wernersquest3", "200213", "24dbc99bf6bc085ec6e91be050a3156a", 55368),
 	ENTRY0("wernersquest4", "020225", "2098db329eff1b0d1cad56f89bd38723", 52736),
 	ENTRY0("wernersquest4", "200213", "df9b7d3fba29b450fb4d666130693cdd", 56220),
-	ENTRY0("whenhelp", "030208", "2185bd75e8cc26ac7773effc300ec210", 286720),
 	ENTRY0("whispers", "050905", "4cbba9cf2b5bce84ccef8e40482ef230", 205824),
 	ENTRY0("whispers", "050926", "360c24ec5c47ced2b03ce38c6e4e2e8d", 177152),
-	ENTRY0("whoahcubswoe", "181030", "fb9e91fc58040e4ec2871b35e3194746", 244006),
 	ENTRY0("wildflowers", "140825", "11df47a8f9ddebbe3ed903ef8c85597a", 518936),
 	ENTRY0("williamtell", "021025", "4f098036ffdc7463000c4f81b6300123", 68096),
 	ENTRY0("winchester", "020131", "9abc235bc791a3f38ee81aa6496112d0", 293888),
@@ -4708,17 +4660,16 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("wizardscastle", "000918", "b205946471d687d83b8dfc988734ab43", 34304),
 	ENTRY0("wizardsmagic", "190727", "4b1c54d572b50f428f2aa6d7b7a79b5f", 165888),
 	ENTRY0("worldupsidedown", "151224", "1b7311638555848aaf3a50857ed4035b", 457496),
-	ENTRY0("wossname", "000225", "ddf9652869c0892cc2d2150607dbf0c0", 77312),
 	ENTRY0("wsp", "050718", "b36c21f76893d6329d0d3a77e59792b8", 114176),
 	ENTRY0("wump2ka", "041119", "64e790c40f04ab7fe2405807f0cecb9f", 174080),
 	ENTRY0("wumpus", "991216", "abdd37af526d03538cbb20d91a941489", 12800),
 	ENTRY0("wurm", "021126", "0ffbc60fcccaccf1abfa877acf293b2a", 4096),
 	ENTRY0("wwwanderer", "080705", "a401b781048229b05b444bdbb68e5b71", 283592),
 	ENTRY0("xenophobia", "111115", "d132c3b5defcef212f36e03a7c9a2e74", 124928),
-	ENTRY0("yagwad", "001121", "6d74b0e48dc46e589efd071e3d329f45", 167936),
 	ENTRY0("yakshaving", "101127", "3c4114a0999f2a68bd08c58fe0494a97", 394958),
 	ENTRY0("yakshaving", "210311", "388cf2afe8648e481b292ef435b099c1", 688198),
-	ENTRY0("yomomma", "100228", "325cd63060b5509300c71af58902670c", 1081664),
+	ENTRY0("yomomma", "100228/z8", "a63d6aa5c9741b7c0ccb27756c741c12", 398336),
+	ENTRY0("yomomma", "100228/zblorb", "325cd63060b5509300c71af58902670c", 1081664),
 	ENTRY0("zassball", "980314", "ab906aa444b7fdd0a92119828616bb58", 12288),
 	ENTRY0("zbefunge", "021128/Beta", "6ae16ce61922211922edf777bb6113ce", 56320),
 	ENTRY0("zcamel", "000918", "96b316f9b7e133eaccbec98a4fb0cf46", 6656),
@@ -4731,7 +4682,6 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("zegro", "041112", "bb7a0ef8d23cfb88afb2dc1e40be9613", 261632),
 	ENTRY0("zenon", "100122", "2c82b81ac43fcfbf2abee4d8c4f98cad", 67584),
 	ENTRY0("zenspeak", "990217", "53a344bef35a5778307aeb937a31f001", 123392),
-	ENTRY0("zigamus", "161005", "f927bb50ece8682d1191ce1f56f41525", 93184),
 	ENTRY0("zlife", "960121", "36bc7d2fdd0bbac996466e05af239924", 6656),
 	ENTRY0("zokoban", "990810", "e599ec4ff1eee51afbd6a3f8e8d8680e", 18944),
 	ENTRY0("zombies", "990524", "4535f316650ee6c76b95ced1100b12d0", 7680),
@@ -4762,12 +4712,12 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 
 	// Converted Scott Adams Classic Adventures games
 	ENTRY0("adventurelandi5", "941017", "cde66d37efaff46f18e67b0f39e4d0cd", 43008),
-	ENTRY0("adventurelandsmpleri5", "980329", "86c473c81e86637105108afa943c3ced", 23040),
+	ENTRY0("adventlandsmpleri5", "980329", "86c473c81e86637105108afa943c3ced", 23040),
 	ENTRY0("buckaroobanzaii5", "980329", "cdbf748cdcee3cade378cf62cfe01d43", 24064),
 	ENTRY0("ghosttowni5", "980329", "0240f4119bb9b8e8197f37049c9b4f82", 25600),
 	ENTRY0("goldenvoyagei5", "980329", "d986f2ac673abdce741c90e8b9fc3acf", 26112),
 	ENTRY0("marveladventurei5", "980329", "964dfa22fcd54d2674123951af79136b", 25600),
-	ENTRY0("missionimpossiblei5", "980329", "9c759b65e43e2d9d6aa02122248040ae", 24064),
+	ENTRY0("missionimpossibli5", "980329", "9c759b65e43e2d9d6aa02122248040ae", 24064),
 	ENTRY0("mysteryfunhousei5", "980329", "4b78c1883356db8184b351c5a269fdce", 24064),
 	ENTRY0("pirateadventurei5", "980329", "0c3d27eaa6563835bfb1aadd309e7a00", 24064),
 	ENTRY0("pyramidofdoomi5", "980329", "a6fc7fd81b7330bc254afbac17b29058", 26112),
@@ -4775,7 +4725,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("returnpirteislei5", "980329", "56e5d7c33d5403ed59a62f67744f4d02", 26624),
 	ENTRY0("savageisland1i5", "980329", "6f6cf307a97becb32524fe66a910587e", 24576),
 	ENTRY0("savageisland2i5", "980329", "a43ab1063e6a8d4849ad3b69f1e4cacb", 25600),
-	ENTRY0("sorcererclaycastlei5", "980329", "54cc89bbead7dac21455b9c00f32f604", 25088),
+	ENTRY0("sorcererclaycstli5", "980329", "54cc89bbead7dac21455b9c00f32f604", 25088),
 	ENTRY0("strangeodysseyi5", "980329", "8216fc5ca7ed593d6a9c4265064d83a4", 24576),
 	ENTRY0("thecounti5", "980329", "a0060ef9c9fa5cc3d3dbbc060f6451c2", 25088),
 	ENTRY0("voodoocastlei5", "980329", "bff285e6c9291fc6ba77c9743b610c2d", 24064),
@@ -4815,7 +4765,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("waxworksi5", "041209", "859a006a14bd69b22135688248756ba0", 30720),
 	ENTRY0("waxworksi5", "110126", "c51e911d1228d8adfc07ed138bc90079", 116220),
 
-	// 1992 album Apollo 18, by They Might be Giants
+	// Apollo 18+20: The IF Tribute Album
 	ENTRY0("apollo1", "120315", "1aec299147675a5c6e10d548a4eeba05", 251100),
 	ENTRY0("apollo4", "120322", "83f92f1fc39bd699ac32935d8eefd35a", 426528),
 	ENTRY0("apollo5", "120324", "6c889ec9c330169740afafe7694030cf", 199680),
@@ -4848,41 +4798,57 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("apollo37", "120323", "55b8607a451ab30d03314f815a30e40b", 327144),
 	ENTRY0("apollo38", "120321", "a760169a6643d08ff3db22be84caed37", 353734),
 
-	// The 1995 Annual Interactive Fiction Competition
+	// IFComp 1995
 	ENTRY0("if95_weather", "950819", "0f8eca394c2956f12e0efc6027a60395", 93696),
+	ENTRY0("if95_weather", "960613", "00f90d5b28604243708ad41cc6a7dcea", 93696),
+	ENTRY0("if95_mindelectric", "941008", "900aae2e5ef17d957e26e8bc0ef90b86", 70656),
 	ENTRY0("if95_mindelectric", "950830", "570cd97c66cea6097533fefbd9072f56", 70144),
 	ENTRY0("if95_magictoyshop", "950726", "4ad2912aa56d0962a74c4fb51b472f10", 71680),
+	ENTRY0("if95_magictoyshop", "951018", "68d597fc1a7b22419033628967dad19f", 73216),
 	ENTRY0("if95_mst3k1", "950814", "de8b17e315820f75556530404bb4fac0", 81408),
+	ENTRY0("if95_mst3k1", "960831", "362107be49493f6ed1ca7664d7884a66", 105984),
 	ENTRY0("if95_libraryfront", "950829", "fc1d5c6b54efb2fd051eef2f1322afff", 55296),
+	ENTRY0("if95_libraryfront", "951204", "e54ca81e93629a6e8ab2dbc84a6712b4", 72704),
 	ENTRY0("if95_tubetrouble", "950831", "3651c39edb3d9cf0f63f32e6e52e705c", 50176),
+	ENTRY0("if95_tubetrouble", "950901", "478a208e21def77097309c2b152a968e", 50176),
 
-	// The 1996 Annual Interactive Fiction Competition
+	// IFComp 1996
 	ENTRY0("if96_sherbet", "960928", "d3539f871e1b25f279e98857ce8e514e", 157696),
+	ENTRY0("if96_sherbet", "961216", "46a865c6f01a800536463ffe93fb3d9d", 174592),
 	ENTRY0("if96_tapestry", "961010", "a8e97156b7211dea1aa94471f0509042", 185344),
 	ENTRY0("if96_delusions", "961021", "c1f63eacbe78cb0e7721e8c0d403fab5", 166400),
+	ENTRY0("if96_delusions", "971121", "8e78eef73d07048d99514bab624fb9aa", 193024),
 	ENTRY0("if96_fear", "961012", "a346c031516cbd4bd493d178317e28e7", 102400),
 	ENTRY0("if96_claw", "961003", "ed2820d0570051d4f7d025034514882c", 126976),
+	ENTRY0("if96_claw", "970327", "4d3992e95530a301ca58939a197c6b1b", 130048),
 	ENTRY0("if96_lists", "960823", "c4373396c5c8e499073b175349161359", 116224),
 	ENTRY0("if96_ralph", "961005", "425c2253d6b083c20a0cb04ea6403a54", 59904),
 	ENTRY0("if96_reverb", "961015", "297a86543115d3c3f5cd5710fea9213f", 100864),
 	ENTRY0("if96_intheend", "961010", "f38c34e0d7a67271bb469c629db10cd0", 106496),
 	ENTRY0("if96_piece", "961015", "2b308f878a82041aadc5b9f9f745221f", 103424),
+	ENTRY0("if96_piece", "970819", "5703a209e660a58f456b0ec99707c3fd", 105984),
 	ENTRY0("if96_phlegm", "961014", "4a10ddf90e3d3b5671b28a881e11a05a", 69632),
+	ENTRY0("if96_phlegm", "970804", "2f6f7667a3c2782aa0f24eeef7c7fec0", 70656),
 	ENTRY0("if96_stargaze", "961015", "5534fb19f4dbb71ec4fb8bd293340826", 61952),
 	ENTRY0("if96_forms", "961021", "a8c58b3da486d76dfe933a82a0861dc0", 82944),
-	ENTRY0("if96_stalkerzcode", "960930", "9a8eba9e5d3f88e603ee4e98ca4e2126", 75776),
+	ENTRY0("if96_forms", "970206", "7de27dd6539ed6ef1c6176ab030510dd", 91136),
+	ENTRY0("if96_housestalker", "960930", "9a8eba9e5d3f88e603ee4e98ca4e2126", 75776),
 	ENTRY0("if96_ripflesh", "960914", "81b3ce6c20eded07e831ee9c83508507", 83456),
 	ENTRY0("if96_liquid", "960927", "5ff0e573df8126e6142a66716b90acf9", 68608),
 	ENTRY0("comp96", "970626", "208b6f721e472f89654e6feb1b54b747", 84992),
 
-	// The 1997 Annual Interactive Fiction Competition
+	// IFComp 1997
 	ENTRY0("if97_edifice", "970930", "15d3cb03378412c6c3d0b050e5d6392c", 173568),
+	ENTRY0("if97_edifice", "980206", "e2fd79d86f7e77659ef60519d2423856", 181760),
 	ENTRY0("if97_spring", "970929", "9b891a246a0a5869e73c42527950143b", 256000),
 	ENTRY0("if97_bear", "971011", "71d95521937e8c4e6753d656ae264a28", 105984),
-	ENTRY0("if97_lostspellmaker", "970927", "e06790b6d56f8b3efafc24c990d5138b", 117248),
+	ENTRY0("if97_lostspellmake", "970927", "e06790b6d56f8b3efafc24c990d5138b", 117248),
 	ENTRY0("if97_mimesis", "970925", "c52b125a2fa69127500a1fbb35796c28", 87552),
+	ENTRY0("if97_mimesis", "980110", "abd66d64b98d47ebc88f69d35816fdf8", 90112),
 	ENTRY0("if97_newday", "970929", "7bebae12833d6253517493de19dd5f91", 121344),
+	ENTRY0("if97_newday", "980227", "c43124915cd5677e0c2e89f081586e8b", 125440),
 	ENTRY0("if97_erden", "970930", "964d7e321582389e1a43c9022876787d", 322560),
+	ENTRY0("if97_erden", "980131", "6125e83116854253240b489a22e83b9f", 348160),
 	ENTRY0("if97_friday", "970927", "cc15b58c93d67f52b23e5f8d2b9e3f3c", 94208),
 	ENTRY0("if97_estrange", "970929", "091cda6fc1229d4e1815d968782583c6", 237056),
 	ENTRY0("if97_sylenius", "970928", "d2858bdf7d92b2fac11db566bfa58b44", 184320),
@@ -4898,16 +4864,21 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if97_cominghome", "970719", "249537ad84a4dd9ee255eb8c9e91d7a7", 71168),
 	ENTRY0("comp97", "971009", "28737e33e980aa77c9e52a3bbbeec6fb", 103424),
 
-	// The 1998 Annual Interactive Fiction Competition
+	// IFComp 1998
 	ENTRY0("if98_photopia", "970918", "6e5e8f088a763de43516926b3e2dc3bc", 188416),
+	ENTRY0("if98_photopia", "980914", "e07246e6a3961b7905e927dc5afe9601", 187904),
+	ENTRY0("if98_photopia", "981223", "7c86e1a9aa2cf27b16b7b60e30d5b584", 194048),
 	ENTRY0("if98_muse", "980927", "d4d3442d178c99a1ba88293a66c244bb", 162304),
+	ENTRY0("if98_muse", "990922", "4dd315769b9d4c4782adaac1d42d0283", 175104),
 	ENTRY0("if98_enlighte", "981001", "1d259d57bb8e4a84fee03b95554a9c7e", 111616),
 	ENTRY0("if98_motherloose", "980928", "dca1f322ec6e290aecb9b0a6712dd942", 204288),
+	ENTRY0("if98_motherloose", "981128", "87de736abcf52f27a00d09b74cfda240", 206336),
 	ENTRY0("if98_bluemen", "980923", "65fb060e7c67d66dcd15c75b272d720c", 174592),
 	ENTRY0("if98_dilly", "980917", "07e1ffdbfdaf760d77a97a78900c8557", 101376),
 	ENTRY0("if98_downtowntokyo", "980930", "bd8868ae2b5467fa157483026d480fc9", 80384),
 	ENTRY0("if98_informatory", "980929", "bdb68ba2a7b4cc2db474cfc4a6ad90bd", 139264),
-	ENTRY0("if98_ritualpurification", "980927", "3eb48bc2b376d8d3b2f4c3c4249525bb", 115712),
+	ENTRY0("if98_informatory", "981211", "c9eb276f103f83b8e7044c1f3930264b", 141312),
+	ENTRY0("if98_ritualpurific", "980927", "3eb48bc2b376d8d3b2f4c3c4249525bb", 115712),
 	ENTRY0("if98_city", "970930", "2b263a9ede155127d8c0d7af62fd1f91", 87552),
 	ENTRY0("if98_evildwells", "980930", "2553619a35b7376f808ed2f60aa38bf8", 130048),
 	ENTRY0("if98_purple", "980929", "760bd290430bd4056e3d139dfacac011", 133120),
@@ -4920,42 +4891,54 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if98_hrs", "980830", "685018bc292fec68de973567f47519bf", 19456),
 	ENTRY0("comp98", "981002", "31cca005f642f01f741daba6e861df27", 122368),
 
-	// The 1999 Annual Interactive Fiction Competition
+	// IFComp 1999
 	ENTRY0("if99_winterwonder", "990928", "62ed5cae5f7957cd7174d0053cc0aeb7", 190976),
 	ENTRY0("if99_forachange", "990925", "e5e67ba8c7db64b0a58cf57a4d220807", 91648),
+	ENTRY0("if99_forachange", "990930", "6cd6f17ea26ed42d56afc367b90de115", 91648),
 	ENTRY0("if99_softfood", "990930", "c45d8a94151e6f3016f238450995dba6", 128000),
 	ENTRY0("if99_halo", "990928", "4d6a77fa2f83e9292fc216273bf58bfa", 250368),
 	ENTRY0("if99_hunterdark", "990918", "165dc72dc8787d6bf69bfd689e2a1338", 114688),
+	ENTRY0("if99_hunterdark", "991119", "3c3288e7023f07e525d7301bb84ffba1", 116224),
 	ENTRY0("if99_beatdevil", "990926", "fd98f48deb150f638f48202fe2f12fe5", 98816),
 	ENTRY0("if99_jacks", "990924", "41779d02b0edae068ee21209f330d73b", 87040),
 	ENTRY0("if99_oad", "990915", "6b8d4b73c5922b45e44caeaaa49b0e05", 75264),
+	ENTRY0("if99_oad", "000913", "c4d1e88c95803bb9ae0e669c575feb67", 78336),
 	ENTRY0("if99_lomalow", "888888", "3e0504b47e42a33d1dcb6d8f1559bc89", 85504),
 	ENTRY0("if99_calliope", "991001", "f20eba0e0ad336554d3b95cc5bc374e1", 84992),
 	ENTRY0("if99_museduction", "990911", "26a185c675df4ccaa7d58ad5ba4ba4b1", 98816),
 	ENTRY0("if99_wossname", "990927", "e06e1accea289d011ab6612986ff8250", 71680),
+	ENTRY0("if99_wossname", "000225", "ddf9652869c0892cc2d2150607dbf0c0", 77312),
 	ENTRY0("if99_thorfinn", "990929", "49cf016252a16cd53cf45cbb737df564", 97280),
 	ENTRY0("if99_death", "990930", "d180e8dc3b9737e3f6ccb9d33cd8ddd9", 126464),
 	ENTRY0("if99_chix", "990930", "19bbc5e81c6a21510a6afbea2f128fae", 144384),
+	ENTRY0("if99_chix", "991124", "760b7fb0fcd9c99ae1295c06ff52529d", 206848),
 	ENTRY0("if99_passbanana", "990921", "a3834e3526f49d947a050bf64f4ba407", 69105),
 	ENTRY0("if99_outsided", "990929", "bfdef202ef6f161f3e5124039328009f", 115200),
 	ENTRY0("if99_ludite", "990930", "6934a4825c718e8d70ab79667e8a6f08", 82944),
 	ENTRY0("if99_guard", "990930", "904703d1341fd6f26b867990a800c360", 346112),
+	ENTRY0("if99_guard", "991231", "db56b6f0f381ba32f30749530ebdc25f", 410624),
 	ENTRY0("comp99", "991005", "a8500f2cbb186a08fcad4d4bb1c71322", 161280),
 
-	// The 2000 Annual Interactive Fiction Competition
+	// IFComp 2000
 	ENTRY0("if00_metamorphoses", "000930", "f8e84ac3d9f80397c8cbd1201b38ab12", 167424),
 	ENTRY0("if00_andrewplotkin", "009999", "8e2294d36ba2668c83da94065633cade", 203264),
 	ENTRY0("if00_adverbum", "000925", "f9bf871dc7059293b0c6a096d2b5e6ce", 135680),
 	ENTRY0("if00_transfer", "000930", "36182bc6ef876ad9e905eb5cda1f9cd8", 185344),
 	ENTRY0("if00_myangel", "000925", "b00787ab7786865c6102f03fdfedd713", 248320),
+	ENTRY0("if00_myangel", "001218", "f478be18002189fe31df1c499ceab89f", 257536),
 	ENTRY0("if00_nevermore", "000928", "4a536014bc819ebdafe08f10be8cd914", 134656),
 	ENTRY0("if00_masquerade", "000930", "2e4541edb1d42b40b8babc4334475c3a", 223232),
+	ENTRY0("if00_masquerade", "010122", "a88a4f7cc20883249db3aaae1aad871c", 225280),
 	ENTRY0("if00_yagwad", "001001", "ad76da388918f38398139a7d41cdb068", 166400),
+	ENTRY0("if00_yagwad", "001121", "6d74b0e48dc46e589efd071e3d329f45", 167936),
 	ENTRY0("if00_shade", "000925", "3d7264ec38cbff7393b9625a082d3c75", 107008),
+	ENTRY0("if00_shade", "001127", "e9ef7c17a40a4d0a30bb30c37ae1e4c5", 108544),
 	ENTRY0("if00_guess", "001002", "7554e5275c00079c5ef5a7dae485d05e", 199680),
+	ENTRY0("if00_guess", "001210", "df6dcaadb7f2d25cbbeb1b357c716a32", 235008),
 	ENTRY0("if00_letters", "000925", "3a0d7445345279a7e54286845bb2bb4d", 183808),
 	ENTRY0("if00_rameses", "000905", "3aa35b977781d22d1b0730e509fbaa32", 162816),
 	ENTRY0("if00_djinni", "000927", "8bd611028351e78c8d428762bb50c88f", 105472),
+	ENTRY0("if00_djinni", "001117", "107f0d7432596234db354dbe3cbb4b68", 105472),
 	ENTRY0("if00_bestman", "", "976dea78b46816162a84a08a26e4e70b", 131584),
 	ENTRY0("if00_atwctw", "000914", "3a2bcd7abd981603ad6f6e42862048c7", 176640),
 	ENTRY0("if00_dinner", "000930", "ab3ef16685db619e89b76093ba2bf986", 158208),
@@ -4967,7 +4950,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if00_castleamnos", "000930", "6f2cb75c73c0f29ea67d8a7c817c63da", 124416),
 	ENTRY0("if00_masque", "000929", "a445df49ab60a2295fbb42d74276c557", 162304),
 	ENTRY0("if00_ppocket", "000929", "2b5bf3234652544ec6cc87f0d9ffd925", 129024),
-	ENTRY0("if00_happyeverafter", "000930", "02c281fff208a4480237140b2c1e4d25", 127488),
+	ENTRY0("if00_happyeveraft", "000930", "02c281fff208a4480237140b2c1e4d25", 127488),
 	ENTRY0("if00_prodly", "000921", "d9bacb93727ab1876a1bac84472b2718", 116736),
 	ENTRY0("if00_withdraw", "000930", "6d42f8a5f721b240b3eda80d4fdbf24f", 66560),
 	ENTRY0("if00_123", "000929", "bada858e1a1ff3f5a712ca8658181496", 87040),
@@ -4977,44 +4960,56 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if00_whatif", "000926", "c678e52cda08e06b709746b519fb58c3", 92160),
 	ENTRY0("comp00", "001002", "e5bd908fb7735764916c195a8d07f9ab", 178688),
 
-	// The 2001 Annual Interactive Fiction Competition
+	// IFComp 2001
 	ENTRY0("if01_allroads", "010908", "1259e45e9adf77ecbe34ae2279fdb5c2", 172032),
+	ENTRY0("if01_allroads", "011119", "84ce94d8c6c77452537511f14739b612", 172032),
 	ENTRY0("if01_moments", "010908", "06b906e9484d0b858dab813476b66922", 303616),
 	ENTRY0("if01_heroes", "010928", "5a1da81f028ff0b81ca1b86771e5ff8b", 200192),
+	ENTRY0("if01_heroes", "011130", "1bfe7f301e15816e46c60edfae9030a5", 204800),
 	ENTRY0("if01_cycles", "010928", "c0b8938782a4e8bad45acbde871dbda5", 118784),
+	ENTRY0("if01_cycles", "020222", "cfe1bb9275f72a63e6b4d96fb39907b3", 121344),
 	ENTRY0("if01_eas", "010926", "17a98281223504a9b750cfca9156a4ac", 178688),
+	ENTRY0("if01_eas", "011204", "5dffcdadd1f24333aa6cb03fefce22fe", 183296),
+	ENTRY0("if01_eleven", "001231", "a573abd0e05318d72502e2ff3b48f5fa", 214528),
 	ENTRY0("if01_eleven", "010928", "66de44d555d009a78f2653926462d6dd", 196096),
 	ENTRY0("if01_prized", "010928", "bfe292ea9b0ae182afae6964039c4e2c", 218624),
 	ENTRY0("if01_finetuned", "010928", "db40fa5a3a42006b70666c91c2de54ff", 271360),
+	ENTRY0("if01_finetuned", "020520", "354ff8d5758cd27f054d5f575dd37742", 293888),
 	ENTRY0("if01_evil", "010902", "14cecf79c9445057799632835034e560", 125440),
 	ENTRY0("if01_gostak", "010926", "3aad7233e05fae59f499fedaaecf75f9", 88064),
-	ENTRY0("if01_crusadezcode", "010913", "cc05c6b1940ed5e5bb53a0abecfbe1bf", 128000),
+	ENTRY0("if01_gostak", "020305", "06a39a234ada7e57733e1ab442909170", 88064),
+	ENTRY0("if01_crusadejg", "010913", "cc05c6b1940ed5e5bb53a0abecfbe1bf", 128000),
 	ENTRY0("if01_urhere", "010928", "2f0240d8c028d9c249b8892c0de7f547", 196096),
 	ENTRY0("if01_elements", "010928", "cb2d89f904f8e4494e4b35561ca888be", 129024),
 	ENTRY0("if01_banebuilders", "010925", "fa7780e270430b2959b49f57d780efb1", 90624),
 	ENTRY0("if01_colours", "010928", "a2ac5c16802f1c0ed1dc5b32166f67d1", 123392),
 	ENTRY0("if01_siliconcastle", "010910", "56f506aab6fd10750a279f565f2c2696", 217600),
+	ENTRY0("if01_siliconcastle", "011119", "51d94f5e8684cae443e28c16e3e04fea", 211456),
 	ENTRY0("if01_timeout", "200108", "25fd8875971dd2ae460e63c2ba71e25d", 119296),
 	ENTRY0("if01_schroed", "010314", "48dc6a08ad6619d17dbf03b8dff0e2db", 59392),
 	ENTRY0("if01_jump", "010928", "6bdc74ee5fccace64e18580c8ba8eb82", 69120),
 	ENTRY0("if01_newcomer", "010928", "c618e4e185c85df8a1d4728537397a4d", 64000),
 	ENTRY0("comp01", "010930", "82c631364cedf25ab4e78bbdc4034327", 169472),
 
-	// The 2002 Annual Interactive Fiction Competition
+	// IFComp 2002
 	ENTRY0("if02_photograph", "020926", "8b5edf2a02123aadbd28bff37a324a95", 196608),
 	ENTRY0("if02_moonlittower", "020927", "99126839757b62c48ddaaed723390f26", 138752),
 	ENTRY0("if02_janitor", "020927", "61035b376a21cafc434d8a5657e8804b", 146944),
+	ENTRY0("if02_janitor", "021210", "00750a8e1dc8c0e157be3465704b426e", 147456),
 	ENTRY0("if02_tookiessong", "020927", "3e09bbcf92dfe6b72aab33ad9d0d572a", 187392),
 	ENTRY0("if02_ftaegea", "020926", "d8a67ae37dbcb99d5edc18f318fd56c1", 343040),
 	ENTRY0("if02_thetemple", "020925", "4d3bc8996e2af00aeac21d62c2278107", 107008),
+	ENTRY0("if02_thetemple", "021118", "1592469a7f1f503789443d2f56f5113f", 107008),
 	ENTRY0("if02_jane", "020927", "dec64545b4f4345b74a17537e65b4732", 171520),
 	ENTRY0("if02_mythtale", "020830", "c3e89166105e986b6708ee470aa50b13", 212480),
 	ENTRY0("if02_idthief", "020928", "eb85f09482a328a548dd96368eac50cc", 140288),
 	ENTRY0("if02_rentaspy", "020923", "6bdaab7bdcac42ac5f150c3ed2600fdb", 143360),
 	ENTRY0("if02_whenhelp", "020926", "07a8884764294f348784a615ad8ab69b", 285696),
+	ENTRY0("if02_whenhelp", "030208", "2185bd75e8cc26ac7773effc300ec210", 286720),
 	ENTRY0("if02_constraints", "020927", "fa88eccd76bd2e9e3108b70aafe537ba", 176128),
 	ENTRY0("if02_hell0", "050929", "63130fb3a0f3c62217ec99c14ebb4ed5", 111616),
 	ENTRY0("if02_bofh", "020927", "3da1806e505c38de29821f0e841248d3", 127488),
+	ENTRY0("if02_bofh", "030202", "c43d7674558043729cf3916f7e1bfe4d", 101376),
 	ENTRY0("if02_samuelgregor", "200108", "da6df678988e311dbdb9ecf3551ca482", 93696),
 	ENTRY0("if02_screen", "020926", "74d0c7f54d1e9e387f91d88e889ec0bf", 83968),
 	ENTRY0("if02_shamulet", "020926", "7bfdd75a3287c7b7874964e8e2480776", 74240),
@@ -5022,10 +5017,12 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if02_ramandjona", "020926", "eea6527824140b1f6b0479e937ae3043", 64512),
 	ENTRY0("comp02", "020928", "db8ba8f1596fb801021c99a92d111b38", 114176),
 
-	// The 2003 Annual Interactive Fiction Competition
-	ENTRY0("if03_slouchingbedlam", "030925", "0f870671f3d7569d57eb79a8be9b4a28", 216576),
+	// IFComp 2003
+	ENTRY0("if03_slouchbedlam", "030925", "0f870671f3d7569d57eb79a8be9b4a28", 216576),
 	ENTRY0("if03_risorg", "030925", "37c4b5b109c7005ae663e989024720d4", 443392),
 	ENTRY0("if03_gourmet", "030927", "d10a75ea4d4485b24c513d9bfefdfe7f", 181760),
+	ENTRY0("if03_gourmet", "031116/z5", "b7a2d1ce038c5ccc983fc3cec4cac682", 190464),
+	ENTRY0("if03_gourmet", "031116/zblorb", "6a78f4aa50d962668a2bf7b0e788bafe", 360808),
 	ENTRY0("if03_baluthar", "030926", "750377a64b3d502970e3bcf30adc9c5d", 121344),
 	ENTRY0("if03_atomicheart", "030921", "8afc2962b86883919e89a4ea4db25516", 138752),
 	ENTRY0("if03_papermoon", "030927", "d455488b4d5b59b4e3f2e6270c6c4e55", 130048),
@@ -5037,21 +5034,29 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if03_lardo", "030830", "8741a6ccd5cb8123a0cd37c23f1721c9", 66048),
 	ENTRY0("comp03", "030928", "55ee4ebe831b1f4dbc1c2865a6b59ef3", 112128),
 
-	// The 2004 Annual Interactive Fiction Competition
+	// IFComp 2004
 	ENTRY0("if04_bluechairs", "040930", "a95e06ff11b68d1c6ab887e568cd0d60", 238080),
+	ENTRY0("if04_bluechairs", "041229", "4ebedbd54fc2eae27fc7d867cadb37c3", 241152),
 	ENTRY0("if04_devours", "040930", "646ce501f1a42de40fb48f945514e0c1", 155648),
+	ENTRY0("if04_devours", "050325", "f9be89a5a26be53b52c08b6cea0ed3d1", 160768),
 	ENTRY0("if04_stingwasp", "040622", "ca5589359f90fc20d9a6acb3312681f9", 239616),
 	ENTRY0("if04_orion", "040930", "04b16a3b081bd49ee702025a7b862116", 202240),
+	ENTRY0("if04_orion", "041123", "16995ce9a4abe4a4670471beda078611", 204288),
 	ENTRY0("if04_mingsheng", "040907", "6a7b1758c832bf394f01882df288badd", 114176),
 	ENTRY0("if04_splashdown", "040926", "518831b70285f9b6a2d57dac3aa55b93", 146944),
 	ENTRY0("if04_gamlet", "040926", "2222246b74477d475064bab951fc78d6", 249856),
+	ENTRY0("if04_gamlet", "041223", "c434581d222f89b85e67bea37aa702af", 260608),
 	ENTRY0("if04_greatxavio", "040930", "7391523964a284b86eb0e3da3da63f33", 164352),
+	ENTRY0("if04_greatxavio", "041204", "3725be7347d460cc3661b0268db55db5", 177664),
 	ENTRY0("if04_geb", "040930", "85c3f43cfe5d7b86799efc2f596ef0aa", 163840),
+	ENTRY0("if04_geb", "051028", "8b731db0410993b8421e06dd7f3e37b2", 165376),
 	ENTRY0("if04_bigscoop", "040916", "2ca8203bd4ae6bfc4e76f5b430a8737d", 173056),
 	ENTRY0("if04_identity", "040928", "1e459aceb4c0071c970dca5484c5617b", 126464),
-	ENTRY0("if04_murderaeroclub", "040921", "aff927b5be8d78a0900bf495f605395b", 108032),
+	ENTRY0("if04_identity", "041121", "72fe1d48259be82d586bb4eb48ccaff9", 126976),
+	ENTRY0("if04_murderaeroclb", "040921", "aff927b5be8d78a0900bf495f605395b", 108032),
 	ENTRY0("if04_bellclap", "040930", "70be7c0e420f7236fae11c34589158db", 123904),
 	ENTRY0("if04_typo", "040924", "827e420f98cfdc0b014203a53a11ff00", 96768),
+	ENTRY0("if04_typo", "041119", "549875ea83b4230896fa7d3fa18ba0a3", 100864),
 	ENTRY0("if04_blink", "040926", "7f8957455ed7187729239a73bd52b625", 88064),
 	ENTRY0("if04_playtorn", "041001", "5c36cf0d222d564a5e10851b842beca3", 191488),
 	ENTRY0("if04_order00", "040930", "3f365a5c640a60e8cbde6d71d3766f8b", 107520),
@@ -5060,16 +5065,17 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("comp04", "041006", "8906d8be4439cfc8d2e34f7e1914462c", 116736),
 	ENTRY0("comp04", "041007", "644fa97fda92e961969ca2525f7b947b", 116224),
 
-	// The 2005 Annual Interactive Fiction Competition
+	// IFComp 2005
 	ENTRY0("if05_vespers", "050929", "a8ff87d7ab10b3e6825db32f093d1f08", 286720),
-	ENTRY0("if05_beyond", "050930", "7c40cfec00e949e0c104b7b415ecb04a", 320512),
+	ENTRY0("if05_vespers", "051128", "35377bb25ea1f3038377c8fb51795d6c", 309760),
+	ENTRY0("if05_beyond_zcode", "050930", "7c40cfec00e949e0c104b7b415ecb04a", 320512),
 	ENTRY0("if05_anewlife", "", "b767db9117f533064d3113e159ef03e8", 260608),
 	ENTRY0("if05_toughbeans", "050930", "5fbe477520b8b9b9fd3873687d829460", 220160),
 	ENTRY0("if05_colourpink", "050924", "1ed112b4d17b4a9f885f5cb7a9ead277", 268800),
 	ENTRY0("if05_unforgotten", "050930", "94966251577ca5807102f1acab09750e", 249856),
 	ENTRY0("if05_snatches", "050930", "c0d612653fc6a3f4bd01f1b7ed492058", 183808),
 	ENTRY0("if05_vigilance", "051001", "93727f29c7a981ef006b4318e1231c3b", 182784),
-	ENTRY0("if05_historyrepeating", "050930", "cd8fab96b41ee0949de6b769a635e2dc", 114176),
+	ENTRY0("if05_historyrepeat", "050930", "cd8fab96b41ee0949de6b769a635e2dc", 114176),
 	ENTRY0("if05_soa", "050927", "49e31704b96971f0e51bfa3dcad39c0f", 115200),
 	ENTRY0("if05_psycheslament", "050929", "67fd7b02ce32ef3da8ad54a5e483e382", 89088),
 	ENTRY0("if05_onoptimism", "050930", "489ef2faedfca7255b3c5aa0fd71c462", 152576),
@@ -5077,251 +5083,298 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("if05_swordofmalice", "050908", "9b43f402cc13e02f57a464ca6f843b32", 96256),
 	ENTRY0("if05_drearylands", "050928", "25b26f262bdc8acca9e149d3ae2a0e4c", 97280),
 	ENTRY0("if05_hellosword", "050929", "ccbda9f1be8df8e5f656db548a002ed1", 152576),
-	ENTRY0("if05_phantomcaverns", "280727", "3dff9322c3f141ff17b47fc1e9d98929", 97792),
+	ENTRY1("if05_hellosword", "060113", "7c5289ab479a5aace75a5518969fedf3", 153600, Common::EN_ANY),
+	ENTRY0("if05_phantomcavern", "280727", "3dff9322c3f141ff17b47fc1e9d98929", 97792),
 	ENTRY0("if05_futuregame", "", "94a44dc4c563b1f4468b13b32ef601f0", 10752),
 	ENTRY0("comp05", "051001", "05e1dac27091bce08cc61a28ba71afa2", 116224),
 
-	// The 2006 Annual Interactive Fiction Competition
-	ENTRY0("if06_floatpointz", "060930", "1350e61da647efffc0e36f705dbc90f4", 1377946),
+	// IFComp 2006
 	ENTRY0("if06_primrose", "060929", "d4a2ee947d42598eaa8f09c23c4ef2a4", 428544),
 	ENTRY0("if06_moonshaped", "060929", "aa2bf7a42417827ac31ce7d8d3453a1f", 323584),
 	ENTRY0("if06_wallpaper", "060928", "4e0b9814068b066ff8a7703f59902f93", 342912),
+	ENTRY0("if06_wallpaper", "061117", "b25d80417e7b783bdc377302a3b53138", 344978),
 	ENTRY0("if06_legion", "060929", "678b0e73b1fb8e3280b955ed587dfc98", 190464),
 	ENTRY0("if06_madamspider", "060929", "6a48aed360accae28e7d21e702fa1b9e", 166400),
 	ENTRY0("if06_mobius", "060929", "8535e1058ea7bd3ccbe098a40ddbdbd5", 425828),
+	ENTRY0("if06_mobius", "061119", "ffafe18502f8c83789f904dde63f9938", 427364),
 	ENTRY0("if06_gameproducer", "060928", "b4e0ff39edec9d291e78bfa95d6dcf22", 179200),
 	ENTRY0("if06_starcity", "060928", "a7366438459f23661e8d178d8e690f49", 288256),
-	ENTRY0("if06_strangegeometry", "060929", "eead1528f100a3340167a909a9f5e97d", 308224),
-	ENTRY0("if06_towerofelephant", "060922", "74fa5a6e7d9b654ca2805edf6a7b0330", 281048),
+	ENTRY0("if06_strangegeo", "060929", "eead1528f100a3340167a909a9f5e97d", 308224),
+	ENTRY0("if06_towerelephant", "060922", "74fa5a6e7d9b654ca2805edf6a7b0330", 281048),
 	ENTRY0("if06_labyrinth", "060929", "abc2409764b3eee49a97ea90d58fc22d", 118272),
 	ENTRY0("if06_cdst", "060929", "c91836c10f543523cd61a6b24020eb3d", 348152),
 	ENTRY0("if06_bibleretold1", "100000", "e387804ec98ad477e6aa5911fbc74338", 191488),
-	ENTRY0("if06_anothergoddamn", "060927", "45a30649c871479e2060e95cc6bda3f4", 232448),
+	ENTRY0("if06_bibleretold1", "102283", "158f9c1818f7a80607a3b8281a9bc140", 169472),
+	ENTRY0("if06_anothergodamn", "060927", "45a30649c871479e2060e95cc6bda3f4", 232448),
 	ENTRY0("if06_fightorflight", "060929", "80db0fdf1d6b3951fc954b48de1e0c83", 270336),
 	ENTRY0("if06_manalive1", "000002", "27e3e2afffe206fca0f0f78f97c2f175", 175616),
 	ENTRY0("if06_hedge", "060929", "c7c17fffb437878b48990ed564960e5b", 216064),
 	ENTRY0("if06_polendina", "060929", "e7e3e0ab767c330635feb9b009bc14ff", 111104),
 	ENTRY0("if06_manalive2", "000002", "de9b6bae4432ef6585d06f65fc93a7ed", 149504),
 	ENTRY0("if06_pathfinder", "060928", "f632512392d33c75fed4a0bc0f0c5fd5", 146432),
-	ENTRY0("if06_apocalypseclock", "060801", "fe06ae2560d153af32bb29e74813d436", 92672),
+	ENTRY0("if06_apocalypclock", "060801", "fe06ae2560d153af32bb29e74813d436", 92672),
 	ENTRY0("if06_sisyphus", "060915", "5af751766ddacab843bd190fe5a6fe46", 134144),
 	ENTRY0("comp06", "061002", "8b72e6e68f62f53bb97646b108f31b0c", 149504),
 
-	// The 2007 Annual Interactive Fiction Competition
+	// IFComp 2007
 	ENTRY0("if07_lostpig", "070917", "10dcc48e7312cc26eae89d1648af50c6", 317952),
 	ENTRY0("if07_actofmurder", "070927", "2b8e594dc3d1d6b06153494bd47bb4db", 386048),
 	ENTRY0("if07_bellwater", "070929", "67feb5edbb49ea993ca7a94f07556ce9", 348520),
-	ENTRY0("if07_acrossthestars", "070929", "4dd6a382a08b2865ad22a99cff8746e4", 492544),
+	ENTRY0("if07_acrossstars", "070929", "4dd6a382a08b2865ad22a99cff8746e4", 492544),
 	ENTRY0("if07_orevore", "070929", "aab0bd90d0a29605e8000590d0205c88", 410624),
+	ENTRY0("if07_orevore", "071116", "fc4d75670412a50ffdc98e483adfaf5f", 415744),
 	ENTRY0("if07_jackmills", "070923", "26689533940170a64107b27adce69cef", 422776),
-	ENTRY0("if07_deadlinenchanter", "07????", "0abf2e1124bf4da63a7efbd6cb239e57", 219648),
+	ENTRY0("if07_deadlinenchan", "07????", "0abf2e1124bf4da63a7efbd6cb239e57", 219648),
 	ENTRY0("if07_fff", "070927", "bf7ad79002812c5b08ef0c98a3f73053", 99840),
+	ENTRY0("if07_fff", "080121", "c29786d16b5498656e19f06eb3d58d94", 100864),
 	ENTRY0("if07_wish", "070928", "c32139de52463c844ed063e0b0e6a227", 92160),
 	ENTRY0("if07_packrat", "070928", "71ab8ff0a6ea40b11e5c0c4990358bc9", 120320),
-	ENTRY0("if07_beneathtransform", "070927", "95b99d50b0c38cfd2907da023233ca82", 139776),
+	ENTRY0("if07_beneathtransf", "070927", "95b99d50b0c38cfd2907da023233ca82", 139776),
 	ENTRY0("if07_theimmortal", "070928", "2fee83a968aa436d25be899d3bdcc02e", 293376),
-	ENTRY0("if07_eduardseminarist", "070926", "b02853e34c156c8feee8895c9f749490", 71168),
+	ENTRY0("if07_eduardseminar", "070926", "b02853e34c156c8feee8895c9f749490", 71168),
 	ENTRY0("if07_pets", "070926", "c6a7ab54d9b9482cc459a9c975f48314", 146432),
 	ENTRY0("comp07", "070930", "383572627817ce8cebd71080d5cc2245", 141312),
 
-	// The 2008 Annual Interactive Fiction Competition
+	// IFComp 2008
 	ENTRY0("if08_violet", "080126", "df37a3ee028b439580ff3f138ff200cf", 598190),
+	ENTRY0("if08_violet", "081123", "0941c8db96a7ef82ebf10fe6cdd1859e", 601262),
 	ENTRY0("if08_afflicted", "080906", "20ecfc89ef0fca5a58d53f3bc6b7057e", 326656),
 	ENTRY0("if08_piracy2", "080926", "e722ca46b86a2a86b979c791ac970646", 250880),
 	ENTRY0("if08_snacktime", "080929/z8", "6cc88dd0f8c3fbea98fa16525a845b11", 339456),
 	ENTRY0("if08_snacktime", "080929/zblorb", "35e2fb47b2a3ef13377be9556d673bf7", 1331682),
 	ENTRY0("if08_openingnight", "080920", "56690c62b68ed95e6f5266c4bf5593de", 240128),
-	ENTRY0("if08_minionunderworld", "080922", "6e02c3844947612a8c6e3b0849568b2f", 108032),
+	ENTRY0("if08_escunderworld", "080922", "6e02c3844947612a8c6e3b0849568b2f", 108032),
 	ENTRY0("if08_bishoes", "080912", "616d0a27ebeaddba73cbee9c7a8406d6", 73728),
+	ENTRY0("if08_bishoes", "090513", "05c6dae3ea1896e756ce54bae26564ae", 85504),
 	ENTRY0("if08_grief", "080929", "10ac0c11f6687f75d940c197dd79f88c", 287744),
 	ENTRY0("if08_trein", "080718", "515fc480d1276c6a83e4af57fcb40670", 341618),
-	ENTRY0("if08_redmoonz", "080905", "cb8f73a536cfd474c548b38d03e08c65", 178176),
+	ENTRY0("if08_redmoon", "080905", "cb8f73a536cfd474c548b38d03e08c65", 178176),
 	ENTRY0("if08_draculascrypt", "080929", "e6be6ce15da3e50df3558c7c1a8a66b3", 238854),
 	ENTRY0("if08_anachronist", "080927", "6e3816a87b03e9c82f92b87c2ceea361", 243092),
-	ENTRY0("if08_whenmachinesattack", "080927", "448e05c036c352e6def70a32ee68128a", 424960),
+	ENTRY0("if08_whenmachsatt", "080927", "448e05c036c352e6def70a32ee68128a", 424960),
 	ENTRY0("if08_thelucubrator", "080928", "110d123776a561ba8c14d72c8d534bf7", 191488),
 	ENTRY0("if08_freedom", "080929", "6e37889524794022328582687754d173", 69120),
 	ENTRY0("if08_riverside", "080903", "965457e0208af211943cb88707059bd0", 191488),
 	ENTRY0("if08_thelighthouse", "080921", "8d29781a8de397439ba40645c9430803", 140800),
-	ENTRY0("if08_absoluteworstgame", "080614", "3c902f43a5393f41655df1f028057e65", 133632),
+	ENTRY0("if08_absworstgame", "080614", "3c902f43a5393f41655df1f028057e65", 133632),
 	ENTRY0("comp08", "081003", "0ea5f859a1aa09b42bd7229786160a5b", 144384),
 
-	// The 2009 Annual Interactive Fiction Competition
+	// IFComp 2009
 	ENTRY0("if09_snowquest", "090792", "7a558ea909edca386a9f225a744a9cca", 1022942),
-	ENTRY0("if09_duelthatspanned", "090925", "e7808064e6569e31be830b07be97cbb5", 379904),
+	ENTRY0("if09_snowquest", "100127", "2442363dd6f7f2ee6a6ca840ca9d9881", 1034206),
+	ENTRY0("if09_duelspanned", "090925", "e7808064e6569e31be830b07be97cbb5", 379904),
 	ENTRY0("if09_duelinsnow", "090930", "b669e90797eb4ce3adf37fba9f1447d8", 383488),
 	ENTRY0("if09_interface", "090929", "afae3500034d118e0fd732ccd0d858f6", 293286),
-	ENTRY0("if09_byzantineperspect", "090930", "dbb1fbf7245f6801d1a8619a95211340", 1690344),
+	ENTRY0("if09_byzantinpersp", "090930", "dbb1fbf7245f6801d1a8619a95211340", 1690344),
+	ENTRY0("if09_byzantinpersp", "091119", "61dcb1e79885f76f9f5f5c62ce2c7e8d", 1727208),
 	ENTRY0("if09_condemned", "090930", "1a73a405571a1413481c47d63392ee3c", 257024),
 	ENTRY0("if09_eruption", "090616", "a1136a2e48d40399bfa17200503dbd04", 113664),
 	ENTRY0("if09_betatester", "090929", "157045ea9339e149dc4686ad229a27ef", 391168),
-	ENTRY0("if09_spelunkersquest", "090929", "81ce5c3f5aac8c3ac9a6c012cff4bda7", 297928),
+	ENTRY0("if09_spelunkquest", "090929", "81ce5c3f5aac8c3ac9a6c012cff4bda7", 297928),
 	ENTRY0("if09_invisibleman", "090927", "fee503f8a8562bb7dc31ee606f23ca7d", 298496),
+	ENTRY0("if09_invisibleman", "100130", "f42de996030f1caeb1695c6923db2249", 336896),
 	ENTRY0("if09_thegrandquest", "090926", "bbb8e21c2c2f71ba29f74cd30940493e", 178176),
+	ENTRY0("if09_thegrandquest", "091209", "3fd8b15a0282e9eb9ef642776bbd916e", 181760),
 	ENTRY0("if09_starhunter", "090930", "60e33decd1e4a5c1f13298688d4eea39", 134656),
 	ENTRY0("if09_gatoron", "090830", "99688a1be3791575a575c33fb98587b6", 122368),
-	ENTRY0("if09_gleamingtheverb", "090930", "6971a0e1b91dffbe75b4efefe7f9540f", 148992),
-	ENTRY0("if09_zorkburiedchaos", "080126", "dd1cb30fccde813a3301a324e5d6ac02", 163218),
+	ENTRY0("if09_gatoron", "091116", "00ddc82b9268ea0968084e215057f21b", 123904),
+	ENTRY0("if09_gleamingverb", "090930", "6971a0e1b91dffbe75b4efefe7f9540f", 148992),
+	ENTRY0("if09_zorkburychaos", "080126", "dd1cb30fccde813a3301a324e5d6ac02", 163218),
 	ENTRY0("comp09", "091001", "c937fadc20db485baa8f35e8d841d77d", 145408),
 
-	// The 2010 Annual Interactive Fiction Competition
-	ENTRY0("if10_deathoffthecuffz", "100926", "288dfb6066beba825f49d2c6080f9081", 311196),
+	// IFComp 2010
+	ENTRY0("if10_deathofftc", "100926", "288dfb6066beba825f49d2c6080f9081", 311196),
 	ENTRY0("if10_mite", "100930", "fa6eb58ea0db68211fa924fa1530d234", 186368),
-	ENTRY0("if10_gloriousrevolution", "100930", "123d7b02f338fe27f4b8f39ba2d15845", 854008),
+	ENTRY0("if10_gloriousrevol", "100930", "123d7b02f338fe27f4b8f39ba2d15845", 854008),
 	ENTRY0("if10_hummingbird", "100913", "4454cc4266f275a4d8a175aa21f5b0b5", 719972),
+	ENTRY0("if10_hummingbird", "110101", "1b48ec7b38899b5747ad4a16be029889", 775268),
 	ENTRY0("if10_warblersnest", "100930", "526aaf64cec2fb85b63b2d329befc086", 799282),
 	ENTRY0("if10_asgard", "100928", "4b69b276e770d6ca6b0b7ff24c91bc13", 569460),
 	ENTRY0("if10_penandpaint", "100930", "9a243dabd2227b95c49284dac825c946", 253440),
 	ENTRY0("if10_bibleretold2", "130000", "9559cb4601fbfe195b36cf5970f7619c", 190976),
 	ENTRY0("if10_heated", "100930", "148d0e98c403af802c3c8108a2e60d2d", 231424),
 	ENTRY0("if10_ninjasfate", "100930", "a314c020fe002482c522c927d2012af1", 321024),
-	ENTRY0("if10_eastgrovehills", "100930", "e627884c529415399883702fb5abf43c", 417266),
+	ENTRY0("if10_eastgrovehill", "100930", "e627884c529415399883702fb5abf43c", 417266),
 	ENTRY0("if10_quietevening", "100924", "14d27fc0f84c6eb9bbad0046938000db", 397964),
 	ENTRY0("if10_chronicler0", "100930", "c16c8d34195c9f29c03629f20be7f800", 68608),
 	ENTRY0("comp10", "101008", "113f48207ab14aed979b6034faf50959", 142336),
 
-	// The 2011 Annual Interactive Fiction Competition
+	// IFComp 2011
 	ENTRY0("if11_santaland", "110913", "e0e8181bbfe04b6cf55c3903153d5ae2", 410112),
 	ENTRY0("if11_canamicah", "110930", "309cde7bcb427088940ac701b7b18040", 363008),
+	ENTRY0("if11_canamicah", "111013", "0fb93ce7d872ba0f0f0dc948d5d249a4", 364544),
 	ENTRY0("if11_comedyerror", "111017", "9219e4a1ac32b67d508d661f0e00eb6c", 885682),
-	ENTRY0("if11_tenthplague", "??????", "358056bdf0d1df7dad3ebbfc46e4f4e0", 379176),
+	ENTRY0("if11_tenthplague", "?????\?/v1", "358056bdf0d1df7dad3ebbfc46e4f4e0", 379176),
+	ENTRY0("if11_tenthplague", "?????\?/v2", "7c8368a8fdbc8bace527efe5a46c9275", 378664),
 	ENTRY0("if11_coldiron", "110909", "e917805948c99b02fdf1491542c2d8dc", 227328),
-	ENTRY0("if11_andromedaawakeningz", "110930", "1c38c3eba0c484048416cbff512b59ba", 512312),
+	ENTRY0("if11_coldiron", "111119", "82f24d7b6d66e76871c64ea47b4a6f5e", 230400),
+	ENTRY0("if11_androawake", "110930", "1c38c3eba0c484048416cbff512b59ba", 512312),
+	ENTRY0("if11_androawake", "111019", "7d82fa4cbcc943aefb3ddc65a38a0b7d", 527028),
 	ENTRY0("if11_keepsake", "110906", "293a92fcd66e8351a7062ed954df5d9e", 462088),
 	ENTRY0("if11_theguardian", "110929", "f707abfb7a69506d1d680a055abc21b3", 254976),
+	ENTRY0("if11_theguardian", "111006", "e36bb34945160c5651d4539218bfad5e", 260096),
 	ENTRY0("if11_lastdaysummer", "110930", "27a77f98d578a4ee5b0aadc6e81953e6", 372294),
 	ENTRY0("if11_shipofwhimsy", "110930", "7cdedbedccd81556e59b4b8bad9e6123", 266274),
 	ENTRY0("if11_pfrank", "110916", "f53fef42fe04091db9c901c41a926814", 398848),
+	ENTRY0("if11_pfrank", "111103", "6e34d4ed01ef9548c960675e80de7f10", 351744),
 	ENTRY0("if11_vestiges", "110930", "ce7506d0fe65344e502c857018f21b68", 265660),
+	ENTRY0("if11_vestiges", "111005", "aadd8e8c1d72d67ce2edb9a260099113", 268230),
 	ENTRY0("comp11", "111001", "b220acb7a5d268278bf4c665f5f693d7", 151552),
 
-	// The 2012 Annual Interactive Fiction Competition
+	// IFComp 2012
 	ENTRY0("if12_eurydice", "120921", "a1e210d32afac8619fb8117c9826a4df", 792470),
+	ENTRY0("if12_eurydice", "121206", "1f4112cdff2e5c924e54bfe06181ff49", 845206),
 	ENTRY0("if12_guildedyouth", "12????", "75980e9b28e4c2b78e79f833e5829fe4", 322040),
 	ENTRY0("if12_changes", "120930", "50d536eedd00ca0d566a369586f75db7", 450560),
-	ENTRY0("if12_sundayafternoon", "120929", "782342798ab1966ae14c740c2702e1e0", 327168),
+	ENTRY0("if12_sundayafterno", "120929", "782342798ab1966ae14c740c2702e1e0", 327168),
 	ENTRY0("if12_spiral", "120929", "5ae949fd69c4549d97402a3a7b3d6dfb", 347648),
+	ENTRY0("if12_spiral", "121106", "c9af41ec32033424b58f08e5798fe86b", 348160),
 	ENTRY0("if12_bodybargain", "120929", "3f6416efb106a73251b731bccd61e18c", 393344),
-	ENTRY0("if12_fishbowl", "12????", "d78a44277239ae80788a322e49109813", 392262),
+	ENTRY0("if12_bodybargain", "121021", "cf2fc83e9230a45317fdff11c3ee3fc5", 400000),
+	ENTRY0("if12_fishbowl", "12???\?/v1", "d78a44277239ae80788a322e49109813", 392262),
+	ENTRY0("if12_fishbowl", "12???\?/v2", "507c86a7456c7cfaf80fbaac1b716abc", 394822),
 	ENTRY0("if12_summerland", "120930", "b57f5c37a65a09b7df789167a027624f", 392238),
+	ENTRY0("if12_summerland", "121011", "fc9152c7eefa6f12d99f94a7916481eb", 426542),
 	ENTRY0("if12_lunarbase1", "120929/z8", "8496b5fe70c738144e85031ea243f830", 311296),
 	ENTRY0("if12_lunarbase1", "120929/zblorb", "f1fe0b501a7af58a305d85ce3738c1e6", 1371878),
 	ENTRY0("if12_murphyslaw", "120929", "3ad61af558113bb14c67024bb7ec9bb6", 567000),
 	ENTRY0("if12_testisready", "120929", "bcea384062b6cab396890e08e6e4d590", 510612),
-	ENTRY0("if12_castleadventure", "120315", "d748b6dd5c380a2f3438f8b957b17345", 240128),
+	ENTRY0("if12_testisready", "121004", "f23aa28f71f47cdc0c5b024eb4270b16", 514196),
+	ENTRY0("if12_castleadvent", "120315", "d748b6dd5c380a2f3438f8b957b17345", 240128),
+	ENTRY0("if12_castleadvent", "121207", "7119fd8068a8e467e3e34c66cbee005b", 243200),
 	ENTRY0("comp12", "121001", "a21991ba784590176bd0570647227fab", 149504),
 
-	// The 2013 Annual Interactive Fiction Competition
+	// IFComp 2013
 	ENTRY0("if13_threediopolis", "130928", "942c317ad151633d5eff4a1fe5c0eb0e", 444252),
-	ENTRY0("if13_paperbagprincess", "130928", "f6b455548bfb5f40f9beeff98927c21d", 307712),
-	ENTRY0("if13_furtherz", "130929", "49f7ad5cd55692627c5535585368820e", 398556),
+	ENTRY0("if13_threediopolis", "140817", "76929b10a1fddcbba4e704b9d7fecdc0", 584032),
+	ENTRY0("if13_paperbagprinc", "130928", "f6b455548bfb5f40f9beeff98927c21d", 307712),
+	ENTRY0("if13_further_zcode", "130929", "49f7ad5cd55692627c5535585368820e", 398556),
 	ENTRY0("if13_9lives", "130817", "0fff213f0d61c01c281d7180e016711e", 337374),
 
-	// The 2014 Annual Interactive Fiction Competition
+	// IFComp 2014
 	ENTRY0("if14_15minutes", "140929", "794388850a60ce63f181efb194519bee", 402308),
+	ENTRY0("if14_15minutes", "141021", "8f99e176b2fd4387219b808515c75d0e", 402308),
 	ENTRY0("if14_teaceremony", "140918", "f8b04f52fc3294539405893474413e16", 268352),
 	ENTRY0("if14_enigmasd", "140929", "3e2bfc7b4a45cb0bf3936cb7b164ee17", 414884),
+	ENTRY0("if14_enigmasd", "141020", "5f933e199785495bc884d003a4579b9b", 415396),
 	ENTRY0("if14_blacklily", "140926", "16e3dee79b000c19e3f211af3bea9266", 188364),
+	ENTRY0("if14_blacklily", "150318", "f74981accbff8eaa36e07bb175640ea2", 199124),
 	ENTRY0("if14_tower", "140912", "9e4e1ffe01254b8f45f22c79d664cbb2", 390132),
+	ENTRY0("if14_tower", "141012", "1c315beb9fe8447acb05a99b9fb7db9e", 390644),
 	ENTRY0("if14_excelsior", "140924", "036fa721ea95f31da9a99b1bea4e1d99", 351232),
 
-	// The 2015 Annual Interactive Fiction Competition
+	// IFComp 2015
 	ENTRY0("if15_finalexam", "150928", "bfdfd2d2daccc201e38f1234ccd6dc25", 165376),
+	ENTRY0("if15_finalexam", "151101", "4e23b49e141f724f71e5e5bf0e1afc81", 177152),
 	ENTRY0("if15_darkiss1", "150927", "5b0a30d18bdcca783d4348d58daa4bf4", 133120),
 	ENTRY0("if15_lifeonmars", "150925", "69b0feca1bdd05f8d3240e6441941f98", 160256),
 	ENTRY0("if15_gbvb", "150922", "8cca270442baf96ba01fae4d77de52c7", 378368),
 	ENTRY0("if15_5minutes", "150929", "cd12b10aab062b1f1f13d113405d725f", 528346),
+	ENTRY0("if15_5minutes", "151002", "de02600e870ea20f6666921d9bc6c61d", 528346),
 	ENTRY0("if15_kingcrown", "150823", "76c9f8ffed03f81aa9d3d8e5aef77597", 380928),
 	ENTRY0("if15_pitcondemned", "150927", "f8c86cd430512f4caae1ddc13e4e28a2", 468432),
 
-	// The 2016 Annual Interactive Fiction Competition
+	// IFComp 2016
 	ENTRY0("if16_insidefacility", "160925", "3f2c1695de721218fdee36c34374e222", 463872),
 	ENTRY0("if16_darkiss2", "160928", "405f407e2009e20317522375bf53e154", 179712),
-	ENTRY0("if16_zigamus", "160928", "8d5ad5bd2aa48b2003b7c6bfc5803669", 89600),
+	ENTRY0("if16_zigamus_zcode", "160928", "8d5ad5bd2aa48b2003b7c6bfc5803669", 89600),
+	ENTRY0("if16_zigamus_zcode", "161005/z5", "f927bb50ece8682d1191ce1f56f41525", 93184),
 	ENTRY0("if16_slickercity", "160928", "fa5141ef64408dbb2535b61355324284", 485840),
-	ENTRY0("if16_youarestanding", "160926", "8471b92b86d52dc9ce417adfac02fff7", 490456),
+	ENTRY0("if16_slickercity", "161114", "d03d358208ba05db9e6e2068cb2cd149", 500176),
+	ENTRY0("if16_youarestand", "160926", "8471b92b86d52dc9ce417adfac02fff7", 490456),
 	ENTRY0("if16_toiletworld", "161009", "56b58c66b5ae7d9e7282a01924e24135", 418206),
 
-	// The 2017 Annual Interactive Fiction Competition
+	// IFComp 2017
 	ENTRY0("if17_tuuli", "170929", "653637e9c257745d2ce77202fe14aa13", 590220),
+	ENTRY0("if17_tuuli", "171008", "dbdcb2acfa69c6eb352343eb556f5d2b", 591756),
+	ENTRY0("if17_tuuli", "180501/v1", "0ee525701efafda124902b1b26f84bdf", 611734),
+	ENTRY0("if17_tuuli", "180501/v2", "0b7e2bb3f6887f30fb98b54230acf039", 611734),
 	ENTRY0("if17_thecubecavern", "170928", "6afede8923f992bbb6849200b1672efb", 374824),
+	ENTRY0("if17_thecubecavern", "171115", "c5f97f8958bf6f58705234f8612421e3", 300286),
 	ENTRY0("if17_squirrel", "050102", "02c19fa852425c6593a4ef4ab383de4b", 112640),
 	ENTRY0("if17_grue", "170810", "578ee64d95f854174a256e75e90f2306", 365056),
 	ENTRY0("if17_richardmines", "170928", "f1e4b5f30a229e4b76c34bd852a66988", 674224),
 	ENTRY0("if17_onewayout", "200829", "9d833823d5e9d49bf32f3caff9077d01", 169984),
 	ENTRY0("if17_inevitamp", "170727", "8ef2c50928f72be5e131e43dff63754f", 433072),
 	ENTRY0("if17_walkinthepark", "091120", "de3cbe750e75112d05d3a03d676cbb12", 123392),
+	ENTRY0("if17_walkinthepark", "100213", "d116d7a9a5160fc336b36f7e8a077a42", 145408),
 
-	// The 2018 Annual Interactive Fiction Competition
+	// IFComp 2018
 	ENTRY0("if18_tethered", "180926", "b458728de80b1510a29ed8f3f7ee9cef", 394086),
+	ENTRY0("if18_tethered", "191125", "1e15d092a3729b88bb886625445a7f3f", 404064),
 
-	// The 2019 Annual Interactive Fiction Competition
+	// IFComp 2019
 	ENTRY0("if19_out", "190929", "30a16ff0bf6ad33faa24c209edbe5bf8", 388608),
+	ENTRY0("if19_out", "191112", "b297d0506353e2791d314399b52516f9", 392704),
 	ENTRY0("if19_oldjim", "190928", "0e11c750f7490241a0e8c8286caf3b71", 413696),
 	ENTRY0("if19_extromnivore", "190928", "e7a93522643ad1e1921fb13046ccc620", 428066),
+	ENTRY0("if19_extromnivore", "190928", "e7a93522643ad1e1921fb13046ccc620", 428066),
 
-	// The 2020 Annual Interactive Fiction Competition
-	ENTRY0("if20_impossiblebottle", "200928", "ca6e77c892f34f602ea25277a8ac6a20", 759930),
+	// IFComp 2020
+	ENTRY0("if20_impossbottle", "200928", "ca6e77c892f34f602ea25277a8ac6a20", 759930),
 	ENTRY0("if20_entangled", "200928", "773ad8d10e980531127a040679a4e3eb", 494080),
 	ENTRY0("if20_drego", "400410", "8a983690928e36c8a77ed50bdbe98bd9", 132096),
 	ENTRY0("if20_sheepcrossing", "200928", "22c2f8a7784272952125344f9e52ccd0", 411456),
 
-	// The 2021 Annual Interactive Fiction Competition
+	// IFComp 2021
 	ENTRY0("if21_darkun", "210928", "1d86626167b93297f3d96cdf822d7594", 335512),
-	ENTRY0("if21_codexsadistica", "210928", "956d15d106c982d3a50ef7069b07b84f", 581378),
+	ENTRY0("if21_codexsadistic", "210928", "956d15d106c982d3a50ef7069b07b84f", 581378),
 	ENTRY0("if21_fourbyfourian", "210928", "593c4f5fb864cf5d43709f4028b37e15", 425190),
 	ENTRY0("if21_bravebear", "210928", "f6b245a25d510c871671097a158cf215", 72192),
 
-	// The 2022 Annual Interactive Fiction Competition
-	ENTRY0("if22_campusinvaders", "220926", "2067ac08742356f2e5f99ad417adab34", 82944),
+	// IFComp 2022
+	ENTRY0("if22_campusinvader", "220926", "2067ac08742356f2e5f99ad417adab34", 82944),
 	ENTRY0("if22_intosun", "220928", "16616858fd3c197b3c6f3e69df6b4bfa", 348160),
 	ENTRY0("if22_lowkey", "220928", "59279a95782344dc98303a5e492664b8", 534510),
 	ENTRY0("if22_zerochance", "220928", "fc11a5a21798584e3dd6441479dbc8d9", 259678),
 
-	// Marnie Parker's "Spring 1999 IF Art Show"
+	// Spring IF Art Show 1999
 	ENTRY0("ifas_tpold", "990417", "fdcd6216895f55cfc591f9d77c32bfed", 46080),
 
-	// Marnie Parker's "Summer 1999 IF Art Show"
+	// Summer IF Art Show 1999
 	ENTRY0("ifas_statuedac", "990827", "16c2855284cbe8510e700d6455346326", 52736),
 	ENTRY0("ifas_statuedac", "990903", "d6bbd50d6da814aa75206eb359dd75a1", 53248),
-	ENTRY0("ifas_wheelzcode", "001128", "7c582d943b29451caceb1140931a9b48", 54784),
-	ENTRY0("ifas_wheelzcode", "990824", "20d6b5c3931aded353868935e5433b85", 52224),
+	ENTRY0("ifas_wheel", "001128", "7c582d943b29451caceb1140931a9b48", 54784),
+	ENTRY0("ifas_wheel", "990824", "20d6b5c3931aded353868935e5433b85", 52224),
 
-	// Marnie Parker's "2000 IF Art Show"
+	// IF Art Show 2000
 	ENTRY0("ifas_custard", "000314", "7a0d6ba2488c4998bb7c7f91342cfdcb", 290304),
 	ENTRY0("ifas_galatea", "000324", "68e59da119f3c1a71c54710e24c8a243", 187392),
 	ENTRY0("ifas_guitar", "000323", "20f80779fc85654e1831e5c2937bb1fa", 65024),
 	ENTRY0("ifas_sparky", "000324", "ad58cd7b8b1313150419470570be9801", 73728),
 	ENTRY0("ifas_cove", "000322", "732eb569ed375fe85fa40997e78bb350", 129536),
+	ENTRY0("ifas_cove", "000525", "a84f448606c1b271a41b225244ef43a9", 130048),
 	ENTRY0("ifas_statuette", "000324", "9be9383ef2a82c99d8404f4a51ac331a", 64512),
 	ENTRY0("ifas_visitor", "000321", "9786e58864fdd7429c3218b07d023498", 56832),
 	ENTRY0("ifas_words", "000225", "6cc34f6b4ed49a769d53a0ab48434112", 5632),
 
-	// Marnie Parker's "2001 IF Art Show"
+	// IF Art Show 2001
 	ENTRY0("ifas_esgarden", "010417", "b77a37124c15e23b416d0ea9b74f9c86", 145408),
 	ENTRY0("ifas_lagoon", "010406", "b7410c419427885c4b755e8cc555ab38", 81408),
 	ENTRY0("ifas_ribbons", "010331", "5fb456f05ac161de3601dacfdf72075a", 109568),
+	ENTRY0("ifas_ribbons", "010702", "7c45bffcbbd611a499e0803805fa87ea", 110080),
 
-	// Marnie Parker's "2003 IF Art Show"
+	// IF Art Show 2003
 	ENTRY0("ifas_stopnight", "030425", "81b6332707329c64b5967e94238e84be", 136704),
 	ENTRY0("ifas_queen", "030426", "dfd3a6dcb6c8a6b1becf6b69011ae3dd", 73728),
 	ENTRY0("ifas_redeem", "030425", "f9ea63216ca6e20c2150ae3139e2aa61", 129536),
 
-	// Marnie Parker's "2004 IF Art Show"
+	// IF Art Show 2004
 	ENTRY0("ifas_flametop", "040528", "58c67a57ac6f077a8d1a7be3fc3c73f6", 70144),
 	ENTRY0("ifas_swanglass", "160702", "daf5f866bbaa6ec159456887e5945d29", 71680),
 	ENTRY0("ifas_firetower", "040528", "fa8d9146120139c768a698e93f70812e", 270336),
 
-	// Marnie Parker's "2007 IF Art Show"
+	// IF Art Show 2007
 	ENTRY0("ifas_rendition", "070407", "1a8fbde9c57754958882ddc4d5ed1bb3", 187392),
 	ENTRY0("ifas_engine", "070518", "cb3434c4917d95b1ff3154acbf3a4dbc", 361578),
-	ENTRY0("ifas_varronismuseum", "070518", "a1eeb2342999c2e3d394c9d718cc8b6f", 434176),
+	ENTRY0("ifas_varronismuseu", "070518", "a1eeb2342999c2e3d394c9d718cc8b6f", 434176),
+	ENTRY0("ifas_varronismuseu", "070602", "a6a8fdd36ad5bb4e390361738b86d8a9", 509148),
 
-	// Marnie Parker's "Spring 1999 IF Art Show"
-	ENTRY0("mhp", "050315", "e2f93006c311f50932c974ba0b213a9c", 452096),
-	ENTRY0("wherethere", "050314", "aba2efcaa2394b315a461bc41a6bd04e", 107008),
+	// The Mystery House Taken Over project
+	ENTRY0("mhto1mhp", "050315", "e2f93006c311f50932c974ba0b213a9c", 452096),
+	ENTRY0("mhto2shiovitz", "050314", "aba2efcaa2394b315a461bc41a6bd04e", 107008),
 
-	// "IF Arcade" Competition
+	// Arcade Collection
 	ENTRY0("ifa_rox", "001231", "0d473c955611eb9b6a07c8487bcb4914", 70656),
 	ENTRY0("ifa_rox", "010105", "369f512671b6f317b033ea6ebe1c2f4e", 71168),
 	ENTRY0("ifa_centipede", "001231", "fadf5f5ac0315307d881ad7d5a05f95c", 201216),
@@ -5336,9 +5389,11 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 
 	// Casual Gameplay Design Competition #7
 	ENTRY0("cgdc7_hoosegow", "100209", "d53ed83532308ca3ea01915e2e9ec05c", 1992422),
-	ENTRY0("cgdc7_fragileshells", "110222", "7a9e1beed6ef25cc11ab5593e859d4cc", 547098),
+	ENTRY0("cgdc7_fragileshell", "110222", "7a9e1beed6ef25cc11ab5593e859d4cc", 547098),
+	ENTRY0("cgdc7_dual", "100109", "dbee7f9e8c76d4810d2e8a99752bd9d0", 367526),
 	ENTRY0("cgdc7_dual", "100225", "57f0e173be4258de1ce224e74172ea11", 430282),
 	ENTRY0("cgdc7_partyfoul", "100208", "e890e53c4454315d4c7bc4ddcb4420f0", 507346),
+	ENTRY0("cgdc7_roofed", "100201", "95f065bfc0203324e161127f9a182830", 292352),
 	ENTRY0("cgdc7_roofed", "100223", "1e2cb89b420ba5c109169dd05a5dc011", 548342),
 	ENTRY0("cgdc7_ka", "100212", "00401b846707deef82efb658be69dcc9", 321536),
 	ENTRY0("cgdc7_monday", "100201", "fe45e5cde6bbb883ca8fd65eeafabfe3", 377856),
@@ -5348,30 +5403,32 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("cgdc7_containment", "100206", "069d65c43c2c70064ad660a8475209c8", 221184),
 	ENTRY0("cgdc7_thecube", "100130", "b37effeaf558c7d406db3efd2d4d68fe", 230400),
 	ENTRY0("cgdc7_blueprint", "100208", "1f63cdc8d96f7c5c0408aaed9b9ca620", 183296),
-	ENTRY0("cgdc7_criticalbreach", "100203", "e27b0ade8558173cd370d92f320be144", 267776),
-	ENTRY0("cgdc7_themanorwhitby", "100201", "8a965849cb2ec58cc7c89df0e046206f", 370084),
+	ENTRY0("cgdc7_critbreach", "100203", "e27b0ade8558173cd370d92f320be144", 267776),
+	ENTRY0("cgdc7_manorwhitby", "100201", "8a965849cb2ec58cc7c89df0e046206f", 370084),
 	ENTRY0("cgdc7_heavenly", "091213", "e5c9c808c47510348bdf9bcb14ef1f9d", 284672),
-	ENTRY0("cgdc7_iexpectyoutodie", "100209", "242d660192fb79236647842f03ba1c12", 192000),
+	ENTRY0("cgdc7_expecttodie", "100209", "242d660192fb79236647842f03ba1c12", 192000),
+	ENTRY0("cgdc7_virtuality", "100131", "a68fe31bf3cce9b3dea7da0d733f45b0", 397244),
 	ENTRY0("cgdc7_virtuality", "100203", "6690eaf9869b53c49696030c072728bc", 397756),
 	ENTRY0("cgdc7_dramaqueen", "100130", "1cd2a0e48662a5bed209366aaad6c53e", 356938),
 	ENTRY0("cgdc7_terminal", "100205", "544d65a88ac7965f5334cae7078f9cc8", 340930),
 	ENTRY0("cgdc7_couchofdoom", "100210", "91e50fdfde64789bc6be1a786224c850", 259584),
-	ENTRY0("cgdc7_basictraining", "090402", "d14365fc61e36672e781e8bbc37c6051", 272320),
-	ENTRY0("cgdc7_paintzcode", "100209", "fbe7f5356d171e92f4011b33dff06625", 205312),
+	ENTRY0("cgdc7_basictrain", "090402", "d14365fc61e36672e781e8bbc37c6051", 272320),
+	ENTRY0("cgdc7_paint", "100209", "fbe7f5356d171e92f4011b33dff06625", 205312),
 	ENTRY0("cgdc7_goldenshadow", "100203", "a99de59ca4478ccc758aabc357931a36", 244682),
-	ENTRY0("cgdc7_escapeinthedark", "100203", "acb5cba872017ed4acf6a97cca18e12c", 165376),
-	ENTRY0("cgdc7_escapefiction", "100203", "4f61e28d71955057ff7f7660f6557740", 273860),
+	ENTRY0("cgdc7_escapeindark", "100203", "acb5cba872017ed4acf6a97cca18e12c", 165376),
+	ENTRY0("cgdc7_escapefict", "100203", "4f61e28d71955057ff7f7660f6557740", 273860),
 	ENTRY0("cgdc7_zeroeth", "100221", "bfa89880cfe414dfd743c36c3186207d", 194048),
 	ENTRY0("cgdc7_openfield", "100131", "e40d2c10d464ff2dfbf4090d2568bb9d", 247234),
 	ENTRY0("cgdc7_survive", "100208", "4cfdfa675947460bb5faf56d5d96bc06", 86016),
 	ENTRY0("cgdc7_zegro", "021310", "a113089b3256dbe600bd43e3616f1f40", 176640),
 
-	// Adam Cadre's "Chicken Competition"
+	// Chicken Competition
 	ENTRY0("cc_chknmt", "980609", "a7461a48ec077946965496712ef3119b", 55296),
 	ENTRY0("cc_behavior", "980611", "72b4c3eddf40183fa1c1cfdbdf7e99b7", 50688),
-	ENTRY0("cc_chickenzcode", "980616", "4c857164047f2babed601c1d351efda0", 48128),
+	ENTRY0("cc_chicken", "980616", "4c857164047f2babed601c1d351efda0", 48128),
 	ENTRY0("cc_chickenegg", "980608", "f7378a3db38fd5cc1bca24fee8893cd8", 60928),
 	ENTRY0("cc_chickenunder", "980616", "ad61d9b0bcff8c70c2ab2a23ec2ac62e", 52736),
+	ENTRY0("cc_chickenunder", "980728", "6655312edc32a1115b3e66f6c50293f9", 52736),
 	ENTRY0("cc_chickendist", "980615", "0ca941817c6e35af59144616d4014f87", 57856),
 	ENTRY0("cc_freerange", "980614", "df1fd1ce15cc87f18a4868db7f749c6c", 49152),
 	ENTRY0("cc_lessonchicken", "980616", "b6579c2706c3b01a7e9aef7b4bf468ac", 63488),
@@ -5381,59 +5438,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("cc_saied", "980608", "e9fc656cee21ac488bc72f17dbef0901", 56832),
 	ENTRY0("cc_xchicken", "980614", "e0da060d09f8ec64223e7ee07c92cadf", 60928),
 
-	// Adam Cadre's "2002 Spring Comp"
-	ENTRY0("stc02_blues", "020618", "dea57d7b1b41b5961143e7faa6125ad9", 261632),
-
-	// Adam Cadre's "2003 Spring Comp"
-	ENTRY0("stc03_inevita", "030225", "8eb1204dade23de158a71f68e81b0437", 213504),
-	ENTRY0("stc03_cofire", "030329", "1f84d501e89c64f2e04f84996b8d0ca3", 252416),
-
-	// Greg Boettcher's "2005 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc05_authority", "050205", "8def535c876448e1cc532a6d6dec328f", 171008),
-	ENTRY0("stc05_flatfeet", "050313", "8b92f0777c98d72c1701bd080531f5b4", 275456),
-	ENTRY0("stc05_telling", "050330", "e50190b0a236084d01595dee39749478", 210944),
-
-	// Greg Boettcher's "2006 Interactive Fiction Spring Thing"Spring Thing Competition"
-	ENTRY1("stc06_debaron", "060329", "32a2298f08a7274e1c1e8ed28d8b99fe", 322560, Common::DE_DEU),
-	ENTRY0("stc06_thebaron", "060329", "cac25a2e2ce7aa87bccccb07dffad212", 310272),
-
-	// Greg Boettcher's "2007 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc07_fate", "070329", "b030c4881ced350f51c1a64bd0f45584", 481792),
-
-	// Greg Boettcher's "2008 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc08_pascal", "080217", "ccdf58a87467b4e822565d54b3ca2a20", 237568),
-
-	// Greg Boettcher's "2009 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc09_milkparadise", "090214", "37f34b58e9907dd1bc7549d451987a86", 239984),
-
-	// Greg Boettcher's "2012 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc12_rocketman", "120405", "a2aac06a0481334279c64ad069865006", 1977066),
-
-	// Aaron Reed's "2014 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc14_mrp", "140406", "35da82199a79e37358de984a5db5d0d1", 174308),
-
-	// Aaron Reed's "2016 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc16_harmonic", "030321", "d3cc582cb71a3a911229b331490cac94", 380416),
-
-	// Aaron Reed's "2017 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc17_enlightened", "170402", "94d384fe0b5f3f6cead8653b4496d1d3", 218112),
-
-	// Aaron Reed's "2018 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc18_gopher", "180327", "1af73704d303624fcc88397bdd1cd4a4", 383488),
-	ENTRY0("stc18_murderbig", "180403", "45b044f05a4f5b6fbd54a913d33e9dfe", 740794),
-
-	// Aaron Reed's "2019 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc19_69105keys", "190401", "4e8c195b1023319a0875ebec71d7a5f5", 318492),
-	ENTRY0("stc19_pca", "181128", "8908ecd93be90264935432fc0986dfb2", 100864),
-
-	// Aaron Reed's "2021 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc21_takethedogout", "210404", "48879bdbfdebc9e4cc57a8261fc4be96", 657462),
-
-	// Aaron Reed's "2022 Interactive Fiction Spring Thing Competition"
-	ENTRY0("stc22_hypercubic", "220320", "6895d310aa8d3bc7dfb67860ab1bc09e", 263680),
-	ENTRY0("stc22_wry", "220407", "a7c52c575f68f1affe727cec8647c572", 460216),
-
-	// Dave Bernazzani's "Commodore 32 Z-Machine Competition"
+	// Commodore 32 Z-Machine Competition
 	ENTRY0("c32_endgame", "041130", "e7bb3a957c8d80e5ab014630de53b046", 30720),
 	ENTRY0("c32_turningpoint", "041127", "54a0aa0762e2a8cc8db3ef2498ab8153", 32768),
 	ENTRY0("c32_amusementpark", "041201", "7f1c810417318d6a8d318335b14a95ee", 32768),
@@ -5442,14 +5447,14 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("c32_paparazzi", "041130", "7dd95b7f52e93f1ea3684f22d70ac645", 32256),
 	ENTRY0("c32", "041130", "02f050055728d8081fe5afee18898c26", 27648),
 
-	// Sam Kabo Ashwell's "Cover Stories Game-Jam"
+	// Cover Stories Game-Jam
 	ENTRY0("cs_antifascista", "120612", "ea02a0f92f7c2c40fa39abd48fd1ccf2", 406208),
 	ENTRY0("cs_leaves", "120610", "d8f48c9a46689a07106dccdc165a3119", 523862),
-	ENTRY0("cs_legendmissinghat", "120610", "c12e8daaff707325e446ef0b557ab044", 586960),
+	ENTRY0("cs_legendmisshat", "120610", "c12e8daaff707325e446ef0b557ab044", 586960),
 	ENTRY0("cs_monkeybusiness", "120610", "da1805563d40cbed5d275e8438f108a4", 416856),
 	ENTRY0("cs_offering", "120610", "6dad4b91d08dc6536acd1f9f7687beac", 670832),
 	ENTRY0("cs_sloth", "120604", "55e327dcf77ca6d2217d008e71fc9613", 1365970),
-	ENTRY0("cs_subtropicservroom", "120611", "79a7fc6f52c2f6dfe5eb606f924f3b74", 797652),
+	ENTRY0("cs_subtropservroom", "120611", "79a7fc6f52c2f6dfe5eb606f924f3b74", 797652),
 
 	// Dinosaur Mini-Competition
 	ENTRY0("dino_rowr", "000301", "41fce26b11af40f57cdedfe5e926eaf2", 52736),
@@ -5460,7 +5465,8 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("dino_adno", "000331", "1bcdfe28b95349c2c0e645d918bdde17", 55808),
 	ENTRY0("dino_olddog", "000331", "e88627fba490bd9a5897742d128392ee", 101888),
 	ENTRY0("dino_revenger", "000331", "e3eeab3757cf4b23583433f91ab42c55", 88064),
-	ENTRY0("dino_dinnertimez", "000331", "7da3b7d01c9d0098a0049968ed3ffae7", 82944),
+	ENTRY0("dino_revenger", "000403", "1f658ebcb395be17154e732cc6306dc9", 88064),
+	ENTRY0("dino_dinnertime", "000331", "7da3b7d01c9d0098a0049968ed3ffae7", 82944),
 	ENTRY0("dino_appoint", "000331", "3b0ab1f1eda430f5334778d4e6d0b724", 90624),
 
 	// Dragon Mini-Competition
@@ -5471,21 +5477,26 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("dr_herebe", "000314", "dd605eff65c76194fe33ad8ce95def50", 51712),
 	ENTRY0("dr_lastlaugh", "000414", "798b6d7697d27b83d2362e7cd2874f78", 83968),
 
-	// Duncan Bowsman's "2011 Ectocomp"
+	// Ectocomp 2011
 	ENTRY0("ec11_bloodless", "111012", "9e3c069d69a6e240f161c16c317010fb", 184320),
+	ENTRY0("ec11_bloodless", "111217", "bf633d44d9ae34fb006aa1c135d24fe2", 188928),
 	ENTRY0("ec11_blue", "111030", "429a5d229c4d6fbf808ce8370ceb8128", 260028),
 	ENTRY0("ec11_dashslapney", "111001", "35215328fcc344c2dd932d4d1a09f15f", 281916),
 
-	// Duncan Bowsman's "2012 Ectocomp"
-	ENTRY0("ec12_ghosteringtonnightz", "121029", "c295d2c2dfe5f3feee2b833a32a2400d", 236544),
+	// Ectocomp 2012
+	ENTRY0("ec12_ghosternight", "121029", "c295d2c2dfe5f3feee2b833a32a2400d", 236544),
 	ENTRY0("ec12_littlegirls", "121031", "d96c3cd0a7609166f70e67cc1ac5f055", 232960),
 	ENTRY0("ec12_parasites", "121021", "bbdb3ff64bea5ab24b0c7dcc68f1f90a", 164864),
+	ENTRY0("ec12_parasites", "130303", "55eadf4edd9aeeb680841bb6cf112ade", 168448),
 
-	// Duncan Bowsman's "2013 Ectocomp"
-	ENTRY0("ec13_horriblepyra", "131029", "d39833192d0c8e0c3872423a740683a5", 321958),
-	ENTRY0("ec13_headlesshapless", "131030", "046e0b958f9900a8733d04e52ab6631b", 262594),
+	// Ectocomp 2013
+	ENTRY0("ec13_horpyr_zcode", "131029", "d39833192d0c8e0c3872423a740683a5", 321958),
+	ENTRY0("ec13_horpyr_zcode", "131201", "b3dfa0f543f7ca3343ca62cc5ec7847f", 365004),
+	ENTRY0("ec13_headleshaples", "131030", "046e0b958f9900a8733d04e52ab6631b", 262594),
 	ENTRY0("ec13_faithfulcomp", "131030", "a9be7589b843ef43b326cfe477ade7d4", 311716),
+	ENTRY0("ec13_faithfulcomp", "131031", "eea6302f434a68e7951ced18b385e2a2", 311716),
 	ENTRY0("ec13_deadpavane", "131031", "18e8bdfbbc704dbc582305b868a1216f", 269232),
+	ENTRY0("ec13_deadpavane", "131204", "cf0f923ae3b079c29608770aecdefdf1", 269270),
 	ENTRY0("ec13_icehouse", "131029", "c85bfbce5eaa4e0db3621c5e6515e5a5", 214528),
 	ENTRY0("ec13_blackness", "131026/z5", "7b8ea77b533399adf669015b013ba4fb", 169472),
 	ENTRY0("ec13_blackness", "131026/zblorb", "21d1829ae6bd6ee3b39bff021b89a22e", 276574),
@@ -5493,171 +5504,216 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("ec13_fishdreams", "131030", "d9022595cff5bb6b3385680f09adfcf1", 259532),
 	ENTRY0("ec13_cursedeagle", "131030", "189a5f517d2e39046f5e9cc5c688c8fd", 314326),
 	ENTRY0("ec13_cenriccurse", "131022", "f0496ff6c8bc01931f6034373fbf1d44", 281730),
+	ENTRY0("ec13_cenriccurse", "131218", "4fa3db6430e3a54f88962a75857ebb2f", 289096),
 	ENTRY0("ec13_nessaslasher", "131013", "b9e68911fc59d06880ef56775aa4bc65", 167424),
 	ENTRY0("ec13_cratercreek", "131018", "44be72462d07e4faa347daf1b2b06955", 276388),
 	ENTRY0("ec13_hillofsouls", "131026", "ebffb813147946e416623c17e7b3ab86", 442546),
 	ENTRY0("ec13_wisp", "131030", "dc4b6d8674622873f5d6fb26aee1a227", 307598),
 
-	// Duncan Bowsman's "2014 Ectocomp"
+	// Ectocomp 2014
 	ENTRY0("ec14_weddingday", "141031", "bde9af024968d3d70615555a41e806fc", 319424),
-	ENTRY0("ec14_lime", "141016", "d7f102df1f7ed0d0cc646190706dd331", 169984),
+	ENTRY0("ec14_limeergot", "141016", "d7f102df1f7ed0d0cc646190706dd331", 169984),
 	ENTRY0("ec14_candyrushsaga", "141031", "d6a271282be8d91a073e9f86ea3d4b79", 263626),
 	ENTRY0("ec14_flywall", "141023", "f263225a38d2eae685e5bb569f6c50b7", 463332),
 	ENTRY0("ec14_monstermaker", "150817", "f0565d38e01ae2ec048b5f3b8ceb4de4", 285696),
 
-	// Duncan Bowsman's "2015 Ectocomp - La Petite Mort"
+	// Ectocomp 2015 - La Petite Mort
 	ENTRY0("ec15_openthatvein", "15????", "e24844c7028262c8117c2ef07138c6f7", 449548),
-	ENTRY0("ec15_oldesthangover", "151030", "e53693405ea9f9e4a7f6bf70cb14ec87", 334848),
+	ENTRY0("ec15_oldhangover", "151030", "e53693405ea9f9e4a7f6bf70cb14ec87", 334848),
 	ENTRY0("ec15_heezypark", "151030", "fd714eb77e36ec59083e922c52d61722", 316860),
 	ENTRY0("ec15_storyshinoboo", "151030", "78988da1e65fa38328b01c569d585321", 202240),
+	ENTRY0("ec15_storyshinoboo", "151103", "5722af4452a4a3463e6b489c9f836dd8", 203264),
 	ENTRY0("ec15_ghostship", "151009", "f76aba5c59c6376edcfdccd76cb9e590", 634812),
 	ENTRY0("ec15_physiognomist", "151030", "f050387c1eb46061c7aacc13c1a366ab", 252890),
 
-	// Duncan Bowsman's "2015 Ectocomp - Le Grand Guignol"
+	// Ectocomp 2015 - Le Grand Guignol
 	ENTRY0("ec15_ninelives", "151030", "e7d97c11b47c0b59d2093700ad936264", 464836),
 
-	// Duncan Bowsman's "2016 Ectocomp - La Petite Mort"
+	// Ectocomp 2016 - La Petite Mort
 	ENTRY0("ec16_bonesaw", "161027", "bbf02174af7d8891d435a37c1cc9b058", 342016),
-	ENTRY0("ec16_checkeredhaunting", "161031", "d8ddc04e13caf50e5bd7d3f8931e8cda", 305616),
+	ENTRY0("ec16_checkerhaunt", "161031", "d8ddc04e13caf50e5bd7d3f8931e8cda", 305616),
 	ENTRY0("ec16_lightdarkness", "161030", "03df7e40dca78a7e2aee74b5049136bb", 258516),
 
-	// David Fisher's "EnvComp"
+	// Ectocomp 2017 - La Petite Mort
+	ENTRY0("ec17_primer", "171025", "744648014bb7291f42eae31a79410d59", 255430),
+	ENTRY0("ec17_dreamcorrupt", "171029", "1f4f956de3054621f928204c0e6b0d6d", 429160),
+	ENTRY0("ec17_uxmulbrufyuz", "171029", "85ee9e7844c6be74b26c1707255f110a", 236760),
+	ENTRY0("ec17_civilmimic", "171031", "3e56399f54b6e0ae2c85f72ef3cc23a8", 305086),
+
+	// Ectocomp 2018 - La Petite Mort
+	ENTRY0("ec18_moongoon", "181029", "55fc4e3ccf26bdf636316220a77ffb10", 433662),
+	ENTRY0("ec18_wakeup_zcode", "181006/z8", "c0ea31ea66528b08ef090813267c417e", 337920),
+	ENTRY0("ec18_whoahcubswoe", "181030", "fb9e91fc58040e4ec2871b35e3194746", 244006),
+
+	// Ectocomp 2018 - Le Grand Guignol
+	ENTRY0("ec18_plshel_zcode", "180923", "d9a47f9750f47d9c08fdd800e450cb89", 342016),
+	ENTRY0("ec18_walkamongus", "181031", "5b6b726c28b897d299d4add5fcd3943e", 2292016),
+	ENTRY0("ec18_walkamongus", "181202/z8", "5f92efa407b998d60ad0bb636f0d729d", 367104),
+	ENTRY0("ec18_walkamongus", "181202/zblorb", "0a79a4dec57d44b6ee09fec8e868ea8e", 780152),
+
+	// Ectocomp 2019 - La Petite Mort
+	ENTRY0("ec19_quitequeer", "191030", "d09302a713495016a0376fc8ce7d7237", 329686),
+
+	// Ectocomp 2019 - Le Grand Guignol
+	ENTRY0("ec19_onceuponwint", "191030", "0df83d2e0c56c3afabfdfacb22a9b34d", 613468),
+
+	// Ectocomp 2020 - La Petite Mort
+	ENTRY0("ec20_fracture", "201031/z8", "84d04db287befa9c46fbc94591b31bb2", 345600),
+	ENTRY0("ec20_fracture", "201031/zblorb", "23744075265e1a0fae0453df0bb14c34", 363830),
+
+	// Ectocomp 2021 - La Petite Mort
+	ENTRY0("ec21_wearyeerie", "211030", "f8e693a21ccb457a9c5b58251b635060", 188824),
+	ENTRY0("ec21_psyops", "211030", "fac6e93acb93bdd6420f49918f20267c", 374812),
+
+	// Ectocomp 2022 - La Petite Mort
+	ENTRY0("ec22_enigmamanor", "221121", "43b8411bc971e5aa83801099f7826044", 769044),
+	ENTRY0("ec22_thosedare", "221212", "06ad94a70731550a4aa920e660a9d805", 308452),
+
+	// Ectocomp 2022 - Le Grand Guignol
+	ENTRY0("ec22_civil", "221122", "6dff9f0c6b642590a41daed3642a6ae7", 339172),
+	ENTRY0("ec22_civil", "221212", "b9384e68587e6bec4890d62c40f47a5d", 339684),
+
+	// EnvComp
 	ENTRY0("ec_laseine", "090320", "1073245f6178172de42f73208b8cfcc2", 167424),
 
-	// David Fisher's "GameplayComp 2009"
-	ENTRY0("gc_fantasticfinaleiv", "090914", "f0f2cf8c1be71de23cd08d7216f5feca", 160768),
+	// GameplayComp 2009
+	ENTRY0("gc_fantafinaleiv", "090914", "f0f2cf8c1be71de23cd08d7216f5feca", 160768),
 
-	// Stephen Granade's "1998 IF Fan Fest"
-	ENTRY0("ff_ite2", "980726", "b7f93aa7570757b814b030d0d5e1759f", 68608),
+	// Ghost Town Redux
+	ENTRY0("gtr_ghosttowntlt", "070725", "f430038611ee776ab82af369d81b6bb6", 171412),
 
-	// Scott Adams' Ghost Town Redux
-	ENTRY0("gtr_ghosttownzcode", "070725", "f430038611ee776ab82af369d81b6bb6", 171412),
-
-	// Graeme Porter's "HighlandComp"
+	// HighlandComp
 	ENTRY0("hc_highland", "010225", "3257620cd54c43c842de8f6a398d358b", 95744),
 	ENTRY0("hc_roots", "010227", "131dd528660c2eeeb19257ad1b43258d", 71168),
 
-	// "24 Hours of Inform" Comp
+	// IF Fan Fest 1998
+	ENTRY0("ff_ite2", "980726", "b7f93aa7570757b814b030d0d5e1759f", 68608),
+
+	// 24 Hours of Inform Competition
 	ENTRY0("24h_aesthetic", "310103", "dd1296e1c1ce31ea4321bad5b7a9959c", 107520),
 	ENTRY0("24h_dastardly", "060122", "79b5c728180c097c3dd01c25ea2663aa", 79872),
 	ENTRY0("24h_defra", "022228", "2866e4e634c136009303b8bce0dd0952", 98304),
 	ENTRY0("24h_borgaris", "030204", "2800f77bb7d1db2c2f94d5c4360e9348", 147968),
 	ENTRY0("24h_ghostship", "030505", "38b15466da3c4c20c6947c9974649e68", 101888),
 
-	// "2008 IFBeginnersComp"
+	// IFBeginnersComp 2008
 	ENTRY0("ifb_connect", "080219", "4c81a7fc404b50d36a47947c10fb7814", 221184),
 	ENTRY0("ifb_limelight", "080215", "4fe735af2e7f328106d9674d8c29bd9e", 214656),
 
-	// Jason Dyer's "Imaginary Games From Imaginary Universes Jam"
+	// Imaginary Games From Imaginary Universes Jam
 	ENTRY0("ig_garbage", "160207", "1d1d0dec9fc382dc4e3c303e37e56afe", 425936),
 
-	// Neil deMause's "2002 IntroComp"
-	ENTRY0("ic02_timetrap", "020319", "dc9d9b5c4af9d6a763465caf2770b22b", 141824),
+	// IntroComp 2002
 	ENTRY0("ic02_waterhouse", "020319", "b36b7a0db435e1f2b28514f87bf1a756", 141824),
+	ENTRY0("ic02_timetrap", "020319", "dc9d9b5c4af9d6a763465caf2770b22b", 141824),
 
-	// Jacqueline Lott's "2003 IntroComp"
+	// IntroComp 2003
+	ENTRY0("ic03_statue", "030321", "17652647e855fa7f94c7be0987aca13b", 276992),
+	ENTRY0("ic03_realend", "030318", "cb8aa32666ba4e48cd191537e28a79f4", 114176),
 	ENTRY0("ic03_agency", "030320", "1fd608f827bae4d5ff3cbfb913293d3c", 70144),
 	ENTRY0("ic03_harlequin", "030321", "0aaeed0851aaa0338ed653ec3e485eb7", 92160),
-	ENTRY0("ic03_harringtonhouse", "030321", "83e4af82d7077019597f6014b7c05b94", 124928),
-	ENTRY0("ic03_realend", "030318", "cb8aa32666ba4e48cd191537e28a79f4", 114176),
-	ENTRY0("ic03_statue", "030321", "17652647e855fa7f94c7be0987aca13b", 276992),
+	ENTRY0("ic03_harringthouse", "030321", "83e4af82d7077019597f6014b7c05b94", 124928),
 
-	// Jacqueline Lott's "2004 IntroComp"
-	ENTRY0("ic04_auden", "040707", "e9468a39f7dc696db24c057819f8bfbd", 67072),
+	// IntroComp 2004
 	ENTRY0("ic04_jbbrwkyi", "040714", "dfbf529105d6eff2610accf0e4e1e9ea", 119296),
-	ENTRY0("ic04_cross", "040718", "9de8aa41ff0ead846e55fb2d7dc609c2", 65024),
+	ENTRY0("ic04_auden", "040707", "e9468a39f7dc696db24c057819f8bfbd", 67072),
 	ENTRY0("ic04_passenger", "040718", "8a8f0ba481aafd3f30f2650290f61ea7", 94720),
+	ENTRY0("ic04_cross", "040718", "9de8aa41ff0ead846e55fb2d7dc609c2", 65024),
 	ENTRY0("ic04_runes", "040706", "41fe4fc08bbbd803baf1b9edee61e095", 87040),
 
-	// Jacqueline Lott's "2005 IntroComp"
+	// IntroComp 2005
 	ENTRY0("ic05_deadsville", "072305", "f6666723bb7dcda541c2d591acc7a1fd", 119808),
+	ENTRY0("ic05_deadsville", "081105", "58ddf8bfbd4a78aa722127193f6f54f5", 120320),
+	ENTRY0("ic05_wscholars", "071107", "03d438cfb4920cc831da090e0c150f2a", 587032),
 	ENTRY0("ic05_stale", "050723", "d6db29b6290672b7faa620f8ecce876f", 87552),
+	ENTRY0("ic05_stale", "060113", "a813af22024cbc8f6113eb293c6d0287", 123904),
 	ENTRY0("ic05_hobbit", "050621", "47f280042669ec7330e9378266c33558", 100352),
 	ENTRY0("ic05_somewhen", "050705", "8796d65ae9dd1c540d5ecf24760f4ee6", 75264),
-	ENTRY0("ic05_wscholars", "071107", "03d438cfb4920cc831da090e0c150f2a", 587032),
 
-	// Jacqueline Lott's "2006 IntroComp"
+	// IntroComp 2006
+	ENTRY0("ic06_southerngoth", "060702", "5c5fab8b67a94080e52d0f553a72410c", 192506),
+	ENTRY0("ic06_childsplay", "060714", "fe8b789b87f715d63f678608db42ae92", 310628),
 	ENTRY0("ic06_artdeception", "060713", "804cd3fd69b98c0f03fd39e0a2d4de12", 156160),
-	ENTRY0("ic06_childsplay7", "060714", "fe8b789b87f715d63f678608db42ae92", 310628),
 	ENTRY0("ic06_mechs", "060716", "4d7d7204634951bb6f999f03894f2148", 89600),
 	ENTRY0("ic06_sabotage", "060512", "b73c47a5c80cd0ad14adf7393d50ae7e", 107008),
-	ENTRY0("ic06_southerngothic", "060702", "5c5fab8b67a94080e52d0f553a72410c", 192506),
+	ENTRY0("ic06_sabotage", "070107", "5ea8fbaf07b5704b79b412dbe06ac256", 108544),
 	ENTRY0("ic06_ufury", "060716", "953ab8c4066d4362247bf444b9b36fe3", 125952),
 
-	// Jacqueline Lott's "2007 IntroComp"
-	ENTRY0("ic07_jackbox", "070731", "8569084f577156621c43d8b3dcf328e6", 184726),
-	ENTRY0("ic07_jacobst", "070804", "8755b906f2732a0739c7a63b557294a4", 210944),
+	// IntroComp 2007
 	ENTRY0("ic07_shredspatches", "070803", "a30d837fe5316756fe423afb198fa562", 276992),
+	ENTRY0("ic07_jacobst", "070804", "8755b906f2732a0739c7a63b557294a4", 210944),
+	ENTRY0("ic07_jackbox", "070731", "8569084f577156621c43d8b3dcf328e6", 184726),
 	ENTRY0("ic07_trainstopping", "070804", "a24d31b0fffb5503cdca093007d84a4e", 179712),
 
-	// Jacqueline Lott's "2008 IntroComp"
-	ENTRY0("ic08_fiendishzoo", "080820", "31992ae38abe111e24f01cc299ec639c", 156562),
+	// IntroComp 2008
 	ENTRY0("ic08_stormcellar", "080818", "f9ec8dd06ef3cd6b76d37083d6c20cad", 253338),
+	ENTRY0("ic08_stormcellar", "081022", "c38434a33b97a9616956ce48a7d69404", 384600),
 	ENTRY0("ic08_bedtimestory", "080819", "defc39612662db16cc20f905a577273f", 286720),
+	ENTRY0("ic08_fiendishzoo", "080820", "31992ae38abe111e24f01cc299ec639c", 156562),
 	ENTRY0("ic08_ninetenths", "080818", "b7972406a4065706b5a0a9bd09cfd228", 224768),
 
-	// Jacqueline Lott's "2009 IntroComp"
+	// IntroComp 2009
 	ENTRY0("ic09_gossip", "090828", "0de83be147d1b6de3ec0a02b9ffc0a8a", 148480),
+	ENTRY0("ic09_gossip", "090918", "5b0be1c76155882fb0d1d9eac3339255", 148480),
 	ENTRY0("ic09_obituary", "090829", "c3ec0a2225c71e901a6f52e4f56955bd", 219648),
 	ENTRY0("ic09_selves", "090828", "899a425d9327b8252934ca73d78e86d4", 301502),
 
-	// Jacqueline Lott's "2010 IntroComp"
+	// IntroComp 2010
 	ENTRY0("ic10_touristtrap", "100705", "4166fc534ae96607232ee13bc9898eb2", 277504),
 	ENTRY0("ic10_moratori", "100704", "34bfe10267a23efaf78b3167ad3ca004", 380058),
 	ENTRY0("ic10_plan6", "100630", "68ac09ff777cff2f9078c4aa39acd98c", 85504),
 	ENTRY0("ic10_waker", "100704", "5c814efafb5da7811c05b138ea5a896e", 506854),
 
-	// Jacqueline Lott's "2011 IntroComp"
-	ENTRY0("ic11_bender", "110611", "1140eb6ddef1ef25d8c14868bcd342cd", 333512),
-	ENTRY0("ic11_despondencyindex", "110629", "ad62e7b6f5565ea6ba41057a357c0e0f", 262608),
-	ENTRY0("ic11_parthenon", "110622", "f663f08ce250614ddcf6cbf1b5bc3580", 261576),
+	// IntroComp 2011
 	ENTRY0("ic11_sfiction", "110630", "242c7a127c04f8a0e01d183dc9acb4b3", 98816),
+	ENTRY0("ic11_sfiction", "120706", "662d83be00d1a832e37bdedc565c1a71", 275968),
+	ENTRY0("ic11_bender", "110611", "1140eb6ddef1ef25d8c14868bcd342cd", 333512),
+	ENTRY0("ic11_despondenidx", "110629", "ad62e7b6f5565ea6ba41057a357c0e0f", 262608),
+	ENTRY0("ic11_parthenon", "110622", "f663f08ce250614ddcf6cbf1b5bc3580", 261576),
 	ENTRY0("ic11_stallingtime", "110630", "939ae90866da68944a48c4e277c4c9e5", 326752),
 
-	// Jacqueline Lott's "2013 IntroComp"
-	ENTRY0("ic13_thechickensexer", "130716", "f3f6d761378d1de0176624d6df85de3e", 370648),
+	// IntroComp 2013
+	ENTRY0("ic13_chickensexer", "130716", "f3f6d761378d1de0176624d6df85de3e", 370648),
 
-	// Jacqueline Lott's "2014 IntroComp"
-	ENTRY0("ic14_talessoulthief", "140720", "cfdeeacc120c9a2bc5702f996e59d645", 352720),
+	// IntroComp 2014
+	ENTRY0("ic14_talesoulthief", "140720", "cfdeeacc120c9a2bc5702f996e59d645", 352720),
 
-	// Jacqueline Lott's "2016 IntroComp"
+	// IntroComp 2016
 	ENTRY0("ic16_grubbyville", "160805", "bfb73ae5770b3794bded32092c14cb64", 284218),
 
-	// Xalavier Nelson Jr's "2018 IntroComp"
+	// IntroComp 2018
 	ENTRY0("ic18_napier", "180727", "ad181efef44aed7ab1162cc4f193e5ec", 921026),
 
-	// Xalavier Nelson Jr's "2019 IntroComp"
+	// IntroComp 2019
 	ENTRY0("ic19_homeland", "190728", "a95092c8e4d929e5462f7e99896107c1", 99328),
 
-	// David Cornelson's "2003 IF Library Competitions"
+	// IntroComp 2020
+	ENTRY0("ic20_navigatio", "200613", "0a841691a8b7d704abf7b125b76e1b39", 457746),
+
+	// IF Library Competition 2003
 	ENTRY0("lc_serve", "030315", "77e8343a373c442074e6f832d904818d", 139264),
 	ENTRY0("lc_trappedschool", "020920", "ba57356b20fa4ca3fd9bd1fd9c390abc", 135680),
 
-	// David Cornelson's "MCDream Competition"
+	// IF Logic Puzzle Mini-Competition
+	ENTRY0("lp_logicpuz", "030211", "6ec37cc157a28f2c5dafc0d0f80d30ba", 95232),
+	ENTRY0("lp_traffic", "041303", "7c456f06a8b544b7e39f6504b0fdbd4b", 58880),
+
+	// LOTECH Competition 2001
+	ENTRY0("lo01_doghouse", "050630", "8cf8ceac10efec821d906ed6d618fd45", 66048),
+
+	// LOTECH Competition 2005
+	ENTRY0("lo05_stormy", "010415", "99d8cc39c86128559467cdcf4e030126", 124928),
+	ENTRY0("lo05_knapsack", "010415", "9b82f92549f74d9f406cc4de91ad19a5", 15872),
+
+	// Manos Mini-Competition
+	ENTRY0("ma_manoz", "000506", "e1c2b5e831c7b65a7c84b4e6795a8234", 64512),
+
+	// MCDream Competition
 	ENTRY0("mc_dreadwine", "060723", "55734ff823a29f039b093e460ea2a071", 473876),
 	ENTRY0("mc_nofamous", "060816", "2a5cfaa1b541ea238f4d29d4ad6f97cf", 227328),
 	ENTRY0("mc_retreat", "060814", "72b81c21592c4f6fef1452fb7fdd3c3b", 213516),
 
-	// David Cornelson's "Segment Mini-Comp"
-	ENTRY0("snowmanzcode2", "050318", "564cd46b498aff8bc07b9bebf120d8a6", 90112),
-	ENTRY0("kaboot", "000001", "f62f20c9a96c93ebefdef4dadfdd3d31", 81920),
-	ENTRY0("snowmanzcode", "050306", "88f22098e7794ac9415ddd95b8e3a713", 175104),
-
-	// Andrew Plotkin's "IF Logic Puzzle Mini-Competition"
-	ENTRY0("lp_logicpuz", "030211", "6ec37cc157a28f2c5dafc0d0f80d30ba", 95232),
-	ENTRY0("lp_traffic", "041303", "7c456f06a8b544b7e39f6504b0fdbd4b", 58880),
-
-	// Mark Silcox's "2001 LOTECH Competition"
-	ENTRY0("lo01_doghouse", "050630", "8cf8ceac10efec821d906ed6d618fd45", 66048),
-
-	// Mark Silcox's "2005 LOTECH Competition"
-	ENTRY0("lo05_stormy", "010415", "99d8cc39c86128559467cdcf4e030126", 124928),
-	ENTRY0("lo05_knapsack", "010415", "9b82f92549f74d9f406cc4de91ad19a5", 15872),
-
-	// Admiral Jota's "Manos Mini-Competition"
-	ENTRY0("ma_manoz", "000506", "e1c2b5e831c7b65a7c84b4e6795a8234", 64512),
-
-	// 2009 Metafilter IF Competition
+	// Metafilter IF Competition 2009
 	ENTRY0("me09_bunt", "090402", "67561ed3290dfcf350d3199d1c68e1f3", 77824),
 	ENTRY0("me09_downout", "090402", "7cf5f82737e9477e0c4a203d92763187", 327010),
 	ENTRY0("me09_underpig", "090413", "9b0b2394a0c9ccc05f0f9ec389cc1a30", 154112),
@@ -5666,76 +5722,86 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("me09_burndown", "090404", "95d1d1650305e213317b13c1128b3688", 157556),
 	ENTRY0("me09_rockrider", "090401", "4b38c9071633db404d19462196c729f6", 241506),
 
-	// 2010 Metafilter IF Competition
+	// Metafilter IF Competition 2010
 	ENTRY0("me10_greatrent", "100531", "9e68a7ff9194e38fcdeb0d5ce922f04a", 255964),
 
-	// Lucian Smith's "1998 IF Mini-Competition"
+	// IF Mini-Competition 1998
 	ENTRY0("mc98_bloodline", "980619", "574f0caa07476e82bcc6967e9ec70171", 58880),
 	ENTRY0("mc98_inherit", "980622", "99cd60a8a1b0b02bffffd5ceba8f1dce", 49152),
 	ENTRY0("mc98_sumbunny", "980623", "a13fa568408aa300adbce0b2d33ffaa0", 108032),
 
-	// Ben Caplan's "Minigames Minicomp"
+	// Minigames Minicomp
 	ENTRY0("mm_hamhall", "030607", "565a327a90408ad167ea16dbfd683419", 30720),
 	ENTRY0("mm_insider", "03????", "e38ce038ffd97c33cf9887cfef29d8f0", 42172),
 
-	// Marius Müller's "Neinth Annual New Year's Mincomp"
+	// 9th Annual New Year's Mincomp
 	ENTRY0("ny09_egyptianwalk", "151231", "ef80dd50c700becf2b4b254ce3ad3c9f", 334848),
 
-	// Marius Müller's "Eleventh Annual New Year's Mincomp"
+	// 11th Annual New Year's Mincomp
 	ENTRY0("ny11_halflife", "180102", "982d29c2516cf97ed2b9dd2cdd0d7ffb", 489416),
 
-	// Michael Gentry's "1999 No-Inventory-Competition"
+	// No-Inventory-Competition 1999
 	ENTRY0("ni_annoyedundead", "990220", "745496c251191b520688bdec23495b35", 64000),
 	ENTRY0("ni_camping", "990127", "11780d271a71c52caebf73332df83be2", 71168),
 
-	// 2002 One Room Game Competition
+	// One Room Game Competition 2002
 	ENTRY1("1r02_artif", "020615", "57e9591631815f341356340eb3336994", 102912, Common::IT_ITA),
-	ENTRY1("1r02_sottomarinogiallo", "020611", "9e05ab30b21c2189359ebb87f07ed79e", 106496, Common::IT_ITA),
+	ENTRY1("1r02_sottogiallo", "020611", "9e05ab30b21c2189359ebb87f07ed79e", 106496, Common::IT_ITA),
 
-	// 2003 One Room Game Competition
+	// One Room Game Competition 2003
 	ENTRY1("1r03_floppy", "040114", "178d3034872888adf68d6ea8d4e013d4", 67072, Common::IT_ITA),
 	ENTRY1("1r03_successo", "040114", "bb4b43e17b1ee5faffe3824653c30ff9", 81920, Common::IT_ITA),
 
-	// 2006 One Room Game Competition
-	ENTRY0("1r06_finalselection", "060419", "2690bfb5cc529c338ed6df923d44e28e", 151040),
+	// One Room Game Competition 2006
+	ENTRY0("1r06_finalselect", "060419", "2690bfb5cc529c338ed6df923d44e28e", 151040),
+	ENTRY0("1r06_finalselect", "061009", "2dd1a94db68abf9626f55e8bd6fa91a7", 151040),
 	ENTRY1("1r06_sforacchiato", "051114", "32b25f95b3fa4d12df956d80483af22f", 128512, Common::IT_ITA),
-	ENTRY1("1r06_venicezcode", "060514", "fad46e7b7fcba0ec52a91d188c3b0c90", 87552, Common::IT_ITA),
+	ENTRY1("1r06_devilatvenice", "060514", "fad46e7b7fcba0ec52a91d188c3b0c90", 87552, Common::IT_ITA),
 	ENTRY1("1r06_galeotto", "060507", "f4fd45e121933080813f7616838a3292", 81920, Common::IT_ITA),
 	ENTRY0("1r06_easter", "060506", "7824bb61c8f4476decfbc0cae326aa19", 79872),
-	ENTRY1("1r06_lazyjonescrostata", "040383", "c8d6a6982b29f8eb32ca269b8ad71959", 91648, Common::IT_ITA),
+	ENTRY1("1r06_lazyjonescrst", "040383", "c8d6a6982b29f8eb32ca269b8ad71959", 91648, Common::IT_ITA),
 	ENTRY1("1r06_dereditu", "060502", "f7413ac65ef04a99d63688f1f0ad85b0", 96768, Common::IT_ITA),
 	ENTRY1("1r06_frankenstein3", "000001", "afd4d53fcce2188d0a1fec585e56a690", 87040, Common::IT_ITA),
 
-	// 2007 One Room Game Competition
+	// One Room Game Competition 2007
 	ENTRY1("1r07_dreimp", "071117", "940f42557242f109cd87c3be791a056a", 70144, Common::IT_ITA),
 	ENTRY1("1r07_kinesis", "071118", "b86d57a022ce0f0fd6881dd6558ae5e3", 179200, Common::IT_ITA),
 	ENTRY1("1r07_necromante", "071107", "d38417af6003c64cefdb1cd59446c611", 109568, Common::IT_ITA),
 	ENTRY0("1r07_suvehnux", "071114", "734690200a67137177928b93c7bbe7b8", 247296),
+	ENTRY0("1r07_suvehnux", "071226", "e82d434c1c0a73a8755a9394a7c2e088", 248320),
 	ENTRY0("1r07_urbanconflict", "071116/z8", "19d9fe507d8ab34b7583a3ace48dc372", 385024),
 	ENTRY0("1r07_urbanconflict", "071116/zblorb", "3df26fcba4d30314f5d071a814e6525b", 886834),
 
-	// Storme Winfield's "2002 RomanceNovelComp"
+	// RomanceNovelComp 2002
 	ENTRY0("rnc_chooseromance", "020131", "c851c0eed65417b51cc2a21a7267d377", 38912),
 
-	// Sam Kabo Ashwell's "2014 Shufflecomp Competition"
+	// Segment Mini-Comp
+	ENTRY0("snowmansp2", "050318", "564cd46b498aff8bc07b9bebf120d8a6", 90112),
+	ENTRY0("kaboot", "000001", "f62f20c9a96c93ebefdef4dadfdd3d31", 81920),
+	ENTRY0("fandbsnowman", "050306", "88f22098e7794ac9415ddd95b8e3a713", 175104),
+
+	// Shufflecomp Competition 2014
 	ENTRY0("sh14_50shades", "140513", "35ba30fad41bdb74dbad8c5127bc657d", 252928),
 	ENTRY0("sh14_flotsam", "140512", "a22df7cc5b1aa4e8d273b4e0d87e3ee1", 503778),
 	ENTRY0("sh14_robotempire", "140511", "1b1adf587847239ef90eafdb2dfa756c", 431472),
+	ENTRY0("sh14_robotempire", "140601", "0be65fa2571465799544009bbf9cc083", 431986),
 	ENTRY0("sh14_illuminate", "140512", "95636ace9c03e03b414d3432aaa7d656", 278528),
 	ENTRY0("sh14_lobsterbucket", "140507", "a56fe70772a0f57eaa10eef5de10afb9", 312492),
 	ENTRY0("sh14_monkeyandbear", "090402", "b18cb887e833e22ba7cd4780428fa690", 542266),
 	ENTRY0("sh14_more", "140511", "4340ca61065c79f0ca13dd20c7c6b48b", 315392),
+	ENTRY0("sh14_more", "140604", "6e3ec8554b9c877c088fa586c965d896", 315392),
 	ENTRY0("sh14_teaandtoast", "140513", "42f8e870d33b47ad097ee0996461ffe6", 416672),
 	ENTRY0("sh14_truth", "140512", "713d190c6296a877de3d2a4fd48e93f6", 187904),
 	ENTRY0("sh14_whitehouses", "140511", "bfa0206e9903d19551db483f810efa09", 423362),
 
-	// 	Neil Butters's "ShuffleComp: Disc 2 Competition"
+	// ShuffleComp: Disc 2 Competition
 	ENTRY0("shd_everythinggame", "150418/z8", "9be1a20d73ed0db81972287766aa3cbc", 315392),
 	ENTRY0("shd_everythinggame", "150418/zblorb", "130aa6031169e969258ef8e6e1105f52", 1490056),
 	ENTRY0("shd_headingeast", "150507", "ee6869fc4d02966a7ebc7681ae751dc2", 109568),
-	ENTRY0("shd_starryseeksorrow", "150505", "0e37bd629858f51e2c83649973170dec", 1362330),
+	ENTRY0("shd_seeksorrow", "150505", "0e37bd629858f51e2c83649973170dec", 1362330),
+	ENTRY0("shd_seeksorrow", "160602", "6108059cd52dc1aba9112b554d6aee0f", 1365918),
 
-	// Emily Short's "SmoochieComp 2001"
+	// SmoochieComp 2001
 	ENTRY0("sc_1981", "001207", "8ffc6af37b119a05d9b0c92e63eaacce", 66048),
 	ENTRY0("sc_august", "010201", "3d3f28c6bfb3884045aebb4cc2280c5d", 180736),
 	ENTRY0("sc_deadofwinter", "010104", "20b4288688fd46267ebbad67bd83e18e", 59392),
@@ -5743,6 +5809,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sc_sparrow", "010207", "bbcb51f48f55802ac0c4e8bb8507cc91", 146432),
 	ENTRY0("sc_bandit", "010210", "222817b5a8665dcd31ab4c5c0d70c189", 102912),
 	ENTRY0("sc_voices", "010203", "a26ef705246c5e096886772363b316fc", 81920),
+	ENTRY0("sc_voices", "010504", "9a78da996a62281db9047c9998cce0a2", 84992),
 
 	// SpeedIF 1 Competition
 	ENTRY0("sif_coffins", "981002", "dba12eaf1628bef4eae0ccbbdd9f0f0e", 49152),
@@ -5756,6 +5823,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_boygoat", "981204", "082ffcff942327fae21328fb9bd1d8cf", 49664),
 	ENTRY0("sif_pryde", "981204", "2562c4cafc2079e56aa7ae2391a82358", 52736),
 	ENTRY0("sif_devildoit", "981203", "6e521967f04375cde72a8151c5516f18", 59904),
+	ENTRY0("sif_devildoit", "000724", "c4c97ca9af421dc9a14849355e7f7a1f", 60416),
 	ENTRY0("sif_3steps", "981203", "a7d8a011417486e12485efda8cef3bf0", 53248),
 
 	// SpeedIF 4 Competition
@@ -5795,15 +5863,16 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_pantsless", "000114", "fa8bb85defb16e81aef67cf204b01e7c", 57344),
 
 	// SpeedIF 9 Competition
-	ENTRY0("sif_darknesszcode", "000414", "4c5b7da3ad90064214e96829f764fdf5", 51200),
+	ENTRY0("sif_ucodarkness", "000414", "4c5b7da3ad90064214e96829f764fdf5", 51200),
 
 	// SpeedIF 10 Competition
 	ENTRY0("sif_deathx4", "000626", "4ef58e4cd15299b52075d5937b71d755", 51200),
 	ENTRY0("sif_taxes", "123456", "4cfde3ed88043fce6bb953021be69287", 79360),
 
 	// SpeedIF 10^-9 Competition
-	ENTRY0("sif_krakatoa", "021215", "3c62064723cfd8a89beb081c1703d133", 73728),
-	ENTRY0("sif_roaddestruction", "021214", "34d12792dda75cd8036455b2b2d74855", 58368),
+	ENTRY0("sif_krakatoa", "021215/v1", "3c62064723cfd8a89beb081c1703d133", 73728),
+	ENTRY0("sif_krakatoa", "021215/v2", "3901a6e3da1bf57ccc33e9da662eb340", 73728),
+	ENTRY0("sif_roadestruction", "021214", "34d12792dda75cd8036455b2b2d74855", 58368),
 
 	// SpeedIF 11 Competition
 	ENTRY0("sif_spiders", "000529", "0303538d9e2755d79d9f6e9bd4500487", 54272),
@@ -5814,14 +5883,15 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_plaque", "000713", "56afa6230573c3f74aac8c4e9949e2de", 57856),
 
 	// SpeedIF 13 Competition
-	ENTRY0("sif_elephantsafterlife", "000728", "31f78d010a7ea81621ea606d3002901f", 53760),
+	ENTRY0("sif_elephantaflife", "000728", "31f78d010a7ea81621ea606d3002901f", 53760),
+	ENTRY0("sif_elephantaflife", "000729", "4de2b50d8f115693a1cfb3a17de51463", 53760),
 	ENTRY0("sif_garden", "000801", "dd8d5ee2e9d4d251ab6a7710f808013e", 53248),
 	ENTRY0("sif_inspector", "000728", "67ffeee55cf1f664e68ae28fd21bd14d", 90624),
 	ENTRY0("sif_potstick", "000728", "3a6548770a04a2bfdf337fdcb30e4801", 86528),
 	ENTRY0("sif_service", "123456", "5acd285b74847a2fe2d99ba72634dc31", 79872),
 
 	// SpeedIF 14 Competition
-	ENTRY0("sif_halloweenzcode", "001025", "43302fac137967573aa61119e0a6359a", 48640),
+	ENTRY0("sif_halloween", "001025", "43302fac137967573aa61119e0a6359a", 48640),
 	ENTRY0("sif_bbp", "001024", "e346b6b69928ffd316fb9d71d6d10868", 54784),
 	ENTRY0("sif_pcontest", "001024", "ecb1d0f122f8734bbab848df40f3fb91", 60416),
 	ENTRY0("sif_worm", "001022", "19df66278ebf4f376fef567f77387547", 51712),
@@ -5866,15 +5936,12 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_literacy", "011118", "245b365f8ef81c146b3d091aa664848b", 52736),
 	ENTRY0("sif_woodencat", "011119", "3628449c452f7d0795d89cdfcce7d6da", 56320),
 
-	// David Cornelson's "18th Anniversary SpeedIF Competition"
-	ENTRY0("sif_farout", "161009", "1ad837661bb8b49c4dde09f149ede7fe", 254422),
-
 	// SpeedIF 2000 Competition
 	ENTRY0("sif_ritual", "991212", "f3a53b9e837a99e58a07133aef9cb23e", 55808),
 
 	// SpeedIF 2001 Competition
 	ENTRY0("sif_battleplanets", "010121", "3fcc87126411e841608884a01d136ccf", 51712),
-	ENTRY0("sif_destinychihuahua", "010121", "006a95783c9a801962b5d4a72da37df5", 56320),
+	ENTRY0("sif_destinychihuah", "010121", "006a95783c9a801962b5d4a72da37df5", 56320),
 	ENTRY0("sif_infiltrt", "010120", "58b67bb5aa44391f787d69af2d8c3406", 88064),
 	ENTRY0("sif_inspiration", "010120", "4c06fd195b9b710d4a3776bbb70f65cb", 82432),
 	ENTRY0("sif_moonjupiter", "010120", "54129d64d0b157c8160b67e86eae31e7", 88064),
@@ -5882,17 +5949,20 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_crouton", "010120", "e6d2fe9ce2aeee4943a165cf777e1ef3", 50688),
 	ENTRY0("sif_speedif17v1", "010121", "b9a7b208928c7c71f3df61654e496240", 51200),
 
-	// SpeedIF 11th Anniversary Competition
-	ENTRY0("sif_nqaa", "090901", "50f7abd76e9f972b4ee07a6f22259513", 132096),
-	ENTRY0("sif_reptile", "090901", "f919b917e924b9d4f5465e4f262082a0", 159232),
-	ENTRY0("sif_teachinghertodance", "090901/z5", "05f40a30e9fcbff5785042452b3d2c27", 146944),
-	ENTRY0("sif_teachinghertodance", "090901/zblorb", "d9c77a55fb2397f35e1de9f8bff92723", 239054),
-
 	// SpeedIF 3rd Anniversary Competition
 	ENTRY0("sif_henry", "011130", "922ca75bdcb5f53b92dd951f0747f30e", 52224),
 
 	// SpeedIF 5th Anniversary Competition
 	ENTRY0("sif_coughcough", "090715", "b62aa1f1f815251d64f734ed991bf74c", 82432),
+
+	// SpeedIF 11th Anniversary Competition
+	ENTRY0("sif_nqaa", "090901", "50f7abd76e9f972b4ee07a6f22259513", 132096),
+	ENTRY0("sif_reptile", "090901", "f919b917e924b9d4f5465e4f262082a0", 159232),
+	ENTRY0("sif_teachher2dance", "090901/z5", "05f40a30e9fcbff5785042452b3d2c27", 146944),
+	ENTRY0("sif_teachher2dance", "090901/zblorb", "d9c77a55fb2397f35e1de9f8bff92723", 239054),
+
+	// SpeedIF 18th Anniversary Competition
+	ENTRY0("sif_farout", "161009", "1ad837661bb8b49c4dde09f149ede7fe", 254422),
 
 	// SpeedIF Argonaut Competition
 	ENTRY0("sif_asciargo", "030309", "d660f5a1a71653e2701528ec9340ae20", 69120),
@@ -5908,12 +5978,12 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 
 	// SpeedIF Copyright Competition
 	ENTRY0("sif_piratescaribou", "030413", "63864258392ef2294ee96bba367edfdc", 119186),
-	ENTRY0("sif_sharingalltheway", "061023", "b21fcf0445928c6954968760a2977f56", 124284),
+	ENTRY0("sif_sharingallway", "061023", "b21fcf0445928c6954968760a2977f56", 124284),
 
 	// SpeedIF Crinkle Cut Competition
 	ENTRY0("sif_travels", "020323", "e794ec45a8872fcf5125427c84590a26", 52736),
 
-	// Douglas Adams Tribute SpeedIF Competition
+	// SpeedIF Douglas Adams Tribute Competition
 	ENTRY0("sif_nightmilliways", "010514", "92e9a393aa3bc7dcad6e42ef38575dec", 84480),
 	ENTRY0("sif_deadlinebda", "010513", "b9b5a235e36e70b5aeca511a9a02a9f8", 51712),
 	ENTRY0("sif_howmany", "010513", "64156dd269c213a2f104a0fa1eaa83ef", 86016),
@@ -5928,15 +5998,16 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 
 	// SpeedIF Gruff Competition
 	ENTRY0("sif_bronze", "060121", "80086fa750c3a0702da93ddb11a464c7", 142848),
+	ENTRY0("sif_bronze", "060503", "ef5b57f69601b8f5944699a6b31bc58d", 492472),
 	ENTRY0("sif_breath", "060121", "317b7bb6a03fca27b306e60791bbe889", 76800),
 	ENTRY0("sif_green", "060120", "dc913a1059a23eb95372692fd65c3078", 46404),
 	ENTRY0("sif_gameiwrote", "060121", "d11c98805aa132e82893c789f82a5f0e", 52736),
 
 	// SpeedIF Halloween 2002 Competition
 	ENTRY0("sif_losing", "021031", "68073c13dddeb29ce8e9530d27fd28c0", 51712),
-	ENTRY0("sif_oldsherwoodcemetary", "021031", "c40277f69d0d57f960bca6351043dabb", 85504),
+	ENTRY0("sif_oldsherwoodcem", "021031", "c40277f69d0d57f960bca6351043dabb", 85504),
 
-	// Jacqueline Lott's "Indigo New Language Speed IF competition"
+	// SpeedIF Indigo New Language Competition
 	ENTRY0("sif_hauntedhouse", "110507", "760df7716aecc0f1e457a2c22735c854", 298436),
 
 	// SpeedIF Introcomp
@@ -5944,7 +6015,8 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_alcohol", "070827", "539270360a14005cd2fc1eddfbb5b21e", 136192),
 	ENTRY0("sif_djibouti", "070825", "fb22ff8e39ba2d46fa892370fda57b8d", 159102),
 	ENTRY0("sif_faetttiw", "070824", "c14f57f0a8225ebf553730633dcc7d4a", 149246),
-	ENTRY0("sif_velocitasfictus", "070826", "3bf4260115172d5e5e595c0055a24b4f", 154664),
+	ENTRY0("sif_faetttiw", "070825", "2c4c1da83791e33977b6cd355a40001c", 149768),
+	ENTRY0("sif_velocitasficts", "070826", "3bf4260115172d5e5e595c0055a24b4f", 154664),
 	ENTRY0("sif_baptist", "070826", "726d3eeee1b405005a6f01f3531d6f5a", 145408),
 	ENTRY0("sif_zefrench", "070827", "62fbd05552dd52ea6959017b4c3a20f1", 140288),
 
@@ -5975,6 +6047,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_lachryma", "110415", "b13f6aa55f041792311301e4c8df4900", 162816),
 	ENTRY0("sif_gorilla", "110416", "9f11aef3e13431c1e5385928843e6052", 168960),
 	ENTRY0("sif_oceantower", "110416", "499631e0f669b7db9f80ba47fc61a664", 303670),
+	ENTRY0("sif_oceantower", "110510", "27e6ac7767ac9dfe5f0082765f6a21b7", 306962),
 	ENTRY0("sif_dreamtrap", "110415", "b29b6cbec814550dd55e8b2f423f1a52", 291840),
 	ENTRY0("sif_spectrum", "110415", "cdc7a95c8bb40e64d0658709704444f7", 210432),
 	ENTRY0("sif_smoochiepoodle", "110414", "605905b3574983313e11574951a83043", 318472),
@@ -5994,73 +6067,23 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_expedition", "060514", "c0851711fe1037eca6a3f3f66faaf5b5", 118640),
 	ENTRY0("sif_speedifnockle", "060513", "fb7d8536e61e1f70dc641cee73846200", 121254),
 
-	// 2007 SpeedIF New Year's Speed Competition
+	// SpeedIF New Year's Speed Competition 2007
 	ENTRY0("sif_nazimice", "071229", "ee0520b15d0fdd8633498b42154d8486", 139264),
 	ENTRY0("sif_notsameols", "071230", "ef765c232443f661c817d8f9a9bbd00d", 223232),
 	ENTRY0("sif_shothitler", "071229", "6a2f3c72e4cf395b29c07ea88756a668", 173568),
 	ENTRY0("sif_newyearswar", "071229", "6a9e22fe827900831f665a16132ffa81", 154624),
 
-	// 2008 SpeedIF New Year's Speed Competition
+	// SpeedIF New Year's Speed Competition 2008
 	ENTRY0("sif_leaptime", "081226", "42e6f54aabedcdb8ccf4caaff341b4ce", 228352),
+	ENTRY0("sif_leaptime", "081230", "aa7363833f61f3b5ac21d2d681ab74bb", 233984),
 	ENTRY0("sif_mauled", "081224", "bf6f8e0783aa8980e81c501d55f52bb9", 173056),
 	ENTRY0("sif_escapist", "081227", "086efab633103cc9f2bf8c223df436c9", 148480),
 
-	// 2009 SpeedIF New Year's Speed Competition
+	// SpeedIF New Year's Speed Competition 2009
 	ENTRY0("sif_dullegriet", "100116", "00c9f618ec2299548ae5d961ad27a500", 169472),
 	ENTRY0("sif_stabbed", "091225", "33b36976ba3a34ccd4f73ce7b95ed468", 187392),
 
-	// 2013 SpeedIF New Year's Speed Competition
-	ENTRY0("sif_faithfulcompv2", "131231", "2aaed4f67468e3e269f211ba1caadd54", 343450),
-	ENTRY0("sif_talemorning", "140103", "a189df712a5254487eb9a9d8cb8fffca", 253952),
-	ENTRY0("sif_thedayicameback", "140104", "c1abdfa44ae62d8194ce301f38f986c4", 356302),
-	ENTRY0("sif_youhavetoputthebaby", "140103", "ce8c2720fd4adab602737e31e3c15554", 152844),
-
-	// 2014 SpeedIF New Year's Speed Competition
-	ENTRY0("sif_youwerehere", "150101", "44d44bcc5e4a09b2b5a8c91ff6e6ffe9", 659824),
-
-	// SpeedIF O Competition
-	ENTRY0("sif_speedo", "010618", "b511f29c86a7e13de673926226383cbd", 49664),
-	ENTRY0("sif_eschew", "010619", "5400d94e3b040b5b562edb459784cb11", 79872),
-	ENTRY0("sif_getting", "010619", "c4ecc47413d22b405139e3e1aad71e31", 57344),
-	ENTRY0("sif_astrology", "010619", "8b822d755dbd37c3bef517f7824c4ab2", 57344),
-
-	// David Cornelson's "SpeedIF PAX East 2010"
-	ENTRY0("sif_wizshop", "100327", "3c288b1b9a0738c055949f77d7a1d904", 188416),
-	ENTRY0("sif_apoptosis", "100327", "41a8f9ed1cda9df15ce634e6c95ef13f", 289728),
-	ENTRY0("sif_foodmagic", "100327", "ea2ba1dec06b945d13509eb5a7cf4404", 279028),
-	ENTRY0("sif_lobsteronaplane", "100327", "60d4c46b482fa3e064bbb6f4ade216a4", 204288),
-	ENTRY0("sif_mango", "010505", "d59a1a92f7855161a9d11df40eb14f33", 268226),
-	ENTRY0("sif_midairmadness", "100327", "a3e636c4c0e87291e64dece9226a2c59", 78848),
-	ENTRY0("sif_paxeast", "100327", "e457d1a18a37b2f33428cac8d8d8c4ab", 18772),
-	ENTRY0("sif_queuelty", "100327/z5", "776595bd1cfed4c67ed8dc4baf8261e9", 218624),
-	ENTRY0("sif_queuelty", "100327/zblorb", "98380afe4c3005eacb229cbe0c737480", 310940),
-	ENTRY0("sif_safehouse", "100327", "e2b98a8b1dfc7364ef96b668ddcd281b", 190464),
-	ENTRY0("sif_vortex2305", "100327", "539c5143e05f8ee96e724e88e2fc76ac", 196680),
-
-	// David Cornelson's "SpeedIF PAX East 2011"
-	ENTRY0("sif_scurvy", "110313", "1345c0f052db46981d21dfca1f61164e", 266224),
-	ENTRY0("sif_helpfulmanzcode", "110312", "413e1a37570643c936bf5d953b23d792", 183808),
-	ENTRY0("sif_boredladders", "110313", "67c2a4d28c2d9b4010eb5df84bf5ac23", 256416),
-	ENTRY0("sif_brainnightguest", "110312", "a53b823f032f6f24cf726cb3807126e0", 232448),
-	ENTRY0("sif_delusionsagain", "110312", "d2f2e384a82561770b1ba346c4cecd48", 247242),
-	ENTRY0("sif_diggingzcode", "110312", "d61670df1a94d9272acdf9282e2ea587", 82432),
-	ENTRY0("sif_merk", "110312", "1ac23aa5b9044df12be4c9a690e51ee5", 317392),
-	ENTRY0("sif_therighttool", "110312", "0d6fa415b46bf15400f215beb212cbe6", 152576),
-
-	// SpeedIF Orange Competition
-	ENTRY0("sif_appall", "020223", "1659420ba9bdac0036857ceef6544826", 52736),
-	ENTRY0("sif_descent", "020223", "ed6f047a085184879b62cfbdd8b00bb6", 55296),
-
-	// Pi-Theta-Aleph-Parallax SpeedIF Competition
-	ENTRY0("sif_parallaxdream", "010722", "eec02151066a419e37945c4d0524febb", 74752),
-	ENTRY0("sif_pethertheta", "010722", "fdbd5f400e09d787c41f9983e40e77dd", 50688),
-	ENTRY0("sif_putiap", "010721", "b72c110cf4e03388bc5c3aeef9718adc", 53760),
-	ENTRY0("sif_squeaky", "010721", "3dc567c99b6df70f258a50f4c8995998", 50176),
-	ENTRY0("sif_ptap", "010721", "be484b2ac6ca2915c558f0fe85f1f922", 82944),
-	ENTRY0("sif_moonbar", "010722", "19d87eff290b6672ea6bcfeec864711c", 53248),
-	ENTRY0("sif_thpoint", "010721", "28fcea7b45429830ec60a7aaefb66609", 110592),
-
-	// 2011 New Year's Speed IF - The penultimate not numbered New Year's Speed IF Competition.
+	// SpeedIF New Year's Speed Competition 2011
 	ENTRY0("sif_beingendbeg", "111230", "7bd6ecaf3861cd0f35798ad64a33fef7", 375758),
 	ENTRY0("sif_birthmind", "111230", "3903332c627cba6350885c17b2bde4b0", 351772),
 	ENTRY0("sif_dashslapney", "111230", "798921e044aaed9d16f8b2b238b7dbf9", 331726),
@@ -6070,8 +6093,64 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_savedelvis", "111231", "10ca0d67db593ee6c81cadd57b2043b2", 191488),
 	ENTRY0("sif_silencegods", "111230", "0aeca7f64c8a551f4cadefca0ae57aca", 294828),
 	ENTRY0("sif_threemore", "111230", "356403c4a1f4e86ae5ed1a26b20013f0", 152576),
+	ENTRY0("sif_threemore", "120110", "d89d23f3cacd8541df1b1792362b206b", 155136),
 
-	// `R*IF` Spam SpeedIF Competition
+	// SpeedIF New Year's Speed Competition 2013
+	ENTRY0("sif_faithfulcompv2", "131231", "2aaed4f67468e3e269f211ba1caadd54", 343450),
+	ENTRY0("sif_talemorning", "140103", "a189df712a5254487eb9a9d8cb8fffca", 253952),
+	ENTRY0("sif_talemorning", "140109", "234a6da218d56ca47410f7e03c2b89a8", 286756),
+	ENTRY0("sif_dayicameback", "140104", "c1abdfa44ae62d8194ce301f38f986c4", 356302),
+	ENTRY0("sif_youhavetoput", "140103", "ce8c2720fd4adab602737e31e3c15554", 152844),
+
+	// SpeedIF New Year's Speed Competition 2014
+	ENTRY0("sif_youwerehere", "150101", "44d44bcc5e4a09b2b5a8c91ff6e6ffe9", 659824),
+
+	// SpeedIF O Competition
+	ENTRY0("sif_speedo", "010618", "b511f29c86a7e13de673926226383cbd", 49664),
+	ENTRY0("sif_eschew", "010619", "5400d94e3b040b5b562edb459784cb11", 79872),
+	ENTRY0("sif_getting", "010619", "c4ecc47413d22b405139e3e1aad71e31", 57344),
+	ENTRY0("sif_astrology", "010619", "8b822d755dbd37c3bef517f7824c4ab2", 57344),
+
+	// SpeedIF PAX East 2010
+	ENTRY0("sif_wizshop", "100327", "3c288b1b9a0738c055949f77d7a1d904", 188416),
+	ENTRY0("sif_apoptosis", "100327", "41a8f9ed1cda9df15ce634e6c95ef13f", 289728),
+	ENTRY0("sif_foodmagic", "100327", "ea2ba1dec06b945d13509eb5a7cf4404", 279028),
+	ENTRY0("sif_lobsteronplane", "100327", "60d4c46b482fa3e064bbb6f4ade216a4", 204288),
+	ENTRY0("sif_mango", "010505", "d59a1a92f7855161a9d11df40eb14f33", 268226),
+	ENTRY0("sif_midairmadness", "100327", "a3e636c4c0e87291e64dece9226a2c59", 78848),
+	ENTRY0("sif_paxeast", "100327", "e457d1a18a37b2f33428cac8d8d8c4ab", 18772),
+	ENTRY0("sif_queuelty", "100327/z5", "776595bd1cfed4c67ed8dc4baf8261e9", 218624),
+	ENTRY0("sif_queuelty", "100327/zblorb", "98380afe4c3005eacb229cbe0c737480", 310940),
+	ENTRY0("sif_safehouse", "100327", "e2b98a8b1dfc7364ef96b668ddcd281b", 190464),
+	ENTRY0("sif_vortex2305", "100327", "539c5143e05f8ee96e724e88e2fc76ac", 196680),
+
+	// SpeedIF PAX East 2011
+	ENTRY0("sif_scurvy", "110313", "1345c0f052db46981d21dfca1f61164e", 266224),
+	ENTRY0("sif_scurvy", "110316", "6fbeb4d7013e53830db77aed351a7715", 267760),
+	ENTRY0("sif_shhelpfulman", "110312", "413e1a37570643c936bf5d953b23d792", 183808),
+	ENTRY0("sif_boredladders", "110313", "67c2a4d28c2d9b4010eb5df84bf5ac23", 256416),
+	ENTRY0("sif_brainightguest", "110312", "a53b823f032f6f24cf726cb3807126e0", 232448),
+	ENTRY0("sif_delusionsagain", "110312", "d2f2e384a82561770b1ba346c4cecd48", 247242),
+	ENTRY0("sif_diggingtime", "110312", "d61670df1a94d9272acdf9282e2ea587", 82432),
+	ENTRY0("sif_merk", "110312", "1ac23aa5b9044df12be4c9a690e51ee5", 317392),
+	ENTRY0("sif_therighttool", "110312", "0d6fa415b46bf15400f215beb212cbe6", 152576),
+
+	// SpeedIF Orange Competition
+	ENTRY0("sif_appall", "020223", "1659420ba9bdac0036857ceef6544826", 52736),
+	ENTRY0("sif_appall", "020422", "3c33d5639fa341829dde7c4b9b1875fd", 52736),
+	ENTRY0("sif_descent", "020223", "ed6f047a085184879b62cfbdd8b00bb6", 55296),
+
+	// SpeedIF Pi-Theta-Aleph-Parallax Competition
+	ENTRY0("sif_parallaxdream", "010722", "eec02151066a419e37945c4d0524febb", 74752),
+	ENTRY0("sif_pethertheta", "010722", "fdbd5f400e09d787c41f9983e40e77dd", 50688),
+	ENTRY0("sif_putiap", "010721", "b72c110cf4e03388bc5c3aeef9718adc", 53760),
+	ENTRY0("sif_squeaky", "010721", "3dc567c99b6df70f258a50f4c8995998", 50176),
+	ENTRY0("sif_squeaky", "010722", "7c50ba3f388d57e96afeabbc6fbd46c0", 51200),
+	ENTRY0("sif_ptap", "010721", "be484b2ac6ca2915c558f0fe85f1f922", 82944),
+	ENTRY0("sif_moonbar", "010722", "19d87eff290b6672ea6bcfeec864711c", 53248),
+	ENTRY0("sif_thpoint", "010721", "28fcea7b45429830ec60a7aaefb66609", 110592),
+
+	// SpeedIF `R*IF` Spam Competition
 	ENTRY0("sif_htp", "090926", "d6ee7e9f0522592ebfdfc689a0639e9c", 148480),
 
 	// SpeedIF Scenario 1 Competition
@@ -6088,12 +6167,13 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	// SpeedIF That Dare Not Speak Its Number Competition
 	ENTRY0("sif_soitgoes", "040125", "f1ce20135cbfd98afcbb7671788d7f2e", 88064),
 	ENTRY0("sif_antioch", "040125", "15a13547cb14d29b6851ca54928c02a8", 81408),
-	ENTRY0("sif_twilightzcode", "040124", "930e1be11b7f2e49e45bb99eae7c40b9", 58052),
+	ENTRY0("sif_twilight", "040124", "930e1be11b7f2e49e45bb99eae7c40b9", 58052),
 
 	// SpeedIF Thanksgiving Competition
 	ENTRY0("sif_dragonflies", "111126", "d2183016a28394ca8e3dca3e26abd68b", 208384),
+	ENTRY0("sif_dragonflies", "111130", "ff692bffb014fe109c3bfe2e072ac98b", 565060),
 	ENTRY0("sif_crystalpalace", "111125", "70b49b3ed49f022f73796765008e1e6a", 310316),
-	ENTRY0("sif_extraordinaryevents", "111127", "062ed8c5329ef1460a7662da4409de11", 252990),
+	ENTRY0("sif_extraordevents", "111127", "062ed8c5329ef1460a7662da4409de11", 252990),
 	ENTRY0("sif_youareaturkey", "111127", "b3b0da101be635d2a8f0ee75dce5e599", 154624),
 
 	// SpeedIF ToasterComp II Competition
@@ -6106,9 +6186,9 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_cheatingdeath", "030525", "eda221a4306e0942e9e589504756fd20", 54272),
 	ENTRY0("sif_rrr", "030525", "ecf72d85d6056bdaeed7de43942248dc", 59392),
 
-	// Ultimate not numbered New Year's Speed IF Competition
-	ENTRY0("sif_disenchantmentbay", "130106", "4a982fea8dab9bebd65062f958a0d81f", 330634),
-	ENTRY0("sif_disenchantmentbay", "130104", "dbf7fe64ac7a33b362eb9e8f2e40c29e", 282804),
+	// SpeedIF Ultimate not numbered New Year's Competition
+	ENTRY0("sif_disenchantbay", "130106", "4a982fea8dab9bebd65062f958a0d81f", 330634),
+	ENTRY0("sif_disenchantbay", "130104", "dbf7fe64ac7a33b362eb9e8f2e40c29e", 282804),
 	ENTRY0("sif_shortof", "130103", "180dbfc43c99c579b6409fcfaf86dd91", 131072),
 	ENTRY0("sif_thedayidied", "130103", "d8bc1ebc8d76fd060ec370618514fd1c", 342474),
 
@@ -6125,7 +6205,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("sif_tragedy", "010312", "5bab2d25280f18504487fcf6b3312107", 51712),
 
 	// SpeedIF Y Competition
-	ENTRY0("sif_bananapocalaypse", "010525", "2c0d8c77d046daeb54906b2a59e066a9", 58368),
+	ENTRY0("sif_bananapocalayp", "010525", "2c0d8c77d046daeb54906b2a59e066a9", 58368),
 	ENTRY0("sif_barton", "010524", "e7e96181e9bc2827f5124b54689854fa", 81408),
 	ENTRY0("sif_bearsx3", "260702", "03b6e09ed4cff7c98b55c84986983caf", 56832),
 	ENTRY0("sif_flexible", "010524", "756fc59448127e97929a5dc189ec1393", 81920),
@@ -6139,24 +6219,24 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	// SpeedIF Zombie Competition
 	ENTRY0("sif_speedifzombie", "050823", "389f6c2083b608fd64c5b98e745b9318", 77824),
 
-	// Bouchercomp SpeedIF Competition
-	ENTRY0("sif_lowellzcode", "080528", "7718a75e194ec0fdf84a2460733a4d0a", 142828),
+	// SpeedIF Bouchercomp Competition
+	ENTRY0("sif_lowellparadise", "080528", "7718a75e194ec0fdf84a2460733a4d0a", 142828),
 	ENTRY0("sif_putpbad", "080528", "69a7ab928c7d1f5196ee8cb954276861", 131584),
 	ENTRY0("sif_seekingsolace", "080528", "bda0aec03bd17c8816c053ea5b25acac", 183544),
 	ENTRY0("sif_wideopengate", "080528", "1898e262d619428285276aa626ff8b6c", 147968),
 
-	// Emily Short's "Swash Comp"
+	// Swash Comp
 	ENTRY0("swa_seacaptains", "030902", "7fb736fb5ffd548d87e0e0d36475a451", 120832),
 
-	// Mark Musante's "Toaster Competition"
+	// Toaster Competition
 	ENTRY0("toa_burnttoast", "000931", "70dba603317dff1feafe1e1941021c95", 80384),
-	ENTRY0("toa_friarbaconstreet", "000831", "b499ff3d6468e7f3dffba37bb2ecd458", 92160),
+	ENTRY0("toa_friarbaconstr", "000831", "b499ff3d6468e7f3dffba37bb2ecd458", 92160),
 	ENTRY0("toa_gottoast", "000818", "9b9efc642110f9cf8cf02d427926c420", 128512),
 	ENTRY0("toa_spittingcrumbs", "000831", "2af8723590a4c2d1525e6f390da92053", 54272),
 	ENTRY0("toa_shrinkingwoman", "000901", "e856b8d56da1c76283159728ec75b636", 52224),
 	ENTRY0("toa_tommytoaster", "000815", "e85536f32722533a9aaa3fd3d6f88037", 59392),
 
-	// Jack Welch's "TWIFcomp"
+	// TWIFcomp
 	ENTRY0("twif_putpbat", "100414", "331ac3c5bb168e99453e5e74043b37c2", 140288),
 	ENTRY0("twif_sin1", "100411", "725d9ec5b537fbd089fa23a7171ad875", 140800),
 	ENTRY0("twif_sin2", "100411", "651b1474b605e6cca52bc6cfeedd8040", 140288),
@@ -6168,19 +6248,85 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("twif_sin8", "100411", "f24f52f675b678db3608d52e6563bf4a", 140288),
 	ENTRY0("twif_war", "100411", "f93714ad73e07cd75ad5d00afde37c8e", 140288),
 
-	// Emily Short's "Walkthrough Competition"
+	// Walkthrough Competition
 	ENTRY0("wlk_wtf", "010522", "dc7a87253da4ff3c05b2217ed564137d", 94208),
 	ENTRY0("wlk_dreams", "010516", "fd9d677f57c1fb0b8a0b4d00dd8d52cf", 110080),
 	ENTRY0("wlk_fit", "010520", "8b735022d6a71cef1d746123193cf304", 133632),
 	ENTRY0("wlk_jigsaw2", "010421", "de554e3d1faca74b0d4a02d7bacd2da0", 61440),
 	ENTRY0("wlk_exile", "010520", "bd4e1fb0b26eb5577db72e5b8788f416", 134656),
 
-	//  David A. Cornelson's "1999 XComp"
+	// XComp 1999
 	ENTRY0("xco_sixfoot", "990323", "37724e6551435bdbd674e7ffc4937d7c", 113664),
 
+	// Spring Thing 2002
+	ENTRY0("stc02_blues", "020618", "dea57d7b1b41b5961143e7faa6125ad9", 261632),
+
+	// Spring Thing 2003
+	ENTRY0("stc03_inevita", "030225", "8eb1204dade23de158a71f68e81b0437", 213504),
+	ENTRY0("stc03_inevita", "030428", "6152b19bbf3eb3dd4334004e7094dbe8", 213504),
+	ENTRY0("stc03_cofire", "030329", "1f84d501e89c64f2e04f84996b8d0ca3", 252416),
+
+	// Spring Thing 2005
+	ENTRY0("stc05_authority", "050205", "8def535c876448e1cc532a6d6dec328f", 171008),
+	ENTRY0("stc05_flatfeet", "050313", "8b92f0777c98d72c1701bd080531f5b4", 275456),
+	ENTRY0("stc05_telling", "050330", "e50190b0a236084d01595dee39749478", 210944),
+	ENTRY0("stc05_telling", "060518", "cfcbfc5d4a7faad9724f7bae961ee71b", 316014),
+
+	// Spring Thing 2006
+	ENTRY1("stc06_debaron", "060329", "32a2298f08a7274e1c1e8ed28d8b99fe", 322560, Common::DE_DEU),
+	ENTRY0("stc06_thebaron", "060329", "cac25a2e2ce7aa87bccccb07dffad212", 310272),
+
+	// Spring Thing 2007
+	ENTRY0("stc07_fate", "070304", "03b02750dac39a92ef6dccf2bc1ced4f", 434568),
+	ENTRY0("stc07_fate", "070329", "b030c4881ced350f51c1a64bd0f45584", 481792),
+	ENTRY0("stc07_fate", "070910", "a659ea01a268760a28bd9a990c8bfb73", 503138),
+
+	// Spring Thing 2008
+	ENTRY0("stc08_pascal", "080217", "ccdf58a87467b4e822565d54b3ca2a20", 237568),
+
+	// Spring Thing 2009
+	ENTRY0("stc09_milkparadise", "090214", "37f34b58e9907dd1bc7549d451987a86", 239984),
+
+	// Spring Thing 2012
+	ENTRY0("stc12_rocketman", "120405", "a2aac06a0481334279c64ad069865006", 1977066),
+
+	// Spring Thing 2014
+	ENTRY0("stc14_mrp", "140406", "35da82199a79e37358de984a5db5d0d1", 174308),
+	ENTRY0("stc14_mrp", "140620", "974627f05fc3e1c2260925a78171d73a", 175288),
+
+	// Spring Thing 2015 - Back Garden
+	ENTRY0("stc15_dirk", "150416", "b2d0a81eaf7008fa9a1c8654fdc5578d", 362462),
+
+	// Spring Thing 2016
+	ENTRY0("stc16_harmonic", "030321", "d3cc582cb71a3a911229b331490cac94", 380416),
+
+	// Spring Thing 2017 - Back Garden
+	ENTRY0("stc17_enlightened", "170402", "94d384fe0b5f3f6cead8653b4496d1d3", 218112),
+
+	// Spring Thing 2018 - Main Festival
+	ENTRY0("stc18_gopher", "180327", "1af73704d303624fcc88397bdd1cd4a4", 383488),
+	ENTRY0("stc18_murderbig", "180403", "45b044f05a4f5b6fbd54a913d33e9dfe", 740794),
+
+	// Spring Thing 2019 - Main Festival
+	ENTRY0("stc19_pca", "181128", "8908ecd93be90264935432fc0986dfb2", 100864),
+
+	// Spring Thing 2019 - Back Garden
+	ENTRY0("stc19_69105keys", "190401", "4e8c195b1023319a0875ebec71d7a5f5", 318492),
+
+	// Spring Thing 2021 - Main Festival
+	ENTRY0("stc21_takethedogout", "210328", "3cc6fd155953f3a5321f6e762ff2cd19", 434112),
+	ENTRY0("stc21_takethedogout", "210404", "48879bdbfdebc9e4cc57a8261fc4be96", 657462),
+
+	// Spring Thing 2022 - Main Festival
+	ENTRY0("stc22_hypercubic", "220320", "6895d310aa8d3bc7dfb67860ab1bc09e", 263680),
+	ENTRY0("stc22_wry", "220407", "a7c52c575f68f1affe727cec8647c572", 460216),
+
+	// Spring Thing 2023 - Main Festival
+	ENTRY0("stc23_mariewaits", "230402", "8d6e47991a8eff1925acb14f918eb2dd", 105472),
+
 	// Danish games
-	ENTRY1("nissen", "r4/171207", "c81784afb569b863098e8374dfdd4f32", 142848, Common::DA_DNK),
-	ENTRY1("nissen", "r3/171207", "fb28905b7ff93a22d5fe43a18efa90c3", 142848, Common::DA_DNK),
+	ENTRY1("nissen", "171207/v1", "fb28905b7ff93a22d5fe43a18efa90c3", 142848, Common::DA_DNK),
+	ENTRY1("nissen", "171207/v2", "c81784afb569b863098e8374dfdd4f32", 142848, Common::DA_DNK),
 
 	// Dutch games
 	ENTRY1("adv", "020822", "dff45a0d89ed78a204d49d18341d15ce", 153600, Common::NL_NLD),
@@ -6195,6 +6341,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY1("ascenseur", "080306", "dadf12d4eb2d9232cdbaae79f8f26494", 96256, Common::FR_FRA),
 	ENTRY1("aventure", "000531", "e70b316ec131bf753b89014e05438d47", 157696, Common::FR_FRA),
 	ENTRY1("balcon", "070823", "6072d8d30e4e1546e72e851bd724bf78", 173440, Common::FR_FRA),
+	ENTRY1("brume", "081230", "8f3633f5774cd4aed22b1b436e864723", 150528, Common::FR_FRA),
 	ENTRY1("castelrous", "131119", "c34b46cf40f1954608955b7f2507d546", 390028, Common::FR_FRA),
 	ENTRY1("caverne", "180901", "9cbf749eba2c1d33ce7bb125c5526a1a", 20992, Common::FR_FRA),
 	ENTRY1("ciafr", "080316", "b75e95796dab8644cd8c32d503826211", 103424, Common::FR_FRA),
@@ -6206,13 +6353,14 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY1("chatiment", "290807", "f852781d00d37112b7adfa7cc9462def", 89600, Common::FR_FRA),
 	ENTRY1("citeeaux", "061026", "c0ee158b5fbff9440b2197a1769ac42c", 159744, Common::FR_FRA),
 	ENTRY1("citronille", "090111", "17a97c92575acb22cb3a33797b5218c2", 131072, Common::FR_FRA),
-	ENTRY1("donjon", "210110", "923d5ef805cb1ab6ecaef82e35750b7f", 201728, Common::FR_FRA),
 	ENTRY1("enfant", "081228", "33b8b7c8c7c0c1cdc61e9c02fb34f683", 77312, Common::FR_FRA),
 	ENTRY1("escaperoom", "110301", "c039c9749a754f312f4fb4fc45f9dc90", 75264, Common::FR_FRA),
-	ENTRY1("espions", "070417", "c592155da4dd1bb360c3c4129a1bd54b", 129536, Common::FR_FRA),
+	ENTRY1("espions", "070417/v1", "c592155da4dd1bb360c3c4129a1bd54b", 129536, Common::FR_FRA),
+	ENTRY1("espions", "070417/v2", "7e59a5199b12376697deb4694cfac744", 124416, Common::FR_FRA),
 	ENTRY1("etoiles", "080211", "19affb3442f83e3cd0d46c245bc81bcc", 69632, Common::FR_FRA),
 	ENTRY1("etoiles", "190825", "313ea6b0a4f1978d6ad67180dd3c000b", 72704, Common::FR_FRA),
 	ENTRY1("femme", "080103", "5edba9471b92073b15f8f15ebe2890d3", 69632, Common::FR_FRA),
+	ENTRY1("fenetre", "200808", "c2d7715e2cec63ee01438818724462ba", 102912, Common::FR_FRA),
 	ENTRY1("filaments", "030301", "0aa6d27086b546f6bd4dea84717da6ff", 337920, Common::FR_FRA),
 	ENTRY1("grosscarabee", "070826", "d94a570da93e76ab4e74094fea36eb75", 173568, Common::FR_FRA),
 	ENTRY1("histoire", "220313", "7b48ca5979ab2eccea797f05f86925e4", 105984, Common::FR_FRA),
@@ -6227,447 +6375,560 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY1("katana", "070906", "133b2ba4e38fc5e4565dd8f22582b5a7", 562502, Common::FR_FRA),
 	ENTRY1("katana", "090524", "2b8c48e6b81b7d8e84807da09d669329", 190976, Common::FR_FRA),
 	ENTRY1("kheper", "070829", "3612cef78d31e80632d6b69b48652306", 94208, Common::FR_FRA),
-	ENTRY1("lieuxcommuns", "070910", "d1032dc1a9635358e0aec29038fdb34e", 253952, Common::FR_FRA),
-	ENTRY1("lieuxcommuns", "090606", "debbdf2966a3f9c8bf3adbde449d8efe", 257024, Common::FR_FRA),
+	ENTRY1("lieuxcommuns_zcode", "070910", "d1032dc1a9635358e0aec29038fdb34e", 253952, Common::FR_FRA),
+	ENTRY1("lieuxcommuns_zcode", "090606", "debbdf2966a3f9c8bf3adbde449d8efe", 257024, Common::FR_FRA),
 	ENTRY1("lifeonmarsfr", "150925", "f7bf75ba1603e4764f0fc70382044352", 192000, Common::FR_FRA),
 	ENTRY1("livraisonexpress", "081228", "d6d2a345af9f5a6d8ffb85d9f93d61a0", 94720, Common::FR_FRA),
-	ENTRY1("lupercalia", "090524", "593326f44f87f77a1f1cd0308c317261", 182784, Common::FR_FRA),
+	ENTRY1("lupercalia_zcode", "090524", "593326f44f87f77a1f1cd0308c317261", 182784, Common::FR_FRA),
+	ENTRY1("lupercalia_zcode", "140825/z8", "66f553e0c7cd676a9273e92a7a63659a", 510976, Common::FR_FRA),
 	ENTRY1("lmpsd", "040921", "bb90b4548c5160b10a7b6cbfdb5384a9", 215040, Common::FR_FRA),
+	ENTRY1("lmpsd", "080323", "5693d0f10edbbc8b85d6eeed7e079a64", 252928, Common::FR_FRA),
 	ENTRY1("magicien", "110328", "7177e5bd97685ad83e4189a65260e39a", 76800, Common::FR_FRA),
 	ENTRY1("memelespommes", "070625", "ca70cd49b3f8d7e1d7ad7af5256c9e73", 86528, Common::FR_FRA),
 	ENTRY1("mortblue", "140511", "48dcb800d06a763230fad45c3c733d69", 25088, Common::FR_FRA),
 	ENTRY1("ombre", "150820", "a3df02e2ecda768542f326480709db02", 137216, Common::FR_FRA),
+	ENTRY1("pantinelectrique", "080423", "29bc48d74b998480b99f950f3a419c26", 216064, Common::FR_FRA),
 	ENTRY1("paranoiafr", "990528", "b6995a27770514b7940e1d744ebb5246", 92160, Common::FR_FRA),
-	ENTRY1("petitgnome", "061101", "fd58d4c7f9c2ed2ee0aec39c237ffe08", 144384, Common::FR_FRA),
-	ENTRY1("petitgnome", "091225", "8c9c1918c32b90ad84d2f206d1ade717", 173056, Common::FR_FRA),
+	ENTRY1("petitgnome_zcode", "061101/z5", "fd58d4c7f9c2ed2ee0aec39c237ffe08", 144384, Common::FR_FRA),
+	ENTRY1("petitgnome_zcode", "091225", "8c9c1918c32b90ad84d2f206d1ade717", 173056, Common::FR_FRA),
 	ENTRY1("plicploc", "070819", "12fd25cc5a77fc408eb0661562bd5ab7", 75264, Common::FR_FRA),
 	ENTRY1("princesse", "131028", "16cdf0b604c538e12de37b4c1e806e79", 124928, Common::FR_FRA),
 	ENTRY1("princesse", "090216", "1c9e9dea744d7faf631ec54646b8f538", 133632, Common::FR_FRA),
 	ENTRY1("quetedubaal", "080601", "1ed20eb58cc08f1593062fe880559373", 97280, Common::FR_FRA),
 	ENTRY1("rats", "081216", "75959db3776f3323ee4ae153799fa321", 178688, Common::FR_FRA),
+	ENTRY1("rats", "100808", "acfccabd9e28775c7b25bd6f1a0dd267", 164864, Common::FR_FRA),
 	ENTRY1("recitsdegrandpere", "081228", "bd9b36e7dd22d203a44b17adca7c38b1", 114688, Common::FR_FRA),
 	ENTRY1("routedesvins", "081227", "3517ee7d5ca9582c4a0e7aac4f948ddb", 196096, Common::FR_FRA),
-	ENTRY1("sarvegne", "061101", "8c308818d08d924fdf69250fd5fdb210", 224768, Common::FR_FRA),
+	ENTRY1("sarvegne_zcode", "061022/z5", "d68b2a0384ef7fb93401325820fde394", 222720, Common::FR_FRA),
+	ENTRY1("sarvegne_zcode", "061101/z5", "8c308818d08d924fdf69250fd5fdb210", 224768, Common::FR_FRA),
 	ENTRY1("sdlc", "070917", "c80e6bf2a43340c87272f16bf3e64397", 67584, Common::FR_FRA),
 	ENTRY1("sdlc", "190825", "082547e20ca3023379ac93872a9d2229", 71168, Common::FR_FRA),
 	ENTRY1("secrets", "170408", "3bf44279ad08fe9b191e1dfc9c3966f8", 95744, Common::FR_FRA),
 	ENTRY1("sorciereaubalcon", "070823", "eabc7e17bdfdc214b3e6fb7fe616c69c", 214528, Common::FR_FRA),
 	ENTRY1("sorciereaubalcon", "080220", "e6f19e66d9981e35a87eaff228b4de62", 179712, Common::FR_FRA),
 	ENTRY1("spoutnik", "140102", "b6f94c786d7041db3b86985f970d7492", 99840, Common::FR_FRA),
-	ENTRY1("stationspatial", "210110", "6b9e23599bb921aaf4fc744d80e193f5", 130048, Common::FR_FRA),
 	ENTRY1("templedefeu", "070731", "05b8c729867644a2b6c417297dcabea3", 131072, Common::FR_FRA),
 	ENTRY1("templenaga", "111218", "20470b0263caad21c9d938bd733c0bd9", 197632, Common::FR_FRA),
 	ENTRY1("templenaga", "130812", "75d1826c8dcb7fd41645cb6f726de96e", 469026, Common::FR_FRA),
 	ENTRY1("terres", "120116", "d554b81728b35803fb52363ac7dbd946", 175104, Common::FR_FRA),
 	ENTRY1("tristam", "211220", "2dc9be4f723166273544c251beca3e5c", 57856, Common::FR_FRA),
+	ENTRY1("valleemysterieuse", "140202", "3e6f3bb7faee707a62136fa5b55fb732", 908028, Common::FR_FRA),
 	ENTRY1("verdeterre", "140228", "6665bda7c172285e281de2e120dac250", 1385176, Common::FR_FRA),
 	ENTRY1("verdeterre", "150805", "a2bd16f0dbf5cae8cf90ce71c4c71fb4", 1402584, Common::FR_FRA),
 	ENTRY1("vindaloofr", "021001", "95642b4ec28e36f1e250d343c1342bba", 98816, Common::FR_FRA),
 
-	// French Comp 2005
+	// French games: French Comp 2005
 	ENTRY1("frc_cercledesgros", "051008", "091a9ab30302eb20d421ccbd0c530439", 128512, Common::FR_FRA),
 	ENTRY1("frc_dreamlands", "050908", "79cecc22e3f020a3ccc23912122785d4", 79872, Common::FR_FRA),
 	ENTRY1("frc_templedefeu", "080317", "ce4d11a46341d6307f4cd2bb303d1c74", 134656, Common::FR_FRA),
 
-	// French Comp 2006
+	// French games: French Comp 2006
 	ENTRY1("frc_citeeaux", "061024", "aec85f8500c931d478d43bb25d75cf90", 159232, Common::FR_FRA),
 	ENTRY1("frc_sarvegne", "081227", "5f6b489cd12c151e4bf67822a5d22b8a", 239104, Common::FR_FRA),
 
-	// French Comp 2007
+	// French games: French Comp 2007
 	ENTRY1("frc_heuresduvent", "080220", "5b9470352594bb79edee84ecc0134e4e", 337920, Common::FR_FRA),
 	ENTRY1("frc_divinebonace", "070711", "a09271e95d3720d1e8016600b7871906", 103936, Common::FR_FRA),
 	ENTRY1("frc_brrr", "070709", "8657c6e47832ce1a1a976fc1107e16fc", 73216, Common::FR_FRA),
-	ENTRY1("frc_phareabandonne", "071220", "b9a70f4bbebbcdca4c52baa6dbac143f", 102912, Common::FR_FRA),
+	ENTRY1("frc_ilephare_zcode", "071220/z5", "b9a70f4bbebbcdca4c52baa6dbac143f", 102912, Common::FR_FRA),
 
-	// French Comp 2008
+	// French games: French Comp 2008
 	ENTRY1("frc_brume", "100424", "b661a3f9a2f9a3700c6cfee216063615", 152576, Common::FR_FRA),
 	ENTRY0("frc_lettresvolees", "081227", "2590cafc6a7b22b40bd3765c16a0e3d0", 250880),
 	ENTRY1("frc_louplachevre", "081121", "473a02087280f01a81e4ee4035249ed5", 98304, Common::FR_FRA),
 
-	// French Comp 2009
+	// French games: French Comp 2009
 	ENTRY1("frc_catapole", "100114", "e326f5ab2f236791b5b8f122d75bdb7d", 156672, Common::FR_FRA),
 	ENTRY1("frc_chambresyrion", "100111", "7db1461b938e392ced1d36747525437d", 123392, Common::FR_FRA),
 	ENTRY1("frc_mechants", "100117", "0d580033a9b180484ea6c8bbc2b6106b", 270848, Common::FR_FRA),
 
-	// French Comp 2011
+	// French games: French Comp 2011
 	ENTRY1("frc_aventureszeus", "120122", "bef1f77e9dfd65d7d39350e3c50b40ce", 91136, Common::FR_FRA),
 	ENTRY1("frc_dardenfer", "120822", "fea4fe5607327d8f0c15c88b65ac5d9a", 275968, Common::FR_FRA),
 	ENTRY1("frc_terreciel", "120122", "cf24a28bea8bb8f80e006acebbef8e33", 245248, Common::FR_FRA),
 	ENTRY1("frc_astrologue", "120122", "4259e9bb2a97152e454ba8feda4f9a04", 198656, Common::FR_FRA),
 	ENTRY1("frc_homelandsec", "120124", "ea70cf57b134c45c2234c976d06d1948", 155136, Common::FR_FRA),
 
-	// French Comp 2013
+	// French games: French Comp 2013
 	ENTRY1("frc_lifeonmarsfr", "140108", "8ef2f4e9dfe63bcce9ff7726cdcca7ea", 163840, Common::FR_FRA),
 	ENTRY1("frc_sourcedezig", "140102", "675d4956a12d6a23cf2a7d491e13cbff", 88064, Common::FR_FRA),
 	ENTRY1("frc_trac", "131213", "5db3d7270a0b2c7b8dab1672b2f24b8c", 334848, Common::FR_FRA),
 
-	// French Comp 2015
+	// French games: French Comp 2015
 	ENTRY1("frc_envol", "150201", "5aa75d7b333fdb69c71601d95d2def30", 157696, Common::FR_FRA),
 
-	// French Comp 2016
+	// French games: French Comp 2016
 	ENTRY1("frc_tipelau", "160104", "e4c8b0d99ceab57393db70b64dcd49c4", 173568, Common::FR_FRA),
 	ENTRY1("frc_diamantblanc", "160103", "d349be5b008ee06ad93bb7342d5ffbea", 167936, Common::FR_FRA),
 
-	// French Comp 2018
+	// French games: French Comp 2018
 	ENTRY1("frc_exil", "180114", "ff9628e84c46771168b5be5a9e23acd9", 107520, Common::FR_FRA),
+
+	// French games: French Comp 2021
+	ENTRY1("frc_donjon", "210110", "923d5ef805cb1ab6ecaef82e35750b7f", 201728, Common::FR_FRA),
+	ENTRY1("frc_stationspatial", "210110", "6b9e23599bb921aaf4fc744d80e193f5", 130048, Common::FR_FRA),
 
 	// German games
 	ENTRY1("abenteuer", "990712", "f849c7a06ebfe21c50819e4222ffee4e", 135680, Common::DE_DEU),
-	ENTRY1("absturzmomente", "100405", "eac3e7f2a6eff119dd4141dc1af7608e", 283542, Common::DE_DEU),
 	ENTRY1("adv", "980419", "6a04a6b303f09359155eb23baa201efc", 126464, Common::DE_DEU),
-	ENTRY1("ausgerechnet", "110403", "5c4cc7e4689850d0726423cb4d14f6d0", 158720, Common::DE_DEU),
 	ENTRY1("bearg", "981201", "59c94a5d3a4f62cfbb4a34d9ac99f747", 139264, Common::DE_DEU),
 	ENTRY1("bearg", "990131", "b18427877fdfdaebac36fc3402244ae1", 134656, Common::DE_DEU),
 	ENTRY1("bearg", "000326", "b85bc696a58e11f6a0cf72f4cf08ad7c", 134656, Common::DE_DEU),
-	ENTRY1("bewerbung", "020429", "5b2a90b66bfcf4564b37dab92afe846a", 114688, Common::DE_DEU),
 	ENTRY1("dasspiel", "101229", "dae98c657d7cdd82757b0c841a211027", 505150, Common::DE_DEU),
 	ENTRY1("debaron", "041104", "222874a5a0fdfd1f5a1d4df8df3c736f", 81408, Common::DE_DEU),
 	ENTRY1("debaron", "050729", "e4e83cae1b826c901776fc6ba6c900da", 122368, Common::DE_DEU),
 	ENTRY1("debaron", "051013", "0c0f7ce043b8b83abdefea52448309d9", 262144, Common::DE_DEU),
 	ENTRY1("debaron", "060507", "34a4236301eaebe6c5f9897c36516ed7", 323072, Common::DE_DEU),
 	ENTRY1("deklinator", "040630", "1ca69e16e8e3e1941eb5c4cd403b2022", 103424, Common::DE_DEU),
-	ENTRY1("die5", "200304", "2a2139d806fc179c98cf8633f671559f", 121344, Common::DE_DEU),
-	ENTRY1("dieakte", "141113", "a4e9bc0f32e66c521e21373ec67e7b8f", 264704, Common::DE_DEU),
-	ENTRY1("dieakte", "150514", "f85adc48c759f62636cb435f2fc7dbee", 279040, Common::DE_DEU),
-	ENTRY1("dieerstenacht", "220326", "c9a1532c6122c33ac40fd4cf19f41dbb", 104412, Common::DE_DEU),
+	ENTRY1("dermantel", "100913", "81155fc7363968d2a47612d13d12830d", 281564, Common::DE_DEU),
 	ENTRY1("diegerechtenricht", "101024", "47f0308a684a569ed6df68dbdc92387e", 439064, Common::DE_DEU),
-	ENTRY1("eden", "020401/z5", "cac7c7f917cc93824f41efa96bf77e57", 120320, Common::DE_DEU),
-	ENTRY1("eden", "020401/zblorb", "73a6cf485aa833ca895b0f860493cfce", 221618, Common::DE_DEU),
-	ENTRY1("emilia", "160401", "bb5872728bbc705c3dbaee32e2629d7c", 161280, Common::DE_DEU),
 	ENTRY1("eskmausden", "130714", "71d37a2c11f9c0b085ff1ce06ba488f9", 199168, Common::DE_DEU),
-	ENTRY1("felleisen", "060331", "51b62cb229fde3719ddc616f450ba1e2", 131072, Common::DE_DEU),
-	ENTRY1("fischstaebchen", "230401", "6c07ebfdcfe23bfcac98cc2a8fdf2c48", 869242, Common::DE_DEU),
-	ENTRY1("gennorden", "230331", "dcc67e5b97f6aaf5f0c7e90a3c62f128", 208896, Common::DE_DEU),
-	ENTRY1("gorgonir", "110330", "7b1f7c22b6fb7aceb630958e19c76e54", 542304, Common::DE_DEU),
 	ENTRY1("halb2", "020523", "d424290a37b5efc67482e4fc9224bc0e", 30208, Common::DE_DEU),
-	ENTRY1("hausaufgabe", "100405", "74a0227fcee105fed02e7458ab8a4e51", 199168, Common::DE_DEU),
 	ENTRY1("herr", "140620", "a6493768373d50096344f4319e7f074a", 208028, Common::DE_DEU),
-	ENTRY1("jazteg", "040522", "6635a44223e0017418acdeb0c78a9c7a", 192000, Common::DE_DEU),
 	ENTRY1("karisma", "130908", "48d6eb07a649a614b037722af9718bf2", 291328, Common::DE_DEU),
 	ENTRY1("karisma", "151213", "7ede806c41268f8fc50e6a50b816d71c", 292352, Common::DE_DEU),
 	ENTRY1("kleine", "181019", "2c2c6112c51bf47da4b5f3c7301c4729", 590784, Common::DE_DEU),
 	ENTRY1("knack", "081215", "b8fa6a55c469cd92d01985933ac093a3", 64388, Common::DE_DEU),
-	ENTRY1("kopialbuch", "050330", "3e4b21e39f57ad741fae18b4836e1d64", 151040, Common::DE_DEU),
-	ENTRY1("lilie", "150318", "645bb70a097de033452216d5ef85c8dd", 241256, Common::DE_DEU),
-	ENTRY1("linear", "030331", "427dd13d669e139f31011da42cdd6c6c", 116736, Common::DE_DEU),
 	ENTRY1("mchatton", "120413", "1485309be7aed1ed0ada396fe3eeb1ec", 290768, Common::DE_DEU),
 	ENTRY1("o", "120412", "850ed6092daa2dcc87862404a2e88338", 240424, Common::DE_DEU),
-	ENTRY1("schief", "220401", "8e74eeb93f60b63ec4eee8a7db80880b", 515794, Common::DE_DEU),
-	ENTRY1("schief", "220404", "78aaa2553d490488b96bda6abe9a7aa7", 516306, Common::DE_DEU),
-	ENTRY1("seite", "020330", "7f1bcab47897d5bbed1351aea77e6f56", 169984, Common::DE_DEU),
+	ENTRY1("schiebefehl", "120412", "c9551891b01c10be5f1aa214be17a0ef", 236544, Common::DE_DEU),
 	ENTRY1("seestrasse", "090315", "4739869217c7c79eaddafaf493039277", 192512, Common::DE_DEU),
 	ENTRY1("starrider", "040110", "6c42a3e46e29419d9d0e3786117ab94b", 222208, Common::DE_DEU),
-	ENTRY1("unterwelt", "040330", "606d95b5e66ccdeb54febbbf2de7c60c", 92160, Common::DE_DEU),
 	ENTRY1("wasserhasser", "140105/z5", "b87ebdaca633e964a575abd70cb88c5a", 151040, Common::DE_DEU),
 	ENTRY1("wasserhasser", "140105/zblorb", "1d332f660aec117a4460d0555a2b30f6", 165336, Common::DE_DEU),
 	ENTRY1("wichtel", "021006", "f52166e02c6bd5e0311145683f415ef5", 88576, Common::DE_DEU),
 
+	// German games: Textfire Grand Prix 2002
+	ENTRY1("tgp_eden", "020401/z5", "cac7c7f917cc93824f41efa96bf77e57", 120320, Common::DE_DEU),
+	ENTRY1("tgp_eden", "020401/zblorb", "73a6cf485aa833ca895b0f860493cfce", 221618, Common::DE_DEU),
+	ENTRY1("tgp_bewerbung", "020429", "5b2a90b66bfcf4564b37dab92afe846a", 114688, Common::DE_DEU),
+	ENTRY1("tgp_seite", "020330", "7f1bcab47897d5bbed1351aea77e6f56", 169984, Common::DE_DEU),
+
+	// German games: Textfire Grand Prix 2003
+	ENTRY1("tgp_linear", "030331", "427dd13d669e139f31011da42cdd6c6c", 116736, Common::DE_DEU),
+
+	// German games: Textfire Grand Prix 2004
+	ENTRY1("tgp_jazteg", "040522", "6635a44223e0017418acdeb0c78a9c7a", 192000, Common::DE_DEU),
+	ENTRY1("tgp_spater", "040330", "1dc330438f4f064b5bbc22e3f80d1c2c", 84208, Common::DE_DEU),
+	ENTRY1("tgp_unterwelt", "040330", "606d95b5e66ccdeb54febbbf2de7c60c", 92160, Common::DE_DEU),
+	ENTRY1("tgp_die5", "200304", "2a2139d806fc179c98cf8633f671559f", 121344, Common::DE_DEU),
+	ENTRY1("tgp_dichter", "040222", "ea4afef4907aa5d232fe61168ceca08d", 13808, Common::DE_DEU),
+
+	// German games: Textfire Grand Prix 2005
+	ENTRY1("tgp_kopialbuch", "050330", "3e4b21e39f57ad741fae18b4836e1d64", 151040, Common::DE_DEU),
+
+	// German games: Textfire Grand Prix 2006
+	ENTRY1("tgp_felleisen", "060331", "51b62cb229fde3719ddc616f450ba1e2", 131072, Common::DE_DEU),
+	ENTRY1("tgp_pmason", "060329", "7c7ec84f10d40a90f76685558abaf81c", 138240, Common::DE_DEU),
+
+	// German games: Textfire Grand Prix 2010
+	ENTRY1("tgp_hausaufgabe", "100405", "74a0227fcee105fed02e7458ab8a4e51", 199168, Common::DE_DEU),
+	ENTRY1("tgp_absturzmomente", "100405", "eac3e7f2a6eff119dd4141dc1af7608e", 283542, Common::DE_DEU),
+
+	// German games: Textfire Grand Prix 2011
+	ENTRY1("tgp_gorgonir", "110330", "7b1f7c22b6fb7aceb630958e19c76e54", 542304, Common::DE_DEU),
+	ENTRY1("tgp_ausgerechnet", "110403", "5c4cc7e4689850d0726423cb4d14f6d0", 158720, Common::DE_DEU),
+
+	// German games: IF Grand Prix 2015
+	ENTRY1("tgp_dieakte", "141113", "a4e9bc0f32e66c521e21373ec67e7b8f", 264704, Common::DE_DEU),
+	ENTRY1("tgp_dieakte", "150514", "f85adc48c759f62636cb435f2fc7dbee", 279040, Common::DE_DEU),
+	ENTRY1("tgp_lilie", "150318", "645bb70a097de033452216d5ef85c8dd", 241256, Common::DE_DEU),
+
+	// German games: IF Grand Prix 2016
+	ENTRY1("tgp_emilia", "160401", "bb5872728bbc705c3dbaee32e2629d7c", 161280, Common::DE_DEU),
+
+	// German games: IF Grand Prix 2022
+	ENTRY1("tgp_schief", "220401", "8e74eeb93f60b63ec4eee8a7db80880b", 515794, Common::DE_DEU),
+	ENTRY1("tgp_schief", "220404", "78aaa2553d490488b96bda6abe9a7aa7", 516306, Common::DE_DEU),
+	ENTRY1("tgp_dieerstenacht", "220326", "c9a1532c6122c33ac40fd4cf19f41dbb", 104412, Common::DE_DEU),
+
+	// German games: IF Grand Prix 2023
+	ENTRY1("tgp_fischstaebchen", "230401", "6c07ebfdcfe23bfcac98cc2a8fdf2c48", 869242, Common::DE_DEU),
+	ENTRY1("tgp_gennorden", "230331", "dcc67e5b97f6aaf5f0c7e90a3c62f128", 208896, Common::DE_DEU),
+
 	// Italian games
-	ENTRY1("aldila", "100115", "4b87d3038bdf6df986f44a6fc1d8772c", 349840, Common::IT_ITA),
+	ENTRY1("africanescape", "040110", "8775547da36268fb07c02f439876a682", 95232, Common::IT_ITA),
+	ENTRY1("anello", "111537/z5", "24126591b2207f17c2ba532a599a0729", 104960, Common::IT_ITA),
+	ENTRY1("anello", "111537/zblorb", "6b56c0ca4cf7610fccad13b2aadf2f87", 133998, Common::IT_ITA),
 	ENTRY1("armando", "050429", "b74fb87510b6baa50307c2b63ba108de", 71168, Common::IT_ITA),
-	ENTRY1("ayon", "130730", "da1a2dab91d8ccec4b69d955487e9539", 232960, Common::IT_ITA),
-	ENTRY1("ayon", "200415", "aa86a043654bd0dd0fbb5b131ac1e43c", 198656, Common::IT_ITA),
-	ENTRY1("beyond", "210810", "09912bc978bb88459fa1bb8405f5962a", 353192, Common::IT_ITA),
-	ENTRY1("darkiss1ita", "151120", "347db588b5663ab9be83048430d9f4a0", 156160, Common::IT_ITA),
-	ENTRY1("darkiss1ita", "200435", "a04bdff3ea97bc0fc28f9559fd35ada4", 156160, Common::IT_ITA),
-	ENTRY1("darkiss2ita", "150616", "899316750483830be4f38caf37ba7d7f", 219136, Common::IT_ITA),
-	ENTRY1("darkiss2ita", "180925", "10dc81bfb3a8973e841293abf76fe1b8", 181248, Common::IT_ITA),
-	ENTRY1("enigma", "111115", "6e9390f62c07038d44ab17167093c935", 111616, Common::IT_ITA),
-	ENTRY1("enigma", "181116", "18f8b0c236655a1d22e4f9677cb94958", 110592, Common::IT_ITA),
+	ENTRY1("attentiombra", "020531", "457dbd8041c18716e9da6d0e8966c5bd", 98304, Common::IT_ITA),
+	ENTRY1("ayon_zcode", "130730", "da1a2dab91d8ccec4b69d955487e9539", 232960, Common::IT_ITA),
+	ENTRY1("ayon_zcode", "170423/z5", "05b083581fcf4ecc5fa3a7161261e1d8", 230400, Common::IT_ITA),
+	ENTRY1("ayon_zcode", "200415", "aa86a043654bd0dd0fbb5b131ac1e43c", 198656, Common::IT_ITA),
+	ENTRY1("beyondita_zcode", "100115/zblorb", "4b87d3038bdf6df986f44a6fc1d8772c", 349840, Common::IT_ITA),
+	ENTRY1("beyondita_zcode", "210810/zblorb", "09912bc978bb88459fa1bb8405f5962a", 353192, Common::IT_ITA),
+	ENTRY1("bustadimenticata", "081219", "71b28ea835d7a2bd590b5a72fec3f6a6", 68608, Common::IT_ITA),
+	ENTRY1("campusinvad_zcode", "220421/z5", "b81b580a40995fabcb5ccfb76f8e7933", 92672, Common::IT_ITA),
+	ENTRY1("casamisteriosa", "180814", "a0098dfe8e0f16ed67c40372daa88bb9", 410624, Common::IT_ITA ),
+	ENTRY1("cosmic", "990619", "e33633d44993496892de89bb369e3f91", 146432, Common::IT_ITA),
+	ENTRY1("darkiss1ita_zcode", "151120", "347db588b5663ab9be83048430d9f4a0", 156160, Common::IT_ITA),
+	ENTRY1("darkiss1ita_zcode", "200425/z5", "a04bdff3ea97bc0fc28f9559fd35ada4", 156160, Common::IT_ITA),
+	ENTRY1("darkiss2ita_zcode", "150616", "899316750483830be4f38caf37ba7d7f", 219136, Common::IT_ITA),
+	ENTRY1("darkiss2ita_zcode", "180925/z5", "10dc81bfb3a8973e841293abf76fe1b8", 181248, Common::IT_ITA),
+	ENTRY1("enigma_zcode", "111115", "6e9390f62c07038d44ab17167093c935", 111616, Common::IT_ITA),
+	ENTRY1("enigma_zcode", "181116/z5", "18f8b0c236655a1d22e4f9677cb94958", 110592, Common::IT_ITA),
 	ENTRY1("filamit", "030520", "41c7069568ea533a4fef227ca14850d3", 324608, Common::IT_ITA),
 	ENTRY1("filamit", "030812", "edde5a37d24b112fb1cf3ff7fb133579", 333312, Common::IT_ITA),
 	ENTRY1("flamel", "010503", "02bb0beba5cf37e7a9b6fe3558e20cab", 198656, Common::IT_ITA),
-	ENTRY1("giardino", "150614", "f3244aa61ce6b3a4dd860c315bd24aa7", 124416, Common::IT_ITA),
-	ENTRY1("giardino", "200415", "2fb555596dbd4360a8ab8474330221ce", 123904, Common::IT_ITA),
-	ENTRY1("hellosword", "050929", "4ac3e9c0411d4ec87281d31ac7b3763d", 163840, Common::IT_ITA),
-	ENTRY1("hellosword", "060113", "a432a8286f9f76dae891699175332237", 166400, Common::IT_ITA),
+	ENTRY1("fugacropoli_zcode", "170417/z5", "69ab0e17ac70ec1020a031e596c1cc5c", 107520, Common::IT_ITA),
+	ENTRY1("giardino_zcode", "150614", "f3244aa61ce6b3a4dd860c315bd24aa7", 124416, Common::IT_ITA),
+	ENTRY1("giardino_zcode", "200415/z5", "2fb555596dbd4360a8ab8474330221ce", 123904, Common::IT_ITA),
+	ENTRY1("hellosword_ita", "050929", "4ac3e9c0411d4ec87281d31ac7b3763d", 163840, Common::IT_ITA),
+	ENTRY1("hellosword_ita", "060113", "a432a8286f9f76dae891699175332237", 166400, Common::IT_ITA),
+	ENTRY1("intrappola", "120710", "b6b6127d3555f549376f5b84928a0e2c", 110592, Common::IT_ITA),
+	ENTRY1("isolakiller", "070613", "e967c84cca2423e50c90120577886586", 94208, Common::IT_ITA),
+	ENTRY1("jibbidu", "081122", "a0b1a308bc73847219e1f2fc3f6b067c", 99328, Common::IT_ITA),
 	ENTRY1("kangourou", "130503", "55449579a0ecd73fb788120dd0707bc0", 95744, Common::IT_ITA),
 	ENTRY1("kangourou", "130510", "249bd922d1247c0abcaad13234664e50", 95744, Common::IT_ITA),
+	ENTRY1("katzrfun", "990605", "54b30a9d8f9ad46e7fc089a1222acb10", 90624, Common::IT_ITA),
+	ENTRY1("killer", "160710", "037334568dd51618801bfdb5ff7838dc", 84992, Common::IT_ITA),
+	ENTRY1("killer", "160711", "316a450d2a2306df6e769f63744427c6", 83968, Common::IT_ITA),
 	ENTRY1("koohinoor", "060717", "867d2f12ae29cd97aadc1a3c6b2e2a2a", 88576, Common::IT_ITA),
 	ENTRY1("lazyjones", "040383", "3a4393278ce83f98bbd66a33aa6c6b6c", 115200, Common::IT_ITA),
-	ENTRY1("luna", "110106", "28f1d106a70a0f50aee1d2628bc42055", 522076, Common::IT_ITA),
-	ENTRY1("luna", "150824", "773550301bd1cdf4c086a47c93ec8e9a", 523394, Common::IT_ITA),
+	ENTRY1("littlefalls_zcode", "050527/z5", "38ef6b7f83a39a0ccb117c7910bbfcf7", 155648, Common::IT_ITA),
+	ENTRY1("lucifinanza_zcode", "200529/z5", "5919b2ef8d1956ac50ddb5b595af232d", 118784, Common::IT_ITA),
+	ENTRY1("noalpitour", "990524", "6d664ec66b95a27cd0fa0c21cfd07d6a", 98816, Common::IT_ITA),
+	ENTRY1("noavventura", "180418", "8c1d557f837896b5989a731a4b87df3e", 217600, Common::IT_ITA),
+	ENTRY1("ordinedragone", "190905", "74e249190148fffd0a04b7411b7bad5d", 169984, Common::IT_ITA),
+	ENTRY1("pietraluna_zcode", "110106/z8", "08c4d4e1e17d7a7c86a43e280c439294", 457728, Common::IT_ITA),
+	ENTRY1("pietraluna_zcode", "110106/zblorb", "28f1d106a70a0f50aee1d2628bc42055", 522076, Common::IT_ITA),
+	ENTRY1("pietraluna_zcode", "120206/zblorb", "53c42ccbb23ae4d987f3bcd6cce9875c", 523394, Common::IT_ITA),
+	ENTRY1("pietraluna_zcode", "150824", "773550301bd1cdf4c086a47c93ec8e9a", 523394, Common::IT_ITA),
 	ENTRY1("oldwest1", "020514", "0182ca4b8153fc90e7be355d1ef51c7e", 157184, Common::IT_ITA),
-	ENTRY1("poesia", "398874", "c383d29e1237cfc4760b46a618f211d2", 196096, Common::IT_ITA),
+	ENTRY1("paosqura", "161029", "b18eec0c747b6731daabda7233d96898", 75776, Common::IT_ITA),
+	ENTRY1("poesia_zcode", "398874/z5/v1", "c383d29e1237cfc4760b46a618f211d2", 196096, Common::IT_ITA),
+	ENTRY1("poesia_zcode", "398874/z5/v2", "feabf26f662e70f4d15ac290b8884e3a", 197632, Common::IT_ITA),
+	ENTRY1("roccatuono", "070508", "9d01134168e088864a58eab6757169ec", 147456, Common::IT_ITA),
 	ENTRY1("rovo", "080424", "b2f570c667e32ea44c121b44cc6baeda", 113664, Common::IT_ITA),
 	ENTRY1("scarafaggio", "070906", "6e980b7108fd4af148308214d6efc6bf", 131584, Common::IT_ITA),
 	ENTRY1("sfida", "200425", "12465a5bc24ac29f5f11dbea510a11a1", 83968, Common::IT_ITA),
-	ENTRY1("sognodisangue", "150702", "d00baeb8f4cca59ba88b24b6e8b71246", 151552, Common::IT_ITA),
+	ENTRY1("sognosangue_zcode", "150702/z5", "d00baeb8f4cca59ba88b24b6e8b71246", 151552, Common::IT_ITA),
+	ENTRY1("sparviero", "071127", "65a760999058a1f8d20514cefca2003c", 139264, Common::IT_ITA),
+	ENTRY1("sparviero2", "071213", "49bd0276270c0541b79a25c30d4caf15", 172544, Common::IT_ITA),
 	ENTRY1("strega", "081007", "71f9cbdeb334cc1de6fce6e1a53cecf3", 153088, Common::IT_ITA),
-	ENTRY1("stregatto", "200424", "7a4f5ec05579fbd913cac1167e890f5c", 84992, Common::IT_ITA),
+	ENTRY1("stregatto_zcode", "200424/z5", "7a4f5ec05579fbd913cac1167e890f5c", 84992, Common::IT_ITA),
 	ENTRY1("terkhen", "911906", "01670fb60050c159c7a0d542fbbdd7b4", 285184, Common::IT_ITA),
-	ENTRY1("tesla", "160613", "e2650593a2aadaef8fb9a5f3b8e10c27", 94720, Common::IT_ITA),
-	ENTRY1("villamorgana", "081014", "6be5dee7a5d1608362083850c9bfc679", 170256, Common::IT_ITA),
-	ENTRY1("villamorgana", "210728", "cd43011f68340e1fa9dc437251276d73", 184880, Common::IT_ITA),
+	ENTRY1("tesla_zcode", "160613/z5", "e2650593a2aadaef8fb9a5f3b8e10c27", 94720, Common::IT_ITA),
+	ENTRY1("toyshop", "021014", "258f10e6082cd188440cfcb78e384c2e", 101888, Common::IT_ITA),
+	ENTRY1("trincea", "081127", "d227b512ca0a5ce99e0b16ac097c006d", 25088, Common::IT_ITA),
+	ENTRY1("villamorgana_zcode", "081014", "6be5dee7a5d1608362083850c9bfc679", 170256, Common::IT_ITA),
+	ENTRY1("villamorgana_zcode", "210728", "cd43011f68340e1fa9dc437251276d73", 184880, Common::IT_ITA),
+	ENTRY1("vita_zcode", "161803/z5/v1", "67cba2cbc9a46c97e3c641d5a7e5a3e7", 218112, Common::IT_ITA),
+	ENTRY1("vita_zcode", "161803/z5/v2", "ae72de7a6dd8a38a6ee625c19bacaaf7", 216064, Common::IT_ITA),
+	ENTRY1("volonta_zcode", "150624/z5", "28c90d35de32ddc055694cda2dcbee64", 204800, Common::IT_ITA ),
+	ENTRY1("zazie", "990506", "74f0a21352b3f6f52e94309e5a02feaf", 114688, Common::IT_ITA),
 	ENTRY1("zazie", "030113", "906b9a3e02b2080ce7f06595c8bdcbb3", 89600, Common::IT_ITA),
 	ENTRY1("zenfactorspa", "100524", "22373bcd74d843ce647c4bd7b6a4404b", 288256, Common::IT_ITA),
-	ENTRY1("zigamusita", "200426", "72ef8669029dce42ec1e1f73ef66fa3c", 98816, Common::IT_ITA),
+	ENTRY1("zigamusita_zcode", "200426/z5", "72ef8669029dce42ec1e1f73ef66fa3c", 98816, Common::IT_ITA),
 	ENTRY1("zombie", "180601", "aa5956094aa8e909f63679a67fb52b14", 134144, Common::IT_ITA),
 	ENTRY1("zombie", "180820", "19a1369039b5226f86323ab19e7aea96", 135168, Common::IT_ITA),
 	ENTRY1("zombie", "230620", "265679a116cca1867a8b05d6b7267318", 135680, Common::IT_ITA),
 	ENTRY1("zorkita", "000031", "3d85a97ddfc1fb0f6bfbf1cb00b4df7b", 192512, Common::IT_ITA),
 	ENTRY1("zorkita", "v6/000031", "be15759f2273cdaf124dbc40436244b0", 192512, Common::IT_ITA),
 
+	// Italian games: Marmellata d'Avventura 2018
+	ENTRY1("ma_lastprigioniero", "180723", "e658aef675c3b44a5027f52b49d53abb", 199168, Common::IT_ITA),
+	ENTRY1("ma_skepto", "989484", "b1642bac5df936d0d6e56e141a4fd120", 145408, Common::IT_ITA),
+	ENTRY1("ma_dejavu_zcode", "180331/z5", "2fdfccb2539bf6d73ea5b86fe1cb7e81", 116224, Common::IT_ITA),
+	ENTRY1("ma_lazystranocaso", "180331", "6d78774d7c8cc30f8bed2e33458e7fc5", 175616, Common::IT_ITA),
+	ENTRY1("ma_pilastri", "180330", "ff72f757570e2a9d0675507c05a6bf69", 75776, Common::IT_ITA),
+
+	// Italian games: Marmellata d'Avventura 2019
+	ENTRY1("ma_salagamescastle", "191222", "6285d40140396eb6b45a3900d4e79577", 239616, Common::IT_ITA),
+	ENTRY1("ma_tesorosalagames", "191210", "bce5e94aa0667c83a869f9a71774086f", 137216, Common::IT_ITA),
+	ENTRY1("ma_lazysalagiochi", "191215", "f8f5030501e6640dbfef11c850967e93", 114176, Common::IT_ITA),
+	ENTRY1("ma_5feudi", "191213", "175cdef793bf9316f70714921e178ac3", 82944, Common::IT_ITA),
+
 	// Russian games
-	ENTRY0("allroads", "070701", "427693ae57580bbc57f204c50437d3cc", 198656),
-	ENTRY0("bluechairs", "111222", "9d6af2460c034fa9078846180ec31f05", 338944),
-	ENTRY0("metamorphoses", "080518", "bc16740cc10500b0d1e1e8e768da6417", 203776),
-	ENTRY0("spiderandweb", "091122", "3ea174936bc6d56c3f4d0bd5fa1fe720", 321536),
+	ENTRY1("allroads_rus", "070701", "427693ae57580bbc57f204c50437d3cc", 198656, Common::RU_RUS),
+	ENTRY1("bluechairs_rus", "111222", "9d6af2460c034fa9078846180ec31f05", 338944, Common::RU_RUS),
+	ENTRY1("metamorphoses_rus", "080518", "bc16740cc10500b0d1e1e8e768da6417", 203776, Common::RU_RUS),
+	ENTRY1("photopia_rus", "130531", "8ec6305361537ecca28b40376b28b98f", 271360, Common::RU_RUS),
+	ENTRY1("spiderandweb_rus", "091122", "3ea174936bc6d56c3f4d0bd5fa1fe720", 321536, Common::RU_RUS),
 
 	// Slovenian games
 	ENTRY1("zenin", "070628", "bda2d35eb0614374d02bae623d3a22ec", 90112, Common::SK_SVK),
 
 	// Spanish games
-	ENTRY1("030307", "070303", "1483dca6052bb366ac32ef4901064b11", 143872, Common::ES_ESP),
-	ENTRY1("abalanzate", "001116", "d235b2e983f74f6176aea5b1d1418a78", 79872, Common::ES_ESP),
 	ENTRY1("abismo", "022001", "d99185503ef97dcad3a3bb10d6063b76", 94208, Common::ES_ESP),
-	ENTRY1("aciegas", "010927", "6825eaa8b9a2cc73293329bfacee1311", 78848, Common::ES_ESP),
 	ENTRY1("acuario", "120122", "b0439b17a37760be2d12579e4fc5cb75", 116224, Common::ES_ESP),
 	ENTRY1("adv", "971209", "2c38b40ffbc8c29fff29acbbefa317e8", 126976, Common::ES_ESP),
 	ENTRY1("adso", "010806", "260d3c709d4efe5538a1f10e725172c6", 116224, Common::ES_ESP),
-	ENTRY1("aventuraespacial", "090721", "f4c316955bbda2ca557de27b1a3605b9", 152576, Common::ES_ESP),
-	ENTRY1("afuera", "010101", "9ed80d0b530f38cce7a7b2c0f1b6ccd9", 116224, Common::ES_ESP),
-	ENTRY1("alemanes", "000405", "859f5aaec930da12b42e5dbfe42723e9", 82432, Common::ES_ESP),
 	ENTRY1("alicia", "980703", "5070504a35d51bdd7f09c67330170d8c", 65536, Common::ES_ESP),
-	ENTRY1("amanda", "091110/z5", "11b63cb4c4ca11b86e835c1b00f9c5ae", 132096, Common::ES_ESP),
-	ENTRY1("amanda", "091110/zblorb", "c373f508436b06081cd76039dc17582e", 342504, Common::ES_ESP),
 	ENTRY1("anillo", "990610", "e071a84c1348e49ccd339be6329ea4e0", 75776, Common::ES_ESP),
-	ENTRY1("aod", "071128", "6e486ac2bc483fab7bb713fa9e954e46", 178176, Common::ES_ESP),
-	ENTRY1("aparato", "000428", "46c40135d29e3fda669d974bb1b76b20", 63488, Common::ES_ESP),
-	ENTRY1("aque1", "000206", "c660bbbba9e9d57cc26406a2b3a5ab8d", 85504, Common::ES_ESP),
-	ENTRY1("aque1", "000428", "5d16ddd8030635e10065b7e36ba5f59e", 86528, Common::ES_ESP),
-	ENTRY1("array", "040107", "8a8e81e62d5762329bfa3d5c7a503d87", 74752, Common::ES_ESP),
-	ENTRY1("asesinato", "020222", "988085754ca9b41f7ade080d9b9262ff", 79872, Common::ES_ESP),
-	ENTRY1("aveces", "021024", "3e0c409d60bda50121c47094e30cd24c", 81920, Common::ES_ESP),
-	ENTRY1("aveces", "110119", "a4004dcb6db8682cc349282aeabb4309", 79872, Common::ES_ESP),
 	ENTRY1("avent", "961111", "7d3f5a62df58d20631f2f38623c26810", 76288, Common::ES_ESP),
 	ENTRY1("aventura", "971209", "5bee30fdf0d157186a3336ac2a977913", 128000, Common::ES_ESP),
-	ENTRY1("azul", "101223/z5", "a9b6daf1a3b3da110d1d17c1587feeef", 260096, Common::ES_ESP),
-	ENTRY1("azul", "101223/zblorb", "f6b9cd8892425e7cb97465baf950b602", 362332, Common::ES_ESP),
-	ENTRY1("b1", "001126", "b3ae1f03ef51b51aec67ef4adc2f032c", 87552, Common::ES_ESP),
-	ENTRY1("b1", "010411", "b390d3874a900f1bc952678106253395", 119808, Common::ES_ESP),
 	ENTRY1("bicho", "000402", "b82fba5bce71304bd2545b3c5a987b3b", 61952, Common::ES_ESP),
-	ENTRY1("boxman", "071223", "a1c807338a3a5db6a26d3a27004a54cb", 71680, Common::ES_ESP),
-	ENTRY1("boxman", "080205", "384ea944adc4be83396c5368a3ba5ed9", 71680, Common::ES_ESP),
 	ENTRY1("busqueda", "020219", "82cb634fb362358c5506b7c2d586f0f5", 119296, Common::ES_ESP),
 	ENTRY1("byodspa", "150928", "b0ef443c46323adeb80471e0871bf74b", 383488, Common::ES_ESP),
 	ENTRY1("casarisa", "140228", "16ff0aba9cf271c0b5432d323af59e61", 33792, Common::ES_ESP),
-	ENTRY1("casi", "000305", "65f4d3c7c96413f1f2f59dae7f83597c", 98304, Common::ES_ESP),
-	ENTRY1("casi", "000311", "d9351b2b336b96f481bc42e222adc3e4", 97792, Common::ES_ESP),
-	ENTRY1("castillosilencio", "031205", "09ef4bbe2455f592941c817cd17cd865", 77824, Common::ES_ESP),
 	ENTRY1("cavernad", "990610", "581b7ac02320a8c95d2c005f9fb89f78", 76800, Common::ES_ESP),
-	ENTRY1("celos", "010403", "6f4dc34a02fe5eb872ffe99faa06fb79", 69632, Common::ES_ESP),
-	ENTRY1("cerillera", "101213/z5", "b4e747ef59bf719b2edecf6b3796883f", 110592, Common::ES_ESP),
-	ENTRY1("cerillera", "101213/zblorb", "6bd57d7dd178cc4d3ef895c147e65087", 1154350, Common::ES_ESP),
-	ENTRY1("ch3ch2oh", "010912", "1a4a689b28c4a17c69e7f8e662a63801", 66048, Common::ES_ESP),
-	ENTRY1("churro", "010924", "fe54d90be488bcc60a122940d8f220fe", 225280, Common::ES_ESP),
-	ENTRY1("churro", "020116", "885c3ffa9a9aeb8518746d69211bff4b", 225792, Common::ES_ESP),
-	ENTRY1("conrumbozcode", "010328", "f0d6bab3466ee98d08676aea0a2e6d76", 67072, Common::ES_ESP),
+	ENTRY1("corto", "000826/Demo", "452c8fbcde064de1ec26ec18fb092f96", 58880, Common::ES_ESP),
+	ENTRY1("corto", "001003/Demo", "b66026cd5d8ed70516fba5c551fcb4c8", 93696, Common::ES_ESP),
 	ENTRY1("cronicasparaiso", "100705", "8ae9219d4afb912be81ce225b94c5112", 335024, Common::ES_ESP),
 	ENTRY1("cruzado", "990610", "d872429765f5c378b35bbb4cd44d7fba", 65024, Common::ES_ESP),
-	ENTRY1("cuentoch", "991224", "2b5deed86c0dc5229cd60c4b46788c2b", 77824, Common::ES_ESP),
 	ENTRY1("cueva", "150301/z5", "e0a6f6e6949944b7793f2822af687f2f", 74752, Common::ES_ESP),
 	ENTRY1("cueva", "150301/zblorb", "fb45c478ca1c30151186a7703a1040fc", 76172, Common::ES_ESP),
-	ENTRY1("ddddddcrj", "050616", "1b89e39bfdcf2ddd4675d8a8013746da", 66048, Common::ES_ESP),
-	ENTRY1("decolor", "171106", "d6fb4727e8ee20d22dbbe17d5673c878", 104960, Common::ES_ESP),
-	ENTRY1("diana", "080806", "2b117f98896856713a418bcd782be568", 107008, Common::ES_ESP),
 	ENTRY1("despert", "980909", "f6c469e0931c9f18f149e1b6da484436", 129536, Common::ES_ESP),
 	ENTRY1("despert", "990519", "2d2bb65c166c24f89dc30be8021309b7", 128000, Common::ES_ESP),
-	ENTRY1("domador", "050712", "a2ee06887398686a1c78aaff78ca9208", 74752, Common::ES_ESP),
-	ENTRY1("domador", "070905", "99babbd53e5cc5f2f3a312615c261b45", 74752, Common::ES_ESP),
 	ENTRY1("draculasp", "020709", "8466396cd5c66595fee8803f442e2e88", 100352, Common::ES_ESP),
 	ENTRY1("draculasp", "071227", "53865e944daea77afeaf9cb909cfe85a", 101888, Common::ES_ESP),
-	ENTRY1("draculasp2", "060331", "eec7853595240864f25c34da9083ca8b", 108032, Common::ES_ESP),
-	ENTRY1("draculasp2", "080819", "4de47380bf5d802f295a487eaf1499c6", 123392, Common::ES_ESP),
-	ENTRY1("dwight", "150211", "35a5ea3853dd9a232d71e9ba853c49be", 196096, Common::ES_ESP),
 	ENTRY1("ecss", "020320", "a24165f84beeb69d0b5c9e804f0ae8a1", 83456, Common::ES_ESP),
 	ENTRY1("edaylobo", "020714", "5a7733503f33e5c63922e04086fef93b", 79360, Common::ES_ESP),
 	ENTRY1("elcontinente", "080402", "6dd46c1e1f58734017f3775b31aac455", 161792, Common::ES_ESP),
 	ENTRY1("ellibro", "030923", "33a3b35529ab33713913f8b92cc8ad8a", 109568, Common::ES_ESP),
-	ENTRY1("elprotector", "010103", "3189852634dcc62258c4e3af727bac46", 154624, Common::ES_ESP),
-	ENTRY1("elprotector", "021225", "45edda9ec6eb400f409681d3f2b052d4", 122368, Common::ES_ESP),
-	ENTRY1("elultimohogar", "021225", "45edda9ec6eb400f409681d3f2b052d4", 122368, Common::ES_ESP),
-	ENTRY1("emmy", "080915", "92890016648bbfe1290f71d9a903afc9", 79872, Common::ES_ESP),
 	ENTRY1("encierro", "010101", "083514ce5d9718020083ddd00d85e279", 247808, Common::ES_ESP),
-	ENTRY1("ergotdelima", "170616/z8", "c0b8265d11c2bb2dd6dd62801fb7ed73", 382464, Common::ES_ESP),
-	ENTRY1("ergotdelima", "170616/zblorb", "0bcc4c1c8cc24165cb8f02f17f00682d", 606834, Common::ES_ESP),
+	ENTRY1("ergotdelima_zcode", "170616/z8", "c0b8265d11c2bb2dd6dd62801fb7ed73", 382464, Common::ES_ESP),
+	ENTRY1("ergotdelima_zcode", "170616/zblorb", "0bcc4c1c8cc24165cb8f02f17f00682d", 606834, Common::ES_ESP),
 	ENTRY1("estacion", "080126", "2a8d4eb4c600ce76f05f03cf862a9328", 92672, Common::ES_ESP),
 	ENTRY1("excessus", "990610", "5bb56f1cf94a376fb34bfaf9c07791f1", 58880, Common::ES_ESP),
-	ENTRY1("faro", "200599", "dac2578e464d19560297946919d9c8fa", 84480, Common::ES_ESP),
-	ENTRY1("faro", "070803", "54fdad7789f03d4c7644835bd295ad1f", 94208, Common::ES_ESP),
 	ENTRY1("forrajeo", "010101", "d86123253ae4b35570013dd87e48036a", 108032, Common::ES_ESP),
-	ENTRY1("fotones", "000814", "1a52fbe4d726febddfff78f1a60a353f", 57856, Common::ES_ESP),
-	ENTRY1("fotones", "001122", "195e147c36e6fe1536db425604424286", 62464, Common::ES_ESP),
 	ENTRY1("fotopia", "991213", "bb067cca7cd769c20e7bb5dc9ed09c65", 214016, Common::ES_ESP),
 	ENTRY1("fotopia", "991220", "8f5264294438c6fa07a4774cae749b47", 214016, Common::ES_ESP),
-	ENTRY1("gambito", "081202", "6ea6121f1891d46fe8cc957ef8939d68", 235990 , Common::ES_ESP),
 	ENTRY1("geo", "129110", "b3e2f191f509cd0b3c627a988f578ef0", 130650, Common::ES_ESP),
-	ENTRY1("gorbag", "100104", "581e67f731d6b1d0d40bfc38cb531bf9", 199168, Common::ES_ESP),
 	ENTRY1("gorron", "001127", "74a82670f409c93607e72860552ddda2", 104960, Common::ES_ESP),
 	ENTRY1("gorron", "001205", "639f4ab6b26cc6b6e2023fa848f00d92", 74240, Common::ES_ESP),
 	ENTRY1("gorron", "020726", "67a7a86523a72c85b9cc0a0cf730ee75", 80896, Common::ES_ESP),
-	ENTRY1("goteras", "010101", "a1333ac5833be019f2c5f21f3b916fa8", 126976, Common::ES_ESP),
-	ENTRY1("goteras", "010102", "892f263e65c00fd92f6e384b2729acbe", 128000, Common::ES_ESP),
-	ENTRY1("gusano", "981010", "8b7400e0ff657ae0c12f86975eb81b17", 60416, Common::ES_ESP),
 	ENTRY1("hampa", "120621", "7db989262feb3c36e5e6b46eeab7447a", 277504, Common::ES_ESP),
 	ENTRY1("heredar", "980907", "d63cdbaf4f65a1fd6bca4f1c14317b38", 56832, Common::ES_ESP),
 	ENTRY1("heresville", "990610", "6b8c930f5b874e0c5a629b6385b0fb30", 70144, Common::ES_ESP),
 	ENTRY1("heresville", "001025", "7d4dfdf7911b926a44c66a355faddf8e", 71168, Common::ES_ESP),
-	ENTRY1("hhorcus", "100818", "092849be8d49f1ef509a88a1bc5bbea8", 118262, Common::ES_ESP),
-	ENTRY1("hhorcus", "110512", "a5ad46532a527efdc80bc1e6638edbe5", 117248, Common::ES_ESP),
-	ENTRY1("hierbacristal", "071222", "64cf677261e13fb9fa6e071c3c864ae0", 222816, Common::ES_ESP),
 	ENTRY1("i0", "000630", "d43fcdb06a748ea24f2329aba8c5761e", 218624, Common::ES_ESP),
 	ENTRY1("i0", "000604", "8a1b35f2ad28a1d279f791417416b1ef", 218624, Common::ES_ESP),
 	ENTRY1("imposibl", "000726", "4a42497c47157f11b87059fc41083358", 59904, Common::ES_ESP),
 	ENTRY1("imposibl", "000903", "011f062695d82ca67afe6efe8001ab51", 59904, Common::ES_ESP),
-	ENTRY1("islas", "050531", "3d7cee978d4f69e41e8af1a8ccda2b9d", 369152, Common::ES_ESP),
 	ENTRY1("islamisteriosa", "120113", "56ce52bdf2d9a51786a4b38cf5cc3725", 236544, Common::ES_ESP),
 	ENTRY1("juguete", "010529", "28b197d2889a7f6c7c8a00c5d8f6c605", 107520, Common::ES_ESP),
-	ENTRY1("jugueteria", "090720", "b6cad6064dbbc4ef5f611db7c8037d6a", 96768, Common::ES_ESP),
-	ENTRY1("kerulen", "090720/z5", "b1b024e24c78e37d424163c5b2a6f1ad", 105984, Common::ES_ESP),
-	ENTRY1("kerulen", "090720/zblorb", "0324283a404d8c6b425e37a05073c61d", 682958, Common::ES_ESP),
 	ENTRY1("laberinto", "081027", "968500b509f1da10153186dfb3d89a37", 164352, Common::ES_ESP),
-	ENTRY1("lamansion", "010103", "332cf78fb9eb0a0a60895bf85b73a7f8", 138752, Common::ES_ESP),
-	ENTRY1("libroaburria", "030730", "f3e8860af7d3751d467f085808f1922d", 106496, Common::ES_ESP),
-	ENTRY1("lldc", "666777", "024e9465504e1ab7bda9399602102876", 164864, Common::ES_ESP),
 	ENTRY1("logicinv", "000809", "0c02dd96b334038619a7a7346ae34a47", 61952, Common::ES_ESP),
 	ENTRY1("logicinv", "000909", "e7225635756c1e4a6a2c990bb8709345", 61952, Common::ES_ESP),
-	ENTRY1("macetas", "010102", "3e987e21093af65c8fce2e458ee3dafb", 234496, Common::ES_ESP),
 	ENTRY1("maquina", "980915", "3229392e8493a2ba08efd3ce53d27ee3", 59392, Common::ES_ESP),
-	ENTRY1("marcopolo", "120121/z8", "b65137ff4f3e7c8a88164f3729419708", 78848, Common::ES_ESP),
-	ENTRY1("marcopolo", "120121/zblorb", "8bed81e9e1d234f4e0e5e715e9a7f0fb", 80038, Common::ES_ESP),
 	ENTRY1("marsmenace", "160210", "c2804882005d945917d765b32c6d39ec", 427008, Common::ES_ESP),
-	ENTRY1("mausoleo", "071223", "a4356d2f89052328323a3dd2ce069658", 164864, Common::ES_ESP),
-	ENTRY1("meeva", "021130", "4d988f4963d14f43cf61c44417be22ae", 135168, Common::ES_ESP),
-	ENTRY1("megara", "091204/z5", "94b7019ed62d257344ef39727011c250", 214016, Common::ES_ESP),
-	ENTRY1("megara", "091204/zblorb", "6798f8acb0c0c60d1026a1e9a6469b55", 472716, Common::ES_ESP),
-	ENTRY1("memorias", "000824", "e0af9b9bbef7ff5f9d1281e32e2db488", 65024, Common::ES_ESP),
-	ENTRY1("memorias", "071119", "c14d4b1b81b8b3c5db7b861d681c5a4f", 228454, Common::ES_ESP),
-	ENTRY1("mimoso", "000002", "1df07c29b69fa6e1635a0f1af0ec68ba", 104960, Common::ES_ESP),
-	ENTRY1("modusvivendi", "010101", "20795fdfe47bc6f6c519f3fe11e34c17", 234496, Common::ES_ESP),
+	ENTRY1("memorias_zcode", "000824", "e0af9b9bbef7ff5f9d1281e32e2db488", 65024, Common::ES_ESP),
+	ENTRY1("memorias_zcode", "010325", "91ab4377ff9ced804949d3e854ab431e", 137216, Common::ES_ESP),
+	ENTRY1("memorias_zcode", "071119", "c14d4b1b81b8b3c5db7b861d681c5a4f", 228454, Common::ES_ESP),
+	ENTRY1("memorias_zcode", "140726", "25881186f8b84b888fcaae67724d1557", 365568, Common::ES_ESP),
+	ENTRY1("memorias_zcode", "150220", "6796107900bad430d8531c44f306ddbc", 460312, Common::ES_ESP),
 	ENTRY1("mpdroidone", "170820", "ea6bf4230bf6f267f76e191d84fb9804", 353792, Common::ES_ESP),
-	ENTRY1("mushahierba", "081021", "2d28f401d63f163e5d34115fec07df72", 207240, Common::ES_ESP),
-	ENTRY1("navidad", "050110", "6fa3ccdcce7b0c45e608f2948a63646d", 102912, Common::ES_ESP),
-	ENTRY1("necedad", "010924", "4d29d5db290b39ccb636c2e58a546512", 101888, Common::ES_ESP),
-	ENTRY1("necedad", "010925", "fc25f03b71e39ddca21e2c93607ac660", 101888, Common::ES_ESP),
-	ENTRY1("necedad", "150515", "3f0daa76a913ec8244fc8ace590e24a1", 91648, Common::ES_ESP),
-	ENTRY1("ocaso", "020215", "017f1ee4813271b886347af89b4c917d", 164352, Common::ES_ESP),
-	ENTRY1("oculta", "050214", "06340073888cd6850b9d176ed3b1a251", 190464, Common::ES_ESP),
-	ENTRY1("olvido", "001230", "c7673107bf9909890480935b4d10ea24", 91648, Common::ES_ESP),
-	ENTRY1("osito", "020918", "5a4cd96e65e9f3132ecd7ef2df8ee714", 128512, Common::ES_ESP),
-	ENTRY1("osito", "021002", "7ab4fdbf2a13da9742350cf9f89121e6", 128512, Common::ES_ESP),
-	ENTRY1("panajo", "010102", "3969bf7b2dd00b342e6c0b4ec797919a", 124416, Common::ES_ESP),
-	ENTRY1("panico", "101224", "382cbfb32478ffca560884fc0af6cd83", 121856, Common::ES_ESP),
-	ENTRY1("papi", "000627", "1b04e46fa60b6d53698e55b22cebcd64", 61952, Common::ES_ESP),
 	ENTRY1("paraiso", "000214", "28abb3f35a041ea425b9ec3e93086440", 68096, Common::ES_ESP),
 	ENTRY1("perseo", "150428", "5242114f236e71848be5f6c92fdcb6ef", 26624, Common::ES_ESP),
 	ENTRY1("peso", "981021", "db6fa2c6d6e9d385e0625f9b66c84f6b", 65536, Common::ES_ESP),
-	ENTRY1("pincoya", "010102", "bafb201726dd331308cdf34ec1e478cb", 168960, Common::ES_ESP),
-	ENTRY1("playera", "010101", "9866408f548c8606e521075907b33ca7", 80896, Common::ES_ESP),
+	ENTRY1("playera", "010101/v1", "9866408f548c8606e521075907b33ca7", 80896, Common::ES_ESP),
+	ENTRY1("playera", "010101/v2", "314ac4dc83fd548049fe639eef8c782e", 114176, Common::ES_ESP),
 	ENTRY1("playera", "021100", "a30d9013d71a6277e2b062fde304ff22", 80384, Common::ES_ESP),
-	ENTRY1("pozo", "030105", "2a6dfdb3ebde6ac58eb27bba9e037052", 73728, Common::ES_ESP),
 	ENTRY1("premios", "000502", "085f093d0ab40c7a46ed2ca5a8382b86", 71168, Common::ES_ESP),
 	ENTRY1("pueblofantasma", "140305", "37284904beae0eedbfb98b17585bcaae", 33792, Common::ES_ESP),
 	ENTRY1("pyramid", "150427", "7b0f878f298d131024568d9364cf54e7", 29184, Common::ES_ESP),
 	ENTRY1("quenoche", "031015", "0085e1d917110642a700551536770d8d", 101376, Common::ES_ESP),
+	ENTRY1("quovadis", "031110/Demo", "fdebdc9b5ff49977ecec03c9d6800e9c", 63488, Common::ES_ESP),
 	ENTRY1("redencionmomificad", "161212", "4e1370baee1a5713a792998f8ff5ce93", 117760, Common::ES_ESP),
 	ENTRY1("reflejos", "010101", "7edc3b30022e97978ea93ef5c22edccd", 144384, Common::ES_ESP),
-	ENTRY1("regentezcode", "090513", "7a84c3ce7a2df69b2da994aaa13ee788", 82432, Common::ES_ESP),
 	ENTRY1("raro", "000402", "dcbe2202d09a7f5b7dfd6ffb96438fd4", 58880, Common::ES_ESP),
 	ENTRY1("regalo", "100104", "8d7ea3a09f39d1d2de103e5117ad3224", 336064, Common::ES_ESP),
-	ENTRY1("regreso", "060704", "21565444255a18e57988d983a283962b", 114176, Common::ES_ESP),
-	ENTRY1("resaca", "060713", "868eb485714fbc34358bff2dfa9335d0", 152576, Common::ES_ESP),
 	ENTRY1("roleando", "071221", "09f5aaad79cbb12084241d8d26199ea6", 124416, Common::ES_ESP),
 	ENTRY1("saee", "000721", "d37e0681b1bc1ebbf001d1a37cbd355c", 29696, Common::ES_ESP),
 	ENTRY1("saee", "010308", "0ad5c5a78ea37c53bb614f4bc6f7754f", 31232, Common::ES_ESP),
-	ENTRY1("senten", "980623", "9a07adb394f9a6a135f26af4608405ee", 71168, Common::ES_ESP),
-	ENTRY1("senten", "991225", "e578cb2626d969bba50d2ccd6d863ade", 90624, Common::ES_ESP),
-	ENTRY1("sinclairdemo", "030617/Demo", "ceb3d5b3086b5a1f4f3b6b239cb396a0", 115712, Common::ES_ESP),
+	ENTRY1("sgw_zcode", "070807/Demo/z5", "4c9b3dbfe549cfbad3aa193d777ad413", 94720, Common::ES_ESP),
+	ENTRY1("sinclairmisterio", "030617/Demo", "ceb3d5b3086b5a1f4f3b6b239cb396a0", 115712, Common::ES_ESP),
 	ENTRY1("sinrumbo", "000806", "e483112a43721be59b4519b037868adb", 58368, Common::ES_ESP),
-	ENTRY1("sm1pesadillavoraz", "080430", "79f8cb30a31146e08465acd9038ba7e6", 604046, Common::ES_ESP),
-	ENTRY1("sm2konix", "080505", "c9a4128b4874ec735f77295f590a3108", 74240, Common::ES_ESP),
-	ENTRY1("sm3absolutos", "080516", "9505fa8fc4f4c2d06730ce6c33f0fd43", 270222, Common::ES_ESP),
-	ENTRY1("sm4culpatuya", "080711", "c62a2c1fa6c4e6918f4c9ee7b7bb4b57", 196096, Common::ES_ESP),
-	ENTRY1("sm6ascenso", "090409/z5", "108dd4e7623634e6ff7ca976118dfa29", 220672, Common::ES_ESP),
-	ENTRY1("sm6ascenso", "090409/zblorb", "352b9bb39f2fff76b409025670169a98", 380434, Common::ES_ESP),
-	ENTRY1("sobrevive", "021127", "f951b4a1540035a90c470fc9016ed39f", 111616, Common::ES_ESP),
-	ENTRY1("sombras", "021127", "72b83812567f8a4c9cd523b6a09a9c65", 121856, Common::ES_ESP),
-	ENTRY1("sonrisas", "081202", "fce16ce85582c2b6157beaace24bf684", 146888, Common::ES_ESP),
 	ENTRY1("toma", "070112", "24b40be7145095b291c60cb02b5310ad", 186368, Common::ES_ESP),
 	ENTRY1("tiros", "070112", "731180f56273fc20895236b5e904a33b", 108544, Common::ES_ESP),
-	ENTRY1("tokland", "001130", "7f5c796474c250f418a47fa9285e3116", 139776, Common::ES_ESP),
-	ENTRY1("torre", "000208", "2a5bca50855883c01ce4e7e30c7bd444", 126464, Common::ES_ESP),
 	ENTRY1("trapero", "000626", "58aa5c86ee0edd2c0e304b059e1a1ca3", 170496, Common::ES_ESP),
 	ENTRY1("tribu", "060599", "65e2958400d47de5adfcf89428367c2d", 154624, Common::ES_ESP),
 	ENTRY1("tribu", "000626", "9348691a35515442682a29daa3239f4b", 9728, Common::ES_ESP),
-	ENTRY1("trono", "060105/z5", "27576046399a460904d06942d534549c", 198656, Common::ES_ESP),
-	ENTRY1("trono", "060105/zblorb", "87bfb28edc44caf30706f3643277ce51", 200052, Common::ES_ESP),
 	ENTRY1("tuuli", "180501", "9382d5a2886dd7681203128a183ebae3", 671650, Common::ES_ESP),
-	ENTRY1("umami", "070807", "86a045a71db97910e78ba402b33c5c7d", 80384, Common::ES_ESP),
 	ENTRY1("varenna", "190399", "2b984b69649ff9de6c13438e4fb81172", 174592, Common::ES_ESP),
-	ENTRY1("venenariusverborum", "160516", "0a89f0ad5b3df50ff6f32d961cce2c00", 192512, Common::ES_ESP),
-	ENTRY1("venenariusverborum", "160517", "1c7c3ce13621f78e7cf6752a2b0fc58b", 192512, Common::ES_ESP),
-	ENTRY1("visitantes", "091130", "d8e7c7376b11f022e109069e4ad3b22a", 87040, Common::ES_ESP),
 	ENTRY1("waxworksspa", "140301", "d0de29f4f375f6ce12539f9f26800ae3", 31232, Common::ES_ESP),
 	ENTRY1("zipi", "990707", "98067b8edc5edadf54c66c4becfa8a3c", 9728, Common::ES_ESP),
 	ENTRY1("zna", "000803", "8e6da0f9124591a68d736e3d1036ec98", 59392, Common::ES_ESP),
 	ENTRY1("zna", "001122", "d4652457908490465a0a4b17965cc695", 64000, Common::ES_ESP),
 
-	// Spanish games: "BreveComp2" Competition
-	ENTRY1("bc2_castillo", "031122", "0c6b8c77106dba58e81223c5d5c1da5f", 95744, Common::ES_ESP),
-	ENTRY1("bc2_cubo", "000001", "b403e06541c950598d72e504182eb3fb", 83456, Common::ES_ESP),
-	ENTRY1("bc2_libroaburria", "031202", "9267337f8592091ec23eb5b05aa8f17f", 110080, Common::ES_ESP),
-	ENTRY1("bc2_lunasp", "030304", "c54874fa9ced274ba70f3ead2c8bfade", 114688, Common::ES_ESP),
-	ENTRY1("bc2_mimoso", "000001", "d563e0682941e3f1518223c44e9eb3ce", 94720, Common::ES_ESP),
-	ENTRY1("bc2_rural", "031104", "ef441ece688cbeef11eef548d0c54aa1", 105472, Common::ES_ESP),
+	// Spanish games: Ectocomp 2017 - Le Grand Guignol
+	ENTRY1("ec17_decolor", "171106", "d6fb4727e8ee20d22dbbe17d5673c878", 104960, Common::ES_ESP),
 
-	// Spanish games; "FIComp2008" Competition
-	ENTRY1("fic_macetas", "010101", "7a20d35db70f537247ed2ef62e0a1f6c", 231424, Common::ES_ESP),
+	// Spanish games: Ectocomp 2022 - Le Grand Guignol
+	ENTRY1("ec22_estadop_zcode", "230428", "7da49889125934b46036a89de3e6d3b3", 474158, Common::ES_ESP),
 
-	// Spanish games; "MedievoComp" Competition
-	ENTRY1("mc_bardo", "050918", "7fbedef94068625973d94d672549f0ab", 156672, Common::ES_ESP),
-	ENTRY1("mc_trono", "051030", "ce8acc82e6fc3de5ba774b6dc4454e44", 180224, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2000
+	ENTRY1("ph00_abalanzate", "001116", "d235b2e983f74f6176aea5b1d1418a78", 79872, Common::ES_ESP),
+	ENTRY1("ph00_alemanes", "000405", "859f5aaec930da12b42e5dbfe42723e9", 82432, Common::ES_ESP),
+	ENTRY1("ph00_aparato", "000428", "46c40135d29e3fda669d974bb1b76b20", 63488, Common::ES_ESP),
+	ENTRY1("ph00_aque1", "000206", "c660bbbba9e9d57cc26406a2b3a5ab8d", 85504, Common::ES_ESP),
+	ENTRY1("ph00_aque1", "000428", "5d16ddd8030635e10065b7e36ba5f59e", 86528, Common::ES_ESP),
+	ENTRY1("ph00_b1", "001126", "b3ae1f03ef51b51aec67ef4adc2f032c", 87552, Common::ES_ESP),
+	ENTRY1("ph00_b1", "010411", "b390d3874a900f1bc952678106253395", 119808, Common::ES_ESP),
+	ENTRY1("ph00_casi", "000305", "65f4d3c7c96413f1f2f59dae7f83597c", 98304, Common::ES_ESP),
+	ENTRY1("ph00_casi", "000311", "d9351b2b336b96f481bc42e222adc3e4", 97792, Common::ES_ESP),
+	ENTRY1("ph00_csa", "150201/v1", "28e903c8f759dd27d520a1b3b6c06448", 72192, Common::ES_ESP),
+	ENTRY1("ph00_csa", "150201/v2", "157307e1f331491f1ed0defb05c2a42f", 72192, Common::ES_ESP),
+	ENTRY1("ph00_csa", "150201/v3", "2efa23d92a10a64196ea6f01dea556c2", 72704, Common::ES_ESP),
+	ENTRY1("ph00_cuentoch", "991224", "2b5deed86c0dc5229cd60c4b46788c2b", 77824, Common::ES_ESP),
+	ENTRY1("ph00_faro00", "200599", "dac2578e464d19560297946919d9c8fa", 84480, Common::ES_ESP),
+	ENTRY1("ph00_fotones", "000814", "1a52fbe4d726febddfff78f1a60a353f", 57856, Common::ES_ESP),
+	ENTRY1("ph00_fotones", "001122", "195e147c36e6fe1536db425604424286", 62464, Common::ES_ESP),
+	ENTRY1("ph00_gusano", "981010", "8b7400e0ff657ae0c12f86975eb81b17", 60416, Common::ES_ESP),
+	ENTRY1("ph00_olvido_zcode", "001124", "392f381ccddd755b437a6ab0c85398a7", 91136, Common::ES_ESP),
+	ENTRY1("ph00_olvido_zcode", "001230", "c7673107bf9909890480935b4d10ea24", 91648, Common::ES_ESP),
+	ENTRY1("ph00_papi", "000627", "1b04e46fa60b6d53698e55b22cebcd64", 61952, Common::ES_ESP),
+	ENTRY1("ph00_senten", "980623", "9a07adb394f9a6a135f26af4608405ee", 71168, Common::ES_ESP),
+	ENTRY1("ph00_senten", "991225", "e578cb2626d969bba50d2ccd6d863ade", 90624, Common::ES_ESP),
+	ENTRY1("ph00_torre", "000208/v1", "2a5bca50855883c01ce4e7e30c7bd444", 126464, Common::ES_ESP),
+	ENTRY1("ph00_torre", "000208/v2", "a132c528864576ef5df1ee46c76a5c61", 126464, Common::ES_ESP),
+	ENTRY1("ph00_tokland", "001130", "7f5c796474c250f418a47fa9285e3116", 139776, Common::ES_ESP),
 
-	// Spanish games; "NanoComp I" Competition
-	ENTRY1("csa", "150201", "2efa23d92a10a64196ea6f01dea556c2", 72704, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2001
+	ENTRY1("ph01_aciegas", "010927", "6825eaa8b9a2cc73293329bfacee1311", 78848, Common::ES_ESP),
+	ENTRY1("ph01_celos", "010403", "6f4dc34a02fe5eb872ffe99faa06fb79", 69632, Common::ES_ESP),
+	ENTRY1("ph01_ch3ch2oh", "010912", "1a4a689b28c4a17c69e7f8e662a63801", 66048, Common::ES_ESP),
+	ENTRY1("ph01_churro", "010924", "fe54d90be488bcc60a122940d8f220fe", 225280, Common::ES_ESP),
+	ENTRY1("ph01_churro", "020116", "885c3ffa9a9aeb8518746d69211bff4b", 225792, Common::ES_ESP),
+	ENTRY1("ph01_conrumb_zcode", "010328", "f0d6bab3466ee98d08676aea0a2e6d76", 67072, Common::ES_ESP),
+	ENTRY1("ph01_lldc", "666777/v1", "024e9465504e1ab7bda9399602102876", 164864, Common::ES_ESP),
+	ENTRY1("ph01_lldc", "666777/v2", "80c0bd13d7017ba291d57d5982bc3384", 164864, Common::ES_ESP),
+	ENTRY1("ph01_necedad", "010924", "4d29d5db290b39ccb636c2e58a546512", 101888, Common::ES_ESP),
+	ENTRY1("ph01_necedad", "010925", "fc25f03b71e39ddca21e2c93607ac660", 101888, Common::ES_ESP),
+	ENTRY1("ph01_necedad", "150515", "3f0daa76a913ec8244fc8ace590e24a1", 91648, Common::ES_ESP),
+	ENTRY1("ph01_ocaso", "020215/v1", "017f1ee4813271b886347af89b4c917d", 164352, Common::ES_ESP),
+	ENTRY1("ph01_ocaso", "020215/v2", "6b47826cde5cb4bb7777bcb735dd76cc", 164352, Common::ES_ESP),
+	ENTRY1("ph01_segapark", "010506", "2d02fd8559b885868aac6a4adcc09198", 75776, Common::ES_ESP),
 
-	// Spanish games; "NanoComp III" Competition
-	ENTRY1("n3_aveces", "030218", "b4232196474c2dc8ae992779e2f5deae", 80384, Common::ES_ESP),
-	ENTRY1("n3_cv", "020804", "10aa5683d762eb22a513ea5079d9f57f", 76288, Common::ES_ESP),
-	ENTRY1("n3_declina", "020804", "bb122c716609e7c04e7d5e8812be7e64", 169472, Common::ES_ESP),
-	ENTRY1("n3_ligue", "020923", "f1d3c7e09e76b29daa2ca82dce3d7bca", 91648, Common::ES_ESP),
-	ENTRY1("n3_obituario", "000002", "f53ed22f096c68aa612d7a4994769c2a", 81920, Common::ES_ESP),
-	ENTRY1("n3_pruebafisica", "021115", "4a30167350b7b94a98463da12a798e8d", 77312, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2002
+	ENTRY1("ph02_asesinato", "020222", "988085754ca9b41f7ade080d9b9262ff", 79872, Common::ES_ESP),
+	ENTRY1("ph02_aveces", "021024", "3e0c409d60bda50121c47094e30cd24c", 81920, Common::ES_ESP),
+	ENTRY1("ph02_aveces", "030218", "b4232196474c2dc8ae992779e2f5deae", 80384, Common::ES_ESP),
+	ENTRY1("ph02_aveces", "110119", "a4004dcb6db8682cc349282aeabb4309", 79872, Common::ES_ESP),
+	ENTRY1("ph02_cv", "020804", "10aa5683d762eb22a513ea5079d9f57f", 76288, Common::ES_ESP),
+	ENTRY1("ph02_ddddddcrj", "050616", "1b89e39bfdcf2ddd4675d8a8013746da", 66048, Common::ES_ESP),
+	ENTRY1("ph02_declina", "020804", "bb122c716609e7c04e7d5e8812be7e64", 169472, Common::ES_ESP),
+	ENTRY1("ph02_jugueteria", "090720", "b6cad6064dbbc4ef5f611db7c8037d6a", 96768, Common::ES_ESP),
+	ENTRY1("ph02_ligue", "020923", "f1d3c7e09e76b29daa2ca82dce3d7bca", 91648, Common::ES_ESP),
+	ENTRY1("ph02_meeva", "021130", "4d988f4963d14f43cf61c44417be22ae", 135168, Common::ES_ESP),
+	ENTRY1("ph02_obituario", "000002", "f53ed22f096c68aa612d7a4994769c2a", 81920, Common::ES_ESP),
+	ENTRY1("ph02_osito", "020918", "5a4cd96e65e9f3132ecd7ef2df8ee714", 128512, Common::ES_ESP),
+	ENTRY1("ph02_osito", "021002", "7ab4fdbf2a13da9742350cf9f89121e6", 128512, Common::ES_ESP),
+	ENTRY1("ph02_pruebafisica", "021115", "4a30167350b7b94a98463da12a798e8d", 77312, Common::ES_ESP),
+	ENTRY1("ph02_regente_zcode", "090513", "7a84c3ce7a2df69b2da994aaa13ee788", 82432, Common::ES_ESP),
+	ENTRY1("ph02_sombras", "021127", "72b83812567f8a4c9cd523b6a09a9c65", 121856, Common::ES_ESP),
+	ENTRY1("ph02_ultimohogar", "021225", "45edda9ec6eb400f409681d3f2b052d4", 122368, Common::ES_ESP),
 
-	// Spanish games; "NanoComp IV" Competition
-	ENTRY1("n4_aluzine", "122103", "8d974b6777b04a288db409bfc777bd22", 78336, Common::ES_ESP),
-	ENTRY1("n4_domador", "030921", "d7a862901c0e8a75688e813aeb9ccabe", 74752, Common::ES_ESP),
-	ENTRY1("n4_otrpalab", "010102", "1df1630200c6e9a631bb71af494c7d81", 67072, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2003
+	ENTRY1("ph03_aluzine", "122103", "8d974b6777b04a288db409bfc777bd22", 78336, Common::ES_ESP),
+	ENTRY1("ph03_array", "040107", "8a8e81e62d5762329bfa3d5c7a503d87", 74752, Common::ES_ESP),
+	ENTRY1("ph03_castillo", "031122", "0c6b8c77106dba58e81223c5d5c1da5f", 95744, Common::ES_ESP),
+	ENTRY1("ph03_cubo", "000001", "b403e06541c950598d72e504182eb3fb", 83456, Common::ES_ESP),
+	ENTRY1("ph03_domador", "030921", "d7a862901c0e8a75688e813aeb9ccabe", 74752, Common::ES_ESP),
+	ENTRY1("ph03_domador", "050712", "a2ee06887398686a1c78aaff78ca9208", 74752, Common::ES_ESP),
+	ENTRY1("ph03_domador", "070905", "99babbd53e5cc5f2f3a312615c261b45", 74752, Common::ES_ESP),
+	ENTRY1("ph03_dwight_zcode", "150211/z5", "35a5ea3853dd9a232d71e9ba853c49be", 196096, Common::ES_ESP),
+	ENTRY1("ph03_libroaburria", "031202", "9267337f8592091ec23eb5b05aa8f17f", 110080, Common::ES_ESP),
+	ENTRY1("ph03_libroaburria", "030730", "f3e8860af7d3751d467f085808f1922d", 106496, Common::ES_ESP),
+	ENTRY1("ph03_lunasp", "030304", "c54874fa9ced274ba70f3ead2c8bfade", 114688, Common::ES_ESP),
+	ENTRY1("ph03_mimoso", "000001", "d563e0682941e3f1518223c44e9eb3ce", 94720, Common::ES_ESP),
+	ENTRY1("ph03_mimoso", "000002", "1df07c29b69fa6e1635a0f1af0ec68ba", 104960, Common::ES_ESP),
+	ENTRY1("ph03_otrpalab", "010102", "1df1630200c6e9a631bb71af494c7d81", 67072, Common::ES_ESP),
+	ENTRY1("ph03_rural", "031104", "ef441ece688cbeef11eef548d0c54aa1", 105472, Common::ES_ESP),
 
-	// Spanish games; "RetroComp 2004" Competition
-	ENTRY0("rc04_remi", "040801", "8c724781c9356c5c94d2ccfe7dd38aba", 102400),
+	// Spanish games: Premios Hispanos 2004
+	ENTRY1("ph04_islas", "050531", "3d7cee978d4f69e41e8af1a8ccda2b9d", 369152, Common::ES_ESP),
+	ENTRY1("ph04_lamansion", "010103/v1", "332cf78fb9eb0a0a60895bf85b73a7f8", 138752, Common::ES_ESP),
+	ENTRY1("ph04_lamansion", "010103/v2", "0acd4655161f834b562b5560353877bd", 138752, Common::ES_ESP),
+	ENTRY1("ph04_navidad", "050110", "6fa3ccdcce7b0c45e608f2948a63646d", 102912, Common::ES_ESP),
+	ENTRY1("ph04_oculta", "050214", "06340073888cd6850b9d176ed3b1a251", 190464, Common::ES_ESP),
+	ENTRY1("ph04_remi", "040801", "8c724781c9356c5c94d2ccfe7dd38aba", 102400, Common::ES_ESP),
+	ENTRY1("ph04_remi", "050107", "9c91d2d67a112caa5f51aae4dfc6d4f9", 102912, Common::ES_ESP),
 
-	// Spanish games; "RetroComp 2006" Competition
-	ENTRY1("rc06_elgatocheko", "061106", "3e668bdd0359ea7bdd6953f063ad0aaf", 110080, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2005
+	ENTRY1("ph05_bardo", "050918", "7fbedef94068625973d94d672549f0ab", 156672, Common::ES_ESP),
+	ENTRY1("ph05_castilsilenco", "031205", "09ef4bbe2455f592941c817cd17cd865", 77824, Common::ES_ESP),
+	ENTRY1("ph05_elprotector", "010103/v1", "3189852634dcc62258c4e3af727bac46", 154624, Common::ES_ESP),
+	ENTRY1("ph05_elprotector", "010103/v2", "a25d70bf5ae8c4af53085c4e57b304e4", 154624, Common::ES_ESP),
+	ENTRY1("ph05_elprotector", "021225", "45edda9ec6eb400f409681d3f2b052d4", 122368, Common::ES_ESP),
+	ENTRY1("ph05_leminscata", "050603", "5a62d55c9a0b2b2bd66deac693e40e35", 69120, Common::ES_ESP),
+	ENTRY1("ph05_pozo", "030105", "2a6dfdb3ebde6ac58eb27bba9e037052", 73728, Common::ES_ESP),
+	ENTRY1("ph05_romanfredo", "050602", "b29277fc75c8ab3580d7395b9b4a1a90", 73728, Common::ES_ESP),
+	ENTRY1("ph05_trono", "051030", "ce8acc82e6fc3de5ba774b6dc4454e44", 180224, Common::ES_ESP),
+	ENTRY1("ph05_trono", "060105/z5", "27576046399a460904d06942d534549c", 198656, Common::ES_ESP),
+	ENTRY1("ph05_trono", "060105/zblorb", "87bfb28edc44caf30706f3643277ce51", 200052, Common::ES_ESP),
 
-	// Spanish games; "XComp 2005" Competition
-	ENTRY1("xc05_lemniscata", "050603", "5a62d55c9a0b2b2bd66deac693e40e35", 69120, Common::ES_ESP),
-	ENTRY1("xc05_romanfredo", "050602", "b29277fc75c8ab3580d7395b9b4a1a90", 73728, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2006
+	ENTRY1("ph06_draculasp2", "060331", "eec7853595240864f25c34da9083ca8b", 108032, Common::ES_ESP),
+	ENTRY1("ph06_draculasp2", "080819", "4de47380bf5d802f295a487eaf1499c6", 123392, Common::ES_ESP),
+	ENTRY1("ph06_elgatocheko", "061106", "3e668bdd0359ea7bdd6953f063ad0aaf", 110080, Common::ES_ESP),
+	ENTRY1("ph06_goteras", "010101", "a1333ac5833be019f2c5f21f3b916fa8", 126976, Common::ES_ESP),
+	ENTRY1("ph06_goteras", "010102/v1", "892f263e65c00fd92f6e384b2729acbe", 128000, Common::ES_ESP),
+	ENTRY1("ph06_goteras", "010102/v2", "89ba901b7ce23ecfea5a433a29836d18", 160768, Common::ES_ESP),
+	ENTRY0("ph06_paee_zcode", "000720", "8fb185a1f581a1cc9a2bb78f2f783345", 26112),
+	ENTRY1("ph06_regreso", "060704", "21565444255a18e57988d983a283962b", 114176, Common::ES_ESP),
+	ENTRY1("ph06_resaca", "060713", "868eb485714fbc34358bff2dfa9335d0", 152576, Common::ES_ESP),
 
-	// Spanish games; "XComp 2008" Competition
-	ENTRY1("xc08_sm4culpatuya", "080723/z5", "77cd0cbf40cd6badfa9edb9306108008", 198656, Common::ES_ESP),
-	ENTRY1("xc08_sm4culpatuya", "080723/zblorb", "01ef491a2099414817f2a20d0ae78dd2", 536956, Common::ES_ESP),
-	ENTRY1("xc08_pronto", "080720", "a48b81b1c97d6074e3679659f9dce23a", 270826, Common::ES_ESP),
+	// Spanish games: Premios Hispanos 2007
+	ENTRY1("ph07_030307", "070303", "1483dca6052bb366ac32ef4901064b11", 143872, Common::ES_ESP),
+	ENTRY1("ph07_afuera", "010101", "9ed80d0b530f38cce7a7b2c0f1b6ccd9", 116224, Common::ES_ESP),
+	ENTRY1("ph07_aod", "071128", "6e486ac2bc483fab7bb713fa9e954e46", 178176, Common::ES_ESP),
+	ENTRY1("ph07_boxman", "071223", "a1c807338a3a5db6a26d3a27004a54cb", 71680, Common::ES_ESP),
+	ENTRY1("ph07_boxman", "080205", "384ea944adc4be83396c5368a3ba5ed9", 71680, Common::ES_ESP),
+	ENTRY1("ph07_edc_zcode", "070831", "3c4b4c9963fbcf69d858f6d16d9b584b", 126464, Common::ES_ESP),
+	ENTRY1("ph07_faro07", "070803", "54fdad7789f03d4c7644835bd295ad1f", 94208, Common::ES_ESP),
+	ENTRY1("ph07_htec_zcode", "071222", "64cf677261e13fb9fa6e071c3c864ae0", 222816, Common::ES_ESP),
+	ENTRY1("ph07_htec_zcode", "111128", "1e4369aae046805529ca8b490c9e5774", 394904, Common::ES_ESP),
+	ENTRY1("ph07_macetas", "010101", "7a20d35db70f537247ed2ef62e0a1f6c", 231424, Common::ES_ESP),
+	ENTRY1("ph07_macetas", "010102", "3e987e21093af65c8fce2e458ee3dafb", 234496, Common::ES_ESP),
+	ENTRY1("ph07_marcopolo", "120121/z8", "b65137ff4f3e7c8a88164f3729419708", 78848, Common::ES_ESP),
+	ENTRY1("ph07_marcopolo", "120121/zblorb", "8bed81e9e1d234f4e0e5e715e9a7f0fb", 80038, Common::ES_ESP),
+	ENTRY1("ph07_mausoleo", "071223", "a4356d2f89052328323a3dd2ce069658", 164864, Common::ES_ESP),
+	ENTRY1("ph07_umami", "070807", "86a045a71db97910e78ba402b33c5c7d", 80384, Common::ES_ESP),
+
+	// Spanish games: Premios Hispanos 2008
+	ENTRY1("ph08_diana_zcode", "080806", "2b117f98896856713a418bcd782be568", 107008, Common::ES_ESP),
+	ENTRY1("ph08_emmy", "080915", "92890016648bbfe1290f71d9a903afc9", 79872, Common::ES_ESP),
+	ENTRY1("ph08_gambito", "081202", "6ea6121f1891d46fe8cc957ef8939d68", 235990 , Common::ES_ESP),
+	ENTRY1("ph08_mushahierba", "081021", "2d28f401d63f163e5d34115fec07df72", 207240, Common::ES_ESP),
+	ENTRY1("ph08_pincoya", "010102", "bafb201726dd331308cdf34ec1e478cb", 168960, Common::ES_ESP),
+	ENTRY1("ph08_pronto", "080720", "a48b81b1c97d6074e3679659f9dce23a", 270826, Common::ES_ESP),
+	ENTRY1("ph08_sm1pesadilla", "080430", "79f8cb30a31146e08465acd9038ba7e6", 604046, Common::ES_ESP),
+	ENTRY1("ph08_sm2konix", "080505", "c9a4128b4874ec735f77295f590a3108", 74240, Common::ES_ESP),
+	ENTRY1("ph08_sm3absolutos", "080516", "9505fa8fc4f4c2d06730ce6c33f0fd43", 270222, Common::ES_ESP),
+	ENTRY1("ph08_sm4culpatuya", "080711", "c62a2c1fa6c4e6918f4c9ee7b7bb4b57", 196096, Common::ES_ESP),
+	ENTRY1("ph08_sm4culpatuya", "080723/z5", "77cd0cbf40cd6badfa9edb9306108008", 198656, Common::ES_ESP),
+	ENTRY1("ph08_sm4culpatuya", "080723/zblorb", "01ef491a2099414817f2a20d0ae78dd2", 536956, Common::ES_ESP),
+	ENTRY1("ph08_sonrisas", "081202", "fce16ce85582c2b6157beaace24bf684", 146888, Common::ES_ESP),
+	ENTRY1("ph08_venenaverbo", "160516", "0a89f0ad5b3df50ff6f32d961cce2c00", 192512, Common::ES_ESP),
+	ENTRY1("ph08_venenaverbo", "160517", "1c7c3ce13621f78e7cf6752a2b0fc58b", 192512, Common::ES_ESP),
+
+	// Spanish games: Premios Hispanos 2009
+	ENTRY1("ph09_amanda", "091110/z5", "11b63cb4c4ca11b86e835c1b00f9c5ae", 132096, Common::ES_ESP),
+	ENTRY1("ph09_amanda", "091110/zblorb", "c373f508436b06081cd76039dc17582e", 342504, Common::ES_ESP),
+	ENTRY1("ph09_gorbag", "100104", "581e67f731d6b1d0d40bfc38cb531bf9", 199168, Common::ES_ESP),
+	ENTRY1("ph09_hhorcus_zcode", "100818", "092849be8d49f1ef509a88a1bc5bbea8", 118262, Common::ES_ESP),
+	ENTRY1("ph09_hhorcus_zcode", "110512", "a5ad46532a527efdc80bc1e6638edbe5", 117248, Common::ES_ESP),
+	ENTRY1("ph09_kerulen", "090720/z5", "b1b024e24c78e37d424163c5b2a6f1ad", 105984, Common::ES_ESP),
+	ENTRY1("ph09_kerulen", "090720/zblorb", "0324283a404d8c6b425e37a05073c61d", 682958, Common::ES_ESP),
+	ENTRY1("ph09_lae_zcode", "090721", "f4c316955bbda2ca557de27b1a3605b9", 152576, Common::ES_ESP),
+	ENTRY1("ph09_megara", "091204/z5", "94b7019ed62d257344ef39727011c250", 214016, Common::ES_ESP),
+	ENTRY1("ph09_megara", "091204/zblorb", "6798f8acb0c0c60d1026a1e9a6469b55", 472716, Common::ES_ESP),
+	ENTRY1("ph09_panajo", "010102", "3969bf7b2dd00b342e6c0b4ec797919a", 124416, Common::ES_ESP),
+	ENTRY1("ph09_sm6ascenso", "090409/z5", "108dd4e7623634e6ff7ca976118dfa29", 220672, Common::ES_ESP),
+	ENTRY1("ph09_sm6ascenso", "090409/zblorb", "352b9bb39f2fff76b409025670169a98", 380434, Common::ES_ESP),
+	ENTRY1("ph09_visitantes", "091130", "d8e7c7376b11f022e109069e4ad3b22a", 87040, Common::ES_ESP),
+
+	// Spanish games: Premios Hispanos 2010
+	ENTRY1("ph10_azul", "101223/z5", "a9b6daf1a3b3da110d1d17c1587feeef", 260096, Common::ES_ESP),
+	ENTRY1("ph10_azul", "101223/zblorb", "f6b9cd8892425e7cb97465baf950b602", 362332, Common::ES_ESP),
+	ENTRY1("ph10_lpc_zcode", "101213/z5", "b4e747ef59bf719b2edecf6b3796883f", 110592, Common::ES_ESP),
+	ENTRY1("ph10_lpc_zcode", "101213/zblorb", "6bd57d7dd178cc4d3ef895c147e65087", 1154350, Common::ES_ESP),
+	ENTRY1("ph10_modusvivendi", "010101", "20795fdfe47bc6f6c519f3fe11e34c17", 234496, Common::ES_ESP),
+	ENTRY1("ph10_panico", "101224", "382cbfb32478ffca560884fc0af6cd83", 121856, Common::ES_ESP),
+	ENTRY1("ph10_sobrevive", "021127", "f951b4a1540035a90c470fc9016ed39f", 111616, Common::ES_ESP),
 
 	// Swedish games
 	ENTRY1("aventyr", "071029", "fff0eb351b418ada4010d56c4298d6ac", 133632, Common::SE_SWE),
-	ENTRY1("drakmagi", "080419", "12739044930fc939b0adf0efd5432713", 98304, Common::SE_SWE),
+	ENTRY1("drakmagi_zcode", "080419", "12739044930fc939b0adf0efd5432713", 98304, Common::SE_SWE),
 	ENTRY1("hotellet", "041212", "efb166d12edc19b19dd1d6e99d67800e", 109056, Common::SE_SWE),
 	ENTRY1("pangnyheten", "040916", "2049135115dff02b2baf1b7bfb59606c", 185856, Common::SE_SWE),
 	ENTRY1("storforsen", "041212", "5e3c06b6b0650f938d2831b2aac98153", 103936, Common::SE_SWE),
 	ENTRY1("stuga", "090712/z5", "c9be7126299f47dfd395af5b951233ff", 122368, Common::SE_SWE),
 	ENTRY1("stuga", "090712/zblorb", "58eef72aada351e7e059202ab00342c4", 588800, Common::SE_SWE),
-	ENTRY1("vanyar", "030613", "abbc2b2fa0f5e922b45a3f8698ba9ad1", 110080, Common::SE_SWE),
+	ENTRY1("vanyar_zcode", "030613", "abbc2b2fa0f5e922b45a3f8698ba9ad1", 110080, Common::SE_SWE),
 
 	// Playfic games
 	ENTRY0("1hour52min15sec", "190319", "9b6b06de44936164c6ebb2cc0e52bbb6", 179712),
@@ -6683,76 +6944,154 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("1984", "121027", "e30b3374275d2d4a256f1c06b388038f", 175616),
 	ENTRY0("1948", "180824", "013228f886e7bb903f5cdca95771e234", 164352),
 	ENTRY0("2084", "140609", "9d84e17d4a3b22dba42f96f7dbeaef7f", 164864),
+	ENTRY0("a221", "130720", "2d830ad6bdd1fb8f600ddcc393cf0fc0", 160256),
+	ENTRY0("abandonhospital_ms", "130325", "c9585ee3b9efe68548033d0add58d734", 160256),
+	ENTRY0("abandonhospital_an", "231025", "2a49b7b647f9d86bbbed0c6582a81ace", 157696),
+	ENTRY0("abandonedneigh", "231024", "f669560a3efd1b44570a1969ec872578", 158208),
+	ENTRY0("aboringroom", "151031", "a8bd6e8bbe73f5b3b38338ab1d287efa", 164352),
+	ENTRY0("abramelin", "140214", "bfb951c88c4d2858981e5ef1d651e9fb", 157184),
+	ENTRY0("acadecwars", "160307", "7416ead1a2cff4249a4d97f006263498", 161280),
+	ENTRY0("accusations", "151217", "0b1ad637ec492ffc607ee7528a7512f9", 157696),
+	ENTRY0("achangeofheart", "160309", "a41579b2d033928352cd1dd8334e84d9", 161280),
+	ENTRY0("achangeofheart", "160310", "8c8dc4bc60866a68ba54380598e8496c", 161792),
+	ENTRY0("achilles", "120615", "1964436de08743a8dea49318d4ca932e", 184832),
+	ENTRY0("aclutteredroom", "120224", "128d341e58e448e4f4f2e596ab1b5842", 158208),
 	ENTRY0("acoldfrostymorning", "180102", "85117f65d31aa37a64334a21e5e99438", 160768),
 	ENTRY0("aconversation", "120505", "cd27a4cd8035441b01ae2f02ebd8c6de", 164352),
+	ENTRY0("adamsplashes", "150602", "57341f04c2a354b5757a14ed513a3c35", 171008),
 	ENTRY0("adayforspelling", "170201", "736c191e48e4ed484d77adb5bf602e35", 174080),
 	ENTRY0("adayinthealex", "190901", "50b7dec633784cbe9a20a8410d5cc8c9", 156672),
-	ENTRY0("adaylifejeymarlowe", "170614", "5060c7797e2c91f6573619def6960562", 167424),
 	ENTRY0("adayinthelife", "170129", "89cdfb450aa6289a73afc079142b62a0", 240128),
+	ENTRY0("adayintheoffice", "120907", "d4107c0a99c3fd16c593d217ae315b41", 160256),
+	ENTRY0("adaylifejeymarlowe", "170614", "5060c7797e2c91f6573619def6960562", 167424),
+	ENTRY0("advancedastronomy", "140629", "bc1312bc412a64c0f0a59568c9e054a7", 171520),
 	ENTRY0("adventcrowther", "110819", "e5cc4af379f9dbc2eaa380e5d6c12d83", 254464),
 	ENTRY0("adventcrowther", "130327", "3bcf081b848b3ae95632211f9aebed63", 293888),
-	ENTRY0("aforgottenworld", "191029", "2422b635d11480637f8732a5995944b1", 161280),
-	ENTRY0("agenerallybadday", "130430", "e1ba15c6d0a6ef4963f31123083416e9", 166400),
-	ENTRY0("agrovegame", "130320", "f25a31a105c6a8a66f5abe8f93c6d830", 159744),
-	ENTRY0("ahorrificadvcomedy", "200803", "898c992e11c939546bb0e153d65814c4", 162304),
-	ENTRY0("aknightsquest", "140619", "04ae60dc7a4a86971876dd426ab38d4b", 168960),
-	ENTRY0("amatteroftiming", "120331", "064767b9a5852775a1c27ca430eb38ed", 156672),
-	ENTRY0("ameadow", "150501", "a70c4dd92f1b9a9be3a0a8c431319864", 162816),
-	ENTRY0("amodestproposal", "120403", "13db1dd26135f6c7f8b6a164c573d405", 183808),
-	ENTRY0("amurdermystery", "160508", "07b0b7c2ae26989bb1159a63d8f5a2fe", 162816),
-	ENTRY0("anotsonormaltemple", "230406", "be1d1e97a1f84f2127930c845be82a6c", 168448),
-	ENTRY0("aperfectdayforit", "120505", "902bda86104826dae9a05671d1f43341", 159232),
-	ENTRY0("aperfectdayforit", "120507", "49c5746ca027bf5ea88aa8e334022139", 177152),
-	ENTRY0("arainynight", "200329", "6510db05e30c4a7a307714e8c2d67119", 173568),
-	ENTRY0("aseparatepeace", "130306", "232dfaa1058e92e02e61b1ecbfe84bb1", 158208),
-	ENTRY0("aslowdayatwork", "190809", "23e369cfdb674779a1995c3970e7c9a6", 162304),
-	ENTRY0("astrangesdventure", "130320", "68ab1a03ce9764fc81e2e80fa4bcb059", 159744),
-	ENTRY0("ataleofbarizan", "161215", "a03de63492f48e844e468849bc11e292", 183808),
-	ENTRY0("atourofthelouvre", "130223", "1a13e54ceef99afee23678909fe28b1d", 157696),
-	ENTRY0("atriptoucla", "130302", "77fc31bd89b659c888bd5babb3d3c9ac", 162304),
-	ENTRY0("averybadjoke", "160229", "75fb2f61a696f45cb819a91bc83275ca", 156672),
-	ENTRY0("averyniceman", "161016", "01dde2022418b95ccfb62c9a6bbdc391", 165376),
-	ENTRY0("awarning", "160608", "de2c2bebc0ff7fbc242ba6dee56e552a", 192512),
-	ENTRY0("awarning", "190726", "d956ed0f1239d2ab6af420fdd56a3943", 250880),
-	ENTRY0("a221", "130720", "2d830ad6bdd1fb8f600ddcc393cf0fc0", 160256),
-	ENTRY0("abandonedhospital", "130325", "c9585ee3b9efe68548033d0add58d734", 160256),
-	ENTRY0("abramelin", "140214", "bfb951c88c4d2858981e5ef1d651e9fb", 157184),
-	ENTRY0("achilles", "120615", "1964436de08743a8dea49318d4ca932e", 184832),
-	ENTRY0("adamsplashes", "150602", "57341f04c2a354b5757a14ed513a3c35", 171008),
-	ENTRY0("advancedastronomy", "140629", "bc1312bc412a64c0f0a59568c9e054a7", 171520),
+	ENTRY0("adventurapf", "171031", "cabfc5a1cb39e77d420c0eef0c10112b", 169472),
+	ENTRY0("adventurenews", "120218", "adfc3d003d0f8ff03504632e9e63867c", 156160),
+	ENTRY0("adventurerback", "130829", "f8856ba158e59ca1d0795b05fb08fd27", 161792),
 	ENTRY0("adventuresinspace", "170412", "6d4c68931d13b6b8d81f65c837969953", 162816),
+	ENTRY0("adventuresww", "120302", "7c7e549abfe5eb149f9619142b391a29", 159744),
+	ENTRY0("adwenturesprincess", "140702", "98b9424fa307d7ba80c3ee6afdd66fa1", 160256),
+	ENTRY0("afairytaleoddity", "181019", "9be2f22ec0378414696f24f916a99fcb", 195072),
+	ENTRY0("aforgottenmurder", "141009", "acef173c0bd52e28c8e1e7936321f54c", 156160),
+	ENTRY0("aforgottenworld", "191029", "2422b635d11480637f8732a5995944b1", 161280),
 	ENTRY0("againsthingsending", "120227", "c3ac321492aad96262fb2fbefdb28a69", 173056),
-	ENTRY0("alchemistgold", "220701/z3", "e3e298d416710e85778b2fe31a7afc63", 81408),
-	ENTRY0("alchemistgold", "220701/z5", "271570957cf46d5c2f71904ec8f69b8f", 83968),
+	ENTRY0("agame", "121024", "de123e78e92d7b673d02d0a14e2ae93c", 157696),
+	ENTRY0("agameaboutyou", "150401", "7d67287ac3530374b10a3f2d9b1d1696", 165888),
+	ENTRY0("agameoffiefs", "150906", "3e5ba1c3e195a4354a6e6cc89613da43", 158208),
+	ENTRY0("agenerallybadday", "130430", "e1ba15c6d0a6ef4963f31123083416e9", 166400),
+	ENTRY0("agescat1stadv", "180227", "43809e0a8cf91eff5515278aaff33fe6", 216064),
+	ENTRY0("agrovegame", "130320", "f25a31a105c6a8a66f5abe8f93c6d830", 159744),
+	ENTRY0("ahole", "140509", "640cc7046cf263c15371c5314e4806cf", 164352),
+	ENTRY0("ahorrificadvcomedy", "200803", "898c992e11c939546bb0e153d65814c4", 162304),
+	ENTRY0("ahouse", "150112", "cd14b928d05a19cb59096ac46db9a20b", 174592),
+	ENTRY0("ahousetour", "200930", "2047b572bd203b6ddcd2d1a7d569002f", 158208),
+	ENTRY0("ajourney2paradise", "231029", "ef29992749a7a12cdf1735767a17052f", 158720),
+	ENTRY0("aknighthisquest", "131127", "a4033b97e02581d7c765e0968ccbff04", 157184),
+	ENTRY0("aknightsquest", "140619", "04ae60dc7a4a86971876dd426ab38d4b", 168960),
+	ENTRY0("akonpliayiti", "181201", "d4938cfa164084c6618a59904c9514eb", 157184),
+	ENTRY0("alexeivsevilpeps", "190610", "6928aaf0898abf1a46a5f1e6214bbdc5", 218112),
 	ENTRY0("aliceintwistedland", "150510", "72e236a6b6c2d4c39e74f903a2c533ff", 163840),
 	ENTRY0("alienabductescape", "140603", "f9569b673574fa6cfce124bc9ece6eea", 156672),
 	ENTRY0("alienabductescape", "140607", "dbbb6d79336ec63e269651dac42077a1", 160256),
+	ENTRY0("alilaboratoryroom", "231027", "46194b8bbee3e3855393fb70472c640b", 158720),
+	ENTRY0("allaboard", "150317", "aa6215e7422d04a9587eac99fac5a6d7", 157184),
+	ENTRY0("allerton", "130207", "a075f57f845f609291f51bd13de49907", 160256),
+	ENTRY0("alleywaypossums", "231025", "ef138542dae64b9d8992eb77462bbca1", 159232),
 	ENTRY0("alloneneedscarrot", "121109", "b5cb7a36aeb1bfcf152bab1cbd62e379", 161792),
 	ENTRY0("almostadream", "151028", "51ef716ea2715d585f4712838cbd417b", 174080),
-	ENTRY0("amnesiazcode", "130623", "a0bacf26ed285681dd6a617f5b3656db", 222208),
+	ENTRY1("alone", "130926", "3f6d19c55818166c65049bfd8883bce5", 176128, Common::FR_FRA),
+	ENTRY0("alonglayover", "161029", "241588926fb070509bcbf5053742198f", 156672),
+	ENTRY0("alostmemory", "180327", "d628dac7863e240710c3f8dac7b2856e", 177152),
+	ENTRY0("alternianforest", "170216", "4c6aab15b6c6bc0ad3c9760924218c83", 165376),
+	ENTRY0("amatteroftiming", "120331", "064767b9a5852775a1c27ca430eb38ed", 156672),
+	ENTRY0("amazetwistypass", "120215", "737279898630f7a081cb2098b8e77549", 156160),
+	ENTRY0("ameadow", "150501", "a70c4dd92f1b9a9be3a0a8c431319864", 162816),
+	ENTRY0("amnesiapf", "150501", "a0bacf26ed285681dd6a617f5b3656db", 222208),
+	ENTRY1("amnesie", "130926", "e0f3c042c250c47479a5a0e0a90c1c2a", 162304, Common::FR_FRA),
+	ENTRY0("amurder", "151208", "921252791f1281807f09610aedf23e56", 161280),
+	ENTRY0("amodestproposal", "120403", "13db1dd26135f6c7f8b6a164c573d405", 183808),
+	ENTRY0("amrnecklace", "120227", "778e87cb6e0aeba92f70aabc4d26f636", 159744),
+	ENTRY0("amurdermystery", "160508", "07b0b7c2ae26989bb1159a63d8f5a2fe", 162816),
 	ENTRY0("analchemicaladvent", "141121", "bb13f99cf335da4be6219106de7f721c", 176640),
-	ENTRY0("anartistneeds", "160310", "ea143276354a6415d93e64dc397f22d9", 159744),
+	ENTRY0("anaponthebeach", "170316", "9eb79814304129fe8215226db4dfbd6c", 163328),
+	ENTRY0("anartistneeds", "190429", "7a4ff0b66ae61fea9301050206e6c6ca", 158720),
+	ENTRY0("angeldustartgal", "120308", "fbba2b1d6b7583a7579a4ac8742cafa3", 157184),
+	ENTRY0("animalapocalypse", "231018", "815c9086dfa015566c6d29d6b12e719d", 156160),
+	ENTRY0("animalfarm", "120229", "bb5494702a4dfc5d5397bc2509ffc6ad", 164864),
+	ENTRY0("annoyathon", "140518", "3fd165c2e435f7a16b8d03a0306af20f", 175616),
+	ENTRY0("anormalday", "210903", "cd5fc4eb9546424c464a68f75067edb0", 156160),
+	ENTRY0("anotherartgallery", "120309", "61b106a4df9a55b0e5cdeea2352136b8", 157696),
 	ENTRY0("anotherolddude", "190517", "31e6c16849aeea4dd91637e4beba9521", 163840),
+	ENTRY0("anotsonormaltemple", "230406", "be1d1e97a1f84f2127930c845be82a6c", 168448),
 	ENTRY0("ant129finalproject", "210214", "133b642a287bf94d47befa00a680b109", 160256),
 	ENTRY0("ant129finalproject", "210307", "9aaba9715701bdd08f16863e12805422", 324588),
+	ENTRY1("antidotes", "131023", "39fb3389916675aa2fdb55564f2ff1e3", 177664, Common::FR_FRA),
+	ENTRY1("antidotes", "131026", "5f2151b7c0737e4554f32f9a7d5d7ab1", 179712, Common::FR_FRA),
+	ENTRY0("aperfectdayforit", "120505", "902bda86104826dae9a05671d1f43341", 159232),
+	ENTRY0("aperfectdayforit", "120507", "49c5746ca027bf5ea88aa8e334022139", 177152),
 	ENTRY0("apocalypse", "120313", "d90f666879d4da1011f5f2c40da1ef57", 161792),
+	ENTRY0("apocalypse", "130217", "6bae55110240838869625d6733012964", 157696),
 	ENTRY0("apocalypsech1", "120314", "f1dc926afd68632807f0e4529bbbec94", 167936),
 	ENTRY0("apocalypsech1", "120318", "f4079a9f5cf35c47211912388038ef4d", 174080),
 	ENTRY0("apocalypsech1", "120324", "b854629d7da06ac3ba035db4dfe0b1bc", 176640),
 	ENTRY0("apocalypsech12", "121205", "55f5106fbce03fbe6ab7d7e2638cb930", 196608),
+	ENTRY0("apocalypserising", "130806", "64a8bc6c862d4aacdd8e591e5f01832f", 156160),
+	ENTRY0("apocalypserising", "201106", "78b9a64db50138e09b60af38b23ee86a", 166400),
 	ENTRY0("applemansion", "131127", "fa1c592bf283c1248e6a6a95d5b6dea5", 163840),
+	ENTRY0("applestwoapples", "120720", "a1db38b3fe188661d05c82ad268e21cf", 160768),
 	ENTRY0("apprenticeschg", "120907", "36e54df8d0424c29bbb95db8fc2705d7", 241664),
+	ENTRY0("arainynight", "200329", "6510db05e30c4a7a307714e8c2d67119", 173568),
+	ENTRY0("arcadeescape", "181005", "13db4f8811ce1e3251d99b2dfd4c3dc5", 156160),
+	ENTRY0("arealbeach", "130426", "95dde5e9cc8f2606786b48201e104fa2", 158208),
+	ENTRY0("areaone", "210424", "3362f396ffa9d0a0b8dff74464ac4d04", 157184),
 	ENTRY0("arlocompendiumch1", "150311", "ad78d19a66ce9939a2f5dc82d4d7b6ef", 178176),
 	ENTRY0("arlocompendiumch1", "201118", "ab70e3b02a23067f9b58821fbd1ad704", 178176),
 	ENTRY0("arlocompendiumch2", "150405", "16338725f548cb06382859530f450315", 201216),
+	ENTRY0("armorsandbuffs", "160220", "9213225f45f1ed4f4391c408b1f272ad", 159744),
+	ENTRY0("aroundthehouse", "131217", "da224e7e5ce7ab121274e127394c183f", 157184),
 	ENTRY0("artiststhenewdeal", "160310", "27b548c967d24de9b8ffbc01936ee260", 158208),
+	ENTRY0("aseparatepeace", "130306", "232dfaa1058e92e02e61b1ecbfe84bb1", 158208),
+	ENTRY0("ash", "160712", "a1fccf87551b30780f17a8371f1db19e", 157184),
+	ENTRY0("ashorti7demo", "130912", "4358490dc234ca31a5285f3169568de8", 156160),
+	ENTRY0("aslowdayatwork", "190809", "23e369cfdb674779a1995c3970e7c9a6", 162304),
+	ENTRY0("assasin", "130119", "9528b8f323293fba075c9e2efa7635ad", 156672),
 	ENTRY0("assessmentmatters", "131116", "cdb7a0857d47da1f6a980792de59b8c5", 157184),
+	ENTRY0("astrangesdventure", "130320", "68ab1a03ce9764fc81e2e80fa4bcb059", 159744),
+	ENTRY0("asurpriseparty", "231031", "d87abcd46298db215fc0a5097eb381f5", 165888),
+	ENTRY0("asylumpf", "151217", "e936d97c841267ba7f9a2daad2c1d736", 159232),
+	ENTRY0("ataleofbarizan", "161215", "a03de63492f48e844e468849bc11e292", 183808),
+	ENTRY0("atestgame", "120328", "4999e9f0e010c0600774254d06b5a988", 156160),
+	ENTRY0("atlantic", "200909", "0ed404d81b506f33d2f932e5e00e4ca4", 156160),
+	ENTRY0("atob", "141214", "ec5fa2f5b718121beea96dc207c31320", 210944),
+	ENTRY0("atomicmeat", "210305", "86980360e3ca8c6073145e55e5a2f006", 161280),
+	ENTRY0("atourofthelouvre", "130223", "1a13e54ceef99afee23678909fe28b1d", 157696),
+	ENTRY0("atrailhead", "230224", "a3e5c4afa46d15de11bca3176988b64a", 156672),
+	ENTRY0("atraingame", "220104", "eb9b2a342df98cbd28d2d6218ff2c97e", 156672),
+	ENTRY0("atriptoucla", "130302", "77fc31bd89b659c888bd5babb3d3c9ac", 162304),
+	ENTRY0("attackkillerjarod", "121113", "d513f96bc80d24271f15b75f8c974b76", 157184),
+	ENTRY0("atthelibrary", "180717", "a49c5f3b0f5049a69ea9d191a9220e46", 156160),
+	ENTRY1("audeldesapparences", "131003", "daeacc7f9455724f7d6e1741d73836d3", 157696, Common::FR_FRA),
+	ENTRY0("audioguide", "131003", "26e8b0a78fa4049c9261b56796589303", 176640),
+	ENTRY1("augh", "120216", "1cb95db2252432116669c974f68bd46d", 157184, Common::FR_FRA),
+	ENTRY0("austinhyattlivedie", "131003", "43650250f0134184131cc230278d887d", 157184),
+	ENTRY0("averybadjoke", "160229", "75fb2f61a696f45cb819a91bc83275ca", 156672),
+	ENTRY0("averyimpstory", "181111", "fb0396b85a1eed350228bbf379c22d05", 159232),
+	ENTRY0("averyniceman", "161016", "01dde2022418b95ccfb62c9a6bbdc391", 165376),
 	ENTRY0("averysmissingtrain", "180302", "ea42f8c9a05e4237eb54e28d5c043e85", 163328),
+	ENTRY0("averystupidgame", "181002", "20bc637207d4dd65da8298f0a90a09cc", 158208),
+	ENTRY0("awake", "160218", "1eed820040ecd7ca20970dc2d691bab1", 160768),
+	ENTRY0("awakeningpf", "130520", "66e47f1c272b6a94d383ff5a838db231", 163328),
+	ENTRY0("awarning", "160608", "de2c2bebc0ff7fbc242ba6dee56e552a", 192512),
+	ENTRY0("awarning", "190726", "d956ed0f1239d2ab6af420fdd56a3943", 250880),
+	ENTRY0("awarriorcatsmm", "231027", "1c39f5419a167befe3d2a9c6bd99e9dc", 157696),
+	ENTRY0("awayout", "231026", "030fc22b028c4e4841f7828ecb27d0f9", 159744),
 	ENTRY0("babysteps", "130817", "38a2308b92d7113d24a076b1fe1b6f05", 165376),
 	ENTRY0("babytroubles", "191222", "4caabfc9954878501fe3ae8659d41154", 163328),
 	ENTRY0("bakerbonanza", "121023", "9adf937f6a68aa8151ede3bd3d816189", 157184),
 	ENTRY0("bananaquest", "150329", "2a9046700244c09c0dcc8571612513f6", 162304),
-	ENTRY0("barroombrawlzcode", "160314", "24cd8acebc3ffb08ff13fd08ba9c9e87", 176640),
+	ENTRY0("barroombrawl_zcode", "160314", "24cd8acebc3ffb08ff13fd08ba9c9e87", 176640),
 	ENTRY0("base0", "191103", "ad75669f55edd48ae5641e30be88e74b", 224768),
 	ENTRY0("bearsadventure", "160925", "f436b157aad302b316a1dba17e0c4382", 157184),
 	ENTRY0("beepboopboopbop", "210207", "25b493c7e60472482b167eac65f81300", 182784),
@@ -6772,7 +7111,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("candyland", "170104", "7a2674e50f9f6a0e1f62dbe61dbc6e39", 158208),
 	ENTRY0("cannibals", "140618", "ad115067caf1e2db6ebf83609f10d508", 159232),
 	ENTRY0("cardinal", "170525", "345ef241a7add6bb5abe79f7e075afbd", 261632),
-	ENTRY0("castlezcode", "130320", "a299d7121c77e4cb2c95990f7a51248d", 164864),
+	ENTRY0("castle", "130320", "a299d7121c77e4cb2c95990f7a51248d", 164864),
 	ENTRY0("caveescape", "220522", "3144cfbed0304988cb207e083ecd50dc", 159232),
 	ENTRY0("ceremony", "200114", "40506795283f4b9f07e078e8d65e122c", 228352),
 	ENTRY0("chaldeabuffet", "230430", "984bcf4f7c943f6776d62efda7d543a2", 219136),
@@ -6788,6 +7127,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("coffeetime", "170214", "fb0ef01b18771ec63a070cd6f58e599c", 161792),
 	ENTRY0("coffinofchaos", "130917", "cf7fec8313f7e50d3677a7615a2ddc90", 161280),
 	ENTRY0("colbysunusualday", "120228", "65a40fce9c5c740730d7b7386441e37a", 159232),
+	ENTRY0("coleandmichael", "160310", "ea143276354a6415d93e64dc397f22d9", 159744),
 	ENTRY0("colinexplore1984", "190303", "43b50829ff5da64463ab8828f27b7758", 172544),
 	ENTRY0("colonialproject", "130425", "ab50d3c44e30d7d435ff75baea0998bf", 174080),
 	ENTRY0("complimentarypean", "130213", "eeb7e01b8ff7dea3fa341863c838e11c", 158208),
@@ -6811,14 +7151,15 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("dayoff", "200819", "10091483fd499ce1c1e120630ff477bd", 316416),
 	ENTRY0("daythyme", "131203", "17f03892dba7f05c125a17a13d3888e4", 163840),
 	ENTRY0("dcblues", "190316", "67ed9ff56611f395a52f63ce6b229195", 157696),
-	ENTRY1("demiddeleeuwen", "141203", "08fe83440581215f4e2bdc5b7b696bbb", 161792, Common::NL_NLD),
+	ENTRY0("deadication", "200815", "eca9763c1f2400a50e3278246ab3bb39", 314880),
 	ENTRY0("deadmansgrave", "151101/z8", "456ba87f580ddd98ef1e1314bfc9247a", 213504),
 	ENTRY0("deadmansgrave", "151101/zblorb", "85750a3498daff7750b65f298858f175", 547808),
 	ENTRY0("deadsprint", "120425", "9a779b2f244b3b7cf29aa8833995bfab", 165888),
 	ENTRY0("deadsprint", "120504", "696a91cd3d0b5134f13efe3b9ab9453f", 175616),
-	ENTRY0("deadication", "200815", "eca9763c1f2400a50e3278246ab3bb39", 314880),
-	ENTRY0("demonhunterzcode", "131003", "10b71b6db865acd5fb524b6f216b54ab", 160768),
+	ENTRY0("decisionsdecisions", "130311", "51d651745f08bfc307a75db186efea12", 157184),
+	ENTRY1("demiddeleeuwen", "141203", "08fe83440581215f4e2bdc5b7b696bbb", 161792, Common::NL_NLD),
 	ENTRY0("demonetization", "191030", "b1c2be9092d15291b6ca49cc4f489297", 158720),
+	ENTRY0("demonhunterpf", "131003", "10b71b6db865acd5fb524b6f216b54ab", 160768),
 	ENTRY0("deoxiousevent2015", "150918", "dfa22eb222b38ec7f0c3ac09e6f79a17", 158720),
 	ENTRY0("depressed", "130607", "6714fccd6ef9239a5bea3c268cc485da", 165888),
 	ENTRY0("detectiveconan", "200204", "b819788f4732b0e4615364af731adef6", 160256),
@@ -6871,15 +7212,18 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("escapethewizcastle", "121111", "16595d8dcdcb4df4d5d8a14aea674b65", 159744),
 	ENTRY0("escapedprisoner", "170505", "ed5c602d1b4ab2867e087e58bed8b10a", 181248),
 	ENTRY0("escapingprison", "150622", "a1b5601fbf7f1e917568a50851cd4ffc", 161792),
-	ENTRY0("experimentzcode", "181019", "9d59860985a25f35ca0dfb24870a9314", 157184),
+	ENTRY0("experimentpf", "181019", "9d59860985a25f35ca0dfb24870a9314", 157184),
 	ENTRY1("exploratriceperdue", "131013", "62cf8a29f9c0b5e77e5db901cf740338", 188416, Common::FR_FRA),
 	ENTRY0("exterminsim2014", "131020", "718306165224f53ac8ee68fc774821eb", 167424),
+	ENTRY0("exterminsim2014", "140310", "dbbd70a1d28f54efbeb0a7bdc50e5afa", 167424),
 	ENTRY0("faction11", "120403", "145bd30f5373534fbda13aab436ab87f", 166912),
 	ENTRY0("fairyring", "170127", "3ad93d293d28d4429a0fa98c11423c4c", 180224),
+	ENTRY0("findairplanekey", "120413", "559c55349f97f5f75143a3170585731c", 157184),
 	ENTRY0("finallythefestival", "181109", "503b862cda59c608223032c032697125", 161280),
 	ENTRY0("findjoker", "130916", "53dd23e5ec1e81021de82216cf9d1407", 158720),
 	ENTRY0("findmealiger", "130415", "8e1b80c0ba2d358ebd7179c415defdfb", 158720),
 	ENTRY0("findmystethoscope", "121107", "bf7ed3eea731242354c843c16d0afd56", 161792),
+	ENTRY0("findpurplesteve", "220305", "7aefff2d227dfbfcdabb1b8273494b82", 157696),
 	ENTRY0("findthatchinchilla", "180302", "4f9de301077ca1826e7573c98577784d", 214528),
 	ENTRY0("findthecookie", "181102", "ac822d25e0c198e3444f6d4d20805ea1", 158208),
 	ENTRY0("findyourjuprof", "130410", "ea2f83fc3b596bcb9bd8bea391dbbb26", 158720),
@@ -6896,7 +7240,9 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("freeparking", "120423", "aae58fc77cd1da8ac90c0fa84b28aec6", 160256),
 	ENTRY0("freighterraphus", "191010", "71ab08049a6e941758e8618b3094bb18", 183808),
 	ENTRY0("fridayafteroffice", "000831", "090f9ffa40b5ab307a0e733a3de359a1", 165376),
+	ENTRY0("fromportlandxoxo", "141202", "2ce5bdd1fdb792cfaa0c766aaad54e5f", 180736),
 	ENTRY0("fungus", "080220", "8d9bcf00404845bf31d35444db36f288", 174080),
+	ENTRY0("futurebookshop", "120611", "d4615b0833770113074a912db4a51ce2", 160768),
 	ENTRY1("galisancommence", "131122", "38ed3d237f15630e30d390054220604e", 175616, Common::FR_FRA),
 	ENTRY1("galisancommence", "140108", "3df8c049294f2ef358500bfd1991e220", 160768, Common::FR_FRA),
 	ENTRY0("gamerstereotypes", "120501", "9381d0b68c587d6e1569370858c2f701", 159232),
@@ -6913,6 +7259,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("getthatcat", "161206", "db33729fbb5e22abb53f6b1380e30027", 166912),
 	ENTRY0("getyourlifeback", "180207", "2173098460829d72f1fdb094a3f6f373", 156160),
 	ENTRY0("getyourlifeback", "180301", "5885a9b69f2f4d050c65c6d6869f7d60", 159232),
+	ENTRY0("ghosttownpf", "231027", "355c9a7ad5b52461a6ad89a839945e84", 160256),
 	ENTRY0("gilberttheelephant", "180305", "00878539308259f3f2c98649f0ad2846", 159744),
 	ENTRY0("giornogiovannas", "220419", "9253cc58ac335b1ff7b0044b152b09ad", 159744),
 	ENTRY0("gotakeashower", "140408", "5daa21eec3725706a4725f699dd92d31", 159232),
@@ -6947,6 +7294,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("houseoflafayette", "210321", "c0dfa5d573d0a17fa729ec1c907c0331", 163328),
 	ENTRY0("howlsmovingcastle", "170328", "4bd96faf37812e62b342eb2b82ba10aa", 161280),
 	ENTRY0("hungoverinbelfast", "120221", "fa766137a3744e87bed131bb68b44214", 164352),
+	ENTRY0("idontevenknow", "190329", "ae7591fe067da922af5a862cb89ff782", 156160),
 	ENTRY0("iliketrains", "170322", "57af94b4cce57b2edbda7e0238edcc64", 163328),
 	ENTRY0("illusion", "140512", "ca50cc32839df2b4c18f498961f797f6", 175104),
 	ENTRY0("imprieteneasca", "151223", "0dcfe52a9da55caf312ec2c695a2f0aa", 158720),
@@ -6954,8 +7302,9 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("inthebasement", "121016", "a3b0a725c8d4bafd1d2636075cdaee2e", 159744),
 	ENTRY0("inception", "150501", "92b244b4965225c23deef6117205606b", 179200),
 	ENTRY0("inferno", "171019", "9eaa0e8627d8413cb9796becd8039e77", 162816),
+	ENTRY0("infiltrator", "231101", "5058260ad0efd431eb5f83c5b4332da3", 191488),
 	ENTRY1("infinitydestiny", "140120", "efa50487c5786e83bb24220e09f6cbef", 210432, Common::FR_FRA),
-	ENTRY0("inheritancezcode", "230504", "6c665834e2c73778bb565070133aca51", 174080),
+	ENTRY0("inheritancepf", "230504", "6c665834e2c73778bb565070133aca51", 174080),
 	ENTRY0("insaneasylum", "160413", "0660fe63ba667f1902f9eff78cc74e33", 224256),
 	ENTRY0("isthisacowfantasy", "150331", "f393a76ac85085683057416bb977dd6b", 165888),
 	ENTRY0("isiscrisis", "190531", "7abe45046fd54626f15203ba9653381d", 182784),
@@ -6972,6 +7321,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("junglesearch", "190306", "033f299e983d1d9d60432cac3c27243a", 167936),
 	ENTRY0("keepingdido", "120516", "56eb7cbeb898cbd892146d9795a91d4b", 332180),
 	ENTRY0("keepingdido", "130111", "10f71f6f39eda761bab839ad6c3dfcec", 271872),
+	ENTRY0("killthedisease", "130911", "6941693d3fcba2b216f21ff158523d7b", 157696),
 	ENTRY0("kingheartbuildraft", "160401", "de55253ef19b0378ba76e1502da2936a", 158720),
 	ENTRY0("kingheartdangerous", "160401", "b00dbe2fd8c07167a38a9e57d96f3802", 160768),
 	ENTRY0("kingdomofamphibia", "??????", "462ba394189cb5c806b9d7f0dffe3720", 402432),
@@ -6987,9 +7337,9 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("leosrage", "181221", "bde6bc7c1d89064c620c90539dc12484", 171520),
 	ENTRY1("lesgaleriemaudites", "140123", "e09668ea2bc2c17d111b09e3f44d4f79", 204800, Common::FR_FRA),
 	ENTRY0("lieblingshause", "190418", "c336a470e777c3714934027ea3a08f73", 175104),
-	ENTRY0("lifezcode", "181011", "7188949d1ee7146d756099be2bc6940e", 156160),
 	ENTRY0("lifeaftertesting", "121220", "e1b840667e7ed5cfc3138b10204ba8ed", 168448),
 	ENTRY0("lifegoals", "151217", "5a7fa5b756cf64f0f0e8a5d99e97efc4", 171520),
+	ENTRY0("lifepf", "181011", "7188949d1ee7146d756099be2bc6940e", 156160),
 	ENTRY0("limbo", "190915", "1032e246551cf5bc5702efe763bbc7b5", 160768),
 	ENTRY0("lines", "191128", "9562edb6f122bd20a8ae396a854a177c", 168448),
 	ENTRY0("littleharmoniclab", "130831", "1334a82f500bb381a2f388ab153fc6b7", 289792),
@@ -7003,6 +7353,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("lookingforfulton", "210308", "dd6a66b127ed787a53f87e6e0deb34a5", 160256),
 	ENTRY0("lostandafraid", "120221", "857a5bac0aebaea78fa9b0f79a2dcb76", 177152),
 	ENTRY0("lostaxe", "190419", "8f4711053df1642e51eadac47f31490e", 160768),
+	ENTRY0("lostchicken", "231102", "8a59e0facd82307ff8aabbb1b1fb8845", 156160),
 	ENTRY0("lostduck", "190529", "bc807f61af3633ec443dc7e4c3dea6ee", 157184),
 	ENTRY0("lostintheforest", "140610", "1ed934ecb82473007222221d2fc165bf", 160768),
 	ENTRY0("lostinthejungle", "221101", "fdb73034cabab6f1e0df015fd7f56a3a", 164352),
@@ -7024,10 +7375,11 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("mcmansion", "230411", "83be8e34b4774189edddafeb780ddf82", 177664),
 	ENTRY0("medievaljailbreak", "150915", "bccac2cba92d49388c5d8cc767cb79d8", 159232),
 	ENTRY0("meetingtime", "161019", "1b67cf962a388fab8cb7b8bd68baa2d0", 161280),
-	ENTRY0("memorieszcode", "130531", "a2987bee5d153b6de23f6a7a0e4bcf29", 183296),
+	ENTRY0("memoriespf", "130531", "a2987bee5d153b6de23f6a7a0e4bcf29", 183296),
 	ENTRY0("micasa", "960613", "b7dfec6fb5519b577ad6739f6aa3dd4b", 162304),
 	ENTRY1("middeleeuwsdrama", "141209", "e6ed1daa45b50f24e2d711a98e03ab4d", 164864, Common::DE_DEU),
-	ENTRY1("middeleeuwsdrama", "141210", "f4dfb45ab6b081604d5811fbfa9d021a", 166400, Common::DE_DEU),
+	ENTRY1("middeleeuwsdrama", "141210/v1", "48f09b6bf006f08f6824c2945b8869a4", 163840, Common::DE_DEU),
+	ENTRY1("middeleeuwsdrama", "141210/v2", "f4dfb45ab6b081604d5811fbfa9d021a", 166400, Common::DE_DEU),
 	ENTRY0("midnightlibrary", "150316", "f86e9d53ed22769d07d85721fc810475", 160768),
 	ENTRY0("mirointeractgaming", "140402", "1c80daa50a6363450c46dfec0fbe5aff", 164352),
 	ENTRY0("mirointeractgaming", "140403", "b0b3e8e42e2c82f9d593d522d02d8cb8", 157184),
@@ -7052,11 +7404,13 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("murderincourtyard", "120314", "0705dd7f52c08eb8c2efba7022d3effd", 159232),
 	ENTRY0("murdermystery", "150813", "18fb3cf3aa776772c1f0728185906b93", 177152),
 	ENTRY0("murderspicemansion", "230411", "3ea2c835dca441097f22c1f0fced41b8", 186368),
+	ENTRY0("mushrooms", "231031", "a18cc0235f22e16ef78d3ecd61af5daa", 157696),
 	ENTRY0("myjapanesemyth", "131203", "888127aa7c62b2ecc5cc05dd7cc24a31", 175104),
-	ENTRY0("mysterymanorzcode", "150223", "8c35e34e246eaf9c69c02a76008b7977", 162304),
+	ENTRY0("mysterymanorpf", "150223", "8c35e34e246eaf9c69c02a76008b7977", 162304),
+	ENTRY0("mysteriousadv", "150622", "bd84375b82ccc0f7d4311a146fe917c9", 159744),
 	ENTRY0("mysterysottomarin", "221105", "0b7fe4c9bbde26e3961cf9dad0f6d93e", 183808),
-	ENTRY0("nautilisia", "120511", "a6993f07a35333bcf74396051e9a497f", 323072),
-	ENTRY0("nautilisia", "130422", "aaa73314eca2a1731f5f212c7de11aef", 1796142),
+	ENTRY0("nautilisia_zcode", "120511", "a6993f07a35333bcf74396051e9a497f", 323072),
+	ENTRY0("nautilisia_zcode", "130422", "aaa73314eca2a1731f5f212c7de11aef", 1796142),
 	ENTRY0("needingawee", "071229", "7a6efd20402d9e138512dc9dfad8e1cf", 158720),
 	ENTRY0("neithersense", "030412", "b51d0138b51430238a39ac436239aab3", 164864),
 	ENTRY0("newdealhitman", "160311", "22c8c6bc8eebbfdc8a9f66faa5b64b1d", 161792),
@@ -7084,10 +7438,11 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("ploc", "210513", "c9dc23eba538ee882bd8e00bfa486ab0", 195584),
 	ENTRY0("poisoned", "170129", "cba75c344353342c9d338795fabf0cea", 186368),
 	ENTRY0("policyhobo", "120227", "037ade0864d0ecda01b4c7c3b0fe6188", 160768),
+	ENTRY0("powerkeys", "120624", "37d8409325b58cf384d88ab0c5a45669", 157184),
 	ENTRY0("prankken", "000728", "9f83abe0c63ef3ae771aca0d64c05a48", 161792),
 	ENTRY0("presidentialrace", "180918", "afa89a1165a0db506aec98c87789f207", 225280),
 	ENTRY0("princtextfghturbo", "120916", "eeae786191d6f741f0605aa240856c4a", 299520),
-	ENTRY0("prisonbreakzcode", "190321", "eabd81867affbcb89cc36f181fbba538", 163328),
+	ENTRY0("prisonbreakpf", "190321", "eabd81867affbcb89cc36f181fbba538", 163328),
 	ENTRY0("prisonescape", "150812", "58076ba2217fa52b1b8248c2d88c1e9e", 160256),
 	ENTRY0("prisonerdrunkenera", "230411", "02a286d926945b4e212e82b33464b57a", 206848),
 	ENTRY1("projetinform", "140601", "7b3882ea3dd7757a39fd402559a28716", 165888, Common::FR_FRA),
@@ -7178,6 +7533,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("starsandbutts", "130623", "7efaf51e90ea6b7f2f3bdb00d93d77de", 229376),
 	ENTRY0("startergame", "191209", "a4e9ace3b9b6a45b5b44aed9a2c1ccd2", 173568),
 	ENTRY0("stealingthestolen", "120927", "6cbfbfa897ab53c52fff536245990c47", 186368),
+	ENTRY0("stealingthestolen", "161222", "6daa42b7ae7f933fcf2fa441e702ea70", 424914),
 	ENTRY0("storything", "190821", "d3f239f244e24a8ae29b3abadeccbc65", 156672),
 	ENTRY0("strandedspcemonkst", "180625", "ce807be7d8784bd039219bbf40d93cc6", 164864),
 	ENTRY0("strangertheseparts", "120820", "c5a736a93771bccd55e4b7daa45a9f00", 195584),
@@ -7208,6 +7564,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("theanniversary", "120302", "fcb54cd89ad5f47f4e6628c0de256208", 166912),
 	ENTRY0("thebabysitter", "141031", "86aeafc387a3c465b10fc5ef97e72e77", 171008),
 	ENTRY0("thebambooheist", "191028", "934ca59e21c8ac559ece127655a9b693", 230912),
+	ENTRY0("thebasement", "200315", "97edd51d25faa6e63bf7667354ff1d0d", 207872),
 	ENTRY0("thebieberfevprob", "120425", "92e4bccf43fdcf7ec50e4b9a5f4c4b12", 157184),
 	ENTRY0("thebiter", "120925", "a99a2717d5546d6a4c6d99320241b08a", 158208),
 	ENTRY0("thebumblebeeband", "180531", "10017c03974bb82ce3f8d73bec3672fd", 162816),
@@ -7231,11 +7588,11 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("theheist", "191028", "930c36631680725299453b77ca3f264e", 239104),
 	ENTRY0("thehideworldmathew", "210902", "7f8b4d95a4a8ffbd99b6b54a857836cc", 161280),
 	ENTRY0("theinnermostproj", "140517", "97df221f413f8e252251a3e9697c31ec", 157184),
-	ENTRY0("theislandzcode", "130225", "d18108dd62f934e665f0fc3b4d96ef28", 303104),
+	ENTRY0("theislandpf", "130225", "d18108dd62f934e665f0fc3b4d96ef28", 303104),
 	ENTRY0("thejewelheist", "220406", "1d7dd786ac76983235dc8941c4a5e00c", 167936),
 	ENTRY0("thejourneylifetime", "150619", "83931b11b8c82eedde117eb52659b82e", 156672),
-	ENTRY0("thelabyrinthzcode", "130513", "4400524c81a8590aa289058580c064e5", 169472),
-	ENTRY0("thelibraryzcode", "150317", "6675119f9a464d075fab555365505596", 161280),
+	ENTRY0("thelabyrinthpf", "130513", "4400524c81a8590aa289058580c064e5", 169472),
+	ENTRY0("thelibrarypf", "150317", "6675119f9a464d075fab555365505596", 161280),
 	ENTRY0("thelightprince", "200731", "6f9ed5f14288217d88dada7314e597e3", 276480),
 	ENTRY0("themachine", "201016", "83604cd8e738bb3ba989f51688d2c481", 164352),
 	ENTRY0("themafiagenerator", "130218", "ea7bc006b8ada46dd2cedf764110053e", 222720),
@@ -7285,6 +7642,7 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("trainofthought", "120729", "3600a1c77c3a445f83144f7762aafc15", 220160),
 	ENTRY0("treasurehunting", "190304", "e632b687be4d8fd1251cfbdbd5034b58", 165888),
 	ENTRY0("tvdream", "190306", "a222e72f2f6bf12694c66abd0f28b3c4", 166912),
+	ENTRY0("twilightmansion", "140702", "ffab730a2aaed3817a9fb3dceb0a7a31", 158720),
 	ENTRY0("un1015lostsoul", "151119", "649faf05912c3339e31b363ec98a7d8f", 165888),
 	ENTRY0("un1015tminus59min", "151205", "665065ef47c80135f01456d0959234ab", 169472),
 	ENTRY0("undercoop", "200303", "dbdc4c4b141f4b4e9c580cdc4d25a6e9", 158720),
@@ -7306,14 +7664,83 @@ const FrotzGameDescription FROTZ_GAMES[] = {
 	ENTRY0("witchcamebridge", "190427", "ce7a3fd88a98a83fcc500a0161803faa", 211456),
 	ENTRY1("wohingehstdu", "130926", "5d5a5df290b6e8121e2fc68129ac5af4", 253440, Common::DE_DEU),
 	ENTRY0("wrenchedanddivine", "141119", "a3e09817d7ca57f2b684b772f344ee7d", 167424),
-	ENTRY0("wrenlaw", "130428", "1abcce7baecbe955f28f8a788bfde1e1", 291328),
-	ENTRY0("wrenlaw", "130429", "24e41af3de0fd4052ef537d0e82b067c", 1835620),
+	ENTRY0("wrenlaw_zcode", "130428", "1abcce7baecbe955f28f8a788bfde1e1", 291328),
+	ENTRY0("wrenlaw_zcode", "130429", "24e41af3de0fd4052ef537d0e82b067c", 1835620),
 	ENTRY0("yemagykqueste", "130805", "63a6c866aad16dccb74fa8b1cf684686", 170496),
 	ENTRY0("youhavefreemanatee", "140506", "93e739304e8a4fb44f24a23dcaa32231", 161280),
 	ENTRY0("yourang", "160607", "8b6145c6bb2ec63830277575a6f9854f", 210944),
-	ENTRY0("youvegotastewgoing", "120218", "0192783d5ba404a4876570dd19dc3c49", 324608),
 	ENTRY0("yourgovneedsyou", "120504", "4d4557901e048ea8ba90b37762427adf", 185344),
 	ENTRY0("zombiefacuacademy", "210215", "591a0e3bd3a3890406c9d7e4cbe887c1", 165376),
+
+	// ParserComp 2015
+	ENTRY0("pc15_sixgrayrats", "150214", "822ebf1958e10ee5a9ba779a1edb0842", 427520),
+	ENTRY0("pc15_sixgrayrats", "150331", "1a2b10729ebb83a08a38f0c80020a34d", 428544),
+	ENTRY0("pc15_sunburn", "150214", "598cc42e8184a840bab2d38c6d6dece0", 471332),
+
+	// ParserComp 2021
+	ENTRY0("pc21_acidrain", "210701", "69376ad4a9d4d5d5a161b230911cb4af", 148480),
+	ENTRY0("pc21_fivebyfivia", "210627", "655affb35059c2077dd74070db1d9572", 356386),
+	ENTRY0("pc21_dannydipstick", "210701", "cfbd17cf1e4f16c61577c5a5b1df8a41", 114176),
+
+	// ParserComp 2022
+	ENTRY0("pc22_imposstairs", "220706", "ab5d27c9b35e52e34e2c5300680e7aa7", 243320),
+	ENTRY0("pc22_alchemistgold", "220701/z3", "e3e298d416710e85778b2fe31a7afc63", 81408),
+	ENTRY0("pc22_alchemistgold", "220701/z5", "271570957cf46d5c2f71904ec8f69b8f", 83968),
+	ENTRY0("pc22_yougetback", "220731/v1", "ca81a9dd480cfa581fe897cf6f8140ea", 296080),
+	ENTRY0("pc22_yougetback", "220731/v2", "a88c49f219bc9fae153a2fd123ed3eb8", 294544),
+
+	// ParserComp 2023
+	ENTRY0("pc23_searchlostark", "230629/z3", "4e08c5528461466698f81f0cd10a2e3f", 74240),
+	ENTRY0("pc23_searchlostark", "230629/z5", "546ec46e41f9056a602ece827173e2c7", 77312),
+	ENTRY0("pc23_xou", "230630/v1", "fe2156a887028e4715706162a47eccc3", 259054),
+	ENTRY0("pc23_xou", "230630/v2", "0bb1331dc6c7cee296134bba21896e94", 260614),
+
+	// PunyJam #1
+	ENTRY0("pj1_captaincutters", "210503/z3", "02e6b574267034d10bb0cdeacb124cb4", 84992),
+	ENTRY0("pj1_captaincutters", "210503/z5", "b7b85a17256237b07bb988a6df924873", 88064),
+	ENTRY0("pj1_djinniotr", "210519/z5", "c99e6e3182a1d25c7deb0cf28361a0d8", 96256),
+	ENTRY0("pj1_djinniotr", "210519/zblorb", "9f526cada9b557ee72b06984e475176f", 514430),
+	ENTRY0("pj1_pubhubbub", "210503", "137af3205cb784e6f18764b726893796", 55296),
+	ENTRY0("pj1_deathnumber4", "210502", "634b0a4a44859ad770f6754854d04d6b", 35840),
+	ENTRY0("pj1_pubadventure", "210429", "1ff56a0f9039a07450c01d73b388742c", 31232),
+	ENTRY0("pj1_arthurdayout", "210430", "9404cfa00a0e0dc3ea1dfefbcd8ded4d", 38400),
+	ENTRY0("pj1_buccaneercache", "210502", "0fc979bfee360e4e966d361aa815ed54", 33792),
+	ENTRY0("pj1_buccaneercache", "210522", "7ba7e32110ac3ca97db5e20e3f167bf3", 34304),
+	ENTRY0("pj1_thejob", "210503", "db22f3109827bc180836f060147e7399", 37376),
+	ENTRY0("pj1_thejob", "210608", "dc2167b524b00040e7540251b1eec08d", 44032),
+	ENTRY0("pj1_thejob", "210930/z5", "4714cd741c5f5be68f1dece71361e11e", 44032),
+	ENTRY0("pj1_thejob", "210930/z3", "1ef1bba228e38a1bd6fb2fde4a8b634c", 42496),
+
+	// PunyJam #2
+	ENTRY0("pj2_morris", "211121", "72c139095c2664c9162a1321d8694e19", 66048),
+	ENTRY0("pj2_opportunity", "211120", "4dcc8c5041f3fd38c3172f38176904cf", 60928),
+	ENTRY0("pj2_phobias", "211121", "95e7a65e33211b7d4699740e5d35a470", 48640),
+
+	// PunyJam #3
+	ENTRY0("pj3_submarinesabot", "230512/z3", "9f4843bb85c7c5dbfc06bbe09ad4bf7f", 65536),
+	ENTRY0("pj3_submarinesabot", "230512/z5", "5cc0529faba276319dce0ccf0a3681fc", 68608),
+	ENTRY0("pj3_a1rl0ck", "230225", "c41cdba49309a60aaafb79238e814726", 86528),
+	ENTRY0("pj3_a1rl0ck", "230317", "11c071867ac8bb4f3a104069fb6c9c3d", 82432 ),
+	ENTRY0("pj3_a1rl0ck", "230402/z3", "97c7a7a51201db8ed5943b6a5cf26a90", 81408),
+	ENTRY0("pj3_a1rl0ck", "230402/z5/v1", "b0685da79e0c783b69a3944658ea34f6", 83456),
+	ENTRY0("pj3_a1rl0ck", "230402/z5/v2", "83056c8cc43940d85e58e3fafd4199b3", 83456),
+	ENTRY0("pj3_strikeforce", "230227", "721affab23af57a324a59046a32206bc", 76800),
+	ENTRY0("pj3_lucidnight", "230226", "6544a782cfb772d929d6f8eb61e54db3", 64512),
+	ENTRY0("pj3_lucidnight", "230320", "7e82fcf268692a811cffd60661f85798", 67072),
+	ENTRY0("pj3_fallingpieces", "230225", "74dd61cb01e76b47b8580d7b234a1357", 48128),
+	ENTRY0("pj3_blorp", "230419/z3", "24c6eb86d8710dc50675b9d84dc63f15", 56320),
+	ENTRY0("pj3_blorp", "230419/z5", "f6172926a3de43e1dbd1d756dbcc91ab", 58368),
+	ENTRY0("pj3_seacoral", "230225", "4f5db746459926ac273390c2424872d5", 69120),
+	ENTRY0("pj3_cleangetaway", "230226", "1c9f4a67a48476426b1460aa49e0a70f", 53248),
+	ENTRY0("pj3_cleangetaway", "230430/z3", "d10bd839564e6c737b674c35ab518baf", 53760),
+	ENTRY0("pj3_cleangetaway", "230430/z5", "458678c12490137ffdd972b78b307562", 54784),
+	ENTRY0("pj3_fantadimension", "230313", "2281e7a74333a7730ac44fd233d4f9b3", 60416),
+	ENTRY0("pj3_fantadimension", "230508/z3", "25455e67bcc64a4343993e8acfbb0b48", 60928),
+	ENTRY0("pj3_fantadimension", "230508/z5", "2eb8729675b9e461b7bbf3449f3538d8", 62464),
+
+	// SeedComp! 2023
+	ENTRY0("kingsball", "230301/z3", "d2f342061077926cc7be238a25af016e", 70144),
+	ENTRY0("kingsball", "230301/z5", "546eea1e3d47cf5139a51188916f9c39", 72704 ),
 
 	FROTZ_TABLE_END_MARKER
 };

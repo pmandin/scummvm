@@ -38,10 +38,10 @@ namespace UI {
 
 // does NOT put the object in a valid state until loadVideo is called
 void Viewport::init() {
-	const BSUM *bootSummary = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bootSummary = GetEngineData(BSUM);
 	assert(bootSummary);
 
-	const VIEW *viewportData = (const VIEW *)g_nancy->getEngineData("VIEW");
+	auto *viewportData = GetEngineData(VIEW);
 	assert(viewportData);
 
 	moveTo(viewportData->screenPosition);
@@ -70,7 +70,7 @@ void Viewport::handleInput(NancyInput &input) {
 	if (	g_nancy->getGameType() != kGameTypeVampire &&
 			input.input & (NancyInput::kLeftMouseButton | NancyInput::kRightMouseButton)
 			&& _stickyCursorPos.x > -1) {
-		g_system->warpMouse(_stickyCursorPos.x, _stickyCursorPos.y);
+		g_nancy->_cursorManager->warpCursor(_stickyCursorPos);
 		input.mousePos = _stickyCursorPos;
 	}
 

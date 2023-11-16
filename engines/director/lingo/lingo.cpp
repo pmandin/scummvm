@@ -413,6 +413,9 @@ Common::String Lingo::formatCallStack(uint pc) {
 			if (frame->sp.ctx && frame->sp.ctx->_id) {
 				result += Common::String::format("%d:", frame->sp.ctx->_id);
 			}
+			if (frame->sp.ctx && frame->sp.ctx->isFactory()) {
+				result += Common::String::format("%s:", frame->sp.ctx->getName().c_str());
+			}
 			result += Common::String::format("%s at [%5d]\n",
 				frame->sp.name->c_str(),
 				framePc
@@ -439,6 +442,9 @@ Common::String Lingo::formatFrame() {
 	if (_state->context->_id)
 		result += Common::String::format("%d:", _state->context->_id);
 	CFrame *frame = callstack[callstack.size() - 1];
+	if (frame->sp.ctx && frame->sp.ctx->isFactory()) {
+		result += Common::String::format("%s:", frame->sp.ctx->getName().c_str());
+	}
 	if (frame->sp.type == VOIDSYM || !frame->sp.name)
 		result += "[unknown]";
 	else
@@ -1647,7 +1653,11 @@ Datum Lingo::varFetch(const Datum &var, bool silent) {
 		{
 			Common::String name = *var.u.s;
 			g_debugger->varReadHook(name);
-			if (_state->localVars && _state->localVars->contains(name)) {
+			// "me" is a special case; even if there is a local variable or argument called "me",
+			// the current me object will take precedence.
+			if (name == "me" && _state->me.type == OBJECT) {
+				return _state->me;
+			} else if (_state->localVars && _state->localVars->contains(name)) {
 				return (*_state->localVars)[name];
 			}
 			debugC(1, kDebugLingoExec, "varFetch: local variable %s not defined", name.c_str());

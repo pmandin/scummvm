@@ -52,7 +52,7 @@ class ActionManager {
 public:
 	static const byte kCursInvHolding			= 0;
 	static const byte kCursInvNotHolding		= 1;
-	static const byte kCursInvNotHoldingOffset	= 100;
+	static const byte kCursStandard				= 254;
 
 	ActionManager() {}
 	virtual ~ActionManager() {}
@@ -72,7 +72,7 @@ public:
 	void synchronize(Common::Serializer &serializer);
 
 protected:
-	static ActionRecord *createActionRecord(uint16 type);
+	static ActionRecord *createActionRecord(uint16 type, Common::SeekableReadStream *recordStream = nullptr);
 	static ActionRecord *createAndLoadNewRecord(Common::SeekableReadStream &inputData);
 
 	void synchronizeMovieWithSound();
@@ -80,6 +80,7 @@ protected:
 	void debugDrawHotspots();
 
 	Common::Array<ActionRecord *> _records;
+	bool _recordsWereExecuted = false; // Used for kDefaultAR dependency
 	Common::Array<ActionRecord *> _activatedRecordsThisFrame;
 };
 

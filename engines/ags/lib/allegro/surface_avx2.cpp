@@ -30,8 +30,11 @@
 
 namespace AGS3 {
 
-inline __m256i simd2BppTo4Bpp(__m256i pixels) {
-	__m256i x = _mm256_unpacklo_epi16(pixels, _mm256_setzero_si256());
+class DrawInnerImpl_AVX2 {
+
+static inline __m256i simd2BppTo4Bpp(__m256i pixels) {
+	__m128i x128 = _mm256_castsi256_si128(pixels);
+	__m256i x = _mm256_cvtepu16_epi32(x128);
 
 	// c is the extracted 5/6 bit color from the image
 	__m256i c = _mm256_srli_epi32(x, 11);
@@ -48,7 +51,7 @@ inline __m256i simd2BppTo4Bpp(__m256i pixels) {
 	return _mm256_or_si256(_mm256_or_si256(_mm256_or_si256(r, g), b), _mm256_set1_epi32(0xff000000));
 }
 
-inline __m256i simd4BppTo2Bpp(__m256i pixels) {
+static inline __m256i simd4BppTo2Bpp(__m256i pixels) {
 	// x is the final 16 bit rgb pixel
 	__m256i x = _mm256_srli_epi32(_mm256_and_si256(pixels, _mm256_set1_epi32(0x000000ff)), 3);
 	x = _mm256_or_si256(x, _mm256_slli_epi32(_mm256_srli_epi32(_mm256_and_si256(pixels, _mm256_set1_epi32(0x0000ff00)), 8+2), 5));
@@ -58,7 +61,7 @@ inline __m256i simd4BppTo2Bpp(__m256i pixels) {
 	return _mm256_packs_epi32(x, _mm256_setzero_si256());
 }
 
-inline __m256i rgbBlendSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alphas) {
+static inline __m256i rgbBlendSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alphas) {
 	// Here we add 1 to alphas if its 0. This is what the original blender function did
 	alphas = _mm256_add_epi16(alphas, _mm256_and_si256(_mm256_cmpgt_epi16(alphas, _mm256_setzero_si256()), _mm256_set1_epi16(1)));
 
@@ -101,7 +104,7 @@ inline __m256i rgbBlendSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alpha
 // preserveAlpha:
 //		false => set destCols's alpha to 0
 // 		true => keep destCols's alpha
-inline __m256i rgbBlendSIMD(__m256i srcCols, __m256i destCols, __m256i alphas, bool preserveAlpha) {
+static inline __m256i rgbBlendSIMD(__m256i srcCols, __m256i destCols, __m256i alphas, bool preserveAlpha) {
 	// Here we add 1 to alphas if its 0. This is what the original blender function did.
 	alphas = _mm256_add_epi32(alphas, _mm256_and_si256(_mm256_cmpgt_epi32(alphas, _mm256_setzero_si256()), _mm256_set1_epi32(1)));
 
@@ -143,7 +146,7 @@ inline __m256i rgbBlendSIMD(__m256i srcCols, __m256i destCols, __m256i alphas, b
 	return srcCols;
 }
 
-inline __m256i argbBlendSIMD(__m256i srcCols, __m256i destCols) {
+static inline __m256i argbBlendSIMD(__m256i srcCols, __m256i destCols) {
 	__m256 srcA = _mm256_cvtepi32_ps(_mm256_srli_epi32(srcCols, 24));
 	srcA = _mm256_mul_ps(srcA, _mm256_set1_ps(1.0f / 255.0f));
 	__m256 srcR = _mm256_cvtepi32_ps(_mm256_and_si256(_mm256_srli_epi32(srcCols, 16), _mm256_set1_epi32(0xff)));
@@ -174,7 +177,7 @@ inline __m256i argbBlendSIMD(__m256i srcCols, __m256i destCols) {
 			_mm256_cvtps_epi32(destB))));
 }
 
-inline __m256i blendTintSpriteSIMD(__m256i srcCols, __m256i destCols, __m256i alphas, bool light) {
+static inline __m256i blendTintSpriteSIMD(__m256i srcCols, __m256i destCols, __m256i alphas, bool light) {
 	// This function is NOT 1 to 1 with the original... It just approximates it
 	// It gets the value of the HSV of the dest color
 	// Then it gets the HSV of the srcCols
@@ -274,21 +277,21 @@ inline __m256i blendTintSpriteSIMD(__m256i srcCols, __m256i destCols, __m256i al
 	return final;
 }
 
-inline __m256i mul32_as16(__m256i a, __m256i b) {
+static inline __m256i mul32_as16(__m256i a, __m256i b) {
 	__m256i a16 = _mm256_packs_epi32(a, _mm256_setzero_si256());
 	__m256i b16 = _mm256_packs_epi32(b, _mm256_setzero_si256());
 	__m256i res = _mm256_mullo_epi16(a16, b16);
 	return _mm256_unpacklo_epi16(res, _mm256_setzero_si256());
 }
 
-inline __m256i findmin32_as16(__m256i a, __m256i b) {
+static inline __m256i findmin32_as16(__m256i a, __m256i b) {
 	__m256i a16 = _mm256_packs_epi32(a, _mm256_setzero_si256());
 	__m256i b16 = _mm256_packs_epi32(b, _mm256_setzero_si256());
 	__m256i res = _mm256_min_epi16(a16, b16);
 	return _mm256_unpacklo_epi16(res, _mm256_setzero_si256());
 }
 
-inline __m256i blendPixelSIMD(__m256i srcCols, __m256i destCols, __m256i alphas) {
+static inline __m256i blendPixelSIMD(__m256i srcCols, __m256i destCols, __m256i alphas) {
 	__m256i srcAlphas, difAlphas, mask, ch1, ch2;
 	auto setupArgbAlphas = [&]() {
 		// This acts the same as this in the normal blender functions
@@ -353,7 +356,7 @@ inline __m256i blendPixelSIMD(__m256i srcCols, __m256i destCols, __m256i alphas)
 	return _mm256_setzero_si256();
 }
 
-inline __m256i blendPixelSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alphas) {
+static inline __m256i blendPixelSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alphas) {
 	__m256i mask, ch1, ch2;
 	switch (_G(_blender_mode)) {
 	case kSourceAlphaBlender:
@@ -390,17 +393,17 @@ inline __m256i blendPixelSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alp
 }
 
 template<int DestBytesPerPixel, int SrcBytesPerPixel>
-inline void drawPixelSIMD(byte *destPtr, const byte *srcP2, __m256i tint, __m256i alphas, __m256i maskedAlphas, __m256i transColors, int xDir, int xCtrBpp, int srcAlpha, int skipTrans, bool horizFlip, bool useTint, __m256i skipMask) {
+static inline void drawPixelSIMD(byte *destPtr, const byte *srcP2, __m256i tint, __m256i alphas, __m256i maskedAlphas, __m256i transColors, int xDir, int xCtrBpp, int srcAlpha, int skipTrans, bool horizFlip, bool useTint, __m256i skipMask) {
 	__m256i srcCols, destCol;
 
 	if (DestBytesPerPixel == 4)
 		destCol = _mm256_loadu_si256((const __m256i *)destPtr);
 	else
-		destCol = simd2BppTo4Bpp(_mm256_and_si256(_mm256_loadu_si256((const __m256i *)destPtr), _mm256_set_epi64x(0, 0, -1, -1)));
+		destCol = simd2BppTo4Bpp(_mm256_loadu_si256((const __m256i *)destPtr));
 	if (SrcBytesPerPixel == 4)
 		srcCols = _mm256_loadu_si256((const __m256i *)(srcP2 + xDir * xCtrBpp));
 	else
-		srcCols = simd2BppTo4Bpp(_mm256_and_si256(_mm256_loadu_si256((const __m256i *)(srcP2 + xDir * xCtrBpp)), _mm256_set_epi64x(0, 0, -1, -1)));
+		srcCols = simd2BppTo4Bpp(_mm256_loadu_si256((const __m256i *)(srcP2 + xDir * xCtrBpp)));
 
 	// we do this here because we need to check if we should skip the pixel before we blend it
 	__m256i mask1 = skipTrans ? _mm256_cmpeq_epi32(_mm256_and_si256(srcCols, maskedAlphas), transColors) : _mm256_setzero_si256();
@@ -427,7 +430,7 @@ inline void drawPixelSIMD(byte *destPtr, const byte *srcP2, __m256i tint, __m256
 	}
 }
 
-inline void drawPixelSIMD2Bpp(byte *destPtr, const byte *srcP2, __m256i tint, __m256i alphas, __m256i transColors, int xDir, int xCtrBpp, int srcAlpha, int skipTrans, bool horizFlip, bool useTint, __m256i skipMask) {
+static inline void drawPixelSIMD2Bpp(byte *destPtr, const byte *srcP2, __m256i tint, __m256i alphas, __m256i transColors, int xDir, int xCtrBpp, int srcAlpha, int skipTrans, bool horizFlip, bool useTint, __m256i skipMask) {
 	__m256i destCol = _mm256_loadu_si256((const __m256i *)destPtr);
 	__m256i srcCols = _mm256_loadu_si256((const __m256i *)(srcP2 + xDir * xCtrBpp));
 	__m256i mask1 = skipTrans ? _mm256_cmpeq_epi16(srcCols, transColors) : _mm256_setzero_si256();
@@ -451,7 +454,6 @@ inline void drawPixelSIMD2Bpp(byte *destPtr, const byte *srcP2, __m256i tint, __
 	_mm256_storeu_si256((__m256i *)destPtr, final);
 }
 
-class DrawInnerImpl {
 public:
 
 // This template handles 2bpp and 4bpp, the other specializations handle 1bpp and format conversion blits
@@ -487,7 +489,7 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 		xCtrBppStart = xCtrStart * SrcBytesPerPixel;
 		args.xStart = 0;
 	}
-	int destY = args.yStart, srcYCtr = 0, yCtr = 0, scaleYCtr = 0, yCtrHeight = (xCtrWidth % 4 == 0) ? args.dstRect.height() : (args.dstRect.height() - 1);
+	int destY = args.yStart, srcYCtr = 0, yCtr = 0, scaleYCtr = 0, yCtrHeight = args.dstRect.height();
 	if (Scale) yCtrHeight = args.dstRect.height();
 	if (args.yStart < 0) {
 		yCtr = -args.yStart;
@@ -499,6 +501,9 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 	}
 	if (args.yStart + yCtrHeight > args.destArea.h) {
 		yCtrHeight = args.destArea.h - args.yStart;
+	}
+	if (xCtrWidth % 8 != 0) {
+		--yCtrHeight;
 	}
 
 	byte *destP = (byte *)args.destArea.getBasePtr(0, destY);
@@ -534,7 +539,7 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 			// scaling size, we create a small dummy buffer that we copy the pixels into and then
 			// call the drawPixelsSIMD function
 			byte srcBuffer[4*8] = {0};
-			for (int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart, scaleXCtr = xCtrStart * args.scaleX; xCtr < xCtrWidth; destX += 4, xCtr += 4, xCtrBpp += SrcBytesPerPixel*4) {
+			for (int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart, scaleXCtr = xCtrStart * args.scaleX; xCtr < xCtrWidth; destX += 8, xCtr += 8, xCtrBpp += SrcBytesPerPixel*4) {
 				if (yCtr + 1 == yCtrHeight && xCtr + 4 > xCtrWidth) break; // Don't go past the last 4 pixels
 				__m256i indexes = _mm256_set1_epi32(scaleXCtr);
 				// Calculate in parallel the indexes of the pixels
@@ -573,7 +578,7 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 
 	// Get the last x values of the last row
 	int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart;
-	// We have a picture that is a multiple of 4, so no extra pixels to draw
+	// We have a picture that is a multiple of 8, so no extra pixels to draw
 	if (xCtrWidth % 8 == 0) return;
 	// Drawing the last few not scaled pixels here.
 	// Same as the loop above but now we check if we are going to overflow,
@@ -658,7 +663,7 @@ static void drawInner2Bpp(BITMAP::DrawInnerArgs &args) {
 		xCtrBppStart = xCtrStart * 2;
 		args.xStart = 0;
 	}
-	int destY = args.yStart, yCtr = 0, srcYCtr = 0, scaleYCtr = 0, yCtrHeight = (xCtrWidth % 16 == 0) ? args.dstRect.height() : (args.dstRect.height() - 1);
+	int destY = args.yStart, yCtr = 0, srcYCtr = 0, scaleYCtr = 0, yCtrHeight = args.dstRect.height();
 	if (Scale) yCtrHeight = args.dstRect.height();
 	if (args.yStart < 0) {
 		yCtr = -args.yStart;
@@ -670,6 +675,9 @@ static void drawInner2Bpp(BITMAP::DrawInnerArgs &args) {
 	}
 	if (args.yStart + yCtrHeight > args.destArea.h) {
 		yCtrHeight = args.destArea.h - args.yStart;
+	}
+	if (!Scale && xCtrWidth % 16 != 0) {
+		--yCtrHeight;
 	}
 
 	byte *destP = (byte *)args.destArea.getBasePtr(0, destY);
@@ -946,20 +954,20 @@ static void drawInner1Bpp(BITMAP::DrawInnerArgs &args) {
 	}
 }
 
-}; // end of class DrawInnerImpl
+}; // end of class DrawInnerImpl_AVX2
 
 template<bool Scale>
 void BITMAP::drawAVX2(DrawInnerArgs &args) {
 	if (args.sameFormat) {
 		switch (format.bytesPerPixel) {
-		case 1: DrawInnerImpl::drawInner1Bpp<Scale>(args); break;
-		case 2: DrawInnerImpl::drawInner2Bpp<Scale>(args); break;
-		case 4: DrawInnerImpl::drawInner4BppWithConv<4, 4, Scale>(args); break;
+		case 1: DrawInnerImpl_AVX2::drawInner1Bpp<Scale>(args); break;
+		case 2: DrawInnerImpl_AVX2::drawInner2Bpp<Scale>(args); break;
+		case 4: DrawInnerImpl_AVX2::drawInner4BppWithConv<4, 4, Scale>(args); break;
 		}
 	} else if (format.bytesPerPixel == 4 && args.src.format.bytesPerPixel == 2) {
-		DrawInnerImpl::drawInner4BppWithConv<4, 2, Scale>(args);
+		DrawInnerImpl_AVX2::drawInner4BppWithConv<4, 2, Scale>(args);
 	} else if (format.bytesPerPixel == 2 && args.src.format.bytesPerPixel == 4) {
-		DrawInnerImpl::drawInner4BppWithConv<2, 4, Scale>(args);
+		DrawInnerImpl_AVX2::drawInner4BppWithConv<2, 4, Scale>(args);
 	}
 }
 

@@ -45,18 +45,13 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 
 	if (iOS7_fetchEvent(&internalEvent)) {
 		switch (internalEvent.type) {
-		case kInputTouchFirstDown:
-			if (!handleEvent_touchFirstDown(event, internalEvent.value1, internalEvent.value2))
+		case kInputTouchBegan:
+			if (!handleEvent_touchBegan(event, internalEvent.value1, internalEvent.value2))
 				return false;
 			break;
 
-		case kInputTouchFirstUp:
-			if (!handleEvent_touchFirstUp(event, internalEvent.value1, internalEvent.value2))
-				return false;
-			break;
-
-		case kInputTouchFirstDragged:
-			if (!handleEvent_touchFirstDragged(event, internalEvent.value1, internalEvent.value2))
+		case kInputTouchMoved:
+			if (!handleEvent_touchMoved(event, internalEvent.value1, internalEvent.value2))
 				return false;
 			break;
 
@@ -104,21 +99,6 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			handleEvent_applicationClearState();
 			return false;
 
-		case kInputTouchSecondDragged:
-			if (!handleEvent_touchSecondDragged(event, internalEvent.value1, internalEvent.value2))
-				return false;
-			break;
-		case kInputTouchSecondDown:
-			_secondaryTapped = true;
-			if (!handleEvent_touchSecondDown(event, internalEvent.value1, internalEvent.value2))
-				return false;
-			break;
-		case kInputTouchSecondUp:
-			_secondaryTapped = false;
-			if (!handleEvent_touchSecondUp(event, internalEvent.value1, internalEvent.value2))
-				return false;
-			break;
-
 		case kInputKeyPressed:
 			handleEvent_keyPressed(event, internalEvent.value1);
 			break;
@@ -130,6 +110,11 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 
 		case kInputTap:
 			if (!handleEvent_tap(event, (UIViewTapDescription) internalEvent.value1, internalEvent.value2))
+				return false;
+			break;
+
+		case kInputLongPress:
+			if (!handleEvent_longPress(event, (UIViewLongPressDescription) internalEvent.value1, internalEvent.value2))
 				return false;
 			break;
 
@@ -161,6 +146,10 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 			event.type = Common::EVENT_SCREEN_CHANGED;
 			break;
 
+		case kInputTouchModeChanged:
+			handleEvent_touchModeChanged();
+			break;
+
 		default:
 			break;
 		}
@@ -170,121 +159,25 @@ bool OSystem_iOS7::pollEvent(Common::Event &event) {
 	return false;
 }
 
-bool OSystem_iOS7::handleEvent_touchFirstDown(Common::Event &event, int x, int y) {
-	//printf("Mouse down at (%u, %u)\n", x, y);
-
-	// Workaround: kInputMouseSecondToggled isn't always sent when the
-	// secondary finger is lifted. Need to make sure we get out of that mode.
-	_secondaryTapped = false;
-
+bool OSystem_iOS7::handleEvent_touchBegan(Common::Event &event, int x, int y) {
 	_lastPadX = x;
 	_lastPadY = y;
 
-	if (!_touchpadModeEnabled) {
+	if (_currentTouchMode == kTouchModeDirect) {
 		Common::Point mouse(x, y);
 		dynamic_cast<iOSCommonGraphics *>(_graphicsManager)->notifyMousePosition(mouse);
 	}
 
-	if (_mouseClickAndDragEnabled) {
-		if (_touchpadModeEnabled) {
-			_queuedInputEvent.type = Common::EVENT_LBUTTONDOWN;
-			_queuedEventTime = getMillis() + 250;
-			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
-		} else {
-			event.type = Common::EVENT_LBUTTONDOWN;
-			handleEvent_mouseEvent(event, 0, 0);
-		}
-		return true;
-	} else {
-		_lastMouseDown = getMillis();
-	}
 	return false;
 }
 
-bool OSystem_iOS7::handleEvent_touchFirstUp(Common::Event &event, int x, int y) {
-	//printf("Mouse up at (%u, %u)\n", x, y);
-
-	if (_secondaryTapped) {
-		_secondaryTapped = false;
-		if (!handleEvent_touchSecondUp(event, x, y))
-			return false;
-	} else if (_mouseClickAndDragEnabled) {
-		if (_touchpadModeEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
-			// This has not been sent yet, send it right away
-			event = _queuedInputEvent;
-			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
-			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
-			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
-		} else {
-			event.type = Common::EVENT_LBUTTONUP;
-			handleEvent_mouseEvent(event, 0, 0);
-		}
-	} else {
-		if (getMillis() - _lastMouseDown < 250) {
-			event.type = Common::EVENT_LBUTTONDOWN;
-			handleEvent_mouseEvent(event, 0, 0);
-
-			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
-			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
-			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
-		} else
-			return false;
-	}
-
-	return true;
-}
-
-bool OSystem_iOS7::handleEvent_touchSecondDown(Common::Event &event, int x, int y) {
-
-	if (_mouseClickAndDragEnabled) {
-		event.type = Common::EVENT_LBUTTONUP;
-		handleEvent_mouseEvent(event, 0, 0);
-
-		_queuedInputEvent.type = Common::EVENT_RBUTTONDOWN;
-		_queuedEventTime = getMillis() + 250;
-		handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
-	} else
-		return false;
-
-	return true;
-}
-
-bool OSystem_iOS7::handleEvent_touchSecondUp(Common::Event &event, int x, int y) {
-	int curTime = getMillis();
-
-	if (!_mouseClickAndDragEnabled) {
-		//printf("Rightclick!\n");
-		event.type = Common::EVENT_RBUTTONDOWN;
-		handleEvent_mouseEvent(event, 0, 0);
-		_queuedInputEvent.type = Common::EVENT_RBUTTONUP;
-		handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
-		_queuedEventTime = curTime + kQueuedInputEventDelay;
-	} else if (_queuedInputEvent.type == Common::EVENT_RBUTTONDOWN) {
-		// This has not been sent yet, send it right away
-		event = _queuedInputEvent;
-		_queuedInputEvent.type = Common::EVENT_RBUTTONUP;
-		_queuedEventTime = curTime + kQueuedInputEventDelay;
-		handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
-	} else {
-		event.type = Common::EVENT_RBUTTONUP;
-		handleEvent_mouseEvent(event, 0, 0);
-	}
-
-	return true;
-}
-
-bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, int y) {
-	//printf("Mouse dragged at (%u, %u)\n", x, y);
+bool OSystem_iOS7::handleEvent_touchMoved(Common::Event &event, int x, int y) {
 	int deltaX = _lastPadX - x;
 	int deltaY = _lastPadY - y;
 	_lastPadX = x;
 	_lastPadY = y;
 
-	if (_touchpadModeEnabled) {
-		if (_mouseClickAndDragEnabled && _queuedInputEvent.type == Common::EVENT_LBUTTONDOWN) {
-			// Cancel the button down event since this was a pure mouse move
-			_queuedInputEvent.type = Common::EVENT_INVALID;
-		}
+	if (_currentTouchMode == kTouchModeTouchpad) {
 		handleEvent_mouseDelta(event, deltaX, deltaY);
 	} else {
 		// Update mouse position
@@ -294,10 +187,6 @@ bool OSystem_iOS7::handleEvent_touchFirstDragged(Common::Event &event, int x, in
 		handleEvent_mouseEvent(event, deltaX, deltaY);
 	}
 	return true;
-}
-
-bool OSystem_iOS7::handleEvent_touchSecondDragged(Common::Event &event, int x, int y) {
-	return false;
 }
 
 void OSystem_iOS7::handleEvent_mouseLeftButtonDown(Common::Event &event, int x, int y) {
@@ -351,6 +240,20 @@ void  OSystem_iOS7::handleEvent_orientationChanged(int orientation) {
 		_screenOrientation = newOrientation;
 		rebuildSurface();
 	}
+}
+
+void OSystem_iOS7::handleEvent_touchModeChanged() {
+	switch (_currentTouchMode) {
+	case kTouchModeDirect:
+		_currentTouchMode = kTouchModeTouchpad;
+		break;
+	case kTouchModeTouchpad:
+	default:
+		_currentTouchMode = kTouchModeDirect;
+		break;
+	}
+
+	updateTouchMode();
 }
 
 void OSystem_iOS7::rebuildSurface() {
@@ -416,16 +319,6 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 	else if (touches == 2) {
 		switch ((UIViewSwipeDirection)direction) {
 		case kUIViewSwipeUp: {
-			_mouseClickAndDragEnabled = !_mouseClickAndDragEnabled;
-			ConfMan.setBool("clickanddrag_mode", _mouseClickAndDragEnabled);
-			ConfMan.flushToDisk();
-			Common::U32String dialogMsg;
-			if (_mouseClickAndDragEnabled) {
-				dialogMsg = _("Mouse-click-and-drag mode enabled.");
-			} else
-				dialogMsg = _("Mouse-click-and-drag mode disabled.");
-			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
-			dialog.runModal();
 			return false;
 		}
 
@@ -439,14 +332,18 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 
 		case kUIViewSwipeRight: {
 			// Swipe right
-			_touchpadModeEnabled = !_touchpadModeEnabled;
-			ConfMan.setBool("touchpad_mode", _touchpadModeEnabled);
-			ConfMan.flushToDisk();
+			if (_currentTouchMode == kTouchModeDirect) {
+				_currentTouchMode = kTouchModeTouchpad;
+			} else {
+				_currentTouchMode = kTouchModeDirect;
+			}
+			updateTouchMode();
+
 			Common::U32String dialogMsg;
-			if (_touchpadModeEnabled)
-				dialogMsg = _("Touchpad mode enabled.");
+			if (_currentTouchMode == kTouchModeTouchpad)
+				dialogMsg = _("Touchpad emulation");
 			else
-				dialogMsg = _("Touchpad mode disabled.");
+				dialogMsg = _("Direct mouse");
 			GUI::TimedMessageDialog dialog(dialogMsg, 1500);
 			dialog.runModal();
 			return false;
@@ -454,8 +351,8 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 
 		case kUIViewSwipeLeft: {
 			// Swipe left
-			bool connect = !ConfMan.getBool("onscreen_control");
-			ConfMan.setBool("onscreen_control", connect);
+			bool connect = !ConfMan.getBool("gamepad_controller");
+			ConfMan.setBool("gamepad_controller", connect);
 			ConfMan.flushToDisk();
 			virtualController(connect);
 			return false;
@@ -470,15 +367,25 @@ bool OSystem_iOS7::handleEvent_swipe(Common::Event &event, int direction, int to
 
 bool OSystem_iOS7::handleEvent_tap(Common::Event &event, UIViewTapDescription type, int touches) {
 	if (touches == 1) {
-		if (type == kUIViewTapDouble) {
-			event.type = Common::EVENT_RBUTTONDOWN;
-			_queuedInputEvent.type = Common::EVENT_RBUTTONUP;
+		if (type == kUIViewTapSingle) {
+			event.type = Common::EVENT_LBUTTONDOWN;
+			handleEvent_mouseEvent(event, 0, 0);
+
+			_queuedInputEvent.type = Common::EVENT_LBUTTONUP;
 			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
 			return true;
 		}
-	}
-	else if (touches == 2) {
-		if (type == kUIViewTapDouble) {
+	} else if (touches == 2) {
+		if (type == kUIViewTapSingle) {
+			event.type = Common::EVENT_RBUTTONDOWN;
+			handleEvent_mouseEvent(event, 0, 0);
+
+			_queuedInputEvent.type = Common::EVENT_RBUTTONUP;
+			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
+			handleEvent_mouseEvent(_queuedInputEvent, 0, 0);
+			return true;
+		} else if (type == kUIViewTapDouble) {
 			event.kbd.keycode = _queuedInputEvent.kbd.keycode = Common::KEYCODE_ESCAPE;
 			event.kbd.ascii = _queuedInputEvent.kbd.ascii = Common::ASCII_ESCAPE;
 			event.type = Common::EVENT_KEYDOWN;
@@ -487,6 +394,29 @@ bool OSystem_iOS7::handleEvent_tap(Common::Event &event, UIViewTapDescription ty
 			_queuedEventTime = getMillis() + kQueuedInputEventDelay;
 			return true;
 		}
+	}
+	return false;
+}
+
+bool OSystem_iOS7::handleEvent_longPress(Common::Event &event, UIViewLongPressDescription type, int touches) {
+	if (touches == 1) {
+		if (type == UIViewLongPressStarted) {
+			event.type = Common::EVENT_LBUTTONDOWN;
+			handleEvent_mouseEvent(event, 0, 0);
+		} else {
+			event.type = Common::EVENT_LBUTTONUP;
+			handleEvent_mouseEvent(event, 0, 0);
+		}
+		return true;
+	} else if (touches == 2) {
+		if (type == UIViewLongPressStarted) {
+			event.type = Common::EVENT_RBUTTONDOWN;
+			handleEvent_mouseEvent(event, 0, 0);
+		} else {
+			event.type = Common::EVENT_RBUTTONUP;
+			handleEvent_mouseEvent(event, 0, 0);
+		}
+		return true;
 	}
 	return false;
 }

@@ -65,6 +65,39 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			0
 		}
 	},
+	{
+		GAMEOPTION_FIX_SOFTLOCKS,
+		{
+			_s("Fix softlocks"),
+			_s("Fix instances where missing something earlier in the game blocks you from progressing any further."),
+			"softlocks_fix",
+			true,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_FIX_ANNOYANCES,
+		{
+			_s("Fix annoyances"),
+			_s("Fix various minor annoyances."),
+			"annoyances_fix",
+			true,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_NANCY2_TIMER,
+		{
+			_s("Extend endgame timer"),
+			_s("Get a little more time before failing the final puzzle. This is an official patch by HeR Interactive."),
+			"final_timer",
+			false,
+			0,
+			0
+		}
+	},
 	AD_EXTRA_GUI_OPTIONS_TERMINATOR
 };
 
@@ -91,7 +124,7 @@ public:
 
 Common::KeymapArray NancyMetaEngine::initKeymaps(const char *target) const {
 	Common::KeymapArray keymaps;
-	Nancy::InputManager::initKeymaps(keymaps);
+	Nancy::InputManager::initKeymaps(keymaps, target);
 	return keymaps;
 }
 
@@ -146,13 +179,13 @@ void NancyMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
 }
 
 void NancyMetaEngine::registerDefaultSettings(const Common::String &target) const {
-	ConfMan.setInt("music_volume", 54 * 255 / 100, target);
-	ConfMan.setInt("speech_volume", 54 * 255 / 100, target);
-	ConfMan.setInt("sfx_volume", 51 * 255 / 100, target);
-	ConfMan.setBool("subtitles", true, target);
+	ConfMan.registerDefault("music_volume", 54 * 255 / 100);
+	ConfMan.registerDefault("speech_volume", 54 * 255 / 100);
+	ConfMan.registerDefault("sfx_volume", 51 * 255 / 100);
+	ConfMan.registerDefault("subtitles", true);
 
-	ConfMan.setBool("player_speech", true, target);
-	ConfMan.setBool("character_speech", true, target);
+	ConfMan.registerDefault("player_speech", true);
+	ConfMan.registerDefault("character_speech", true);
 }
 
 const ADExtraGuiOptionsMap *NancyMetaEngine::getAdvancedExtraGuiOptions() const {

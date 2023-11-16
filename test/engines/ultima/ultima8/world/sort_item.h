@@ -268,6 +268,33 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 	}
 
 	/**
+	 * Overlapping non-flat items partially in front draw after
+	 * Test case for rendering issue at MainActor::teleport 37 22730 18016 56
+	 */
+	void test_nonflat_partial_front_sort() {
+		Ultima::Ultima8::SortItem si1;
+		Ultima::Ultima8::SortItem si2;
+
+		Ultima::Ultima8::Box b1(22591, 17599, 56, 160, 160, 8);
+		si1.setBoxBounds(b1, 0, 0);
+		si1._solid = true;
+		si1._land = true;
+		si1._fixed = true;
+
+		Ultima::Ultima8::Box b2(22719, 17695, 56, 160, 160, 8);
+		si2.setBoxBounds(b2, 0, 0);
+		si2._solid = true;
+		si2._land = true;
+		si2._fixed = true;
+
+		TS_ASSERT(si1.overlap(si2));
+		TS_ASSERT(si2.overlap(si1));
+
+		TS_ASSERT(si1.below(si2));
+		TS_ASSERT(!si2.below(si1));
+	}
+
+	/**
 	 * Overlapping lower Z position transparent non-solid draw after
 	 * Test case for rendering issue at MainActor::teleport 50 2316 7812 48
 	 * Skeleton in niche should render before cobweb
@@ -315,14 +342,14 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 
 	/**
 	 * Overlapping x-flat vs non-flat floor where z order not clear
-	 * Test case for rendering issue at MainActor::teleport 40 12311 9415 48
+	 * Test case for rendering issue at MainActor::teleport 37 17620 19260 104
 	 * Tapestry should draw after floor
 	 */
 	void test_x_flat_z_tolerance_sort() {
 		Ultima::Ultima8::SortItem si1;
 		Ultima::Ultima8::SortItem si2;
 
-		Ultima::Ultima8::Box b1(12543, 9727, 40, 256, 256, 8);
+		Ultima::Ultima8::Box b1(17663, 19199, 96, 256, 256, 8);
 		si1.setBoxBounds(b1, 0, 0);
 		si1._solid = true;
 		si1._occl = true;
@@ -330,7 +357,7 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 		si1._land = true;
 		si1._fixed = true;
 
-		Ultima::Ultima8::Box b2(12287, 9791, 46, 0, 96, 40);
+		Ultima::Ultima8::Box b2(17410, 19110, 96, 0, 96, 40);
 		si2.setBoxBounds(b2, 0, 0);
 		si2._fixed = true;
 
@@ -389,10 +416,81 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 	}
 
 	/**
+	 * Overlapping x-flats differing in y position and slightly by x position
+	 * Test case for rendering issue at MainActor::teleport 37 17631 17831 104
+	 */
+	void test_x_flat_layered_sort() {
+		Ultima::Ultima8::SortItem si1;
+		Ultima::Ultima8::SortItem si2;
+
+		Ultima::Ultima8::Box b1(17410, 17806, 96, 0, 96, 40);
+		si1.setBoxBounds(b1, 0, 0);
+		si1._fixed = true;
+
+		Ultima::Ultima8::Box b2(17408, 17888, 96, 0, 96, 40);
+		si2.setBoxBounds(b2, 0, 0);
+		si2._fixed = true;
+
+		TS_ASSERT(si1.overlap(si2));
+		TS_ASSERT(si2.overlap(si1));
+
+		TS_ASSERT(si1.below(si2));
+		TS_ASSERT(!si2.below(si1));
+	}
+
+	/**
+	 * Overlapping y-flats differing in x position
+	 * Test case for rendering issue at MainActor::teleport 8 2063 1207 48
+	 */
+	void test_y_flat_layered_sort() {
+		Ultima::Ultima8::SortItem si1;
+		Ultima::Ultima8::SortItem si2;
+
+		Ultima::Ultima8::Box b1(2175, 1055, 48, 96, 0, 40);
+		si1.setBoxBounds(b1, 0, 0);
+		si1._fixed = true;
+
+		Ultima::Ultima8::Box b2(2111, 1055, 48, 96, 0, 40);
+		si2.setBoxBounds(b2, 0, 0);
+		si2._fixed = true;
+
+		TS_ASSERT(si1.overlap(si2));
+		TS_ASSERT(si2.overlap(si1));
+
+		TS_ASSERT(si1.below(si2));
+		TS_ASSERT(!si2.below(si1));
+	}
+
+	/**
+	 * Overlapping y-flats vs non-flat item only by one pixel edge
+	 * Test case for rendering issue at MainActor::teleport 8 2143 1215 48
+	 */
+	void test_y_flat_edge_overlap_sort() {
+		Ultima::Ultima8::SortItem si1;
+		Ultima::Ultima8::SortItem si2;
+
+		Ultima::Ultima8::Box b1(2239, 1055, 48, 64, 32, 40);
+		si1.setBoxBounds(b1, 0, 0);
+		si1._solid = true;
+		si1._fixed = true;
+
+		Ultima::Ultima8::Box b2(2175, 1055, 48, 96, 0, 40);
+		si2.setBoxBounds(b2, 0, 0);
+		si2._fixed = true;
+
+		// These share a one pixel edge, but we need to ignore that currently to prevent paint dependency cycles
+		TS_ASSERT(!si1.overlap(si2));
+		TS_ASSERT(!si2.overlap(si1));
+
+		TS_ASSERT(si1.below(si2));
+		TS_ASSERT(!si2.below(si1));
+	}
+
+	/**
 	 * Completely Overlapping y-flats differing only in item number and frame
 	 * Test case for rendering issue at MainActor::teleport 37 17628 19668 56
 	 */
-	void test_y_flat_layered_sort() {
+	void test_y_flat_same_position_sort() {
 		Ultima::Ultima8::SortItem si1;
 		Ultima::Ultima8::SortItem si2;
 
@@ -431,6 +529,33 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 		si1._fixed = true;
 
 		Ultima::Ultima8::Box b2(19008, 17432, 104, 96, 0, 40);
+		si2.setBoxBounds(b2, 0, 0);
+		si2._fixed = true;
+
+		TS_ASSERT(si1.overlap(si2));
+		TS_ASSERT(si2.overlap(si1));
+
+		TS_ASSERT(si1.below(si2));
+		TS_ASSERT(!si2.below(si1));
+	}
+
+	/**
+	 * Overlapping y-flat vs z-flat floor where z order not clear
+	 * Test case for rendering issue at MainActor::teleport 37 22546 18656 56
+	 * Vines should draw after floor
+	 */
+	void test_y_flat_z_tolerance_sort() {
+		Ultima::Ultima8::SortItem si1;
+		Ultima::Ultima8::SortItem si2;
+
+		Ultima::Ultima8::Box b1(22271, 18431, 56, 128, 128, 0);
+		si1.setBoxBounds(b1, 0, 0);
+		si1._solid = true;
+		si1._occl = true;
+		si1._land = true;
+		si1._fixed = true;
+
+		Ultima::Ultima8::Box b2(22367, 18399, 48, 128, 0, 40);
 		si2.setBoxBounds(b2, 0, 0);
 		si2._fixed = true;
 
@@ -650,9 +775,9 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 		TS_ASSERT(si1.contains(si1._sxTop, si1._syTop));
 		TS_ASSERT(si1.contains(si1._sxLeft, (si1._syTop + si1._syBot) / 2));
 
-		// Exclusive of right and bottom
-		TS_ASSERT(!si1.contains(si1._sxBot, si1._syBot));
-		TS_ASSERT(!si1.contains(si1._sxRight, (si1._syTop + si1._syBot) / 2));
+		// Inclusive of right and bottom
+		TS_ASSERT(si1.contains(si1._sxBot, si1._syBot));
+		TS_ASSERT(si1.contains(si1._sxRight, (si1._syTop + si1._syBot) / 2));
 
 		// Outside bounds
 		TS_ASSERT(!si1.contains(si1._sxBot, si1._syBot + 1));
@@ -714,17 +839,31 @@ class U8SortItemTestSuite : public CxxTest::TestSuite {
 		TS_ASSERT(!si1.overlap(si2));
 		TS_ASSERT(!si2.overlap(si1));
 
-		// Check outside left & right bounds using non-flats
+		// Check edge left & right bounds using non-flats
 		b1 = Ultima::Ultima8::Box(0, 0, 0, 128, 128, 32);
 		si1.setBoxBounds(b1, 0, 0);
 
 		b2 = Ultima::Ultima8::Box(128, -128, 0, 128, 128, 32);
 		si2.setBoxBounds(b2, 0, 0);
 
+		// These often share a one pixel edge, but we need to ignore that currently to prevent paint dependency cycles
 		TS_ASSERT(!si1.overlap(si2));
 		TS_ASSERT(!si2.overlap(si1));
 
 		b2 = Ultima::Ultima8::Box(-128, 128, 0, 128, 128, 32);
+		si2.setBoxBounds(b2, 0, 0);
+
+		TS_ASSERT(!si1.overlap(si2));
+		TS_ASSERT(!si2.overlap(si1));
+
+		// Check outside left & right bounds using non-flats
+		b2 = Ultima::Ultima8::Box(160, -128, 0, 128, 128, 32);
+		si2.setBoxBounds(b2, 0, 0);
+
+		TS_ASSERT(!si1.overlap(si2));
+		TS_ASSERT(!si2.overlap(si1));
+
+		b2 = Ultima::Ultima8::Box(-128, 160, 0, 128, 128, 32);
 		si2.setBoxBounds(b2, 0, 0);
 
 		TS_ASSERT(!si1.overlap(si2));

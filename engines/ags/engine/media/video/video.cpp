@@ -98,9 +98,10 @@ static bool play_video(Video::VideoDecoder *decoder, const char *name, int flags
 					stretchVideo = false;
 
 				if (stretchVideo) {
+					scr.fillRect(Common::Rect(dstRect.Left, dstRect.Top, dstRect.Right + 1, dstRect.Bottom + 1), 0);
 					scr.transBlitFrom(*frame, Common::Rect(0, 0, frame->w, frame->h),
-					                  Common::Rect(dstRect.Left, dstRect.Top, dstRect.Right + 1, dstRect.Bottom + 1),
-					                  decoder->getPalette());
+									  Common::Rect(dstRect.Left, dstRect.Top, dstRect.Right + 1, dstRect.Bottom + 1),
+									  decoder->getPalette());
 				} else {
 					scr.blitFrom(*frame, Common::Point(dstRect.Left, dstRect.Top), decoder->getPalette());
 				}
@@ -133,6 +134,11 @@ static bool play_video(Video::VideoDecoder *decoder, const char *name, int flags
 				return true; // skip on mouse click
 		}
 	}
+
+	// Clear the screen after playback
+	if (_G(gfxDriver)->UsesMemoryBackBuffer())
+		_G(gfxDriver)->GetMemoryBackBuffer()->Clear();
+	render_to_screen();
 
 	invalidate_screen();
 

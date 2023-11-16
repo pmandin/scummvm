@@ -151,6 +151,14 @@ void OSystem_iOS7::updateOutputSurface() {
 	});
 }
 
+void OSystem_iOS7::updateTouchMode() {
+#if TARGET_OS_IOS
+	execute_on_main_thread(^ {
+		[[iOS7AppDelegate iPhoneView] updateTouchMode];
+	});
+#endif
+}
+
 void OSystem_iOS7::virtualController(bool connect) {
 	execute_on_main_thread(^ {
 		[[iOS7AppDelegate iPhoneView] virtualController:connect];

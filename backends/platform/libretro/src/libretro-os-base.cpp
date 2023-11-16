@@ -123,6 +123,8 @@ void OSystem_libretro::engineInit() {
 		ConfMan.setBool("original_gui", false);
 		retro_log_cb(RETRO_LOG_INFO, "\"original_gui\" setting forced to false\n");
 	}
+	_mousePalette.reset();
+	_gamePalette.reset();
 }
 
 void OSystem_libretro::engineDone() {
@@ -130,7 +132,7 @@ void OSystem_libretro::engineDone() {
 }
 
 bool OSystem_libretro::hasFeature(Feature f) {
-	return (f == OSystem::kFeatureCursorPalette);
+	return (f == OSystem::kFeatureCursorPalette) || (f == OSystem::kFeatureCursorAlpha);
 }
 
 void OSystem_libretro::setFeatureState(Feature f, bool enable) {

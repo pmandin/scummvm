@@ -24,11 +24,14 @@
 
 #include "common/scummsys.h"
 #include "common/rect.h"
-#include "graphics/fonts/macfont.h"
 #include "graphics/sjis.h"
 #include "scumm/charset_v7.h"
 #include "scumm/scumm.h"
 #include "scumm/gfx.h"
+
+namespace Graphics {
+class Font;
+}
 
 namespace Scumm {
 
@@ -156,7 +159,7 @@ protected:
 	virtual bool prepareDraw(uint16 chr);
 
 	int _width, _height, _origWidth, _origHeight;
-	const int _cjkSpacing;
+	int _cjkSpacing;
 	int _offsX, _offsY;
 	const byte *_charPtr;
 
@@ -166,7 +169,7 @@ protected:
 public:
 	CharsetRendererClassic(ScummEngine *vm, int cjkSpacing) : CharsetRendererPC(vm), _cjkSpacing(cjkSpacing) {}
 	CharsetRendererClassic(ScummEngine *vm) : CharsetRendererClassic(vm, vm->_game.id == GID_INDY4 &&
-									 vm->_game.platform == Common::kPlatformMacintosh &&
+									 (vm->_game.platform == Common::kPlatformMacintosh || vm->_game.platform == Common::kPlatformDOS) &&
 									 vm->_language == Common::JA_JPN ? -3 : 0) {}
 
 	void printChar(int chr, bool ignoreCharsetMask) override;
@@ -281,12 +284,11 @@ public:
 
 class CharsetRendererMac : public CharsetRendererCommon {
 protected:
-	Graphics::MacFONTFont _macFonts[2];
+	const Graphics::Font *_macFonts[2];
 	bool _useRealCharWidth;
 	bool _useCorrectFontSpacing;
 	bool _pad;
 	int _lastTop;
-
 
 	int getDrawWidthIntern(uint16 chr) const;
 

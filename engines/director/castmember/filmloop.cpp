@@ -129,7 +129,11 @@ void FilmLoopCastMember::loadFilmLoopDataD2(Common::SeekableReadStreamEndian &st
 	FilmLoopFrame newFrame;
 
 	while (stream.pos() < size) {
-		uint16 frameSize = stream.readUint16BE() - 2;
+		uint16 frameSize = stream.readUint16BE();
+		if (frameSize == 0) {
+			continue;
+		}
+		frameSize -= 2;
 		if (debugChannelSet(5, kDebugLoading)) {
 			debugC(5, kDebugLoading, "loadFilmLoopDataD2: Frame entry:");
 			stream.hexdump(frameSize);
@@ -140,8 +144,9 @@ void FilmLoopCastMember::loadFilmLoopDataD2(Common::SeekableReadStreamEndian &st
 			int order = stream.readByte() * 2 - 0x20;
 			frameSize -= 2;
 
-			int channel = (order / channelSize) - 1;
+			int channel = order / channelSize;
 			int channelOffset = order % channelSize;
+			int offset = order;
 
 			debugC(8, kDebugLoading, "loadFilmLoopDataD2: Message: msgWidth %d, channel %d, channelOffset %d", msgWidth, channel, channelOffset);
 			if (debugChannelSet(8, kDebugLoading)) {
@@ -162,12 +167,13 @@ void FilmLoopCastMember::loadFilmLoopDataD2(Common::SeekableReadStreamEndian &st
 				sprite._puppet = 1;
 				sprite._stretch = 1;
 
-				uint16 needSize = MIN((uint16)(nextStart - channelOffset), segSize);
+				uint16 needSize = MIN((uint16)(nextStart - offset), segSize);
 				int startPosition = stream.pos() - channelOffset;
 				int finishPosition = stream.pos() + needSize;
 				readSpriteDataD2(stream, sprite, startPosition, finishPosition);
 				newFrame.sprites.setVal(channel, sprite);
 				segSize -= needSize;
+				offset += needSize;
 				channel += 1;
 				channelOffset = 0;
 				nextStart += kSprChannelSizeD2;
@@ -234,7 +240,11 @@ void FilmLoopCastMember::loadFilmLoopDataD4(Common::SeekableReadStreamEndian &st
 	FilmLoopFrame newFrame;
 
 	while (stream.pos() < size) {
-		uint16 frameSize = stream.readUint16BE() - 2;
+		uint16 frameSize = stream.readUint16BE();
+		if (frameSize == 0) {
+			continue;
+		}
+		frameSize -= 2;
 		if (debugChannelSet(5, kDebugLoading)) {
 			debugC(5, kDebugLoading, "loadFilmLoopDataD4: Frame entry:");
 			stream.hexdump(frameSize);
@@ -261,7 +271,12 @@ void FilmLoopCastMember::loadFilmLoopDataD4(Common::SeekableReadStreamEndian &st
 				Sprite sprite(nullptr);
 				sprite._movie = g_director->getCurrentMovie();
 				if (newFrame.sprites.contains(channel)) {
-					sprite = newFrame.sprites.getVal(channel);
+					// In some cases, particularly in Total Distortion, there could be sprites of type kInactiveSprite.
+					// We need to skip processing them to avoid issues.
+					
+					if (newFrame.sprites.getVal(channel)._spriteType == kBitmapSprite) {
+						sprite = newFrame.sprites.getVal(channel);
+					}
 				}
 
 				sprite._puppet = 1;

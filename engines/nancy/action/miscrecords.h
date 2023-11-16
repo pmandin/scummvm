@@ -30,10 +30,6 @@ class NancyEngine;
 
 namespace Action {
 
-class Unimplemented : public ActionRecord {
-	void execute() override;
-};
-
 // Changes the palette for the current scene's background. TVD only.
 class PaletteThisScene : public ActionRecord {
 public:
@@ -84,6 +80,8 @@ public:
 	byte _type = 1;
 	uint16 _fadeToBlackTime = 0;
 	uint16 _frameTime = 0;
+	uint16 _totalTime = 0;
+	Common::Rect _rect;
 
 protected:
 	Common::String getRecordTypeName() const override { return "SpecialEffect"; }
@@ -201,19 +199,23 @@ protected:
 // Sets up to 10 flags at once.
 class EventFlags : public ActionRecord {
 public:
+	EventFlags(bool terse = false) : _isTerse(terse) {}
+	virtual ~EventFlags() {}
+
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
 
 	MultiEventFlagDescription _flags;
+	bool _isTerse;
 
 protected:
-	Common::String getRecordTypeName() const override { return "EventFlags"; }
+	Common::String getRecordTypeName() const override { return _isTerse ? "EventFlagsTerse" : "EventFlags"; }
 };
 
 // Sets up to 10 flags when clicked. Hotspot can move alongside background frame.
 class EventFlagsMultiHS : public EventFlags {
 public:
-	EventFlagsMultiHS(bool isCursor) : _isCursor(isCursor) {}
+	EventFlagsMultiHS(bool isCursor, bool terse = false) : EventFlags(terse), _isCursor(isCursor) {}
 	virtual ~EventFlagsMultiHS() {}
 
 	void readData(Common::SeekableReadStream &stream) override;
@@ -228,7 +230,17 @@ public:
 
 protected:
 	bool canHaveHotspot() const override { return true; }
-	Common::String getRecordTypeName() const override { return _isCursor ? "EventFlagsCursorHS" : "EventFlagsMultiHS"; }
+	Common::String getRecordTypeName() const override { return _isCursor ? (_isTerse ? "EventFlagsHSTerse" : "EventFlagsCursorHS") : "EventFlagsMultiHS"; }
+};
+
+// Returns the player back to the main menu
+class GotoMenu : public ActionRecord {
+public:
+	void readData(Common::SeekableReadStream &stream) override;
+	void execute() override;
+
+protected:
+	Common::String getRecordTypeName() const override { return "GotoMenu"; }
 };
 
 // Stops the game and boots the player back to the Menu screen, while also making sure
@@ -277,31 +289,7 @@ protected:
 	Common::String getRecordTypeName() const override { return "WinGame"; }
 };
 
-// Simply adds an item to the player's inventory.
-class AddInventoryNoHS : public ActionRecord {
-public:
-	void readData(Common::SeekableReadStream &stream) override;
-	void execute() override;
 
-	uint16 _itemID = 0;
-	bool _setCursor = false;
-	bool _forceCursor = false;
-
-protected:
-	Common::String getRecordTypeName() const override { return "AddInventoryNoHS"; }
-};
-
-// Simply removes an item from the player's inventory.
-class RemoveInventoryNoHS : public ActionRecord {
-public:
-	void readData(Common::SeekableReadStream &stream) override;
-	void execute() override;
-
-	uint _itemID;
-
-protected:
-	Common::String getRecordTypeName() const override { return "RemoveInventoryNoHS"; }
-};
 
 // Sets the difficulty level for the current save. Only appears at the start of the game.
 // First appears in nancy1. Nancy1 and nancy2 have three difficulty values, while later games
@@ -316,50 +304,6 @@ public:
 
 protected:
 	Common::String getRecordTypeName() const override { return "DifficultyLevel"; }
-};
-
-// Displays a static image inside the viewport. The static image corresponds to an
-// inventory item, and is only displayed if the item is not in the player's possesion.
-// On click, it hides the image and adds the item to the inventory.
-class ShowInventoryItem : public RenderActionRecord {
-public:
-	void readData(Common::SeekableReadStream &stream) override;
-	void execute() override;
-
-	ShowInventoryItem() : RenderActionRecord(9) {}
-	virtual ~ShowInventoryItem() { _fullSurface.free(); }
-
-	void init() override;
-
-	uint16 _objectID = 0;
-	Common::String _imageName;
-	Common::Array<FrameBlitDescription> _blitDescriptions;
-
-	int16 _drawnFrameID = -1;
-	Graphics::ManagedSurface _fullSurface;
-
-protected:
-	bool canHaveHotspot() const override { return true; }
-	Common::String getRecordTypeName() const override { return "ShowInventoryItem"; }
-	bool isViewportRelative() const override { return true; }
-};
-
-// When clicking an ActionRecord hotspot with a kItem dependency, the engine
-// checks if the required item is currently being held; when it isn't, it plays
-// a specific sound to inform the player they need some item. This AR changes that
-// sound and its related caption (or stops it from playing entirely).
-class InventorySoundOverride : public ActionRecord {
-public:
-	void readData(Common::SeekableReadStream &stream) override;
-	void execute() override;
-
-	byte _command = 0;
-	uint16 _itemID = 0;
-	SoundDescription _sound;
-	Common::String _caption;
-
-protected:
-	Common::String getRecordTypeName() const override { return "InventorySoundOverride"; }
 };
 
 // Checks how many hints the player is allowed to get. If they are still allowed hints,

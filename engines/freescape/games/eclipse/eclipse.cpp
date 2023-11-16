@@ -22,6 +22,7 @@
 #include "common/file.h"
 
 #include "freescape/freescape.h"
+#include "freescape/games/eclipse/eclipse.h"
 #include "freescape/language/8bitDetokeniser.h"
 
 namespace Freescape {
@@ -102,7 +103,8 @@ void EclipseEngine::gotoArea(uint16 areaID, int entranceID) {
 		_gfx->_keyColor = 255;
 
 	swapPalette(areaID);
-	//_currentArea->_skyColor = isCPC() ? 1 : 0;
+	if (isDemo())
+		_currentArea->_skyColor = 27;
 	_currentArea->_usualBackgroundColor = isCPC() ? 1 : 0;
 
 	resetInput();

@@ -97,9 +97,9 @@ Menu::Menu(Screen *pScreen, Mouse *pMouse) {
 	_fadeSubject = 0;
 	_fadeObject = 0;
 	for (cnt = 0; cnt < 16; cnt++)
-		_subjects[cnt] = NULL;
+		_subjects[cnt] = nullptr;
 	for (cnt = 0; cnt < TOTAL_pockets; cnt++)
-		_objects[cnt] = NULL;
+		_objects[cnt] = nullptr;
 	_inMenu = 0;
 }
 
@@ -108,11 +108,11 @@ Menu::~Menu() {
 	// the menu may be open, so delete the icons
 	for (i = 0; i < TOTAL_pockets; i++) {
 		delete _objects[i];
-		_objects[i] = NULL;
+		_objects[i] = nullptr;
 	}
 	for (i = 0; i < 16; i++) {
 		delete _subjects[i];
-		_subjects[i] = NULL;
+		_subjects[i] = nullptr;
 	}
 }
 
@@ -155,7 +155,7 @@ uint8 Menu::checkMenuClick(uint8 menuType) {
 				}
 			} else if (mouseEvent & BS1L_BUTTON_DOWN) {
 				for (uint8 cnt = 0; cnt < Logic::_scriptVars[IN_SUBJECT]; cnt++) {
-					if (_subjects[cnt]->wasClicked(x, y)) {
+					if (_subjects[cnt] && _subjects[cnt]->wasClicked(x, y)) {
 						Logic::_scriptVars[OBJECT_HELD] = _subjectBar[cnt];
 						refreshMenus();
 						break;
@@ -170,7 +170,7 @@ uint8 Menu::checkMenuClick(uint8 menuType) {
 				}
 			} else if (mouseEvent & BS1L_BUTTON_DOWN) {
 				for (uint8 cnt = 0; cnt < _inMenu; cnt++) {
-					if (_objects[cnt]->wasClicked(x, y)) {
+					if (_objects[cnt] && _objects[cnt]->wasClicked(x, y)) {
 						Logic::_scriptVars[OBJECT_HELD] = _menuList[cnt];
 						refreshMenus();
 						break;
@@ -182,7 +182,7 @@ uint8 Menu::checkMenuClick(uint8 menuType) {
 		// Normal use, i.e. inventory. Things happen on mouse-down.
 		if (menuType == MENU_TOP) {
 			for (uint8 cnt = 0; cnt < _inMenu; cnt++) {
-				if (_objects[cnt]->wasClicked(x, y)) {
+				if (_objects[cnt] && _objects[cnt]->wasClicked(x, y)) {
 					if (mouseEvent & BS1R_BUTTON_DOWN) { // looking at item
 						Logic::_scriptVars[OBJECT_HELD] = _menuList[cnt];
 						Logic::_scriptVars[MENU_LOOKING] = 1;
@@ -217,7 +217,7 @@ void Menu::buildSubjects() {
 	for (cnt = 0; cnt < 16; cnt++)
 		if (_subjects[cnt]) {
 			delete _subjects[cnt];
-			_subjects[cnt] = NULL;
+			_subjects[cnt] = nullptr;
 		}
 	for (cnt = 0; cnt < Logic::_scriptVars[IN_SUBJECT]; cnt++) {
 		uint32 res = _subjectList[(_subjectBar[cnt] & 65535) - BASE_SUBJECT].subjectRes;
@@ -254,7 +254,7 @@ void Menu::refresh(uint8 menuType) {
 			else {
 				for (i = 0; i < _inMenu; i++) {
 					delete _objects[i];
-					_objects[i] = NULL;
+					_objects[i] = nullptr;
 				}
 				_objectBarStatus = MENU_CLOSED;
 			}
@@ -279,7 +279,7 @@ void Menu::refresh(uint8 menuType) {
 			else {
 				for (i = 0; i < Logic::_scriptVars[IN_SUBJECT]; i++) {
 					delete _subjects[i];
-					_subjects[i] = NULL;
+					_subjects[i] = nullptr;
 				}
 				_subjectBarStatus = MENU_CLOSED;
 			}
@@ -293,7 +293,7 @@ void Menu::buildMenu() {
 	for (uint8 cnt = 0; cnt < _inMenu; cnt++)
 		if (_objects[cnt]) {
 			delete _objects[cnt];
-			_objects[cnt] = NULL;
+			_objects[cnt] = nullptr;
 		}
 	_inMenu = 0;
 	for (uint32 pocketNo = 0; pocketNo < TOTAL_pockets; pocketNo++)
@@ -389,12 +389,37 @@ void Menu::setToTargetState() {
 	// Note that we are only doing this for the top menu:
 	// I haven't seen any instance of a bottom menu (dialog)
 	// being able to immediately open after a palette fade.
-	if (_objectBarStatus == MENU_CLOSING)
+	if (_objectBarStatus == MENU_CLOSING) {
 		_objectBarStatus = MENU_CLOSED;
+		_fadeObject = 0;
+		for (int i = 0; i < 16; i++) {
+			if (_objects[i])
+				_objects[i]->draw(_fadeEffectTop, _fadeObject);
+			else
+				_screen->showFrame(i * 40, 0, 0xffffffff, 0, _fadeEffectTop, _fadeObject);
+		}
+	}
 
 	if (_objectBarStatus == MENU_OPENING) {
 		_objectBarStatus = MENU_OPEN;
 		_fadeObject = 8;
+		showMenu(MENU_TOP);
+	}
+
+	if (_subjectBarStatus == MENU_CLOSING) {
+		_subjectBarStatus = MENU_CLOSED;
+		_fadeSubject = 0;
+		for (int i = 0; i < 16; i++) {
+			if (_subjects[i])
+				_subjects[i]->draw(_fadeEffectBottom, _fadeSubject);
+			else
+				_screen->showFrame(i * 40, 440, 0xffffffff, 0, _fadeEffectBottom, _fadeSubject);
+		}
+	}
+
+	if (_subjectBarStatus == MENU_OPENING) {
+		_subjectBarStatus = MENU_OPEN;
+		_fadeSubject = 8;
 		showMenu(MENU_TOP);
 	}
 }

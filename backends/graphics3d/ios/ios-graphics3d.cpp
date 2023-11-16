@@ -30,7 +30,6 @@
 #include "graphics/opengl/context.h"
 #include "backends/graphics3d/opengl/texture.h"
 #include "graphics/blit.h"
-#include "common/translation.h"
 
 #include "engines/engine.h"
 
@@ -81,6 +80,8 @@ void iOSGraphics3dManager::initSurface() {
 	if (status != GL_FRAMEBUFFER_COMPLETE)
 		error("Framebuffer is not complete! status: %d", status);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	_old_touch_mode = kTouchModeTouchpad;
 
 	//initSize will be called to set the size
 }
@@ -170,6 +171,7 @@ bool iOSGraphics3dManager::hasFeature(OSystem::Feature f) const {
 	if ((f == OSystem::kFeatureOpenGLForGame) ||
 		(f == OSystem::kFeatureAspectRatioCorrection) ||
 		(f == OSystem::kFeatureStretchMode) ||
+		(f == OSystem::kFeatureCursorAlpha) ||
 		(f == OSystem::kFeatureOverlaySupportsAlpha && _overlayFormat.aBits() > 3)) {
 		return true;
 	}
@@ -424,6 +426,16 @@ void iOSGraphics3dManager::showOverlay(bool inGUI) {
 		return;
 	}
 
+	// Don't change touch mode when not changing mouse coordinates
+	if (inGUI) {
+		_old_touch_mode = dynamic_cast<OSystem_iOS7 *>(g_system)->getCurrentTouchMode();
+		// in 3D, in overlay
+		dynamic_cast<OSystem_iOS7 *>(g_system)->applyTouchSettings(true, true);
+	} else if (_overlayInGUI) {
+		// Restore touch mode active before overlay was shown
+		dynamic_cast<OSystem_iOS7 *>(g_system)->setCurrentTouchMode(static_cast<TouchMode>(_old_touch_mode));
+	}
+
 	WindowedGraphicsManager::showOverlay(inGUI);
 
 	delete _overlayBackground;
@@ -447,6 +459,12 @@ void iOSGraphics3dManager::hideOverlay() {
 	if (!_overlayVisible) {
 		return;
 	}
+
+	if (_overlayInGUI) {
+		// Restore touch mode active before overlay was shown
+		dynamic_cast<OSystem_iOS7 *>(g_system)->setCurrentTouchMode(static_cast<TouchMode>(_old_touch_mode));
+	}
+
 	WindowedGraphicsManager::hideOverlay();
 
 	delete _overlayBackground;

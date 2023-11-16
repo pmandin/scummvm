@@ -27,12 +27,14 @@ endif
 TARGET_64BIT := $(BUILD_64BIT)
 
 LD        = $(CXX)
-AR        = ar cru
-RANLIB    = ranlib
-LS        = ls
-MKDIR     = mkdir -p
-RM        = rm -f
-RM_REC    = rm -rf
+AR       := ar cru
+RANLIB   := ranlib
+LS       := ls
+MKDIR    := mkdir -p
+RM       := rm -f
+RM_REC   := rm -rf
+CP       := cp
+
 
 LDFLAGS :=
 
@@ -117,14 +119,17 @@ else ifeq ($(platform), genode)
    AR  = $(shell pkg-config genode-base --variable=ar) rcs
    RANLIB = genode-x86-ranlib
 
-# PS3
-else ifeq ($(platform), ps3)
-   TARGET  := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-   CXX = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-g++.exe
-   AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe rcs
-   DEFINES += -DPLAYSTATION3
-   STATIC_LINKING=1
+# Lightweight PS3 Homebrew SDK
+else ifneq (,$(filter $(platform), ps3 psl1ght))
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   CC = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)gcc$(EXE_EXT)
+   CXX = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)g++$(EXE_EXT)
+   AR = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)ar$(EXE_EXT) rcs
+   DEFINES := -DPLAYSTATION3 -D__PS3__ -DRETRO_IS_BIG_ENDIAN=1 -DRETRO_IS_LITTLE_ENDIAN=0 -DWORDS_BIGENDIAN=1 -mcpu=cell -mno-fp-in-toc -I$(PS3DEV)/ppu/include
+   ifeq ($(platform), psl1ght)
+      DEFINES += -D__PSL1GHT__
+   endif
+   STATIC_LINKING = 1
 
 # Nintendo Wii
 else ifeq ($(platform), wii)
@@ -162,7 +167,6 @@ else ifeq ($(platform), wiiu)
    DEFINES += -DHAVE_STRTOUL -DWIIU
    CXXFLAGS := -fpermissive
    LITE := 1
-   CP := cp
    STATIC_LINKING = 1
 
 # Nintendo 3DS
@@ -301,9 +305,12 @@ else ifneq (,$(findstring oga_a35_neon_hardfloat,$(platform)))
 # Emscripten
 else ifeq ($(platform), emscripten)
    TARGET := $(TARGET_NAME)_libretro_$(platform).bc
+   AR_ALONE := emar
+   AR := emar rcs
    DEFINES += -DEMSCRIPTEN -DUSE_CXX11
    CXXFLAGS += -std=c++11
    STATIC_LINKING = 1
+   USE_LIBCO  = 0
    USE_CLOUD = 0
 
 # Windows MSVC 2017 all architectures
@@ -477,9 +484,9 @@ endif
 
 ifeq ($(platform), wiiu)
    DEFINES += -Os
-else ifeq ($(platform),genode)
-   DEFINES += -O2
-else ifneq (,$(findstring msvc,$(platform)))
+else ifneq (,$(findstring $(platform), ios osx))
+   DEFINES += -O1
+else ifneq (,$(findstring $(platform), msvc genode))
    DEFINES += -O2
 else
    DEFINES += -O3
@@ -562,7 +569,7 @@ else
 endif
 endif
 
-ifeq ($(platform), wiiu)
+ifneq (,$(filter $(platform), wiiu emscripten))
 $(TARGET): $(OBJS) libdeps.a libdetect.a
 	$(MKDIR) libtemp
 	$(CP) $+ libtemp/
@@ -575,7 +582,7 @@ $(TARGET): libnx-ln $(OBJS) libdeps.a libdetect.a
 else ifeq ($(STATIC_LINKING), 1)
 $(TARGET): $(OBJS) libdeps.a libdetect.a
 	$(MKDIR) libtemp
-	cp $+ libtemp/
+	$(CP) $+ libtemp/
 	@echo Linking $@...
 	$(AR) -M < $(ROOT_PATH)/script.mri
 else

@@ -181,13 +181,13 @@ bool Debugger::cmdHelp(int argc, const char **argv) {
 	debugPrintf(" bpmovie / bm [moviePath] - Create a breakpoint on a switch to a movie\n");
 	debugPrintf(" bpframe / bf [frameId] - Create a breakpoint on a frame in the score\n");
 	debugPrintf(" bpframe / bf [moviePath] [frameId] - Create a breakpoint on a frame in the score of a specific movie\n");
-	debugPrintf(" bpentity / be [entityName] - Create a breakpoint on a Lingo \"the\" entity being read or modified");
-	debugPrintf(" bpentity / be [entityName] [r/w/rw] - Create a breakpoint on a Lingo \"the\" entity being accessed in a specific way");
-	debugPrintf(" bpentity / be [entityName:fieldName] - Create a breakpoint on a Lingo \"the\" field being read or modified");
-	debugPrintf(" bpentity / be [entityName:fieldName] [r/w/rw] - Create a breakpoint on a Lingo \"the\" field being accessed in a specific way");
-	debugPrintf(" bpvar / bv [varName] - Create a breakpoint on a Lingo variable being read or modified");
-	debugPrintf(" bpvar / bv [varName] [r/w/rw] - Create a breakpoint on a Lingo variable being accessed in a specific way");
-	debugPrintf(" bpevent / bn [eventName] - Create a breakpoint on a Lingo event");
+	debugPrintf(" bpentity / be [entityName] - Create a breakpoint on a Lingo \"the\" entity being read or modified\n");
+	debugPrintf(" bpentity / be [entityName] [r/w/rw] - Create a breakpoint on a Lingo \"the\" entity being accessed in a specific way\n");
+	debugPrintf(" bpentity / be [entityName:fieldName] - Create a breakpoint on a Lingo \"the\" field being read or modified\n");
+	debugPrintf(" bpentity / be [entityName:fieldName] [r/w/rw] - Create a breakpoint on a Lingo \"the\" field being accessed in a specific way\n");
+	debugPrintf(" bpvar / bv [varName] - Create a breakpoint on a Lingo variable being read or modified\n");
+	debugPrintf(" bpvar / bv [varName] [r/w/rw] - Create a breakpoint on a Lingo variable being accessed in a specific way\n");
+	debugPrintf(" bpevent / bn [eventName] - Create a breakpoint on a Lingo event\n");
 	debugPrintf(" bpdel [n] - Deletes a specific breakpoint\n");
 	debugPrintf(" bpenable [n] - Enables a specific breakpoint\n");
 	debugPrintf(" bpdisable [n] - Disables a specific breakpoint\n");
@@ -477,6 +477,8 @@ bool Debugger::cmdDisasm(int argc, const char **argv) {
 		if (!strcmp(argv[1], "all")) {
 			Movie *movie = g_director->getCurrentMovie();
 			Score *score = movie->getScore();
+			Cast *targets[2] = {movie->getCast(), movie->getSharedCast()};
+			const char *targetNames[2] = {"Cast", "Shared cast"};
 			ScriptContext *csc = lingo->_state->context;
 			if (csc) {
 				debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrameNum());
@@ -488,44 +490,44 @@ bool Debugger::cmdDisasm(int argc, const char **argv) {
 				debugPrintf("  [empty]\n");
 			}
 			debugPrintf("\n");
-			debugPrintf("Cast functions:\n");
-			Cast *cast = movie->getCast();
-			if (cast && cast->_lingoArchive) {
-				for (int i = 0; i <= kMaxScriptType; i++) {
-					debugPrintf("  %s:\n", scriptType2str((ScriptType)i));
-					if (cast->_lingoArchive->scriptContexts[i].size() == 0)
-						debugPrintf("    [empty]\n");
+			for (int t = 0; t < 2; t++) {
+				debugPrintf("%s functions:\n", targetNames[t]);
+				Cast *cast = targets[t];
+				if (cast && cast->_lingoArchive) {
+					for (int i = 0; i <= kMaxScriptType; i++) {
+						debugPrintf("  %s:\n", scriptType2str((ScriptType)i));
+						if (cast->_lingoArchive->scriptContexts[i].size() == 0)
+							debugPrintf("    [empty]\n");
 
-					for (auto &it : cast->_lingoArchive->scriptContexts[i]) {
-						for (auto &jt : it._value->_functionHandlers) {
-							debugPrintf("%s\n", g_lingo->formatFunctionBody(jt._value).c_str());
+						for (auto &it : cast->_lingoArchive->scriptContexts[i]) {
+							for (auto &jt : it._value->_functionHandlers) {
+								debugPrintf("%s\n", g_lingo->formatFunctionBody(jt._value).c_str());
+							}
 						}
 					}
-				}
-
-			} else {
-				debugPrintf("  [empty]\n");
-			}
-			debugPrintf("\n");
-			debugPrintf("Shared cast functions:\n");
-			Cast *sharedCast = movie->getSharedCast();
-			if (sharedCast && sharedCast->_lingoArchive) {
-				for (int i = 0; i <= kMaxScriptType; i++) {
-					debugPrintf("  %s:\n", scriptType2str((ScriptType)i));
-					if (sharedCast->_lingoArchive->scriptContexts[i].size() == 0)
+					debugPrintf("  Factories:\n");
+					if (cast->_lingoArchive->factoryContexts.empty()) {
 						debugPrintf("    [empty]\n");
-
-					for (auto &it : sharedCast->_lingoArchive->scriptContexts[i]) {
-						for (auto &jt : it._value->_functionHandlers) {
-							debugPrintf("%s\n", g_lingo->formatFunctionBody(jt._value).c_str());
+					} else {
+						for (auto it : cast->_lingoArchive->factoryContexts) {
+							debugPrintf("  %d:\n", it._key);
+							if (it._value->empty()) {
+								debugPrintf("    [empty]\n");
+							} else {
+								for (auto jt : *it._value) {
+									debugPrintf("    %s:\n", jt._key.c_str());
+									for (auto &kt : jt._value->_functionHandlers) {
+										debugPrintf("%s\n", g_lingo->formatFunctionBody(kt._value).c_str());
+									}
+								}
+							}
 						}
 					}
+				} else {
+					debugPrintf("  [empty]\n");
 				}
-
-			} else {
-				debugPrintf("  [empty]\n");
+				debugPrintf("\n");
 			}
-
 			return true;
 		}
 		Common::String target(argv[1]);
@@ -543,23 +545,30 @@ bool Debugger::cmdDisasm(int argc, const char **argv) {
 
 		Common::String funcName = target.substr(splitPoint + 1, Common::String::npos);
 		Movie *movie = g_director->getCurrentMovie();
-		Cast *cast = movie->getCast();
-		if (cast && cast->_lingoArchive) {
-			ScriptContext *ctx = cast->_lingoArchive->findScriptContext(scriptId);
-			if (ctx && ctx->_functionHandlers.contains(funcName)) {
-				debugPrintf("%s\n", lingo->formatFunctionBody(ctx->_functionHandlers[funcName]).c_str());
-				return true;
-			}
-		}
-		Cast *sharedCast = movie->getSharedCast();
-		if (sharedCast && sharedCast->_lingoArchive) {
-			ScriptContext *ctx = sharedCast->_lingoArchive->findScriptContext(scriptId);
-			if (ctx && ctx->_functionHandlers.contains(funcName)) {
-				debugPrintf("%s\n", lingo->formatFunctionBody(ctx->_functionHandlers[funcName]).c_str());
-				return true;
-			}
-		}
+		Cast *targets[2] = {movie->getCast(), movie->getSharedCast()};
 
+		for (int i = 0; i < 2; i++) {
+			Cast *cast = targets[i];
+			if (cast && cast->_lingoArchive) {
+				ScriptContext *ctx = cast->_lingoArchive->findScriptContext(scriptId);
+				if (ctx && ctx->_functionHandlers.contains(funcName)) {
+					debugPrintf("%s\n", lingo->formatFunctionBody(ctx->_functionHandlers[funcName]).c_str());
+					return true;
+				}
+				if (cast->_lingoArchive->factoryContexts.contains(scriptId)) {
+					for (auto &it : *cast->_lingoArchive->factoryContexts.getVal(scriptId)) {
+						Common::String prefix = Common::String::format("%s:", it._key.c_str());
+						if (funcName.hasPrefixIgnoreCase(prefix)) {
+							Common::String handler = funcName.substr(prefix.size());
+							if (it._value->_functionHandlers.contains(handler)) {
+								debugPrintf("%s\n", lingo->formatFunctionBody(it._value->_functionHandlers[handler]).c_str());
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
 	} else {
 		Common::Array<CFrame *> &callstack = g_lingo->_state->callstack;
 		if (callstack.size() == 0) {
@@ -1002,7 +1011,13 @@ void Debugger::bpUpdateState() {
 				continue;
 			if (!head->sp.ctx)
 				continue;
-			if (it.funcName.equalsIgnoreCase(*head->sp.name)) {
+			// check for a straight function name match
+			bool nameTest = it.funcName.equalsIgnoreCase(*head->sp.name);
+			if (head->sp.ctx->isFactory()) {
+				// for factories, check for a "FactoryName:funcName" match
+				nameTest |= it.funcName.equalsIgnoreCase(Common::String::format("%s:%s", head->sp.ctx->getName().c_str(), head->sp.name->c_str()));
+			}
+			if (nameTest) {
 				if (it.scriptId) {
 					if (it.scriptId == head->sp.ctx->_id) {
 						_bpMatchScriptId = head->sp.ctx->_id;

@@ -57,7 +57,6 @@ class Mouse;
 class ResMan;
 class ObjectMan;
 class Menu;
-class Music;
 class Control;
 
 struct SystemVars {
@@ -69,6 +68,9 @@ struct SystemVars {
 	int              snrStatus;
 	bool             wantFade;           // when true => fade during scene change, else cut.
 	bool             playSpeech;
+	bool             textRunning;
+	uint32           speechRunning;
+	bool             speechFinished;
 	bool             showText;
 	int32            textNumber;
 	uint8            language;
@@ -124,6 +126,7 @@ public:
 	void startFadePaletteUp(int speed);
 	void waitForFade();
 	bool screenIsFading();
+	bool fadeDirectionIsUp();
 	void setMenuToTargetState();
 
 	void showDebugInfo();
@@ -178,7 +181,6 @@ private:
 	Logic       *_logic;
 	Sound       *_sound;
 	Menu        *_menu;
-	Music       *_music;
 	Control     *_control;
 	static const uint8  _cdList[TOTAL_SECTIONS];
 	static const CdFile _pcCdFileList[];

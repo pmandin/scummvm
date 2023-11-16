@@ -46,11 +46,13 @@ class NancyEngine;
 static const int8 kFlagNoLabel						= -1;
 static const int8 kEvNoEvent						= -1;
 static const int8 kFrNoFrame						= -1;
+static const uint16 kNoScene						= 9999;
 
 // Inventory items use types
 static const byte kInvItemUseThenLose				= 0;
 static const byte kInvItemKeepAlways				= 1;
 static const byte kInvItemReturn					= 2;
+static const byte kInvItemNewSceneView				= 3;
 
 // Inventory item sound override commands
 static const byte kInvSoundOverrideCommandNoSound	= 0;
@@ -62,6 +64,11 @@ static const byte kInvSoundOverrideCommandICant		= 3;
 static const byte kFlagEvent						= 1;
 static const byte kFlagInventory					= 2;
 static const byte kFlagCursor						= 3;
+
+// Scene panning
+static const byte kPanNone							= 0;
+static const byte kPan360							= 1;
+static const byte kPanLeftRight						= 2;
 
 // Scene sound flags
 static const byte kContinueSceneSound				= 1;
@@ -83,6 +90,9 @@ static const byte kPlayerDuskDawn					= 2;
 // Video
 static const byte kSmallVideoFormat					= 1;
 static const byte kLargeVideoFormat					= 2;
+
+static const byte kVideoPlaytypeAVF					= 0;
+static const byte kVideoPlaytypeBink				= 1;
 
 // Overlay
 static const byte kPlayOverlayPlain					= 1;
@@ -108,35 +118,31 @@ static const byte kNoChangeTableValue				= 0;
 static const byte kIncrementTableValue				= 1;
 static const byte kDecrementTableValue				= 2;
 
+// 3D sound rotation
+static const byte kRotateAroundX					= 0;
+static const byte kRotateAroundY					= 1;
+static const byte kRotateAroundZ					= 2;
+
 enum MovementDirection : byte { kUp = 1, kDown = 2, kLeft = 4, kRight = 8, kMoveFast = 16 };
 
 // Separate namespace to remove possible clashes
 namespace NancyState {
 enum NancyState {
-	kBoot,
-	kLogo,
-	kCredits,
-	kMap,
-	kMainMenu,
-	kLoadSave,
-	kSetup,
-	// unknown/invalid
-	kHelp,
-	kScene,
-	// CD change
-	// Cheat,
-	kQuit,
-	// regain focus
+	// Original engine states
+	kBoot, kLogo, kCredits, kMap,
+	kMainMenu, kLoadSave, kSetup,
+	kHelp, kScene, kSaveDialog,
+
+	// Not real states
 	kNone,
-	kSaveDialog,
+	kQuit,
 	kPause, // only used when the GMM is on screen
-	kReloadSave
 };
 }
 
 // Describes a scene transition
 struct SceneChangeDescription {
-	uint16 sceneID = 0;
+	uint16 sceneID = kNoScene;
 	uint16 frameID = 0;
 	uint16 verticalOffset = 0;
 	uint16 continueSceneSound = kLoadSceneSound;
@@ -174,6 +180,7 @@ struct HotspotDescription {
 // Describes a blit operation, dependent on a background frame
 struct FrameBlitDescription {
 	uint16 frameID = 0; // Frame ID of the Scene background
+	uint16 staticRectID = 0; // Used in Overlay
 	uint hasHotspot = kPlayOverlayNoHotspot;
 	Common::Rect src;
 	Common::Rect dest;
@@ -199,9 +206,10 @@ struct SecondaryVideoDescription {
 };
 
 // Describes set of effects that can be applied to sounds.
+// Defaults are set according to the values used by PlaySoundTerse
 struct SoundEffectDescription {
-	uint32 minTimeDelay = 0;
-	uint32 maxTimeDelay = 0;
+	uint32 minTimeDelay = 500;
+	uint32 maxTimeDelay = 2000;
 
 	int32 randomMoveMinX = 0;
 	int32 randomMoveMaxX = 0;
@@ -214,8 +222,8 @@ struct SoundEffectDescription {
 	int32 fixedPosY = 0;
 	int32 fixedPosZ = 0;
 
-	uint32 moveStepTime = 0;
-	int32 numMoveSteps = 0;
+	uint32 moveStepTime = 1000;
+	int32 numMoveSteps = 10;
 
 	int32 linearMoveStartX = 0;
 	int32 linearMoveEndX = 0;
@@ -227,7 +235,7 @@ struct SoundEffectDescription {
 	int32 rotateMoveStartX = 0;
 	int32 rotateMoveStartY = 0;
 	int32 rotateMoveStartZ = 0;
-	byte rotateMoveAxis = 0;
+	byte rotateMoveAxis = kRotateAroundY;
 
 	uint32 minDistance = 0;
 	uint32 maxDistance = 0;
@@ -237,7 +245,7 @@ struct SoundEffectDescription {
 
 // Descrbes a single sound. Combines four different structs found in the data in one
 struct SoundDescription {
-	Common::String name;
+	Common::String name = "NO SOUND";
 	uint16 channelID = 0;
 	uint16 playCommands = 1;
 	uint16 numLoops = 0;
@@ -250,12 +258,13 @@ struct SoundDescription {
 	void readDIGI(Common::SeekableReadStream &stream);
 	void readMenu(Common::SeekableReadStream &stream);
 	void readScene(Common::SeekableReadStream &stream);
+	void readTerse(Common::SeekableReadStream &stream);
 };
 
 // Structs inside nancy.dat, which contains all the data that was
 // originally stored inside the executable
 
-enum class StaticDataConditionType : byte { kEvent = 0, kInventory = 1, kDifficulty = 2 };
+enum class StaticDataConditionType { kEvent = 0, kInventory = 1, kDifficulty = 2 };
 struct StaticDataFlag { byte type; int16 label; byte flag; };
 
 struct ConditionalDialogue {

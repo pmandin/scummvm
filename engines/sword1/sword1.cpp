@@ -29,7 +29,6 @@
 #include "sword1/screen.h"
 #include "sword1/swordres.h"
 #include "sword1/menu.h"
-#include "sword1/music.h"
 #include "sword1/control.h"
 
 #include "common/config-manager.h"
@@ -73,7 +72,6 @@ SwordEngine::SwordEngine(OSystem *syst, const ADGameDescription *gameDesc)
 	_logic = 0;
 	_sound = 0;
 	_menu = 0;
-	_music = 0;
 	_control = 0;
 }
 
@@ -82,7 +80,6 @@ SwordEngine::~SwordEngine() {
 	delete _logic;
 	delete _menu;
 	delete _sound;
-	delete _music;
 	delete _screen;
 	delete _mouse;
 	delete _objectMan;
@@ -100,13 +97,16 @@ Common::Error SwordEngine::init() {
 	debug(5, "Starting object manager");
 	_objectMan = new ObjectMan(_resMan);
 	_mouse = new Mouse(_system, _resMan, _objectMan);
-	_screen = new Screen(_system, _resMan, _objectMan);
-	_music = new Music(_mixer);
-	_sound = new Sound(_mixer, _resMan);
+	_screen = new Screen(_system, this, _resMan, _objectMan);
+	_sound = new Sound(_mixer, this, _resMan);
 	_menu = new Menu(_screen, _mouse);
-	_logic = new Logic(this, _objectMan, _resMan, _screen, _mouse, _sound, _music, _menu, _system, _mixer);
+	_logic = new Logic(this, _objectMan, _resMan, _screen, _mouse, _sound, _menu, _system, _mixer);
 	_mouse->useLogicAndMenu(_logic, _menu);
 	_mouse->useScreenMutex(&_screen->_screenAccessMutex);
+
+	// Init the virtual mouse coordinates to be at the center of the screen
+	_mouseCoord.x = SCREEN_WIDTH / 2;
+	_mouseCoord.y = SCREEN_FULL_DEPTH / 2;
 
 	syncSoundSettings();
 
@@ -171,13 +171,14 @@ Common::Error SwordEngine::init() {
 	_logic->initialize();
 	_objectMan->initialize();
 	_mouse->initialize();
-	_control = new Control(this, _saveFileMan, _resMan, _objectMan, _system, _mouse, _sound, _music, _screen, _logic);
+	_control = new Control(this, _saveFileMan, _resMan, _objectMan, _system, _mouse, _sound, _screen, _logic);
+	_logic->setControlPanelObject(_control);
 
 	return Common::kNoError;
 }
 
 void SwordEngine::reinitialize() {
-	_sound->quitScreen();
+	_sound->clearAllFx();
 	_resMan->flush(); // free everything that's currently alloced and opened. (*evil*)
 
 	_logic->initialize();     // now reinitialize these objects as they (may) have locked
@@ -190,64 +191,7 @@ void SwordEngine::reinitialize() {
 void SwordEngine::syncSoundSettings() {
 	Engine::syncSoundSettings();
 
-	uint musicVol = ConfMan.getInt("music_volume");
-	uint sfxVol = ConfMan.getInt("sfx_volume");
-	uint speechVol = ConfMan.getInt("speech_volume");
-
-	uint musicBal = 50;
-	if (ConfMan.hasKey("music_balance")) {
-		musicBal = CLIP(ConfMan.getInt("music_balance"), 0, 100);
-	}
-
-	uint speechBal = 50;
-	if (ConfMan.hasKey("speech_balance")) {
-		speechBal = CLIP(ConfMan.getInt("speech_balance"), 0, 100);
-	}
-	uint sfxBal = 50;
-	if (ConfMan.hasKey("sfx_balance")) {
-		sfxBal = CLIP(ConfMan.getInt("sfx_balance"), 0, 100);
-	}
-
-	uint musicVolL = 2 * musicVol * musicBal / 100;
-	uint musicVolR = 2 * musicVol - musicVolL;
-
-	uint speechVolL = 2 * speechVol * speechBal / 100;
-	uint speechVolR = 2 * speechVol - speechVolL;
-
-	uint sfxVolL = 2 * sfxVol * sfxBal / 100;
-	uint sfxVolR = 2 * sfxVol - sfxVolL;
-
-	if (musicVolR > 255) {
-		musicVolR = 255;
-	}
-	if (musicVolL > 255) {
-		musicVolL = 255;
-	}
-
-	if (speechVolR > 255) {
-		speechVolR = 255;
-	}
-	if (speechVolL > 255) {
-		speechVolL = 255;
-	}
-	if (sfxVolR > 255) {
-		sfxVolR = 255;
-	}
-	if (sfxVolL > 255) {
-		sfxVolL = 255;
-	}
-
-	bool mute = ConfMan.getBool("mute");
-
-	if (mute) {
-		_music->setVolume(0, 0);
-		_sound->setSpeechVol(0, 0);
-		_sound->setSfxVol(0, 0);
-	} else {
-		_music->setVolume(musicVolL, musicVolR);
-		_sound->setSpeechVol(speechVolL, speechVolR);
-		_sound->setSfxVol(sfxVolL, sfxVolR);
-	}
+	_sound->getVolumes();
 }
 
 void SwordEngine::flagsToBool(bool *dest, uint8 flags) {
@@ -263,23 +207,18 @@ void SwordEngine::flagsToBool(bool *dest, uint8 flags) {
 void SwordEngine::checkKeys() {
 
 	if (_systemVars.gamePaused) {
-		// TODO: Audio
-		//PauseSpeech();
-		//PauseMusic();
-		//PauseFx();
-		_mixer->pauseAll(true);
+		_sound->pauseSpeech();
+		_sound->pauseMusic();
+		_sound->pauseFx();
 
 		while (_keyPressed.keycode != Common::KEYCODE_p && !Engine::shouldQuit()) {
 			pollInput(0);
-			// TODO: Audio
-			// UpdateSampleStreaming();
+			_sound->updateMusicStreaming();
 		}
 
-		// TODO: Audio
-		//UnpauseSpeech();
-		//UnpauseMusic();
-		//UnpauseFx();
-		_mixer->pauseAll(false);
+		_sound->unpauseSpeech();
+		_sound->unpauseMusic();
+		_sound->unpauseFx();
 
 		_systemVars.gamePaused = false;
 		_keyPressed.reset();
@@ -288,7 +227,9 @@ void SwordEngine::checkKeys() {
 	switch (_keyPressed.keycode) {
 	case Common::KEYCODE_F5:
 	case Common::KEYCODE_ESCAPE:
-		if ((Logic::_scriptVars[MOUSE_STATUS] & 1) && (Logic::_scriptVars[GEORGE_HOLDING_PIECE] == 0)) {
+		if ((Logic::_scriptVars[MOUSE_STATUS] & 1) &&
+			(Logic::_scriptVars[GEORGE_HOLDING_PIECE] == 0) &&
+			(Logic::_scriptVars[SCREEN] != 91)) { // Disable the save screen on the phone envelope room!
 			_systemVars.saveGameFlag = SGF_SAVE;
 			_systemVars.snrStatus = SNR_MAINPANEL;
 		}
@@ -812,6 +753,11 @@ void SwordEngine::showDebugInfo() {
 	int32 pausedX = Logic::_scriptVars[SCROLL_OFFSET_X] + 400;
 	int32 pausedY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 315;
 
+	if (SwordEngine::isPsx()) {
+		pausedX += 20;
+		pausedY -= 16;
+	}
+
 	uint8 buf[255];
 
 	if (_systemVars.gamePaused) {
@@ -932,7 +878,6 @@ void SwordEngine::checkCd() {
 				askForCd();
 			} // else: there is already a cd inserted and we don't care if it's cd1 or cd2.
 		} else if (needCd != _systemVars.currentCD) { // we need a different CD than the one in drive.
-			_music->startMusic(0, 0); //
 			_sound->closeCowSystem(); // close music and sound files before changing CDs
 			_systemVars.currentCD = needCd; // askForCd will ask the player to insert _systemVars.currentCd,
 			askForCd();           // so it has to be updated before calling it.
@@ -973,7 +918,7 @@ void SwordEngine::askForCd() {
 			pollInput(0);
 		}
 
-		_screen->startFadePaletteDown(1);
+		startFadePaletteDown(1);
 
 		startTime = _system->getMillis();
 		while (_screen->stillFading()) {
@@ -1039,6 +984,7 @@ uint8 SwordEngine::mainLoop() {
 			_systemVars.gameCycle++;
 
 			_logic->engine();
+			_sound->setCrossFadeIncrement();
 			_logic->updateScreenParams(); // sets scrolling
 
 			_screen->draw();
@@ -1093,13 +1039,13 @@ uint8 SwordEngine::mainLoop() {
 			(!shouldQuit()));
 
 		if ((Logic::_scriptVars[SCREEN] != 53) && !shouldQuit()) {
-			_screen->startFadePaletteDown(1);
+			startFadePaletteDown(1);
 		}
 
 		_screen->quitScreen(); // Close graphic resources
 		waitForFade();
 
-		_sound->quitScreen(); // Purge the sound AFTER they've been faded
+		_sound->clearAllFx(); // Purge the sound AFTER they've been faded
 
 		_objectMan->closeSection(Logic::_scriptVars[SCREEN]); // Close the section that PLAYER has just left, if it's empty now
 	} while ((_systemVars.saveGameFlag < SGF_RESTORE) && (!shouldQuit()));
@@ -1157,6 +1103,8 @@ void SwordEngine::pollInput(uint32 delay) { //copied and mutilated from sky.cpp
 			}
 		}
 
+		_sound->updateMusicStreaming();
+
 		_screen->_screenAccessMutex.lock();
 		_system->updateScreen();
 		_screen->_screenAccessMutex.unlock();
@@ -1198,14 +1146,12 @@ void SwordEngine::fadePaletteStep() {
 
 void SwordEngine::startFadePaletteDown(int speed) {
 	_screen->startFadePaletteDown(speed);
-
-	// TODO: Fade audio here
+	_sound->fadeFxDown(speed);
 }
 
 void SwordEngine::startFadePaletteUp(int speed) {
 	_screen->startFadePaletteUp(speed);
-
-	// TODO: Fade audio here
+	_sound->fadeFxUp(speed);
 }
 
 static void vblCallback(void *refCon) {
@@ -1226,7 +1172,7 @@ static void vblCallback(void *refCon) {
 			if ((vm->_vblCount == 3) || (vm->_vblCount == 7)) {
 				vm->updateBottomMenu();
 			}
-		} else {
+		} else if (vm->fadeDirectionIsUp()) {
 			// This is an optimization for all the locks introduced
 			// with the fade palette changes: we disable the menu
 			// updates whenever the palette is fading, and we bring
@@ -1239,8 +1185,6 @@ static void vblCallback(void *refCon) {
 
 			vm->fadePaletteStep();
 		}
-
-		// TODO: Volume fading here...
 	}
 
 	vm->_inTimer--;
@@ -1250,15 +1194,21 @@ bool SwordEngine::screenIsFading() {
 	return _screen->stillFading() != 0;
 }
 
+bool SwordEngine::fadeDirectionIsUp() {
+	return _screen->stillFading() == 1;
+}
+
 void SwordEngine::installTimerRoutines() {
 	debug(2, "SwordEngine::installTimerRoutines(): Installing timers...");
 	_ticker = 0;
 	getTimerManager()->installTimerProc(&vblCallback, 1000000 / TIMER_RATE, this, "AILTimer");
+	_sound->installFadeTimer();
 }
 
 void SwordEngine::uninstallTimerRoutines() {
 	debug(2, "SwordEngine::uninstallTimerRoutines(): Uninstalling timers...");
 	getTimerManager()->removeTimerProc(&vblCallback);
+	_sound->uninstallFadeTimer();
 }
 
 } // End of namespace Sword1

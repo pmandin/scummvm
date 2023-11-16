@@ -529,13 +529,18 @@ void Sound::triggerSound(int soundID) {
 			warning("Scumm::Sound::triggerSound: encountered audio resource with chunk type 'SOUN' and sound type %d", type);
 		}
 	}
-	else if ((_vm->_game.platform == Common::kPlatformMacintosh) && (_vm->_game.id == GID_INDY3) && READ_BE_UINT16(ptr + 8) == 0x1C) {
+	else if ((_vm->_game.platform == Common::kPlatformMacintosh) && (_vm->_game.id == GID_INDY3) && ptr[4] != 0x7F) {
 		// Sound format as used in Indy3 EGA Mac.
 		// It seems to be closely related to the Amiga format, see player_v3a.cpp
+		//
+		// We assume that if byte 5 is 0x7F, it's music because that's
+		// where the priority of the track is stored, and it's always
+		// that value. See player_v2.cpp
+		//
 		// The following is known:
 		// offset 0, 16 LE: total size
 		// offset 2-7: ?
-		// offset 8, 16BE: offset to sound data (0x1C = 28 -> header size 28?)
+		// offset 8, 16BE: offset to sound data (usually 0x1C = 28 -> header size 28?)
 		// offset 10-11: ? another offset, maybe related to looping?
 		// offset 12, 16BE: size of sound data
 		// offset 14-15: ? often the same as 12-13: maybe loop size/end?
@@ -1437,7 +1442,7 @@ void Sound::startCDTimer() {
 	// LOOM Steam uses a fixed 240Hz rate. This was probably done to get rid of some
 	// audio glitches which are confirmed to be in the original. So let's activate this
 	// fix for the DOS version of LOOM as well, if enhancements are enabled.
-	if (_isLoomSteam || (_vm->_game.id == GID_LOOM && _vm->_enableEnhancements))
+	if (_isLoomSteam || (_vm->_game.id == GID_LOOM && _vm->enhancementEnabled(kEnhMinorBugFixes)))
 		interval = 1000000 / LOOM_STEAM_CDDA_RATE;
 
 	_vm->getTimerManager()->removeTimerProc(&cdTimerHandler);
@@ -1671,7 +1676,7 @@ int ScummEngine::readSoundResource(ResId idx) {
 				// Some of the Mac MI2 music only exists as Roland tracks. The
 				// original interpreter doesn't play them. I don't think there
 				// is any similarly missing FoA music.
-				if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh && !_enableEnhancements) {
+				if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh && !enhancementEnabled(kEnhAudioChanges)) {
 					pri = -1;
 					break;
 				}

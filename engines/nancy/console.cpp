@@ -31,6 +31,7 @@
 #include "engines/nancy/console.h"
 #include "engines/nancy/resource.h"
 #include "engines/nancy/sound.h"
+#include "engines/nancy/cif.h"
 #include "engines/nancy/iff.h"
 #include "engines/nancy/input.h"
 #include "engines/nancy/graphics.h"
@@ -43,8 +44,8 @@ namespace Nancy {
 
 NancyConsole::NancyConsole() : GUI::Debugger() {
 	registerCmd("load_cal", WRAP_METHOD(NancyConsole, Cmd_loadCal));
-	registerCmd("cif_hexdump", WRAP_METHOD(NancyConsole, Cmd_cifHexDump));
 	registerCmd("cif_export", WRAP_METHOD(NancyConsole, Cmd_cifExport));
+	registerCmd("ciftree_export", WRAP_METHOD(NancyConsole, Cmd_ciftreeExport));
 	registerCmd("cif_list", WRAP_METHOD(NancyConsole, Cmd_cifList));
 	registerCmd("cif_info", WRAP_METHOD(NancyConsole, Cmd_cifInfo));
 	registerCmd("chunk_export", WRAP_METHOD(NancyConsole, Cmd_chunkExport));
@@ -68,7 +69,6 @@ NancyConsole::NancyConsole() : GUI::Debugger() {
 	registerCmd("set_difficulty", WRAP_METHOD(NancyConsole, Cmd_setDifficulty));
 	registerCmd("sound_info", WRAP_METHOD(NancyConsole, Cmd_soundInfo));
 	registerCmd("debug_hotspots", WRAP_METHOD(NancyConsole, Cmd_showHotspots));
-
 }
 
 NancyConsole::~NancyConsole() {}
@@ -153,25 +153,6 @@ void NancyConsole::postEnter() {
 	g_nancy->_input->forceCleanInput();
 }
 
-bool NancyConsole::Cmd_cifHexDump(int argc, const char **argv) {
-	if (argc < 2 || argc > 3) {
-		debugPrintf("Dumps the specified resource to standard output\n");
-		debugPrintf("Usage: %s <name> [cal]\n", argv[0]);
-		return true;
-	}
-
-	uint size;
-	byte *buf = g_nancy->_resource->loadCif((argc == 2 ? "ciftree" : argv[2]), argv[1], size);
-	if (!buf) {
-		debugPrintf("Failed to load resource '%s'\n", argv[1]);
-		return true;
-	}
-
-	Common::hexdump(buf, size);
-	delete[] buf;
-	return true;
-}
-
 bool NancyConsole::Cmd_cifExport(int argc, const char **argv) {
 	if (argc < 2 || argc > 3) {
 		debugPrintf("Exports the specified resource to .cif file\n");
@@ -179,10 +160,29 @@ bool NancyConsole::Cmd_cifExport(int argc, const char **argv) {
 		return true;
 	}
 
-	if (!g_nancy->_resource->exportCif((argc == 2 ? "ciftree" : argv[2]), argv[1]))
+	if (!g_nancy->_resource->exportCif((argc == 2 ? "" : argv[2]), argv[1]))
 		debugPrintf("Failed to export '%s'\n", argv[1]);
 
-	return true;
+	return cmdExit(0, nullptr);
+}
+
+bool NancyConsole::Cmd_ciftreeExport(int argc, const char **argv) {
+	if (argc < 3) {
+		debugPrintf("Exports the specified resources to a ciftree\n");
+		debugPrintf("Usage: %s <tree name> <files...>\n", argv[0]);
+		return true;
+	}
+
+	Common::StringArray files;
+
+	for (int i = 2; i < argc; ++i) {
+		files.push_back(argv[i]);
+	}
+
+	if (!g_nancy->_resource->exportCifTree(argv[1], files))
+		debugPrintf("Failed to export '%s'\n", argv[1]);
+
+	return cmdExit(0, nullptr);
 }
 
 bool NancyConsole::Cmd_cifList(int argc, const char **argv) {
@@ -194,7 +194,7 @@ bool NancyConsole::Cmd_cifList(int argc, const char **argv) {
 	}
 
 	Common::Array<Common::String> list;
-	g_nancy->_resource->list((argc == 2 ? "ciftree" : argv[2]), list, atoi(argv[1]));
+	g_nancy->_resource->list((argc == 2 ? "" : argv[2]), list, (CifInfo::ResType)atoi(argv[1]));
 
 	debugPrintColumns(list);
 
@@ -219,8 +219,8 @@ bool NancyConsole::Cmd_chunkExport(int argc, const char **argv) {
 		return true;
 	}
 
-	IFF iff(argv[1]);
-	if (!iff.load()) {
+	IFF *iff = g_nancy->_resource->loadIFF(argv[1]);
+	if (!iff) {
 		debugPrintf("Failed to load IFF '%s'\n", argv[1]);
 		return true;
 	}
@@ -237,9 +237,10 @@ bool NancyConsole::Cmd_chunkExport(int argc, const char **argv) {
 	if (argc == 4)
 		index = atoi(argv[3]);
 
-	buf = iff.getChunk(id, size, index);
+	buf = iff->getChunk(id, size, index);
 	if (!buf) {
 		debugPrintf("Failed to find chunk '%s' (index %d) in IFF '%s'\n", argv[2], index, argv[1]);
+		delete iff;
 		return true;
 	}
 
@@ -253,6 +254,7 @@ bool NancyConsole::Cmd_chunkExport(int argc, const char **argv) {
 	dumpfile.open(filename);
 	dumpfile.write(buf, size);
 	dumpfile.close();
+	delete iff;
 	return true;
 }
 
@@ -263,8 +265,8 @@ bool NancyConsole::Cmd_chunkHexDump(int argc, const char **argv) {
 		return true;
 	}
 
-	IFF iff(argv[1]);
-	if (!iff.load()) {
+	IFF *iff = g_nancy->_resource->loadIFF(argv[1]);
+	if (!iff) {
 		debugPrintf("Failed to load IFF '%s'\n", argv[1]);
 		return true;
 	}
@@ -281,13 +283,14 @@ bool NancyConsole::Cmd_chunkHexDump(int argc, const char **argv) {
 	if (argc == 4)
 		index = atoi(argv[3]);
 
-	buf = iff.getChunk(id, size, index);
+	buf = iff->getChunk(id, size, index);
 	if (!buf) {
 		debugPrintf("Failed to find chunk '%s' (index %d) in IFF '%s'\n", argv[2], index, argv[1]);
 		return true;
 	}
 
 	Common::hexdump(buf, size);
+	delete iff;
 	return true;
 }
 
@@ -298,14 +301,14 @@ bool NancyConsole::Cmd_chunkList(int argc, const char **argv) {
 		return true;
 	}
 
-	IFF iff(argv[1]);
-	if (!iff.load()) {
+	IFF *iff = g_nancy->_resource->loadIFF(argv[1]);
+	if (!iff) {
 		debugPrintf("Failed to load IFF '%s'\n", argv[1]);
 		return true;
 	}
 
 	Common::Array<Common::String> list;
-	iff.list(list);
+	iff->list(list);
 	for (uint i = 0; i < list.size(); i++) {
 		debugPrintf("%-6s", list[i].c_str());
 		if ((i % 13) == 12 && i + 1 != list.size())
@@ -313,6 +316,7 @@ bool NancyConsole::Cmd_chunkList(int argc, const char **argv) {
 	}
 
 	debugPrintf("\n");
+	delete iff;
 
 	return true;
 }
@@ -395,7 +399,7 @@ bool NancyConsole::Cmd_loadCal(int argc, const char **argv) {
 		return true;
 	}
 
-	if (!g_nancy->_resource->loadCifTree(argv[1], "cal"))
+	if (!g_nancy->_resource->readCifTree(argv[1], "cal", 3))
 		debugPrintf("Failed to load '%s.cal'\n", argv[1]);
 	return true;
 }
@@ -410,6 +414,7 @@ bool NancyConsole::Cmd_playSound(int argc, const char **argv) {
 	Common::File *f = new Common::File;
 	if (!f->open(Common::String(argv[1]) + ".his")) {
 		debugPrintf("Failed to open '%s.his'\n", argv[1]);
+		delete f;
 		return true;
 	}
 
@@ -438,8 +443,8 @@ bool NancyConsole::Cmd_loadScene(int argc, const char **argv) {
 	}
 
 	Common::String sceneName = Common::String::format("S%s", argv[1]);
-	IFF iff(sceneName);
-	if (!iff.load()) {
+	IFF *iff = g_nancy->_resource->loadIFF(sceneName);
+	if (!iff) {
 		debugPrintf("Invalid scene S%s\n", argv[1]);
 		return true;
 	}
@@ -448,6 +453,7 @@ bool NancyConsole::Cmd_loadScene(int argc, const char **argv) {
 	scene.sceneID = (uint16)atoi(argv[1]);
 	NancySceneState.changeScene(scene);
 	NancySceneState._state = State::Scene::kLoad;
+	delete iff;
 	return cmdExit(0, nullptr);
 }
 
@@ -478,7 +484,7 @@ void NancyConsole::printActionRecord(const Nancy::Action::ActionRecord *record, 
 void NancyConsole::recursePrintDependencies(const Nancy::Action::DependencyRecord &record) {
 	using namespace Nancy::Action;
 
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	auto *inventoryData = GetEngineData(INV);
 	assert(inventoryData);
 
 	for (const DependencyRecord &dep : record.children) {
@@ -530,7 +536,7 @@ void NancyConsole::recursePrintDependencies(const Nancy::Action::DependencyRecor
 			debugPrintf("kSceneCount, scene ID %i, hit count %s %i",
 				dep.hours,
 				dep.milliseconds == 1 ? ">" : dep.milliseconds == 2 ? "<" : "==",
-				dep.seconds);
+				dep.minutes);
 			break;
 		case DependencyType::kElapsedPlayerDay :
 			debugPrintf("kElapsedPlayerDay");
@@ -604,13 +610,13 @@ bool NancyConsole::Cmd_listActionRecords(int argc, const char **argv) {
 		Common::Queue<uint> unknownTypes;
 		Common::Queue<Common::String> unknownDescs;
 		Common::SeekableReadStream *chunk;
-		IFF sceneIFF("S" + s);
-		if (!sceneIFF.load()) {
+		IFF *sceneIFF = g_nancy->_resource->loadIFF("S" + s);
+		if (!sceneIFF) {
 			debugPrintf("Invalid scene S%s\n", argv[1]);
 			return true;
 		}
 
-		while (chunk = sceneIFF.getChunkStream("ACT", records.size()), chunk != nullptr) {
+		while (chunk = sceneIFF->getChunkStream("ACT", records.size()), chunk != nullptr) {
 			ActionRecord *rec = ActionManager::createAndLoadNewRecord(*chunk);
 			if (rec == nullptr) {
 				chunk->seek(0);
@@ -642,6 +648,8 @@ bool NancyConsole::Cmd_listActionRecords(int argc, const char **argv) {
 		for (uint i = 0; i < records.size(); ++i) {
 			delete records[i];
 		}
+
+		delete sceneIFF;
 	} else {
 		debugPrintf("Invalid input\n");
 	}
@@ -685,8 +693,9 @@ bool NancyConsole::Cmd_scanForActionRecordType(int argc, const char **argv) {
 	}
 
 	Common::Array<Common::String> list;
-	// Action records only appear in the ciftree
-	g_nancy->_resource->list("ciftree", list, ResourceManager::kResTypeScript);
+	// Action records only appear in the ciftree and promotree
+	g_nancy->_resource->list("ciftree", list, CifInfo::kResTypeScript);
+	g_nancy->_resource->list("promotree", list, CifInfo::kResTypeScript);
 
 	char descBuf[0x30];
 
@@ -702,11 +711,11 @@ bool NancyConsole::Cmd_scanForActionRecordType(int argc, const char **argv) {
 			name.matchString("S###") ||
 			name.matchString("S####")) {
 
-			IFF iff(cifName);
-			if (iff.load()) {
+			IFF *iff = g_nancy->_resource->loadIFF(cifName);
+			if (iff) {
 				uint num = 0;
 				Common::SeekableReadStream *chunk = nullptr;
-				while (chunk = iff.getChunkStream("ACT", num), chunk != nullptr) {
+				while (chunk = iff->getChunkStream("ACT", num), chunk != nullptr) {
 					bool isSatisfied = true;
 					for (uint i = 0; i < vals.size(); i += 2) {
 						if ((int64)vals[i] >= chunk->size()) {
@@ -731,6 +740,8 @@ bool NancyConsole::Cmd_scanForActionRecordType(int argc, const char **argv) {
 					++num;
 					delete chunk;
 				}
+
+				delete iff;
 			}
 		}
 	}
@@ -815,7 +826,7 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 	}
 
 	uint numItems = g_nancy->getStaticData().numItems;
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	auto *inventoryData = GetEngineData(INV);
 	assert(inventoryData);
 
 	debugPrintf("Total number of inventory items: %u\n", numItems);
@@ -852,7 +863,7 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 }
 
 bool NancyConsole::Cmd_setInventory(int argc, const char **argv) {
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	auto *inventoryData = GetEngineData(INV);
 	assert(inventoryData);
 	
 	if (g_nancy->_gameFlow.curState != NancyState::kScene) {

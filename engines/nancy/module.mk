@@ -5,6 +5,7 @@ MODULE_OBJS = \
   action/actionrecord.o \
   action/arfactory.o \
   action/autotext.o \
+  action/inventoryrecords.o \
   action/navigationrecords.o \
   action/soundrecords.o \
   action/miscrecords.o \
@@ -12,8 +13,11 @@ MODULE_OBJS = \
   action/overlay.o \
   action/secondarymovie.o \
   action/secondaryvideo.o \
+  action/puzzle/assemblypuzzle.o \
+  action/puzzle/bballpuzzle.o \
   action/puzzle/bombpuzzle.o \
   action/puzzle/collisionpuzzle.o \
+  action/puzzle/cubepuzzle.o \
   action/puzzle/leverpuzzle.o \
   action/puzzle/mazechasepuzzle.o \
   action/puzzle/mouselightpuzzle.o \
@@ -54,7 +58,9 @@ MODULE_OBJS = \
   state/setupmenu.o \
   misc/hypertext.o \
   misc/lightning.o \
+  misc/mousefollow.o \
   misc/specialeffect.o \
+  cif.o \
   commontypes.o \
   console.o \
   cursor.o \

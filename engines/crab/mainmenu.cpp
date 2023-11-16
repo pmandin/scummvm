@@ -232,14 +232,12 @@ void MainMenu::handleEvents(Common::Event &event, bool &shouldChangeState, GameS
 		break;
 
 	case STATE_LOAD:
-		if (!g_engine->loadGameDialog())
-			changeState(STATE_NORMAL);
-		else {
+		if (g_engine->loadGameDialog()) {
 			shouldChangeState = true;
 			newStateId = GAMESTATE_LOAD_GAME;
-			return;
 		}
-		break;
+		changeState(STATE_NORMAL);
+		return;
 
 	case STATE_DIFF: {
 		int choice = _diff._menu.handleEvents(event);
@@ -314,6 +312,10 @@ void MainMenu::changeState(MenuState ms, const bool &start) {
 		else if (_state != STATE_CREDITS && ms == STATE_CREDITS)
 			g_engine->_musicManager->playMusic(_musicKey._credits);
 	}
+
+	// Disable keymapper if switching state to input savename so inputs do not get "eaten".
+	KeyBindingMode mode = (ms == STATE_SAVENAME ? KBM_NONE : KBM_GAME);
+	g_engine->_inputManager->setKeyBindingMode(mode);
 
 	// Set current state
 	_state = ms;

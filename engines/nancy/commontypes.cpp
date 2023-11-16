@@ -22,8 +22,11 @@
 #include "engines/nancy/commontypes.h"
 #include "engines/nancy/util.h"
 #include "engines/nancy/nancy.h"
-
+#include "engines/nancy/cif.h"
+#include "engines/nancy/resource.h"
 #include "engines/nancy/state/scene.h"
+
+#include "common/memstream.h"
 
 namespace Nancy {
 
@@ -94,8 +97,8 @@ void FrameBlitDescription::readData(Common::SeekableReadStream &stream, bool lon
 	frameID = stream.readUint16LE();
 	
 	if (longFormat) {
-		// Related to static mode, seems to be a frame ID? However, it is always set to zero so we skip it.
-		stream.skip(2);
+		// In static mode Overlays, this is the id of the _srcRect to be used
+		staticRectID = stream.readUint16LE();
 	}
 
 	if (g_nancy->getGameType() >= kGameTypeNancy3 && longFormat) {
@@ -255,6 +258,14 @@ void SoundDescription::readScene(Common::SeekableReadStream &stream) {
 	s.syncAsUint32LE(samplesPerSec, kGameTypeVampire, kGameTypeNancy2);
 }
 
+void SoundDescription::readTerse(Common::SeekableReadStream &stream) {
+	readFilename(stream, name);
+	channelID = stream.readUint16LE();
+	numLoops = stream.readUint32LE();
+	volume = stream.readUint16LE();
+	stream.skip(2);
+}
+
 void ConditionalDialogue::readData(Common::SeekableReadStream &stream) {
 	textID = stream.readByte();
 	sceneID = stream.readUint16LE();
@@ -341,6 +352,12 @@ void SoundChannelInfo::readData(Common::SeekableReadStream &stream) {
 void StaticData::readData(Common::SeekableReadStream &stream, Common::Language language, uint32 endPos) {
 	uint16 num = 0;
 	int languageID = -1;
+
+	// Used for patch file reading
+	byte *patchBuf = nullptr;
+	uint32 patchBufSize = 0;
+	Common::Array<Common::Array<Common::String>> confManProps;
+	Common::Array<Common::Array<Common::String>> fileIDs;
 
 	while (stream.pos() < endPos) {
 		uint32 nextSectionOffset = stream.readUint32LE();
@@ -524,32 +541,57 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 			}
 
 			break;
+		case MKTAG('P', 'A', 'T', 'C') :
+			// Patch file
+			patchBufSize = nextSectionOffset - stream.pos();
+			patchBuf = new byte[patchBufSize];
+			stream.read(patchBuf, patchBufSize);
+			break;
+		case MKTAG('P', 'A', 'S', 'S') :
+			// Patch file <-> ConfMan entries associations
+			num = stream.readUint16LE();
+			confManProps.resize(num);
+			fileIDs.resize(num);
+			for (uint i = 0; i < num; ++i) {
+				// Read ConfMan key-value pairs
+				uint16 num2 = stream.readUint16LE();
+				confManProps[i].resize(num2);
+				for (uint j = 0; j < num2; ++j) {
+					confManProps[i][j] = stream.readString();
+				}
+
+				// Read filenames
+				num2 = stream.readUint16LE();
+				fileIDs[i].resize(num2);
+				for (uint j = 0; j < num2; ++j) {
+					fileIDs[i][j] = stream.readString();
+				}
+			}
+
+			break;
 		default:
 			stream.seek(nextSectionOffset);
 		}
 	}
-	
 
-	
+	if (patchBuf) {
+		// Load the patch tree into the ResourceManager
+		Common::MemoryReadStream *patchStream = new Common::MemoryReadStream(patchBuf, patchBufSize, DisposeAfterUse::YES);
+		PatchTree *tree = g_nancy->_resource->readPatchTree(patchStream, "patchtree", 2);
+		assert(tree);
 
-	// Read the strings logic
-	
+		// Write the ConfMan associations
+		for (uint i = 0; i < confManProps.size(); ++i) {
+			assert(confManProps[i].size() % 2 == 0);
+			// Separate the array of strings into an array of Pairs of strings
+			Common::Array<Common::Pair<Common::String, Common::String>> props;
+			for (uint j = 0; j < confManProps[i].size() / 2; ++j) {
+				props.push_back({confManProps[i][j * 2], confManProps[i][j * 2 + 1]});
+			}
 
-	
-
-	
-
-	// Read the in-game strings, making sure to pick the correct language
-
-
-	
-
-	
-
-	
-
-	// Read debug strings
-	
+			tree->_associations.push_back({props, fileIDs[i]});
+		}
+	}
 }
 
 } // End of namespace Nancy

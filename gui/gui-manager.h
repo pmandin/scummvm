@@ -47,6 +47,16 @@ namespace Common {
 namespace GUI {
 
 enum {
+	kActionEnd,
+	kActionShiftEnd,
+	kActionHome,
+	kActionShiftHome,
+	kActionCopy,
+	kActionCut,
+	kActionPaste,
+};
+
+enum {
 	kIconsSetLoadedCmd  = 'icns'
 };
 
@@ -106,6 +116,8 @@ public:
 	int16 getGUIHeight() const { return _baseHeight; }
 	float getScaleFactor() const { return _scaleFactor; }
 	void computeScaleFactor();
+
+	bool useLowResGUI() const { return _baseWidth <= 320; }
 
 	bool useRTL() const { return _useRTL; }
 	void setLanguageRTL();

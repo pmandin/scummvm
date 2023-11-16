@@ -36,7 +36,7 @@ const GameConstants _nancy3Constants = {
 	4000
 };
 
-const SoundChannelInfo _nancy3to6SoundChannelInfo = {
+const SoundChannelInfo _nancy3to7SoundChannelInfo = {
 	32, 14,
 	{ 12, 13, 30 },
 	{ 0, 1, 2, 3, 19, 26, 27, 29 },
@@ -851,6 +851,16 @@ const Common::Array<const char *> _nancy3EventFlagNames = {
 	"empty",
 	"empty",
 	"empty",
+};
+
+const Common::Array<const char *> nancy3PatchSrcFiles {
+	"han92b.his"
+};
+
+// Patch notes:
+// - The missing sound file is a patch from the original devs. Should only be enabled in the English version
+const Common::Array<PatchAssociation> nancy3PatchAssociations {
+	{ { "language", "en" }, { "han92b.his" } }
 };
 
 #endif // NANCY3DATA_H

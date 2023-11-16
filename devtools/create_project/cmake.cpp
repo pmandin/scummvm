@@ -85,6 +85,8 @@ void CMakeProvider::createWorkspace(const BuildSetup &setup) {
 	workspace << "project(" << setup.projectDescription << ")\n\n";
 
 	workspace << R"(set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 11) # Globally enable C++11
+
 find_package(PkgConfig QUIET)
 include(CMakeParseArguments)
 
@@ -173,6 +175,9 @@ if (TARGET SDL2::SDL2)
 	get_target_property(SDL2_LIBRARIES SDL2::SDL2 LOCATION)
 endif()
 include_directories(${SDL2_INCLUDE_DIRS})
+
+# Explicitly support MacPorts (hopefully harmless on other platforms)
+link_directories(/opt/local/lib)
 
 )";
 

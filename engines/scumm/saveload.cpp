@@ -27,6 +27,7 @@
 
 #include "scumm/actor.h"
 #include "scumm/charset.h"
+#include "scumm/gfx_mac.h"
 #include "scumm/imuse_digi/dimuse_engine.h"
 #include "scumm/imuse/imuse.h"
 #include "scumm/players/player_towns.h"
@@ -67,7 +68,7 @@ struct SaveInfoSection {
 
 #define SaveInfoSectionSize (4+4+4 + 4+4 + 4+2)
 
-#define CURRENT_VER 109
+#define CURRENT_VER 110
 #define INFOSECTION_VERSION 2
 
 #pragma mark -
@@ -78,6 +79,9 @@ Common::Error ScummEngine::loadGameState(int slot) {
 }
 
 bool ScummEngine::canLoadGameStateCurrently() {
+	if (!_setupIsComplete)
+		return false;
+
 	// FIXME: For now always allow loading in V0-V3 games
 	// FIXME: Actually, we might wish to support loading in more places.
 	// As long as we are sure it won't cause any problems... Are we
@@ -138,6 +142,9 @@ Common::Error ScummEngine::saveGameState(int slot, const Common::String &desc, b
 }
 
 bool ScummEngine::canSaveGameStateCurrently() {
+	if (!_setupIsComplete)
+		return false;
+
 	// Disallow saving in v0-v3 games when a 'prequel' to a cutscene is shown.
 	// This is a blank screen with text, and while this is shown, saving should
 	// be disabled, as no room is set.
@@ -865,6 +872,9 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 		_macScreen->fillRect(Common::Rect(_macScreen->w, _macScreen->h), 0);
 	clearTextSurface();
 
+	if (_macIndy3Gui)
+		_macIndy3Gui->resetAfterLoad();
+
 	_lastCodePtr = nullptr;
 	_drawObjectQueNr = 0;
 	_verbMouseOver = 0;
@@ -1269,6 +1279,7 @@ bool ScummEngine::changeSavegameName(int slot, char *newName) {
 		if (in->err()) {
 			warning("ScummEngine::changeSavegameName(): Error in input file stream, aborting...");
 			delete in;
+			free(saveBuffer);
 			return false;
 		}
 	}
@@ -1276,18 +1287,21 @@ bool ScummEngine::changeSavegameName(int slot, char *newName) {
 	delete in;
 
 	Common::WriteStream *out = openSaveFileForWriting(slot, false, filename);
-	saveSaveGameHeader(out, hdr);
 
 	if (!out) {
 		warning("ScummEngine::changeSavegameName(): Couldn't open output file, aborting...");
+		free(saveBuffer);
 		return false;
 	}
+
+	saveSaveGameHeader(out, hdr);
 
 	for (uint i = 0; i < (uint)bufferSizeNoHdr; i++) {
 		out->writeByte(saveBuffer[i]);
 
 		if (out->err()) {
 			warning("ScummEngine::changeSavegameName(): Error in output file stream, aborting...");
+			free(saveBuffer);
 			delete out;
 			return false;
 		}
@@ -1297,10 +1311,12 @@ bool ScummEngine::changeSavegameName(int slot, char *newName) {
 
 	if (out->err()) {
 		warning("ScummEngine::changeSavegameName(): Error in output file stream after finalizing...");
+		free(saveBuffer);
 		delete out;
 		return false;
 	}
 
+	free(saveBuffer);
 	delete out;
 
 	return true;
@@ -2060,7 +2076,7 @@ void ScummEngine_v5::saveLoadWithSerializer(Common::Serializer &s) {
 	// invisible after loading.
 
 	if (s.isLoading() && _game.platform == Common::kPlatformMacintosh) {
-		if ((_game.id == GID_LOOM && !_macCursorFile.empty()) || (_game.id == GID_INDY3 && _macScreen)) {
+		if ((_game.id == GID_LOOM && !_macCursorFile.empty()) || _macIndy3Gui) {
 			setBuiltinCursor(0);
 		}
 	}

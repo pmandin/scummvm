@@ -156,6 +156,14 @@ bool readHISHeader(Common::SeekableReadStream *stream, SoundType &type, uint16 &
 	return true;
 }
 
+uint getAdjustedVolume(uint volume) {
+	if (g_nancy->getGameType() >= kGameTypeNancy3) {
+		return 10 + (volume * 90) / 100;
+	} else {
+		return volume;
+	}
+}
+
 Audio::SeekableAudioStream *SoundManager::makeHISStream(Common::SeekableReadStream *stream, DisposeAfterUse::Flag disposeAfterUse, uint32 overrideSamplesPerSec) {
 	char buf[22];
 
@@ -262,6 +270,12 @@ void SoundManager::loadSound(const SoundDescription &description, SoundEffectDes
 		if (	description.name == existing.name &&
 				description.numLoops == existing.numLoops &&
 				description.playCommands == existing.playCommands) {
+
+			// When the same sound is already playing at a different volume, adjust to new volume (nancy2 scene 599)
+			if (existing.volume != getAdjustedVolume(description.volume)) {
+				setVolume(description, description.volume);
+			}
+
 			return;
 		}
 	}
@@ -304,9 +318,7 @@ void SoundManager::playSound(uint16 channelID) {
 
 	// Set a minimum volume (10 percent was chosen arbitrarily, but sounds reasonably close)
 	// Fix for nancy3 scene 6112, but NOT a hack; the original engine also set a minimum volume for all sounds
-	if (g_nancy->getGameType() >= kGameTypeNancy3) {
-		chan.volume = 10 + ((int)chan.volume * 90) / 100;
-	}
+	chan.volume = getAdjustedVolume(chan.volume);
 
 	// Init 3D sound
 	if (chan.playCommands & ~kPlaySequential && chan.effectData) {
@@ -498,10 +510,10 @@ byte SoundManager::getVolume(const Common::String &chunkName) {
 }
 
 void SoundManager::setVolume(uint16 channelID, uint16 volume) {
-	if (channelID >= _channels.size())
+	if (channelID >= _channels.size() || !isSoundPlaying(channelID))
 		return;
 
-	_mixer->setChannelVolume(_channels[channelID].handle, volume);
+	_mixer->setChannelVolume(_channels[channelID].handle, getAdjustedVolume(volume) * 255 / 100);
 }
 
 void SoundManager::setVolume(const SoundDescription &description, uint16 volume) {
@@ -759,7 +771,8 @@ void SoundManager::soundEffectMaintenance(uint16 channelID, bool force) {
 	}
 
 	// Check if the player has moved OR if the sound itself has moved, OR, if we're still interpolating
-	if (!_shouldRecalculate && !hasStepped && _positionLerp == 0) {
+	// Also, make sure we don't accidentally create a Scene state during game startup
+	if (!State::Scene::hasInstance() || (!_shouldRecalculate && !hasStepped && _positionLerp == 0)) {
 		return;
 	}
 	

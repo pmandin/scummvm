@@ -355,7 +355,6 @@ reg_t disassemble(EngineState *s, reg_t pos, const Object *obj, bool printBWTag,
 			int restmod = s->r_rest;
 			int stackframe = (scr[pos.getOffset() + 1] >> 1) + restmod;
 			reg_t *sb = s->xs->sp;
-			uint16 selector;
 			reg_t fun_ref;
 
 			while (stackframe > 0) {
@@ -368,7 +367,7 @@ reg_t disassemble(EngineState *s, reg_t pos, const Object *obj, bool printBWTag,
 				else if (opcode == op_self)
 					called_obj_addr = s->xs->objp;
 
-				selector = sb[- stackframe].getOffset();
+				uint16 selector = sb[- stackframe].getOffset();
 
 				name = s->_segMan->getObjectName(called_obj_addr);
 
@@ -1129,7 +1128,7 @@ void logBacktrace() {
 		int paramc, totalparamc;
 
 		switch (call.type) {
-		case EXEC_STACK_TYPE_CALL: // Normal function
+		case EXEC_STACK_TYPE_CALL: // Script function
 			con->debugPrintf(" %x: script %d - ", i, s->_segMan->getScript(call.addr.pc.getSegment())->getScriptNumber());
 
 			if (call.debugSelector != -1) {

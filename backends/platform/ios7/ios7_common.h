@@ -26,12 +26,8 @@
 
 
 enum InputEvent {
-	kInputTouchFirstDown,
-	kInputTouchFirstUp,
-	kInputTouchFirstDragged,
-	kInputTouchSecondDragged,
-	kInputTouchSecondDown,
-	kInputTouchSecondUp,
+	kInputTouchBegan,
+	kInputTouchMoved,
 	kInputMouseLeftButtonDown,
 	kInputMouseLeftButtonUp,
 	kInputMouseRightButtonDown,
@@ -46,11 +42,13 @@ enum InputEvent {
 	kInputApplicationRestoreState,
 	kInputSwipe,
 	kInputTap,
+	kInputLongPress,
 	kInputMainMenu,
 	kInputJoystickAxisMotion,
 	kInputJoystickButtonDown,
 	kInputJoystickButtonUp,
-	kInputScreenChanged
+	kInputScreenChanged,
+	kInputTouchModeChanged
 };
 
 enum ScreenOrientation {
@@ -59,6 +57,16 @@ enum ScreenOrientation {
 	kScreenOrientationFlippedPortrait,
 	kScreenOrientationLandscape,
 	kScreenOrientationFlippedLandscape
+};
+
+enum DirectionalInput {
+	kDirectionalInputThumbstick,
+	kDirectionalInputDpad,
+};
+
+enum TouchMode {
+	kTouchModeDirect,
+	kTouchModeTouchpad,
 };
 
 enum UIViewSwipeDirection {
@@ -71,6 +79,11 @@ enum UIViewSwipeDirection {
 enum UIViewTapDescription {
 	kUIViewTapSingle = 1,
 	kUIViewTapDouble = 2
+};
+
+enum UIViewLongPressDescription {
+	UIViewLongPressStarted = 1,
+	UIViewLongPressEnded = 2
 };
 
 struct InternalEvent {
@@ -93,6 +106,6 @@ void iOS7_buildSharedOSystemInstance();
 void iOS7_main(int argc, char **argv);
 Common::String iOS7_getDocumentsDir();
 Common::String iOS7_getAppBundleDir();
-bool iOS7_touchpadModeEnabled();
+TouchMode iOS7_getCurrentTouchMode();
 
 #endif

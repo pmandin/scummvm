@@ -69,7 +69,7 @@ int CurlSocket::ready() {
 	return waitOnSocket(_socket, 1, 0);
 }
 
-bool CurlSocket::connect(Common::String url) {
+bool CurlSocket::connect(const Common::String &url) {
 	_easy = curl_easy_init();
 	if (_easy) {
 		curl_easy_setopt(_easy, CURLOPT_URL, url.c_str());
@@ -168,7 +168,7 @@ size_t CurlSocket::recv(void *data, int maxLen) {
 		return nread;
 	}
 
-	debug(1, "libcurl: Received %llu bytes", (unsigned long long)nread);
+	debug(3, "libcurl: Received %llu bytes", (unsigned long long)nread);
 	return nread;
 }
 

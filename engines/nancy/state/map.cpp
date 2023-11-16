@@ -54,7 +54,7 @@ Map::Map() : _state(kInit),
 			_label(7),
 			_closedLabel(7),
 			_background(0) {
-	_mapData = (const MAP*)g_nancy->getEngineData("MAP");
+	_mapData = GetEngineData(MAP);
 	assert(_mapData);
 }
 
@@ -146,7 +146,7 @@ void Map::setLabel(int labelID) {
 }
 
 void Map::MapViewport::init() {
-	const VIEW *viewportData = (const VIEW *)g_nancy->getEngineData("VIEW");
+	auto *viewportData = GetEngineData(VIEW);
 	assert(viewportData);
 
 	moveTo(viewportData->screenPosition);
@@ -193,7 +193,7 @@ void TVDMap::init() {
 	_ornaments.init();
 	_globe.init();
 
-	const BSUM *bootSummary = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bootSummary = GetEngineData(BSUM);
 	assert(bootSummary);
 
 	Common::Rect textboxScreenPosition = bootSummary->textboxScreenPosition;
@@ -343,7 +343,7 @@ void TVDMap::MapGlobe::onTrigger() {
 		_gargoyleEyes.setVisible(true);
 		_owner->_viewport.setVisible(true);
 		_owner->_viewport.playVideo();
-		g_system->warpMouse(_owner->_mapData->cursorPosition.x, _owner->_mapData->cursorPosition.y);
+		g_nancy->_cursorManager->warpCursor(_owner->_mapData->cursorPosition);
 		g_nancy->setMouseEnabled(true);
 	} else {
 		_owner->_state = kExit;
@@ -406,7 +406,7 @@ void Nancy1Map::load() {
 
 	setLabel(-1);
 	g_nancy->_cursorManager->setCursorItemID(-1);
-	g_system->warpMouse(_mapData->cursorPosition.x, _mapData->cursorPosition.y);
+	g_nancy->_cursorManager->warpCursor(_mapData->cursorPosition);
 
 	if (!g_nancy->_sound->isSoundPlaying(getSound())) {
 		g_nancy->_sound->loadSound(getSound());

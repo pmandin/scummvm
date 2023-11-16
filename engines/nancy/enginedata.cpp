@@ -54,6 +54,10 @@ BSUM::BSUM(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 	s.syncAsUint16LE(startTimeHours);
 	s.syncAsUint16LE(startTimeMinutes);
 
+	s.syncAsUint16LE(adScene.sceneID, kGameTypeNancy7);
+	s.syncAsUint16LE(adScene.frameID, kGameTypeNancy7);
+	s.syncAsUint16LE(adScene.verticalOffset, kGameTypeNancy7);
+
 	s.skip(0xA4, kGameTypeVampire, kGameTypeNancy2);
 	s.skip(3); // Number of object, frame, and logo images
 	if (g_nancy->getGameFlags() & GF_PLG_BYTE_IN_BSUM) {
@@ -177,26 +181,28 @@ INV::INV(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 		item.name = (char *)textBuf;
 
 		s.syncAsUint16LE(item.keepItem);
+		s.syncAsUint16LE(item.sceneID, kGameTypeNancy7);
+		s.syncAsUint16LE(item.sceneSoundFlag, kGameTypeNancy7);
 		readRect(s, item.sourceRect);
 		readRect(s, item.highlightedSourceRect, kGameTypeNancy2);
 
 		if (s.getVersion() == kGameTypeNancy2) {
 			s.syncBytes(textBuf, 60);
 			textBuf[59] = '\0';
-			assembleTextLine((char *)textBuf, item.specificCantText, 60);
+			assembleTextLine((char *)textBuf, item.cantText, 60);
 
 			s.syncBytes(textBuf, 60);
 			textBuf[59] = '\0';
-			assembleTextLine((char *)textBuf, item.generalCantText, 60);
+			assembleTextLine((char *)textBuf, item.cantTextNotHolding, 60);
 
-			item.specificCantSound.readNormal(*chunkStream);
-			item.generalCantSound.readNormal(*chunkStream);
+			item.cantSound.readNormal(*chunkStream);
+			item.cantSoundNotHolding.readNormal(*chunkStream);
 		} else if (s.getVersion() >= kGameTypeNancy3) {
 			s.syncBytes(textBuf, 60);
 			textBuf[59] = '\0';
-			assembleTextLine((char *)textBuf, item.specificCantText, 60);
+			assembleTextLine((char *)textBuf, item.cantText, 60);
 
-			item.specificCantSound.readNormal(*chunkStream);
+			item.cantSound.readNormal(*chunkStream);
 		}
 	}
 }
@@ -369,7 +375,7 @@ MENU::MENU(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 
 	ser.skip(22);
 
-	uint numOptions = 8;
+	uint numOptions = g_nancy->getGameType() <= kGameTypeNancy6 ? 8 : 9;
 
 	readRectArray16(ser, _buttonDests, numOptions, numOptions, kGameTypeVampire, kGameTypeNancy1);
 	readRectArray16(ser, _buttonDownSrcs, numOptions, numOptions, kGameTypeVampire, kGameTypeNancy1);
@@ -486,22 +492,28 @@ LOAD::LOAD(Common::SeekableReadStream *chunkStream) :
 }
 
 SDLG::SDLG(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
-	readFilename(*chunkStream, _imageName);
+	while (chunkStream->pos() < chunkStream->size()) {
+		dialogs.push_back(Dialog(chunkStream));
+	}
+}
+
+SDLG::Dialog::Dialog(Common::SeekableReadStream *chunkStream) {
+	readFilename(*chunkStream, imageName);
 	chunkStream->skip(16);
 
-	readRect(*chunkStream, _yesDest);
-	readRect(*chunkStream, _noDest);
-	readRect(*chunkStream, _cancelDest);
+	readRect(*chunkStream, yesDest);
+	readRect(*chunkStream, noDest);
+	readRect(*chunkStream, cancelDest);
 
 	chunkStream->skip(16);
 
-	readRect(*chunkStream, _yesHighlightSrc);
-	readRect(*chunkStream, _noHighlightSrc);
-	readRect(*chunkStream, _cancelHighlightSrc);
+	readRect(*chunkStream, yesHighlightSrc);
+	readRect(*chunkStream, noHighlightSrc);
+	readRect(*chunkStream, cancelHighlightSrc);
 
-	readRect(*chunkStream, _yesDownSrc);
-	readRect(*chunkStream, _noDownSrc);
-	readRect(*chunkStream, _cancelDownSrc);
+	readRect(*chunkStream, yesDownSrc);
+	readRect(*chunkStream, noDownSrc);
+	readRect(*chunkStream, cancelDownSrc);
 }
 
 HINT::HINT(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {

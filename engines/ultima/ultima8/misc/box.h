@@ -52,9 +52,17 @@ struct Box {
 	}
 
 	// Check to see if a point is within the Box
-	bool contains(int px, int py, int pz) const {
-		return (px > (_x - _xd) && py > (_y - _yd) && pz >= _z &&
-		        px <= _x && py <= _y && pz < (_z + _zd));
+	bool contains(int32 px, int32 py, int32 pz) const {
+		return px > _x - _xd && px <= _x &&
+			   py > _y - _yd && py <= _y &&
+			   pz >= _z && pz < _z + _zd;
+	}
+
+	// Check to see if the box is below a point
+	bool isBelow(int32 px, int32 py, int32 pz) const {
+		return px > _x - _xd && px <= _x &&
+			   py > _y - _yd && py <= _y &&
+			   pz >= _z + _zd;
 	}
 
 	// Move the Box (Relative)
@@ -84,6 +92,14 @@ struct Box {
 		if (_y <= o._y - o._yd || o._y <= _y - _yd)
 			return false;
 		if (_z + _zd <= o._z || o._z + o._zd <= _z)
+			return false;
+		return true;
+	}
+
+	bool overlapsXY(const Box& o) const {
+		if (_x <= o._x - o._xd || o._x <= _x - _xd)
+			return false;
+		if (_y <= o._y - o._yd || o._y <= _y - _yd)
 			return false;
 		return true;
 	}

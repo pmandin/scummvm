@@ -40,7 +40,8 @@ InventoryBox::InventoryBox() :
 		RenderObject(6),
 		_scrollbar(nullptr),
 		_scrollbarPos(0),
-		_highlightedHotspot(-1) {}
+		_highlightedHotspot(-1),
+		_inventoryData(nullptr) {}
 
 InventoryBox::~InventoryBox() {
 	_fullInventorySurface.free();
@@ -48,16 +49,16 @@ InventoryBox::~InventoryBox() {
 }
 
 void InventoryBox::init() {
-	const BSUM *bootSummary = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bootSummary = GetEngineData(BSUM);
 	assert(bootSummary);
 
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
-	assert(inventoryData);
+	_inventoryData = GetEngineData(INV);
+	assert(_inventoryData);
 
 	_order.clear();
 
 	moveTo(bootSummary->inventoryBoxScreenPosition);
-	g_nancy->_resource->loadImage(inventoryData->inventoryBoxIconsImageName, _iconsSurface);
+	g_nancy->_resource->loadImage(_inventoryData->inventoryBoxIconsImageName, _iconsSurface);
 
 	_fullInventorySurface.create(_screenPosition.width(), _screenPosition.height() * ((g_nancy->getStaticData().numItems / 4) + 1), g_nancy->_graphicsManager->getScreenPixelFormat());
 	Common::Rect sourceRect = _screenPosition;
@@ -75,9 +76,9 @@ void InventoryBox::init() {
 	RenderObject::init();
 
 	_scrollbar = new Scrollbar(	9,
-								inventoryData->scrollbarSrcBounds,
-								inventoryData->scrollbarDefaultPos,
-								inventoryData->scrollbarMaxScroll - inventoryData->scrollbarDefaultPos.y);
+								_inventoryData->scrollbarSrcBounds,
+								_inventoryData->scrollbarDefaultPos,
+								_inventoryData->scrollbarMaxScroll - _inventoryData->scrollbarDefaultPos.y);
 	_scrollbar->init();
 	_curtains.init();
 }
@@ -122,9 +123,31 @@ void InventoryBox::handleInput(NancyInput &input) {
 				hoveredHotspot = i;
 
 				if (input.input & NancyInput::kLeftMouseButtonUp) {
-					NancySceneState.removeItemFromInventory(_itemHotspots[i].itemID);
-					_highlightedHotspot = -1;
-					hoveredHotspot = -1;
+					uint16 itemID = _itemHotspots[i].itemID;
+					INV::ItemDescription item = _inventoryData->itemDescriptions[itemID];
+					byte disabled = NancySceneState.getItemDisabledState(itemID);
+
+					if (!disabled) {
+						// Item is not disabled
+						NancySceneState.removeItemFromInventory(itemID, item.keepItem != kInvItemNewSceneView);
+						_highlightedHotspot = -1;
+						hoveredHotspot = -1;
+
+						if (item.keepItem == kInvItemNewSceneView) {
+							// Transport the player to a close-up scene, temporarily remove the item from the inventory
+							NancySceneState.pushScene(itemID);
+							SceneChangeDescription sceneChange;
+							sceneChange.sceneID = item.sceneID;
+							sceneChange.continueSceneSound = item.sceneSoundFlag;
+							NancySceneState.changeScene(sceneChange);
+						}
+					} else {
+						// Item is disabled
+						if (disabled == 2) {
+							// ...and set so it plays the "can't" sound when you click it
+							NancySceneState.playItemCantSound(itemID);
+						}
+					}
 				}
 			}
 			break;
@@ -199,10 +222,7 @@ void InventoryBox::setHotspots(const uint pageNr) {
 }
 
 void InventoryBox::drawItemInSlot(const uint itemID, const uint slotID, const bool highlighted) {
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
-	assert(inventoryData);
-
-	auto &item = inventoryData->itemDescriptions[itemID];
+	auto &item = _inventoryData->itemDescriptions[itemID];
 	Common::Rect dest;
 
 	dest.setWidth(_screenPosition.width() / 2);
@@ -231,7 +251,7 @@ void InventoryBox::onScrollbarMove() {
 }
 
 void InventoryBox::Curtains::init() {
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	auto *inventoryData = GetEngineData(INV);
 	assert(inventoryData);
 
 	moveTo(inventoryData->curtainsScreenPosition);
@@ -257,7 +277,7 @@ void InventoryBox::Curtains::updateGraphics() {
 	Time time = g_nancy->getTotalPlayTime();
 	if (_areOpen) {
 		if (_curFrame < g_nancy->getStaticData().numCurtainAnimationFrames && time > _nextFrameTime) {
-			const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+			auto *inventoryData = GetEngineData(INV);
 			assert(inventoryData);
 
 			setAnimationFrame(++_curFrame);
@@ -270,7 +290,7 @@ void InventoryBox::Curtains::updateGraphics() {
 		}
 	} else {
 		if (_curFrame > 0 && time > _nextFrameTime) {
-			const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+			auto *inventoryData = GetEngineData(INV);
 			assert(inventoryData);
 
 			setAnimationFrame(--_curFrame);
@@ -304,7 +324,7 @@ void InventoryBox::Curtains::setAnimationFrame(uint frame) {
 		setVisible(true);
 	}
 
-	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	auto *inventoryData = GetEngineData(INV);
 	assert(inventoryData);
 
 	_drawSurface.clear(g_nancy->_graphicsManager->getTransColor());

@@ -36,6 +36,7 @@
 #include "gui/message.h"
 
 #include "graphics/cursorman.h"
+#include "graphics/macgui/macfontmanager.h"
 
 #include "scumm/akos.h"
 #include "scumm/charset.h"
@@ -45,6 +46,7 @@
 #include "scumm/dialogs.h"
 #include "scumm/file.h"
 #include "scumm/file_nes.h"
+#include "scumm/gfx_mac.h"
 #include "scumm/imuse/imuse.h"
 #include "scumm/imuse_digi/dimuse_engine.h"
 #include "scumm/smush/smush_player.h"
@@ -396,6 +398,10 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	assert(!_mainMenuDialog);
 	_mainMenuDialog = new ScummMenuDialog(this);
 #endif
+
+	_isIndy4Jap = _game.id == GID_INDY4 &&
+				  (_game.platform == Common::kPlatformMacintosh || _game.platform == Common::kPlatformDOS) &&
+				  _language == Common::JA_JPN;
 }
 
 
@@ -427,6 +433,7 @@ ScummEngine::~ScummEngine() {
 	for (int i = 0; i < 20; i++)
 		if (_2byteMultiFontPtr[i])
 			delete _2byteMultiFontPtr[i];
+	delete _macFontManager;
 	delete _charset;
 	delete _messageDialog;
 	delete _pauseDialog;
@@ -473,6 +480,8 @@ ScummEngine::~ScummEngine() {
 		_macIndy3TextBox->free();
 		delete _macIndy3TextBox;
 	}
+
+	delete _macIndy3Gui;
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	delete _townsScreen;
@@ -917,12 +926,22 @@ Common::Error ScummEngine::init() {
 		}
 	}
 
-
 	ConfMan.registerDefault("original_gui", true);
 	if (ConfMan.hasKey("original_gui", _targetName)) {
 		_useOriginalGUI = ConfMan.getBool("original_gui");
 	}
-	_enableEnhancements = ConfMan.getBool("enable_enhancements");
+
+	// Register original bug fixes as defaults...
+	ConfMan.registerDefault("enhancements", kEnhGameBreakingBugFixes | kEnhGrp1);
+	if (!ConfMan.hasKey("enhancements", _targetName)) {
+		if (ConfMan.hasKey("enable_enhancements", _targetName) && ConfMan.getBool("enable_enhancements", _targetName)) {
+			// Was the "enable_enhancements" key previously set to true?
+			// Convert it to a full activation of the enhancement flags then!
+			ConfMan.setInt("enhancements", kEnhGameBreakingBugFixes | kEnhGrp1 | kEnhGrp2 | kEnhGrp3 | kEnhGrp4);
+		}
+	}
+
+	_activeEnhancements = (int32)ConfMan.getInt("enhancements");
 	_enableAudioOverride = ConfMan.getBool("audio_override");
 
 	// Add default file directories.
@@ -1154,15 +1173,14 @@ Common::Error ScummEngine::init() {
 
 					_macIndy3TextBox = new Graphics::Surface();
 					_macIndy3TextBox->create(448, 47, Graphics::PixelFormat::createFormatCLUT8());
+					_macIndy3Gui = new MacIndy3Gui(_system, this);
 					break;
 				}
 			}
 
 			if (macResourceFile.empty()) {
-				GUI::MessageDialog dialog(_(
-"Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
-"be disabled."), _("OK"));
-				dialog.runModal();
+				return Common::Error(Common::kReadingFailed, _(
+"This game requires the 'Indy' Macintosh executable for its fonts."));
 			}
 
 		} else if (_game.id == GID_LOOM) {
@@ -1185,10 +1203,8 @@ Common::Error ScummEngine::init() {
 			}
 
 			if (macResourceFile.empty()) {
-				GUI::MessageDialog dialog(_(
-"Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
-"versions of font and cursor will be disabled."), _("OK"));
-				dialog.runModal();
+				return Common::Error(Common::kReadingFailed, _(
+"This game requires the 'Loom' Macintosh executable for its music and fonts."));
 			}
 		} else if (_game.id == GID_MONKEY) {
 			// Try both with and without underscore in the
@@ -1318,19 +1334,32 @@ Common::Error ScummEngine::init() {
 	if (!ConfMan.hasKey("talkspeed", _targetName))
 		setTalkSpeed(_defaultTextSpeed);
 
+	_setupIsComplete = true;
+
 	syncSoundSettings();
 
 	return Common::kNoError;
 }
 
 void ScummEngine::setupScumm(const Common::String &macResourceFile) {
+	// TODO: This may be the wrong place for it
+	// Enhancements used to be all or nothing, but now there are different
+	// types of them.
+	if (ConfMan.hasKey("enable_enhancements")) {
+		if (!ConfMan.hasKey("enhancements")) {
+			ConfMan.setInt("enhancements", ConfMan.getBool("enable_enhancements") ? kEnhGameBreakingBugFixes | kEnhGrp1 : 0);
+		}
+		ConfMan.removeKey("enable_enhancements", ConfMan.getActiveDomainName());
+		ConfMan.flushToDisk();
+	}
+
 	Common::String macInstrumentFile;
 	Common::String macFontFile;
 
 	if (_game.platform == Common::kPlatformMacintosh) {
 		if (_game.id == GID_INDY3) {
 			macFontFile = macResourceFile;
-		} if (_game.id == GID_LOOM) {
+		} else if (_game.id == GID_LOOM) {
 			macInstrumentFile = macResourceFile;
 			macFontFile = macResourceFile;
 			_macCursorFile = macResourceFile;
@@ -1467,7 +1496,7 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 	}
 
 	// Skip the sound pre-loading
-	if (_game.id == GID_SAMNMAX && _bootParam == 0 && _enableEnhancements) {
+	if (_game.id == GID_SAMNMAX && _bootParam == 0 && enhancementEnabled(kEnhUIUX)) {
 		_bootParam = -1;
 	}
 
@@ -1593,9 +1622,10 @@ void ScummEngine::setupCharsetRenderer(const Common::String &macFontFile) {
 #endif
 		if (_game.platform == Common::kPlatformFMTowns)
 			_charset = new CharsetRendererTownsV3(this);
-		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty())
+		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty()) {
+			_macFontManager = new Graphics::MacFontManager(0, Common::Language::UNK_LANG);
 			_charset = new CharsetRendererMac(this, macFontFile);
-		else
+		} else
 			_charset = new CharsetRendererV3(this);
 #ifdef ENABLE_SCUMM_7_8
 	} else if (_game.version == 7) {
@@ -1673,8 +1703,9 @@ void ScummEngine::resetScumm() {
 		_macScreen->fillRect(Common::Rect(_macScreen->w, _macScreen->h), 0);
 	}
 
-	if (_macIndy3TextBox) {
+	if (_macIndy3Gui) {
 		_macIndy3TextBox->fillRect(Common::Rect(_macIndy3TextBox->w, _macIndy3TextBox->h), 0);
+		_macIndy3Gui->reset();
 	}
 
 	if (_game.version == 0) {
@@ -2234,6 +2265,9 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 }
 
 void ScummEngine::syncSoundSettings() {
+	if (!_setupIsComplete)
+		return;
+
 	if (isUsingOriginalGUI() && _game.version > 6) {
 		int guiTextStatus = 0;
 		if (ConfMan.getBool("speech_mute")) {
@@ -2387,7 +2421,7 @@ Common::Error ScummEngine::go() {
 		// custom names for save states. We do this in order to avoid
 		// lag and/or lose keyboard inputs.
 
-		if (_enableEnhancements) {
+		if (enhancementEnabled(kEnhUIUX)) {
 			// INDY3:
 			if (_game.id == GID_INDY3 && _currentRoom == 14) {
 				delta = 3;
@@ -2418,6 +2452,9 @@ Common::Error ScummEngine::go() {
 
 		// Run the main loop
 		scummLoop(delta);
+
+		if (_macIndy3Gui)
+			_macIndy3Gui->update(delta);
 
 		if (_game.heversion >= 60) {
 			((SoundHE *)_sound)->feedMixer();
@@ -2456,6 +2493,7 @@ void ScummEngine::waitForTimer(int quarterFrames) {
 		uint32 screenUpdateTimerStart = _system->getMillis();
 		towns_updateGfx();
 #endif
+
 		_system->updateScreen();
 		cur = _system->getMillis();
 
@@ -2983,11 +3021,11 @@ void ScummEngine_v3::terminateSaveMenuScript() {
 		}
 
 		// Show the cursor
-		_cursor.state++;
+		_cursor.state = 1;
 		verbMouseOver(0);
 
 		// Enable user interaction
-		_userPut++;
+		_userPut = 1;
 
 		// Stop code for all the objects in the save screen
 		stopObjectCode();
@@ -3059,11 +3097,11 @@ void ScummEngine_v3::terminateSaveMenuScript() {
 		}
 
 		// Show the cursor
-		_cursor.state++;
+		_cursor.state = 1;
 		verbMouseOver(0);
 
 		// Enable user interaction
-		_userPut++;
+		_userPut = 1;
 
 		// Stop code for all the objects in the save screen
 		stopObjectCode();
@@ -3118,11 +3156,11 @@ void ScummEngine_v3::terminateSaveMenuScript() {
 		}
 
 		// Show the cursor
-		_cursor.state++;
+		_cursor.state = 1;
 		verbMouseOver(0);
 
 		// Enable user interaction
-		_userPut++;
+		_userPut = 1;
 
 		// Chain script 5 (or 6 for FM-Towns)
 		int chainedArgs[NUM_SCRIPT_LOCAL];
@@ -3651,6 +3689,10 @@ bool ScummEngine::isUsingOriginalGUI() {
 		return false;
 
 	return _useOriginalGUI;
+}
+
+bool ScummEngine::isMessageBannerActive() {
+	return _messageBannerActive;
 }
 
 void ScummEngine::runBootscript() {

@@ -19,7 +19,6 @@
  *
  */
 
-#include "common/system.h"
 #include "common/random.h"
 #include "common/config-manager.h"
 #include "common/serializer.h"
@@ -148,7 +147,7 @@ void ConversationSound::execute() {
 		adjustedMousePos.x -= cursorHotspot.x;
 		adjustedMousePos.y -= cursorHotspot.y - 1;
 		if (g_nancy->_cursorManager->getPrimaryVideoInactiveZone().bottom > adjustedMousePos.y) {
-			g_system->warpMouse(initialMousePos.x + cursorHotspot.x, initialMousePos.y + cursorHotspot.y);
+			g_nancy->_cursorManager->warpCursor(Common::Point(initialMousePos.x + cursorHotspot.x, initialMousePos.y + cursorHotspot.y));
 			g_nancy->_cursorManager->setCursorType(CursorManager::kNormalArrow);
 		}
 
@@ -165,7 +164,7 @@ void ConversationSound::execute() {
 	case kRun:
 		if (!_hasDrawnTextbox) {
 			_hasDrawnTextbox = true;
-			const TBOX *textboxData = (const TBOX *)g_nancy->getEngineData("TBOX");
+			auto *textboxData = GetEngineData(TBOX);
 			assert(textboxData);
 			NancySceneState.getTextbox().clear();
 			NancySceneState.getTextbox().setOverrideFont(textboxData->conversationFontID);
@@ -243,19 +242,19 @@ void ConversationSound::execute() {
 		}
 		break;
 	case kActionTrigger:
-		// process flags structs
-		for (auto &flags : _flagsStructs) {
-			if (flags.conditions.isSatisfied()) {
-				flags.flagToSet.set();
-			}
-		}
-
-		if (_pickedResponse != -1) {
-			// Set response's event flag, if any
-			NancySceneState.setEventFlag(_responses[_pickedResponse].flagDesc);
-		}
-
 		if (!g_nancy->_sound->isSoundPlaying(_responseGenericSound)) {
+			// process flags structs
+			for (auto &flags : _flagsStructs) {
+				if (flags.conditions.isSatisfied()) {
+					flags.flagToSet.set();
+				}
+			}
+
+			if (_pickedResponse != -1) {
+				// Set response's event flag, if any
+				NancySceneState.setEventFlag(_responses[_pickedResponse].flagDesc);
+			}
+
 			g_nancy->_sound->stopSound(_responseGenericSound);
 
 			if (_pickedResponse != -1) {
@@ -347,6 +346,7 @@ void ConversationSound::addConditionalDialogue() {
 			
 			newResponse.sceneChange.sceneID = res.sceneID;
 			newResponse.sceneChange.continueSceneSound = kContinueSceneSound;
+			newResponse.sceneChange.listenerFrontVector.set(0, 0, 1);
 
 			// Check if the response is a repeat. This can happen when multiple condition combinations
 			// trigger the same response.
@@ -429,12 +429,12 @@ void ConversationSound::addGoodbye() {
 
 	// The reply from the character is picked randomly
 	newResponse.sceneChange.sceneID = sceneChange.sceneIDs[g_nancy->_randomSource->getRandomNumber(sceneChange.sceneIDs.size() - 1)];
+	newResponse.sceneChange.continueSceneSound = kContinueSceneSound;
+	newResponse.sceneChange.listenerFrontVector.set(0, 0, 1);
 
 	// Set an event flag if applicable
 	// Assumes flagToSet is an event flag
 	NancySceneState.setEventFlag(sceneChange.flagToSet.label, sceneChange.flagToSet.flag);
-
-	newResponse.sceneChange.continueSceneSound = kContinueSceneSound;
 }
 
 void ConversationSound::ConversationFlag::read(Common::SeekableReadStream &stream) {
@@ -672,37 +672,31 @@ void ConversationCel::readData(Common::SeekableReadStream &stream) {
 	
 	readFilenameArray(stream, _treeNames, 4);
 
-	uint xsheetDataSize = 0;
-	byte *xsbuf = g_nancy->_resource->loadData(xsheetName, xsheetDataSize);
-	if (!xsbuf) {
-		return;
-	}
-
-	Common::MemoryReadStream xsheet(xsbuf, xsheetDataSize, DisposeAfterUse::YES);
+	Common::SeekableReadStream *xsheet = SearchMan.createReadStreamForMember(xsheetName);
 
 	// Read the xsheet and load all images into the arrays
 	// Completely unoptimized, the original engine uses a buffer
-	xsheet.seek(0);
-	Common::String signature = xsheet.readString('\0', 18);
+	xsheet->seek(0);
+	Common::String signature = xsheet->readString('\0', 18);
 	if (signature != "XSHEET WayneSikes") {
 		warning("XSHEET signature doesn't match!");
 		return;
 	}
 
-	xsheet.seek(0x22);
-	uint numFrames = xsheet.readUint16LE();
-	xsheet.skip(2);
-	_frameTime = xsheet.readUint16LE();
-	xsheet.skip(2);
+	xsheet->seek(0x22);
+	uint numFrames = xsheet->readUint16LE();
+	xsheet->skip(2);
+	_frameTime = xsheet->readUint16LE();
+	xsheet->skip(2);
 
 	_celNames.resize(4, Common::Array<Common::String>(numFrames));
 	for (uint i = 0; i < numFrames; ++i) {
 		for (uint j = 0; j < _celNames.size(); ++j) {
-			readFilename(xsheet, _celNames[j][i]);
+			readFilename(*xsheet, _celNames[j][i]);
 		}
 
 		// 4 unknown values
-		xsheet.skip(8);
+		xsheet->skip(8);
 	}
 
 	// Continue reading the AR stream

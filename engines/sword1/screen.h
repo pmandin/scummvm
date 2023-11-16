@@ -66,6 +66,7 @@ struct PSXDataCache { // Cache for PSX screen, to avoid decompressing background
 #define BORDER_BLACK 5
 #define TEXT_WHITE 6
 
+class SwordEngine;
 class ResMan;
 class ObjectMan;
 class Text; // Text objects use sprites that are created internally at run-time
@@ -74,7 +75,7 @@ class Text; // Text objects use sprites that are created internally at run-time
 class Screen {
 	friend class Text;
 public:
-	Screen(OSystem *system, ResMan *pResMan, ObjectMan *pObjMan);
+	Screen(OSystem *system, SwordEngine *vm, ResMan *pResMan, ObjectMan *pObjMan);
 	~Screen();
 	void clearScreen();
 	void useTextManager(Text *pTextMan);
@@ -98,7 +99,7 @@ public:
 
 	bool showScrollFrame();
 	void updateScreen();
-	void showFrame(uint16 x, uint16 y, uint32 resId, uint32 frameNo, const byte *fadeMask = NULL, int8 fadeStatus = 0);
+	void showFrame(uint16 x, uint16 y, uint32 resId, uint32 frameNo, const byte *fadeMask = nullptr, int8 fadeStatus = 0);
 
 	void fnSetParallax(uint32 screen, uint32 resId);
 	void fnFlash(uint8 color);
@@ -158,6 +159,7 @@ private:
 	void flushPsxCache();
 
 	OSystem *_system;
+	SwordEngine *_vm;
 	ResMan *_resMan;
 	ObjectMan *_objMan;
 	Text *_textMan;

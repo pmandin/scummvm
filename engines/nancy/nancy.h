@@ -93,6 +93,7 @@ public:
 	uint32 getGameFlags() const;
 	const char *getGameId() const;
 	GameType getGameType() const;
+	Common::Language getGameLanguage() const;
 	Common::Platform getPlatform() const;
 
 	const StaticData &getStaticData() const;
@@ -161,6 +162,7 @@ private:
 };
 
 extern NancyEngine *g_nancy;
+#define GetEngineData(s) (const s*)g_nancy->getEngineData(#s);
 
 } // End of namespace Nancy
 

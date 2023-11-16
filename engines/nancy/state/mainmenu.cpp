@@ -24,6 +24,7 @@
 #include "engines/nancy/sound.h"
 #include "engines/nancy/input.h"
 #include "engines/nancy/util.h"
+#include "engines/nancy/graphics.h"
 
 #include "engines/nancy/state/mainmenu.h"
 #include "engines/nancy/state/scene.h"
@@ -63,7 +64,7 @@ void MainMenu::onStateEnter(const NancyState::NancyState prevState) {
 }
 
 bool MainMenu::onStateExit(const NancyState::NancyState nextState) {
-	return true;
+	return _destroyOnExit;
 }
 
 void MainMenu::registerGraphics() {
@@ -72,6 +73,8 @@ void MainMenu::registerGraphics() {
 	for (auto *button : _buttons) {
 		button->registerGraphics();
 	}
+
+	g_nancy->_graphicsManager->redrawAll();
 }
 
 void MainMenu::clearButtonState() {
@@ -81,7 +84,7 @@ void MainMenu::clearButtonState() {
 }
 
 void MainMenu::init() {
-	_menuData = (const MENU*)g_nancy->getEngineData("MENU");
+	_menuData = GetEngineData(MENU);
 	assert(_menuData);
 
 	_background.init(_menuData->_imageName);
@@ -110,6 +113,11 @@ void MainMenu::init() {
 	// Perhaps could be enabled always, and just load the latest save?
 	if (!Scene::hasInstance()) {
 		_buttons[3]->setDisabled(true);
+	} else {
+		if (NancySceneState.isRunningAd() && ConfMan.hasKey("restore_after_ad", ConfMan.kTransientDomain)) {
+			// Force immediate load of second chance save, if we need to restore the game that was running
+			g_nancy->loadGameState(g_nancy->getMetaEngine()->getMaximumSaveSlot());
+		}
 	}
 
 	_state = kRun;
@@ -188,15 +196,69 @@ void MainMenu::stop() {
 	case 6:
 		// Exit Game
 		if (g_nancy->getEngineData("SDLG") && Nancy::State::Scene::hasInstance() && !g_nancy->_hasJustSaved) {
-			g_nancy->setState(NancyState::kSaveDialog);
+			if (!ConfMan.hasKey("sdlg_return", ConfMan.kTransientDomain)) {
+				// Request the "Do you want to save before quitting" dialog
+				ConfMan.setInt("sdlg_id", 0, ConfMan.kTransientDomain);
+				_destroyOnExit = false;
+				g_nancy->setState(NancyState::kSaveDialog);
+			} else {
+				// Dialog has returned
+				_destroyOnExit = true;
+				g_nancy->_graphicsManager->suppressNextDraw();
+				uint ret = ConfMan.getInt("sdlg_return", ConfMan.kTransientDomain);
+				ConfMan.removeKey("sdlg_return", ConfMan.kTransientDomain);
+				switch (ret) {
+				case 0 :
+					// "Yes" switches to LoadSave
+					g_nancy->setState(NancyState::kLoadSave);
+					break;
+				case 1 :
+					// "No" quits the game
+					g_nancy->quitGame();
+					
+					// fall through
+				case 2 :
+					// "Cancel" keeps us in the main menu
+					_selected = -1;
+					for (uint i = 0; i < _buttons.size(); ++i) {
+						_buttons[i]->_isClicked = false;
+					}
+					_state = kRun;
+					break;
+				default:
+					break;
+				}
+			}
 		} else {
+			// Earlier games had no "Do you want to save before quitting" dialog, directly quit
 			g_nancy->quitGame();
+
+			// Fallback for when the ScummVM "Ask for confirmation on exit" option is enabled, and
+			// the player clicks cancel
+			_selected = -1;
+			for (uint i = 0; i < _buttons.size(); ++i) {
+				_buttons[i]->_isClicked = false;
+			}
+			_state = kRun;
+			break;
 		}
 		
 		break;
 	case 7:
 		// Help
 		g_nancy->setState(NancyState::kHelp);
+		break;
+	case 8:
+		// More Nancy Drew!
+		if (Scene::hasInstance()) {
+			// The second chance slot is used as temporary save
+			g_nancy->secondChance();
+			NancySceneState.destroy();
+			ConfMan.setBool("restore_after_ad", true, ConfMan.kTransientDomain);
+		}
+
+		ConfMan.setBool("load_ad", true, ConfMan.kTransientDomain);
+		g_nancy->setState(NancyState::kScene);
 		break;
 	}
 }

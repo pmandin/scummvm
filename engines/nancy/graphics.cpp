@@ -40,7 +40,7 @@ GraphicsManager::GraphicsManager() :
 	_isSuppressed(false) {}
 
 void GraphicsManager::init() {
-	const BSUM *bsum = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bsum = GetEngineData(BSUM);
 	assert(bsum);
 
 	// Extract transparent color from the boot summary
@@ -94,6 +94,7 @@ void GraphicsManager::draw(bool updateScreen) {
 		}
 
 		current._needsRedraw = false;
+		current._hasMoved = false;
 		current._previousScreenPosition = current._screenPosition;
 	}
 
@@ -132,7 +133,7 @@ void GraphicsManager::draw(bool updateScreen) {
 }
 
 void GraphicsManager::loadFonts(Common::SeekableReadStream *chunkStream) {
-	const BSUM *bsum = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bsum = GetEngineData(BSUM);
 	assert(bsum);
 	assert(chunkStream);
 
@@ -350,10 +351,10 @@ void GraphicsManager::rotateBlit(const Graphics::ManagedSurface &src, Graphics::
 	}
 }
 
-void GraphicsManager::crossDissolve(const Graphics::ManagedSurface &from, const Graphics::ManagedSurface &to, byte alpha, Graphics::ManagedSurface &inResult) {
-	assert(from.getBounds() == to.getBounds() && to.getBounds() == inResult.getBounds());
-	inResult.blitFrom(from, Common::Point());
-	inResult.transBlitFrom(to, (uint32)-1, false, 0, alpha);
+void GraphicsManager::crossDissolve(const Graphics::ManagedSurface &from, const Graphics::ManagedSurface &to, byte alpha, const Common::Rect rect, Graphics::ManagedSurface &inResult) {
+	assert(from.getBounds() == to.getBounds());
+	inResult.blitFrom(from, rect, Common::Point());
+	inResult.transBlitFrom(to, rect, Common::Point(), (uint32)-1, false, 0, alpha);
 }
 
 void GraphicsManager::debugDrawToScreen(const Graphics::ManagedSurface &surf) {
@@ -383,16 +384,6 @@ void GraphicsManager::grabViewportObjects(Common::Array<RenderObject *> &inArray
 			inArray.push_back(obj);
 		}
 	}
-}
-
-void GraphicsManager::screenshotViewport(Graphics::ManagedSurface &inSurf) {
-	const VIEW *viewportData = (const VIEW *)g_nancy->getEngineData("VIEW");
-	assert(viewportData);
-
-	draw(false);
-	inSurf.free();
-	inSurf.create(viewportData->bounds.width(), viewportData->bounds.height(), _screenPixelFormat);
-	inSurf.blitFrom(_screen, viewportData->screenPosition, viewportData->bounds);
 }
 
 void GraphicsManager::screenshotScreen(Graphics::ManagedSurface &inSurf) {

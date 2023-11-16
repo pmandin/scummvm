@@ -27,6 +27,7 @@
 
 #include "scumm/debugger.h"
 #include "scumm/dialogs.h"
+#include "scumm/gfx_mac.h"
 #include "scumm/insane/insane.h"
 #include "scumm/imuse/imuse.h"
 #include "scumm/imuse_digi/dimuse_engine.h"
@@ -104,6 +105,10 @@ void ScummEngine_v80he::parseEvent(Common::Event event) {
 #endif
 
 void ScummEngine::parseEvent(Common::Event event) {
+	// Handle Mac Indy3 events before scaling the mouse coordinates.
+	if (_macIndy3Gui && _macIndy3Gui->isVerbGuiActive())
+		_macIndy3Gui->handleEvent(event);
+
 	switch (event.type) {
 	case Common::EVENT_CUSTOM_ENGINE_ACTION_START:
 		if (event.customType >= kScummActionCount) {
@@ -181,14 +186,16 @@ void ScummEngine::parseEvent(Common::Event event) {
 		// remap keypad keys to always have a corresponding ASCII value.
 		// Normally, keypad keys would only have an ASCII value when
 		// NumLock is enabled. This fixes fighting in Indy 3 (Trac #11227)
-		if (_keyPressed.keycode >= Common::KEYCODE_KP0 && _keyPressed.keycode <= Common::KEYCODE_KP9) {
+
+		if (event.kbd.keycode >= Common::KEYCODE_KP0 && event.kbd.keycode <= Common::KEYCODE_KP9) {
+			_keyPressed = event.kbd;
 			_keyPressed.ascii = (_keyPressed.keycode - Common::KEYCODE_KP0) + '0';
 		}
 
-		if (event.kbd.ascii >= 512) {
+		if (_keyPressed.ascii >= 512) {
 			debugC(DEBUG_GENERAL, "keyPressed > 512 (%d)", event.kbd.ascii);
 		} else {
-			_keyDownMap[event.kbd.ascii] = false;
+			_keyDownMap[_keyPressed.ascii] = false;
 
 			// Due to some weird bug with capslock key pressed
 			// generated keydown event is for lower letter but
@@ -1128,6 +1135,12 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 			// We don't have original menus for Mac versions of LOOM and INDY3, so let's just open the GMM...
 			openMainMenuDialog();
 			return;
+		}
+
+		if (enhancementEnabled(kEnhUIUX) && _game.id == GID_LOOM &&
+			mainmenuKeyEnabled && (lastKeyHit.keycode == Common::KEYCODE_d && lastKeyHit.hasFlags(Common::KBD_CTRL))) {
+			// Drafts menu
+			showDraftsInventory();
 		}
 
 		if (snapScrollKeyEnabled) {

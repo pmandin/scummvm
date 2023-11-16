@@ -1027,6 +1027,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("gui/themes/translations.dat");
 		files.push_back("dists/engine-data/access.dat");
 		files.push_back("dists/engine-data/achievements.dat");
+		files.push_back("dists/engine-data/classicmacfonts.dat");
 		files.push_back("dists/engine-data/cryo.dat");
 		files.push_back("dists/engine-data/cryomni3d.dat");
 		files.push_back("dists/engine-data/drascula.dat");
@@ -1057,6 +1058,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/engine-data/ultima.dat");
 		files.push_back("dists/engine-data/ultima8.dat");
 		files.push_back("dists/engine-data/wintermute.zip");
+		files.push_back("dists/ios7/ios-help.zip");
 		files.push_back("dists/ios7/LaunchScreen_ios.storyboard");
 		files.push_back("dists/tvos/LaunchScreen_tvos.storyboard");
 		files.push_back("dists/pred.dic");
@@ -1410,7 +1412,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	// Separate iphoneos and iphonesimulator definitions since simulator running on x86_64
 	// hosts doesn't support NEON
 	ValueList scummvmIOS_defines = scummvmIOSsimulator_defines;
-	ADD_DEFINE(scummvmIOS_defines, "SCUMMVM_NEON");
+	//	ADD_DEFINE(scummvmIOS_defines, "SCUMMVM_NEON");
 	ADD_SETTING_LIST(iPhone_Debug, "\"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]\"", scummvmIOS_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	ADD_SETTING(iPhone_Debug, "ASSETCATALOG_COMPILER_APPICON_NAME", "AppIcon");
 	ADD_SETTING(iPhone_Debug, "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME", "LaunchImage");
@@ -1573,7 +1575,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	// Separate appletvos and appletvsimulator definitions since simulator running on x86_64
 	// hosts doesn't support NEON
 	ValueList scummvmTVOS_defines = scummvmTVOSsimulator_defines;
-	ADD_DEFINE(scummvmTVOS_defines, "SCUMMVM_NEON");
+	//	ADD_DEFINE(scummvmTVOS_defines, "SCUMMVM_NEON");
 	ADD_SETTING_LIST(tvOS_Debug, "\"GCC_PREPROCESSOR_DEFINITIONS[sdk=appletvos*]\"", scummvmTVOS_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	ADD_SETTING(tvOS_Debug, "ASSETCATALOG_COMPILER_APPICON_NAME", "AppIcon");
 	ADD_SETTING(tvOS_Debug, "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME", "LaunchImage");

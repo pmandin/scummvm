@@ -2455,8 +2455,15 @@ if test "$_debug_build" != no; then
 	echo_n -- "$debug_mode"
 
 	echo "int main() { return 0; }" > $TMPC
-	if `which $_dwp >/dev/null 2>&1` && cc_check_no_clean $debug_mode -gsplit-dwarf && `$_dwp -e $TMPO -o /dev/null >/dev/null 2>&1`; then
-		append_var CXXFLAGS "-gsplit-dwarf"
+
+	# HACK: The default DWARF version "for most targets" is 5. However,
+	#       that version causes dwp to segfault. According to
+	#       https://sourceware.org/bugzilla/show_bug.cgi?id=26219 it just
+	#       isn't implemented, and there's no fix in sight. So we force
+	#       DWARF version 4 and hope that works for, well... "most targets".
+
+	if `which $_dwp >/dev/null 2>&1` && cc_check_no_clean $debug_mode -gsplit-dwarf -gdwarf-4 && `$_dwp -e $TMPO -o /dev/null >/dev/null 2>&1`; then
+		append_var CXXFLAGS "-gsplit-dwarf -gdwarf-4"
 		add_line_to_config_mk "SPLIT_DWARF = 1"
 		echo_n -- " + split DWARF"
 		if test "$_lld" = yes && cc_check_no_clean $debug_mode -gsplit-dwarf -fuse-ld=lld -Wl,--gdb-index; then
@@ -2573,7 +2580,7 @@ elif $_strings $TMPO$HOSTEXEEXT 2>> "$TMPLOG" | grep LiTTleEnDian >/dev/null; th
 	_endian=little
 fi
 echo $_endian;
-cc_check_clean tmp_endianness_check.cpp tmp_endianness_check.dwo
+cc_check_clean tmp_endianness_check.cpp $TMPO-tmp_endianness_check.dwo
 
 case $_endian in
 	big)
@@ -3673,7 +3680,7 @@ if test -n "$_host"; then
 			_backend="ios7"
 			_seq_midi=no
 			_timidity=no
-			_ext_neon=yes
+			_ext_neon=no
 			;;
 		kos32)
 			# neither pkg-config nor *-config work, so we setup everything manually

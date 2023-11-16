@@ -68,7 +68,7 @@ const Common::Array<Common::Array<ConditionalDialogue>> _nancy2ConditionalDialog
 	{	8, 729, "NRD29",
 		{ { kEv, 115, kFalse }, { kEv, 68, kTrue } } },
 	{	8, 729, "NRD29",
-		{ { kEv, 15, kFalse }, { kEv, 64, kTrue } } },
+		{ { kEv, 115, kFalse }, { kEv, 64, kTrue } } },
 	{	9, 728, "NRD28",
 		{ { kEv, 50, kTrue }, { kEv, 114, kFalse } } },
 	{	10, 717, "NRD18",
@@ -615,6 +615,23 @@ const Common::Array<const char *> _nancy2EventFlagNames = {
 	"empty",
 	"empty",
 	"empty"
+};
+
+const Common::Array<const char *> nancy2PatchSrcFiles {
+	"S1160.cif",
+	"S1563.cif",
+	"S1564.cif",
+	"S1565.cif"
+};
+
+// Patch notes:
+// - The patch that extends the final timer was originally distributed by HeR.
+// - The softlock fix is custom, and works by adding a second inventory dependency
+// to the last two ARs in scene S1160. This allows the player to re-enter the
+// prop room when they've collected the door knob, but not the wire clippers.
+const Common::Array<PatchAssociation> nancy2PatchAssociations {
+	{ { "softlocks_fix", "true" }, { "S1160" } },
+	{ { "final_timer", "true" }, { "S1563", "S1564", "S1565" } }
 };
 
 #endif // NANCY2DATA

@@ -37,19 +37,12 @@ namespace Nancy {
 namespace Action {
 
 void Overlay::init() {
-	// Check for special autotext strings, and use the requested surface as source
-	if (_imageName.hasPrefix("USE_AUTOTEXT")) {
-		uint surfID = _imageName[12] - '1';
-		Graphics::ManagedSurface &surf = g_nancy->_graphicsManager->getAutotextSurface(surfID);
-		_fullSurface.create(surf, surf.getBounds());
-	} else if (_imageName.hasPrefix("USE_AUTOJOURNAL")) {
-		uint surfID = _imageName.substr(15).asUint64() + 2;
-		Graphics::ManagedSurface &surf = g_nancy->_graphicsManager->getAutotextSurface(surfID);
-		_fullSurface.create(surf, surf.getBounds());
-	} else {
-		// No autotext, load image source
-		g_nancy->_resource->loadImage(_imageName, _fullSurface);
+	// Autotext overlays need special handling when blitting
+	if (_imageName.hasPrefix("USE_")) {
+		_usesAutotext = true;
 	}
+	
+	g_nancy->_resource->loadImage(_imageName, _fullSurface);
 
 	setFrame(_firstFrame);
 
@@ -69,7 +62,11 @@ void Overlay::handleInput(NancyInput &input) {
 
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				_state = kActionTrigger;
-				input.eatMouseInput(); // Make sure nothing else gets triggered
+				if (g_nancy->getGameType() >= kGameTypeNancy3) {
+					// Make sure nothing else gets triggered
+					// This is nancy3 and up, since we actually want to trigger other records in nancy2 (e.g. scene 2541)
+					input.eatMouseInput();
+				}
 			}
 		}
 	}
@@ -185,6 +182,7 @@ void Overlay::execute() {
 
 							if (_enableHotspot == kPlayOverlayWithHotspot) {
 								_hotspot = _screenPosition;
+								_hasHotspot = true;
 							}
 
 							break;
@@ -192,30 +190,33 @@ void Overlay::execute() {
 					}
 				}
 
+				uint16 frameDiff = 1;
+				uint16 nextFrame = _currentFrame;
+
 				if (_nextFrameTime == 0) {
 					_nextFrameTime = _currentFrameTime + _frameTime;
 				} else {
-					_nextFrameTime += _frameTime;
+					uint32 timeDiff = _currentFrameTime - _nextFrameTime;
+					frameDiff = timeDiff / MAX<uint32>(_frameTime, 1); // Fix for nancy2 scene 1090, where _frameTime is 0
+					_nextFrameTime += _frameTime * frameDiff;
 				}
 
-				uint16 nextFrame = _currentFrame;
-
 				if (_playDirection == kPlayOverlayReverse) {
-					if (nextFrame - 1 < _loopFirstFrame) {
-						// We keep looping if sound is present (nancy1 only)
-						if (_loop == kPlayOverlayLoop || (_sound.name != "NO SOUND" && g_nancy->getGameType() == kGameTypeNancy1)) {
-							nextFrame = _loopLastFrame;
+					if (nextFrame - frameDiff < _loopFirstFrame) {
+						// We keep looping if sound is present (nancy1/2 only)
+						if (_loop == kPlayOverlayLoop || (_sound.name != "NO SOUND" && g_nancy->getGameType() <= kGameTypeNancy2)) {
+							nextFrame = _loopLastFrame - (frameDiff % (_loopLastFrame - _loopFirstFrame + 1));
 						}
 					} else {
-						--nextFrame;
+						nextFrame -= frameDiff;
 					}
 				} else {
-					if (nextFrame + 1 > _loopLastFrame) {
-						if (_loop == kPlayOverlayLoop || (_sound.name != "NO SOUND" && g_nancy->getGameType() == kGameTypeNancy1)) {
-							nextFrame = _loopFirstFrame;
+					if (nextFrame + frameDiff > _loopLastFrame) {
+						if (_loop == kPlayOverlayLoop || (_sound.name != "NO SOUND" && g_nancy->getGameType() <= kGameTypeNancy2)) {
+							nextFrame = _loopFirstFrame + (frameDiff % (_loopLastFrame - _loopFirstFrame + 1));
 						}
 					} else {
-						++nextFrame;
+						nextFrame += frameDiff;
 					}
 				}
 
@@ -312,57 +313,83 @@ void Overlay::setFrame(uint frame) {
 			return;
 		}
 
-		// Static mode overlays are an absolute mess, and use both the general source rects (_srcRects),
+		// Static mode overlays use both the general source rects (_srcRects),
 		// and the ones inside the blit description struct corresponding to the current scene background.
 
-		if (_srcRects.size() > 1) {
-			// First, the order of the blit descriptions does not necessarily correspond to the order of
-			// the general rects, as the general rects are ordered based on the scene's background frame id,
-			// while the blit descriptions can be in arbitrary order. 
-			// An example is nancy4 scene 3500, where the overlay appears on background frames 0, 1, 2, 18 and 19,
-			// while the blit descriptions are in order 18, 19, 0, 1, 2. Thus, if we don't do the counting below
-			// we get wildly inaccurate results.
-			uint srcID = 0;
+		// BlitDescriptions contain the id of the source rect to actually use
+		srcRect = _srcRects[_blitDescriptions[frame].staticRectID];
+		Common::Rect staticBounds = _blitDescriptions[frame].src;
 
-			for (int i = 0; i < _currentViewportFrame; ++i) {
-				for (uint j = 0; j < _blitDescriptions.size(); ++j) {
-					if (_blitDescriptions[j].frameID == i) {
-						++srcID;
-						continue;
-					}
-				}
+		if (_usesAutotext) {
+			// For autotext overlays, the srcRect is junk data
+			srcRect = staticBounds;
+		} else {
+			// Lastly, the general source rect we just got may also be completely empty (nancy5 scenes 2056, 2057),
+			// or have coordinates other than (0, 0) (nancy3 scene 3070, nancy5 scene 2000). Presumably,
+			// the general source rect was used for blitting to an (optional) intermediate surface, while the ones
+			// inside the blit description below were used for blitting from that intermediate surface to the screen.
+			// We can achieve the same results by doung the calculations below
+			srcRect.translate(staticBounds.left, staticBounds.top);
+
+			if (srcRect.isEmpty()) {
+				srcRect.setWidth(staticBounds.width());
+				srcRect.setHeight(staticBounds.height());
+			} else {
+				// Grab whichever dimensions are smaller. Fixes the book in nancy5 scene 3000
+				srcRect.setWidth(MIN<int>(staticBounds.width(), srcRect.width()));
+				srcRect.setHeight(MIN<int>(staticBounds.height(), srcRect.height()));
 			}
-
-			srcRect = _srcRects[srcID];
-		} else {
-			// Second, the number of general source rects may also be just one, in which case it's valid
-			// for every blit description (nancy4 scene 1300)
-			srcRect = _srcRects[0];
-		}
-
-		// Lastly, the general source rect we just got may also be completely empty (nancy5 scenes 2056, 2057),
-		// or have coordinates other than (0, 0) (nancy3 scene 3070, nancy5 scene 2000). Presumably,
-		// the general source rect was used for blitting to an (optional) intermediate surface, while the ones
-		// inside the blit description below were used for blitting from that intermediate surface to the screen.
-		// We can achieve the same results by doung the calculations below
-		Common::Rect staticSrc = _blitDescriptions[frame].src;
-		srcRect.translate(staticSrc.left, staticSrc.top);
-
-		if (srcRect.isEmpty()) {
-			srcRect.setWidth(staticSrc.width());
-			srcRect.setHeight(staticSrc.height());
-		} else {
-			// Grab whichever dimensions are smaller. Fixes the book in nancy5 scene 3000
-			srcRect.setWidth(MIN<int>(staticSrc.width(), srcRect.width()));
-			srcRect.setHeight(MIN<int>(staticSrc.height(), srcRect.height()));
-		}
-		
+		}	
 	}
 
 	_drawSurface.create(_fullSurface, srcRect);
 	setTransparent(_transparency == kPlayOverlayTransparent);
 
 	_needsRedraw = true;
+}
+
+void OverlayStaticTerse::readData(Common::SeekableReadStream &stream) {
+	readFilename(stream, _imageName);
+	_transparency = stream.readUint16LE();
+	_z = stream.readUint16LE();
+
+	Common::Rect dest, src;
+	readRect(stream, dest);
+	readRect(stream, src);
+
+	_srcRects.push_back(src);
+	_blitDescriptions.resize(1);
+	_blitDescriptions[0].src = Common::Rect(src.width(), src.height());
+	_blitDescriptions[0].dest = dest;
+
+	_overlayType = kPlayOverlayStatic;
+}
+
+void OverlayAnimTerse::readData(Common::SeekableReadStream &stream) {
+	readFilename(stream, _imageName);
+	stream.skip(2); // VIDEO_STOP_RENDERING, VIDEO_CONTINUE_RENDERING
+	_transparency = stream.readUint16LE();
+	_hasSceneChange = stream.readUint16LE();
+	_z = stream.readUint16LE();
+	_playDirection = stream.readUint16LE();
+	_loop = stream.readUint16LE();
+
+	_sceneChange.sceneID = stream.readUint16LE();
+	_sceneChange.continueSceneSound = kContinueSceneSound;
+	_sceneChange.listenerFrontVector.set(0, 0, 1);
+	_flagsOnTrigger.descs[0].label = stream.readSint16LE();
+	_flagsOnTrigger.descs[0].flag = stream.readUint16LE();
+
+	_firstFrame = _loopFirstFrame = stream.readUint16LE();
+	_loopLastFrame = stream.readUint16LE();
+
+	_blitDescriptions.resize(1);
+	readRect(stream, _blitDescriptions[0].dest);
+
+	readRectArray(stream, _srcRects, _loopLastFrame - _loopFirstFrame + 1);
+
+	_overlayType = kPlayOverlayAnimated;
+	_frameTime = Common::Rational(1000, 15).toInt(); // Always set to 15 fps
 }
 
 void TableIndexOverlay::readData(Common::SeekableReadStream &stream) {
@@ -377,7 +404,7 @@ void TableIndexOverlay::execute() {
 
 	TableData *playerTable = (TableData *)NancySceneState.getPuzzleData(TableData::getTag());
 	assert(playerTable);
-	const TABL *tabl = (const TABL *)g_nancy->getEngineData("TABL");
+	auto *tabl = GetEngineData(TABL);
 	assert(tabl);
 
 	if (_lastIndexVal != playerTable->currentIDs[_tableIndex - 1]) {

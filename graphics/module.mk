@@ -4,6 +4,7 @@ MODULE_OBJS := \
 	big5.o \
 	blit/blit.o \
 	blit/blit-alpha.o \
+	blit/blit-generic.o \
 	blit/blit-scale.o \
 	cursorman.o \
 	font.o \
@@ -29,6 +30,7 @@ MODULE_OBJS := \
 	macgui/macmenu.o \
 	macgui/macpopupmenu.o \
 	macgui/mactext.o \
+	macgui/mactext-canvas.o \
 	macgui/mactext-md.o \
 	macgui/mactextwindow.o \
 	macgui/macwidget.o \
@@ -55,7 +57,6 @@ MODULE_OBJS := \
 	svg.o \
 	transform_struct.o \
 	transform_tools.o \
-	transparent_surface.o \
 	thumbnail.o \
 	VectorRenderer.o \
 	VectorRendererSpec.o \

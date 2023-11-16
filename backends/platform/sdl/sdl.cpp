@@ -41,6 +41,7 @@
 #include "backends/audiocd/sdl/sdl-audiocd.h"
 #endif
 
+#include "backends/mixer/null/null-mixer.h"
 #include "backends/events/default/default-events.h"
 #include "backends/events/sdl/legacy-sdl-events.h"
 #include "backends/keymapper/hardware-input.h"
@@ -303,6 +304,13 @@ void OSystem_SDL::initBackend() {
 		_mixerManager = new SdlMixerManager();
 		// Setup and start mixer
 		_mixerManager->init();
+
+		if (_mixerManager->getMixer() == nullptr) {
+			// Audio was unavailable or disabled
+			delete _mixerManager;
+			_mixerManager = new NullMixerManager();
+			_mixerManager->init();
+		}
 	}
 
 #ifdef ENABLE_EVENTRECORDER
@@ -1018,29 +1026,29 @@ _s(
 "\n"
 "Default shortcuts are shown in the table.\n"
 "\n"
-"| Shortcut      | Description\n"
-"| --------------------------------\n"
-"| `Ctrl+F5` -- Displays the Global Main Menu\n")
+"| Shortcut      | Description      \n"
+"| --------------|------------------\n"
+"| `Ctrl+F5` | Displays the Global Main Menu\n")
 #if defined(MACOSX)
-_s("| `Cmd+q`    -- Quit (macOS)\n")
+_s("| `Cmd+q`    | Quit (macOS)\n")
 #elif defined(WIN32)
-_s("| `Alt+F4`  -- Quit (Windows)\n")
+_s("| `Alt+F4`  | Quit (Windows)\n")
 #else
-_s("| `Ctrl+q`  -- Quit (Linux/Unix)\n")
-_s("| `Ctrl+z`  -- Quit (other platforms)\n")
+_s("| `Ctrl+q`  | Quit (Linux/Unix)\n")
+_s("| `Ctrl+z`  | Quit (other platforms)\n")
 #endif
 _s(
-"| `Ctrl+u`  -- Mutes all sounds\n"
-"| `Ctrl+m`  -- Toggles mouse capture\n"
-"| `Ctrl+Alt` and `9` or `0` -- Cycles forwards/backwards between graphics filters\n"
-"| `Ctrl+Alt` and `+` or `-` -- Increases/decreases the scale factor\n"
-"| `Ctrl+Alt+a` -- Toggles aspect ratio correction on/off\n"
-"| `Ctrl+Alt+f` -- Toggles between nearest neighbor and bilinear interpolation (graphics filtering on/off)\n"
-"| `Ctrl+Alt+s` -- Cycles through stretch modes\n"
-"| `Alt+Enter`   -- Toggles full screen/windowed mode\n"
-"| `Alt+s`          -- Takes a screenshot\n"
-"| `Ctrl+F7`       -- Opens virtual keyboard (if enabled). This can also be opened with a long press of the middle mouse button or wheel.\n"
-"| `Ctrl+Alt+d` -- Opens the ScummVM debugger\n"
+"| `Ctrl+u`  | Mutes all sounds\n"
+"| `Ctrl+m`  | Toggles mouse capture\n"
+"| `Ctrl+Alt` and `9` or `0` | Cycles forwards/backwards between graphics filters\n"
+"| `Ctrl+Alt` and `+` or `-` | Increases/decreases the scale factor\n"
+"| `Ctrl+Alt+a` | Toggles aspect ratio correction on/off\n"
+"| `Ctrl+Alt+f` | Toggles between nearest neighbor and bilinear interpolation (graphics filtering on/off)\n"
+"| `Ctrl+Alt+s` | Cycles through stretch modes\n"
+"| `Alt+Enter`   | Toggles full screen/windowed mode\n"
+"| `Alt+s`          | Takes a screenshot\n"
+"| `Ctrl+F7`       | Opens virtual keyboard (if enabled). This can also be opened with a long press of the middle mouse button or wheel.\n"
+"| `Ctrl+Alt+d` | Opens the ScummVM debugger\n"
 ),
 
 0,

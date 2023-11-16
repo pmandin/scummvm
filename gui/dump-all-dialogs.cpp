@@ -31,6 +31,18 @@
 #include "gui/gui-manager.h"
 #include "gui/launcher.h"
 #include "gui/message.h"
+#include "gui/browser.h"
+#include "gui/downloaddialog.h"
+#include "gui/remotebrowser.h"
+#include "gui/chooser.h"
+#include "gui/cloudconnectionwizard.h"
+#include "gui/dialog.h"
+#include "gui/downloaddialog.h"
+#include "gui/downloadpacksdialog.h"
+#include "gui/fluidsynth-dialog.h"
+#include "gui/themebrowser.h"
+#include "gui/massadd.h"
+#include "gui/options.h"
 
 #include "image/png.h"
 
@@ -49,6 +61,15 @@ void saveGUISnapshot(Graphics::Surface surf, const Common::String &filename) {
 	}
 }
 
+void handleSimpleDialog(GUI::Dialog &dialog, const Common::String &filename,Graphics::Surface surf) {
+	dialog.open();         // For rendering
+	dialog.reflowLayout(); // For updating surface
+	g_gui.redrawFull();
+	g_system->grabOverlay(surf);
+	saveGUISnapshot(surf, filename);
+	dialog.close();
+}
+
 void dumpDialogs(const Common::String &message, int res, const Common::String &lang) {
 #ifdef USE_TRANSLATION
 	// Update GUI language
@@ -58,30 +79,63 @@ void dumpDialogs(const Common::String &message, int res, const Common::String &l
 	// Update resolution
 	ConfMan.setInt("last_window_width", res, Common::ConfigManager::kApplicationDomain);
 	ConfMan.setInt("last_window_height", 600, Common::ConfigManager::kApplicationDomain);
-	g_system->initSize(res, 600);
+	g_system->beginGFXTransaction();
+		g_system->initSize(res, 600);
+	g_system->endGFXTransaction();
 
 	Graphics::Surface surf;
 	surf.create(g_system->getOverlayWidth(), g_system->getOverlayHeight(), g_system->getOverlayFormat());
 
 	Common::String filename = Common::String::format("%d-%s.png", res, lang.c_str());
 
+	// Skipping Tooltips as not required
+
 	// MessageDialog
 	GUI::MessageDialog messageDialog(message);
-	messageDialog.open();     // For rendering
-	messageDialog.reflowLayout(); // For updating surface
-	g_gui.redrawFull();
-	g_system->grabOverlay(surf);
-	saveGUISnapshot(surf, "message-" + filename);
-	messageDialog.close();
-
+	handleSimpleDialog(messageDialog, "messageDialog-", surf);
 	// AboutDialog
 	GUI::AboutDialog aboutDialog;
-	aboutDialog.open();     // For rendering
-	aboutDialog.reflowLayout(); // For updating surface
-	g_gui.redrawFull();
-	g_system->grabOverlay(surf);
-	saveGUISnapshot(surf, "about-" + filename);
-	aboutDialog.close();
+	handleSimpleDialog(aboutDialog, "aboutDialog-", surf);
+
+#if defined(USE_CLOUD) && defined(USE_LIBCURL)
+	// CloudConnectingWizard
+	GUI::CloudConnectionWizard cloudConnectingWizard;
+	handleSimpleDialog(cloudConnectingWizard, "cloudConnectingWizard-", surf);
+
+	// RemoteBrowserDialog
+	GUI::RemoteBrowserDialog remoteBrowserDialog(_("Select directory with game data"));
+	handleSimpleDialog(remoteBrowserDialog, "remoteBrowserDialog-", surf);
+
+	// DownloadIconPacksDialog
+	GUI::DownloadPacksDialog downloadIconPacksDialog(_("icon packs"), "LIST", "gui-icons*.dat");
+	handleSimpleDialog(downloadIconPacksDialog, "downloadIconPacksDialog-", surf);
+
+	// DownloadShaderPacksDialog
+	GUI::DownloadPacksDialog downloadShaderPacksDialog(_("shader packs"), "LIST-SHADERS", "shaders*.dat");
+	handleSimpleDialog(downloadShaderPacksDialog, "downloadShaderPacksDialog-", surf);
+#endif
+
+#ifdef USE_FLUIDSYNTH
+	// FluidSynthSettingsDialog
+	GUI::FluidSynthSettingsDialog fluidSynthSettingsDialog;
+	handleSimpleDialog(fluidSynthSettingsDialog, "fluidSynthSettings-", surf);
+#endif
+
+	// ThemeBrowserDialog
+	GUI::ThemeBrowser themeBrowser;
+	handleSimpleDialog(themeBrowser, "themeBrowser-", surf);
+
+	// BrowserDialog
+	GUI::BrowserDialog browserDialog(_("Select directory with game data"), true);
+	handleSimpleDialog(browserDialog, "browserDialog-", surf);
+
+	// ChooserDialog
+	GUI::ChooserDialog chooserDialog(_("Pick the game:"));
+	handleSimpleDialog(chooserDialog, "chooserDialog-", surf);
+
+	// MassAddDialog
+	GUI::MassAddDialog massAddDialog(Common::FSNode("."));
+	handleSimpleDialog(massAddDialog, "massAddDialog-", surf);
 
 	// LauncherDialog
 #if 0
@@ -119,7 +173,10 @@ void dumpAllDialogs(const Common::String &message) {
 #endif
 	ConfMan.setInt("last_window_width", original_window_width, Common::ConfigManager::kApplicationDomain);
 	ConfMan.setInt("last_window_height", original_window_height, Common::ConfigManager::kApplicationDomain);
-	g_system->initSize(original_window_width, original_window_height);
+
+	g_system->beginGFXTransaction();
+		g_system->initSize(original_window_width, original_window_height);
+	g_system->endGFXTransaction();
 }
 
 } // End of namespace GUI

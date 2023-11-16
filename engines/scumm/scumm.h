@@ -67,6 +67,7 @@ class SeekableWriteStream;
 }
 namespace Graphics {
 class FontSJIS;
+class MacFontManager;
 }
 
 /**
@@ -90,6 +91,7 @@ class BaseScummFile;
 class CharsetRenderer;
 class IMuse;
 class IMuseDigital;
+class MacIndy3Gui;
 class MusicEngine;
 class Player_Towns;
 class ScummEngine;
@@ -517,8 +519,10 @@ extern const char *const insaneKeymapId;
 class ScummEngine : public Engine, public Common::Serializable {
 	friend class ScummDebugger;
 	friend class CharsetRenderer;
+	friend class CharsetRendererClassic;
 	friend class CharsetRendererTownsClassic;
 	friend class ResourceManager;
+	friend class MacIndy3Gui;
 
 public:
 	/* Put often used variables at the top.
@@ -547,11 +551,12 @@ public:
 	ResourceManager *_res = nullptr;
 	int _insideCreateResource = 0; // Counter for HE sound
 
-	bool _enableEnhancements = false;
+	int32 _activeEnhancements = kEnhGameBreakingBugFixes;
 	bool _useOriginalGUI = true;
 	bool _enableAudioOverride = false;
 	bool _enableCOMISong = false;
 	bool _isAmigaPALSystem = false;
+	bool _quitFromScriptCmd = false;
 
 	Common::Keymap *_insaneKeymap;
 
@@ -578,6 +583,7 @@ public:
 
 	void errorString(const char *buf_input, char *buf_output, int buf_output_size) override;
 	bool hasFeature(EngineFeature f) const override;
+	bool enhancementEnabled(int32 cls);
 	void syncSoundSettings() override;
 
 	Common::Error loadGameState(int slot) override;
@@ -656,6 +662,9 @@ public:
 	void pauseGame();
 	void restart();
 	bool isUsingOriginalGUI();
+	bool isMessageBannerActive(); // For Indy4 Jap character shadows
+
+	bool _isIndy4Jap = false;
 
 protected:
 	Dialog *_pauseDialog = nullptr;
@@ -772,6 +781,7 @@ protected:
 	void showMainMenu();
 	virtual void setUpMainMenuControls();
 	void setUpMainMenuControlsSegaCD();
+	void setUpMainMenuControlsIndy4Jap();
 	void drawMainMenuControls();
 	void drawMainMenuControlsSegaCD();
 	void updateMainMenuControls();
@@ -787,6 +797,9 @@ protected:
 	void restoreCursorPostMenu();
 	void saveSurfacesPreGUI();
 	void restoreSurfacesPostGUI();
+	void showDraftsInventory();
+	void setUpDraftsInventory();
+	void drawDraftsInventory();
 
 public:
 	char displayMessage(const char *altButton, MSVC_PRINTF const char *message, ...) GCC_PRINTF(3, 4);
@@ -883,6 +896,8 @@ protected:
 	byte _leftBtnPressed = 0, _rightBtnPressed = 0;
 
 	int _mouseWheelFlag = 0; // For original save/load dialog only
+
+	bool _setupIsComplete = false;
 
 	/**
 	 * Last time runInputScript was run (measured in terms of OSystem::getMillis()).
@@ -987,7 +1002,6 @@ protected:
 	void executeScript();
 	void updateScriptPtr();
 	virtual void runInventoryScript(int i);
-	void inventoryScriptIndy3Mac();
 	virtual void checkAndRunSentenceScript();
 	void runExitScript();
 	void runEntryScript();
@@ -1559,8 +1573,11 @@ public:
 	 */
 	Graphics::Surface _textSurface;
 	int _textSurfaceMultiplier = 0;
+
+	Graphics::MacFontManager *_macFontManager = nullptr;
 	Graphics::Surface *_macScreen = nullptr;
 	Graphics::Surface *_macIndy3TextBox = nullptr;
+	MacIndy3Gui *_macIndy3Gui = nullptr;
 
 protected:
 	byte _charsetColor = 0;
@@ -1614,7 +1631,7 @@ public:
 	bool _useMultiFont = false;
 	int _numLoadedFont = 0;
 	int _2byteShadow = 0;
-	bool _segaForce2ByteCharHeight = false;
+	bool _force2ByteCharHeight = false;
 
 	int _2byteHeight = 0;
 	int _2byteWidth = 0;

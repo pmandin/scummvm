@@ -155,7 +155,26 @@ void render_table_cell(Common::SDDataBuffer *ob, const Common::SDDataBuffer *tex
 	if (!text)
 		return;
 
-	Common::String res = Common::String::format("\001\016Tc%02x" "%s" "\001\016TC", flags, Common::String((const char *)text->data , text->size).c_str());
+	TextAlign align;
+
+	switch (flags) {
+	case Common::MKD_TABLE_ALIGN_R:
+		align = kTextAlignRight;
+		break;
+	case Common::MKD_TABLE_ALIGN_CENTER:
+		align = kTextAlignCenter;
+		break;
+	case Common::MKD_TABLE_ALIGN_L:
+	default:
+		align = kTextAlignLeft;
+	}
+
+	Common::String res = Common::String((const char *)text->data, text->size);
+
+	if (flags & Common::MKD_TABLE_HEADER)
+		res = Common::String::format("\001\016+%02x00" "%s" "\001\016-%02x00", kMacFontBold, res.c_str(), kMacFontBold);
+
+	res = Common::String::format("\001\016Tc%02x" "%s" "\001\016TC", align, res.c_str());
 
 	sd_bufput(ob, res.c_str(), res.size());
 
@@ -207,7 +226,7 @@ int render_emphasis(Common::SDDataBuffer *ob, const Common::SDDataBuffer *text, 
 	return 1;
 }
 
-int render_image(Common::SDDataBuffer *ob, const Common::SDDataBuffer *link, const Common::SDDataBuffer *title, const Common::SDDataBuffer *alt, void *opaque) {
+int render_image(Common::SDDataBuffer *ob, const Common::SDDataBuffer *link, const Common::SDDataBuffer *title, const Common::SDDataBuffer *alt, const Common::SDDataBuffer *ext, void *opaque) {
 	if (!link)
 		return 0;
 
@@ -220,13 +239,20 @@ int render_image(Common::SDDataBuffer *ob, const Common::SDDataBuffer *link, con
 		res += "00";
 
 	if (title)
-		res += Common::String::format("%02x%s\n", (uint)title->size, Common::String((const char *)title->data, title->size).c_str());
+		res += Common::String::format("%02x%s", (uint)title->size, Common::String((const char *)title->data, title->size).c_str());
 	else
-		res += "00\n";
+		res += "00";
+
+	if (ext)
+		res += Common::String::format("%02x%s", (uint)ext->size, Common::String((const char *)ext->data, ext->size).c_str());
+	else
+		res += "00";
+
+	res += "\n";
 
 	sd_bufput(ob, res.c_str(), res.size());
 
-	debug(1, "render_image(%s, %s, %s)", PR(link), PR(title), PR(alt));
+	debug(1, "render_image(%s, %s, %s, %s)", PR(link), PR(title), PR(alt), PR(ext));
 	return 1;
 }
 

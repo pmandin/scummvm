@@ -31,6 +31,10 @@
 
 #include "backends/platform/ios7/ios7_app_delegate.h"
 
+#ifdef __IPHONE_14_0
+#include <GameController/GameController.h>
+#endif
+
 #if 0
 static long g_lastTick = 0;
 static int g_frames = 0;
@@ -78,7 +82,14 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	return fetched;
 }
 
-@implementation iPhoneView
+@implementation iPhoneView {
+#if TARGET_OS_IOS
+	UIButton *_menuButton;
+	UIButton *_toggleTouchModeButton;
+	UITapGestureRecognizer *oneFingerTapGesture;
+	UITapGestureRecognizer *twoFingerTapGesture;
+#endif
+}
 
 + (Class)layerClass {
 	return [CAEAGLLayer class];
@@ -179,6 +190,42 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 - (void)setupGestureRecognizers {
 #if TARGET_OS_IOS
+	UILongPressGestureRecognizer *longPressKeyboard = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressKeyboard:)];
+	[_toggleTouchModeButton addGestureRecognizer:longPressKeyboard];
+	[longPressKeyboard setNumberOfTouchesRequired:1];
+	[longPressKeyboard release];
+
+	oneFingerTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(oneFingerTap:)];
+	[oneFingerTapGesture setNumberOfTapsRequired:1];
+	[oneFingerTapGesture setNumberOfTouchesRequired:1];
+	[oneFingerTapGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
+	[oneFingerTapGesture setDelaysTouchesBegan:NO];
+	[oneFingerTapGesture setDelaysTouchesEnded:NO];
+
+	twoFingerTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingerTap:)];
+	[twoFingerTapGesture setNumberOfTapsRequired:1];
+	[twoFingerTapGesture setNumberOfTouchesRequired:2];
+	[twoFingerTapGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
+	[twoFingerTapGesture setDelaysTouchesBegan:NO];
+	[twoFingerTapGesture setDelaysTouchesEnded:NO];
+
+	// Default long press duration is 0.5 seconds which suits us well
+	UILongPressGestureRecognizer *oneFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(oneFingerLongPress:)];
+	[oneFingerLongPressGesture setNumberOfTouchesRequired:1];
+	[oneFingerLongPressGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
+	[oneFingerLongPressGesture setDelaysTouchesBegan:NO];
+	[oneFingerLongPressGesture setDelaysTouchesEnded:NO];
+	[oneFingerLongPressGesture setCancelsTouchesInView:NO];
+	[oneFingerLongPressGesture canPreventGestureRecognizer:oneFingerTapGesture];
+
+	UILongPressGestureRecognizer *twoFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingerLongPress:)];
+	[twoFingerLongPressGesture setNumberOfTouchesRequired:2];
+	[twoFingerLongPressGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
+	[twoFingerLongPressGesture setDelaysTouchesBegan:NO];
+	[twoFingerLongPressGesture setDelaysTouchesEnded:NO];
+	[twoFingerLongPressGesture setCancelsTouchesInView:NO];
+	[twoFingerLongPressGesture canPreventGestureRecognizer:twoFingerTapGesture];
+
 	UIPinchGestureRecognizer *pinchKeyboard = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(keyboardPinch:)];
 
 	UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingersSwipeRight:)];
@@ -245,6 +292,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[self addGestureRecognizer:swipeUp3];
 	[self addGestureRecognizer:swipeDown3];
 	[self addGestureRecognizer:doubleTapTwoFingers];
+	[self addGestureRecognizer:oneFingerTapGesture];
+	[self addGestureRecognizer:twoFingerTapGesture];
+	[self addGestureRecognizer:oneFingerLongPressGesture];
+	[self addGestureRecognizer:twoFingerLongPressGesture];
 
 	[pinchKeyboard release];
 	[swipeRight release];
@@ -256,6 +307,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[swipeUp3 release];
 	[swipeDown3 release];
 	[doubleTapTwoFingers release];
+	[oneFingerTapGesture release];
+	[twoFingerTapGesture release];
+	[oneFingerLongPressGesture release];
+	[twoFingerLongPressGesture release];
 #elif TARGET_OS_TV
 	UITapGestureRecognizer *tapUpGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeUp:)];
 	[tapUpGestureRecognizer setAllowedPressTypes:@[@(UIPressTypeUpArrow)]];
@@ -293,6 +348,22 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	_backgroundSaveStateTask = UIBackgroundTaskInvalid;
 #if TARGET_OS_IOS
 	_currentOrientation = UIInterfaceOrientationUnknown;
+
+	// On-screen control buttons
+	UIImage *menuBtnImage = [UIImage imageNamed:@"ic_action_menu"];
+	_menuButton = [[UIButton alloc] initWithFrame:CGRectMake(self.frame.size.width - menuBtnImage.size.width, 0, menuBtnImage.size.width, menuBtnImage.size.height)];
+	[_menuButton setImage:menuBtnImage forState:UIControlStateNormal];
+	[_menuButton setAlpha:0.5];
+	[_menuButton addTarget:self action:@selector(handleMainMenuKey) forControlEvents:UIControlEventTouchUpInside];
+	[self addSubview:_menuButton];
+
+	// The mode will be updated when OSystem has loaded its presets
+	UIImage *toggleTouchModeBtnImage = [UIImage imageNamed:@"ic_action_touchpad"];
+	_toggleTouchModeButton = [[UIButton alloc] initWithFrame:CGRectMake(self.frame.size.width - menuBtnImage.size.width - toggleTouchModeBtnImage.size.width, 0, toggleTouchModeBtnImage.size.width, toggleTouchModeBtnImage.size.height)];
+	[_toggleTouchModeButton setImage:toggleTouchModeBtnImage forState:UIControlStateNormal];
+	[_toggleTouchModeButton setAlpha:0.5];
+	[_toggleTouchModeButton addTarget:self action:@selector(triggerTouchModeChanged) forControlEvents:UIControlEventTouchUpInside];
+	[self addSubview:_toggleTouchModeButton];
 #endif
 
 	[self setupGestureRecognizers];
@@ -313,6 +384,37 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 	return self;
 }
+
+#if TARGET_OS_IOS
+- (void)triggerTouchModeChanged {
+	if ([self isKeyboardShown]) {
+		[self hideKeyboard];
+	} else {
+		[self addEvent:InternalEvent(kInputTouchModeChanged, 0, 0)];
+	}
+}
+
+- (void)updateTouchMode {
+	UIImage *btnImage;
+	TouchMode currentTouchMode = iOS7_getCurrentTouchMode();
+	bool isEnabled = ConfMan.getBool("onscreen_control");
+
+	if (currentTouchMode == kTouchModeDirect) {
+		btnImage = [UIImage imageNamed:@"ic_action_mouse"];
+	} else if (currentTouchMode == kTouchModeTouchpad) {
+		btnImage = [UIImage imageNamed:@"ic_action_touchpad"];
+	} else {
+		return;
+	}
+
+    [_toggleTouchModeButton setImage: btnImage forState:UIControlStateNormal];
+
+	[_toggleTouchModeButton setEnabled:isEnabled];
+	[_toggleTouchModeButton setHidden:!isEnabled];
+	[_menuButton setEnabled:isEnabled];
+	[_menuButton setHidden:!isEnabled];
+}
+#endif
 
 - (void)dealloc {
 	[_keyboardView release];
@@ -341,7 +443,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		[self virtualController:false];
 	} else {
 		// Connect or disconnect the virtual controller
-		[self virtualController:ConfMan.getBool("onscreen_control")];
+		[self virtualController:ConfMan.getBool("gamepad_controller")];
 	}
 #endif
 }
@@ -358,9 +460,9 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	// available when running on iOS 11+ if it has been compiled on iOS 11+
 #ifdef __IPHONE_11_0
 	if ( @available(iOS 11, tvOS 11, *) ) {
-		CGRect screenSize = [[UIScreen mainScreen] bounds];
 		CGRect newFrame = self.frame;
 #if TARGET_OS_IOS
+		CGRect screenSize = [[UIScreen mainScreen] bounds];
 		UIEdgeInsets inset = [[[UIApplication sharedApplication] keyWindow] safeAreaInsets];
 		UIInterfaceOrientation orientation = [iOS7AppDelegate currentOrientation];
 
@@ -390,6 +492,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		} else if ( orientation == UIInterfaceOrientationLandscapeRight ) {
 			newFrame = CGRectMake(screenSize.origin.x + inset.left, screenSize.origin.y, screenSize.size.width - inset.left, height);
 		}
+
+		// The onscreen control buttons have to be moved accordingly
+		[_menuButton setFrame:CGRectMake(newFrame.size.width - _menuButton.imageView.image.size.width, 0, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
+		[_toggleTouchModeButton setFrame:CGRectMake(newFrame.size.width - _toggleTouchModeButton.imageView.image.size.width - _toggleTouchModeButton.imageView.image.size.width, 0, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
 #endif
 		self.frame = newFrame;
 	}
@@ -456,6 +562,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		screenOrientation = kScreenOrientationFlippedLandscape;
 	}
 
+	// The onscreen control buttons have to be moved accordingly
+	[_menuButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width, 0, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
+	[_toggleTouchModeButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width - _toggleTouchModeButton.imageView.image.size.width, 0, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
+
 	[self addEvent:InternalEvent(kInputOrientationChanged, screenOrientation, 0)];
 	if (UIInterfaceOrientationIsLandscape(orientation)) {
 		[self hideKeyboard];
@@ -469,10 +579,16 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 - (void)showKeyboard {
 	[_keyboardView showKeyboard];
+#if TARGET_OS_IOS
+	[_toggleTouchModeButton setImage:[UIImage imageNamed:@"ic_action_keyboard"] forState:UIControlStateNormal];
+#endif
 }
 
 - (void)hideKeyboard {
 	[_keyboardView hideKeyboard];
+#if TARGET_OS_IOS
+	[self updateTouchMode];
+#endif
 }
 
 - (BOOL)isKeyboardShown {
@@ -488,6 +604,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+#if TARGET_OS_IOS
+	[oneFingerTapGesture setState:UIGestureRecognizerStateCancelled];
+	[twoFingerTapGesture setState:UIGestureRecognizerStateCancelled];
+#endif
 	for (GameController *c : _controllers) {
 		if ([c isKindOfClass:TouchController.class]) {
 			[(TouchController *)c touchesMoved:touches withEvent:event];
@@ -564,6 +684,14 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 #endif
 
 #if TARGET_OS_IOS
+- (void)longPressKeyboard:(UILongPressGestureRecognizer *)recognizer {
+	if (![self isKeyboardShown]) {
+		if (recognizer.state == UIGestureRecognizerStateBegan) {
+			[self showKeyboard];
+		}
+	}
+}
+
 - (void)keyboardPinch:(UIPinchGestureRecognizer *)recognizer {
 	if ([recognizer scale] < 0.8)
 		[self showKeyboard];
@@ -571,6 +699,34 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		[self hideKeyboard];
 }
 #endif
+
+- (void)oneFingerTap:(UITapGestureRecognizer *)recognizer {
+	if (recognizer.state == UIGestureRecognizerStateEnded) {
+		[self addEvent:InternalEvent(kInputTap, kUIViewTapSingle, 1)];
+	}
+}
+
+- (void)twoFingerTap:(UITapGestureRecognizer *)recognizer {
+	if (recognizer.state == UIGestureRecognizerStateEnded) {
+		[self addEvent:InternalEvent(kInputTap, kUIViewTapSingle, 2)];
+	}
+}
+
+- (void)oneFingerLongPress:(UILongPressGestureRecognizer *)recognizer {
+	if (recognizer.state == UIGestureRecognizerStateBegan) {
+		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressStarted, 1)];
+	} else if (recognizer.state == UIGestureRecognizerStateEnded) {
+		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressEnded, 1)];
+	}
+}
+
+- (void)twoFingerLongPress:(UILongPressGestureRecognizer *)recognizer {
+	if (recognizer.state == UIGestureRecognizerStateBegan) {
+		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressStarted, 2)];
+	} else if (recognizer.state == UIGestureRecognizerStateEnded) {
+		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressEnded, 2)];
+	}
+}
 
 - (void)twoFingersSwipeRight:(UISwipeGestureRecognizer *)recognizer {
 	[self addEvent:InternalEvent(kInputSwipe, kUIViewSwipeRight, 2)];
@@ -619,9 +775,14 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 - (void)handleMainMenuKey {
 	if ([self isInGame]) {
 		[self addEvent:InternalEvent(kInputMainMenu, 0, 0)];
-	} else {
+	}
+#if TARGET_OS_TV
+	else {
+		// According to Apple's guidelines the app should return to the
+		// home screen when pressing the menu button from the root view.
 		[[UIApplication sharedApplication] performSelector:@selector(suspend)];
 	}
+#endif
 }
 
 - (void)applicationSuspend {

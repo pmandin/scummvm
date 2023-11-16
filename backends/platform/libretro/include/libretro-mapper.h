@@ -245,17 +245,18 @@ static struct retro_input_descriptor retro_input_desc[] = {
 	{0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Left Analog X"},
 	{0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Left Analog Y"},
 	{0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Right Analog X"},
-	{0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Right Analog Y"}
+	{0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Right Analog Y"},
+	{0}
 };
 
 void mapper_poll_device(void);
 bool mapper_set_device_keys(unsigned int retro_device_id, const char *retro_key_value);
-uint8_t mapper_get_device_key_status(unsigned int retro_device_id);
-int16_t mapper_get_device_key_value(unsigned int retro_device_id);
-int16_t mapper_get_device_key_retro_id(unsigned int retro_device_id);
-int16_t mapper_get_device_key_scummvm_id(unsigned int retro_device_id);
-int8_t mapper_get_mapper_key_index(int16_t key_retro_id, uint8_t start_index = 0);
-uint8_t mapper_get_mapper_key_status(int16_t key_retro_id);
-int16_t mapper_get_mapper_key_value(int16_t key_retro_id);
+uint8 mapper_get_device_key_status(unsigned int retro_device_id);
+int16 mapper_get_device_key_value(unsigned int retro_device_id);
+int16 mapper_get_device_key_retro_id(unsigned int retro_device_id);
+int16 mapper_get_device_key_scummvm_id(unsigned int retro_device_id);
+int8 mapper_get_mapper_key_index(int16 key_retro_id, uint8 start_index = 0);
+uint8 mapper_get_mapper_key_status(int16 key_retro_id);
+int16 mapper_get_mapper_key_value(int16 key_retro_id);
 
 #endif // LIBRETRO_MAPPER_H

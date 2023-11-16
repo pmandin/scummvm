@@ -44,16 +44,17 @@ namespace Sword1 {
 #define FADE_UP              1
 #define FADE_DOWN           -1
 
-Screen::Screen(OSystem *system, ResMan *pResMan, ObjectMan *pObjMan) {
+Screen::Screen(OSystem *system, SwordEngine *vm, ResMan *pResMan, ObjectMan *pObjMan) {
 	_system = system;
+	_vm = vm;
 	_resMan = pResMan;
 	_objMan = pObjMan;
-	_screenBuf = _screenGrid = NULL;
+	_screenBuf = _screenGrid = nullptr;
 	_backLength = _foreLength = _sortLength = 0;
 	_currentScreen = 0xFFFF;
 	_updatePalette = false;
-	_psxCache.decodedBackground = NULL;
-	_psxCache.extPlxCache = NULL;
+	_psxCache.decodedBackground = nullptr;
+	_psxCache.extPlxCache = nullptr;
 	_oldScrollX = 0;
 	_oldScrollY = 0;
 
@@ -78,6 +79,13 @@ Screen::Screen(OSystem *system, ResMan *pResMan, ObjectMan *pObjMan) {
 	_scrnSizeY = 0;
 	_gridSizeX = 0;
 	_gridSizeY = 0;
+
+	_paletteFadeInfo.fadeCount = 0;
+	_paletteFadeInfo.paletteCount = 0;
+	_paletteFadeInfo.paletteIndex = 0;
+	_paletteFadeInfo.paletteStatus = NO_FADE;
+	memset(_paletteFadeInfo.srcPalette, 0, sizeof(_paletteFadeInfo.srcPalette));
+	memset(_paletteFadeInfo.dstPalette, 0, sizeof(_paletteFadeInfo.dstPalette));
 }
 
 Screen::~Screen() {
@@ -349,7 +357,7 @@ void Screen::updateScreen() {
 		if (SwordEngine::isMac())
 			fnSetFadeTargetPalette(255, 1, 0, BORDER_BLACK);
 
-		startFadePaletteUp(1);
+		_vm->startFadePaletteUp(1);
 		_updatePalette = false;
 	}
 
@@ -514,7 +522,7 @@ void Screen::newScreen(uint32 screen) {
 		_layerGrid[cnt] = (uint16 *)_resMan->openFetchRes(_roomDefTable[_currentScreen].grids[cnt]);
 		_layerGrid[cnt] += 14;
 	}
-	_parallax[0] = _parallax[1] = NULL;
+	_parallax[0] = _parallax[1] = nullptr;
 	if (_roomDefTable[_currentScreen].parallax[0])
 		_parallax[0] = (uint8 *)_resMan->openFetchRes(_roomDefTable[_currentScreen].parallax[0]);
 	if (_roomDefTable[_currentScreen].parallax[1])
@@ -666,8 +674,8 @@ void Screen::processImage(uint32 id) {
 		spriteY += (int16)_resMan->readUint16(&frameHead->offsetY);
 	}
 
-	uint8 *tonyBuf = NULL;
-	uint8 *hifBuf = NULL;
+	uint8 *tonyBuf = nullptr;
+	uint8 *hifBuf = nullptr;
 	if (SwordEngine::isPsx() && compact->o_type != TYPE_TEXT) { // PSX sprites are compressed with HIF
 		hifBuf = (uint8 *)malloc(_resMan->readUint16(&frameHead->width) * _resMan->readUint16(&frameHead->height) / 2);
 		memset(hifBuf, 0x00, (_resMan->readUint16(&frameHead->width) * _resMan->readUint16(&frameHead->height) / 2));
@@ -825,8 +833,8 @@ void Screen::renderParallax(uint8 *data) {
 	uint16 scrnScrlX, scrnScrlY;
 	uint16 scrnWidth, scrnHeight;
 	uint16 paraSizeX, paraSizeY;
-	ParallaxHeader *header = NULL;
-	uint32 *lineIndexes = NULL;
+	ParallaxHeader *header = nullptr;
+	uint32 *lineIndexes = nullptr;
 
 	if (SwordEngine::isPsx()) //Parallax headers are different in PSX version
 		fetchPsxParallaxSize(data, &paraSizeX, &paraSizeY);
@@ -1309,12 +1317,12 @@ void Screen::decompressHIF(uint8 *src, uint8 *dest) {
 void Screen::flushPsxCache() {
 	if (_psxCache.decodedBackground) {
 		free(_psxCache.decodedBackground);
-		_psxCache.decodedBackground = NULL;
+		_psxCache.decodedBackground = nullptr;
 	}
 
 	if (_psxCache.extPlxCache) {
 		free(_psxCache.extPlxCache);
-		_psxCache.extPlxCache = NULL;
+		_psxCache.extPlxCache = nullptr;
 	}
 }
 
@@ -1323,10 +1331,20 @@ void Screen::fnSetParallax(uint32 screen, uint32 resId) {
 }
 
 void Screen::spriteClipAndSet(uint16 *pSprX, uint16 *pSprY, uint16 *pSprWidth, uint16 *pSprHeight, uint16 *incr) {
-	int16 sprX = *pSprX - SCREEN_LEFT_EDGE;
-	int16 sprY = *pSprY - SCREEN_TOP_EDGE;
+	int16 sprX = *pSprX;
+	int16 sprY = *pSprY;
 	int16 sprW = *pSprWidth;
 	int16 sprH = *pSprHeight;
+
+	// The PSX code clips sprites a little bit differently
+	if (SwordEngine::isPsx()) {
+		sprX -= 129;
+		sprY = (sprY + 1) & 0xFFFE;
+	} else {
+		sprX -= SCREEN_LEFT_EDGE;
+	}
+
+	sprY -= SCREEN_TOP_EDGE;
 
 	if (sprY < 0) {
 		*incr = (uint16)((-sprY) * sprW);

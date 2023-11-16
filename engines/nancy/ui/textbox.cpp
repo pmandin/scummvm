@@ -48,10 +48,10 @@ Textbox::~Textbox() {
 }
 
 void Textbox::init() {
-	const BSUM *bsum = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bsum = GetEngineData(BSUM);
 	assert(bsum);
 
-	const TBOX *tbox = (const TBOX *)g_nancy->getEngineData("TBOX");
+	auto *tbox = GetEngineData(TBOX);
 	assert(tbox);
 
 	moveTo(bsum->textboxScreenPosition);
@@ -135,7 +135,7 @@ void Textbox::handleInput(NancyInput &input) {
 }
 
 void Textbox::drawTextbox() {
-	const TBOX *tbox = (const TBOX *)g_nancy->getEngineData("TBOX");
+	auto *tbox = GetEngineData(TBOX);
 	assert(tbox);
 
 	Common::Rect textBounds = _fullSurface.getBounds();
@@ -173,10 +173,13 @@ void Textbox::addTextLine(const Common::String &text, uint32 autoClearTime) {
 		// Currently only used by inventory closed captions
 		_autoClearTime = g_nancy->getTotalPlayTime() + autoClearTime;
 	}
+
+	_scrollbar->resetPosition();
+	onScrollbarMove();
 }
 
 void Textbox::setOverrideFont(const uint fontID) {
-	const BSUM *bsum = (const BSUM *)g_nancy->getEngineData("BSUM");
+	auto *bsum = GetEngineData(BSUM);
 	assert(bsum);
 
 	if (fontID >= bsum->numFonts) {
@@ -206,7 +209,10 @@ void Textbox::onScrollbarMove() {
 }
 
 uint16 Textbox::getInnerHeight() const {
-	const TBOX *tbox = (const TBOX *)g_nancy->getEngineData("TBOX");
+	// As early as nancy3 this behavior stopped being relevant, as the original
+	// engine always scrolls down to the bottom of the entire inner surface.
+	// However, that makes the scrollbar almost unusable, so I'm not changing this.
+	auto *tbox = GetEngineData(TBOX);
 	assert(tbox);
 
 	return _drawnTextHeight + tbox->upOffset + tbox->downOffset;

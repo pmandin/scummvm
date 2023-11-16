@@ -122,7 +122,7 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 	_screen(nullptr), _tmpscreen(nullptr),
 	_screenFormat(Graphics::PixelFormat::createFormatCLUT8()),
 	_cursorFormat(Graphics::PixelFormat::createFormatCLUT8()),
-	_useOldSrc(false),
+	_useOldSrc(false), _isHwPalette(false),
 	_overlayscreen(nullptr), _tmpscreen2(nullptr),
 	_screenChangeCount(0),
 	_mouseSurface(nullptr), _mouseScaler(nullptr),
@@ -162,8 +162,6 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 	if (ConfMan.hasKey("use_sdl_debug_focusrect"))
 		_enableFocusRectDebugCode = ConfMan.getBool("use_sdl_debug_focusrect");
 #endif
-
-	_videoMode.isHwPalette = false;
 
 #if defined(USE_ASPECT)
 	_videoMode.aspectRatioCorrection = ConfMan.getBool("aspect_ratio");
@@ -220,6 +218,7 @@ bool SurfaceSdlGraphicsManager::hasFeature(OSystem::Feature f) const {
 		(f == OSystem::kFeatureVSync) ||
 #endif
 		(f == OSystem::kFeatureCursorPalette) ||
+		(f == OSystem::kFeatureCursorAlpha && !_isHwPalette) ||
 		(f == OSystem::kFeatureIconifyWindow) ||
 		(f == OSystem::kFeatureCursorMask);
 }
@@ -286,11 +285,37 @@ int SurfaceSdlGraphicsManager::getDefaultGraphicsMode() const {
 }
 
 bool SurfaceSdlGraphicsManager::setGraphicsMode(int mode, uint flags) {
-	return (mode == GFX_SURFACESDL);
+	Common::StackLock lock(_graphicsMutex);
+
+	assert(_transactionMode == kTransactionActive);
+
+	if (_oldVideoMode.setup && _oldVideoMode.mode == mode)
+		return true;
+
+	// Check this is a valid mode
+	const OSystem::GraphicsMode *sm = getSupportedGraphicsModes();
+	bool found = false;
+	while (sm->name) {
+		if (sm->id == mode) {
+			found = true;
+			break;
+		}
+		sm++;
+	}
+	if (!found) {
+		warning("unknown mode %d", mode);
+		return false;
+	}
+
+	_transactionDetails.needUpdatescreen = true;
+
+	_videoMode.mode = mode;
+
+	return true;
 }
 
 int SurfaceSdlGraphicsManager::getGraphicsMode() const {
-	return GFX_SURFACESDL;
+	return _videoMode.mode;
 }
 
 void SurfaceSdlGraphicsManager::beginGFXTransaction() {
@@ -320,6 +345,12 @@ OSystem::TransactionError SurfaceSdlGraphicsManager::endGFXTransaction() {
 	assert(_transactionMode != kTransactionNone);
 
 	if (_transactionMode == kTransactionRollback) {
+		if (_videoMode.mode != _oldVideoMode.mode) {
+			errors |= OSystem::kTransactionModeSwitchFailed;
+
+			_videoMode.mode = _oldVideoMode.mode;
+		}
+
 		if (_videoMode.fullscreen != _oldVideoMode.fullscreen) {
 			errors |= OSystem::kTransactionFullscreenFailed;
 
@@ -533,7 +564,7 @@ void SurfaceSdlGraphicsManager::detectSupportedFormats() {
 #endif
 	}
 
-	if (!_videoMode.isHwPalette) {
+	if (!_isHwPalette) {
 		// Some tables with standard formats that we always list
 		// as "supported". If frontend code tries to use one of
 		// these, we will perform the necessary format
@@ -875,27 +906,23 @@ void SurfaceSdlGraphicsManager::setupHardwareSize() {
 }
 
 void SurfaceSdlGraphicsManager::initGraphicsSurface() {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	Uint32 flags = SDL_SWSURFACE;
-#else
-	Uint32 flags = _videoMode.isHwPalette ? (SDL_HWSURFACE | SDL_HWPALETTE | SDL_DOUBLEBUF) : SDL_SWSURFACE;
-#endif
 	if (_videoMode.fullscreen)
 		flags |= SDL_FULLSCREEN;
-	_hwScreen = SDL_SetVideoMode(_videoMode.hardwareWidth, _videoMode.hardwareHeight, _videoMode.isHwPalette ? 8 : 16,
-				     flags);
+
+	_hwScreen = SDL_SetVideoMode(_videoMode.hardwareWidth, _videoMode.hardwareHeight, 16, flags);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	_isDoubleBuf = false;
+	_isHwPalette = false;
 #else
 	_isDoubleBuf = flags & SDL_DOUBLEBUF;
+	_isHwPalette = flags & SDL_HWPALETTE;
 #endif
 }
 
 bool SurfaceSdlGraphicsManager::loadGFXMode() {
 	_forceRedraw = true;
 
-	// Init isHwPalette. Allow setupHardwareSize to override it.
-	_videoMode.isHwPalette = false;
 	setupHardwareSize();
 
 	//
@@ -1020,7 +1047,7 @@ bool SurfaceSdlGraphicsManager::loadGFXMode() {
 	if (_tmpscreen2 == nullptr)
 		error("allocating _tmpscreen2 failed");
 
-	if (_videoMode.isHwPalette) {
+	if (_isHwPalette) {
 		SDL_SetColors(_tmpscreen2, _overlayPalette, 0, 256);
 		SDL_SetColors(_overlayscreen, _overlayPalette, 0, 256);
 	}
@@ -1217,11 +1244,11 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 		SDL_SetColors(_screen, _currentPalette + _paletteDirtyStart,
 			_paletteDirtyStart,
 			_paletteDirtyEnd - _paletteDirtyStart);
-		if (_videoMode.isHwPalette)
+		if (_isHwPalette)
 			SDL_SetColors(_tmpscreen, _currentPalette + _paletteDirtyStart,
 				      _paletteDirtyStart,
 				      _paletteDirtyEnd - _paletteDirtyStart);
-		if (_videoMode.isHwPalette && !_isInOverlayPalette)
+		if (_isHwPalette && !_isInOverlayPalette)
 			SDL_SetColors(_hwScreen, _currentPalette + _paletteDirtyStart,
 				       _paletteDirtyStart,
 				       _paletteDirtyEnd - _paletteDirtyStart);
@@ -1271,7 +1298,7 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 	updateOSD();
 #endif
 
-	if (_videoMode.isHwPalette && _isInOverlayPalette != _overlayVisible) {
+	if (_isHwPalette && _isInOverlayPalette != _overlayVisible) {
 		SDL_SetColors(_hwScreen, _overlayVisible ? _overlayPalette : _currentPalette, 0, 256);
 		_forceRedraw = true;
 		_isInOverlayPalette = _overlayVisible;
@@ -1893,7 +1920,7 @@ void SurfaceSdlGraphicsManager::clearOverlay() {
 	SDL_LockSurface(_overlayscreen);
 
 	// Transpose from game palette to RGB332 (overlay palette)
-	if (_videoMode.isHwPalette) {
+	if (_isHwPalette) {
 		byte *p = (byte *)(_tmpscreen->pixels) + _maxExtraPixels * _tmpscreen->pitch + _maxExtraPixels * _tmpscreen->format->BytesPerPixel;
 		int pitchSkip = _tmpscreen->pitch - _videoMode.screenWidth;
 		for (int y = 0; y < _videoMode.screenHeight; y++) {
@@ -2040,7 +2067,7 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 	}
 
 #ifdef USE_RGB_COLOR
-	if (mask && format && format->bytesPerPixel > 1) {
+	if (mask && format && format->bytesPerPixel > 1 && !_isHwPalette) {
 		const uint numPixels = w * h;
 		const uint inBPP = format->bytesPerPixel;
 
@@ -2050,7 +2077,7 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 		if (format->aBits() > 0)
 			formatWithAlpha = *format;
 
-		const uint outBPP = format->bytesPerPixel;
+		const uint outBPP = formatWithAlpha.bytesPerPixel;
 
 		Common::Array<byte> maskedImage;
 		maskedImage.resize(numPixels * outBPP);
@@ -2094,11 +2121,7 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 	bool formatChanged = false;
 
 	if (format) {
-#ifndef USE_RGB_COLOR
-		assert(format->bytesPerPixel == 1);
-#else
-		assert(format->bytesPerPixel == 1 || !_videoMode.isHwPalette);
-#endif
+		assert(format->bytesPerPixel == 1 || !_isHwPalette);
 
 		if (format->bytesPerPixel != _cursorFormat.bytesPerPixel) {
 			formatChanged = true;

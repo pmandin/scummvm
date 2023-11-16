@@ -36,7 +36,6 @@
 #include "sword1/control.h"
 #include "sword1/logic.h"
 #include "sword1/mouse.h"
-#include "sword1/music.h"
 #include "sword1/objectman.h"
 #include "sword1/resman.h"
 #include "sword1/sound.h"
@@ -176,22 +175,13 @@ const Button Control::volumeButtons[25] = {
 
 };
 
-static int volToBalance(int volL, int volR) {
-	if (volL + volR == 0) {
-		return 50;
-	} else {
-		return (100 * volL / (volL + volR));
-	}
-}
-
-Control::Control(SwordEngine *vm, Common::SaveFileManager *saveFileMan, ResMan *pResMan, ObjectMan *pObjMan, OSystem *system, Mouse *pMouse, Sound *pSound, Music *pMusic, Screen *pScreen, Logic *pLogic) {
+Control::Control(SwordEngine *vm, Common::SaveFileManager *saveFileMan, ResMan *pResMan, ObjectMan *pObjMan, OSystem *system, Mouse *pMouse, Sound *pSound, Screen *pScreen, Logic *pLogic) {
 	_vm = vm;
 	_saveFileMan = saveFileMan;
 	_resMan = pResMan;
 	_objMan = pObjMan;
 	_system = system;
 	_mouse = pMouse;
-	_music = pMusic;
 	_sound = pSound;
 	_screen = pScreen;
 	_logic = pLogic;
@@ -247,20 +237,18 @@ void Control::getPlayerOptions() {
 
 	Logic::_scriptVars[CURRENT_MUSIC] = safeCurrentMusic;
 
-	_screen->startFadePaletteDown(1);
+	_vm->startFadePaletteDown(1);
 	_vm->waitForFade();
-	_sound->quitScreen();
+	_sound->clearAllFx();
 	_keyPressed.reset();
 
 	while (SwordEngine::_systemVars.snrStatus != SNR_BLANK && !Engine::shouldQuit()) {
 		delay(DEFAULT_FRAME_TIME / 2);
 
-		// TODO: audio
-		// SetCrossFadeIncrement();
+		_sound->setCrossFadeIncrement();
 
 		_mouse->animate();
-		// TODO: audio
-		// UpdateSampleStreaming(); // stream music
+		_sound->updateMusicStreaming();
 		saveRestoreScreen();
 	}
 
@@ -281,7 +269,7 @@ void Control::getPlayerOptions() {
 		_logic->fnStopMusic(nullptr, 0, 0, 0, 0, 0, 0, 0);
 	}
 
-	_screen->startFadePaletteDown(1);
+	_vm->startFadePaletteDown(1);
 	_vm->waitForFade();
 
 	_logic->fnNormalMouse(nullptr, 0, 0, 0, 0, 0, 0, 0);
@@ -290,8 +278,7 @@ void Control::getPlayerOptions() {
 	if (SwordEngine::_systemVars.saveGameFlag == SGF_SAVE) {
 		saveGame();
 	} else if (SwordEngine::_systemVars.saveGameFlag == SGF_QUIT) {
-		// TODO: audio
-		// FadeMusicDown(1);
+		_sound->fadeMusicDown(1);
 
 		Engine::quitGame();
 	}
@@ -386,7 +373,7 @@ void Control::saveRestoreScreen() {
 			break;
 		case SNR_MAINPANEL:
 			removeControlPanel();
-			setVolumes();
+			_sound->setVolumes();
 			break;
 		case SNR_SAVE:
 			removeSave();
@@ -403,7 +390,7 @@ void Control::saveRestoreScreen() {
 			break;
 		case SNR_VOLUME:
 			removeVolume();
-			setVolumes();
+			_sound->setVolumes();
 			break;
 		case SNR_DRIVEFULL:
 			removeConfirmation();
@@ -420,7 +407,7 @@ void Control::saveRestoreScreen() {
 				initialiseResources();
 			}
 
-			//GetVolumes();
+			_sound->getVolumes();
 			initialiseControlPanel();
 			break;
 		case SNR_SAVE:
@@ -445,7 +432,7 @@ void Control::saveRestoreScreen() {
 			initialiseSpeed();
 			break;
 		case SNR_VOLUME:
-			//GetVolumes();
+			_sound->getVolumes();
 			initialiseVolume();
 			break;
 		case SNR_DRIVEFULL:
@@ -467,7 +454,7 @@ void Control::saveRestoreScreen() {
 
 		if (_newPal) {
 			_newPal = false;
-			_screen->startFadePaletteUp(1);
+			_vm->startFadePaletteUp(1);
 		}
 
 		break;
@@ -966,10 +953,6 @@ void Control::removeConfirmation() {
 }
 
 void Control::renderVolumeLight(int32 i) {
-	// TODO: This function has been mangled to accomodate the current
-	// audio engine, which will partly get rewritten in the immediate
-	// future :)
-
 	uint8 *src, *dst;
 	uint8 vol[2] = { 0, 0 };
 	int32 x;
@@ -977,22 +960,19 @@ void Control::renderVolumeLight(int32 i) {
 	Sprite *srVlight;
 
 	switch (i) {
-	case 0: //music
-		_music->giveVolume(&vol[0], &vol[1]);
-		//vol[0] = volMusic[0];
-		//vol[1] = volMusic[1];
+	case 0:
+		vol[0] = _sound->_volMusic[0];
+		vol[1] = _sound->_volMusic[1];
 		x = 158;
 		break;
-	case 1: //speech
-		_sound->giveSpeechVol(&vol[0], &vol[1]);
-		//vol[0] = volSpeech[0];
-		//vol[1] = volSpeech[1];
+	case 1:
+		vol[0] = _sound->_volSpeech[0];
+		vol[1] = _sound->_volSpeech[1];
 		x = 291;
 		break;
-	case 2: //fx
-		_sound->giveSfxVol(&vol[0], &vol[1]);
-		//vol[0] = volFX[0];
-		//vol[1] = volFX[1];
+	case 2:
+		vol[0] = _sound->_volFX[0];
+		vol[1] = _sound->_volFX[1];
 		x = 424;
 		break;
 	default:
@@ -1003,7 +983,7 @@ void Control::renderVolumeLight(int32 i) {
 	srVlight = (Sprite *)_resMan->fetchRes(SR_VLIGHT);
 
 	// Render left light
-	f = (FrameHeader *)((uint8 *)srVlight + _resMan->getUint32(srVlight->spriteOffset[vol[0] >> 4]));
+	f = (FrameHeader *)((uint8 *)srVlight + _resMan->getUint32(srVlight->spriteOffset[vol[0]]));
 	src = (uint8 *)f + sizeof(FrameHeader);
 	dst = _screenBuf + x + 211 * SCREEN_WIDTH;
 
@@ -1018,7 +998,7 @@ void Control::renderVolumeLight(int32 i) {
 	}
 
 	// Render right light
-	f = (FrameHeader *)((uint8 *)srVlight + _resMan->getUint32(srVlight->spriteOffset[vol[1] >> 4]));
+	f = (FrameHeader *)((uint8 *)srVlight + _resMan->getUint32(srVlight->spriteOffset[vol[1]]));
 	src = (uint8 *)f + sizeof(FrameHeader);
 	dst = _screenBuf + x + 32 + 211 * SCREEN_WIDTH;
 
@@ -1033,125 +1013,42 @@ void Control::renderVolumeLight(int32 i) {
 	}
 }
 
-void Control::setVolumes() {
-	// TODO: This function has been mangled to accomodate the current
-	// audio engine, which will partly get rewritten in the immediate
-	// future :)
-
-	uint8 volL, volR;
-	_music->giveVolume(&volL, &volR);
-	int vol = (int)((volR + volL) / 2);
-	int volBalance = volToBalance(volL, volR);
-	if (vol != ConfMan.getInt("music_volume"))
-		ConfMan.setInt("music_volume", vol);
-	if (volBalance != ConfMan.getInt("music_balance"))
-		ConfMan.setInt("music_balance", volBalance);
-
-	_sound->giveSpeechVol(&volL, &volR);
-	vol = (int)((volR + volL) / 2);
-	volBalance = volToBalance(volL, volR);
-	if (vol != ConfMan.getInt("speech_volume"))
-		ConfMan.setInt("speech_volume", vol);
-	if (volBalance != ConfMan.getInt("speech_balance"))
-		ConfMan.setInt("speech_balance", volBalance);
-
-	_sound->giveSfxVol(&volL, &volR);
-	vol = (int)((volR + volL) / 2);
-	volBalance = volToBalance(volL, volR);
-	if (vol != ConfMan.getInt("sfx_volume"))
-		ConfMan.setInt("sfx_volume", vol);
-	if (volBalance != ConfMan.getInt("sfx_balance"))
-		ConfMan.setInt("sfx_balance", volBalance);
-
-	if (SwordEngine::_systemVars.showText != ConfMan.getBool("subtitles"))
-		ConfMan.setBool("subtitles", SwordEngine::_systemVars.showText);
-	ConfMan.flushToDisk();
-}
-
 void Control::volUp(int32 i, int32 j) {
-	// TODO: This function has been mangled to accomodate the current
-	// audio engine, which will partly get rewritten in the immediate
-	// future :)
-
-	uint32 vol[2] = { 0, 0 };
+	uint32 *vol = nullptr;
 
 	switch (i) {
 	case 0:
-		_music->giveVolume((uint8 *)&vol[0], (uint8 *)&vol[1]);
-		//vol = &volMusic[j];
+		vol = &_sound->_volMusic[j];
 		break;
 	case 1:
-		_sound->giveSpeechVol((uint8 *)&vol[0], (uint8 *)&vol[1]);
-		//vol = &volSpeech[j];
+		vol = &_sound->_volSpeech[j];
 		break;
 	case 2:
-		_sound->giveSfxVol((uint8 *)&vol[0], (uint8 *)&vol[1]);
-		//vol = &volFX[j];
+		vol = &_sound->_volFX[j];
 		break;
 	}
 
-	if ((vol[j] >> 4) < 16)
-		vol[j] += 1 << 4;
-
-	vol[j] = CLIP<uint32>(vol[j], 0, 255);
-
-	switch (i) {
-	case 0:
-		_music->setVolume((uint8)vol[0], (uint8)vol[1]);
-		//vol = &volMusic[j];
-		break;
-	case 1:
-		_sound->setSpeechVol((uint8)vol[0], (uint8)vol[1]);
-		//vol = &volSpeech[j];
-		break;
-	case 2:
-		_sound->setSfxVol((uint8)vol[0], (uint8)vol[1]);
-		//vol = &volFX[j];
-		break;
-	}
+	if (vol && *vol < 16)
+		*vol += 1;
 }
 
 void Control::volDown(int32 i, int32 j) {
-	// TODO: This function has been mangled to accomodate the current
-	// audio engine, which will partly get rewritten in the immediate
-	// future :)
-
-	uint32 vol[2] = {0, 0};
+	uint32 *vol = nullptr;
 
 	switch (i) {
 	case 0:
-		_music->giveVolume((uint8 *)&vol[0], (uint8 *)&vol[1]);
-		//vol = &volMusic[j];
+		vol = &_sound->_volMusic[j];
 		break;
 	case 1:
-		_sound->giveSpeechVol((uint8 *)&vol[0], (uint8 *)&vol[1]);
-		//vol = &volSpeech[j];
+		vol = &_sound->_volSpeech[j];
 		break;
 	case 2:
-		_sound->giveSfxVol((uint8 *)&vol[0], (uint8 *)&vol[1]);
-		//vol = &volFX[j];
+		vol = &_sound->_volFX[j];
 		break;
 	}
 
-	if (vol[j] > 1 << 4)
-		vol[j] -= 1 << 4;
-
-	vol[j] = CLIP<uint32>(vol[j], 0, 255);
-
-	switch (i) {
-	case 0:
-		_music->setVolume((uint8)vol[0], (uint8)vol[1]);
-		//vol = &volMusic[j];
-		break;
-	case 1:
-		_sound->setSpeechVol((uint8)vol[0], (uint8)vol[1]);
-		//vol = &volSpeech[j];
-		break;
-	case 2:
-		_sound->setSfxVol((uint8)vol[0], (uint8)vol[1]);
-		//vol = &volFX[j];
-		break;
-	}
+	if (vol && *vol > 0)
+		*vol -= 1;
 }
 
 void Control::renderVolumeDisc(int32 i, int32 j) {
@@ -2077,7 +1974,7 @@ void Control::removeSave() {
 		_resMan->resClose(SR_REDFONT);
 	}
 
-	setVolumes();
+	_sound->setVolumes();
 }
 
 bool Control::restoreGame() {
@@ -2488,7 +2385,7 @@ void Control::removeRestore() {
 		_resMan->resClose(SR_REDFONT);
 	}
 
-	setVolumes();
+	_sound->setVolumes();
 }
 
 void Control::initialiseControlPanel() {
@@ -2507,7 +2404,7 @@ void Control::initialiseControlPanel() {
 	if (SwordEngine::_systemVars.controlPanelMode != CP_DEATHSCREEN) { // NOT THE DEATH SCREEN ie. start game panel, normal control panel, or end of game
 		switch (SwordEngine::_systemVars.language) {
 		case BS1_ENGLISH:
-			if (SwordEngine::_systemVars.realLanguage == Common::EN_USA) {
+			if (!SwordEngine::isPsx() && SwordEngine::_systemVars.realLanguage == Common::EN_USA) {
 				srPanel = (Sprite *)_resMan->openFetchRes(SR_PANEL_AMERICAN);
 			} else {
 				srPanel = (Sprite *)_resMan->openFetchRes(SR_PANEL_ENGLISH);
@@ -3060,7 +2957,7 @@ bool Control::restoreGameFromFile(uint8 slot) {
 		displayMessage(0, "Can't read from file '%s'. (%s)", fName, _saveFileMan->popErrorDesc().c_str());
 		delete inf;
 		free(_restoreBuf);
-		_restoreBuf = NULL;
+		_restoreBuf = nullptr;
 		return false;
 	}
 	delete inf;
@@ -3114,7 +3011,7 @@ bool Control::convertSaveGame(uint8 slot, char *desc) {
 		// Display a warning message and do nothing
 		warning("Unable to create file '%s'. (%s)", newFileName, _saveFileMan->popErrorDesc().c_str());
 		delete[] saveData;
-		saveData = NULL;
+		saveData = nullptr;
 		return false;
 	}
 
@@ -3145,7 +3042,7 @@ bool Control::convertSaveGame(uint8 slot, char *desc) {
 
 	// Cleanup
 	delete[] saveData;
-	saveData = NULL;
+	saveData = nullptr;
 	return true;
 }
 
@@ -3215,6 +3112,21 @@ bool Control::loadCustomStrings(const char *filename) {
 }
 
 const uint8 *Control::getPauseString() {
+	if (SwordEngine::isPsx()) {
+		switch (SwordEngine::_systemVars.language) {
+		case BS1_ENGLISH:
+			return _psxPauseStrings[0];
+		case BS1_GERMAN:
+		case BS1_FRENCH:
+			return _psxPauseStrings[1];
+		case BS1_ITALIAN:
+		case BS1_SPANISH:
+			return _psxPauseStrings[2];
+		default:
+			return _psxPauseStrings[0];
+		}
+	}
+
 	return _lStrings[STR_PAUSED];
 }
 
@@ -3414,5 +3326,375 @@ const uint8 Control::_mediaHouseLanguageStrings[20][43] = {
 	"\x8A\xAE\xAD\xA5\xE6\x00\x45\x20\x43\x44\x2D\x00",                                             // "The End",
 	"DRIVE FULL!",
 };
+
+/* ---------- PSX CREDITS CODE ---------- */
+
+int32 Control::getCreditsStringLength(uint8 *str, uint8 *font) {
+	int32 width = 0;
+	FrameHeader *f;
+
+	while (*str) {
+		f = (FrameHeader *)_resMan->fetchFrame(font, *str - 32);
+		width += f->width;
+		str++;
+
+		if (*str)
+			width += PSX_CREDITS_SPACING;
+	}
+
+	return width;
+}
+
+int32 Control::getCreditsFontHeight(uint8 *font) {
+	FrameHeader *f;
+
+	f = (FrameHeader *)_resMan->fetchFrame(font, 'A' - 32);
+	return (f->height / 2);
+}
+
+void Control::createCreditsTextSprite(uint8 *data, int32 pitch, uint8 *str, uint8 *font) {
+	uint16 x = 0;
+	FrameHeader *f;
+	uint8 *src, *dst;
+
+	while (*str) {
+		f = (FrameHeader *)_resMan->fetchFrame(font, *str - 32);
+
+		src = (uint8 *)f + sizeof(FrameHeader);
+		dst = data + x;
+
+		for (int i = 0; i < f->height / 2; i++) {
+			memcpy(dst, src, f->width);
+			src += f->width;
+			dst += pitch;
+		}
+
+		x += (f->width + PSX_CREDITS_SPACING);
+		str++;
+	}
+}
+
+void Control::renderCreditsTextSprite(uint8 *data, uint8 *screenBuf, int16 x, int16 y, int16 width, int16 height) {
+	// Clip the coordinates like the PSX code would do
+	y = (y + 1) & 0xFFFE;
+	x -= 129;
+	y -= (128 - 56);
+
+	// Boundary checks
+	if (x >= SCREEN_WIDTH || y >= SCREEN_FULL_DEPTH)
+		return;
+
+	if (x + width <= 0 || y + height <= 0)
+		return;
+
+	// Are there rows outside the screen?
+	// Calculate how many doubled rows of the sprite are outside the screen on the top
+	int16 skippedDoubledRows = (y < 0) ? -y : 0;
+	int16 skippedRowsInData = skippedDoubledRows / 2;
+
+	data += width * skippedRowsInData; // Adjust data pointer based on the number of skipped rows in the sprite
+	height -= skippedDoubledRows;      // Adjust height based on the number of skipped doubled rows
+
+	if (y < 0) {
+		y = 0;
+	}
+
+	uint8 *dst = screenBuf + x + SCREEN_WIDTH * y;
+
+	for (int i = 0; i < height; i += 2) { // Increment by 2 for the doubled height
+		// Boundary check for y
+		if (y + i >= SCREEN_FULL_DEPTH)
+			break;
+
+		// First horizontal line
+		for (int j = 0; j < width; j++) {
+			// Boundary checks for x
+			if (x + j < 0)
+				continue;
+
+			if (x + j >= SCREEN_WIDTH)
+				break;
+
+			if (data[j])
+				dst[j] = data[j];
+		}
+
+		dst += SCREEN_WIDTH;
+
+		// Second horizontal line (duplicated)
+		for (int j = 0; j < width; j++) {
+			// Boundary checks for x
+			if (x + j < 0)
+				continue;
+
+			if (x + j >= SCREEN_WIDTH)
+				break;
+
+			if (data[j])
+				dst[j] = data[j];
+		}
+
+		dst += SCREEN_WIDTH; // Move to the next line
+		data += width;       // Move to the next row of source sprite
+	}
+}
+
+void Control::psxEndCredits() {
+	int16 h;
+	int16 nextCredit = PSX_NUM_CREDITS + 1;
+	uint8 *creditLine = nullptr;
+	uint8 *titleLine = nullptr;
+	int32 *creditData = nullptr;
+	Common::File creditsFile;
+
+	int32 creditsFileSize = 0;
+	int32 totalCreditsNum = 0;
+
+	uint8 *creditSprite[PSX_NUM_CREDITS];
+	uint8 *titleSprite[PSX_NUM_CREDITS];
+	int16 creditWidth[PSX_NUM_CREDITS];
+	int16 titleWidth[PSX_NUM_CREDITS];
+	int16 creditsHeight[PSX_NUM_CREDITS] = {
+		400, 440, 480, 520, 560, 600, 640,
+		680, 720, 760, 800, 840, 880, 920
+	};
+
+	for (int i = 0; i < PSX_NUM_CREDITS; i++) {
+		creditSprite[i] = nullptr;
+		titleSprite[i] = nullptr;
+		creditWidth[i] = 0;
+		titleWidth[i] = 0;
+	}
+
+	// If we're here, the resource is already there, no need to open it
+	uint8 *font = (uint8 *)_resMan->fetchRes(GAME_FONT);
+
+	switch (SwordEngine::_systemVars.language) {
+	case BS1_ENGLISH:
+		totalCreditsNum = 101;
+		creditsFileSize = 2798;
+		break;
+	case BS1_GERMAN:
+		totalCreditsNum = 83;
+		creditsFileSize = 2382;
+		break;
+	case BS1_FRENCH:
+		totalCreditsNum = 83;
+		creditsFileSize = 2382;
+		break;
+	case BS1_SPANISH:
+		totalCreditsNum = 83;
+		creditsFileSize = 2412;
+		break;
+	case BS1_ITALIAN:
+		totalCreditsNum = 101;
+		creditsFileSize = 2823;
+		break;
+	default:
+		totalCreditsNum = 101;
+		creditsFileSize = 2798;
+	}
+
+	_sound->clearAllFx();
+	_screen->startFadePaletteUp(1);
+
+	for (int i = 0; i < PSX_NUM_CREDITS; i++)
+		creditsHeight[i] = 400 + i * 40;
+
+	h = getCreditsFontHeight(font);
+	_screen->fnSetFadeTargetPalette(193, 1, 0, TEXT_WHITE);
+
+	_sound->streamMusicFile(101, 1);
+	_sound->updateMusicStreaming();
+
+	uint8 *creditsScreenBuf = (uint8 *)malloc(SCREEN_WIDTH * SCREEN_FULL_DEPTH);
+	if (!creditsScreenBuf) {
+		warning("Control::psxEndCredits(): Couldn't allocate memory for credits screen buffer");
+		return;
+	}
+
+	memset(creditsScreenBuf, 0, SCREEN_WIDTH * SCREEN_FULL_DEPTH);
+
+	creditData = (int32 *)malloc(creditsFileSize);
+	if (!creditData) {
+		warning("Control::psxEndCredits(): Couldn't allocate memory for text data");
+		free(creditsScreenBuf);
+		return;
+	}
+
+	if (!creditsFile.exists("CREDITS.DAT")) {
+		debug(2, "Control::psxEndCredits(): Couldn't find CREDITS.DAT");
+		free(creditsScreenBuf);
+		free(creditData);
+		return;
+	}
+
+	creditsFile.open("CREDITS.DAT");
+	if (!creditsFile.isOpen()) {
+		debug(2, "Control::psxEndCredits(): Couldn't open CREDITS.DAT");
+		free(creditsScreenBuf);
+		free(creditData);
+		return;
+	}
+
+	creditsFile.read(creditData, creditsFileSize);
+	creditsFile.close();
+
+	bool allSet = true;
+
+	for (int i = 0; i < PSX_NUM_CREDITS; i++) {
+		_sound->updateMusicStreaming();
+		_sound->setCrossFadeIncrement();
+
+		creditLine = ((uint8 *)creditData + creditData[i + totalCreditsNum]);
+		titleLine = ((uint8 *)creditData + creditData[i]);
+
+		creditWidth[i] = (getCreditsStringLength(creditLine, font) + 1) & 0xFFFE;
+		titleWidth[i] = (getCreditsStringLength(titleLine, font) + 1) & 0xFFFE;
+
+		if (creditWidth[i]) {
+			creditSprite[i] = (uint8 *)malloc(h * creditWidth[i]);
+			if (!creditSprite[i]) {
+				warning("Control::psxEndCredits(): Couldn't allocate memory for text sprites");
+				allSet = false;
+				break; // Break so the clean-up code is executed
+			}
+
+			memset(creditSprite[i], 0, h * creditWidth[i]);
+		} else {
+			creditSprite[i] = nullptr;
+		}
+
+		if (titleWidth[i]) {
+			titleSprite[i] = (uint8 *)malloc(h * titleWidth[i]);
+			if (!titleSprite[i]) {
+				warning("Control::psxEndCredits(): Couldn't allocate memory for text sprites");
+				allSet = false;
+				break; // Break so the clean-up code is executed
+			}
+
+			memset(titleSprite[i], 0, h * titleWidth[i]);
+		} else {
+			titleSprite[i] = nullptr;
+		}
+
+		createCreditsTextSprite(creditSprite[i], creditWidth[i], creditLine, font);
+		createCreditsTextSprite(titleSprite[i], titleWidth[i], titleLine, font);
+	}
+
+	_keyPressed.reset();
+
+	while (allSet && creditsHeight[PSX_NUM_CREDITS - 1] > -120 &&
+		!Engine::shouldQuit() &&
+		_keyPressed.keycode != Common::KEYCODE_ESCAPE) {
+		memset(creditsScreenBuf, 0, SCREEN_WIDTH * SCREEN_FULL_DEPTH);
+
+		for (int i = 0; i < PSX_NUM_CREDITS; i++) {
+			// Name
+			renderCreditsTextSprite(
+				creditSprite[i],
+				creditsScreenBuf,
+				PSX_CREDITS_MIDDLE + Logic::_scriptVars[SCROLL_OFFSET_X],
+				PSX_CREDITS_OFFSET + creditsHeight[i],
+				creditWidth[i],
+				h * 2);
+
+			// Role
+			renderCreditsTextSprite(
+				titleSprite[i],
+				creditsScreenBuf,
+				PSX_CREDITS_MIDDLE + Logic::_scriptVars[SCROLL_OFFSET_X] - 30 - titleWidth[i],
+				PSX_CREDITS_OFFSET + creditsHeight[i],
+				titleWidth[i],
+				h * 2);
+
+			creditsHeight[i] -= 2;
+		}
+
+		_system->copyRectToScreen(creditsScreenBuf, SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_FULL_DEPTH);
+
+		delay(33); // Run credits at about 30 FPS
+
+		// Always remember to update sound :-)
+		_sound->updateMusicStreaming();
+		_sound->setCrossFadeIncrement();
+
+		// Scroll the credits!
+		if (creditsHeight[0] < -120) {
+			if (nextCredit <= totalCreditsNum) {
+				for (int i = 0; i < PSX_NUM_CREDITS; i++) {
+					creditsHeight[i] += 40;
+				}
+
+				if (creditSprite[0] != nullptr)
+					free(creditSprite[0]);
+
+				if (titleSprite[0] != nullptr)
+					free(titleSprite[0]);
+
+				for (int i = 0; i < PSX_NUM_CREDITS - 1; i++) {
+					creditSprite[i] = creditSprite[i + 1];
+					titleSprite[i] = titleSprite[i + 1];
+					creditWidth[i] = creditWidth[i + 1];
+					titleWidth[i] = titleWidth[i + 1];
+				}
+
+				creditLine = ((uint8 *)creditData + creditData[nextCredit - 1 + totalCreditsNum]);
+				titleLine = ((uint8 *)creditData + creditData[nextCredit - 1]);
+
+				creditWidth[PSX_NUM_CREDITS - 1] = (getCreditsStringLength(creditLine, font) + 1) & 0xFFFE;
+				titleWidth[PSX_NUM_CREDITS - 1] = (getCreditsStringLength(titleLine, font) + 1) & 0xFFFE;
+
+				if (creditWidth[PSX_NUM_CREDITS - 1]) {
+					creditSprite[PSX_NUM_CREDITS - 1] = (uint8 *)malloc(h * creditWidth[PSX_NUM_CREDITS - 1]);
+					if (!creditSprite[PSX_NUM_CREDITS - 1]) {
+						warning("Control::psxEndCredits(): Couldn't allocate memory for text sprites");
+						break;
+					}
+
+					memset(creditSprite[PSX_NUM_CREDITS - 1], 0, h * creditWidth[PSX_NUM_CREDITS - 1]);
+				} else {
+					creditSprite[PSX_NUM_CREDITS - 1] = nullptr;
+				}
+
+				if (titleWidth[PSX_NUM_CREDITS - 1]) {
+					titleSprite[PSX_NUM_CREDITS - 1] = (uint8 *)malloc(h * titleWidth[PSX_NUM_CREDITS - 1]);
+					if (!titleSprite[PSX_NUM_CREDITS - 1]) {
+						warning("Control::psxEndCredits(): Couldn't allocate memory for text sprites");
+						break;
+					}
+
+					memset(titleSprite[PSX_NUM_CREDITS - 1], 0, h * titleWidth[PSX_NUM_CREDITS - 1]);
+				} else {
+					titleSprite[PSX_NUM_CREDITS - 1] = nullptr;
+				}
+
+				createCreditsTextSprite(creditSprite[PSX_NUM_CREDITS - 1], creditWidth[PSX_NUM_CREDITS - 1], creditLine, font);
+				createCreditsTextSprite(titleSprite[PSX_NUM_CREDITS - 1], titleWidth[PSX_NUM_CREDITS - 1], titleLine, font);
+
+				nextCredit += 1;
+			}
+		}
+	}
+
+	for (int i = 0; i < PSX_NUM_CREDITS; i++) {
+		if (creditSprite[i] != nullptr)
+			free(creditSprite[i]);
+
+		if (titleSprite[i] != nullptr)
+			free(titleSprite[i]);
+	}
+
+	free(creditData);
+
+	_screen->startFadePaletteDown(1);
+	_vm->waitForFade();
+
+	memset(creditsScreenBuf, 0, SCREEN_WIDTH * SCREEN_FULL_DEPTH);
+	_system->copyRectToScreen(creditsScreenBuf, SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_FULL_DEPTH);
+	free(creditsScreenBuf);
+
+	_keyPressed.reset();
+}
 
 } // End of namespace Sword1

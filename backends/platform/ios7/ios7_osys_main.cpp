@@ -89,12 +89,10 @@ public:
 
 OSystem_iOS7::OSystem_iOS7() :
 	_mixer(NULL), _queuedEventTime(0),
-	_secondaryTapped(false),
 	_screenOrientation(kScreenOrientationAuto),
-	_timeSuspended(0), _runningTasks(0) {
+	_runningTasks(0) {
 	_queuedInputEvent.type = Common::EVENT_INVALID;
-	_touchpadModeEnabled = ConfMan.getBool("touchpad_mode");
-	_mouseClickAndDragEnabled = ConfMan.getBool("clickanddrag_mode");
+	_currentTouchMode = kTouchModeTouchpad;
 
 	_chrootBasePath = iOS7_getDocumentsDir();
 	ChRootFilesystemFactory *chFsFactory = new ChRootFilesystemFactory(_chrootBasePath);
@@ -110,10 +108,6 @@ OSystem_iOS7::~OSystem_iOS7() {
 
 	delete _mixer;
 	delete _graphicsManager;
-}
-
-bool OSystem_iOS7::touchpadModeEnabled() const {
-	return _touchpadModeEnabled;
 }
 
 #if defined(USE_OPENGL) && defined(USE_GLAD)
@@ -149,6 +143,7 @@ void OSystem_iOS7::initBackend() {
 bool OSystem_iOS7::hasFeature(Feature f) {
 	switch (f) {
 	case kFeatureCursorPalette:
+	case kFeatureCursorAlpha:
 	case kFeatureFilteringMode:
 	case kFeatureVirtualKeyboard:
 #if TARGET_OS_IOS
@@ -253,7 +248,6 @@ bool OSystem_iOS7::setGraphicsMode(int mode, uint flags) {
 
 void OSystem_iOS7::suspendLoop() {
 	bool done = false;
-	uint32 startTime = getMillis();
 
 	PauseToken pt;
 	if (g_engine)
@@ -275,8 +269,6 @@ void OSystem_iOS7::suspendLoop() {
 	}
 
 	startSoundsystem();
-
-	_timeSuspended += getMillis() - startTime;
 }
 
 void OSystem_iOS7::saveState() {
@@ -335,7 +327,7 @@ void OSystem_iOS7::clearState() {
 
 uint32 OSystem_iOS7::getMillis(bool skipRecord) {
 	CFTimeInterval timeInSeconds = CACurrentMediaTime();
-	return (uint32) ((timeInSeconds - _startTime) * 1000.0) - _timeSuspended;
+	return (uint32) ((timeInSeconds - _startTime) * 1000.0);
 }
 
 void OSystem_iOS7::delayMillis(uint msecs) {
@@ -429,13 +421,16 @@ void OSystem_iOS7::addSysArchivesToSearchSet(Common::SearchSet &s, int priority)
 	}
 }
 
-bool iOS7_touchpadModeEnabled() {
-	OSystem_iOS7 *sys = dynamic_cast<OSystem_iOS7 *>(g_system);
-	return sys && sys->touchpadModeEnabled();
-}
-
 void iOS7_buildSharedOSystemInstance() {
 	OSystem_iOS7::sharedInstance();
+}
+
+TouchMode iOS7_getCurrentTouchMode() {
+	OSystem_iOS7 *sys = dynamic_cast<OSystem_iOS7 *>(g_system);
+	if (!sys) {
+		abort();
+	}
+	return sys->getCurrentTouchMode();
 }
 
 void iOS7_main(int argc, char **argv) {

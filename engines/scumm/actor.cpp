@@ -242,7 +242,7 @@ void Actor_v7::initActor(int mode) {
 		_visible = false;
 
 	Actor::initActor(mode);
-	
+
 	_forceClip = 100;
 	_vm->_classData[_number] = _vm->_classData[0];
 }
@@ -417,7 +417,7 @@ void Actor_v3::setupActorScale() {
 	// in the German release (and then it'd probably be better to restore
 	// that safeguard instead, since the game clearly doesn't expect you
 	// to go back inside the castle), but I don't own this version.  -dwa
-	if (_number == 2 && _costume == 7 && _vm->_game.id == GID_INDY3 && _vm->_currentRoom == 12 && _vm->_enableEnhancements) {
+	if (_number == 2 && _costume == 7 && _vm->_game.id == GID_INDY3 && _vm->_currentRoom == 12 && _vm->enhancementEnabled(kEnhMinorBugFixes)) {
 		_scalex = 0x50;
 		_scaley = 0x50;
 	} else {
@@ -544,7 +544,7 @@ int Actor::calcMovementFactor(const Common::Point& next) {
 	_walkdata.deltaYFactor = deltaYFactor;
 
 	if (_vm->_game.version >= 7)
-		_targetFacing = normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), (int)(atan2((double)deltaXFactor, (double)-deltaYFactor) * 180 / M_PI));
+		_targetFacing = ((int)(atan2((double)deltaXFactor, (double)-deltaYFactor) * 180 / M_PI) + 360) % 360;
 	else
 		_targetFacing = (ABS(diffY) * 3 > ABS(diffX)) ? (deltaYFactor > 0 ? 180 : 0) : (deltaXFactor > 0 ? 90 : 270);
 
@@ -600,7 +600,7 @@ int Actor::actorWalkStep() {
 	int nextFacing = (_vm->_game.version < 7) ? updateActorDirection(true) : _targetFacing;
 	if (!(_moving & MF_IN_LEG) || _facing != nextFacing) {
 		if (_walkFrame != _frame || _facing != nextFacing) {
-			startWalkAnim(1, nextFacing);
+			startWalkAnim(_vm->_game.version >= 7 && (_moving & MF_IN_LEG) ? 2 : 1, nextFacing);
 		}
 		_moving |= MF_IN_LEG;
 	}
@@ -874,7 +874,7 @@ void Actor::startWalkAnim(int cmd, int angle) {
 		angle = _facing;
 
 	if (_vm->_game.version >= 7)
-		angle = remapDirection(normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), angle), false); 
+		angle = remapDirection(normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), angle), false);
 
 	if (_walkScript) {
 		int args[NUM_SCRIPT_LOCAL];
@@ -1378,18 +1378,7 @@ int Actor::remapDirection(int dir, bool is_walking) {
 	bool flipX;
 	bool flipY;
 
-	// FIXME: It seems that at least in The Dig the original code does
-	// check _ignoreBoxes here. However, it breaks some animations in Loom,
-	// causing Bobbin to face towards the camera instead of away from it
-	// in some places: After the tree has been destroyed by lightning, and
-	// when entering the dark tunnels beyond the dragon's lair at the very
-	// least. Possibly other places as well.
-	//
-	// The Dig also checks if the actor is in the current room, but that's
-	// not necessary here because we never call the function unless the
-	// actor is in the current room anyway.
-
-	if (!_ignoreBoxes || _vm->_game.id == GID_LOOM) {
+	if ((_vm->_game.version < 5 || !_ignoreBoxes) && (_vm->_game.version < 7 || isInCurrentRoom())) {
 		if (_walkbox != kOldInvalidBox) {
 			assert(_walkbox < ARRAYSIZE(_vm->_extraBoxFlags));
 			specdir = _vm->_extraBoxFlags[_walkbox];
@@ -1515,12 +1504,13 @@ void Actor::setDirection(int direction) {
 	int i;
 	uint16 vald;
 
+	direction = (direction + 360) % 360;
+
 	// Do nothing if actor is already facing in the given direction
-	if (_facing == (direction + 360) % 360)
+	if (_facing == direction)
 		return;
 
-	// Normalize the angle
-	_facing = normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), direction);
+	_facing = direction;
 
 	// If there is no costume set for this actor, we are finished
 	if (_costume == 0)
@@ -1624,7 +1614,7 @@ void Actor_v7::turnToDirection(int newdir) {
 	if (newdir == -1 || _ignoreTurns)
 		return;
 
-	newdir = remapDirection((newdir + 360) % 360, false); 
+	newdir = remapDirection((newdir + 360) % 360, false);
 	_moving &= ~MF_TURN;
 
 	if (newdir != _facing) {
@@ -1658,7 +1648,7 @@ void Actor::putActor(int dstX, int dstY, int newRoom) {
 	// WORKAROUND: The green transparency of the tank in the Hall of Oddities
 	// is positioned one pixel too far to the left. This appears to be a bug
 	// in the original game as well.
-	if (_vm->_game.id == GID_SAMNMAX && newRoom == 16 && _number == 5 && dstX == 235 && dstY == 236 && _vm->_enableEnhancements)
+	if (_vm->_game.id == GID_SAMNMAX && newRoom == 16 && _number == 5 && dstX == 235 && dstY == 236 && _vm->enhancementEnabled(kEnhMinorBugFixes))
 		dstX++;
 
 	_pos.x = dstX;

@@ -87,16 +87,11 @@ Console::Console(SciEngine *engine) : GUI::Debugger(),
 	registerVar("gc_interval",		&engine->_gamestate->scriptGCInterval);
 	registerVar("simulated_key",		&g_debug_simulated_key);
 	registerVar("track_mouse_clicks",	&g_debug_track_mouse_clicks);
-	// FIXME: This actually passes an enum type instead of an integer but no
-	// precaution is taken to assure that all assigned values are in the range
-	// of the enum type. We should handle this more carefully...
-	registerVar("script_abort_flag",	(int *)&_engine->_gamestate->abortScriptProcessing);
 	registerCmd("speed_throttle",   WRAP_METHOD(Console, cmdSpeedThrottle));
 
 	// General
 	registerCmd("help",				WRAP_METHOD(Console, cmdHelp));
 	// Kernel
-//	registerCmd("classes",			WRAP_METHOD(Console, cmdClasses));	// TODO
 	registerCmd("opcodes",			WRAP_METHOD(Console, cmdOpcodes));
 	registerCmd("selector",			WRAP_METHOD(Console, cmdSelector));
 	registerCmd("selectors",			WRAP_METHOD(Console, cmdSelectors));
@@ -326,7 +321,6 @@ bool Console::cmdHelp(int argc, const char **argv) {
 	debugPrintf("gc_interval: Number of kernel calls in between garbage collections\n");
 	debugPrintf("simulated_key: Add a key with the specified scan code to the event list\n");
 	debugPrintf("track_mouse_clicks: Toggles mouse click tracking to the console\n");
-	debugPrintf("script_abort_flag: Set to 1 to abort script execution. Set to 2 to force a replay afterwards\n");
 	debugPrintf("speed_throttle: Displays or changes kGameIsRestarting maximum delay\n");
 	debugPrintf("\n");
 	debugPrintf("Debug flags\n");
@@ -1287,15 +1281,14 @@ bool Console::cmdVerifyScripts(int argc, const char **argv) {
 
 	debugPrintf("%d SCI1.1-SCI3 scripts found, performing sanity checks...\n", resources.size());
 
-	Resource *script, *heap;
 	Common::List<ResourceId>::iterator itr;
 	for (itr = resources.begin(); itr != resources.end(); ++itr) {
-		script = _engine->getResMan()->findResource(*itr, false);
+		Resource *script = _engine->getResMan()->findResource(*itr, false);
 		if (!script)
 			debugPrintf("Error: script %d couldn't be loaded\n", itr->getNumber());
 
 		if (getSciVersion() <= SCI_VERSION_2_1_LATE) {
-			heap = _engine->getResMan()->findResource(ResourceId(kResourceTypeHeap, itr->getNumber()), false);
+			Resource *heap = _engine->getResMan()->findResource(ResourceId(kResourceTypeHeap, itr->getNumber()), false);
 			if (!heap)
 				debugPrintf("Error: script %d doesn't have a corresponding heap\n", itr->getNumber());
 
@@ -1630,11 +1623,11 @@ bool Console::cmdAudioDump(int argc, const char **argv) {
 				return true;
 			}
 
-			byte buffer[4096];
-			const int samplesToRead = ARRAYSIZE(buffer) / 2;
+			int16 buffer[2048];
+			const int samplesToRead = ARRAYSIZE(buffer);
 			uint bytesWritten = 0;
 			int samplesRead;
-			while ((samplesRead = audioStream->readBuffer((int16 *)buffer, samplesToRead))) {
+			while ((samplesRead = audioStream->readBuffer(buffer, samplesToRead))) {
 				uint bytesToWrite = samplesRead * bytesPerSample;
 				outFile.write(buffer, bytesToWrite);
 				bytesWritten += bytesToWrite;
@@ -1735,6 +1728,12 @@ bool Console::cmdRestoreGame(int argc, const char **argv) {
 }
 
 bool Console::cmdRestartGame(int argc, const char **argv) {
+#ifdef ENABLE_SCI32
+	if (getSciVersion() >= SCI_VERSION_2) {
+		debugPrintf("This SCI version does not support this command\n");
+		return true;
+	}
+#endif
 	_engine->_gamestate->abortScriptProcessing = kAbortRestartGame;
 
 	return cmdExit(0, nullptr);
@@ -3442,8 +3441,6 @@ bool Console::cmdScriptSteps(int argc, const char **argv) {
 }
 
 bool Console::cmdScriptObjects(int argc, const char **argv) {
-	int curScriptNr = -1;
-
 	if (argc < 2) {
 		debugPrintf("Shows all objects inside a specified script.\n");
 		debugPrintf("Usage: %s <script number>\n", argv[0]);
@@ -3452,6 +3449,7 @@ bool Console::cmdScriptObjects(int argc, const char **argv) {
 		return true;
 	}
 
+	int curScriptNr;
 	if (strcmp(argv[1], "*") == 0) {
 		// get said-strings of all currently loaded scripts
 		curScriptNr = -1;
@@ -3464,8 +3462,6 @@ bool Console::cmdScriptObjects(int argc, const char **argv) {
 }
 
 bool Console::cmdScriptStrings(int argc, const char **argv) {
-	int curScriptNr = -1;
-
 	if (argc < 2) {
 		debugPrintf("Shows all strings inside a specified script.\n");
 		debugPrintf("Usage: %s <script number>\n", argv[0]);
@@ -3474,6 +3470,7 @@ bool Console::cmdScriptStrings(int argc, const char **argv) {
 		return true;
 	}
 
+	int curScriptNr;
 	if (strcmp(argv[1], "*") == 0) {
 		// get strings of all currently loaded scripts
 		curScriptNr = -1;
@@ -3486,8 +3483,6 @@ bool Console::cmdScriptStrings(int argc, const char **argv) {
 }
 
 bool Console::cmdScriptSaid(int argc, const char **argv) {
-	int curScriptNr = -1;
-
 	if (argc < 2) {
 		debugPrintf("Shows all said-strings inside a specified script.\n");
 		debugPrintf("Usage: %s <script number>\n", argv[0]);
@@ -3496,6 +3491,7 @@ bool Console::cmdScriptSaid(int argc, const char **argv) {
 		return true;
 	}
 
+	int curScriptNr;
 	if (strcmp(argv[1], "*") == 0) {
 		// get said-strings of all currently loaded scripts
 		curScriptNr = -1;
@@ -3671,14 +3667,12 @@ bool Console::cmdStepGlobal(int argc, const char **argv) {
 }
 
 bool Console::cmdStepCallk(int argc, const char **argv) {
-	int callk_index;
-	char *endptr;
-
 	if (argc == 2) {
 		/* Try to convert the parameter to a number. If the conversion stops
 		   before end of string, assume that the parameter is a function name
 		   and scan the function table to find out the index. */
-		callk_index = strtoul(argv[1], &endptr, 0);
+		char *endptr;
+		int callk_index = strtoul(argv[1], &endptr, 0);
 		if (*endptr != '\0') {
 			callk_index = -1;
 			for (uint i = 0; i < _engine->getKernel()->getKernelNamesSize(); i++)
@@ -3864,12 +3858,11 @@ void Console::printKernelCallsFound(int kernelFuncNum, bool showFoundScripts) {
 				uint32 offset = fptr.getOffset();
 				int16 opparams[4];
 				byte extOpcode;
-				byte opcode;
 				uint16 maxJmpOffset = 0;
 
 				for (;;) {
 					offset += readPMachineInstruction(script->getBuf(offset), extOpcode, opparams);
-					opcode = extOpcode >> 1;
+					byte opcode = extOpcode >> 1;
 
 					if (opcode == op_callk) {
 						uint16 kFuncNum = opparams[0];
@@ -4176,7 +4169,7 @@ bool Console::cmdBreakpointDelete(int argc, const char **argv) {
 	return true;
 }
 
-static bool stringToBreakpointAction(Common::String str, BreakpointAction &action) {
+static bool stringToBreakpointAction(const Common::String &str, BreakpointAction &action) {
 	if (str == "break")
 		action = BREAK_BREAK;
 	else if (str == "log")
@@ -5041,12 +5034,11 @@ static int parse_reg_t(EngineState *s, const char *str, reg_t *dest) {
 				if (*endptr)
 					return 1;
 			} else {
-				int val = 0;
 				dest->setSegment(0);
 
 				if (charsCountNumber == charsCount) {
 					// Only numbers in input, assume decimal value
-					val = strtol(str, &endptr, 10);
+					int val = strtol(str, &endptr, 10);
 					if (*endptr)
 						return 1; // strtol failed?
 					dest->setOffset(val);
@@ -5054,7 +5046,7 @@ static int parse_reg_t(EngineState *s, const char *str, reg_t *dest) {
 				} else {
 					// We also got letters, check if there were only hexadecimal letters and '0x' at the start or 'h' at the end
 					if ((charsForceHex) && (!charsCountObject)) {
-						val = strtol(str, &endptr, 16);
+						int val = strtol(str, &endptr, 16);
 						if ((*endptr != 'h') && (*endptr != 0))
 							return 1;
 						dest->setOffset(val);

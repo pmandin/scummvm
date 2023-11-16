@@ -1,4 +1,4 @@
-/* ScummVM - Graphic Adventure Engine
+ /* ScummVM - Graphic Adventure Engine
  *
  * ScummVM is the legal property of its developers, whose names
  * are too numerous to list here. Please refer to the COPYRIGHT
@@ -59,16 +59,13 @@ protected:
 	Audio::MixerImpl *_mixer;
 
 	CFTimeInterval _startTime;
-	uint32 _timeSuspended;
 
 	int _runningTasks;
 
 	long _lastMouseDown;
 	long _queuedEventTime;
 	Common::Event _queuedInputEvent;
-	bool _secondaryTapped;
-	bool _mouseClickAndDragEnabled;
-	bool _touchpadModeEnabled;
+	TouchMode _currentTouchMode;
 	int _lastPadX;
 	int _lastPadY;
 
@@ -101,12 +98,14 @@ public:
 
 	bool setGraphicsMode(int mode, uint flags) override;
 
-	bool touchpadModeEnabled() const;
+	TouchMode getCurrentTouchMode() const { return _currentTouchMode; };
+	void setCurrentTouchMode(TouchMode mode) { _currentTouchMode = mode; };
 
 #if TARGET_OS_IOS
 	void applyOrientationSettings();
 	void setSupportedScreenOrientation(ScreenOrientation screenOrientation);
 #endif
+	void applyTouchSettings(bool _3dMode, bool overlayShown);
 
 	uint createOpenGLContext();
 	void destroyOpenGLContext();
@@ -153,7 +152,7 @@ public:
 	bool setTextInClipboard(const Common::U32String &text) override;
 
 	bool openUrl(const Common::String &url) override;
-
+	const char * const *buildHelpDialogData() override;
 	Common::String getSystemLanguage() const override;
 
 	bool isConnectionLimited() override;
@@ -167,6 +166,7 @@ public:
 
 protected:
 	void updateOutputSurface();
+	void updateTouchMode();
 	void setShowKeyboard(bool);
 	bool isKeyboardShown() const;
 
@@ -179,22 +179,18 @@ protected:
 
 	bool handleEvent_swipe(Common::Event &event, int direction, int touches);
 	bool handleEvent_tap(Common::Event &event, UIViewTapDescription type, int touches);
+	bool handleEvent_longPress(Common::Event &event, UIViewLongPressDescription type, int touches);
 	void handleEvent_keyPressed(Common::Event &event, int keyPressed);
 	void handleEvent_orientationChanged(int orientation);
+	void handleEvent_touchModeChanged();
 	void handleEvent_applicationSuspended();
 	void handleEvent_applicationResumed();
 	void handleEvent_applicationSaveState();
 	void handleEvent_applicationRestoreState();
 	void handleEvent_applicationClearState();
 
-	bool handleEvent_touchFirstDown(Common::Event &event, int x, int y);
-	bool handleEvent_touchFirstUp(Common::Event &event, int x, int y);
-
-	bool handleEvent_touchSecondDown(Common::Event &event, int x, int y);
-	bool handleEvent_touchSecondUp(Common::Event &event, int x, int y);
-
-	bool handleEvent_touchFirstDragged(Common::Event &event, int x, int y);
-	bool handleEvent_touchSecondDragged(Common::Event &event, int x, int y);
+	bool handleEvent_touchBegan(Common::Event &event, int x, int y);
+	bool handleEvent_touchMoved(Common::Event &event, int x, int y);
 
 	void handleEvent_mouseLeftButtonDown(Common::Event &event, int x, int y);
 	void handleEvent_mouseLeftButtonUp(Common::Event &event, int x, int y);

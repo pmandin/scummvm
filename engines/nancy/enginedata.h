@@ -47,6 +47,9 @@ struct BSUM : public EngineData {
 	uint16 startTimeHours;
 	uint16 startTimeMinutes;
 
+	// More Nancy Drew! scene
+	SceneChangeDescription adScene;
+
 	// UI
 	Common::Rect extraButtonHotspot;	// Extra button is map in tvd, clock in nancy2 and up
 	Common::Rect extraButtonHighlightDest;
@@ -102,14 +105,16 @@ struct PCAL : public EngineData {
 struct INV : public EngineData {
 	struct ItemDescription {
 		Common::String name;
-		byte keepItem;
+		byte keepItem = kInvItemKeepAlways;
+		uint16 sceneID = kNoScene;
+		uint16 sceneSoundFlag = kContinueSceneSound;
 		Common::Rect sourceRect;
 		Common::Rect highlightedSourceRect;
 
-		Common::String specificCantText;
-		Common::String generalCantText;
-		SoundDescription specificCantSound;
-		SoundDescription generalCantSound;
+		Common::String cantText;
+		Common::String cantTextNotHolding; // nancy2 only
+		SoundDescription cantSound;
+		SoundDescription cantSoundNotHolding; // nancy2 only
 	};
 
 	INV(Common::SeekableReadStream *chunkStream);
@@ -293,21 +298,27 @@ struct LOAD : public EngineData {
 // Contains data for the prompt that appears when exiting the game
 // without saving first. Introduced in nancy3.
 struct SDLG : public EngineData {
+	struct Dialog {
+		Dialog(Common::SeekableReadStream *chunkStream);
+		
+		Common::String imageName;
+
+		Common::Rect yesDest;
+		Common::Rect noDest;
+		Common::Rect cancelDest;
+
+		Common::Rect yesHighlightSrc;
+		Common::Rect noHighlightSrc;
+		Common::Rect cancelHighlightSrc;
+
+		Common::Rect yesDownSrc;
+		Common::Rect noDownSrc;
+		Common::Rect cancelDownSrc;
+	};
+
 	SDLG(Common::SeekableReadStream *chunkStream);
 
-	Common::String _imageName;
-
-	Common::Rect _yesDest;
-	Common::Rect _noDest;
-	Common::Rect _cancelDest;
-
-	Common::Rect _yesHighlightSrc;
-	Common::Rect _noHighlightSrc;
-	Common::Rect _cancelHighlightSrc;
-
-	Common::Rect _yesDownSrc;
-	Common::Rect _noDownSrc;
-	Common::Rect _cancelDownSrc;
+	Common::Array<Dialog> dialogs;
 };
 
 // Contains data for the hint system. Only used in nancy1.

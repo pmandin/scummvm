@@ -1264,7 +1264,7 @@ void ScummEngine::restoreCharsetBg() {
 		_charset->_str.left = -1;
 		_charset->_left = -1;
 
-		if (_macScreen && _game.id == GID_INDY3 && _charset->_textScreenID == kTextVirtScreen) {
+		if (_macIndy3Gui && _charset->_textScreenID == kTextVirtScreen) {
 			mac_undrawIndy3TextBox();
 			return;
 		}
@@ -1666,7 +1666,8 @@ void ScummEngine::drawLine(int x1, int y1, int x2, int y2, int color) {
 }
 
 void ScummEngine::drawPixel(VirtScreen *vs, int x, int y, int16 color, bool useBackbuffer) {
-	if (x >= 0 && y >= 0 && _screenWidth + 8 > x && _screenHeight > y) {
+	int factor = _isIndy4Jap ? 0 : 8;
+	if (x >= 0 && y >= 0 && _screenWidth + factor > x && _screenHeight > y) {
 		if (useBackbuffer)
 			*(vs->getBackPixels(x, y + _screenTop - vs->topline)) = color;
 		else
@@ -2223,7 +2224,7 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 	// FM-TOWNS release.  We take care not to apply this palette change to the
 	// text or inventory, as they still require the original colors.
 	if (_vm->_game.id == GID_INDY3 && (_vm->_game.features & GF_OLD256) && _vm->_game.platform != Common::kPlatformFMTowns
-		&& _vm->_roomResource == 46 && smapLen == 43159 && vs->number == kMainVirtScreen && _vm->_enableEnhancements) {
+		&& _vm->_roomResource == 46 && smapLen == 43159 && vs->number == kMainVirtScreen && _vm->enhancementEnabled(kEnhMinorBugFixes)) {
 		if (_roomPalette[11] == 11 && _roomPalette[86] == 86)
 			_roomPalette[11] = 86;
 		if (_roomPalette[13] == 13 && _roomPalette[80] == 80)
@@ -2246,7 +2247,7 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 			_vm->_currentRoom == 36 &&
 			vs->number == kMainVirtScreen &&
 			y == 8 && x >= 7 && x <= 30 && height == 88 &&
-			_vm->_enableEnhancements) {
+			_vm->enhancementEnabled(kEnhVisualChanges)) {
 		_roomPalette[47] = 15;
 
 		byte result = decompressBitmap(dstPtr, vs->pitch, smap_ptr + offset, height);
@@ -2267,7 +2268,7 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 			_vm->_currentRoom == 11 &&
 			vs->number == kMainVirtScreen &&
 			y == 24 && x >= 28 && x <= 52 && height == 56 &&
-			_vm->_enableEnhancements) {
+			_vm->enhancementEnabled(kEnhVisualChanges)) {
 		_roomPalette[1] = 15;
 
 		byte result = decompressBitmap(dstPtr, vs->pitch, smap_ptr + offset, height);

@@ -24,7 +24,6 @@
 #include "common/config-manager.h"
 #include "common/events.h"
 #include "common/fs.h"
-#include "common/gui_options.h"
 #include "common/util.h"
 #include "common/system.h"
 #include "common/translation.h"
@@ -116,6 +115,8 @@ const GroupingMode groupingModes[] = {
 	{"language", _sc("Language", "group"),     nullptr,                 kGroupByLanguage},
 	// I18N: Group name for the game list, grouped by game platform
 	{"platform", _sc("Platform", "group"),     nullptr,                 kGroupByPlatform},
+	// I18N: Group name for the game list, grouped by year
+	{"year", _sc("Year", "year"),              nullptr,                 kGroupByYear},
 	{nullptr, nullptr, nullptr, kGroupByNone}
 };
 
@@ -235,7 +236,7 @@ void LauncherDialog::build() {
 	Common::String grouping = ConfMan.get("grouping");
 	const GroupingMode *mode = groupingModes;
 	while (mode->name) {
-		if (mode->lowresDescription && g_system->getOverlayWidth() <= 320) {
+		if (mode->lowresDescription && g_gui.useLowResGUI()) {
 			_grpChooserPopup->appendEntry(_c(mode->lowresDescription, "group"), mode->id);
 		} else {
 			_grpChooserPopup->appendEntry(_c(mode->description, "group"), mode->id);
@@ -284,7 +285,7 @@ void LauncherDialog::build() {
 	_removeButton =
 		// I18N: Button caption. R is the shortcut, Ctrl+R, put it in parens for non-latin (~R~)
 		new ButtonWidget(this, _title + ".RemoveGameButton", _("~R~emove Game"), _("Remove game from the list. The game data files stay intact"), kRemoveGameCmd, 0, _c("~R~emove Game", "lowres"));
-	if (g_system->getOverlayWidth() > 320) {
+	if (!g_gui.useLowResGUI()) {
 		// I18N: Button caption. Mass add games
 		addButton->appendEntry(_("Mass Add..."), kMassAddGameCmd);
 	} else {
@@ -425,7 +426,7 @@ void LauncherDialog::massAddGame() {
 	MessageDialog alert(_("Do you really want to run the mass game detector? "
 						  "This could potentially add a huge number of games."), _("Yes"), _("No"));
 	if (alert.runModal() == GUI::kMessageOK && _browser->runModal() > 0) {
-		MD5Man.clear();
+		ADCacheMan.clear();
 		MassAddDialog massAddDlg(_browser->getResult());
 
 		massAddDlg.runModal();
@@ -1254,6 +1255,19 @@ void LauncherSimple::groupEntries(const Common::Array<LauncherEntry> &metadata) 
 		}
 		break;
 	}
+	case kGroupByYear: {
+		for (Common::Array<LauncherEntry>::const_iterator iter = metadata.begin(); iter != metadata.end(); ++iter) {
+			Common::U32String year = _metadataParser._gameInfo[buildQualifiedGameName(iter->engineid, iter->gameid)].year;
+			attrs.push_back(year);
+
+			if (!metadataNames.contains(year))
+				metadataNames[year] = year;
+		}
+		_list->setGroupHeaderFormat(Common::U32String(""), Common::U32String(""));
+		// I18N: List group when no year is specified
+		metadataNames[""] = _("Unknown Year");
+		break;
+	}
 	case kGroupByNone:	// Fall-through intentional
 	default:
 		_list->setGroupsVisibility(false);
@@ -1435,6 +1449,19 @@ void LauncherGrid::groupEntries(const Common::Array<LauncherEntry> &metadata) {
 		for (; p->code; ++p) {
 			metadataNames[p->code] = p->description;
 		}
+		break;
+	}
+	case kGroupByYear: {
+		for (Common::Array<LauncherEntry>::const_iterator iter = metadata.begin(); iter != metadata.end(); ++iter) {
+			Common::U32String year = _metadataParser._gameInfo[buildQualifiedGameName(iter->engineid, iter->gameid)].year;
+			attrs.push_back(year);
+
+			if (!metadataNames.contains(year))
+				metadataNames[year] = year;
+		}
+		_grid->setGroupHeaderFormat(Common::U32String(""), Common::U32String(""));
+		// I18N: List group when no year is specified
+		metadataNames[""] = _("Unknown Year");
 		break;
 	}
 	case kGroupByNone:	// Fall-through intentional
