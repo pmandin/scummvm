@@ -35,7 +35,7 @@ RofsArchive::~RofsArchive() {
 	close();
 }
 
-bool RofsArchive::open(const Common::String &filename) {
+bool RofsArchive::open(const Common::Path &filename) {
 	close();
 
 	_stream = SearchMan.createReadStreamForMember(filename);
