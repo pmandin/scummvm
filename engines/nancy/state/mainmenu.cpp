@@ -114,9 +114,17 @@ void MainMenu::init() {
 	if (!Scene::hasInstance()) {
 		_buttons[3]->setDisabled(true);
 	} else {
-		if (NancySceneState.isRunningAd() && ConfMan.hasKey("restore_after_ad", ConfMan.kTransientDomain)) {
-			// Force immediate load of second chance save, if we need to restore the game that was running
-			g_nancy->loadGameState(g_nancy->getMetaEngine()->getMaximumSaveSlot());
+		if (NancySceneState.isRunningAd()) {
+			// Always destroy current state to make sure music starts again
+			NancySceneState.destroy();
+
+			if (ConfMan.hasKey("restore_after_ad", Common::ConfigManager::kTransientDomain)) {
+				// Returning to running game, restore second chance
+				ConfMan.setInt("save_slot", g_nancy->getMetaEngine()->getMaximumSaveSlot(), Common::ConfigManager::kTransientDomain);
+			} else {
+				// Not returning to running game, disable Continue button
+				_buttons[3]->setDisabled(true);
+			}
 		}
 	}
 
@@ -196,17 +204,17 @@ void MainMenu::stop() {
 	case 6:
 		// Exit Game
 		if (g_nancy->getEngineData("SDLG") && Nancy::State::Scene::hasInstance() && !g_nancy->_hasJustSaved) {
-			if (!ConfMan.hasKey("sdlg_return", ConfMan.kTransientDomain)) {
+			if (!ConfMan.hasKey("sdlg_return", Common::ConfigManager::kTransientDomain)) {
 				// Request the "Do you want to save before quitting" dialog
-				ConfMan.setInt("sdlg_id", 0, ConfMan.kTransientDomain);
+				ConfMan.setInt("sdlg_id", 0, Common::ConfigManager::kTransientDomain);
 				_destroyOnExit = false;
 				g_nancy->setState(NancyState::kSaveDialog);
 			} else {
 				// Dialog has returned
 				_destroyOnExit = true;
 				g_nancy->_graphicsManager->suppressNextDraw();
-				uint ret = ConfMan.getInt("sdlg_return", ConfMan.kTransientDomain);
-				ConfMan.removeKey("sdlg_return", ConfMan.kTransientDomain);
+				uint ret = ConfMan.getInt("sdlg_return", Common::ConfigManager::kTransientDomain);
+				ConfMan.removeKey("sdlg_return", Common::ConfigManager::kTransientDomain);
 				switch (ret) {
 				case 0 :
 					// "Yes" switches to LoadSave
@@ -251,13 +259,17 @@ void MainMenu::stop() {
 	case 8:
 		// More Nancy Drew!
 		if (Scene::hasInstance()) {
-			// The second chance slot is used as temporary save
-			g_nancy->secondChance();
+			// The second chance slot is used as temporary save. We make sure not to
+			// overwrite it when selecting the ad button multiple times in a row.
+			if (!ConfMan.hasKey("restore_after_ad", Common::ConfigManager::kTransientDomain)) {
+				g_nancy->secondChance();
+			}
+
+			ConfMan.setBool("restore_after_ad", true, Common::ConfigManager::kTransientDomain);
 			NancySceneState.destroy();
-			ConfMan.setBool("restore_after_ad", true, ConfMan.kTransientDomain);
 		}
 
-		ConfMan.setBool("load_ad", true, ConfMan.kTransientDomain);
+		ConfMan.setBool("load_ad", true, Common::ConfigManager::kTransientDomain);
 		g_nancy->setState(NancyState::kScene);
 		break;
 	}

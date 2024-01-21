@@ -40,7 +40,7 @@ public:
 	virtual bool Stop() = 0;
 	virtual bool FadeOut(float seconds) = 0;
 	virtual bool SetVolume(uint8 volume) = 0; //range 0..255
-	string GetName() {
+	const string &GetName() const {
 		return m_Filename;
 	}
 	string GetTitle() {
@@ -50,6 +50,7 @@ public:
 		return m_FileId;
 	}
 protected:
+	// TODO: determine if filename should be a Common::Path
 	string m_Filename;
 	string m_Title;
 	string m_FileId;

@@ -17,6 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv3 license mentioned above, this code is also
+ * licensed under LGPL 2.1. See LICENSES/COPYING.LGPL file for the
+ * full text of the license.
+ *
  */
 
 /* Detection tables for Lost in Time. */
@@ -36,7 +42,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -50,7 +55,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -64,7 +68,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -78,7 +81,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -95,7 +97,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -109,7 +110,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -123,7 +123,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -137,7 +136,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -151,7 +149,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -165,11 +162,10 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
-{ // Supplied by SiRoCs in bug report #3943
+{ // Supplied by SiRoCs in bug report #3943 dated 09.06.93
 	{
 		"lit",
 		"CD v1.00",
@@ -179,11 +175,10 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
-{ // Supplied by SiRoCs in bug report #3943
+{ // Supplied by SiRoCs in bug report #3943 dated 09.06.93
 	{
 		"lit",
 		"CD v1.00",
@@ -193,11 +188,10 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
-{ // Supplied by SiRoCs in bug report #3943
+{ // Supplied by SiRoCs in bug report #3943 dated 09.06.93
 	{
 		"lit",
 		"CD v1.00",
@@ -207,11 +201,10 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
-{ // Supplied by SiRoCs in bug report #3943
+{ // Supplied by SiRoCs in bug report #3943 dated 09.06.93
 	{
 		"lit",
 		"CD v1.00",
@@ -221,11 +214,10 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
-{ // Supplied by SiRoCs in bug report #3943
+{ // Supplied by SiRoCs in bug report #3943 dated 09.06.93
 	{
 		"lit",
 		"CD v1.00",
@@ -235,11 +227,10 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
-{ // Supplied by SiRoCs in bug report #3943
+{ // Supplied by SiRoCs in bug report #3943 dated 09.06.93
 	{
 		"lit",
 		"CD v1.00",
@@ -249,7 +240,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -266,7 +256,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -280,7 +269,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -294,7 +282,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -308,7 +295,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -322,7 +308,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -336,7 +321,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -353,7 +337,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -368,7 +351,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -385,7 +367,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -400,7 +381,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -418,7 +398,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -435,7 +414,6 @@
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	"demo.stk", "demo.tot", 0
 },
@@ -444,12 +422,11 @@
 		"lit",
 		"Non-interactive Demo",
 		AD_ENTRY1s("demo.stk", "2eba8abd9e3878c57307576012dd2fec", 3031494),
-		UNK_LANG,
+		FR_FRA,
 		kPlatformDOS,
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	"demo.stk", "demo.tot", 0
 },
@@ -458,12 +435,11 @@
 		"lit",
 		"Non-interactive Demo",
 		AD_ENTRY1s("demo.stk", "895359c918a145adc048f779b3cdacc3", 645068),
-		UNK_LANG,
+		FR_FRA,
 		kPlatformDOS,
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	"demo.stk", "demo.tot", 0
 },
@@ -479,7 +455,6 @@
 		ADGF_PIRATED,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeLostInTime,
 	kFeaturesAdLib,
 	0, 0, 0
 },

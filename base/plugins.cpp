@@ -36,7 +36,7 @@
 
 // Plugin versioning
 
-int pluginTypeVersions[PLUGIN_TYPE_MAX] = {
+const int pluginTypeVersions[PLUGIN_TYPE_MAX] = {
 	PLUGIN_TYPE_ENGINE_DETECTION_VERSION,
 	PLUGIN_TYPE_ENGINE_VERSION,
 	PLUGIN_TYPE_MUSIC_VERSION,
@@ -81,7 +81,7 @@ public:
 		PluginList pl;
 
 		#define LINK_PLUGIN(ID) \
-			extern PluginType g_##ID##_type; \
+			extern const PluginType g_##ID##_type; \
 			extern PluginObject *g_##ID##_getObject(); \
 			pl.push_back(new StaticPlugin(g_##ID##_getObject(), g_##ID##_type));
 
@@ -196,7 +196,7 @@ PluginList FilePluginProvider::getPlugins() {
 	addCustomDirectories(pluginDirs);
 
 	// Add the user specified directory
-	Common::String pluginsPath(ConfMan.get("pluginspath"));
+	Common::Path pluginsPath(ConfMan.getPath("pluginspath"));
 	if (!pluginsPath.empty())
 		pluginDirs.push_back(Common::FSNode(pluginsPath));
 
@@ -206,10 +206,10 @@ PluginList FilePluginProvider::getPlugins() {
 		// Scan for all plugins in this directory
 		Common::FSList files;
 		if (!dir->getChildren(files, Common::FSNode::kListFilesOnly)) {
-			debug(1, "Couldn't open plugin directory '%s'", dir->getPath().c_str());
+			debug(1, "Couldn't open plugin directory '%s'", dir->getPath().toString().c_str());
 			continue;
 		} else {
-			debug(1, "Reading plugins from plugin directory '%s'", dir->getPath().c_str());
+			debug(1, "Reading plugins from plugin directory '%s'", dir->getPath().toString().c_str());
 		}
 
 		for (Common::FSList::const_iterator i = files.begin(); i != files.end(); ++i) {
@@ -296,7 +296,7 @@ const Plugin *PluginManager::getEngineFromMetaEngine(const Plugin *plugin) {
 	enginePlugin = PluginMan.findEnginePlugin(metaEnginePluginName);
 
 	if (enginePlugin) {
-		debug(9, "MetaEngine: %s \t matched to \t Engine: %s", plugin->get<MetaEngineDetection>().getEngineName(), enginePlugin->getFileName());
+		debug(9, "MetaEngine: %s \t matched to \t Engine: %s", plugin->get<MetaEngineDetection>().getEngineName(), enginePlugin->getFileName().toString().c_str());
 		return enginePlugin;
 	}
 
@@ -325,11 +325,11 @@ const Plugin *PluginManager::getMetaEngineFromEngine(const Plugin *plugin) {
 	}
 
 	if (metaEngine) {
-		debug(9, "Engine: %s matched to MetaEngine: %s", plugin->getFileName(), metaEngine->get<MetaEngineDetection>().getEngineName());
+		debug(9, "Engine: %s matched to MetaEngine: %s", plugin->getFileName().toString().c_str(), metaEngine->get<MetaEngineDetection>().getEngineName());
 		return metaEngine;
 	}
 
-	debug(9, "Engine: %s couldn't find a match for a MetaEngine plugin.", plugin->getFileName());
+	debug(9, "Engine: %s couldn't find a match for a MetaEngine plugin.", plugin->getFileName().toString().c_str());
 	return nullptr;
 }
 
@@ -364,8 +364,8 @@ void PluginManagerUncached::init() {
 			// music or an engine plugin.
 #ifndef DETECTION_STATIC
 			if (!foundDetectPlugin && (*pp)->isFilePluginProvider()) {
-				Common::String pName = (*p)->getFileName();
-				if (pName.hasSuffixIgnoreCase(detectPluginName)) {
+				Common::Path pName = (*p)->getFileName();
+				if (pName.baseName().hasSuffixIgnoreCase(detectPluginName)) {
 					_detectionPlugin = (*p);
 					foundDetectPlugin = true;
 					debug(9, "Detection plugin found!");
@@ -398,7 +398,7 @@ bool PluginManagerUncached::loadPluginFromEngineId(const Common::String &engineI
 
 	if (domain) {
 		if (domain->contains(engineId)) {
-			Common::String filename = (*domain)[engineId];
+			Common::Path filename(Common::Path::fromConfig((*domain)[engineId]));
 
 			if (loadPluginByFileName(filename)) {
 				return true;
@@ -412,8 +412,8 @@ bool PluginManagerUncached::loadPluginFromEngineId(const Common::String &engineI
 	tentativeEnginePluginFilename += PLUGIN_SUFFIX;
 #endif
 	for (PluginList::iterator p = _allEnginePlugins.begin(); p != _allEnginePlugins.end(); ++p) {
-		Common::String filename = (*p)->getFileName();
-		if (filename.hasSuffixIgnoreCase(tentativeEnginePluginFilename)) {
+		Common::Path filename = (*p)->getFileName();
+		if (filename.baseName().hasSuffixIgnoreCase(tentativeEnginePluginFilename)) {
 			if (loadPluginByFileName(filename)) {
 				return true;
 			}
@@ -425,7 +425,7 @@ bool PluginManagerUncached::loadPluginFromEngineId(const Common::String &engineI
 /**
  * Load a plugin with a filename taken from ConfigManager.
  **/
-bool PluginManagerUncached::loadPluginByFileName(const Common::String &filename) {
+bool PluginManagerUncached::loadPluginByFileName(const Common::Path &filename) {
 	if (filename.empty())
 		return false;
 
@@ -433,7 +433,7 @@ bool PluginManagerUncached::loadPluginByFileName(const Common::String &filename)
 
 	PluginList::iterator i;
 	for (i = _allEnginePlugins.begin(); i != _allEnginePlugins.end(); ++i) {
-		if (Common::String((*i)->getFileName()) == filename && (*i)->loadPlugin()) {
+		if ((*i)->getFileName() == filename && (*i)->loadPlugin()) {
 			addToPluginsInMemList(*i);
 			_currentPlugin = i;
 			return true;
@@ -448,13 +448,13 @@ bool PluginManagerUncached::loadPluginByFileName(const Common::String &filename)
  **/
 void PluginManagerUncached::updateConfigWithFileName(const Common::String &engineId) {
 	// Check if we have a filename for the current plugin
-	if ((*_currentPlugin)->getFileName()) {
+	if (!(*_currentPlugin)->getFileName().empty()) {
 		if (!ConfMan.hasMiscDomain("engine_plugin_files"))
 			ConfMan.addMiscDomain("engine_plugin_files");
 
 		Common::ConfigManager::Domain *domain = ConfMan.getDomain("engine_plugin_files");
 		assert(domain);
-		(*domain).setVal(engineId, (*_currentPlugin)->getFileName());
+		(*domain).setVal(engineId, (*_currentPlugin)->getFileName().toConfig());
 
 		ConfMan.flushToDisk();
 	}
@@ -751,14 +751,15 @@ const PluginList &EngineManager::getPlugins(const PluginType fetchPluginType) co
 	return PluginManager::instance().getPlugins(fetchPluginType);
 }
 
-namespace {
-
-void addStringToConf(const Common::String &key, const Common::String &value, const Common::String &domain) {
+static void addStringToConf(const Common::String &key, const Common::String &value, const Common::String &domain) {
 	if (!value.empty())
 		ConfMan.set(key, value, domain);
 }
 
-} // End of anonymous namespace
+static void addPathToConf(const Common::String &key, const Common::Path &value, const Common::String &domain) {
+	if (!value.empty())
+		ConfMan.setPath(key, value, domain);
+}
 
 Common::String EngineManager::generateUniqueDomain(const Common::String gameId) {
 	Common::String domainName(gameId);
@@ -787,7 +788,7 @@ Common::String EngineManager::createTargetForGame(const DetectedGame &game) {
 	addStringToConf("description", game.description, domain);
 	addStringToConf("language", Common::getLanguageCode(game.language), domain);
 	addStringToConf("platform", Common::getPlatformCode(game.platform), domain);
-	addStringToConf("path", game.path, domain);
+	addPathToConf("path", game.path, domain);
 	addStringToConf("extra", game.extra, domain);
 	addStringToConf("guioptions", game.getGUIOptions(), domain);
 
@@ -919,7 +920,7 @@ void EngineManager::upgradeTargetForEngineId(const Common::String &target) const
 	debug("Target '%s' lacks an engine ID, upgrading...", target.c_str());
 
 	Common::String oldGameId = domain->getVal("gameid");
-	Common::String path = domain->getVal("path");
+	Common::Path path = Common::Path::fromConfig(domain->getVal("path"));
 
 	// At this point the game ID and game path must be known
 	if (oldGameId.empty()) {
@@ -943,7 +944,7 @@ void EngineManager::upgradeTargetForEngineId(const Common::String &target) const
 		Common::FSNode dir(path);
 		Common::FSList files;
 		if (!dir.getChildren(files, Common::FSNode::kListAll)) {
-			warning("Failed to access path '%s' when upgrading target '%s'", path.c_str(), target.c_str());
+			warning("Failed to access path '%s' when upgrading target '%s'", path.toString(Common::Path::kNativeSeparator).c_str(), target.c_str());
 			return;
 		}
 
@@ -956,7 +957,7 @@ void EngineManager::upgradeTargetForEngineId(const Common::String &target) const
 		DetectedGames candidates = metaEngine.detectGames(files);
 		if (candidates.empty()) {
 			warning("No games supported by the engine '%s' were found in path '%s' when upgrading target '%s'",
-			        metaEngine.getName(), path.c_str(), target.c_str());
+			        metaEngine.getName(), path.toString(Common::Path::kNativeSeparator).c_str(), target.c_str());
 			return;
 		}
 

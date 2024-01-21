@@ -181,7 +181,7 @@ public:
 	 *
 	 * @return The file name.
 	 */
-	Common::Path getPathInArchive() const override;
+	Path getPathInArchive() const override;
 
 	/**
 	 * Return a string representation of the name of the file, without any
@@ -194,18 +194,14 @@ public:
 	virtual String getRealName() const;
 
 	/**
-	 * Return a string representation of the file that is suitable for
-	 * archiving (i.e. writing to the config file). This will usually be a
-	 * 'path' (hence the name of the method), but can be anything that meets
-	 * the above criteria. What a 'path' is differs greatly from system to
+	 * Return a path representation of the file that is suitable for
+	 * archiving (i.e. writing to the config file).
+	 * What a 'path' is differs greatly from system to
 	 * system.
-	 *
-	 * @note Do not assume that this string contains (back)slashes or any
-	 *       other kind of 'path separators'.
 	 *
 	 * @return The 'path' represented by this file system node.
 	 */
-	String getPath() const;
+	Path getPath() const;
 
 	/**
 	 * Get the parent node of this node. If this node has no parent node,
@@ -349,7 +345,7 @@ class FSDirectory : public Archive {
 
 	// Caches are case insensitive, clashes are dealt with when creating
 	// Key is stored in lowercase.
-	typedef HashMap<Path, FSNode, Path::IgnoreCaseAndMac_Hash, Path::IgnoreCaseAndMac_EqualsTo> NodeCache;
+	typedef HashMap<Path, FSNode, Path::IgnoreCaseAndMac_Hash, Path::IgnoreCaseAndMac_EqualTo> NodeCache;
 	mutable NodeCache	_fileCache, _subDirCache;
 	mutable bool _cached;
 
@@ -441,6 +437,12 @@ public:
 	 * for success.
 	 */
 	SeekableReadStream *createReadStreamForMember(const Path &path) const override;
+
+	/**
+	 * Open an alternate stream for a specified file. A full match of relative path and file name is needed
+	 * for success.
+	 */
+	SeekableReadStream *createReadStreamForMemberAltStream(const Path &path, AltStreamType altStreamType) const override;
 };
 
 /** @} */

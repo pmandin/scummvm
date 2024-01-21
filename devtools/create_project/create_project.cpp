@@ -1887,6 +1887,9 @@ void ProjectProvider::addFilesToProject(const std::string &dir, std::ostream &pr
 										const std::string &pchIncludeRoot, const StringList &pchDirs, const StringList &pchExclude,
 										const std::string &filePrefix) {
 	FileNode *files = scanFiles(dir, includeList, excludeList);
+	if (files == nullptr) {
+		return;
+	}
 
 	writeFileListToProject(*files, projectFile, 0, std::string(), filePrefix + '/', pchIncludeRoot, pchDirs, pchExclude);
 
@@ -2312,11 +2315,11 @@ void error(const std::string &message) {
 	std::exit(-1);
 }
 
-bool BuildSetup::featureEnabled(std::string feature) const {
+bool BuildSetup::featureEnabled(const std::string &feature) const {
 	return getFeature(feature).enable;
 }
 
-Feature BuildSetup::getFeature(std::string feature) const {
+Feature BuildSetup::getFeature(const std::string &feature) const {
 	for (FeatureList::const_iterator itr = features.begin(); itr != features.end(); ++itr) {
 		if (itr->name != feature)
 			continue;

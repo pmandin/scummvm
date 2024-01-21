@@ -43,7 +43,7 @@ public:
 	StuffItArchive();
 	~StuffItArchive() override;
 
-	bool open(const Common::String &filename, bool flattenTree);
+	bool open(const Common::Path &filename, bool flattenTree);
 	bool open(Common::SeekableReadStream *stream, bool flattenTree);
 	void close();
 	bool isOpen() const { return _stream != nullptr; }
@@ -52,9 +52,9 @@ public:
 	bool hasFile(const Common::Path &path) const override;
 	int listMembers(Common::ArchiveMemberList &list) const override;
 	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
-	Common::SharedArchiveContents readContentsForPath(const Common::String &name) const override;
-	Common::SharedArchiveContents readContentsForPathAltStream(const String &translatedPath, Common::AltStreamType altStreamType) const override;
-	Common::String translatePath(const Common::Path &path) const override;
+	Common::SharedArchiveContents readContentsForPath(const Common::Path &name) const override;
+	Common::SharedArchiveContents readContentsForPathAltStream(const Common::Path &translatedPath, Common::AltStreamType altStreamType) const override;
+	Common::Path translatePath(const Common::Path &path) const override;
 	char getPathSeparator() const override;
 
 private:
@@ -73,12 +73,19 @@ private:
 		FileEntryFork resFork;
 	};
 
+	class StuffItArchiveMember : public Common::GenericArchiveMember {
+	public:
+		StuffItArchiveMember(const Common::Path &path, const Common::Archive &archive);
+
+		bool isInMacArchive() const override;
+	};
+
 	Common::SeekableReadStream *_stream;
 
-	typedef Common::HashMap<Common::String, FileEntry, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> FileMap;
+	typedef Common::HashMap<Common::Path, FileEntry, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> FileMap;
 	FileMap _map;
 
-	typedef Common::HashMap<Common::String, Common::MacFinderInfoData, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> MetadataMap;
+	typedef Common::HashMap<Common::Path, Common::MacFinderInfoData, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> MetadataMap;
 	MetadataMap _metadataMap;
 
 	bool _flattenTree;
@@ -91,7 +98,7 @@ private:
 	void update14(uint16 first, uint16 last, byte *code, uint16 *freq) const;
 	void readTree14(Common::BitStream8LSB *bits, SIT14Data *dat, uint16 codesize, uint16 *result) const;
 
-	Common::SharedArchiveContents readContentsForPathFork(const String &translatedPath, bool isResFork) const;
+	Common::SharedArchiveContents readContentsForPathFork(const Common::Path &translatedPath, bool isResFork) const;
 };
 
 StuffItArchive::StuffItArchive() : Common::MemcachingCaseInsensitiveArchive(), _flattenTree(false) {
@@ -110,7 +117,7 @@ static const uint32 s_magicNumbers[] = {
 	MKTAG('S', 'T', 'i', '3'), MKTAG('S', 'T', 'i', '4'), MKTAG('S', 'T', '4', '6')
 };
 
-bool StuffItArchive::open(const Common::String &filename, bool flattenTree) {
+bool StuffItArchive::open(const Common::Path &filename, bool flattenTree) {
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filename);
 	return open(stream, flattenTree);
 }
@@ -230,12 +237,14 @@ bool StuffItArchive::open(Common::SeekableReadStream *stream, bool flattenTree) 
 		if (!flattenTree)
 			name = dirPrefix + name;
 
-		_metadataMap[name] = finfo.toData();
+		Common::Path path(name, ':');
+
+		_metadataMap[path] = finfo.toData();
 
 		if (dataForkUncompressedSize != 0) {
 			// We have a data fork
 
-			FileEntryFork &entryFork = _map[name].dataFork;
+			FileEntryFork &entryFork = _map[path].dataFork;
 			entryFork.compression = dataForkCompression;
 			entryFork.uncompressedSize = dataForkUncompressedSize;
 			entryFork.compressedSize = dataForkCompressedSize;
@@ -248,7 +257,7 @@ bool StuffItArchive::open(Common::SeekableReadStream *stream, bool flattenTree) 
 		if (resForkUncompressedSize != 0) {
 			// We have a resource fork
 
-			FileEntryFork &entryFork = _map[name].resFork;
+			FileEntryFork &entryFork = _map[path].resFork;
 			entryFork.compression = resForkCompression;
 			entryFork.uncompressedSize = resForkUncompressedSize;
 			entryFork.compressedSize = resForkCompressedSize;
@@ -272,8 +281,7 @@ void StuffItArchive::close() {
 }
 
 bool StuffItArchive::hasFile(const Common::Path &path) const {
-	Common::String name = path.toString(':');
-	return _map.contains(name);
+	return _map.contains(path);
 }
 
 int StuffItArchive::listMembers(Common::ArchiveMemberList &list) const {
@@ -284,14 +292,14 @@ int StuffItArchive::listMembers(Common::ArchiveMemberList &list) const {
 }
 
 const Common::ArchiveMemberPtr StuffItArchive::getMember(const Common::Path &path) const {
-	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(path, *this));
+	return Common::ArchiveMemberPtr(new StuffItArchiveMember(path, *this));
 }
 
-Common::SharedArchiveContents StuffItArchive::readContentsForPath(const Common::String &name) const {
-	return readContentsForPathFork(name, false);
+Common::SharedArchiveContents StuffItArchive::readContentsForPath(const Common::Path &path) const {
+	return readContentsForPathFork(path, false);
 }
 
-Common::SharedArchiveContents StuffItArchive::readContentsForPathAltStream(const String &translatedPath, Common::AltStreamType altStreamType) const {
+Common::SharedArchiveContents StuffItArchive::readContentsForPathAltStream(const Common::Path &translatedPath, Common::AltStreamType altStreamType) const {
 	if (altStreamType == Common::AltStreamType::MacFinderInfo) {
 		if (_metadataMap.contains(translatedPath)) {
 			const Common::MacFinderInfoData &metadata = _metadataMap[translatedPath];
@@ -308,13 +316,13 @@ Common::SharedArchiveContents StuffItArchive::readContentsForPathAltStream(const
 	return Common::SharedArchiveContents();
 }
 
-Common::SharedArchiveContents StuffItArchive::readContentsForPathFork(const Common::String &name, bool isResFork) const {
-	FileMap::const_iterator entryIt = _map.find(name);
+Common::SharedArchiveContents StuffItArchive::readContentsForPathFork(const Common::Path &path, bool isResFork) const {
+	FileMap::const_iterator entryIt = _map.find(path);
 
 	if (entryIt == _map.end())
 		return Common::SharedArchiveContents();
 
-	const FileEntry &entry = _map[name];
+	const FileEntry &entry = entryIt->_value;
 	const FileEntryFork &entryFork = isResFork ? entry.resFork : entry.dataFork;
 
 	if (entryFork.uncompressedSize == 0) {
@@ -351,14 +359,14 @@ Common::SharedArchiveContents StuffItArchive::readContentsForPathFork(const Comm
 	uint16 actualCRC = Common::CRC16().crcFast(uncompressedBlock, entryFork.uncompressedSize);
 
 	if (actualCRC != entryFork.crc) {
-		error("StuffItArchive::readContentsForPath(): CRC mismatch: %04x vs %04x for file %s %s fork", actualCRC, entryFork.crc, name.c_str(), (isResFork ? "res" : "data"));
+		error("StuffItArchive::readContentsForPath(): CRC mismatch: %04x vs %04x for file %s %s fork", actualCRC, entryFork.crc, path.toString().c_str(), (isResFork ? "res" : "data"));
 	}
 
 	return Common::SharedArchiveContents(uncompressedBlock, entryFork.uncompressedSize);
 }
 
-Common::String StuffItArchive::translatePath(const Common::Path &path) const {
-	return _flattenTree ? path.getLastComponent().toString() : path.toString(':');
+Common::Path StuffItArchive::translatePath(const Common::Path &path) const {
+	return _flattenTree ? path.getLastComponent() : path;
 }
 
 char StuffItArchive::getPathSeparator() const {
@@ -975,7 +983,7 @@ static void SIT13_CreateTree(struct SIT13Data *s, Common::BitStream8LSB *bits, s
 bool StuffItArchive::decompress13(Common::SeekableReadStream *src, byte *dst, uint32 uncompressedSize) const {
 	Common::MemoryWriteStream out(dst, uncompressedSize);
 
-	Common::BitStream8LSB *bits = new Common::BitStream8LSB(src);
+	Common::BitStream8LSB bits(src);
 
 	uint32 i, j;
 
@@ -990,7 +998,7 @@ bool StuffItArchive::decompress13(Common::SeekableReadStream *src, byte *dst, ui
 		s->Buffer4[i].freq = -1;
 	}
 
-	j = bits->getBits<8>();
+	j = bits.getBits<8>();
 	i = j>>4;
 	if(i > 5)
 		return false;
@@ -1003,15 +1011,15 @@ bool StuffItArchive::decompress13(Common::SeekableReadStream *src, byte *dst, ui
 	}
 	else
 	{
-		SIT13_CreateTree(s, bits, s->Buffer3, 0x141);
+		SIT13_CreateTree(s, &bits, s->Buffer3, 0x141);
 		if(j&8)
 			memcpy(s->Buffer3b, s->Buffer3, 0x1000*sizeof(struct SIT13Buffer));
 		else
-			SIT13_CreateTree(s, bits, s->Buffer3b, 0x141);
+			SIT13_CreateTree(s, &bits, s->Buffer3b, 0x141);
 		j = (j&7)+10;
-		SIT13_CreateTree(s, bits, s->Buffer2, j);
+		SIT13_CreateTree(s, &bits, s->Buffer2, j);
 	}
-	return SIT13_Extract(s, bits, out);
+	return SIT13_Extract(s, &bits, out);
 }
 
 #define OUTPUT_VAL(x) \
@@ -1118,7 +1126,15 @@ void StuffItArchive::decompress14(Common::SeekableReadStream *src, byte *dst, ui
 StuffItArchive::FileEntryFork::FileEntryFork() : uncompressedSize(0), compressedSize(0), offset(0), crc(0), compression(0) {
 }
 
-Common::Archive *createStuffItArchive(const Common::String &fileName, bool flattenTree) {
+StuffItArchive::StuffItArchiveMember::StuffItArchiveMember(const Common::Path &path, const Common::Archive &archive)
+	: Common::GenericArchiveMember(path, archive) {
+}
+
+bool StuffItArchive::StuffItArchiveMember::isInMacArchive() const {
+	return true;
+}
+
+Common::Archive *createStuffItArchive(const Common::Path &fileName, bool flattenTree) {
 	StuffItArchive *archive = new StuffItArchive();
 
 	if (!archive->open(fileName, flattenTree)) {

@@ -30,74 +30,123 @@
 namespace GUI {
 
 HelpDialog::HelpDialog()
-	: Dialog(30, 20, 260, 124) {
+	: Dialog("HelpDialog") {
 
-	const int screenW = g_system->getOverlayWidth();
-	const int screenH = g_system->getOverlayHeight();
+	_tab = new TabWidget(this, "HelpDialog.TabWidget");
 
-	int buttonWidth = g_gui.xmlEval()->getVar("Globals.Button.Width", 0);
-	int buttonHeight = g_gui.xmlEval()->getVar("Globals.Button.Height", 0);
-
-	_w = screenW * 8 / 10;
-	_h = screenH * 8 / 10;
-
-	// Center the dialog
-	_x = (screenW - _w) / 2;
-	_y = (screenH - _h) / 2;
-
-
-	int tabHeight = _h - (buttonHeight + 10) * 5 / 2;
-
-	TabWidget *tab = new TabWidget(this, 10, 10, _w - 10, tabHeight);
-
-	tab->addTab(_("General"), "HelpDialog", false);
-	Common::U32String helpText1 = _(
+static const char * const helpTabs[] = {
+_s("General"),
+"",
+_s(
+"## ScummVM at a Glance\n"
+"\n"
+"ScummVM is a modern reimplementation of various game engines. Once you transfer the original game data to your device, it endeavors to use it to faithfully recreate the original gaming experience. \n"
+"\n"
+"ScummVM isn't your typical emulator of DOS, Windows, or some console. Rather than a one-size-fits-all approach, it takes a meticulous route, implementing the precise game logic for each specific title or engine it supports. ScummVM will not work with game engines it does not support.\n"
+"\n"
+"ScummVM is developed by a team of volunteers and is free software. We lack an extensive testing team, possess only a limited range of devices, and cannot always address every request. We also do not run advertisements or sell you anything. Please be mindful of this when you submit a complaint or a bug report.\n"
+"\n"
 "## Where to get the games\n"
 "\n"
-"Visit [our Wiki](https://wiki.scummvm.org/index.php?title=Where_to_get_the_games) for a list of games and where to purchase them.\n"
+"Visit [our Wiki](https://wiki.scummvm.org/index.php?title=Where_to_get_the_games) for a detailed list of supported games and where to purchase them.\n"
 "\n"
-"Alternatively, download a selection of [freeware games](https://scummvm.org/games) and [demos](https://www.scummvm.org/demos/) from our website \n"
+"Alternatively, you can download a variety of [freeware games](https://scummvm.org/games) and [demos](https://www.scummvm.org/demos/) directly from our website.\n"
 "\n"
-"For other (out of print) games, try Amazon, eBay, Game Trading Zone or other auction "
-"sites. Beware of faulty games and illegal game copies.\n"
-"\n"
-"The ScummVM team does not recommend any individual supplier of games,"
-"however the project does get a cut from every purchase on "
-"[GOG.com](https://www.gog.com/?pp=22d200f8670dbdb3e253a90eee5098477c95c23d) and "
+"The ScummVM team does not endorse any specific game supplier. "
+"However, the project receives a commission from every purchase made on "
 "[ZOOM-Platform](https://www.zoom-platform.com/?affiliate=c049516c-9c4c-42d6-8649-92ed870e8b53) "
 "through affiliate referral links.\n"
-	);
+"\n"
+"Additionally, games not available on ZOOM-Platform can be found on other suppliers such as GOG.com and Steam.\n"
+"\n"
+"For other (out-of-print) games, consider checking platforms like Amazon, eBay, Game Trading Zone, or other auction "
+"sites. Be cautious of faulty games and illegal game copies.\n"
+),
 
-	new RichTextWidget(tab, 10, 10, _w - 10, tabHeight - buttonHeight - 10, helpText1);
+#ifdef USE_CLOUD
+
+_s("Cloud"),
+"helpdialog.zip",
+_s(
+"## Connecting a cloud service - Quick mode\n"
+"\n"
+"1. From the Launcher, select **Global Options** and then select the **Cloud** tab.\n"
+"\n"
+"2. Select your preferred cloud storage service from the **Active storage** dropdown, then select **Connect**.\n"
+"\n	"
+"  ![Select cloud service](choose_storage.png \"Select cloud service\"){w=70%}\n"
+"\n"
+"3. Select **Quick mode**.\n"
+"\n	"
+"  ![Quick mode](quick_mode.png \"Quick mode\"){w=70%}\n"
+"\n"
+"4. Select **Run server** and then select **Next** \n"
+"\n	"
+"  ![Run server](run_server.png \"Run server\"){w=70%}\n"
+"\n"
+"  ![Next step](server_next.png \"Next step\"){w=70%}\n"
+"\n"
+"5. Open the link.\n"
+"\n	"
+"  ![Open the link](open_link.png \"Open the link\"){w=70%}\n"
+"\n"
+"6. In the browser window that opens, select the cloud service to connect. \n"
+"\n	"
+"  ![Choose the cloud service](cloud_browser.png \"Choose the cloud service\"){w=70%}\n"
+"\n"
+"7. Sign in to the chosen cloud service. Once completed, return to ScummVM.\n"
+"\n"
+"8. On the success screen, select **Finish** to exit. \n"
+"\n	"
+"  ![Success](cloud_success.png \"Success\"){w=70%}\n"
+"9. Back on the main Cloud tab, select **Enable storage**.\n"
+"\n	"
+"  ![Enable storage](enable_storage.png \"Enable storage\"){w=70%}\n"
+"\n"
+"10. You're ready to go! Use the cloud functionality to sync saved games or game files between your devices.\n"
+"\n	"
+"  ![Cloud functionality](cloud_functions.png \"Cloud functionality\"){w=70%}\n"
+"\n"
+"   For more information, including how to use the manual connection wizard, see our [Cloud documentation](https://docs.scummvm.org/en/latest/use_scummvm/connect_cloud.html) "
+),
+
+#endif
+
+0,
+	};
 
 
+	addTabs(helpTabs);
 	// Now add backend-specific tabs if any
 	const char * const *backendTabs = g_system->buildHelpDialogData();
 
-	if (backendTabs) {
-		while (*backendTabs) {
-			Common::U32String tabName(_(*backendTabs++));
-			const char *imagePack = nullptr;
+	if (backendTabs)
+		addTabs(backendTabs);
 
-			if (*backendTabs && **backendTabs)
-				imagePack = *backendTabs;
+	_tab->setActiveTab(0);
 
-			backendTabs++;
+	new ButtonWidget(this, "HelpDialog.Close", Common::U32String("Close"), Common::U32String(), kCloseCmd);
+}
 
-			Common::U32String tabText(_(*backendTabs++));
+void HelpDialog::addTabs(const char * const *tabData) {
+	while (*tabData) {
+		Common::U32String tabName(*tabData++);
+		const char *imagePack = nullptr;
 
-			tab->addTab(tabName, "HelpDialog", false);
+		if (*tabData && **tabData)
+			imagePack = *tabData;
 
-			RichTextWidget *rt = new RichTextWidget(tab, 10, 10, _w - 10, tabHeight - buttonHeight - 10, tabText);
+		tabData++;
 
-			if (imagePack)
-				rt->setImageArchive(imagePack);
-		}
+		Common::U32String tabText(*tabData++);
+
+		_tab->addTab(tabName, "HelpContentDialog", false);
+
+		RichTextWidget *rt = new RichTextWidget(_tab, "HelpContentDialog.RichTextWidget", tabText);
+
+		if (imagePack)
+			rt->setImageArchive(imagePack);
 	}
-
-	 tab->setActiveTab(0);
-
-	new ButtonWidget(this, _w - buttonWidth - 10, _h - buttonHeight - 10, buttonWidth, buttonHeight, Common::U32String("Close"), Common::U32String(), kCloseCmd);
 }
 
 void HelpDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data) {

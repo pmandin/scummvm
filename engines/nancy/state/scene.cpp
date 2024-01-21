@@ -132,7 +132,7 @@ Scene::Scene() :
 		_isRunningAd(false),
 		_hotspotDebug(50) {}
 
-Scene::~Scene()  {
+Scene::~Scene() {
 	delete _helpButton;
 	delete _menuButton;
 	delete _viewportOrnaments;
@@ -187,7 +187,6 @@ void Scene::onStateEnter(const NancyState::NancyState prevState) {
 			g_nancy->_cursorManager->setCursorItemID(getHeldItem());
 		}
 
-
 		if (prevState == NancyState::kPause) {
 			g_nancy->_sound->pauseAllSounds(false);
 		} else {
@@ -226,6 +225,10 @@ bool Scene::onStateExit(const NancyState::NancyState nextState) {
 	}
 
 	return _destroyOnExit;
+}
+
+bool Scene::isRunningSpecialEffect() const {
+	return _specialEffects.size() && _specialEffects.front().isHalfInitialized() && !_specialEffects.front().isDone();
 }
 
 void Scene::changeScene(const SceneChangeDescription &sceneDescription) {
@@ -336,7 +339,7 @@ void Scene::removeItemFromInventory(uint16 id, bool pickUp) {
 	}
 }
 
-void Scene::setHeldItem(int16 id)  {
+void Scene::setHeldItem(int16 id) {
 	_flags.heldItem = id; g_nancy->_cursorManager->setCursorItemID(id);
 }
 
@@ -610,6 +613,7 @@ void Scene::synchronize(Common::Serializer &ser) {
 		ser.syncAsUint16LE(_sceneState.pushedInvScene.frameID);
 		ser.syncAsUint16LE(_sceneState.pushedInvScene.verticalOffset);
 		ser.syncAsByte(_sceneState.isInvScenePushed);
+		ser.syncAsUint16LE(_sceneState.pushedInvItemID);		
 	}
 
 	// hardcoded number of logic conditions, check if there can ever be more/less
@@ -661,6 +665,11 @@ void Scene::synchronize(Common::Serializer &ser) {
 	g_nancy->setTotalPlayTime((uint32)_timers.lastTotalTime);
 
 	ser.syncArray(_flags.eventFlags.data(), g_nancy->getStaticData().numEventFlags, Common::Serializer::Byte);
+
+	// Clear generic flags
+	for (uint16 id : g_nancy->getStaticData().genericEventFlags) {
+		_flags.eventFlags[id] = g_nancy->_false;
+	}
 
 	// Skip empty sceneCount array
 	ser.skip(2001 * 2, 0, 2);
@@ -726,7 +735,7 @@ void Scene::synchronize(Common::Serializer &ser) {
 	}
 
 	_isRunningAd = false;
-	ConfMan.removeKey("restore_after_ad", ConfMan.kTransientDomain);
+	ConfMan.removeKey("restore_after_ad", Common::ConfigManager::kTransientDomain);
 
 	g_nancy->_graphicsManager->suppressNextDraw();
 }
@@ -755,9 +764,9 @@ void Scene::init() {
 	_timers.playerTimeNextMinute = 0;
 	_timers.pushedPlayTime = 0;
 
-	if (ConfMan.hasKey("load_ad", ConfMan.kTransientDomain)) {
+	if (ConfMan.hasKey("load_ad", Common::ConfigManager::kTransientDomain)) {
 		changeScene(bootSummary->adScene);
-		ConfMan.removeKey("load_ad", ConfMan.kTransientDomain);
+		ConfMan.removeKey("load_ad", Common::ConfigManager::kTransientDomain);
 		_isRunningAd = true;
 	} else {
 		changeScene(bootSummary->firstScene);
@@ -771,9 +780,9 @@ void Scene::init() {
 
 	initStaticData();
 
-	if (ConfMan.hasKey("save_slot")) {
+	if (!_isRunningAd && ConfMan.hasKey("save_slot", Common::ConfigManager::kTransientDomain)) {
 		// Load savefile directly from the launcher
-		int saveSlot = ConfMan.getInt("save_slot");
+		int saveSlot = ConfMan.getInt("save_slot", Common::ConfigManager::kTransientDomain);
 		if (saveSlot >= 0 && saveSlot <= g_nancy->getMetaEngine()->getMaximumSaveSlot()) {
 			g_nancy->loadGameState(saveSlot);
 		}
@@ -783,6 +792,11 @@ void Scene::init() {
 	} else {
 		// Normal boot, load default first scene
 		_state = kLoad;
+	}
+
+	// Set relevant event flag when player has won the game at least once
+	if (ConfMan.get("PlayerWonTheGame", ConfMan.getActiveDomainName()) == "AcedTheGame") {
+		setEventFlag(g_nancy->getStaticData().wonGameSceneID, g_nancy->_true);
 	}
 
 	if (g_nancy->getGameType() == kGameTypeVampire) {
@@ -847,11 +861,11 @@ void Scene::load(bool fromSaveFile) {
 	g_nancy->_graphicsManager->suppressNextDraw();
 
 	// Scene IDs are prefixed with S inside the cif tree; e.g 100 -> S100
-	Common::String sceneName = Common::String::format("S%u", _sceneState.nextScene.sceneID);
+	Common::Path sceneName(Common::String::format("S%u", _sceneState.nextScene.sceneID));
 	IFF *sceneIFF = g_nancy->_resource->loadIFF(sceneName);
 
 	if (!sceneIFF) {
-		error("Faled to load IFF %s", sceneName.c_str());
+		error("Faled to load IFF %s", sceneName.toString().c_str());
 	}
 
 	Common::SeekableReadStream *sceneSummaryChunk = sceneIFF->getChunkStream("SSUM");
@@ -904,7 +918,7 @@ void Scene::load(bool fromSaveFile) {
 						_sceneState.currentScene.verticalOffset,
 						_sceneState.summary.panningType,
 						_sceneState.summary.videoFormat,
-						_sceneState.summary.palettes.size() ? _sceneState.summary.palettes[(byte)_sceneState.currentScene.paletteID] : Common::String());
+						_sceneState.summary.palettes.size() ? _sceneState.summary.palettes[(byte)_sceneState.currentScene.paletteID] : Common::Path());
 
 	if (_viewport.getFrameCount() <= 1) {
 		_viewport.disableEdges(kLeft | kRight);
@@ -978,13 +992,20 @@ void Scene::run() {
 		return;
 	}
 
-	_actionManager.processActionRecords();
+	// Run action records. From nancy7 onward want to skip this if we're in the
+	// middle of a special effect. This way, the nancy7 dog scare sequence 
+	// (scene 2090 and onwards) gets the fades to black present in the original.
+	// We don't do the same for earlier games, since we _want_ records to execute
+	// there; an example is the text in the nancy3 intro.
+	// Note: if this causes any issues, move the check inside SecondaryMovie.
+	if (!isRunningSpecialEffect() || g_nancy->getGameType() <= kGameTypeNancy6) {
+		_actionManager.processActionRecords();
+	}
 
 	if (_lightning) {
 		_lightning->run();
 	}
 
-	// Do this after the first records are processed to fix the text in nancy3 intro
 	if (_specialEffects.size()) {
 		if (_specialEffects.front().isInitialized()) {
 			if (_specialEffects.front().isDone()) {
@@ -1010,9 +1031,20 @@ void Scene::handleInput() {
 	if (_activeConversation != nullptr) {
 		const Common::Rect &inactiveZone = g_nancy->_cursorManager->getPrimaryVideoInactiveZone();
 
-		if (inactiveZone.bottom > input.mousePos.y) {
-			input.mousePos.y = inactiveZone.bottom;
-			g_nancy->_cursorManager->warpCursor(input.mousePos);
+		if (g_nancy->getGameType() == kGameTypeVampire) {
+			const Common::Point cursorHotspot = g_nancy->_cursorManager->getCurrentCursorHotspot();
+			Common::Point adjustedMousePos = input.mousePos;
+			adjustedMousePos.y -= cursorHotspot.y;
+
+			if (inactiveZone.bottom > adjustedMousePos.y) {
+				input.mousePos.y = inactiveZone.bottom + cursorHotspot.y;
+				g_nancy->_cursorManager->warpCursor(input.mousePos);
+			}
+		} else {
+			if (inactiveZone.bottom > input.mousePos.y) {
+				input.mousePos.y = inactiveZone.bottom;
+				g_nancy->_cursorManager->warpCursor(input.mousePos);
+			}
 		}
 	} else {
 		// Check if player has pressed esc

@@ -195,7 +195,7 @@ Engine::~Engine() {
 }
 
 void Engine::initializePath(const Common::FSNode &gamePath) {
-	SearchMan.addDirectory(gamePath.getPath(), gamePath, 0, 4);
+	SearchMan.addDirectory(gamePath, 0, 4);
 }
 
 void initCommonGFX() {
@@ -224,7 +224,7 @@ void initCommonGFX() {
 			g_system->setScaler(ConfMan.get("scaler").c_str(), ConfMan.getInt("scale_factor"));
 
 		if (gameDomain->contains("shader"))
-			g_system->setShader(ConfMan.get("shader"));
+			g_system->setShader(ConfMan.getPath("shader"));
 
 		// TODO: switching between OpenGL and SurfaceSDL is quite fragile
 		// and the SDL backend doesn't really need this so leave it out
@@ -324,12 +324,12 @@ void initGraphicsModes(const Graphics::ModeList &modes) {
  * Inits any of the modes in "modes". "modes" is in the order of preference.
  * Return value is index in modes of resulting mode.
  */
-int initGraphicsAny(const Graphics::ModeWithFormatList &modes) {
+int initGraphicsAny(const Graphics::ModeWithFormatList &modes, int start) {
 	int candidate = -1;
 	OSystem::TransactionError gfxError = OSystem::kTransactionSizeChangeFailed;
 	int last_width = 0, last_height = 0;
 
-	for (candidate = 0; candidate < (int)modes.size(); candidate++) {
+	for (candidate = start; candidate < (int)modes.size(); candidate++) {
 		g_system->beginGFXTransaction();
 		initCommonGFX();
 #ifdef USE_RGB_COLOR
@@ -509,7 +509,7 @@ void GUIErrorMessageFormat(const char *fmt, ...) {
 }
 
 void GUIErrorMessageFormatU32StringPtr(const Common::U32String *fmt, ...) {
-	Common::U32String msg("");
+	Common::U32String msg;
 
 	va_list va;
 	va_start(va, fmt);
@@ -874,7 +874,7 @@ Common::Error Engine::loadGameStream(Common::SeekableReadStream *stream) {
 	return Common::kReadingFailed;
 }
 
-bool Engine::canLoadGameStateCurrently() {
+bool Engine::canLoadGameStateCurrently(Common::U32String *msg) {
 	// Do not allow loading by default
 	return false;
 }
@@ -901,7 +901,7 @@ Common::Error Engine::saveGameStream(Common::WriteStream *stream, bool isAutosav
 	return Common::kWritingFailed;
 }
 
-bool Engine::canSaveGameStateCurrently() {
+bool Engine::canSaveGameStateCurrently(Common::U32String *msg) {
 	// Do not allow saving by default
 	return false;
 }

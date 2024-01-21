@@ -1226,9 +1226,15 @@ void LC::c_or() {
 }
 
 void LC::c_not() {
+	// Not returns true when a variable is undefined or is an int and is zero.
+	Datum res;
 	Datum d = g_lingo->pop();
 
-	Datum res(d.asInt() == 0 ? 1 : 0);
+	if ((d.type == INT && d.u.i == 0) || d.type == VOID) {
+		res = Datum(1);
+	} else {
+		res = Datum(0);
+	}
 
 	g_lingo->push(res);
 }
@@ -1445,11 +1451,13 @@ void LC::c_tell() {
 		warning("LC::c_tell(): wrong argument type: %s", window.type2str());
 		return;
 	}
-	if (static_cast<Window *>(window.u.obj)->getCurrentMovie() == nullptr) {
+	Window *w = static_cast<Window *>(window.u.obj);
+	w->ensureMovieIsLoaded();
+	if (w->getCurrentMovie() == nullptr) {
 		warning("LC::c_tell(): window has no movie");
 		return;
 	}
-	g_director->setCurrentWindow(static_cast<Window *>(window.u.obj));
+	g_director->setCurrentWindow(w);
 
 }
 
@@ -1528,6 +1536,25 @@ void LC::call(const Common::String &name, int nargs, bool allowRetVal) {
 				call(funcSym, nargs, allowRetVal);
 				return;
 			}
+		}
+	}
+
+	// Fallback for the edge case where a local factory method is called,
+	// but with an invalid first argument.
+	// If there is a current me object, and it has a function handler
+	// with a matching name, then the first argument will be replaced with the me object.
+	// If there are no arguments at all, one will be added.
+	if (g_lingo->_state->me.type == OBJECT) {
+		AbstractObject *target = g_lingo->_state->me.u.obj;
+		funcSym = target->getMethod(name);
+		if (funcSym.type != VOIDSYM) {
+			if (nargs == 0) {
+				g_lingo->_stack.push_back(Datum());
+				nargs = 1;
+			}
+			g_lingo->_stack[g_lingo->_stack.size() - nargs] = funcSym.target; // Set first arg to target
+			call(funcSym, nargs, allowRetVal);
+			return;
 		}
 	}
 

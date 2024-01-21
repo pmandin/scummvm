@@ -29,69 +29,72 @@
 
 namespace Freescape {
 
-Common::Array<Common::Keymap *> FreescapeEngine::initKeymaps(const char *target) {
-	Common::Keymap *engineKeyMap = new Common::Keymap(Common::Keymap::kKeymapTypeGame, "freescape", "Freescape game");
+void FreescapeEngine::initKeymaps(Common::Keymap *engineKeyMap, const char *target) {
 	Common::Action *act;
 
 	act = new Common::Action(Common::kStandardActionMoveUp, _("Up"));
 	act->setKeyEvent(Common::KEYCODE_UP);
-	act->allowKbdRepeats();
 	act->addDefaultInputMapping("JOY_UP");
+	act->addDefaultInputMapping("o");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveDown, _("Down"));
 	act->setKeyEvent(Common::KEYCODE_DOWN);
-	act->allowKbdRepeats();
 	act->addDefaultInputMapping("JOY_DOWN");
+	act->addDefaultInputMapping("k");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveLeft, _("Strafe Left"));
 	act->setKeyEvent(Common::KEYCODE_LEFT);
-	act->allowKbdRepeats();
 	act->addDefaultInputMapping("JOY_LEFT");
+	act->addDefaultInputMapping("q");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveRight, _("Strafe Right"));
 	act->setKeyEvent(Common::KEYCODE_RIGHT);
-	act->allowKbdRepeats();
 	act->addDefaultInputMapping("JOY_RIGHT");
+	act->addDefaultInputMapping("w");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("SHOOT", _("Shoot"));
-	act->setKeyEvent(Common::KeyState(Common::KEYCODE_0, '0'));
-	act->allowKbdRepeats();
-	act->setLeftClickEvent();
+	act->setKeyEvent(Common::KeyState(Common::KEYCODE_KP5, '5'));
 	act->addDefaultInputMapping("JOY_A");
+	act->addDefaultInputMapping("5");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("RISE", _("Rise/Fly up"));
 	act->setKeyEvent(Common::KeyState(Common::KEYCODE_r, 'r'));
 	act->addDefaultInputMapping("JOY_B");
+	act->addDefaultInputMapping("r");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("LOWER", _("Lower/Fly down"));
 	act->setKeyEvent(Common::KeyState(Common::KEYCODE_f, 'f'));
+	act->addDefaultInputMapping("JOY_Y");
+	act->addDefaultInputMapping("f");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("SWITCH", _("Change mode"));
 	act->setKeyEvent(Common::KeyState(Common::KEYCODE_SPACE, Common::ASCII_SPACE));
+	act->addDefaultInputMapping("SPACE");
 	act->addDefaultInputMapping("JOY_X");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("ROTL", _("Rotate Left"));
 	act->setKeyEvent(Common::KeyState(Common::KEYCODE_q, 'q'));
+	act->addDefaultInputMapping("q");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("ROTR", _("Rotate Right"));
 	act->setKeyEvent(Common::KeyState(Common::KEYCODE_w, 'w'));
+	act->addDefaultInputMapping("w");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("MENU", _("Info Menu"));
 	act->setKeyEvent(Common::KeyState(Common::KEYCODE_i, 'i'));
+	act->addDefaultInputMapping("i");
 	act->addDefaultInputMapping("JOY_GUIDE");
 	engineKeyMap->addAction(act);
-
-	return Common::Keymap::arrayOf(engineKeyMap);
 }
 
 Math::AABB createPlayerAABB(Math::Vector3d const position, int playerHeight) {
@@ -166,7 +169,7 @@ void FreescapeEngine::activate() {
 
 	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset);
 	Math::Ray ray(_position, direction);
-	Object *interacted = _currentArea->shootRay(ray);
+	Object *interacted = _currentArea->checkCollisionRay(ray, 8192);
 	if (interacted) {
 		GeometricObject *gobj = (GeometricObject *)interacted;
 		debugC(1, kFreescapeDebugMove, "Interact with object %d with flags %x", gobj->getObjectID(), gobj->getObjectFlags());
@@ -183,7 +186,7 @@ void FreescapeEngine::activate() {
 void FreescapeEngine::shoot() {
 	playSound(1, false);
 	g_system->delayMillis(2);
-	_shootingFrames = 4;
+	_shootingFrames = 10;
 
 	Common::Point center(_viewArea.left + _viewArea.width() / 2, _viewArea.top + _viewArea.height() / 2);
 	float xoffset = _crossairPosition.x - center.x;
@@ -193,7 +196,7 @@ void FreescapeEngine::shoot() {
 
 	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset);
 	Math::Ray ray(_position, direction);
-	Object *shot = _currentArea->shootRay(ray);
+	Object *shot = _currentArea->checkCollisionRay(ray, 8192);
 	if (shot) {
 		GeometricObject *gobj = (GeometricObject *)shot;
 		debugC(1, kFreescapeDebugMove, "Shot object %d with flags %x", gobj->getObjectID(), gobj->getObjectFlags());
@@ -396,43 +399,31 @@ void FreescapeEngine::resolveCollisions(Math::Vector3d const position) {
 
 bool FreescapeEngine::runCollisionConditions(Math::Vector3d const lastPosition, Math::Vector3d const newPosition) {
 	bool executed = false;
-	// We need to make sure the bounding box touches the floor so we will expand it and run the collision checking
-	uint tolerance = isCastle() ? 1 : 3;
-
-	int yDifference = _flyMode ? tolerance : -_playerHeight - tolerance;
-	Math::Vector3d v(newPosition.x() - 1, newPosition.y() + yDifference, newPosition.z() - 1);
-	Math::AABB boundingBox(lastPosition, lastPosition);
-	boundingBox.expand(v);
-
-	ObjectArray objs = _currentArea->checkCollisions(boundingBox);
-
-	// sort so the condition from those objects that are larger are executed last
-	struct {
-		bool operator()(Object *object1, Object *object2) {
-			return object1->getSize().length() < object2->getSize().length();
-		};
-	} compareObjectsSizes;
-
-	Common::sort(objs.begin(), objs.end(), compareObjectsSizes);
 	uint16 areaID = _currentArea->getAreaID();
+	GeometricObject *gobj = nullptr;
+	Object *collided = nullptr;
 
-	bool largeObjectWasBlocking = false;
-	for (auto &obj : objs) {
-		GeometricObject *gobj = (GeometricObject *)obj;
-		debugC(1, kFreescapeDebugMove, "Collided with object id %d of size %f %f %f", gobj->getObjectID(), gobj->getSize().x(), gobj->getSize().y(), gobj->getSize().z());
-		// The following check stops the player from going through big solid objects such as walls
-		// FIXME: find a better workaround of this
-		if (gobj->getSize().length() > 3000) {
-			if (largeObjectWasBlocking && !(isDriller() && _currentArea->getAreaID() == 14))
-				continue;
-			largeObjectWasBlocking = true;
-		}
-
+	Math::Ray ray(newPosition, -_upVector);
+	collided = _currentArea->checkCollisionRay(ray, _playerHeight + 3);
+	if (collided) {
+		gobj = (GeometricObject *)collided;
+		debugC(1, kFreescapeDebugMove, "Collided down with object id %d of size %f %f %f", gobj->getObjectID(), gobj->getSize().x(), gobj->getSize().y(), gobj->getSize().z());
 		executed |= executeObjectConditions(gobj, false, true, false);
-
-		if (areaID != _currentArea->getAreaID())
-			break;
 	}
+
+	if (areaID != _currentArea->getAreaID())
+		return collided;
+
+	Math::Vector3d direction = newPosition - lastPosition;
+	direction.normalize();
+	ray = Math::Ray(lastPosition, direction);
+	collided = _currentArea->checkCollisionRay(ray, 45);
+	if (collided) {
+		gobj = (GeometricObject *)collided;
+		debugC(1, kFreescapeDebugMove, "Collided with object id %d of size %f %f %f", gobj->getObjectID(), gobj->getSize().x(), gobj->getSize().y(), gobj->getSize().z());
+		executed |= executeObjectConditions(gobj, false, true, false);
+	}
+
 	return executed;
 }
 

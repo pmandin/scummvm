@@ -24,12 +24,13 @@
 #include "common/savefile.h"
 #include "common/serializer.h"
 #include "common/system.h"
+#include "common/translation.h"
 
 #include "scumm/actor.h"
 #include "scumm/charset.h"
-#include "scumm/gfx_mac.h"
 #include "scumm/imuse_digi/dimuse_engine.h"
 #include "scumm/imuse/imuse.h"
+#include "scumm/macgui/macgui.h"
 #include "scumm/players/player_towns.h"
 #include "scumm/he/intern_he.h"
 #include "scumm/object.h"
@@ -68,7 +69,7 @@ struct SaveInfoSection {
 
 #define SaveInfoSectionSize (4+4+4 + 4+4 + 4+2)
 
-#define CURRENT_VER 110
+#define CURRENT_VER 112
 #define INFOSECTION_VERSION 2
 
 #pragma mark -
@@ -78,7 +79,7 @@ Common::Error ScummEngine::loadGameState(int slot) {
 	return Common::kNoError;
 }
 
-bool ScummEngine::canLoadGameStateCurrently() {
+bool ScummEngine::canLoadGameStateCurrently(Common::U32String *msg) {
 	if (!_setupIsComplete)
 		return false;
 
@@ -92,8 +93,12 @@ bool ScummEngine::canLoadGameStateCurrently() {
 	//
 	// Except the earliest HE Games (3DO and initial DOS version of
 	// puttputt), which didn't offer scripted load/save screens.
-	if (_game.heversion >= 62)
+	if (_game.heversion >= 62) {
+		if (msg)
+			*msg = _("This game does not support loading from the menu. Use in-game interface");
+
 		return false;
+	}
 
 	// COMI always disables saving/loading (to tell the truth:
 	// the main menu) via its scripts, thus we need to make an
@@ -141,7 +146,7 @@ Common::Error ScummEngine::saveGameState(int slot, const Common::String &desc, b
 	return Common::kNoError;
 }
 
-bool ScummEngine::canSaveGameStateCurrently() {
+bool ScummEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 	if (!_setupIsComplete)
 		return false;
 
@@ -160,8 +165,12 @@ bool ScummEngine::canSaveGameStateCurrently() {
 	//
 	// Except the earliest HE Games (3DO and initial DOS version of
 	// puttputt), which didn't offer scripted load/save screens.
-	if (_game.heversion >= 62)
+	if (_game.heversion >= 62) {
+		if (msg)
+			*msg = _("This game does not support saving from the menu. Use in-game interface");
+
 		return false;
+	}
 
 #ifdef ENABLE_SCUMM_7_8
 	// COMI always disables saving/loading (to tell the truth:
@@ -744,6 +753,9 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 	if (_game.features & GF_OLD_BUNDLE)
 		loadCharset(0); // FIXME - HACK ?
 
+	// Save this for later
+	bool currentSessionUsesCorrection = _useMacScreenCorrectHeight;
+
 	//
 	// Now do the actual loading
 	//
@@ -862,8 +874,18 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 	vs->setDirtyRange(0, vs->h);
 	updateDirtyScreen(kMainVirtScreen);
 	updatePalette();
+
+	if (!currentSessionUsesCorrection && _useMacScreenCorrectHeight) {
+		sb -= 20 * 2;
+		sh -= 20 * 2;
+	} else if (currentSessionUsesCorrection && !_useMacScreenCorrectHeight) {
+		sb += 20 * 2;
+		sh += 20 * 2;
+	}
+
 	initScreens(sb, sh);
 
+	_useMacScreenCorrectHeight = currentSessionUsesCorrection;
 	_completeScreenRedraw = true;
 
 	// Reset charset mask
@@ -872,8 +894,8 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 		_macScreen->fillRect(Common::Rect(_macScreen->w, _macScreen->h), 0);
 	clearTextSurface();
 
-	if (_macIndy3Gui)
-		_macIndy3Gui->resetAfterLoad();
+	if (_macGui)
+		_macGui->resetAfterLoad();
 
 	_lastCodePtr = nullptr;
 	_drawObjectQueNr = 0;
@@ -1396,6 +1418,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 		// WORKAROUND: FM-TOWNS original _screenHeight is 240. if we use trim_fmtowns_to_200_pixels, it's reduced to 200
 		// camera's y is always half of the screen. in order to share save games between the two modes, we need to update the y
 		camera._cur.y = _screenHeight / 2;
+
 	s.syncAsSint16LE(camera._last.x, VER(8));
 	s.syncAsSint16LE(camera._last.y, VER(8));
 	s.syncAsSint16LE(camera._accel.x, VER(8));
@@ -1408,6 +1431,30 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsSint16LE(camera._rightTrigger, VER(8));
 	s.syncAsUint16LE(camera._movingToActor, VER(8));
 	s.syncAsByte(_cameraIsFrozen, VER(108));
+
+	// For Mac versions...
+	bool currentSessionUsesCorrection = _useMacScreenCorrectHeight;
+
+	s.syncAsUint16LE(_screenDrawOffset, VER(112));
+	s.syncAsByte(_useMacScreenCorrectHeight, VER(112));
+
+	// If this is an older version without Mac screen
+	// offset correction, bring it up to date...
+	if (s.isLoading()) {
+		if (s.getVersion() < VER(112)) {
+			// We assume _useMacScreenCorrectHeight == false
+			camera._cur.y += _screenDrawOffset;
+			camera._last.y += _screenDrawOffset;
+		} else {
+			if (!currentSessionUsesCorrection && _useMacScreenCorrectHeight) {
+				camera._cur.y -= _screenDrawOffset;
+				camera._last.y -= _screenDrawOffset;
+			} else if (currentSessionUsesCorrection && !_useMacScreenCorrectHeight) {
+				camera._cur.y += _screenDrawOffset;
+				camera._last.y += _screenDrawOffset;
+			}
+		}
+	}
 
 	s.syncAsByte(_actorToPrintStrFor, VER(8));
 	s.syncAsByte(_charsetColor, VER(8));
@@ -1554,6 +1601,22 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 
 	s.syncAsUint16LE(_screenB, VER(8));
 	s.syncAsUint16LE(_screenH, VER(8));
+
+	// Other screen offset corrections for Mac games savestates...
+	if (s.isLoading()) {
+		if (s.getVersion() < VER(112)) {
+			_screenB += _screenDrawOffset;
+			_screenH += _screenDrawOffset;
+		} else {
+			if (currentSessionUsesCorrection && !_useMacScreenCorrectHeight) {
+				_screenB -= _screenDrawOffset;
+				_screenH -= _screenDrawOffset;
+			} else if (!currentSessionUsesCorrection && _useMacScreenCorrectHeight) {
+				_screenB += _screenDrawOffset;
+				_screenH += _screenDrawOffset;
+			}
+		}
+	}
 
 	s.syncAsUint16LE(_NESCostumeSet, VER(47));
 
@@ -2076,7 +2139,7 @@ void ScummEngine_v5::saveLoadWithSerializer(Common::Serializer &s) {
 	// invisible after loading.
 
 	if (s.isLoading() && _game.platform == Common::kPlatformMacintosh) {
-		if ((_game.id == GID_LOOM && !_macCursorFile.empty()) || _macIndy3Gui) {
+		if ((_game.id == GID_LOOM && !_macCursorFile.empty()) || _macGui) {
 			setBuiltinCursor(0);
 		}
 	}
@@ -2085,7 +2148,7 @@ void ScummEngine_v5::saveLoadWithSerializer(Common::Serializer &s) {
 	// This avoids color issues when loading savegames that have been saved with a different ScummVM port
 	// that uses a different 16bit color mode than the ScummVM port which is currently used.
 #ifdef USE_RGB_COLOR
-	if (_game.platform == Common::kPlatformPCEngine && s.isLoading()) {
+	if (_game.id == GID_LOOM && _game.platform == Common::kPlatformPCEngine && s.isLoading()) {
 		for (int i = 0; i < 256; ++i)
 			_16BitPalette[i] = get16BitColor(_currentPalette[i * 3 + 0], _currentPalette[i * 3 + 1], _currentPalette[i * 3 + 2]);
 	}

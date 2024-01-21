@@ -576,6 +576,8 @@ void CurrentMap::areaSearch(UCList *itemlist, const uint8 *loopscript,
 	// Mission 12 (map 19) at (17118,34878) uses range 6400 and a VALBOX
 	// exactly 6400 from the KEYPAD.
 	//
+	// box size is negative in x and y, so range is from x+range to x-range.
+	//
 	const Box searchrange(x + range, y + range, 0, xd + range * 2 + 1, yd + range * 2 + 1, INT_MAX_VALUE);
 
 	int minx = ((x - xd - range) / _mapChunkSize) - 1;
@@ -605,8 +607,9 @@ void CurrentMap::areaSearch(UCList *itemlist, const uint8 *loopscript,
 					continue;
 
 				// check if item is in range
-				const Box ib = item->getWorldBox();
-				if (searchrange.overlapsXY(ib)) {
+				int32 ix, iy, iz;
+				item->getLocation(ix, iy, iz);
+				if (searchrange.containsXY(ix, iy)) {
 					// check item against loopscript
 					if (item->checkLoopScript(loopscript, scriptsize)) {
 						assert(itemlist->getElementSize() == 2);
@@ -795,8 +798,10 @@ PositionInfo CurrentMap::getPositionInfo(const Box &target, const Box &start, ui
 	}
 
 	info.valid = info.blocker == nullptr;
-	// Partial support allowed if land is close
-	if (supportz == target._z && landz + 8 >= target._z)
+	// Partial support allowed if land is close. Allow up to 9 to match
+	// the position adjustments in scanForValidPosition for stepping on
+	// to Crusader elevators.
+	if (supportz == target._z && landz + 9 >= target._z)
 		info.supported = true;
 
 	// Mark supported at minimum z

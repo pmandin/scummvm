@@ -49,8 +49,8 @@ public:
 		kMoveDown				= 11,	// Used for movement
 		kRotateLeft				= 12,	// Used in 360 scenes in nancy6 and up
 		kRotateRight			= 13,	// Used in 360 scenes in nancy6 and up
-		kInvertedRotateLeft		= 14,	// Used in 360 scenes with inverted rotation; nancy6 and up
-		kInvertedRotateRight	= 15,	// Used in 360 scenes with inverted rotation; nancy6 and up
+		kInvertedRotateRight	= 14,	// Used in 360 scenes with inverted rotation; nancy6 and up
+		kInvertedRotateLeft		= 15,	// Used in 360 scenes with inverted rotation; nancy6 and up
 		kNormalArrow,
 		kHotspotArrow
 	};
@@ -97,6 +97,7 @@ private:
 	CursorType _curCursorType;
 	int16 _curItemID;
 	uint _curCursorID;
+	uint _lastCursorID;
 	bool _hasItem;
 	bool _isInitialized;
 	int _numCursorTypes;

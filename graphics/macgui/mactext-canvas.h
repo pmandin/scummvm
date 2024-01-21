@@ -124,10 +124,7 @@ public:
 	MacFontRun _defaultFormatting;
 
 public:
-	~MacTextCanvas() {
-		delete _surface;
-		delete _shadowSurface;
-	}
+	~MacTextCanvas();
 
 	void recalcDims();
 	void reallocSurface();
@@ -185,7 +182,7 @@ struct MacTextLine {
 	bool wordContinuation = false;
 	int indent = 0; // in units
 	int firstLineIndent = 0; // in pixels
-	Common::String picfname;
+	Common::Path picfname;
 	Common::U32String picalt, pictitle, picext;
 	uint16 picpercent = 50;
 	Common::Array<MacTextTableRow> *table = nullptr;
@@ -205,11 +202,6 @@ struct MacTextLine {
 	 * @note If requested column is too big, returns last character in the line
 	 */
 	uint getChunkNum(int *col);
-
-	~MacTextLine() {
-		delete table;
-		delete tableSurface;
-	}
 };
 
 } // End of namespace Graphics

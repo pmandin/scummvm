@@ -51,6 +51,7 @@ ScummVM Team
     AGS:
        Paul Gilbert
        Thierry Crozat
+       Walter Agazzi                  - Maintenance, Game archival
        Chris Jones                    - Creator
        Alan Van Drake                 - AGS
        Benjamin Penney                - AGS
@@ -196,6 +197,9 @@ ScummVM Team
        Filippos Karapetis
        Vladimir Menshakov
        Willem Jan Palenstijn
+
+    Efh:
+       Arnaud Boutonne
 
     Freescape:
        Chris Allen                    - Sound engine programming
@@ -588,6 +592,9 @@ ScummVM Team
 
   Backend Teams
   -------------
+    Atari:
+       Miro Kropacek
+
     Android:
        Andre Heider
        Angus Lees
@@ -945,6 +952,9 @@ Other contributions
 
   Icons pack
   ----------
+     Stefan Philippsen              - Primary contributor and coordination
+     Benjamin Funke
+     Daniel Albano
      David Calvert
      Eugene Sandulenko
      J Moretti
@@ -952,9 +962,9 @@ Other contributions
      Lothar Serra Mari
      Oleg Ermakov
      Olly Dean
-     Stefan Philippsen
+     Walter Agazzi
+     beresk137
      Canuma
-     SupSuper
      Thunderforge
      neuromancer
      nightm4re94

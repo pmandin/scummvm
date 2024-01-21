@@ -304,7 +304,7 @@ void OSystem_Atari::initBackend() {
 	atariEventSource->setGraphicsManager(atariGraphicsManager);
 
 #ifdef DISABLE_FANCY_THEMES
-	// On the slim build force "STMIDI" as the audio driver, i.e. do not attempt
+	// On the lite build force "STMIDI" as the audio driver, i.e. do not attempt
 	// to emulate anything by default. That prevents mixing silence and enable
 	// us to stop DMA playback which takes unnecessary cycles.
 	if (!ConfMan.hasKey("music_driver")) {
@@ -398,12 +398,12 @@ void OSystem_Atari::logMessage(LogMessageType::Type type, const char *message) {
 
 void OSystem_Atari::addSysArchivesToSearchSet(Common::SearchSet &s, int priority) {
 	{
-		Common::FSDirectory currentDirectory{ getFilesystemFactory()->makeCurrentDirectoryFileNode()->getPath() };
+		Common::FSDirectory currentDirectory{ Common::Path(getFilesystemFactory()->makeCurrentDirectoryFileNode()->getPath()) };
 		Common::FSDirectory *dataDirectory = currentDirectory.getSubDirectory("data");
 		if (dataDirectory) {
 			Common::FSNode dataNode = dataDirectory->getFSNode();
 			if (dataNode.exists() && dataNode.isDirectory() && dataNode.isReadable()) {
-				s.addDirectory(dataNode.getPath(), dataNode, priority);
+				s.addDirectory(dataNode.getPath(), priority);
 			}
 		}
 	}
@@ -419,18 +419,15 @@ void OSystem_Atari::addSysArchivesToSearchSet(Common::SearchSet &s, int priority
 #endif
 }
 
-Common::String OSystem_Atari::getDefaultConfigFileName() {
-	const Common::String baseConfigName = OSystem::getDefaultConfigFileName();
-
-	Common::String configFile;
+Common::Path OSystem_Atari::getDefaultConfigFileName() {
+	const Common::Path baseConfigName = OSystem::getDefaultConfigFileName();
 
 	const char *envVar = getenv("HOME");
 	if (envVar && *envVar) {
-		configFile = envVar;
-		configFile += '/';
-		configFile += baseConfigName;
+		Common::Path configFile(envVar);
+		configFile.joinInPlace(baseConfigName);
 
-		if (configFile.size() < MAXPATHLEN)
+		if (configFile.toString(Common::Path::kNativeSeparator).size() < MAXPATHLEN)
 			return configFile;
 	}
 

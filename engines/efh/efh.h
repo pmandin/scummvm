@@ -277,8 +277,8 @@ public:
 
 	// savegames.cpp
 	Common::String getSavegameFilename(int slot);
-	bool canLoadGameStateCurrently() override;
-	bool canSaveGameStateCurrently() override;
+	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override;
+	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override;
 	Common::Error loadGameState(int slot) override;
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false) override;
 
@@ -413,10 +413,10 @@ private:
 	void handleDamageOnArmor(int16 charId, int16 damage);
 
 	// Files
-	int32 readFileToBuffer(Common::String &filename, uint8 *destBuffer);
+	int32 readFileToBuffer(const Common::Path &filename, uint8 *destBuffer);
 	void readAnimInfo();
 	void findMapFile(int16 mapId);
-	void rImageFile(Common::String filename, uint8 *targetBuffer, uint8 **subFilesArray, uint8 *packedBuffer);
+	void rImageFile(const Common::Path &filename, uint8 *targetBuffer, uint8 **subFilesArray, uint8 *packedBuffer);
 	void readItems();
 	void readImpFile(int16 id, bool techMapFl);
 	void loadNewPortrait();

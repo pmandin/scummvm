@@ -41,8 +41,7 @@ enum GameType {
 };
 
 enum NancyGameFlags {
-	GF_COMPRESSED 		= 1 << 0,
-	GF_PLG_BYTE_IN_BSUM	= 1 << 1
+	GF_COMPRESSED 		= 1 << 0
 };
 
 struct NancyGameDescription {
@@ -55,7 +54,8 @@ enum NancyDebugChannels {
 	kDebugActionRecord	= 1 << 1,
 	kDebugScene			= 1 << 2,
 	kDebugSound			= 1 << 3,
-	kDebugVideo			= 1 << 4
+	kDebugVideo			= 1 << 4,
+	kDebugHypertext		= 1 << 5
 };
 
 // Settings found in the original engine

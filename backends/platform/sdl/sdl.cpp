@@ -332,7 +332,7 @@ void OSystem_SDL::initBackend() {
 #endif
 
 	ConfMan.registerDefault("iconspath", this->getDefaultIconsPath());
-	ConfMan.registerDefault("dlcspath", this->getDefaultDLCsPath().toString());
+	ConfMan.registerDefault("dlcspath", this->getDefaultDLCsPath());
 
 	_inited = true;
 
@@ -615,9 +615,9 @@ Common::WriteStream *OSystem_SDL::createLogFile() {
 	// of a failure, we know that no log file is open.
 	_logFilePath.clear();
 
-	Common::String logFile;
+	Common::Path logFile;
 	if (ConfMan.hasKey("logfile"))
-		logFile = ConfMan.get("logfile");
+		logFile = ConfMan.getPath("logfile");
 	else
 		logFile = getDefaultLogFileName();
 	if (logFile.empty())
@@ -800,11 +800,8 @@ uint32 OSystem_SDL::getDoubleClickTime() const {
 }
 
 //Not specified in base class
-Common::String OSystem_SDL::getDefaultIconsPath() {
-	Common::String path = ConfMan.get("iconspath");
-	if (!path.empty() && !path.hasSuffix("/"))
-		path += "/";
-	return path;
+Common::Path OSystem_SDL::getDefaultIconsPath() {
+	return ConfMan.getPath("iconspath");
 }
 
 // Not specified in base class
@@ -814,11 +811,8 @@ Common::Path OSystem_SDL::getDefaultDLCsPath() {
 }
 
 //Not specified in base class
-Common::String OSystem_SDL::getScreenshotsPath() {
-	Common::String path = ConfMan.get("screenshotpath");
-	if (!path.empty() && !path.hasSuffix("/"))
-		path += "/";
-	return path;
+Common::Path OSystem_SDL::getScreenshotsPath() {
+	return ConfMan.getPath("screenshotpath");
 }
 
 #ifdef USE_OPENGL

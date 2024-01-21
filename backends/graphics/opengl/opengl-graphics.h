@@ -86,7 +86,7 @@ public:
 #endif
 
 #if !USE_FORCED_GLES
-	bool setShader(const Common::String &fileNode) override;
+	bool setShader(const Common::Path &fileNode) override;
 #endif
 
 	void beginGFXTransaction() override;
@@ -199,7 +199,7 @@ protected:
 		uint scalerIndex;
 		int scaleFactor;
 
-		Common::String shader;
+		Common::Path shader;
 
 		bool operator==(const VideoState &right) {
 			return gameWidth == right.gameWidth && gameHeight == right.gameHeight
@@ -273,7 +273,7 @@ protected:
 	 */
 	virtual bool loadVideoMode(uint requestedWidth, uint requestedHeight, const Graphics::PixelFormat &format) = 0;
 
-	bool loadShader(const Common::String &fileName);
+	bool loadShader(const Common::Path &fileName);
 
 	/**
 	 * Refresh the screen contents.
@@ -286,7 +286,7 @@ protected:
 	 * @param filename The output filename.
 	 * @return true on success, false otherwise
 	 */
-	bool saveScreenshot(const Common::String &filename) const;
+	bool saveScreenshot(const Common::Path &filename) const;
 
 	// Do not hide the argument-less saveScreenshot from the base class
 	using WindowedGraphicsManager::saveScreenshot;

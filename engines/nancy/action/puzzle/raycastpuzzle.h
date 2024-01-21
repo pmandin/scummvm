@@ -38,14 +38,15 @@ class RaycastPuzzle : public RenderActionRecord {
 	friend class RaycastDeferredLoader;
 	friend class RaycastLevelBuilder;
 public:
-	RaycastPuzzle()  : RenderActionRecord(7), _map(7) {}
-	~RaycastPuzzle() override {}
+	RaycastPuzzle() : RenderActionRecord(7), _map(7) {}
+	~RaycastPuzzle() override;
 
 	void init() override;
 	void registerGraphics() override;
 
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
+	void onPause(bool pause) override;
 	void handleInput(NancyInput &input) override;
 	void updateGraphics() override;
 
@@ -55,7 +56,7 @@ protected:
 
 	void validateMap();
 
-	void createTextureLightSourcing(Common::Array<Graphics::ManagedSurface> *array, const Common::String &textureName);
+	void createTextureLightSourcing(Common::Array<Graphics::ManagedSurface> *array, const Common::Path &textureName);
 
 	void drawMap();
 	void updateMap();

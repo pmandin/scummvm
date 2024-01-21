@@ -21,6 +21,7 @@
 
 #include "common/config-manager.h"
 #include "common/fs.h"
+#include "director/types.h"
 #include "graphics/macgui/macbutton.h"
 
 #include "director/director.h"
@@ -361,9 +362,8 @@ const char *Lingo::field2str(int id) {
 	warning("Lingo::getTheEntity(): Unprocessed getting entity %s", entity2str(entity));
 
 Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
-	if (debugChannelSet(3, kDebugLingoExec)) {
-		debugC(3, kDebugLingoExec, "Lingo::getTheEntity(%s, %s, %s)", entity2str(entity), id.asString(true).c_str(), field2str(field));
-	}
+	debugC(3, kDebugLingoThe, "Lingo::getTheEntity(%s, %s, %s)", entity2str(entity), id.asString(true).c_str(), field2str(field));
+	debugC(3, kDebugLingoExec, "Lingo::getTheEntity(%s, %s, %s)", entity2str(entity), id.asString(true).c_str(), field2str(field));
 
 	Datum d;
 	Movie *movie = _vm->getCurrentMovie();
@@ -886,7 +886,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		break;
 	case kTheTraceLogFile:
 		d.type = STRING;
-		d.u.s = new Common::String(g_director->_traceLogFile);
+		d.u.s = new Common::String(g_director->_traceLogFile.toString(Common::Path::kNativeSeparator));
 		break;
 	case kTheUpdateMovieEnabled:
 		d = g_lingo->_updateMovieEnabled;
@@ -921,9 +921,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 	warning("Lingo::setTheEntity: Attempt to set read-only entity %s", entity2str(entity));
 
 void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
-	if (debugChannelSet(3, kDebugLingoExec)) {
-		debugC(3, kDebugLingoExec, "Lingo::setTheEntity(%s, %s, %s, %s)", entity2str(entity), id.asString(true).c_str(), field2str(field), d.asString(true).c_str());
-	}
+	debugC(3, kDebugLingoThe, "Lingo::setTheEntity(%s, %s, %s, %s)", entity2str(entity), id.asString(true).c_str(), field2str(field), d.asString(true).c_str());
+	debugC(3, kDebugLingoExec, "Lingo::setTheEntity(%s, %s, %s, %s)", entity2str(entity), id.asString(true).c_str(), field2str(field), d.asString(true).c_str());
 
 	Movie *movie = _vm->getCurrentMovie();
 	Score *score = movie->getScore();
@@ -1195,14 +1194,14 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 	case kTheTraceLogFile:
 	{
 		if (d.asString().size()) {
-			Common::String logPath = ConfMan.get("path") + "/" + d.asString();
+			Common::Path logPath = ConfMan.getPath("path").appendComponent(d.asString());
 			Common::FSNode out(logPath);
 			if (!out.exists())
 				out.createWriteStream();
 			if (out.isWritable())
 				g_director->_traceLogFile = logPath;
 			else
-				warning("traceLogFile '%s' is not writeable", logPath.c_str());
+				warning("traceLogFile '%s' is not writeable", logPath.toString(Common::Path::kNativeSeparator).c_str());
 		} else {
 			g_director->_traceLogFile.clear();
 		}
@@ -1979,15 +1978,64 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		CastMemberID id = *obj.u.cast;
 		CastMember *member = movie->getCastMember(id);
 		if (!member) {
-			if (propName.equalsIgnoreCase("loaded")) {
-				d = 0;
-			} else if (propName.equalsIgnoreCase("filename")) {
-				d = Datum(Common::String());
-			} else if (id.member <= getMembersNum()) {
-				warning("Lingo::getObjectProp(): %s not found", id.asString().c_str());
-			} else {
-				g_lingo->lingoError("Lingo::getObjectProp(): %s not found and out of range", id.asString().c_str());
+			// No matching cast member. Many of the fields are accessible
+			// to indicate the cast member is empty, however the
+			// rest will throw a Lingo error.
+			Common::String key = Common::String::format("%d%s", kTheCast, propName.c_str());
+			bool emptyAllowed = false;
+			if (_theEntityFields.contains(key)) {
+				emptyAllowed = true;
+				switch (_theEntityFields[key]->field) {
+				case kTheCastType:
+					d = Datum("empty");
+					d.type = SYMBOL;
+					break;
+				case kTheFileName:
+				case kTheScriptText:
+					d = Datum("");
+					break;
+				case kTheHeight:
+				case kTheLoaded:
+				case kTheModified:
+				case kThePurgePriority:
+				case kTheWidth:
+				case kTheCenter:
+				case kTheFrameRate:
+				case kThePausedAtStart:
+				case kThePreLoad:
+				case kTheDepth:
+				case kThePalette:
+					d = Datum(0);
+					break;
+				case kTheCrop:
+				case kTheVideo:
+					d = Datum(1);
+					break;
+				case kTheRect:
+					d = Datum(Common::Rect(0, 0, 0, 0));
+					break;
+				case kTheRegPoint:
+					d = Datum(Common::Point(0, 0));
+					break;
+				case kTheNumber:
+					d = Datum(id.member);
+					break;
+				default:
+					emptyAllowed = false;
+					break;
+				}
 			}
+
+			if (id.member <= getMembersNum()) {
+				// Cast member ID is within range (i.e. less than max)
+				// In real Director, accessing -any- of the properties will
+				// be allowed, but return garbage.
+				warning("Lingo::getObjectProp(): %s not found, but within cast ID range", id.asString().c_str());
+			} else if (!emptyAllowed) {
+				// Cast member ID is out of range, throw a Lingo error
+				g_lingo->lingoError("Lingo::getObjectProp(): %s not found and out of cast ID range", id.asString().c_str());
+			}
+
 			g_lingo->push(d);
 			return;
 		}

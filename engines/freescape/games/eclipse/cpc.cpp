@@ -54,6 +54,8 @@ void EclipseEngine::loadAssetsCPCDemo() {
 		error("Failed to open TEPROG.BIN");
 
 	loadFonts(&file, 0x63ce);
+	loadMessagesFixedSize(&file, 0x362, 16, 23);
+	loadMessagesFixedSize(&file, 0x570b, 264, 5);
 	load8bitBinary(&file, 0x65c6, 16);
 	for (auto &it : _areaMap) {
 		it._value->_name = "  NOW TRAINING  ";
@@ -61,6 +63,8 @@ void EclipseEngine::loadAssetsCPCDemo() {
 		for (int16 id = 183; id < 207; id++)
 			it._value->addObjectFromArea(id, _areaMap[255]);
 	}
+	loadColorPalette();
+	swapPalette(1);
 	//_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
 	//_indicators.push_back(loadBundledImage("dark_crouch_indicator"));
 	//_indicators.push_back(loadBundledImage("dark_walk_indicator"));
@@ -94,7 +98,19 @@ void EclipseEngine::drawCPCUI(Graphics::Surface *surface) {
 
 	if (!_currentAreaMessages.empty())
 		drawStringInSurface(_currentAreaMessages[0], 102, 135, back, front, surface);
-	drawStringInSurface(Common::String::format("%08d", score), 136, 6, back, other, surface);
+
+	Common::String scoreStr = Common::String::format("%07d", score);
+	drawStringInSurface(scoreStr, 136, 6, back, other, surface, 'Z' - '0' + 1);
+
+	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 135, back, front, surface, 'Z' - '$' + 1);
+	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 135, back, front, surface, 'Z' - '$' + 1);
+	drawStringInSurface(Common::String('7' - _playerHeightNumber), 240, 135, back, front, surface, 'Z' - '$' + 1);
+
+	if (_shootingFrames > 0) {
+		drawStringInSurface("4", 232, 135, back, front, surface, 'Z' - '$' + 1);
+		drawStringInSurface("<", 240, 135, back, front, surface, 'Z' - '$' + 1);
+	}
+	drawAnalogClock(surface, 90, 172, back, other, front);
 }
 
 } // End of namespace Freescape

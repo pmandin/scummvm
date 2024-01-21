@@ -29,16 +29,38 @@ namespace Common {
 
 struct ArchiveMemberListBackComparator {
 	bool operator()(const ArchiveMemberPtr &a, const ArchiveMemberPtr &b) {
-		return a->getName() < b->getName();
+		return a->getName() > b->getName();
 	}
 };
 
 bool generateZipSet(SearchSet &searchSet, const char *defaultFile, const char *packsMask, const char *packsPath) {
-	Archive *dat = nullptr;
+	Archive *dat;
 	bool changed = false;
 
+	if (!ConfMan.getPath(packsPath).empty()) {
+		FSDirectory *iconDir = new FSDirectory(ConfMan.getPath(packsPath));
+		ArchiveMemberList iconFiles;
+
+		iconDir->listMatchingMembers(iconFiles, packsMask);
+		sort(iconFiles.begin(), iconFiles.end(), ArchiveMemberListBackComparator());
+
+		for (ArchiveMemberList::iterator ic = iconFiles.begin(); ic != iconFiles.end(); ++ic) {
+			dat = makeZipArchive((*ic)->createReadStream());
+
+			if (dat) {
+				searchSet.add((*ic)->getName(), dat);
+				changed = true;
+				debug(2, "generateZipSet: Loaded pack file: %s", (*ic)->getName().c_str());
+			}
+		}
+
+		delete iconDir;
+	}
+
+	dat = nullptr;
+
 	if (ConfMan.hasKey("themepath")) {
-		FSNode *fs = new FSNode(normalizePath(ConfMan.get("themepath") + "/" + defaultFile, '/'));
+		FSNode *fs = new FSNode(ConfMan.getPath("themepath").join(defaultFile).normalize());
 		if (fs->exists()) {
 			dat = makeZipArchive(*fs);
 		}
@@ -48,7 +70,7 @@ bool generateZipSet(SearchSet &searchSet, const char *defaultFile, const char *p
 	if (!dat) {
 		File *file = new File;
 		if (ConfMan.hasKey(packsPath)) {
-			String path(normalizePath(ConfMan.get(packsPath) + "/" + defaultFile, '/'));
+			Path path(ConfMan.getPath(packsPath).join(defaultFile).normalize());
 
 			if (File::exists(path))
 				file->open(path);
@@ -71,28 +93,6 @@ bool generateZipSet(SearchSet &searchSet, const char *defaultFile, const char *p
 		searchSet.add(defaultFile, dat);
 		changed = true;
 		debug(2, "generateZipSet: Loaded pack file: %s", defaultFile);
-	}
-
-	dat = nullptr;
-
-	if (!ConfMan.get(packsPath).empty()) {
-		FSDirectory *iconDir = new FSDirectory(ConfMan.get(packsPath));
-		ArchiveMemberList iconFiles;
-
-		iconDir->listMatchingMembers(iconFiles, packsMask);
-		sort(iconFiles.begin(), iconFiles.end(), ArchiveMemberListBackComparator());
-
-		for (ArchiveMemberList::iterator ic = iconFiles.begin(); ic != iconFiles.end(); ++ic) {
-			dat = makeZipArchive((*ic)->createReadStream());
-
-			if (dat) {
-				searchSet.add((*ic)->getName(), dat);
-				changed = true;
-				debug(2, "generateZipSet: Loaded pack file: %s", (*ic)->getName().c_str());
-			}
-		}
-
-		delete iconDir;
 	}
 
 	return changed;

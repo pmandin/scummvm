@@ -48,8 +48,7 @@ public:
 	FileMapArchive(const AdvancedMetaEngineDetection::FileMap &fileMap) : _fileMap(fileMap) {}
 
 	bool hasFile(const Common::Path &path) const override {
-		Common::String name = path.toString();
-		return _fileMap.contains(name);
+		return _fileMap.contains(path);
 	}
 
 	int listMembers(Common::ArchiveMemberList &list) const override {
@@ -63,8 +62,7 @@ public:
 	}
 
 	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override {
-		Common::String name = path.toString();
-		AdvancedMetaEngineDetection::FileMap::const_iterator it = _fileMap.find(name);
+		AdvancedMetaEngineDetection::FileMap::const_iterator it = _fileMap.find(path);
 		if (it == _fileMap.end()) {
 			return Common::ArchiveMemberPtr();
 		}
@@ -73,8 +71,7 @@ public:
 	}
 
 	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override {
-		Common::String name = path.toString();
-		Common::FSNode fsNode = _fileMap.getValOrDefault(name);
+		Common::FSNode fsNode = _fileMap.getValOrDefault(path);
 		return fsNode.createReadStream();
 	}
 
@@ -355,17 +352,17 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 
 	Common::String gameid = ConfMan.get("gameid");
 
-	Common::String path;
+	Common::Path path;
 	if (ConfMan.hasKey("path")) {
-		path = ConfMan.get("path");
+		path = ConfMan.getPath("path");
 	} else {
-		path = ".";
+		path = Common::Path(".");
 		warning("No path was provided. Assuming the data files are in the current directory");
 	}
 	Common::FSNode dir(path);
 	Common::FSList files;
 	if (!dir.isDirectory() || !dir.getChildren(files, Common::FSNode::kListAll)) {
-		warning("Game data path does not exist or is not a directory (%s)", path.c_str());
+		warning("Game data path does not exist or is not a directory (%s)", path.toString(Common::Path::kNativeSeparator).c_str());
 		return Common::kNoGameDataFoundError;
 	}
 
@@ -443,14 +440,14 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 	}
 
 	debug("Running %s", gameDescriptor.description.c_str());
-	Common::StringArray filenames;
+	Common::Array<Common::Path> filenames;
 	for (FilePropertiesMap::const_iterator i = gameDescriptor.matchedFiles.begin(); i != gameDescriptor.matchedFiles.end(); ++i) {
 		filenames.push_back(i->_key);
 	}
 	Common::sort(filenames.begin(), filenames.end());
 	for (uint i = 0; i < filenames.size(); ++i) {
 		const FileProperties &file = gameDescriptor.matchedFiles[filenames[i]];
-		debug("%s: %s, %llu bytes.", filenames[i].c_str(), file.md5.c_str(), (unsigned long long)file.size);
+		debug("%s: %s, %llu bytes.", filenames[i].toString().c_str(), file.md5.c_str(), (unsigned long long)file.size);
 	}
 	initSubSystems(agdDesc.desc);
 
@@ -465,7 +462,7 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 	if (plugin) {
 		if (_flags & kADFlagMatchFullPaths) {
 			Common::StringArray dirs = getPathsFromEntry(agdDesc.desc);
-			Common::FSNode gameDataDir = Common::FSNode(ConfMan.get("path"));
+			Common::FSNode gameDataDir = Common::FSNode(ConfMan.getPath("path"));
 
 			for (auto d = dirs.begin(); d != dirs.end(); ++d)
 				SearchMan.addSubDirectoryMatching(gameDataDir, *d, 0, _fullPathGlobsDepth);
@@ -478,7 +475,7 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 	return Common::Error(Common::kEnginePluginNotFound);
 }
 
-void AdvancedMetaEngineDetection::composeFileHashMap(FileMap &allFiles, const Common::FSList &fslist, int depth, const Common::String &parentName) const {
+void AdvancedMetaEngineDetection::composeFileHashMap(FileMap &allFiles, const Common::FSList &fslist, int depth, const Common::Path &parentName) const {
 	if (depth <= 0)
 		return;
 
@@ -487,7 +484,7 @@ void AdvancedMetaEngineDetection::composeFileHashMap(FileMap &allFiles, const Co
 
 	for (Common::FSList::const_iterator file = fslist.begin(); file != fslist.end(); ++file) {
 		Common::String efname = Common::punycode_encodefilename(file->getName());
-		Common::String tstr = ((_flags & kADFlagMatchFullPaths) && !parentName.empty() ? parentName + "/" : "") + efname;
+		Common::Path tstr = ((_flags & kADFlagMatchFullPaths) ? parentName : Common::Path()).appendComponent(efname);
 
 		if (file->isDirectory()) {
 			if (!_globsMap.contains(efname))
@@ -502,16 +499,15 @@ void AdvancedMetaEngineDetection::composeFileHashMap(FileMap &allFiles, const Co
 		}
 
 		// Strip any trailing dot
-		if (tstr.lastChar() == '.')
-			tstr.deleteLastChar();
-
-		if (efname.lastChar() == '.')
+		if (efname.lastChar() == '.') {
 			efname.deleteLastChar();
+			tstr = ((_flags & kADFlagMatchFullPaths) ? parentName : Common::Path()).appendComponent(efname);
+		}
 
-		debugC(9, kDebugGlobalDetection, "$$ ['%s'] ['%s'] in '%s", tstr.c_str(), efname.c_str(), firstPathComponents(fslist.front().getPath(), '/').c_str());
+		debugC(9, kDebugGlobalDetection, "$$ ['%s'] ['%s'] in '%s", tstr.toString().c_str(), efname.c_str(), firstPathComponents(fslist.front().getPath().toString(), '/').c_str());
 
 		allFiles[tstr] = *file;		// Record the presence of this file
-		allFiles[efname] = *file;	// ...and its file name
+		allFiles[Common::Path(efname, Common::Path::kNoSeparator)] = *file;	// ...and its file name
 	}
 }
 
@@ -558,7 +554,7 @@ Common::String md5PropToGameFile(MD5Properties flags) {
 	Common::String res;
 
 	switch (flags & kMD5MacMask) {
-	case kMD5MacDataFork: 
+	case kMD5MacDataFork:
 		res = "d";
 		break;
 
@@ -583,12 +579,12 @@ Common::String md5PropToGameFile(MD5Properties flags) {
 	return res;
 }
 
-static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps);
+static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, MD5Properties md5prop, const Common::Path &fname, FileProperties &fileProps);
 
-bool AdvancedMetaEngineDetection::getFileProperties(const FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps) const {
+bool AdvancedMetaEngineDetection::getFileProperties(const FileMap &allFiles, MD5Properties md5prop, const Common::Path &fname, FileProperties &fileProps) const {
 	Common::String hashname = md5PropToCachePrefix(md5prop);
 		hashname += ':';
-		hashname += fname;
+		hashname += fname.toString('/');
 		hashname += ':';
 		hashname += Common::String::format("%d", _md5Bytes);
 
@@ -608,11 +604,11 @@ bool AdvancedMetaEngineDetection::getFileProperties(const FileMap &allFiles, MD5
 	return res;
 }
 
-bool AdvancedMetaEngine::getFilePropertiesExtern(uint md5Bytes, const FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps) const {
+bool AdvancedMetaEngine::getFilePropertiesExtern(uint md5Bytes, const FileMap &allFiles, MD5Properties md5prop, const Common::Path &fname, FileProperties &fileProps) const {
 	return getFilePropertiesIntern(md5Bytes, allFiles, md5prop, fname, fileProps);
 }
 
-static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps) {
+static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, MD5Properties md5prop, const Common::Path &fname, FileProperties &fileProps) {
 	if (md5prop & (kMD5MacResFork | kMD5MacDataFork)) {
 		FileMapArchive fileMapArchive(allFiles);
 		bool is_legacy = ((md5prop & kMD5MacMask) == kMD5MacResOrDataFork);
@@ -655,10 +651,10 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::Fil
 		// The desired file is inside an archive
 
 		// First, split the file string
-		Common::StringTokenizer tok(fname, ":");
+		Common::StringTokenizer tok(fname.toString(), ":");
 		Common::String archiveType = tok.nextToken();
-		Common::String archiveName = tok.nextToken();
-		Common::String fileName = tok.nextToken();
+		Common::Path archiveName(tok.nextToken());
+		Common::Path fileName(tok.nextToken());
 
 		if (!allFiles.contains(archiveName))
 			return false;
@@ -668,7 +664,7 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::Fil
 
 		if (!archive) {
 			// Archive not in cache. Find the appropriate type based on the type string,
-			// open the archive, and add it to the cache 
+			// open the archive, and add it to the cache
 			if (archiveType.equals("is")) {
 				// InstallShield (v4 and up)
 				archive = Common::makeInstallShieldArchive(allFiles[archiveName]);
@@ -768,14 +764,14 @@ void AdvancedMetaEngineDetection::dumpDetectionEntries() const {
 }
 
 ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &parent, const FileMap &allFiles, Common::Language language, Common::Platform platform, const Common::String &extra, uint32 skipADFlags, bool skipIncomplete) {
-	FilePropertiesMap filesProps;
+	CachedPropertiesMap filesProps;
 	ADDetectedGames matched;
 
 	const ADGameFileDescription *fileDesc;
 	const ADGameDescription *g;
 	const byte *descPtr;
 
-	debugC(3, kDebugGlobalDetection, "Starting detection for engine '%s' in dir '%s'", getName(), parent.getPath().c_str());
+	debugC(3, kDebugGlobalDetection, "Starting detection for engine '%s' in dir '%s'", getName(), parent.getPath().toString(Common::Path::kNativeSeparator).c_str());
 
 	preprocessDescriptions();
 
@@ -795,7 +791,7 @@ ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &pa
 				continue;
 
 			FileProperties tmp;
-			if (getFileProperties(allFiles, md5prop, fname, tmp)) {
+			if (getFileProperties(allFiles, md5prop, Common::Path(fname), tmp)) {
 				debugC(3, kDebugGlobalDetection, "> '%s': '%s' %ld", key.c_str(), tmp.md5.c_str(), long(tmp.size));
 			}
 
@@ -846,7 +842,7 @@ ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &pa
 				break;
 			}
 
-			game.matchedFiles[tstr] = filesProps[key];
+			game.matchedFiles[Common::Path(tstr)] = filesProps[key];
 
 			if (game.hasUnknownFiles)
 				continue;
@@ -983,12 +979,13 @@ PlainGameDescriptor AdvancedMetaEngineDetection::findGame(const char *gameId) co
 	return PlainGameDescriptor::empty();
 }
 
-static const char *grayList[] = {
+static const char *const grayList[] = {
 	"game.exe",
 	"demo.exe",
 	"game",
 	"gamedata",
 	"demo",
+	"demo.ini",
 	"data",
 	"data.z",
 	"data.cab",
@@ -1054,8 +1051,8 @@ void AdvancedMetaEngineDetection::preprocessDescriptions() {
 		for (const ADGameFileDescription *fileDesc = g->filesDescriptions; fileDesc->fileName; fileDesc++) {
 			if (strchr(fileDesc->fileName, '/')) {
 				if (!(_flags & kADFlagMatchFullPaths))
-					warning("Path component detected in entry for '%s' in engine '%s' but no kADFlagMatchFullPaths is set",
-						g->gameId, getName());
+					warning("Path component detected in entry for '%s:%s' but no kADFlagMatchFullPaths is set",
+						getName(), g->gameId);
 
 				Common::StringTokenizer tok(fileDesc->fileName, "/");
 
@@ -1082,8 +1079,8 @@ void AdvancedMetaEngineDetection::preprocessDescriptions() {
 
 		// Check if the detection entry have only files from the blacklist
 		if (isEntryGrayListed(g)) {
-			debug(0, "WARNING: Detection entry for '%s' in engine '%s' contains only blacklisted names. Add more files to the entry (%s)",
-				g->gameId, getName(), g->filesDescriptions[0].md5);
+			debug(0, "WARNING: Detection entry for '%s:%s' contains only blacklisted names. Add more files to the entry (%s)",
+				getName(), g->gameId, g->filesDescriptions[0].md5);
 		}
 	}
 
@@ -1151,7 +1148,7 @@ void AdvancedMetaEngineDetection::detectClashes() const {
 
 	for (const PlainGameDescriptor *g = _gameIds; g->gameId; g++) {
 		if (idsMap.contains(g->gameId))
-			debug(0, "WARNING: Detection gameId for '%s' in engine '%s' has duplicates", g->gameId, getName());
+			debug(0, "WARNING: Detection gameId for '%s:%s' has duplicates", getName(), g->gameId);
 
 		idsMap[g->gameId] = 0;
 	}
@@ -1160,7 +1157,7 @@ void AdvancedMetaEngineDetection::detectClashes() const {
 		const ADGameDescription *g = (const ADGameDescription *)descPtr;
 
 		if (!idsMap.contains(g->gameId)) {
-			debug(0, "WARNING: Detection gameId for '%s' in engine '%s' is not present in gameids", g->gameId, getName());
+			debug(0, "WARNING: Detection gameId for '%s:%s' is not present in gameids", getName(), g->gameId);
 		} else {
 			idsMap[g->gameId]++;
 		}
@@ -1184,7 +1181,7 @@ void AdvancedMetaEngineDetection::detectClashes() const {
 
 				// We need exactly three tokens: <archive type> : <archive name> : <file name>
 				if (numTokens != 3) {
-					debug(0, "WARNING: Detection entry '%s' for gameId '%s' in engine '%s' is invalid", fileDesc.fileName, g->gameId, getName());
+					debug(0, "WARNING: Detection entry '%s' for gameId '%s:%s' is invalid", fileDesc.fileName, getName(), g->gameId);
 				}
 			}
 		}
@@ -1192,7 +1189,7 @@ void AdvancedMetaEngineDetection::detectClashes() const {
 
 	for (auto &k : idsMap) {
 		if (k._value == 0 && k._key != getName())
-			debug(0, "WARNING: Detection gameId for '%s' in engine '%s' has no games in the detection table", k._key.c_str(), getName());
+			debug(0, "WARNING: Detection gameId for '%s:%s' has no games in the detection table", getName(), k._key.c_str());
 	}
 }
 

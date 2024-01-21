@@ -59,6 +59,8 @@ LoadSaveMenu::~LoadSaveMenu() {
 
 	delete _exitButton;
 	delete _cancelButton;
+
+	g_nancy->_input->setVKEnabled(false);
 }
 
 void LoadSaveMenu::process() {
@@ -98,10 +100,14 @@ void LoadSaveMenu::process() {
 }
 
 void LoadSaveMenu::onStateEnter(const NancyState::NancyState prevState) {
+	if (_state == kEnterFilename) {
+		g_nancy->_input->setVKEnabled(true);
+	}
 	registerGraphics();
 }
 
 bool LoadSaveMenu::onStateExit(const NancyState::NancyState nextState) {
+	g_nancy->_input->setVKEnabled(false);
 	return _destroyOnExit;
 }
 
@@ -175,7 +181,11 @@ void LoadSaveMenu::init() {
 			_filenameStrings[i] = desc.getDescription();
 		} else {
 			// If no valid save, copy over the empty save string
-			_filenameStrings[i] = g_nancy->getStaticData().emptySaveText;
+			if (_loadSaveData->_emptySaveText.size()) {
+				_filenameStrings[i] = _loadSaveData->_emptySaveText;
+			} else {
+				_filenameStrings[i] = g_nancy->getStaticData().emptySaveText;
+			}
 		}
 	}
 
@@ -231,7 +241,7 @@ void LoadSaveMenu::init() {
 		Common::Point(), g_nancy->_graphicsManager->getTransColor());
 
 	// Load the "Your game has been saved" popup graphic
-	if (_loadSaveData->_gameSavedPopup.size()) {
+	if (!_loadSaveData->_gameSavedPopup.empty()) {
 		g_nancy->_resource->loadImage(_loadSaveData->_gameSavedPopup, _successOverlay._drawSurface);
 		Common::Rect destBounds = Common::Rect(0,0, _successOverlay._drawSurface.w, _successOverlay._drawSurface.h);
 		destBounds.moveTo(640 / 2 - destBounds.width() / 2,
@@ -399,6 +409,7 @@ void LoadSaveMenu::enterFilename() {
 		_blinkingCursorOverlay.setVisible(true);
 		_nextBlink = g_nancy->getTotalPlayTime() + _loadSaveData->_blinkingTimeDelay;
 		_enteringNewState = false;
+		g_nancy->_input->setVKEnabled(true);
 	}
 
 	// Perform cursor blinking
@@ -419,7 +430,7 @@ void LoadSaveMenu::enterFilename() {
 			if (_enteredString.size()) {
 				_enteredString.deleteLastChar();
 			}
-		} else if (key.keycode == Common::KEYCODE_RETURN) {
+		} else if (key.keycode == Common::KEYCODE_RETURN || key.keycode == Common::KEYCODE_KP_ENTER) {
 			enterKeyPressed = true;
 		} else if (Common::isAlnum(key.ascii) || Common::isSpace(key.ascii)) {
 			_enteredString += key.ascii;
@@ -436,6 +447,7 @@ void LoadSaveMenu::enterFilename() {
 		_state = kRun;
 		_enteringNewState = true;
 		g_nancy->_sound->playSound("BULS");
+		g_nancy->_input->setVKEnabled(false);
 		return;
 	}
 
@@ -444,6 +456,7 @@ void LoadSaveMenu::enterFilename() {
 		_state = kSave;
 		_enteringNewState = true;
 		g_nancy->_sound->playSound("BULS");
+		g_nancy->_input->setVKEnabled(false);
 		return;
 	}
 }
@@ -456,9 +469,9 @@ void LoadSaveMenu::save() {
 		// First, check if we are actually overwriting
 		SaveStateDescriptor desc = g_nancy->getMetaEngine()->querySaveMetaInfos(ConfMan.getActiveDomainName().c_str(), _selectedSave + 1);
 		if (desc.isValid()) {
-			if (!ConfMan.hasKey("sdlg_return", ConfMan.kTransientDomain)) {
+			if (!ConfMan.hasKey("sdlg_return", Common::ConfigManager::kTransientDomain)) {
 				// Request the dialog
-				ConfMan.setInt("sdlg_id", 1, ConfMan.kTransientDomain);
+				ConfMan.setInt("sdlg_id", 1, Common::ConfigManager::kTransientDomain);
 				_destroyOnExit = false;
 				g_nancy->setState(NancyState::kSaveDialog);
 				return;
@@ -466,8 +479,8 @@ void LoadSaveMenu::save() {
 				// Dialog has returned
 				g_nancy->_graphicsManager->suppressNextDraw();
 				_destroyOnExit = true;
-				uint ret = ConfMan.getInt("sdlg_return", ConfMan.kTransientDomain);
-				ConfMan.removeKey("sdlg_return", ConfMan.kTransientDomain);
+				uint ret = ConfMan.getInt("sdlg_return", Common::ConfigManager::kTransientDomain);
+				ConfMan.removeKey("sdlg_return", Common::ConfigManager::kTransientDomain);
 				switch (ret) {
 				case 1 :
 					// "No" keeps us in the LoadSave state but doesn't save
@@ -488,8 +501,42 @@ void LoadSaveMenu::save() {
 	// Improvement: not providing a name doesn't result in the
 	// savefile being named "--- Empty ---" or "Nothing Saved Here".
 	// Instead, we use ScummVM's built-in save name generator
-	g_nancy->saveGameState(_selectedSave + 1, _enteredString.size() ? _enteredString :
-		_filenameStrings[_selectedSave].equals(g_nancy->getStaticData().emptySaveText) ? Common::String() : _filenameStrings[_selectedSave], false);
+
+	// This does not apply to nancy7, where a default name is provided in
+	// the LOAD chunk, and has a number appended to the end
+
+	Common::String finalDesc = _enteredString;
+	if (!finalDesc.size()) {
+		if (_loadSaveData->_defaultSaveNamePrefix.size()) {
+			if (_filenameStrings[_selectedSave].equals(_loadSaveData->_emptySaveText)) {
+				uint suffixNum = 1;
+				for (int i = 1; i < g_nancy->getMetaEngine()->getMaximumSaveSlot(); ++i) {
+					if (i == _selectedSave + 1) {
+						continue;
+					}
+
+					SaveStateDescriptor desc = g_nancy->getMetaEngine()->querySaveMetaInfos(ConfMan.getActiveDomainName().c_str(), i);
+					if (desc.getDescription().substr(0, _loadSaveData->_defaultSaveNamePrefix.size()).equals(Common::U32String(_loadSaveData->_defaultSaveNamePrefix))) {
+						if (desc.getDescription().substr(_loadSaveData->_defaultSaveNamePrefix.size(), 1).asUint64() == suffixNum) {
+							++suffixNum;
+						} else {
+							break;
+						}
+					}
+				}
+				
+				finalDesc = _loadSaveData->_defaultSaveNamePrefix + ('0' + suffixNum);
+			} else {
+				finalDesc = _filenameStrings[_selectedSave];
+			}
+		} else {
+			if (!_filenameStrings[_selectedSave].equals(g_nancy->getStaticData().emptySaveText)) {
+				finalDesc = _filenameStrings[_selectedSave];
+			}
+		}
+	}
+
+	g_nancy->saveGameState(_selectedSave + 1, finalDesc, false);
 
 	// Feed the new name back into the list of saves
 	SaveStateDescriptor desc = g_nancy->getMetaEngine()->querySaveMetaInfos(ConfMan.getActiveDomainName().c_str(), _selectedSave + 1);
@@ -514,9 +561,9 @@ void LoadSaveMenu::load() {
 
 	if (sdlg && sdlg->dialogs.size() > 1 && Nancy::State::Scene::hasInstance() && !g_nancy->_hasJustSaved) {
 		// nancy6 added a "Do you want load without saving" dialog.
-		if (!ConfMan.hasKey("sdlg_return", ConfMan.kTransientDomain)) {
+		if (!ConfMan.hasKey("sdlg_return", Common::ConfigManager::kTransientDomain)) {
 			// Request the dialog
-			ConfMan.setInt("sdlg_id", 2, ConfMan.kTransientDomain);
+			ConfMan.setInt("sdlg_id", 2, Common::ConfigManager::kTransientDomain);
 			_destroyOnExit = false;
 			g_nancy->setState(NancyState::kSaveDialog);
 			return;
@@ -524,8 +571,8 @@ void LoadSaveMenu::load() {
 			// Dialog has returned
 			_destroyOnExit = true;
 			g_nancy->_graphicsManager->suppressNextDraw();
-			uint ret = ConfMan.getInt("sdlg_return", ConfMan.kTransientDomain);
-			ConfMan.removeKey("sdlg_return", ConfMan.kTransientDomain);
+			uint ret = ConfMan.getInt("sdlg_return", Common::ConfigManager::kTransientDomain);
+			ConfMan.removeKey("sdlg_return", Common::ConfigManager::kTransientDomain);
 			switch (ret) {
 			case 1 :
 				// "No" keeps us in the LoadSave state but doesn't load

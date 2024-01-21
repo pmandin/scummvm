@@ -153,7 +153,7 @@ distclean: clean clean-devtools clean-test
 clean: clean-toplevel
 clean-toplevel:
 	$(RM_REC) $(DEPDIRS)
-	$(RM) $(OBJS) $(DETECT_OBJS) $(EXECUTABLE)
+	$(RM) $(OBJS) $(DETECT_OBJS) $(EXECUTABLE) $(PLUGIN_OBJ_FILES)
 ifdef SPLIT_DWARF
 	$(RM) $(OBJS:.o=.dwo) $(DETECT_OBJS:.o=.dwo)
 	$(RM) $(EXECUTABLE).dwp
@@ -468,7 +468,8 @@ ifdef ENABLE_TOON
 DIST_FILES_ENGINEDATA+=toon.dat
 endif
 ifdef ENABLE_ULTIMA
-DIST_FILES_ENGINEDATA+=ultima.dat ultima8.dat
+DIST_FILES_ENGINEDATA+=ultima.dat
+DIST_FILES_ENGINEDATA+=ultima8.dat
 endif
 ifdef ENABLE_WINTERMUTE
 DIST_FILES_ENGINEDATA+=wintermute.zip
@@ -494,6 +495,7 @@ endif
 DIST_FILES_ENGINEDATA+=achievements.dat
 DIST_FILES_ENGINEDATA+=classicmacfonts.dat
 DIST_FILES_ENGINEDATA+=encoding.dat
+DIST_FILES_ENGINEDATA+=helpdialog.zip
 DIST_FILES_ENGINEDATA+=macgui.dat
 DIST_FILES_ENGINEDATA:=$(addprefix $(srcdir)/dists/engine-data/,$(DIST_FILES_ENGINEDATA))
 
@@ -501,6 +503,13 @@ DIST_FILES_ENGINEDATA:=$(addprefix $(srcdir)/dists/engine-data/,$(DIST_FILES_ENG
 ifdef ENABLE_AGI
 DIST_FILES_ENGINEDATA+=$(srcdir)/dists/pred.dic
 endif
+
+# fonts-cjk.dat is used only on systems with plenty of memory
+ifdef USE_FREETYPE2
+DIST_FILES_ENGINEDATA_BIG+=fonts-cjk.dat
+endif
+
+DIST_FILES_ENGINEDATA_BIG:=$(addprefix $(srcdir)/dists/engine-data/,$(DIST_FILES_ENGINEDATA_BIG))
 
 # Shaders: install if USE_OPENGL_SHADERS is defined
 DIST_FILES_SHADERS=
@@ -526,6 +535,13 @@ endif
 ifdef ENABLE_FREESCAPE
 DIST_FILES_SHADERS+=$(wildcard $(srcdir)/engines/freescape/shaders/*)
 endif
+endif
+
+# Soundfonts
+DIST_FILES_SOUNDFONTS=
+ifdef USE_FLUIDSYNTH
+DIST_FILES_SOUNDFONTS:=$(addprefix $(srcdir)/dists/soundfonts/,Roland_SC-55.sf2)
+DIST_FILES_DOCS+=$(addprefix $(srcdir)/dists/soundfonts/,COPYRIGHT.Roland_SC-55)
 endif
 
 .PHONY: all clean distclean plugins dist-src clean-toplevel manual

@@ -21,6 +21,7 @@
 
 #include "common/debug.h"
 #include "common/file.h"
+#include "common/macresman.h"
 #include "common/random.h"
 #include "common/substream.h"
 #include "common/system.h"
@@ -1127,6 +1128,18 @@ void DynamicValue::ValueUnion::construct(T &&value) {
 }
 
 template<class T, T(DynamicValue::ValueUnion::*TMember)>
+void DynamicValue::ValueUnion::assign(const T &value) {
+	T *field = &(this->*TMember);
+	*field = value;
+}
+
+template<class T, T(DynamicValue::ValueUnion::*TMember)>
+void DynamicValue::ValueUnion::assign(T &&value) {
+	T *field = &(this->*TMember);
+	*field = static_cast<T &&>(value);
+}
+
+template<class T, T(DynamicValue::ValueUnion::*TMember)>
 void DynamicValue::ValueUnion::destruct() {
 	T *field = &(this->*TMember);
 	field->~T();
@@ -1310,81 +1323,114 @@ const DynamicValueWriteProxy &DynamicValue::getWriteProxy() const {
 }
 
 void DynamicValue::setInt(int32 value) {
-	if (_type != DynamicValueTypes::kInteger)
+	if (_type != DynamicValueTypes::kInteger) {
 		clear();
-	_type = DynamicValueTypes::kInteger;
-	_value.construct<int32, &ValueUnion::asInt>(value);
+		_type = DynamicValueTypes::kInteger;
+		_value.construct<int32, &ValueUnion::asInt>(value);
+	} else {
+		_value.assign<int32, &ValueUnion::asInt>(value);
+	}
 }
 
 void DynamicValue::setFloat(double value) {
-	if (_type != DynamicValueTypes::kFloat)
+	if (_type != DynamicValueTypes::kFloat) {
 		clear();
-	_type = DynamicValueTypes::kFloat;
-	_value.construct<double, &ValueUnion::asFloat>(value);
+		_type = DynamicValueTypes::kFloat;
+		_value.construct<double, &ValueUnion::asFloat>(value);
+	} else {
+		_value.assign<double, &ValueUnion::asFloat>(value);
+	}
 }
 
 void DynamicValue::setPoint(const Common::Point &value) {
-	if (_type != DynamicValueTypes::kPoint)
+	if (_type != DynamicValueTypes::kPoint) {
 		clear();
-	_type = DynamicValueTypes::kPoint;
-	_value.construct<Common::Point, &ValueUnion::asPoint>(value);
+		_type = DynamicValueTypes::kPoint;
+		_value.construct<Common::Point, &ValueUnion::asPoint>(value);
+	} else {
+		_value.assign<Common::Point, &ValueUnion::asPoint>(value);
+	}
 }
 
 void DynamicValue::setIntRange(const IntRange &value) {
-	if (_type != DynamicValueTypes::kIntegerRange)
+	if (_type != DynamicValueTypes::kIntegerRange) {
 		clear();
-	_type = DynamicValueTypes::kIntegerRange;
-	_value.construct<IntRange, &ValueUnion::asIntRange>(value);
+		_type = DynamicValueTypes::kIntegerRange;
+		_value.construct<IntRange, &ValueUnion::asIntRange>(value);
+	} else {
+		_value.assign<IntRange, &ValueUnion::asIntRange>(value);
+	}
 }
 
 void DynamicValue::setVector(const AngleMagVector &value) {
-	if (_type != DynamicValueTypes::kVector)
+	if (_type != DynamicValueTypes::kVector) {
 		clear();
-	_type = DynamicValueTypes::kVector;
-	_value.construct<AngleMagVector, &ValueUnion::asVector>(value);
+		_type = DynamicValueTypes::kVector;
+		_value.construct<AngleMagVector, &ValueUnion::asVector>(value);
+	} else {
+		_value.assign<AngleMagVector, &ValueUnion::asVector>(value);
+	}
 }
 
 void DynamicValue::setLabel(const Label &value) {
-	if (_type != DynamicValueTypes::kLabel)
+	if (_type != DynamicValueTypes::kLabel) {
 		clear();
-	_type = DynamicValueTypes::kLabel;
-	_value.construct<Label, &ValueUnion::asLabel>(value);
+		_type = DynamicValueTypes::kLabel;
+		_value.construct<Label, &ValueUnion::asLabel>(value);
+	} else {
+		_value.assign<Label, &ValueUnion::asLabel>(value);
+	}
 }
 
 void DynamicValue::setEvent(const Event &value) {
-	if (_type != DynamicValueTypes::kEvent)
+	if (_type != DynamicValueTypes::kEvent) {
 		clear();
-	_type = DynamicValueTypes::kEvent;
-	_value.construct<Event, &ValueUnion::asEvent>(value);
+		_type = DynamicValueTypes::kEvent;
+		_value.construct<Event, &ValueUnion::asEvent>(value);
+	} else {
+		_value.assign<Event, &ValueUnion::asEvent>(value);
+	}
 }
 
 void DynamicValue::setString(const Common::String &value) {
-	if (_type != DynamicValueTypes::kString)
+	if (_type != DynamicValueTypes::kString) {
 		clear();
-	_type = DynamicValueTypes::kString;
-	_value.construct<Common::String, &ValueUnion::asString>(value);
+		_type = DynamicValueTypes::kString;
+		_value.construct<Common::String, &ValueUnion::asString>(value);
+	} else {
+		_value.assign<Common::String, &ValueUnion::asString>(value);
+	}
 }
 
 void DynamicValue::setBool(bool value) {
-	if (_type != DynamicValueTypes::kBoolean)
+	if (_type != DynamicValueTypes::kBoolean) {
 		clear();
-	_type = DynamicValueTypes::kBoolean;
-	_value.construct<bool, &ValueUnion::asBool>(value);
+		_type = DynamicValueTypes::kBoolean;
+		_value.construct<bool, &ValueUnion::asBool>(value);
+	} else {
+		_value.assign<bool, &ValueUnion::asBool>(value);
+	}
 }
 
 void DynamicValue::setList(const Common::SharedPtr<DynamicList> &value) {
-	if (_type != DynamicValueTypes::kList)
+	if (_type != DynamicValueTypes::kList) {
 		clear();
-	_type = DynamicValueTypes::kList;
-	_value.construct<Common::SharedPtr<DynamicList>, &ValueUnion::asList>(value);
+		_type = DynamicValueTypes::kList;
+		_value.construct<Common::SharedPtr<DynamicList>, &ValueUnion::asList>(value);
+	} else {
+		_value.assign<Common::SharedPtr<DynamicList>, &ValueUnion::asList>(value);
+	}
 }
 
 void DynamicValue::setWriteProxy(const DynamicValueWriteProxy &writeProxy) {
 	Common::SharedPtr<DynamicList> listRef = writeProxy.containerList; // Back up list ref in case this is a self-assign
-	if (_type != DynamicValueTypes::kWriteProxy)
+	if (_type != DynamicValueTypes::kWriteProxy) {
 		clear();
-	_type = DynamicValueTypes::kWriteProxy;
-	_value.construct<DynamicValueWriteProxy, &ValueUnion::asWriteProxy>(writeProxy);
+		_type = DynamicValueTypes::kWriteProxy;
+		_value.construct<DynamicValueWriteProxy, &ValueUnion::asWriteProxy>(writeProxy);
+	} else {
+		_value.assign<DynamicValueWriteProxy, &ValueUnion::asWriteProxy>(writeProxy);
+	}
 }
 
 bool DynamicValue::roundToInt(int32 &outInt) const {
@@ -1475,10 +1521,13 @@ bool DynamicValue::convertToTypeNoDereference(DynamicValueTypes::DynamicValueTyp
 }
 
 void DynamicValue::setObject(const ObjectReference &value) {
-	if (_type != DynamicValueTypes::kObject)
+	if (_type != DynamicValueTypes::kObject) {
 		clear();
-	_type = DynamicValueTypes::kObject;
-	_value.construct<ObjectReference, &ValueUnion::asObj>(value);
+		_type = DynamicValueTypes::kObject;
+		_value.construct<ObjectReference, &ValueUnion::asObj>(value);
+	} else {
+		_value.assign<ObjectReference, &ValueUnion::asObj>(value);
+	}
 }
 
 void DynamicValue::setObject(const Common::WeakPtr<RuntimeObject> &value) {
@@ -1519,7 +1568,7 @@ bool DynamicValue::operator==(const DynamicValue &other) const {
 	case DynamicValueTypes::kBoolean:
 		return _value.asBool == other._value.asBool;
 	case DynamicValueTypes::kList:
-		return (*_value.asList.get()) == (*_value.asList.get());
+		return (*_value.asList.get()) == (*other._value.asList.get());
 	case DynamicValueTypes::kObject:
 		return _value.asObj == other._value.asObj;
 	default:
@@ -2501,7 +2550,8 @@ Common::SharedPtr<CursorGraphic> CursorGraphicCollection::getGraphicByID(uint32 
 	return nullptr;
 }
 
-ProjectDescription::ProjectDescription(ProjectPlatform platform) : _language(Common::EN_ANY), _platform(platform) {
+ProjectDescription::ProjectDescription(ProjectPlatform platform, ProjectMajorVersion majorVersion, Common::Archive *rootArchive, const Common::Path &projectRootDir)
+	: _language(Common::EN_ANY), _platform(platform), _rootArchive(rootArchive), _projectRootDir(projectRootDir), _majorVersion(majorVersion) {
 }
 
 ProjectDescription::~ProjectDescription() {
@@ -2564,11 +2614,23 @@ ProjectPlatform ProjectDescription::getPlatform() const {
 	return _platform;
 }
 
+ProjectMajorVersion ProjectDescription::getMajorVersion() const {
+	return _majorVersion;
+}
+
+Common::Archive *ProjectDescription::getRootArchive() const {
+	return _rootArchive;
+}
+
+const Common::Path &ProjectDescription::getProjectRootDir() const {
+	return _projectRootDir;
+}
+
 const SubtitleTables &ProjectDescription::getSubtitles() const {
 	return _subtitles;
 }
 
-void ProjectDescription::getSubtitles(const SubtitleTables &subs) {
+void ProjectDescription::setSubtitles(const SubtitleTables &subs) {
 	_subtitles = subs;
 }
 
@@ -2580,6 +2642,10 @@ void SimpleModifierContainer::appendModifier(const Common::SharedPtr<Modifier> &
 	_modifiers.push_back(modifier);
 	if (modifier)
 		modifier->setParent(nullptr);
+}
+
+void SimpleModifierContainer::clear() {
+	_modifiers.clear();
 }
 
 RuntimeObject::RuntimeObject() : _guid(0), _runtimeGUID(0) {
@@ -4197,6 +4263,13 @@ void SceneTransitionHooks::onSceneTransitionEnded(Runtime *runtime, const Common
 
 
 Palette::Palette() {
+	initDefaultPalette(1);
+}
+
+void Palette::initDefaultPalette(int version) {
+	// NOTE: The "V2" pallete is correct for Unit: Rebooted.
+	// Is it correct for all V2 apps?
+	assert(version == 1 || version == 2);
 	int outColorIndex = 0;
 	for (int rb = 0; rb < 6; rb++) {
 		for (int rg = 0; rg < 6; rg++) {
@@ -4204,9 +4277,15 @@ Palette::Palette() {
 				byte *color = _colors + outColorIndex * 3;
 				outColorIndex++;
 
-				color[0] = 255 - rr * 51;
-				color[1] = 255 - rg * 51;
-				color[2] = 255 - rb * 51;
+				if (version == 1) {
+					color[0] = 255 - rr * 51;
+					color[1] = 255 - rg * 51;
+					color[2] = 255 - rb * 51;
+				} else {
+					color[2] = 255 - rr * 51;
+					color[1] = 255 - rg * 51;
+					color[0] = 255 - rb * 51;
+				}
 			}
 		}
 	}
@@ -4223,7 +4302,7 @@ Palette::Palette() {
 
 			byte intensity = 255 - ri * 17;
 
-			if (ch == 4) {
+			if (ch == 3) {
 				color[0] = color[1] = color[2] = intensity;
 			} else {
 				color[0] = color[1] = color[2] = 0;
@@ -4234,9 +4313,18 @@ Palette::Palette() {
 
 	assert(outColorIndex == 255);
 
-	_colors[255 * 3 + 0] = 0;
-	_colors[255 * 3 + 1] = 0;
-	_colors[255 * 3 + 2] = 0;
+	if (version == 1) {
+		_colors[255 * 3 + 0] = 0;
+		_colors[255 * 3 + 1] = 0;
+		_colors[255 * 3 + 2] = 0;
+	} else {
+		_colors[0 * 3 + 0] = 0;
+		_colors[0 * 3 + 1] = 0;
+		_colors[0 * 3 + 2] = 0;
+		_colors[255 * 3 + 0] = 255;
+		_colors[255 * 3 + 1] = 255;
+		_colors[255 * 3 + 2] = 255;
+	}
 }
 
 Palette::Palette(const ColorRGB8 *colors) {
@@ -4312,7 +4400,7 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProv
 
 Runtime::~Runtime() {
 	// Clear the project first, which should detach any references to other things
-	_project.reset();
+	unloadProject();
 
 	_subtitleRenderer.reset();
 }
@@ -6921,15 +7009,37 @@ Project::AssetDesc::AssetDesc() : typeCode(0), id(0), streamID(0), filePosition(
 }
 
 Project::Project(Runtime *runtime)
-	: Structural(runtime), _projectFormat(Data::kProjectFormatUnknown), _isBigEndian(false),
+	: Structural(runtime), _projectFormat(Data::kProjectFormatUnknown),
 	  _haveGlobalObjectInfo(false), _haveProjectStructuralDef(false), _playMediaSignaller(new PlayMediaSignaller()),
 	  _keyboardEventSignaller(new KeyboardEventSignaller()), _guessedVersion(MTropolisVersions::kMTropolisVersion1_0),
-	  _platform(kProjectPlatformUnknown) {
+	  _platform(kProjectPlatformUnknown), _rootArchive(nullptr), _majorVersion(kProjectMajorVersionUnknown) {
 }
 
 Project::~Project() {
+	// Project teardown can be chaotic, we need to get rid of things in an orderly fashion.
+
+	// Remove all modifiers and structural children, which should unhook anything referencing an asset
+	_modifiers.clear();
+	_children.clear();
+
+	// Remove all global modifiers
+	_globalModifiers.clear();
+
+	// Unhook assets assets
+	_assets.clear();
+
+	// Unhook plug-ins
+	_plugIns.clear();
+
+	// Unhook cursor graphics
+	_cursorGraphics.reset();
+
+	// Close all segment streams
 	for (size_t i = 0; i < _segments.size(); i++)
 		closeSegmentStream(i);
+
+	// Last of all, release project resources
+	_resources.reset();
 }
 
 VThreadState Project::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
@@ -6955,6 +7065,9 @@ void Project::loadFromDescription(const ProjectDescription &desc, const Hacks &h
 	_cursorGraphics = desc.getCursorGraphics();
 	_subtitles = desc.getSubtitles();
 	_platform = desc.getPlatform();
+	_rootArchive = desc.getRootArchive();
+	_projectRootDir = desc.getProjectRootDir();
+	_majorVersion = desc.getMajorVersion();
 
 	debug(1, "Loading new project...");
 
@@ -6986,49 +7099,44 @@ void Project::loadFromDescription(const ProjectDescription &desc, const Hacks &h
 
 	if (startValue == 1) {
 		// Windows format
-		_isBigEndian = false;
 		_projectFormat = Data::kProjectFormatWindows;
 	} else if (startValue == 0) {
 		// Mac format
-		_isBigEndian = true;
 		_projectFormat = Data::kProjectFormatMacintosh;
+	} else if (startValue == 8) {
+		// Cross-platform format
+		_projectFormat = Data::kProjectFormatNeutral;
 	} else {
 		warning("Unrecognized project segment header (startValue: %d)", startValue);
 		_projectFormat = Data::kProjectFormatWindows;
 	}
 
-	Common::SeekableSubReadStreamEndian stream(baseStream, 2, baseStream->size(), _isBigEndian);
-	const uint32 magic = stream.readUint32();
-	const uint32 hdr1 = stream.readUint32();
-	const uint32 hdr2 = stream.readUint32();
-	if (magic != 0xaa55a5a5 || (hdr1 != 0 && hdr1 != 0x2000000) || hdr2 != 14) {
+	Common::SeekableSubReadStream stream(baseStream, 2, baseStream->size());
+
+	Data::DataReader catReader(2, stream, (_projectFormat == Data::kProjectFormatMacintosh) ? Data::kDataFormatMacintosh : Data::kDataFormatWindows);
+
+	uint32 magic = 0;
+	uint32 hdr1 = 0;
+	uint32 hdr2 = 0;
+	if (!catReader.readMultiple(magic, hdr1, hdr2) || magic != 0xaa55a5a5 || (hdr1 != 0 && hdr1 != 0x2000000) || hdr2 != 14) {
 		error("Unrecognized project segment header (%x, %x, %d)", magic, hdr1, hdr2);
 	}
 
-	if (hdr1 == 0)
-		_projectEngineVersion = Data::kProjectEngineVersion1;
-	else
-		_projectEngineVersion = Data::kProjectEngineVersion2;
-
-	Data::DataReader reader(2, stream, _projectFormat, _projectEngineVersion);
-
 	Common::SharedPtr<Data::DataObject> dataObject;
-	Data::loadDataObject(_plugInRegistry.getDataLoaderRegistry(), reader, dataObject);
+	Data::loadDataObject(_plugInRegistry.getDataLoaderRegistry(), catReader, dataObject);
 
 	if (!dataObject || dataObject->getType() != Data::DataObjectTypes::kProjectHeader) {
 		error("Expected project header but found something else");
 	}
 
-	Data::loadDataObject(plugInDataLoaderRegistry, reader, dataObject);
+	Data::loadDataObject(plugInDataLoaderRegistry, catReader, dataObject);
 	if (!dataObject || dataObject->getType() != Data::DataObjectTypes::kProjectCatalog) {
 		error("Expected project catalog but found something else");
 	}
 
 	Data::ProjectCatalog *catalog = static_cast<Data::ProjectCatalog *>(dataObject.get());
 
-	if (catalog->segments.size() != desc.getSegments().size()) {
-		error("Project declared a different number of segments than the project description provided");
-	}
+	_segments.resize(catalog->segments.size());
 
 	debug(1, "Catalog loaded OK, identified %i streams", static_cast<int>(catalog->streams.size()));
 
@@ -7047,8 +7155,8 @@ void Project::loadFromDescription(const ProjectDescription &desc, const Hacks &h
 			streamDesc.streamType = kStreamTypeUnknown;
 
 		streamDesc.segmentIndex = srcStream.segmentIndexPlusOne - 1;
-		streamDesc.size = srcStream.size;
-		streamDesc.pos = srcStream.pos;
+		streamDesc.size = (_platform == kProjectPlatformMacintosh) ? srcStream.macSize : srcStream.winSize;
+		streamDesc.pos = (_platform == kProjectPlatformMacintosh) ? srcStream.macPos : srcStream.winPos;
 	}
 
 	// Locate the boot stream
@@ -7084,8 +7192,8 @@ void Project::loadSceneFromStream(const Common::SharedPtr<Structural> &scene, ui
 
 	openSegmentStream(segmentIndex);
 
-	Common::SeekableSubReadStreamEndian stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size, _isBigEndian);
-	Data::DataReader reader(streamDesc.pos, stream, _projectFormat, _projectEngineVersion);
+	Common::SeekableSubReadStream stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size);
+	Data::DataReader reader(streamDesc.pos, stream, (_platform == kProjectPlatformMacintosh) ? Data::kDataFormatMacintosh : Data::kDataFormatWindows);
 
 	if (getRuntime()->getHacks().mtiHispaniolaDamagedStringHack && scene->getName() == "C01b : Main Deck Helm Kidnap")
 		reader.setPermitDamagedStrings(true);
@@ -7212,8 +7320,8 @@ void Project::forceLoadAsset(uint32 assetID, Common::Array<Common::SharedPtr<Ass
 
 	openSegmentStream(segmentIndex);
 
-	Common::SeekableSubReadStreamEndian stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size, _isBigEndian);
-	Data::DataReader reader(streamDesc.pos, stream, _projectFormat, _projectEngineVersion);
+	Common::SeekableSubReadStream stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size);
+	Data::DataReader reader(streamDesc.pos, stream, (_projectFormat == Data::kProjectFormatMacintosh) ? Data::kDataFormatMacintosh : Data::kDataFormatWindows);
 
 	const Data::PlugInModifierRegistry &plugInDataLoaderRegistry = _plugInRegistry.getDataLoaderRegistry();
 
@@ -7273,13 +7381,43 @@ void Project::openSegmentStream(int segmentIndex) {
 		segment.rcStream.reset();
 		segment.weakStream = segment.desc.stream;
 	} else {
-		Common::File *f = new Common::File();
-		segment.rcStream.reset(f);
-		segment.weakStream = f;
+		Common::Path defaultPath = _projectRootDir.appendComponent(segment.desc.filePath);
 
-		if (!f->open(segment.desc.filePath)) {
-			error("Failed to open segment file %s", segment.desc.filePath.c_str());
+		if (_platform == kProjectPlatformMacintosh)
+			segment.rcStream.reset(Common::MacResManager::openFileOrDataFork(defaultPath, *_rootArchive));
+		else
+			segment.rcStream.reset(_rootArchive->createReadStreamForMember(defaultPath));
+
+		if (!segment.rcStream) {
+			warning("Segment '%s' isn't in the project directory", segment.desc.filePath.c_str());
+
+			Common::ArchiveMemberList memberList;
+			Common::ArchiveMemberPtr locatedMember;
+
+			_rootArchive->listMembers(memberList);
+
+			for (const Common::ArchiveMemberPtr &member : memberList) {
+				if (member->getFileName().equalsIgnoreCase(segment.desc.filePath)) {
+					if (locatedMember)
+						error("Segment '%s' exists multiple times in the workspace, and isn't in the project directory, couldn't disambiguate", segment.desc.filePath.c_str());
+
+					locatedMember = member;
+				}
+			}
+
+			if (!locatedMember)
+				error("Segment '%s' is missing from the workspace", segment.desc.filePath.c_str());
+
+			if (_platform == kProjectPlatformMacintosh)
+				segment.rcStream.reset(Common::MacResManager::openFileOrDataFork(locatedMember->getPathInArchive(), *_rootArchive));
+			else
+				segment.rcStream.reset(locatedMember->createReadStream());
+
+			if (!segment.rcStream)
+				error("Failed to open segment file %s", segment.desc.filePath.c_str());
 		}
+
+		segment.weakStream = segment.rcStream.get();
 	}
 
 	segment.unloadSignaller.reset(new SegmentUnloadSignaller(this, segmentIndex));
@@ -7372,8 +7510,8 @@ void Project::loadBootStream(size_t streamIndex, const Hacks &hacks) {
 	size_t segmentIndex = streamDesc.segmentIndex;
 	openSegmentStream(segmentIndex);
 
-	Common::SeekableSubReadStreamEndian stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size, _isBigEndian);
-	Data::DataReader reader(streamDesc.pos, stream, _projectFormat, _projectEngineVersion);
+	Common::SeekableSubReadStream stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size);
+	Data::DataReader reader(streamDesc.pos, stream, (_platform == kProjectPlatformMacintosh) ? Data::kDataFormatMacintosh : Data::kDataFormatWindows);
 
 	ChildLoaderStack loaderStack;
 	AssetDefLoaderContext assetDefLoader;
@@ -7430,6 +7568,8 @@ void Project::loadBootStream(size_t streamIndex, const Hacks &hacks) {
 					loaderContext.type = ChildLoaderContext::kTypeProject;
 
 					loaderStack.contexts.push_back(loaderContext);
+
+					initAdditionalSegments(def->name);
 				} break;
 			case Data::DataObjectTypes::kStreamHeader:
 			case Data::DataObjectTypes::kUnknown19:
@@ -7668,6 +7808,30 @@ void Project::assignAssets(const Common::Array<Common::SharedPtr<Asset> >& asset
 			for (const Common::SharedPtr<AssetHooks> &hook : hacks.assetHooks)
 				hook->onLoaded(asset.get(), desc->name);
 		}
+	}
+}
+
+void Project::initAdditionalSegments(const Common::String &projectName) {
+	for (uint segmentIndex = 1; segmentIndex < _segments.size(); segmentIndex++) {
+		Segment &segment = _segments[segmentIndex];
+
+		Common::String segmentName = projectName + Common::String::format("%i", static_cast<int>(segmentIndex + 1));
+
+		if (_projectFormat == Data::kProjectFormatNeutral) {
+			segmentName += ".mxx";
+		} else if (_projectFormat == Data::kProjectFormatWindows) {
+			if (_majorVersion == kProjectMajorVersion2)
+				segmentName += ".mxw";
+			else
+				segmentName += ".mpx";
+		} else if (_projectFormat == Data::kProjectFormatMacintosh) {
+			if (_majorVersion == kProjectMajorVersion2)
+				segmentName += ".mxm";
+		}
+
+		// Attempt to find the segment
+		segment.desc.filePath = segmentName;
+		segment.desc.volumeID = segmentIndex;
 	}
 }
 

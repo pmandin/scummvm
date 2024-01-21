@@ -61,6 +61,7 @@ Score::Score(Movie *movie) {
 
 	_soundManager = _window->getSoundManager();
 
+	_puppetTempo = 0;
 	_puppetPalette = false;
 	_paletteTransitionIndex = 0;
 	memset(_paletteSnapshotBuffer, 0, 768);
@@ -107,7 +108,7 @@ Score::~Score() {
 }
 
 void Score::setPuppetTempo(int16 puppetTempo) {
-	_currentFrame->_mainChannels.tempo = puppetTempo;
+	_puppetTempo = puppetTempo;
 }
 
 CastMemberID Score::getCurrentPalette() {
@@ -160,7 +161,7 @@ Common::String *Score::getLabelList() {
 
 	for (auto &i : *_labels) {
 		*res += i->name;
-		*res += '\n';
+		*res += '\r';
 	}
 
 	return res;
@@ -399,19 +400,21 @@ void Score::update() {
 	for (uint ch = 0; ch < _channels.size(); ch++)
 		*_currentFrame->_sprites[ch] = *_channels[ch]->_sprite;
 
+	uint32 nextFrameNumberToLoad = _curFrameNumber;
+
 	if (!_vm->_playbackPaused) {
 		if (_nextFrame) {
 			// With the advent of demand loading frames and due to partial updates, we rebuild our channel data
 			// when jumping.
-			_curFrameNumber = _nextFrame;
+			nextFrameNumberToLoad = _nextFrame;
 		}
 		else if (!_window->_newMovieStarted)
-			_curFrameNumber++;
+			nextFrameNumberToLoad = (_curFrameNumber+1);
 	}
 
 	_nextFrame = 0;
 
-	if (_curFrameNumber >= getFramesNum()) {
+	if (nextFrameNumberToLoad >= getFramesNum()) {
 		Window *window = _vm->getCurrentWindow();
 		if (!window->_movieStack.empty()) {
 			MovieReference ref = window->_movieStack.back();
@@ -423,8 +426,7 @@ void Score::update() {
 				processFrozenScripts();
 				return;
 			}
-
-			_curFrameNumber = ref.frameI;
+			nextFrameNumberToLoad = ref.frameI;
 		} else {
 			if (debugChannelSet(-1, kDebugNoLoop)) {
 				_playState = kPlayStopped;
@@ -432,21 +434,30 @@ void Score::update() {
 				return;
 			}
 
-			_curFrameNumber = 1;
+			nextFrameNumberToLoad = 1;
 		}
 	}
 
 	if (_labels != nullptr) {
 		for (auto &i : *_labels) {
-			if (i->number == _curFrameNumber) {
-				_currentLabel = _curFrameNumber;
+			if (i->number == nextFrameNumberToLoad) {
+				_currentLabel = nextFrameNumberToLoad;
 			}
 		}
 	}
 
-	loadFrame(_curFrameNumber, true);
+	if (_curFrameNumber != nextFrameNumberToLoad) {
+		// this updates _curFrameNumber
+		loadFrame(nextFrameNumberToLoad, true);
+	}
 
-	byte tempo = _currentFrame->_mainChannels.tempo;
+	byte tempo = _currentFrame->_mainChannels.scoreCachedTempo;
+	// puppetTempo is overridden by changes in score tempo
+	if (_currentFrame->_mainChannels.tempo || tempo != _lastTempo) {
+		_puppetTempo = 0;
+	} else if (_puppetTempo) {
+		tempo = _puppetTempo;
+	}
 
 	if (tempo) {
 		const bool waitForClickOnly = _vm->getVersion() < 300;
@@ -541,7 +552,9 @@ void Score::update() {
 			}
 		}
 		// If another frozen state gets triggered, wait another update() before thawing
-		if (_window->frozenLingoStateCount() > count)
+		if ((_vm->getVersion() < 400) && _window->frozenLingoStateCount() > 0)
+			return;
+		else if ((_vm->getVersion() >= 400) && _window->frozenLingoStateCount() > count)
 			return;
 	}
 
@@ -1199,7 +1212,7 @@ void Score::screenShot() {
 	Common::String currentPath = _vm->getCurrentPath().c_str();
 	Common::replace(currentPath, Common::String(g_director->_dirSeparator), "-"); // exclude dir separator from screenshot filename prefix
 	Common::String prefix = Common::String::format("%s%s", currentPath.c_str(), Common::punycode_encodefilename(_movie->getMacName()).c_str());
-	Common::String filename = dumpScriptName(prefix.c_str(), kMovieScript, g_director->_framesRan, "png");
+	Common::Path filename = dumpScriptName(prefix.c_str(), kMovieScript, g_director->_framesRan, "png");
 
 	const char *buildNumber = getenv("BUILD_NUMBER");
 
@@ -1208,8 +1221,8 @@ void Score::screenShot() {
 		// The filename is in the form:
 		// ./dumps/theapartment/25/xn--Main Menu-zd0e-19.png
 
-		Common::String buildDir = Common::String::format("%s/%s", ConfMan.get("screenshotpath").c_str(),
-			g_director->getTargetName().c_str());
+		Common::Path buildDir(Common::String::format("%s/%s", ConfMan.get("screenshotpath").c_str(),
+			g_director->getTargetName().c_str()), '/');
 
 		// We run for the first time, let's check if we had the directory previously
 		if (_previousBuildBotBuild == -1) {
@@ -1225,7 +1238,7 @@ void Score::screenShot() {
 
 		// Now we try to find any previous dump
 		while (prevbuild > 0) {
-			filename = Common::String::format("%s/%d/%s-%d.png", buildDir.c_str(), prevbuild, prefix.c_str(), g_director->_framesRan);
+			filename = buildDir.join(Common::Path(Common::String::format("%d/%s-%d.png", prevbuild, prefix.c_str(), g_director->_framesRan), '/'));
 
 			Common::FSNode fs(filename);
 
@@ -1243,14 +1256,14 @@ void Score::screenShot() {
 
 			if (stream && decoder.loadStream(*stream)) {
 				if (checkShotSimilarity(decoder.getSurface(), newSurface)) {
-					warning("Screenshot is equal to previous one, skipping: %s", filename.c_str());
+					warning("Screenshot is equal to previous one, skipping: %s", filename.toString(Common::Path::kNativeSeparator).c_str());
 					newSurface->free();
 					delete newSurface;
 					delete stream;
 					return;
 				}
 			} else {
-				warning("Error loading previous screenshot %s", filename.c_str());
+				warning("Error loading previous screenshot %s", filename.toString(Common::Path::kNativeSeparator).c_str());
 			}
 
 			delete stream;
@@ -1260,16 +1273,16 @@ void Score::screenShot() {
 		// the screenshot was different from the previous one.
 		//
 		// Regenerate file name with the correct build number
-		filename = Common::String::format("%s/%s/%s-%d.png", buildDir.c_str(), buildNumber, prefix.c_str(), g_director->_framesRan);
+		filename = buildDir.join(Common::Path(Common::String::format("%s/%s-%d.png", buildNumber, prefix.c_str(), g_director->_framesRan), '/'));
 	}
 
 	Common::DumpFile screenshotFile;
 	if (screenshotFile.open(filename, true)) {
-		debug("Dumping screenshot to %s", filename.c_str());
+		debug("Dumping screenshot to %s", filename.toString(Common::Path::kNativeSeparator).c_str());
 
 		Image::writePNG(screenshotFile, *newSurface);
 	} else {
-		warning("Cannot write screenshot to %s", filename.c_str());
+		warning("Cannot write screenshot to %s", filename.toString(Common::Path::kNativeSeparator).c_str());
 	}
 
 	newSurface->free();
@@ -1310,11 +1323,22 @@ bool Score::checkSpriteIntersection(uint16 spriteId, Common::Point pos) {
 }
 
 Common::List<Channel *> Score::getSpriteIntersections(const Common::Rect &r) {
-	Common::List<Channel *>intersections;
+	Common::List<Channel *> intersections;
+	Common::List<Channel *> appendix;
 
 	for (uint i = 0; i < _channels.size(); i++) {
-		if (!_channels[i]->isEmpty() && !r.findIntersectingRect(_channels[i]->getBbox()).isEmpty())
-			intersections.push_back(_channels[i]);
+		if (!_channels[i]->isEmpty() && !r.findIntersectingRect(_channels[i]->getBbox()).isEmpty()) {
+			// Editable text sprites will (more or less) always be rendered in front of other sprites,
+			// regardless of their order in the channel list.
+			if (_channels[i]->getEditable()) {
+				appendix.push_back(_channels[i]);
+			} else {
+				intersections.push_back(_channels[i]);
+			}
+		}
+	}
+	for (auto &ch : appendix) {
+		intersections.push_back(ch);
 	}
 
 	return intersections;
@@ -1463,7 +1487,7 @@ void Score::loadFrames(Common::SeekableReadStreamEndian &stream, uint16 version)
 }
 
 bool Score::loadFrame(int frameNum, bool loadCast) {
-	debugC(7, kDebugLoading, "****** Frame request %d, current pos: %ld", frameNum, _framesStream->pos());
+	debugC(7, kDebugLoading, "****** Frame request %d, current pos: %ld, current frame number: %d", frameNum, _framesStream->pos(), _curFrameNumber);
 
 	int sourceFrame = _curFrameNumber;
 	int targetFrame = frameNum;
@@ -1532,8 +1556,8 @@ bool Score::readOneFrame() {
 			_currentFrame->readChannel(*_framesStream, channelOffset, channelSize, _version);
 		}
 
-		if (debugChannelSet(4, kDebugLoading)) {
-			debugC(4, kDebugLoading, "%s", _currentFrame->formatChannelInfo().c_str());
+		if (debugChannelSet(9, kDebugLoading)) {
+			debugC(9, kDebugLoading, "%s", _currentFrame->formatChannelInfo().c_str());
 		}
 
 		debugC(8, kDebugLoading, "Score::readOneFrame(): Frame %d actionId: %s", _curFrameNumber, _currentFrame->_mainChannels.actionId.asString().c_str());

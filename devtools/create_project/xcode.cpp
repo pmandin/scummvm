@@ -1033,8 +1033,10 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/engine-data/drascula.dat");
 		files.push_back("dists/engine-data/encoding.dat");
 		files.push_back("dists/engine-data/fonts.dat");
+		files.push_back("dists/engine-data/fonts-cjk.dat");
 		files.push_back("dists/engine-data/freescape.dat");
 		files.push_back("dists/engine-data/hadesch_translations.dat");
+		files.push_back("dists/engine-data/helpdialog.zip");
 		files.push_back("dists/engine-data/hugo.dat");
 		files.push_back("dists/engine-data/kyra.dat");
 		files.push_back("dists/engine-data/lure.dat");
@@ -1148,6 +1150,10 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/freescape/shaders/freescape_bitmap.vertex");
 			files.push_back("engines/freescape/shaders/freescape_triangle.fragment");
 			files.push_back("engines/freescape/shaders/freescape_triangle.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "USE_FLUIDSYNTH")) {
+			files.push_back("dists/soundfonts/Roland_SC-55.sf2");
+			files.push_back("dists/soundfonts/COPYRIGHT.Roland_SC-55");
 		}
 		files.push_back("icons/scummvm.icns");
 		files.push_back("AUTHORS");
@@ -1412,7 +1418,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	// Separate iphoneos and iphonesimulator definitions since simulator running on x86_64
 	// hosts doesn't support NEON
 	ValueList scummvmIOS_defines = scummvmIOSsimulator_defines;
-	//	ADD_DEFINE(scummvmIOS_defines, "SCUMMVM_NEON");
+	ADD_DEFINE(scummvmIOS_defines, "SCUMMVM_NEON");
 	ADD_SETTING_LIST(iPhone_Debug, "\"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]\"", scummvmIOS_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	ADD_SETTING(iPhone_Debug, "ASSETCATALOG_COMPILER_APPICON_NAME", "AppIcon");
 	ADD_SETTING(iPhone_Debug, "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME", "LaunchImage");
@@ -1575,7 +1581,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	// Separate appletvos and appletvsimulator definitions since simulator running on x86_64
 	// hosts doesn't support NEON
 	ValueList scummvmTVOS_defines = scummvmTVOSsimulator_defines;
-	//	ADD_DEFINE(scummvmTVOS_defines, "SCUMMVM_NEON");
+	ADD_DEFINE(scummvmTVOS_defines, "SCUMMVM_NEON");
 	ADD_SETTING_LIST(tvOS_Debug, "\"GCC_PREPROCESSOR_DEFINITIONS[sdk=appletvos*]\"", scummvmTVOS_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	ADD_SETTING(tvOS_Debug, "ASSETCATALOG_COMPILER_APPICON_NAME", "AppIcon");
 	ADD_SETTING(tvOS_Debug, "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME", "LaunchImage");

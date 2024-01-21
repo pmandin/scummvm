@@ -767,9 +767,9 @@ void Debugger::dumpCurrentMap() {
 	s->EndPainting();
 
 #ifdef USE_PNG
-	Std::string filename = Common::String::format("map_%03d.png", currentMap->getNum());
+	Common::Path filename(Common::String::format("map_%03d.png", currentMap->getNum()));
 #else
-	Std::string filename = Common::String::format("map_%03d.bmp", currentMap->getNum());
+	Common::Path filename(Common::String::format("map_%03d.bmp", currentMap->getNum()));
 #endif
 
 	Common::DumpFile dumpFile;
@@ -783,9 +783,9 @@ void Debugger::dumpCurrentMap() {
 	}
 
 	if (result) {
-		debugPrintf("Map dumped: %s\n", filename.c_str());
+		debugPrintf("Map dumped: %s\n", filename.toString().c_str());
 	} else {
-		debugPrintf("Could not write file: %s\n", filename.c_str());
+		debugPrintf("Could not write file: %s\n", filename.toString().c_str());
 	}
 
 	delete g;
@@ -1052,7 +1052,7 @@ bool Debugger::cmdName(int argc, const char **argv) {
 
 bool Debugger::cmdUseBackpack(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use backpack: avatarInStasis\n");
+		debugPrintf("Can't use backpack: avatarInStasis");
 		return false;
 	}
 	MainActor *av = getMainActor();
@@ -1069,7 +1069,7 @@ static bool _isAvatarControlled() {
 
 bool Debugger::cmdNextInventory(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use inventory: avatarInStasis\n");
+		debugPrintf("Can't use inventory: avatarInStasis");
 		return false;
 	}
 
@@ -1085,7 +1085,7 @@ bool Debugger::cmdNextInventory(int argc, const char **argv) {
 
 bool Debugger::cmdNextWeapon(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't change weapon: avatarInStasis\n");
+		debugPrintf("Can't change weapon: avatarInStasis");
 		return false;
 	}
 
@@ -1101,7 +1101,7 @@ bool Debugger::cmdNextWeapon(int argc, const char **argv) {
 
 bool Debugger::cmdUseInventoryItem(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use active inventory item: avatarInStasis\n");
+		debugPrintf("Can't use active inventory item: avatarInStasis");
 		return false;
 	}
 
@@ -1123,7 +1123,7 @@ bool Debugger::cmdUseInventoryItem(int argc, const char **argv) {
 
 bool Debugger::cmdUseMedikit(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use medikit: avatarInStasis\n");
+		debugPrintf("Can't use medikit: avatarInStasis");
 		return false;
 	}
 
@@ -1139,7 +1139,7 @@ bool Debugger::cmdUseMedikit(int argc, const char **argv) {
 
 bool Debugger::cmdUseEnergyCube(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use energy cube: avatarInStasis\n");
+		debugPrintf("Can't use energy cube: avatarInStasis");
 		return false;
 	}
 
@@ -1155,7 +1155,7 @@ bool Debugger::cmdUseEnergyCube(int argc, const char **argv) {
 
 bool Debugger::cmdDetonateBomb(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't detonate bomb: avatarInStasis\n");
+		debugPrintf("Can't detonate bomb: avatarInStasis");
 		return false;
 	}
 
@@ -1171,7 +1171,7 @@ bool Debugger::cmdDetonateBomb(int argc, const char **argv) {
 
 bool Debugger::cmdDropWeapon(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't drop weapon: avatarInStasis\n");
+		debugPrintf("Can't drop weapon: avatarInStasis");
 		return false;
 	}
 
@@ -1187,7 +1187,7 @@ bool Debugger::cmdDropWeapon(int argc, const char **argv) {
 
 bool Debugger::cmdUseInventory(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use inventory: avatarInStasis\n");
+		debugPrintf("Can't use inventory: avatarInStasis");
 		return false;
 	}
 	MainActor *av = getMainActor();
@@ -1222,7 +1222,7 @@ bool Debugger::cmdUseKeyring(int argc, const char **argv) {
 
 bool Debugger::cmdCameraOnAvatar(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isCruStasis()) {
-		debugPrintf("Can't move camera: cruStasis\n");
+		debugPrintf("Can't move camera: cruStasis");
 		return false;
 	}
 	Actor *actor = getControlledActor();
@@ -1239,7 +1239,7 @@ static bool _avatarMoveKey(uint32 flag, const char *debugname) {
 	Ultima8Engine *engine = Ultima8Engine::get_instance();
 	engine->moveKeyEvent();
 	if (engine->isAvatarInStasis()) {
-		debug("Can't %s: avatarInStasis\n", debugname);
+		debug("Can't %s: avatarInStasis", debugname);
 		return false;
 	}
 	AvatarMoverProcess *proc = engine->getAvatarMoverProcess();
@@ -1392,7 +1392,7 @@ bool Debugger::cmdToggleCrouch(int argc, const char **argv) {
 
 bool Debugger::cmdToggleCombat(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't toggle combat: avatarInStasis\n");
+		debugPrintf("Can't toggle combat: avatarInStasis");
 		return false;
 	}
 
@@ -1403,7 +1403,7 @@ bool Debugger::cmdToggleCombat(int argc, const char **argv) {
 
 bool Debugger::cmdStartSelection(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't select items: avatarInStasis\n");
+		debugPrintf("Can't select items: avatarInStasis");
 		return false;
 	}
 
@@ -1423,7 +1423,7 @@ bool Debugger::cmdStartSelection(int argc, const char **argv) {
 
 bool Debugger::cmdUseSelection(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't use items: avatarInStasis\n");
+		debugPrintf("Can't use items: avatarInStasis");
 		return false;
 	}
 
@@ -1440,7 +1440,7 @@ bool Debugger::cmdUseSelection(int argc, const char **argv) {
 
 bool Debugger::cmdGrabItems(int argc, const char **argv) {
 	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-		debugPrintf("Can't grab items: avatarInStasis\n");
+		debugPrintf("Can't grab items: avatarInStasis");
 		return false;
 	}
 
@@ -1493,11 +1493,11 @@ bool Debugger::cmdObjectInfo(int argc, const char **argv) {
 static bool _quickMoveKey(uint32 flag, const char *debugname) {
 	Ultima8Engine *engine = Ultima8Engine::get_instance();
 	if (engine->isAvatarInStasis()) {
-		g_debugger->debugPrintf("Can't %s: avatarInStasis\n", debugname);
+		g_debugger->debugPrintf("Can't %s: avatarInStasis", debugname);
 		return true;
 	}
 	if (!engine->areCheatsEnabled()) {
-		g_debugger->debugPrintf("Can't %s: Cheats aren't enabled\n", debugname);
+		g_debugger->debugPrintf("Can't %s: Cheats aren't enabled", debugname);
 		return true;
 	}
 
@@ -1748,9 +1748,9 @@ bool Debugger::cmdPlayMovie(int argc, const char **argv) {
 		return true;
 	}
 
-	Std::string filename = Common::String::format("static/%s.skf", argv[1]);
+	Common::String filename = Common::String::format("static/%s.skf", argv[1]);
 	FileSystem *filesys = FileSystem::get_instance();
-	Common::SeekableReadStream *skf = filesys->ReadFile(filename);
+	Common::SeekableReadStream *skf = filesys->ReadFile(filename.c_str());
 	if (!skf) {
 		debugPrintf("movie not found.\n");
 		return true;

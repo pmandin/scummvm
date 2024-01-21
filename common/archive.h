@@ -22,14 +22,14 @@
 #ifndef COMMON_ARCHIVE_H
 #define COMMON_ARCHIVE_H
 
-#include "common/str.h"
+#include "common/error.h"
+#include "common/hashmap.h"
+#include "common/hash-str.h"
 #include "common/list.h"
 #include "common/path.h"
 #include "common/ptr.h"
-#include "common/hashmap.h"
-#include "common/hash-str.h"
 #include "common/singleton.h"
-#include "common/error.h"
+#include "common/str.h"
 
 namespace Common {
 
@@ -82,6 +82,7 @@ public:
 	virtual bool isDirectory() const; /*!< Checks if the ArchiveMember is a directory. */
 	virtual void listChildren(ArchiveMemberList &childList, const char *pattern = nullptr) const; /*!< Adds the immediate children of this archive member to childList, optionally matching a pattern. */
 	virtual U32String getDisplayName() const; /*!< Get the display name of the archive member. */
+	virtual bool isInMacArchive() const; /*!< Checks if the ArchiveMember is in a Mac archive, in which case resource forks and Finder info can only be loaded via alt streams. */
 };
 
 struct ArchiveMemberDetails {
@@ -204,7 +205,7 @@ public:
 	/**
 	 * Dump all files from the archive to the given directory
 	 */
-	Common::Error dumpArchive(String destPath);
+	Common::Error dumpArchive(const Path &destPath);
 
 	/**
 	 * Returns the separator used by internal paths in the archive
@@ -271,20 +272,18 @@ public:
 	SeekableReadStream *createReadStreamForMember(const Path &path) const;
 	SeekableReadStream *createReadStreamForMemberAltStream(const Path &path, Common::AltStreamType altStreamType) const;
 
-	virtual String translatePath(const Path &path) const {
-		// Most of users of this class implement DOS-like archives.
-		// Others override this method.
-		return normalizePath(path.toString('\\'), '\\');
+	virtual Path translatePath(const Path &path) const {
+		return path.normalize();
 	}
 
-	virtual SharedArchiveContents readContentsForPath(const String &translatedPath) const = 0;
-	virtual SharedArchiveContents readContentsForPathAltStream(const String &translatedPath, AltStreamType altStreamType) const;
+	virtual SharedArchiveContents readContentsForPath(const Path &translatedPath) const = 0;
+	virtual SharedArchiveContents readContentsForPathAltStream(const Path &translatedPath, AltStreamType altStreamType) const;
 
 private:
 	struct CacheKey {
 		CacheKey();
 
-		String path;
+		Path path;
 		AltStreamType altStreamType;
 	};
 
@@ -342,12 +341,18 @@ public:
 	/**
 	 * Create and add an FSDirectory by name.
 	 */
-	void addDirectory(const String &name, const String &directory, int priority = 0, int depth = 1, bool flat = false);
+	void addDirectory(const String &name, const Path &directory, int priority = 0, int depth = 1, bool flat = false);
 
 	/**
 	 * Create and add an FSDirectory by FSNode.
 	 */
 	void addDirectory(const String &name, const FSNode &directory, int priority = 0, int depth = 1, bool flat = false);
+
+	/**
+	 * Overloads which use directory path as name
+	 */
+	void addDirectory(const Path &directory, int priority = 0, int depth = 1, bool flat = false);
+	void addDirectory(const FSNode &directory, int priority = 0, int depth = 1, bool flat = false);
 
 	/**
 	 * Create and add a subdirectory by name (caseless).

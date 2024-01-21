@@ -81,26 +81,15 @@ void musicFinished() {
 	SoundManager::g_MusicFinished = true;
 }
 
-SoundManager::SoundManager(Audio::Mixer *mixer) : _mixer(mixer) {
-	m_pCurrentSong = NULL;
+SoundManager::SoundManager(Audio::Mixer *mixer) : _mixer(mixer),
+		m_pCurrentSong(nullptr), audio_enabled(false), music_enabled(false),
+		sfx_enabled(false), m_Config(nullptr), m_SfxManager(nullptr), opl(nullptr),
+		stop_music_on_group_change(true), speech_enabled(true), music_volume(0),
+		sfx_volume(0), game_type(NUVIE_GAME_NONE), _midiDriver(nullptr),
+		_mt32MidiDriver(nullptr), _midiParser(nullptr), _deviceType(MT_NULL),
+		_musicData(nullptr), _mt32InstrumentMapping(nullptr) {
 	m_CurrentGroup = "";
 	g_MusicFinished = true;
-
-	audio_enabled = false;
-	music_enabled = false;
-	sfx_enabled = false;
-
-	m_Config = NULL;
-	m_SfxManager = NULL;
-
-	opl = NULL;
-
-	_midiDriver = nullptr;
-	_mt32MidiDriver = nullptr;
-	_midiParser = nullptr;
-	_deviceType = MT_NULL;
-	_musicData = nullptr;
-	_mt32InstrumentMapping = nullptr;
 }
 
 SoundManager::~SoundManager() {
@@ -145,7 +134,7 @@ SoundManager::~SoundManager() {
 	delete m_SfxManager;
 }
 
-bool SoundManager::nuvieStartup(Configuration *config) {
+bool SoundManager::nuvieStartup(const Configuration *config) {
 	Std::string config_key;
 	Std::string music_style;
 	Std::string music_cfg_file; //full path and filename to music.cfg
@@ -177,7 +166,7 @@ bool SoundManager::nuvieStartup(Configuration *config) {
 		if (game_type == NUVIE_GAME_U6)
 			LoadNativeU6Songs(); //FIX need to handle MD & SE music too.
 	} else if (music_style == "custom")
-		LoadCustomSongs(sound_dir);
+		LoadCustomSongs(Common::Path(sound_dir));
 	else
 		DEBUG(0, LEVEL_WARNING, "Unknown music style '%s'\n", music_style.c_str());
 
@@ -251,70 +240,70 @@ bool SoundManager::initAudio() {
 bool SoundManager::LoadNativeU6Songs() {
 	Song *song;
 
-	string filename;
+	Common::Path filename;
 	string fileId;
 
 	fileId = "brit.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-// loadSong(song, filename.c_str());
-	loadSong(song, filename.c_str(), fileId.c_str(), "Rule Britannia");
+// loadSong(song, filename);
+	loadSong(song, filename, fileId.c_str(), "Rule Britannia");
 	groupAddSong("random", song);
 
 	fileId = "forest.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Wanderer (Forest)");
+	loadSong(song, filename, fileId.c_str(), "Wanderer (Forest)");
 	groupAddSong("random", song);
 
 	fileId = "stones.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Stones");
+	loadSong(song, filename, fileId.c_str(), "Stones");
 	groupAddSong("random", song);
 
 	fileId = "ultima.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Ultima VI Theme");
+	loadSong(song, filename, fileId.c_str(), "Ultima VI Theme");
 	groupAddSong("random", song);
 
 	fileId = "engage.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Engagement and Melee");
+	loadSong(song, filename, fileId.c_str(), "Engagement and Melee");
 	groupAddSong("combat", song);
 
 	fileId = "hornpipe.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Captain Johne's Hornpipe");
+	loadSong(song, filename, fileId.c_str(), "Captain Johne's Hornpipe");
 	groupAddSong("boat", song);
 
 	fileId = "gargoyle.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Audchar Gargl Zenmur");
+	loadSong(song, filename, fileId.c_str(), "Audchar Gargl Zenmur");
 	groupAddSong("gargoyle", song);
 
 	fileId = "dungeon.m";
 	config_get_path(m_Config, fileId, filename);
 	song = new SongFilename();
-	loadSong(song, filename.c_str(), fileId.c_str(), "Dungeon");
+	loadSong(song, filename, fileId.c_str(), "Dungeon");
 	groupAddSong("dungeon", song);
 
 	return true;
 }
 
-bool SoundManager::LoadCustomSongs(string sound_dir) {
+bool SoundManager::LoadCustomSongs(const Common::Path &sound_dir) {
 	char seps[] = ";\r\n";
 	char *token1;
 	char *token2;
 	char *sz;
 	NuvieIOFileRead niof;
 	Song *song;
-	Std::string scriptname;
-	Std::string filename;
+	Common::Path scriptname;
+	Common::Path filename;
 
 	build_path(sound_dir, "music.cfg", scriptname);
 
@@ -323,19 +312,19 @@ bool SoundManager::LoadCustomSongs(string sound_dir) {
 
 	sz = (char *)niof.readAll();
 
-	if (sz == NULL)
+	if (sz == nullptr)
 		return false;
 
 	token1 = strtok(sz, seps);
-	for (; (token1 != NULL) && ((token2 = strtok(NULL, seps)) != NULL) ; token1 = strtok(NULL, seps)) {
+	for (; (token1 != nullptr) && ((token2 = strtok(nullptr, seps)) != nullptr) ; token1 = strtok(nullptr, seps)) {
 		build_path(sound_dir, token2, filename);
 
 		song = (Song *)SongExists(token2);
-		if (song == NULL) {
+		if (song == nullptr) {
 			// Note: the base class Song does not have an implementation for
 			// Init, so loading custom songs does not work.
 			song = new Song;
-			if (!loadSong(song, filename.c_str(), token2))
+			if (!loadSong(song, filename, token2))
 				continue; //error loading song
 		}
 
@@ -348,19 +337,19 @@ bool SoundManager::LoadCustomSongs(string sound_dir) {
 	return true;
 }
 
-bool SoundManager::loadSong(Song *song, const char *filename, const char *fileId) {
+bool SoundManager::loadSong(Song *song, const Common::Path &filename, const char *fileId) {
 	if (song->Init(filename, fileId)) {
 		m_Songs.push_back(song);       //add it to our global list
 		return true;
 	} else {
-		DEBUG(0, LEVEL_ERROR, "could not load %s\n", filename);
+		DEBUG(0, LEVEL_ERROR, "could not load %s\n", filename.toString().c_str());
 	}
 
 	return false;
 }
 
 // (SB-X)
-bool SoundManager::loadSong(Song *song, const char *filename, const char *fileId, const char *title) {
+bool SoundManager::loadSong(Song *song, const Common::Path &filename, const char *fileId, const char *title) {
 	if (loadSong(song, filename, fileId) == true) {
 		song->SetTitle(title);
 		return true;
@@ -369,7 +358,7 @@ bool SoundManager::loadSong(Song *song, const char *filename, const char *fileId
 }
 
 bool SoundManager::groupAddSong(const char *group, Song *song) {
-	if (song != NULL) {
+	if (song != nullptr) {
 		//we have a valid song
 		SoundCollection *psc;
 		Common::HashMap <Common::String, SoundCollection * >::iterator it;
@@ -408,13 +397,13 @@ bool SoundManager::LoadObjectSamples (string sound_dir)
 
   token1 = strtok (sz, seps);
 
-  while ((token1 != NULL) && ((token2 = strtok (NULL, seps)) != NULL))
+  while ((token1 != nullptr) && ((token2 = strtok (nullptr, seps)) != nullptr))
 	{
 	  int id = atoi (token1);
 	  DEBUG(0,LEVEL_DEBUGGING,"%d : %s\n", id, token2);
 	  Sound *ps;
 	  ps = SampleExists (token2);
-	  if (ps == NULL)
+	  if (ps == nullptr)
 		{
 		  Sample *s;
 		  s = new Sample;
@@ -426,7 +415,7 @@ bool SoundManager::LoadObjectSamples (string sound_dir)
 		  ps = s;
 		  m_Samples.push_back (ps);     //add it to our global list
 		}
-	  if (ps != NULL)
+	  if (ps != nullptr)
 		{                       //we have a valid sound
 		  SoundCollection *psc;
 		  Common::HashMap < int, SoundCollection * >::iterator it;
@@ -443,7 +432,7 @@ bool SoundManager::LoadObjectSamples (string sound_dir)
 			  psc->m_Sounds.push_back (ps);     //add this sound to the collection
 			}
 		}
-	  token1 = strtok (NULL, seps);
+	  token1 = strtok (nullptr, seps);
 	}
   return true;
 };
@@ -470,13 +459,13 @@ bool SoundManager::LoadTileSamples (string sound_dir)
 
   token1 = strtok (sz, seps);
 
-  while ((token1 != NULL) && ((token2 = strtok (NULL, seps)) != NULL))
+  while ((token1 != nullptr) && ((token2 = strtok (nullptr, seps)) != nullptr))
 	{
 	  int id = atoi (token1);
 	  DEBUG(0,LEVEL_DEBUGGING,"%d : %s\n", id, token2);
 	  Sound *ps;
 	  ps = SampleExists (token2);
-	  if (ps == NULL)
+	  if (ps == nullptr)
 		{
 		  Sample *s;
 		  s = new Sample;
@@ -488,7 +477,7 @@ bool SoundManager::LoadTileSamples (string sound_dir)
 		  ps = s;
 		  m_Samples.push_back (ps);     //add it to our global list
 		}
-	  if (ps != NULL)
+	  if (ps != nullptr)
 		{                       //we have a valid sound
 		  SoundCollection *psc;
 		  Common::HashMap < int, SoundCollection * >::iterator it;
@@ -505,13 +494,13 @@ bool SoundManager::LoadTileSamples (string sound_dir)
 			  psc->m_Sounds.push_back (ps);     //add this sound to the collection
 			}
 		}
-	  token1 = strtok (NULL, seps);
+	  token1 = strtok (nullptr, seps);
 	}
   return true;
 };
 */
 bool SoundManager::LoadSfxManager(string sfx_style) {
-	if (m_SfxManager != NULL) {
+	if (m_SfxManager != nullptr) {
 		return false;
 	}
 
@@ -560,7 +549,7 @@ void SoundManager::musicPlayFrom(string group) {
 void SoundManager::musicPause() {
 	Common::StackLock lock(_musicMutex);
 
-	if (m_pCurrentSong != NULL && _midiParser->isPlaying()) {
+	if (m_pCurrentSong != nullptr && _midiParser->isPlaying()) {
 		_midiParser->stopPlaying();
 	}
 }
@@ -569,23 +558,23 @@ void SoundManager::musicPause() {
 void SoundManager::musicPlay() {
 	Common::StackLock lock(_musicMutex);
 
-	if (m_pCurrentSong != NULL && _midiParser->isPlaying()) {
+	if (m_pCurrentSong != nullptr && _midiParser->isPlaying()) {
 		// Already playing a song.
 		return;
 	}
 
 	// (SB-X) Get a new song if stopped.
-	if (m_pCurrentSong == NULL)
+	if (m_pCurrentSong == nullptr)
 		m_pCurrentSong = RequestSong(m_CurrentGroup);
 
-	if (m_pCurrentSong != NULL) {
+	if (m_pCurrentSong != nullptr) {
 		DEBUG(0, LEVEL_INFORMATIONAL, "assigning new song! '%s'\n", m_pCurrentSong->GetName().c_str());
 
 		// TODO Only Ultima 6 LZW format is supported.
 		uint32 decompressed_filesize;
 		U6Lzw lzw;
 
-		_musicData = lzw.decompress_file(m_pCurrentSong->GetName(), decompressed_filesize);
+		_musicData = lzw.decompress_file(Common::Path(m_pCurrentSong->GetName()), decompressed_filesize);
 
 		bool result = _midiParser->loadMusic(_musicData, decompressed_filesize);
 		if (result) {
@@ -610,14 +599,14 @@ void SoundManager::musicPlay() {
 }
 
 void SoundManager::musicPlay(const char *filename, uint16 song_num) {
-	string path;
+	Common::Path path;
 
 	if (!music_enabled || !audio_enabled)
 		return;
 
 	config_get_path(m_Config, filename, path);
 	SongFilename *song = new SongFilename();
-	song->Init(path.c_str(), filename, song_num);
+	song->Init(path, filename, song_num);
 
 	Common::StackLock lock(_musicMutex);
 
@@ -632,7 +621,7 @@ void SoundManager::musicStop() {
 	Common::StackLock lock(_musicMutex);
 
 	musicPause();
-	m_pCurrentSong = NULL;
+	m_pCurrentSong = nullptr;
 	if (_musicData) {
 		delete _musicData;
 		_musicData = nullptr;
@@ -667,13 +656,13 @@ void SoundManager::update_map_sfx() {
 	//m_ViewableTiles
 
 	//get a list of all the sounds
-	for (i = 0; i < mw->m_ViewableObjects.size(); i++) {
-		//DEBUG(0,LEVEL_DEBUGGING,"%d %s",mw->m_ViewableObjects[i]->obj_n,Game::get_game()->get_obj_manager()->get_obj_name(mw->m_ViewableObjects[i]));
-		SfxIdType sfx_id = RequestObjectSfxId(mw->m_ViewableObjects[i]->obj_n); //does this object have an associated sound?
+	for (const Obj *obj : mw->m_ViewableObjects) {
+		//DEBUG(0,LEVEL_DEBUGGING,"%d %s",obj->obj_n,Game::get_game()->get_obj_manager()->get_obj_name(obj));
+		SfxIdType sfx_id = RequestObjectSfxId(obj->obj_n); //does this object have an associated sound?
 		if (sfx_id != NUVIE_SFX_NONE) {
 			//calculate the volume
-			uint16 ox = mw->m_ViewableObjects[i]->x;
-			uint16 oy = mw->m_ViewableObjects[i]->y;
+			uint16 ox = obj->x;
+			uint16 oy = obj->y;
 			float dist = sqrtf((float)(x - ox) * (x - ox) + (float)(y - oy) * (y - oy));
 			float vol = (8.0f - dist) / 8.0f;
 			if (vol < 0)
@@ -696,7 +685,7 @@ void SoundManager::update_map_sfx() {
 	for (i = 0; i < mw->m_ViewableTiles.size(); i++)
 	  {
 	    Sound *sp = RequestTileSound (mw->m_ViewableTiles[i].t->tile_num);        //does this object have an associated sound?
-	    if (sp != NULL)
+	    if (sp != nullptr)
 	      {
 	        //calculate the volume
 	        short ox = mw->m_ViewableTiles[i].x - 5;
@@ -773,24 +762,22 @@ void SoundManager::update() {
 	}
 }
 
-Sound *SoundManager::SongExists(string name) {
-	Std::list < Sound * >::iterator it;
-	for (it = m_Songs.begin(); it != m_Songs.end(); ++it) {
-		if ((*it)->GetName() == name)
-			return *it;
+Sound *SoundManager::SongExists(const string &name) {
+	for (Sound *song : m_Songs) {
+		if (song->GetName() == name)
+			return song;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
-Sound *SoundManager::SampleExists(string name) {
-	Std::list < Sound * >::iterator it;
-	for (it = m_Samples.begin(); it != m_Samples.end(); ++it) {
-		if ((*it)->GetName() == name)
-			return *it;
+Sound *SoundManager::SampleExists(const string &name) {
+	for (Sound *sample : m_Samples) {
+		if (sample->GetName() == name)
+			return sample;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 Sound *SoundManager::RequestTileSound(int id) {
@@ -801,7 +788,7 @@ Sound *SoundManager::RequestTileSound(int id) {
 		psc = (*it)._value;
 		return psc->Select();
 	}
-	return NULL;
+	return nullptr;
 }
 
 Sound *SoundManager::RequestObjectSound(int id) {
@@ -812,7 +799,7 @@ Sound *SoundManager::RequestObjectSound(int id) {
 		psc = (*it)._value;
 		return psc->Select();
 	}
-	return NULL;
+	return nullptr;
 }
 
 uint16 SoundManager::RequestObjectSfxId(uint16 obj_n) {
@@ -826,7 +813,7 @@ uint16 SoundManager::RequestObjectSfxId(uint16 obj_n) {
 	return NUVIE_SFX_NONE;
 }
 
-Sound *SoundManager::RequestSong(string group) {
+Sound *SoundManager::RequestSong(const string &group) {
 	Common::HashMap<Common::String, SoundCollection * >::iterator it;
 	it = m_MusicMap.find(group);
 	if (it != m_MusicMap.end()) {
@@ -834,10 +821,10 @@ Sound *SoundManager::RequestSong(string group) {
 		psc = (*it)._value;
 		return psc->Select();
 	}
-	return NULL;
+	return nullptr;
 }
 
-Audio::SoundHandle SoundManager::playTownsSound(Std::string filename, uint16 sample_num) {
+Audio::SoundHandle SoundManager::playTownsSound(const Common::Path &filename, uint16 sample_num) {
 	FMtownsDecoderStream *stream = new FMtownsDecoderStream(filename, sample_num);
 	Audio::SoundHandle handle;
 	_mixer->playStream(Audio::Mixer::kSpeechSoundType, &handle, stream, -1);
@@ -850,7 +837,7 @@ bool SoundManager::isSoundPLaying(Audio::SoundHandle handle) {
 }
 
 bool SoundManager::playSfx(uint16 sfx_id, bool async) {
-	if (m_SfxManager == NULL || audio_enabled == false || sfx_enabled == false)
+	if (m_SfxManager == nullptr || audio_enabled == false || sfx_enabled == false)
 		return false;
 
 	if (async) {

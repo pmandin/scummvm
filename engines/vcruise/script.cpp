@@ -150,7 +150,7 @@ struct ScriptNamedInstruction {
 
 class ScriptCompiler {
 public:
-	ScriptCompiler(TextParser &parser, const Common::String &blamePath, ScriptDialect dialect, uint loadAsRoom, uint fileRoom, IScriptCompilerGlobalState *gs);
+	ScriptCompiler(TextParser &parser, const Common::Path &blamePath, ScriptDialect dialect, uint loadAsRoom, uint fileRoom, IScriptCompilerGlobalState *gs);
 
 	void compileScriptSet(ScriptSet *ss);
 
@@ -179,7 +179,7 @@ private:
 
 	TextParser &_parser;
 	NumberParsingMode _numberParsingMode;
-	const Common::String _blamePath;
+	const Common::Path _blamePath;
 
 	ScriptDialect _dialect;
 	uint _loadAsRoom;
@@ -226,7 +226,7 @@ private:
 	Common::Array<Common::SharedPtr<Script> > _functions;
 };
 
-ScriptCompiler::ScriptCompiler(TextParser &parser, const Common::String &blamePath, ScriptDialect dialect, uint loadAsRoom, uint fileRoom, IScriptCompilerGlobalState *gs)
+ScriptCompiler::ScriptCompiler(TextParser &parser, const Common::Path &blamePath, ScriptDialect dialect, uint loadAsRoom, uint fileRoom, IScriptCompilerGlobalState *gs)
 	: _numberParsingMode(kNumberParsingHex), _parser(parser), _blamePath(blamePath), _dialect(dialect), _loadAsRoom(loadAsRoom), _fileRoom(fileRoom), _gs(gs),
 	  _scrToken(nullptr), _eroomToken(nullptr) {
 }
@@ -1355,7 +1355,7 @@ ScriptSet::ScriptSet() {
 IScriptCompilerGlobalState::~IScriptCompilerGlobalState() {
 }
 
-static void compileLogicFile(ScriptSet &scriptSet, Common::ReadStream &stream, uint streamSize, const Common::String &blamePath, ScriptDialect dialect, uint loadAsRoom, uint fileRoom, IScriptCompilerGlobalState *gs) {
+static void compileLogicFile(ScriptSet &scriptSet, Common::ReadStream &stream, uint streamSize, const Common::Path &blamePath, ScriptDialect dialect, uint loadAsRoom, uint fileRoom, IScriptCompilerGlobalState *gs) {
 	LogicUnscrambleStream unscrambleStream(&stream, streamSize);
 	TextParser parser(&unscrambleStream);
 
@@ -1368,14 +1368,14 @@ Common::SharedPtr<IScriptCompilerGlobalState> createScriptCompilerGlobalState() 
 	return Common::SharedPtr<IScriptCompilerGlobalState>(new ScriptCompilerGlobalState());
 }
 
-Common::SharedPtr<ScriptSet> compileReahLogicFile(Common::ReadStream &stream, uint streamSize, const Common::String &blamePath) {
+Common::SharedPtr<ScriptSet> compileReahLogicFile(Common::ReadStream &stream, uint streamSize, const Common::Path &blamePath) {
 	Common::SharedPtr<ScriptSet> scriptSet(new ScriptSet());
 
 	compileLogicFile(*scriptSet, stream, streamSize, blamePath, kScriptDialectReah, 0, 0, nullptr);
 	return scriptSet;
 }
 
-void compileSchizmLogicFile(ScriptSet &scriptSet, uint loadAsRoom, uint fileRoom, Common::ReadStream &stream, uint streamSize, const Common::String &blamePath, IScriptCompilerGlobalState *gs) {
+void compileSchizmLogicFile(ScriptSet &scriptSet, uint loadAsRoom, uint fileRoom, Common::ReadStream &stream, uint streamSize, const Common::Path &blamePath, IScriptCompilerGlobalState *gs) {
 	compileLogicFile(scriptSet, stream, streamSize, blamePath, kScriptDialectSchizm, loadAsRoom, fileRoom, gs);
 }
 
@@ -1425,6 +1425,15 @@ void optimizeScriptSet(ScriptSet &scriptSet) {
 
 	Common::Array<Script *> scriptCheckQueue;
 
+	ScreenNameMap_t screenNames;
+
+	// Find all screen names.
+	// There is one duplicate: START exists in room 1 and room 63.  In that case, we want to use the latter ID.
+	for (const RoomScriptSetMap_t::Node &rsNode : scriptSet.roomScripts) {
+		for (const ScreenNameMap_t::Node &snNode : rsNode._value->screenNames)
+			screenNames[snNode._key] = snNode._value;
+	}
+
 	for (const RoomScriptSetMap_t::Node &rsNode : scriptSet.roomScripts) {
 		for (const ScreenScriptSetMap_t::Node &ssNode : rsNode._value->screenScripts) {
 			if (ssNode._value->entryScript)
@@ -1453,6 +1462,23 @@ void optimizeScriptSet(ScriptSet &scriptSet) {
 					instr.arg = newIndex;
 				} else
 					instr.arg = funcIDIt->_value;
+			} else if (instr.op == ScriptOps::kScreenName) {
+				// In a few places, the screen number being transitioned to isn't valid in the target room.
+				//
+				// fnKOLEJKA_PRACOWNIA in room 61 and fnKOLEJKA_CIEMNO in room 62 both execute animF ops after changing room number,
+				// but reference a screen ID in the current room.  They then execute another animF op in the new room, which changes
+				// to a valid screen number.
+				//
+				// The way this appears to work is that screen IDs are applied based on the loaded room script
+				// instead of the active room.  We compensate for this by just resolving the screen name here.
+				const Common::String &screenNameStr = scriptSet.strings[instr.arg];
+
+				ScreenNameMap_t::const_iterator snIt = screenNames.find(screenNameStr);
+				if (snIt != screenNames.end()) {
+					instr.op = ScriptOps::kNumber;
+					instr.arg = snIt->_value;
+				} else
+					error("Couldn't resolve screen name %s to number", screenNameStr.c_str());
 			} else if (opArgIsStringIndex(instr.op)) {
 				uint strID = instr.arg;
 

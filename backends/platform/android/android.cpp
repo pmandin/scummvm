@@ -138,10 +138,10 @@ void checkGlError(const char *expr, const char *file, int line) {
 
 class AndroidSaveFileManager : public DefaultSaveFileManager {
 public:
-	AndroidSaveFileManager(const Common::String &defaultSavepath) : DefaultSaveFileManager(defaultSavepath) {}
+	AndroidSaveFileManager(const Common::Path &defaultSavepath) : DefaultSaveFileManager(defaultSavepath) {}
 
 	bool removeSavefile(const Common::String &filename) override {
-		Common::String path = getSavePath() + "/" + filename;
+		Common::String path = getSavePath().join(filename).toString(Common::Path::kNativeSeparator);
 		AbstractFSNode *node = AndroidFilesystemFactory::instance().makeFileNodePath(path);
 
 		if (!node) {
@@ -192,8 +192,8 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_thirdPointerId(-1),
 	_trackball_scale(2),
 	_joystick_scale(10),
-	_defaultConfigFileName(""),
-	_defaultLogFileName(""),
+	_defaultConfigFileName(),
+	_defaultLogFileName(),
 	_systemPropertiesSummaryStr(""),
 	_systemSDKdetectedStr(""),
 	_logger(nullptr) {
@@ -524,7 +524,7 @@ void OSystem_Android::initBackend() {
 	}
 
 	if (!ConfMan.hasKey("browser_lastpath")) {
-		ConfMan.set("browser_lastpath", "/");
+		ConfMan.setPath("browser_lastpath", "/");
 	}
 
 	if (!ConfMan.hasKey("gui_scale")) {
@@ -537,14 +537,14 @@ void OSystem_Android::initBackend() {
 
 	Common::String basePath = JNI::getScummVMBasePath();
 
-	_savefileManager = new AndroidSaveFileManager(basePath + "/saves");
+	_savefileManager = new AndroidSaveFileManager(Common::Path(basePath, Common::Path::kNativeSeparator).joinInPlace("saves"));
 	// TODO remove the debug message eventually
-	LOGD("Setting DefaultSaveFileManager path to: %s", ConfMan.get("savepath").c_str());
+	LOGD("Setting DefaultSaveFileManager path to: %s", ConfMan.getPath("savepath").toString(Common::Path::kNativeSeparator).c_str());
 
 
-	ConfMan.registerDefault("iconspath", basePath + "/icons");
+	ConfMan.registerDefault("iconspath", Common::Path(basePath, Common::Path::kNativeSeparator).joinInPlace("icons"));
 	// TODO remove the debug message eventually
-	LOGD("Setting Default Icons and Shaders path to: %s", ConfMan.get("iconspath").c_str());
+	LOGD("Setting Default Icons and Shaders path to: %s", ConfMan.getPath("iconspath").toString(Common::Path::kNativeSeparator).c_str());
 
 	_timerManager = new DefaultTimerManager();
 
@@ -578,7 +578,7 @@ void OSystem_Android::initBackend() {
 	BaseBackend::initBackend();
 }
 
-Common::String OSystem_Android::getDefaultConfigFileName() {
+Common::Path OSystem_Android::getDefaultConfigFileName() {
 	// if possible, skip JNI call which is more costly (performance wise)
 	if (_defaultConfigFileName.empty()) {
 		_defaultConfigFileName = JNI::getScummVMConfigPath();
@@ -586,7 +586,7 @@ Common::String OSystem_Android::getDefaultConfigFileName() {
 	return _defaultConfigFileName;
 }
 
-Common::String OSystem_Android::getDefaultLogFileName() {
+Common::Path OSystem_Android::getDefaultLogFileName() {
 	if (_defaultLogFileName.empty()) {
 		_defaultLogFileName = JNI::getScummVMLogPath();
 	}
@@ -594,12 +594,14 @@ Common::String OSystem_Android::getDefaultLogFileName() {
 }
 
 Common::WriteStream *OSystem_Android::createLogFileForAppending() {
-	if (getDefaultLogFileName().empty()) {
+	Common::String logPath(getDefaultLogFileName().toString(Common::Path::kNativeSeparator));
+
+	if (logPath.empty()) {
 		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Log file path is not known upon create attempt!");
 		return nullptr;
 	}
 
-	FILE *scvmLogFilePtr = fopen(getDefaultLogFileName().c_str(), "a");
+	FILE *scvmLogFilePtr = fopen(logPath.c_str(), "a");
 	if (scvmLogFilePtr != nullptr) {
 		// We check for log file size; if it's too big, we rewrite it.
 		// This happens only upon app launch, in initBackend() when createLogFileForAppending() is called
@@ -608,9 +610,9 @@ Common::WriteStream *OSystem_Android::createLogFileForAppending() {
 		if (sz > MAX_ANDROID_SCUMMVM_LOG_FILESIZE_IN_BYTES) {
 			fclose(scvmLogFilePtr);
 			__android_log_write(ANDROID_LOG_WARN, android_log_tag, "Default log file is bigger than 100KB. It will be overwritten!");
-			if (!getDefaultLogFileName().empty()) {
+			if (!logPath.empty()) {
 				// Create the log file from scratch overwriting the previous one
-				scvmLogFilePtr = fopen(getDefaultLogFileName().c_str(), "w");
+				scvmLogFilePtr = fopen(logPath.c_str(), "w");
 				if (scvmLogFilePtr == nullptr) {
 					__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Could not open default log file for rewrite!");
 					return nullptr;
@@ -622,7 +624,7 @@ Common::WriteStream *OSystem_Android::createLogFileForAppending() {
 		}
 	} else {
 		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Could not open default log file for writing/appending.");
-		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, getDefaultLogFileName().c_str());
+		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, logPath.c_str());
 	}
 	return new PosixIoStream(scvmLogFilePtr);
 }
@@ -816,12 +818,13 @@ Common::MutexInternal *OSystem_Android::createMutex() {
 void OSystem_Android::quit() {
 	ENTER();
 
+	_audio_thread_exit = true;
+	_timer_thread_exit = true;
+
+	JNI::wakeupForQuit();
 	JNI::setReadyForEvents(false);
 
-	_audio_thread_exit = true;
 	pthread_join(_audio_thread, 0);
-
-	_timer_thread_exit = true;
 	pthread_join(_timer_thread, 0);
 }
 
@@ -1026,6 +1029,18 @@ void *OSystem_Android::getOpenGLProcAddress(const char *name) const {
 #endif
 
 static const char * const helpTabs[] = {
+
+_s("Getting help"),
+"",
+_s(
+"## Help, I'm lost!\n"
+"\n"
+"First, make sure you have the games and necessary game files ready. Check the **Where to Get the Games** section under the **General** tab. Once obtained, follow the steps outlined in the **Adding Games** tab to finish adding them on this device. Take a moment to review this process carefully, as some users encountered challenges here owing to recent Android changes.\n"
+"\n"
+"Need more help? Refer to our [online documentation for Android](https://docs.scummvm.org/en/latest/other_platforms/android.html). Got questions? Swing by our [support forums](https://forums.scummvm.org/viewforum.php?f=17) or hop on our [Discord server](https://discord.gg/4cDsMNtcpG), which includes an [Android support channel](https://discord.com/channels/581224060529148060/1135579923185139862).\n"
+"\n"
+"Oh, and heads up, many of our supported games are intentionally tricky, sometimes mind-bogglingly so. If you're stuck in a game, think about checking out a game walkthrough. Good luck!\n"
+),
 
 _s("Touch Controls"),
 "android-help.zip",

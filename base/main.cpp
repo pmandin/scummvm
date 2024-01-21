@@ -173,7 +173,7 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 	assert(enginePlugin);
 
 	// Determine the game data path, for validation and error messages
-	Common::FSNode dir(ConfMan.get("path"));
+	Common::FSNode dir(ConfMan.getPath("path"));
 	Common::String target = ConfMan.getActiveDomainName();
 	Common::Error err = Common::kNoError;
 	Engine *engine = nullptr;
@@ -235,7 +235,7 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 			metaEngineDetection.getEngineName(),
 			err.getDesc().c_str(),
 			target.c_str(),
-			dir.getPath().c_str()
+			dir.getPath().toString(Common::Path::kNativeSeparator).c_str()
 			);
 
 		// If a temporary target failed to launch, remove it from the configuration manager
@@ -277,8 +277,8 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 
 	// Add extrapath (if any) to the directory search list
 	if (ConfMan.hasKey("extrapath")) {
-		dir = Common::FSNode(ConfMan.get("extrapath"));
-		SearchMan.addDirectory(dir.getPath(), dir);
+		dir = Common::FSNode(ConfMan.getPath("extrapath"));
+		SearchMan.addDirectory(dir);
 	}
 
 	// If a second extrapath is specified on the app domain level, add that as well.
@@ -286,10 +286,10 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 	// verify that it's not already there before adding it. The search manager will
 	// check for that too, so this check is mostly to avoid a warning message.
 	if (ConfMan.hasKey("extrapath", Common::ConfigManager::kApplicationDomain)) {
-		Common::String extraPath = ConfMan.get("extrapath", Common::ConfigManager::kApplicationDomain);
-		if (!SearchMan.hasArchive(extraPath)) {
-			dir = Common::FSNode(extraPath);
-			SearchMan.addDirectory(dir.getPath(), dir);
+		Common::Path extraPath = ConfMan.getPath("extrapath", Common::ConfigManager::kApplicationDomain);
+		dir = Common::FSNode(extraPath);
+		if (!SearchMan.hasArchive(dir.getPath().toString())) {
+			SearchMan.addDirectory(dir);
 		}
 	}
 
@@ -362,7 +362,7 @@ static void setupGraphics(OSystem &system) {
 		system.setGraphicsMode(ConfMan.get("gfx_mode").c_str());
 		system.setStretchMode(ConfMan.get("stretch_mode").c_str());
 		system.setScaler(ConfMan.get("scaler").c_str(), ConfMan.getInt("scale_factor"));
-		system.setShader(ConfMan.get("shader"));
+		system.setShader(ConfMan.getPath("shader"));
 
 #if defined(OPENDINGUX) || defined(MIYOO) || defined(MIYOOMINI)
 		// 0, 0 means "autodetect" but currently only SDL supports
@@ -467,13 +467,14 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 	}
 
 	// Load the config file (possibly overridden via command line):
-	Common::String initConfigFilename;
+	Common::Path initConfigFilename;
 	if (settings.contains("initial-cfg"))
-		initConfigFilename = settings["initial-cfg"];
+		initConfigFilename = Common::Path(settings["initial-cfg"], Common::Path::kNativeSeparator);
 
 	bool configLoadStatus;
 	if (settings.contains("config")) {
-		configLoadStatus = ConfMan.loadConfigFile(settings["config"], initConfigFilename);
+		configLoadStatus = ConfMan.loadConfigFile(
+			Common::Path(settings["config"], Common::Path::kNativeSeparator), initConfigFilename);
 	} else {
 		configLoadStatus = ConfMan.loadDefaultConfigFile(initConfigFilename);
 	}
@@ -657,13 +658,13 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				"\n"
 				"  1. From the Launcher, go to **Game Options > Paths**."
 				" Select **Game Path** or **Extra Path**, as appropriate. \n"
-				"  2. Inside the ScummVM file browser, select **Go Up** until you reach the root folder"
+				"  2. Inside the ScummVM file browser, select **Go Up** until you reach the root folder "
 				"which has the **<Add a new folder>** option.\n"
-				"  3. Double-tap **<Add a new folder>**. In your device's file browser, navigate to the folder"
+				"  3. Double-tap **<Add a new folder>**. In your device's file browser, navigate to the folder "
 				"containing all your game folders. For example, **SD Card > ScummVMgames** \n"
 				"  4. Select **Use this folder**. \n"
 				"  5. Select **Allow** to give ScummVM permission to access the folder. \n"
-				"  6. In the ScummVM file browser, double-tap to browse through your added folder."
+				"  6. In the ScummVM file browser, double-tap to browse through your added folder. "
 				"Select the folder containing the game's files, then tap **Choose**. \n"
 				"\n"
 				"Repeat steps 1 and 6 for each game."
@@ -682,13 +683,13 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				"To add a game:\n"
 				"\n"
 				"  1. Select **Add Game...** from the launcher. \n"
-				"  2. Inside the ScummVM file browser, select **Go Up** until you reach the root folder"
+				"  2. Inside the ScummVM file browser, select **Go Up** until you reach the root folder "
 				"which has the **<Add a new folder>** option.\n"
-				"  3. Double-tap **<Add a new folder>**. In your device's file browser, navigate to the folder"
+				"  3. Double-tap **<Add a new folder>**. In your device's file browser, navigate to the folder "
 				"containing all your game folders. For example, **SD Card > ScummVMgames** \n"
 				"  4. Select **Use this folder**. \n"
 				"  5. Select **Allow** to give ScummVM permission to access the folder. \n"
-				"  6. In the ScummVM file browser, double-tap to browse through your added folder."
+				"  6. In the ScummVM file browser, double-tap to browse through your added folder. "
 				"Select the sub-folder containing the game's files, then tap **Choose**."
 				"\n"
 				"Repeat steps 1 and 6 for each game."

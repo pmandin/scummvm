@@ -48,7 +48,8 @@ NuvieEngine *g_engine;
 
 NuvieEngine::NuvieEngine(OSystem *syst, const Ultima::UltimaGameDescription *gameDesc) :
 		Ultima::Shared::UltimaEngine(syst, gameDesc),  _config(nullptr), _savegame(nullptr),
-		_screen(nullptr), _script(nullptr), _game(nullptr), _soundManager(nullptr) {
+		_screen(nullptr), _script(nullptr), _game(nullptr), _soundManager(nullptr),
+		_events(nullptr) {
 	g_engine = this;
 }
 
@@ -63,7 +64,7 @@ NuvieEngine::~NuvieEngine() {
 	g_engine = nullptr;
 }
 
-bool NuvieEngine::isDataRequired(Common::String &folder, int &majorVersion, int &minorVersion) {
+bool NuvieEngine::isDataRequired(Common::Path &folder, int &majorVersion, int &minorVersion) {
 	folder = "ultima6";
 	majorVersion = 1;
 	minorVersion = 1;
@@ -111,10 +112,8 @@ bool NuvieEngine::initialize() {
 	// Setup screen
 	_screen = new Screen(_config);
 
-	if (_screen->init() == false) {
-		DEBUG(0, LEVEL_ERROR, "Initializing screen!\n");
-		return false;
-	}
+	if (_screen->init() == false)
+		error("Error initializing screen!");
 
 	GUI *gui = new GUI(_config, _screen);
 
@@ -164,6 +163,7 @@ bool NuvieEngine::initialize() {
 
 	if (_game->loadGame(_script) == false) {
 		delete _game;
+		_game = nullptr;
 		return false;
 	}
 
@@ -213,10 +213,10 @@ void NuvieEngine::assignGameConfigValues(uint8 gameType) {
 }
 
 bool NuvieEngine::checkGameDir(uint8 gameType) {
-	Std::string path;
+	Common::Path path;
 
 	config_get_path(_config, "", path);
-	ConsoleAddInfo("gamedir: \"%s\"", path.c_str());
+	ConsoleAddInfo("gamedir: \"%s\"", path.toString().c_str());
 
 	return true;
 }

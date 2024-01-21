@@ -146,8 +146,8 @@ public:
 	Console *getSciDebugger();
 	Common::Error loadGameState(int slot) override;
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false) override;
-	bool canLoadGameStateCurrently() override;
-	bool canSaveGameStateCurrently() override;
+	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override;
+	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override;
 	void syncSoundSettings() override; ///< from ScummVM to the game
 	void updateSoundMixerVolumes();
 	uint32 getTickCount();
@@ -365,17 +365,6 @@ private:
 	 * or restoring a game re-initializes certain states and continues the loop.
 	 */
 	void runGame();
-
-	/**
-	 * "Uninitializes an initialized SCI game" was the original description.
-	 * This is only called by runGame immediately after calling run_vm.
-	 * It uninitalizes some engine state depending on the abort flag, but it also
-	 * has old TODO comments and doesn't uninitialize the heap. runGame does
-	 * just as much uninitialization after calling this, so maybe exitGame's
-	 * code should just be moved into runGame instead of splitting up the
-	 * re-initialization steps.
-	 */
-	void exitGame();
 	
 	/**
 	 * Initializes the stack to call a method in the game object once the VM starts.
@@ -433,6 +422,7 @@ private:
 	Common::RandomSource _rng;
 	Common::MacResManager _macExecutable;
 	bool _forceHiresGraphics; // user-option for GK1, KQ6, PQ4
+	bool _inErrorString; /**< Set while `errorString` is executing */
 };
 
 /**

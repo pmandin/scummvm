@@ -259,13 +259,13 @@ SoundManager::~SoundManager() {
 	stopAllSounds();
 }
 
-void SoundManager::loadSound(const SoundDescription &description, SoundEffectDescription **effectData) {
+void SoundManager::loadSound(const SoundDescription &description, SoundEffectDescription **effectData, bool forceReload) {
 	if (description.name == "NO SOUND") {
 		return;
 	}
 
 	Channel &existing = _channels[description.channelID];
-	if (existing.stream != nullptr) {
+	if (!forceReload && existing.stream != nullptr) {
 		// There's a channel already loaded. Check if we're trying to reload the exact same sound
 		if (	description.name == existing.name &&
 				description.numLoops == existing.numLoops &&
@@ -303,7 +303,8 @@ void SoundManager::loadSound(const SoundDescription &description, SoundEffectDes
 		*effectData = nullptr;
 	}
 
-	Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(description.name + (g_nancy->getGameType() == kGameTypeVampire ? ".dwd" : ".his"));
+	Common::Path path(description.name + (g_nancy->getGameType() == kGameTypeVampire ? ".dwd" : ".his"));
+	Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(path);
 	if (file) {
 		_channels[description.channelID].stream = makeHISStream(file, DisposeAfterUse::YES, description.samplesPerSec);
 	}
@@ -753,14 +754,14 @@ void SoundManager::soundEffectMaintenance(uint16 channelID, bool force) {
 				Math::Quaternion quat;
 				switch (chan.effectData->rotateMoveAxis) {
 				case kRotateAroundX:
-				   quat = Math::Quaternion::xAxis(360.0 / chan.effectData->numMoveSteps);
-				   break;
+					quat = Math::Quaternion::xAxis(360.0 / chan.effectData->numMoveSteps);
+					break;
 				case kRotateAroundY:
-				   quat = Math::Quaternion::yAxis(360.0 / chan.effectData->numMoveSteps);
-				   break;
+					quat = Math::Quaternion::yAxis(360.0 / chan.effectData->numMoveSteps);
+					break;
 				case kRotateAroundZ:
-				   quat = Math::Quaternion::zAxis(360.0 / chan.effectData->numMoveSteps);
-				   break;
+					quat = Math::Quaternion::zAxis(360.0 / chan.effectData->numMoveSteps);
+					break;
 				} 
 
 				quat.transform(chan.position);

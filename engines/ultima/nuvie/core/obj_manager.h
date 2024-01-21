@@ -73,7 +73,7 @@ void delete_obj(Obj *obj);
 void clean_obj_tree_node(void *node);
 
 class ObjManager {
-	Configuration *config;
+	const Configuration *config;
 	int game_type;
 	EggManager *egg_manager;
 	TileManager *tile_manager;
@@ -102,7 +102,7 @@ class ObjManager {
 
 public:
 
-	ObjManager(Configuration *cfg, TileManager *tm, EggManager *em);
+	ObjManager(const Configuration *cfg, TileManager *tm, EggManager *em);
 	~ObjManager();
 
 	bool use_custom_actor_tiles() {
@@ -130,53 +130,53 @@ public:
 		usecode = uc;
 	}
 	UseCode *get_usecode()        {
-		return (usecode);
+		return usecode;
 	}
 	EggManager *get_egg_manager() {
-		return (egg_manager);
+		return egg_manager;
 	}
 
 //U6LList *get_obj_superchunk(uint16 x, uint16 y, uint8 level);
-	bool is_boundary(uint16 x, uint16 y, uint8 level, uint8 boundary_type = TILEFLAG_BOUNDARY, Obj *excluded_obj = NULL);
+	bool is_boundary(uint16 x, uint16 y, uint8 level, uint8 boundary_type = TILEFLAG_BOUNDARY, Obj *excluded_obj = nullptr);
 //bool is_door(Obj * obj);
 	bool is_damaging(uint16 x, uint16 y, uint8 level);
 	uint8 is_passable(uint16 x, uint16 y, uint8 level);
 	bool is_forced_passable(uint16 x, uint16 y, uint8 level);
-	bool is_stackable(Obj *obj);
-	bool is_breakable(Obj *obj);
+	bool is_stackable(const Obj *obj);
+	bool is_breakable(const Obj *obj);
 	bool can_store_obj(Obj *target, Obj *src); // Bag, open chest, spellbook.
 	bool can_get_obj(Obj *obj);
 	bool has_reduced_weight(uint16 obj_n);
-	bool has_reduced_weight(Obj *obj) {
+	bool has_reduced_weight(const Obj *obj) {
 		return has_reduced_weight(obj->obj_n);
 	}
-	bool has_toptile(Obj *obj);
-	bool obj_is_damaging(Obj *obj, Actor *actor = NULL); // if actor, it will damage and display text
+	bool has_toptile(const Obj *obj);
+	bool obj_is_damaging(const Obj *obj, Actor *actor = nullptr); // if actor, it will damage and display text
 	bool is_door(uint16 x, uint16 y, uint8 level);
 
 	U6LList *get_obj_list(uint16 x, uint16 y, uint8 level);
 
 	Tile *get_obj_tile(uint16 obj_n, uint8 frame_n);
-	Tile *get_obj_tile(uint16 x, uint16 y, uint8 level, bool top_obj = true);
-	Tile *get_obj_dmg_tile(uint16 x, uint16 y, uint8 level);
-	Obj *get_obj(uint16 x, uint16 y, uint8 level, bool top_obj = OBJ_SEARCH_TOP, bool include_ignored_objects = OBJ_EXCLUDE_IGNORED, Obj *excluded_obj = NULL);
+	const Tile *get_obj_tile(uint16 x, uint16 y, uint8 level, bool top_obj = true);
+	const Tile *get_obj_dmg_tile(uint16 x, uint16 y, uint8 level);
+	Obj *get_obj(uint16 x, uint16 y, uint8 level, bool top_obj = OBJ_SEARCH_TOP, bool include_ignored_objects = OBJ_EXCLUDE_IGNORED, Obj *excluded_obj = nullptr);
 	Obj *get_obj_of_type_from_location_inc_multi_tile(uint16 obj_n, uint16 x, uint16 y, uint8 z);
 	Obj *get_obj_of_type_from_location_inc_multi_tile(uint16 obj_n, sint16 quality, sint32 qty, uint16 x, uint16 y, uint8 z);
 	Obj *get_obj_of_type_from_location(uint16 obj_n, uint16 x, uint16 y, uint8 z);
 	Obj *get_obj_of_type_from_location(uint16 obj_n, sint16 quality, sint32 qty, uint16 x, uint16 y, uint8 z);
-	Obj *get_objBasedAt(uint16 x, uint16 y, uint8 level, bool top_obj, bool include_ignored_objects = true, Obj *excluded_obj = NULL);
+	Obj *get_objBasedAt(uint16 x, uint16 y, uint8 level, bool top_obj, bool include_ignored_objects = true, Obj *excluded_obj = nullptr);
 	Obj *get_tile_obj(uint16 obj_n);
 
 	uint16 get_obj_tile_num(uint16 obj_num);
-	inline bool is_corpse(Obj *obj);
-	uint16 get_obj_tile_num(Obj *obj);
+	inline bool is_corpse(const Obj *obj);
+	uint16 get_obj_tile_num(const Obj *obj);
 	void set_obj_tile_num(uint16 obj_num, uint16 tile_num);
 
 	U6LList *get_actor_inventory(uint16 actor_num);
 	bool actor_has_inventory(uint16 actor_num);
 
 	Obj *find_next_obj(uint8 level, Obj *prev_obj, bool match_frame_n = OBJ_NOMATCH_FRAME_N, bool match_quality = OBJ_MATCH_QUALITY);
-	Obj *find_obj(uint8 level, uint16 obj_n, uint8 quality, bool match_quality = OBJ_MATCH_QUALITY, uint16 frame_n = 0, bool match_frame_n = OBJ_NOMATCH_FRAME_N,  Obj **prev_obj = NULL);
+	Obj *find_obj(uint8 level, uint16 obj_n, uint8 quality, bool match_quality = OBJ_MATCH_QUALITY, uint16 frame_n = 0, bool match_frame_n = OBJ_NOMATCH_FRAME_N,  Obj **prev_obj = nullptr);
 
 	bool move(Obj *obj, uint16 x, uint16 y, uint8 level);
 	bool add_obj(Obj *obj, bool addOnTop = false);
@@ -184,7 +184,7 @@ public:
 	bool remove_obj_type_from_location(uint16 obj_n, uint16 x, uint16 y, uint8 z);
 
 
-	Obj *copy_obj(Obj *obj);
+	Obj *copy_obj(const Obj *obj);
 	const char *look_obj(Obj *obj, bool show_prefix = false);
 	Obj *get_obj_from_stack(Obj *obj, uint32 count);
 
@@ -196,7 +196,7 @@ public:
 
 	float get_obj_weight(Obj *obj, bool include_container_items = OBJ_WEIGHT_INCLUDE_CONTAINER_ITEMS, bool scale = true, bool include_qty = true);
 	uint8 get_obj_weight_unscaled(uint16 obj_n) {
-		return (obj_weight[obj_n]);
+		return obj_weight[obj_n];
 	}
 	float get_obj_weight(uint16 obj_n);
 
@@ -242,7 +242,7 @@ protected:
 public:
 	void print_object_list();
 	void print_egg_list();
-	void print_obj(Obj *obj, bool in_container, uint8 indent = 0);
+	void print_obj(const Obj *obj, bool in_container, uint8 indent = 0);
 };
 
 } // End of namespace Nuvie

@@ -161,7 +161,7 @@ bool OSystem_Win32::displayLogFile() {
 
 	// Try opening the log file with the default text editor
 	// log files should be registered as "txtfile" by default and thus open in the default text editor
-	TCHAR *tLogFilePath = Win32::stringToTchar(_logFilePath);
+	TCHAR *tLogFilePath = Win32::stringToTchar(_logFilePath.toString(Common::Path::kNativeSeparator));
 	SHELLEXECUTEINFO sei;
 
 	memset(&sei, 0, sizeof(sei));
@@ -256,7 +256,7 @@ Common::String OSystem_Win32::getSystemLanguage() const {
 	return OSystem_SDL::getSystemLanguage();
 }
 
-Common::String OSystem_Win32::getDefaultIconsPath() {
+Common::Path OSystem_Win32::getDefaultIconsPath() {
 	TCHAR iconsPath[MAX_PATH];
 
 	if (_isPortable) {
@@ -265,13 +265,13 @@ Common::String OSystem_Win32::getDefaultIconsPath() {
 	} else {
 		// Use the Application Data directory of the user profile
 		if (!Win32::getApplicationDataDirectory(iconsPath)) {
-			return Common::String();
+			return Common::Path();
 		}
 		_tcscat(iconsPath, TEXT("\\Icons\\"));
 		CreateDirectory(iconsPath, nullptr);
 	}
 
-	return Win32::tcharToString(iconsPath);
+	return Common::Path(Win32::tcharToString(iconsPath), Common::Path::kNativeSeparator);
 }
 
 Common::Path OSystem_Win32::getDefaultDLCsPath() {
@@ -292,12 +292,10 @@ Common::Path OSystem_Win32::getDefaultDLCsPath() {
 	return Common::Path(Win32::tcharToString(dlcsPath));
 }
 
-Common::String OSystem_Win32::getScreenshotsPath() {
+Common::Path OSystem_Win32::getScreenshotsPath() {
 	// If the user has configured a screenshots path, use it
-	Common::String screenshotsPath = ConfMan.get("screenshotpath");
+	Common::Path screenshotsPath = ConfMan.getPath("screenshotpath");
 	if (!screenshotsPath.empty()) {
-		if (!screenshotsPath.hasSuffix("\\") && !screenshotsPath.hasSuffix("/"))
-			screenshotsPath += "\\";
 		return screenshotsPath;
 	}
 
@@ -312,7 +310,7 @@ Common::String OSystem_Win32::getScreenshotsPath() {
 			if (hr != E_NOTIMPL) {
 				warning("Unable to locate My Pictures directory");
 			}
-			return Common::String();
+			return Common::Path();
 		}
 		_tcscat(picturesPath, TEXT("\\ScummVM Screenshots\\"));
 	}
@@ -324,10 +322,10 @@ Common::String OSystem_Win32::getScreenshotsPath() {
 			error("Cannot create ScummVM Screenshots folder");
 	}
 
-	return Win32::tcharToString(picturesPath);
+	return Common::Path(Win32::tcharToString(picturesPath), Common::Path::kNativeSeparator);
 }
 
-Common::String OSystem_Win32::getDefaultConfigFileName() {
+Common::Path OSystem_Win32::getDefaultConfigFileName() {
 	TCHAR configFile[MAX_PATH];
 
 	// if this is the first time the default config file name is requested
@@ -374,10 +372,10 @@ Common::String OSystem_Win32::getDefaultConfigFileName() {
 		}
 	}
 
-	return Win32::tcharToString(configFile);
+	return Common::Path(Win32::tcharToString(configFile), Common::Path::kNativeSeparator);
 }
 
-Common::String OSystem_Win32::getDefaultLogFileName() {
+Common::Path OSystem_Win32::getDefaultLogFileName() {
 	TCHAR logFile[MAX_PATH];
 
 	if (_isPortable) {
@@ -385,7 +383,7 @@ Common::String OSystem_Win32::getDefaultLogFileName() {
 	} else {
 		// Use the Application Data directory of the user profile
 		if (!Win32::getApplicationDataDirectory(logFile)) {
-			return Common::String();
+			return Common::Path();
 		}
 		_tcscat(logFile, TEXT("\\Logs"));
 		CreateDirectory(logFile, nullptr);
@@ -393,7 +391,7 @@ Common::String OSystem_Win32::getDefaultLogFileName() {
 
 	_tcscat(logFile, TEXT("\\scummvm.log"));
 
-	return Win32::tcharToString(logFile);
+	return Common::Path(Win32::tcharToString(logFile), Common::Path::kNativeSeparator);
 }
 
 bool OSystem_Win32::detectPortableConfigFile() {
@@ -440,7 +438,7 @@ public:
 	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
 	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 private:
-	typedef Common::List<Common::String> FilenameList;
+	typedef Common::List<Common::Path> FilenameList;
 
 	FilenameList _files;
 };
@@ -451,7 +449,8 @@ BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCTSTR lpszType, LPTSTR lpszName
 
 	Win32ResourceArchive *arch = (Win32ResourceArchive *)lParam;
 	Common::String filename = Win32::tcharToString(lpszName);
-	arch->_files.push_back(filename);
+	// We use / as path separator in resources
+	arch->_files.push_back(Common::Path(filename, '/'));
 	return TRUE;
 }
 
@@ -460,9 +459,8 @@ Win32ResourceArchive::Win32ResourceArchive() {
 }
 
 bool Win32ResourceArchive::hasFile(const Common::Path &path) const {
-	Common::String name = path.toString();
 	for (FilenameList::const_iterator i = _files.begin(); i != _files.end(); ++i) {
-		if (i->equalsIgnoreCase(name))
+		if (i->equalsIgnoreCase(path))
 			return true;
 	}
 
@@ -483,7 +481,8 @@ const Common::ArchiveMemberPtr Win32ResourceArchive::getMember(const Common::Pat
 }
 
 Common::SeekableReadStream *Win32ResourceArchive::createReadStreamForMember(const Common::Path &path) const {
-	Common::String name = path.toString();
+	// We store paths in resources using / separator
+	Common::String name = path.toString('/');
 	TCHAR *tName = Win32::stringToTchar(name);
 	HRSRC resource = FindResource(nullptr, tName, MAKEINTRESOURCE(256));
 	free(tName);

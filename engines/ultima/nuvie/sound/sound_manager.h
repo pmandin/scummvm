@@ -73,7 +73,7 @@ public:
 	SoundManager(Audio::Mixer *mixer);
 	~SoundManager();
 
-	bool nuvieStartup(Configuration *config);
+	bool nuvieStartup(const Configuration *config);
 	bool initAudio();
 	void update_map_sfx(); //updates the active sounds
 	void update(); // at the moment this just changes songs if required
@@ -85,7 +85,7 @@ public:
 	void musicPlay(const char *filename, uint16 song_num = 0);
 
 	void musicStop(); // SB-X
-	Audio::SoundHandle playTownsSound(Std::string filename, uint16 sample_num);
+	Audio::SoundHandle playTownsSound(const Common::Path &filename, uint16 sample_num);
 	bool isSoundPLaying(Audio::SoundHandle handle);
 
 	bool playSfx(uint16 sfx_id, bool async = false);
@@ -129,23 +129,23 @@ public:
 	bool stop_music_on_group_change;
 
 private:
-	bool LoadCustomSongs(string scriptname);
+	bool LoadCustomSongs(const Common::Path &scriptname);
 	bool LoadNativeU6Songs();
-	bool loadSong(Song *song, const char *filename, const char *fileId);
-	bool loadSong(Song *song, const char *filename, const char *fileId, const char *title);
+	bool loadSong(Song *song, const Common::Path &filename, const char *fileId);
+	bool loadSong(Song *song, const Common::Path &filename, const char *fileId, const char *title);
 	bool groupAddSong(const char *group, Song *song);
 
 	//bool LoadObjectSamples(string sound_dir);
 	//bool LoadTileSamples(string sound_dir);
 	bool LoadSfxManager(string sfx_style);
 
-	Sound *SongExists(string name); //have we loaded this sound before?
-	Sound *SampleExists(string name); //have we loaded this sound before?
+	Sound *SongExists(const string &name); //have we loaded this sound before?
+	Sound *SampleExists(const string &name); //have we loaded this sound before?
 
 
 	Sound *RequestTileSound(int id);
 	Sound *RequestObjectSound(int id);
-	Sound *RequestSong(string group); //request a song from this group
+	Sound *RequestSong(const string &group); //request a song from this group
 
 	uint16 RequestObjectSfxId(uint16 obj_n);
 
@@ -156,7 +156,7 @@ private:
 	StringCollectionMap m_MusicMap;
 	list<Sound *> m_Songs;
 	list<Sound *> m_Samples;
-	Configuration *m_Config;
+	const Configuration *m_Config;
 
 	//state info:
 	string m_CurrentGroup;

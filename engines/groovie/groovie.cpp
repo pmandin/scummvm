@@ -56,7 +56,7 @@ GroovieEngine::GroovieEngine(OSystem *syst, const GroovieGameDescription *gd) :
 	_spookyMode(false) {
 
 	// Adding the default directories
-	const Common::FSNode gameDataDir(ConfMan.get("path"));
+	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
 	SearchMan.addSubDirectoryMatching(gameDataDir, "groovie");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "media");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "system");
@@ -397,7 +397,7 @@ void GroovieEngine::syncSoundSettings() {
 		mute ? 0 : ConfMan.getInt("speech_volume"));
 }
 
-bool GroovieEngine::canLoadGameStateCurrently() {
+bool GroovieEngine::canLoadGameStateCurrently(Common::U32String *msg) {
 	// TODO: verify the engine has been initialized
 	if (isDemo())
 		return false;
@@ -407,7 +407,7 @@ bool GroovieEngine::canLoadGameStateCurrently() {
 		return false;
 }
 
-bool GroovieEngine::canSaveGameStateCurrently() {
+bool GroovieEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 	// TODO: verify the engine has been initialized
 	if (isDemo())
 		return false;

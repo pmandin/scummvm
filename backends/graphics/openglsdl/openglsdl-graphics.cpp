@@ -279,6 +279,10 @@ void OpenGLSdlGraphicsManager::initSize(uint w, uint h, const Graphics::PixelFor
 		_graphicsScale = 2;
 	}
 
+	if (ConfMan.getBool("force_resize", Common::ConfigManager::kApplicationDomain)) {
+		notifyResize(w, h);
+	}
+
 	return OpenGLGraphicsManager::initSize(w, h, format);
 }
 
@@ -306,7 +310,17 @@ void OpenGLSdlGraphicsManager::notifyResize(const int width, const int height) {
 	int currentWidth, currentHeight;
 	getWindowSizeFromSdl(&currentWidth, &currentHeight);
 	float dpiScale = _window->getSdlDpiScalingFactor();
+
+	if (ConfMan.getBool("force_resize", Common::ConfigManager::kApplicationDomain)) {
+		currentWidth = width;
+		currentHeight = height;
+	}
+	
 	debug(3, "req: %d x %d  cur: %d x %d, scale: %f", width, height, currentWidth, currentHeight, dpiScale);
+
+	if (ConfMan.getBool("force_resize", Common::ConfigManager::kApplicationDomain)) {
+		createOrUpdateWindow(currentWidth, currentHeight, 0);
+	}
 
 	handleResize(currentWidth, currentHeight);
 
@@ -435,7 +449,7 @@ void OpenGLSdlGraphicsManager::handleResizeImpl(const int width, const int heigh
 	SdlGraphicsManager::handleResizeImpl(width, height);
 }
 
-bool OpenGLSdlGraphicsManager::saveScreenshot(const Common::String &filename) const {
+bool OpenGLSdlGraphicsManager::saveScreenshot(const Common::Path &filename) const {
 	return OpenGLGraphicsManager::saveScreenshot(filename);
 }
 

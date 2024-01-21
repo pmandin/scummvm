@@ -177,7 +177,7 @@ GrimEngine::GrimEngine(OSystem *syst, uint32 gameFlags, GrimGameType gameType, C
 	_blastTextDefaults.setFont(nullptr);
 	_blastTextDefaults.setJustify(TextObject::LJUSTIFY);
 
-	const Common::FSNode gameDataDir(ConfMan.get("path"));
+	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
 	SearchMan.addSubDirectoryMatching(gameDataDir, "movies"); // Add 'movies' subdirectory for the demo
 	SearchMan.addSubDirectoryMatching(gameDataDir, "credits");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "widescreen");
@@ -273,6 +273,12 @@ GfxBase *GrimEngine::createRenderer(int screenW, int screenH) {
 			Graphics::kRendererTypeTinyGL |
 #endif
 			0;
+
+	// For Grim Fandango, Korean fan translation can only use OpenGL renderer
+	if (getGameType() == GType_GRIM && g_grim->getGameLanguage() == Common::KO_KOR) {
+		availableRendererTypes &= ~Graphics::kRendererTypeOpenGLShaders;
+		availableRendererTypes &= ~Graphics::kRendererTypeTinyGL;
+	}
 
 	// For Grim Fandango, OpenGL renderer without shaders is preferred if available
 	if (desiredRendererType == Graphics::kRendererTypeDefault &&
@@ -1661,7 +1667,7 @@ void GrimEngine::pauseEngineIntern(bool pause) {
 }
 
 
-Graphics::Surface *loadPNG(const Common::String &filename) {
+Graphics::Surface *loadPNG(const Common::Path &filename) {
 	Image::PNGDecoder d;
 	Common::SeekableReadStream *s = SearchMan.createReadStreamForMember(filename);
 	if (!s)

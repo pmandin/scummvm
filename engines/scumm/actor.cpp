@@ -543,10 +543,13 @@ int Actor::calcMovementFactor(const Common::Point& next) {
 	_walkdata.deltaXFactor = deltaXFactor;
 	_walkdata.deltaYFactor = deltaYFactor;
 
-	if (_vm->_game.version >= 7)
-		_targetFacing = ((int)(atan2((double)deltaXFactor, (double)-deltaYFactor) * 180 / M_PI) + 360) % 360;
-	else
+	if (_vm->_game.version >= 7) {
+		_walkdata.nextDir = ((int)(atan2((double)deltaXFactor, (double)-deltaYFactor) * 180 / M_PI) + 360) % 360;
+		startWalkAnim((_moving & MF_IN_LEG) ? 2 : 1, _walkdata.nextDir);
+		_moving |= MF_IN_LEG;
+	} else {
 		_targetFacing = (ABS(diffY) * 3 > ABS(diffX)) ? (deltaYFactor > 0 ? 180 : 0) : (deltaXFactor > 0 ? 90 : 270);
+	}
 
 	return actorWalkStep();
 }
@@ -597,12 +600,13 @@ int Actor_v3::calcMovementFactor(const Common::Point& next) {
 int Actor::actorWalkStep() {
 	_needRedraw = true;
 
-	int nextFacing = (_vm->_game.version < 7) ? updateActorDirection(true) : _targetFacing;
-	if (!(_moving & MF_IN_LEG) || _facing != nextFacing) {
-		if (_walkFrame != _frame || _facing != nextFacing) {
-			startWalkAnim(_vm->_game.version >= 7 && (_moving & MF_IN_LEG) ? 2 : 1, nextFacing);
+	if (_vm->_game.version < 7) {
+		int nextFacing = updateActorDirection(true);
+		if (!(_moving & MF_IN_LEG) || _facing != nextFacing) {
+			if (_walkFrame != _frame || _facing != nextFacing)
+				startWalkAnim(1, nextFacing);
+			_moving |= MF_IN_LEG;
 		}
-		_moving |= MF_IN_LEG;
 	}
 
 	if (_walkbox != _walkdata.curbox && _vm->checkXYInBoxBounds(_walkdata.curbox, _pos.x, _pos.y))
@@ -870,11 +874,10 @@ void Actor::startWalkActor(int destX, int destY, int dir) {
 }
 
 void Actor::startWalkAnim(int cmd, int angle) {
-	if (angle == -1)
-		angle = _facing;
-
 	if (_vm->_game.version >= 7)
-		angle = remapDirection(normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), angle), false);
+		angle = remapDirection(normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), angle == -1 ? _walkdata.nextDir : angle), false);
+	else if (angle == -1)
+		angle = _facing;
 
 	if (_walkScript) {
 		int args[NUM_SCRIPT_LOCAL];
@@ -1616,6 +1619,14 @@ void Actor_v7::turnToDirection(int newdir) {
 
 	newdir = remapDirection((newdir + 360) % 360, false);
 	_moving &= ~MF_TURN;
+
+	if (isInCurrentRoom() && !_ignoreBoxes) { 
+		byte flags = _vm->getBoxFlags(_walkbox);
+		if ((flags & kBoxXFlip) || isInClass(kObjectClassXFlip))
+			newdir = 360 - newdir;
+		if ((flags & kBoxYFlip) || isInClass(kObjectClassYFlip))
+			newdir = 180 - newdir;
+	}
 
 	if (newdir != _facing) {
 		_moving |= MF_TURN;
@@ -3862,6 +3873,7 @@ void Actor::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsSint32LE(_walkdata.deltaYFactor, VER(8));
 	s.syncAsUint16LE(_walkdata.xfrac, VER(8));
 	s.syncAsUint16LE(_walkdata.yfrac, VER(8));
+	s.syncAsSint16LE(_walkdata.nextDir, VER(111));
 
 	s.syncAsUint16LE(_walkdata.point3.x, VER(42));
 	s.syncAsUint16LE(_walkdata.point3.y, VER(42));

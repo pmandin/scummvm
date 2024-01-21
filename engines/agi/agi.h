@@ -617,8 +617,8 @@ public:
 class AgiLoader_v1 : public AgiLoader {
 private:
 	AgiEngine *_vm;
-	Common::String _filenameDisk0;
-	Common::String _filenameDisk1;
+	Common::Path _filenameDisk0;
+	Common::Path _filenameDisk1;
 
 	int loadDir_DDP(AgiDir *agid, int offset, int max);
 	int loadDir_BC(AgiDir *agid, int offset, int max);
@@ -639,14 +639,17 @@ public:
 class AgiLoader_v2 : public AgiLoader {
 private:
 	AgiEngine *_vm;
+	bool _hasV3VolumeFormat;
 
 	int loadDir(AgiDir *agid, const char *fname);
 	uint8 *loadVolRes(AgiDir *agid);
+	bool detectV3VolumeFormat();
 
 public:
 
 	AgiLoader_v2(AgiEngine *vm) {
 		_vm = vm;
+		_hasV3VolumeFormat = false;
 	}
 
 	int init() override;
@@ -793,8 +796,8 @@ public:
 
 	const char *getDiskName(uint16 id);
 
-	bool canLoadGameStateCurrently() override;
-	bool canSaveGameStateCurrently() override;
+	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override;
+	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override;
 
 	const byte *getFontData();
 
@@ -932,14 +935,8 @@ public:
 
 public:
 	void decrypt(uint8 *mem, int len);
-	void releaseSprites();
 	uint16 processAGIEvents();
-	int viewPictures();
 	int runGame();
-	int getAppDir(char *appDir, unsigned int size);
-
-	int setupV2Game(int ver);
-	int setupV3Game(int ver);
 
 	void newRoom(int16 newRoomNr);
 	void resetControllers();
@@ -954,7 +951,6 @@ public:
 
 	// Objects
 public:
-	int showObjects();
 	int loadObjects(const char *fname);
 	int loadObjects(Common::File &fp);
 	const char *objectName(uint16 objectNr);
@@ -1002,8 +998,6 @@ public:
 
 	// View
 private:
-
-	void lSetLoop(ScreenObjEntry *screenObj, int16 loopNr);
 	void updateView(ScreenObjEntry *screenObj);
 
 public:
@@ -1024,8 +1018,6 @@ private:
 	void unpackViewCelDataAGI256(AgiViewCel *celData, byte *compressedData, uint16 compressedSize);
 
 public:
-	void addToPic(int, int, int, int, int, int, int);
-	void drawObj(int);
 	bool isEgoView(const ScreenObjEntry *screenObj);
 
 	// Motion
@@ -1055,14 +1047,12 @@ public:
 
 	// Keyboard
 	int doPollKeyboard();
-	void cleanKeyboard();
 
 	bool handleMouseClicks(uint16 &key);
 	bool handleController(uint16 key);
 
 	bool showPredictiveDialog();
 
-	uint16 agiGetKeypress();
 	int waitKey();
 	int waitAnyKey();
 

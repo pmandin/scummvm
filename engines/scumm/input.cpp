@@ -27,7 +27,6 @@
 
 #include "scumm/debugger.h"
 #include "scumm/dialogs.h"
-#include "scumm/gfx_mac.h"
 #include "scumm/insane/insane.h"
 #include "scumm/imuse/imuse.h"
 #include "scumm/imuse_digi/dimuse_engine.h"
@@ -35,6 +34,7 @@
 #include "scumm/he/intern_he.h"
 #include "scumm/he/logic_he.h"
 #endif
+#include "scumm/macgui/macgui.h"
 #include "scumm/resource.h"
 #include "scumm/scumm_v0.h"
 #include "scumm/scumm_v6.h"
@@ -105,9 +105,13 @@ void ScummEngine_v80he::parseEvent(Common::Event event) {
 #endif
 
 void ScummEngine::parseEvent(Common::Event event) {
-	// Handle Mac Indy3 events before scaling the mouse coordinates.
-	if (_macIndy3Gui && _macIndy3Gui->isVerbGuiActive())
-		_macIndy3Gui->handleEvent(event);
+	// Handle Macintosh events before scaling the mouse coordinates.
+	//
+	// TODO: Don't allow menu while message banner is active. Don't allow
+	// message banner while menu is active.
+
+	if (_macGui && _macGui->handleEvent(event))
+		return;
 
 	switch (event.type) {
 	case Common::EVENT_CUSTOM_ENGINE_ACTION_START:
@@ -277,6 +281,7 @@ void ScummEngine::parseEvent(Common::Event event) {
 		break;
 	case Common::EVENT_RETURN_TO_LAUNCHER:
 	case Common::EVENT_QUIT:
+	{
 		// Some backends send a key stroke event and the quit
 		// event which was triggered by the keystroke. Clear the key.
 		clearClickedStatus();
@@ -291,7 +296,21 @@ void ScummEngine::parseEvent(Common::Event event) {
 				getEventManager()->resetQuit();
 				getEventManager()->resetReturnToLauncher();
 				if (!_messageBannerActive) {
-					queryQuit(exitType);
+					if (_macGui) {
+						if (!(ConfMan.hasKey("confirm_exit") && ConfMan.getBool("confirm_exit")) ||
+							_macGui->runQuitDialog()) {
+							_quitByGUIPrompt = true;
+							if (exitType) {
+								Common::Event fakeEvent;
+								fakeEvent.type = Common::EVENT_RETURN_TO_LAUNCHER;
+								getEventManager()->pushEvent(fakeEvent);
+							} else {
+								quitGame();
+							}
+						}
+					} else {
+						queryQuit(exitType);
+					}
 					_closeBannerAndQueryQuitFlag = false;
 				} else {
 					_closeBannerAndQueryQuitFlag = true;
@@ -302,6 +321,7 @@ void ScummEngine::parseEvent(Common::Event event) {
 			}
 		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -975,7 +995,14 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 		restartKeyPressed &= !isSegaCD && !isNES;
 
 		if (restartKeyPressed) {
-			queryRestart();
+			if (_macGui) {
+				if (_macGui->runRestartDialog()) {
+					restart();
+				}
+			} else {
+				queryRestart();
+			}
+
 			return;
 		}
 
@@ -1140,7 +1167,11 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 		if (enhancementEnabled(kEnhUIUX) && _game.id == GID_LOOM &&
 			mainmenuKeyEnabled && (lastKeyHit.keycode == Common::KEYCODE_d && lastKeyHit.hasFlags(Common::KBD_CTRL))) {
 			// Drafts menu
-			showDraftsInventory();
+			if (_macGui) {
+				_macGui->runDraftsInventory();
+			} else {
+				showDraftsInventory();
+			}
 		}
 
 		if (snapScrollKeyEnabled) {

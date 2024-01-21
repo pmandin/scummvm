@@ -1,7 +1,19 @@
 For a more comprehensive changelog of the latest experimental code, see:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2.8.0 (XXXX-XX-XX)
+#### 2.9.0 (XXXX-XX-XX)
+
+ New games:
+  - Added support for Orion Burger.
+
+ General:
+  - Fixed GLSL version parsing on some OpenGL ES2 platforms
+
+ TsAGE:
+   - Added support for Russian CD fan-translation for Ringworld.
+
+
+#### 2.8.0 "Mysteries, Mammoths, and Muppets" (2023-12-30)
 
  New games:
    - Added support for macOS versions of Syberia and Syberia II.
@@ -12,8 +24,15 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Might and Magic Book One.
    - Added support for Muppet Treasure Island.
    - Added support for Primordia, Shardlight and Technobabylon.
+   - Added support for The Excavation of Hob's Barrow, Strangeland and Whispers
+   of a Machine.
+   - Added support for Stranga and Cloak and Dagger's AGS games.
    - Added support for Adibou 1.
    - Added support for Dark Side.
+   - Added support for Kingdom: The Far Reaches.
+   - Added support for Escape From Hell.
+   - Added support for Wrath of the Gods, Gadget: Invention, Travel and Adventure,
+     The Dark Eye, and 4 other Director titles.
 
  New platforms:
    - Added libretro new shiny port.
@@ -27,18 +46,26 @@ For a more comprehensive changelog of the latest experimental code, see:
      Synthesis) sound driver.
    - Added YUV422 and YUV444 support to Theora decoder.
    - Implemented specialized CPU routines for graphics blitting for ManagedSurface.
-   - Changed default GM device to "auto" for better compatibility.
+   - General MIDI support is now enabled by default.
 
  AGS:
-   - Synced with upstream AGS 3.6.0.51.
+   - Synced with upstream AGS 3.6.0.53.
    - Sped up graphics manipulation on modern hardware with CPU-specific code.
    - Added support for early font rendering, to match the original interpreter.
+   - Added support for playback of transcoded videos in place of unsupported codecs.
+   - Completed implementation of MOD audio playback.
+   - Fixed background music not looping in some games.
+   - Fixed game-breaking bugs in various games (e.g. Strangeland, Chronicle of Innsmouth)
+   - Multiple updates to the game detection tables.
 
  Asylum:
    - Added support for Chinese Sanitarium.
 
  Dragons:
    - Implemented localizations for the copyright screen and main menu.
+
+ Freescape:
+   - Improved collision and projectile detection using sweepAABB
 
  GrimE:
    - Added support for Chinese Grim Fandango.
@@ -51,12 +78,20 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Chinese EOB2.
    - Added support for the PC-98 version of EOB2.
 
+ Mohawk:
+   - Greatly improved the accuracy of the code generation for the Domes in
+     Riven: The Sequel to Myst to match the original game.
+
+ Private:
+   - Added support for the Japanese Windows release.
+
  SCUMM:
    - Added support for unpacked RuSCUMM patches for Russian localizations.
    - Allow usage of the official Monkey Island 1 Roland MT-32 patch with any
      EGA version, not just the English release.
    - Completely rewritten sound code for all Humongous Entertainment games.
-   - Faithfully implemented Mac GUI for Indiana Jones and the Last Crusade.
+   - Faithfully implemented Mac GUI for Indiana Jones and the Last Crusade,
+     and Loom.
    - Implemented turning around animation when changing direction for Full
      Throttle, The Dig and The Curse of Monkey Island.
    - Added enhancement to Loom: Ctrl+D shows up list of drafts that has been
@@ -65,6 +100,8 @@ For a more comprehensive changelog of the latest experimental code, see:
      Island 1. Text rendering for this game is now pixel perfect.
    - Implemented complete support for the Macintosh and DOS/V Japanese versions
      of Indiana Jones and the Fate of Atlantis distributed by MicroMouse.
+   - Implemented network multiplayer support for Backyard Football,
+     Backyard Baseball 2001, and Backyard Football 2002.
 
  Sherlock:
    - Added support for Chinese Serrated Scalpel.
@@ -122,6 +159,10 @@ For a more comprehensive changelog of the latest experimental code, see:
  Xeen:
    - Renamed 'xeen' engine to 'mm' for Might & Magic.
    - Added custom engine option to replace the health gems with HP/SP bars.
+
+ RISC OS port:
+   - Double buffering is now used in full screen mode when V-sync is enabled.
+   - Added support for hardware palettes.
 
 
 #### 2.7.1 "Stan's previously broken swords" (2023-07-31)

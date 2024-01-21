@@ -114,8 +114,8 @@ Channel::~Channel() {
 
 DirectorPlotData Channel::getPlotData() {
 	DirectorPlotData pd(g_director, _sprite->_spriteType, _sprite->_ink, _sprite->_blendAmount, _sprite->getBackColor(), _sprite->getForeColor());
-	pd.colorWhite = 0;
-	pd.colorBlack = 255;
+	pd.colorWhite = g_director->getColorWhite();
+	pd.colorBlack = g_director->getColorBlack();
 	pd.dst = nullptr;
 
 	pd.srf = getSurface();
@@ -172,6 +172,10 @@ const Graphics::Surface *Channel::getMask(bool forceMatte) {
 			BitmapCastMember *bitmap = ((BitmapCastMember *)_sprite->_cast);
 			// 1-bit images only require a matte for the matte ink type
 			if (bitmap->_bitsPerPixel == 1 && _sprite->_ink != kInkTypeMatte) {
+				// 1-bit images will not blend with kInkTypeCopy, whereas 8-bit images will.
+				if (_sprite->_ink == kInkTypeCopy) {
+                    _sprite->_blendAmount = 0;
+                }
 				return nullptr;
 			}
 			return bitmap->getMatte(bbox);
@@ -464,6 +468,15 @@ void Channel::updateTextCast() {
 			g_director->getCurrentWindow()->addDirtyRect(_widget->_dims);
 		}
 	}
+}
+
+bool Channel::getEditable() {
+	if (_sprite->_cast && _sprite->_cast->_type == kCastText) {
+		if (_widget && (Graphics::MacText *)_widget->isEditable()) {
+			return true;
+		}
+	}
+	return false;
 }
 
 void Channel::setEditable(bool editable) {

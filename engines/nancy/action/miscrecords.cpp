@@ -328,17 +328,11 @@ void GotoMenu::readData(Common::SeekableReadStream &stream) {
 }
 
 void GotoMenu::execute() {
-	if (!ConfMan.hasKey("original_menus") || ConfMan.getBool("original_menus")) {
-		g_nancy->setState(NancyState::kMainMenu);
-	} else {
-		Common::Event ev;
-		ev.type = Common::EVENT_RETURN_TO_LAUNCHER;
-		g_system->getEventManager()->pushEvent(ev);
-	}
+	//NancySceneState.setDestroyOnExit();
+	g_nancy->setState(NancyState::kMainMenu);
 
 	_isDone = true;
 }
-
 
 void LoseGame::readData(Common::SeekableReadStream &stream) {
 	stream.skip(1);
@@ -382,6 +376,11 @@ void WinGame::readData(Common::SeekableReadStream &stream) {
 }
 
 void WinGame::execute() {
+	// Set ConfMan value that will stay persistent across future playthroughs.
+	// Default value in original is StillWorkingOnIt, but we just don't set it instead.
+	ConfMan.set("PlayerWonTheGame", "AcedTheGame", ConfMan.getActiveDomainName());
+	ConfMan.flushToDisk();
+
 	g_nancy->_sound->stopAndUnloadSceneSpecificSounds();
 	NancySceneState.setDestroyOnExit();
 	g_nancy->setState(NancyState::kCredits, NancyState::kMainMenu);

@@ -32,9 +32,8 @@ namespace Nuvie {
 
 using Std::vector;
 
-PartyPathFinder::PartyPathFinder(Party *p) {
+PartyPathFinder::PartyPathFinder(Party *p) : party(p) {
 	assert(p);
-	party = p;
 }
 
 PartyPathFinder::~PartyPathFinder() {
@@ -64,9 +63,9 @@ bool PartyPathFinder::is_at_target(uint32 p) {
 /* Is anyone in front of `member_num' adjacent to `from'?
  * (is_contiguous(member, member_loc) == "is member adjacent to another member
  * whose following position is lower-numbered?") */
-bool PartyPathFinder::is_contiguous(uint32 member_num, MapCoord from) {
+bool PartyPathFinder::is_contiguous(uint32 member_num, const MapCoord &from) {
 	for (uint32 q = 0; q < member_num; q++) { // check lower-numbered members
-		Actor *actor = get_member(q).actor;
+		const Actor *actor = get_member(q).actor;
 		if (actor && actor->is_immobile() == true) continue;
 
 		MapCoord loc = party->get_location(q);
@@ -99,7 +98,7 @@ void PartyPathFinder::get_forward_dir(sint8 &vec_x, sint8 &vec_y) {
 //    get_last_move(vec_x, vec_y);
 	vec_x = 0;
 	vec_y = 0;
-	uint8 dir = (get_leader() >= 0) ? get_member(get_leader()).actor->get_direction() : NUVIE_DIR_N;
+	NuvieDir dir = (get_leader() >= 0) ? get_member(get_leader()).actor->get_direction() : NUVIE_DIR_N;
 	if (dir == NUVIE_DIR_N)      {
 		vec_x = 0;
 		vec_y = -1;
@@ -334,7 +333,7 @@ bool PartyPathFinder::try_all_directions(uint32 p, MapCoord target_loc) {
  * distance to 'target'. (near to far)
  */
 vector<MapCoord>
-PartyPathFinder::get_neighbor_tiles(MapCoord &center, MapCoord &target) {
+PartyPathFinder::get_neighbor_tiles(const MapCoord &center, const MapCoord &target) {
 	sint8 rel_x = get_wrapped_rel_dir(target.x, center.x, target.z);
 	sint8 rel_y = get_wrapped_rel_dir(target.y, center.y, target.z);
 	vector<MapCoord> neighbors;
@@ -424,7 +423,7 @@ bool PartyPathFinder::move_member(uint32 member_num, sint16 relx, sint16 rely, b
 			return true;
 		}
 		if (actor->get_error()->err == ACTOR_BLOCKED_BY_ACTOR) {
-			Actor *blocking_actor = actor->get_error()->blocking_actor;
+			const Actor *blocking_actor = actor->get_error()->blocking_actor;
 			sint8 blocking_member_num = -1;
 			if (blocking_actor)
 				blocking_member_num = party->get_member_num(blocking_actor);

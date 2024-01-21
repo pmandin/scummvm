@@ -60,10 +60,11 @@ BSUM::BSUM(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 
 	s.skip(0xA4, kGameTypeVampire, kGameTypeNancy2);
 	s.skip(3); // Number of object, frame, and logo images
-	if (g_nancy->getGameFlags() & GF_PLG_BYTE_IN_BSUM) {
-		// There's a weird version of nancy3 with an extra byte counting the number of partner logos.
-		// On first glance this seems to be the only difference, but it'll need to be checked more thoroughly
-		// TODO
+	if (g_nancy->getEngineData("PLG0")) {
+		// Parner logos were introduced with nancy4, but at least one nancy3 release
+		// had one as well. For some reason they didn't port over the code from the
+		// later games, but implemented it the same way the other BSUM images work.
+		// Hence, we skip an extra byte indicating the number of partner logos. 
 		s.skip(1);
 	}
 
@@ -130,7 +131,7 @@ INV::INV(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 	readRectArray(s, ornamentSrcs, 6, 6, kGameTypeVampire, kGameTypeNancy1);
 	readRectArray(s, ornamentDests, 6, 6, kGameTypeVampire, kGameTypeNancy1);
 
-	uint numFrames = g_nancy->getStaticData().numCurtainAnimationFrames;
+	uint numFrames = g_nancy->getGameType() == kGameTypeVampire ? 10 : 7;
 
 	readRectArray(s, curtainAnimationSrcs, numFrames * 2);
 
@@ -355,7 +356,7 @@ CRED::CRED(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 	readFilename(*chunkStream, imageName);
 
 	textNames.resize(isVampire ? 7 : 1);
-	for (Common::String &str : textNames) {
+	for (Common::Path &str : textNames) {
 		readFilename(*chunkStream, str);
 	}
 
@@ -487,6 +488,8 @@ LOAD::LOAD(Common::SeekableReadStream *chunkStream) :
 		readRect(s, _cancelButtonDisabledSrc);
 
 		readFilename(s, _gameSavedPopup, kGameTypeNancy3);
+		readFilename(s, _emptySaveText, kGameTypeNancy7);
+		readFilename(s, _defaultSaveNamePrefix, kGameTypeNancy7);
 		s.skip(16, kGameTypeNancy3);
 	}
 }
@@ -698,16 +701,17 @@ RCPR::RCPR(Common::SeekableReadStream *chunkStream) : EngineData(chunkStream) {
 	uColor10[1] = chunkStream->readByte();
 	uColor10[2] = chunkStream->readByte();
 
-	Common::String tmp;
+	Common::Path tmp;
 	while (chunkStream->pos() < chunkStream->size()) {
 		readFilename(*chunkStream, tmp);
-		if (tmp.hasPrefixIgnoreCase("Wall")) {
+		Common::String baseName(tmp.baseName());
+		if (baseName.hasPrefixIgnoreCase("Wall")) {
 			wallNames.push_back(tmp);
-		} else if (tmp.hasPrefixIgnoreCase("SpW")) {
+		} else if (baseName.hasPrefixIgnoreCase("SpW")) {
 			specialWallNames.push_back(tmp);
-		} else if (tmp.hasPrefixIgnoreCase("Ceil")) {
+		} else if (baseName.hasPrefixIgnoreCase("Ceil")) {
 			ceilingNames.push_back(tmp);
-		} else if (tmp.hasPrefixIgnoreCase("Floor")) {
+		} else if (baseName.hasPrefixIgnoreCase("Floor")) {
 			floorNames.push_back(tmp);
 		}
 	}

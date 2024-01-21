@@ -58,7 +58,8 @@ static inline __m256i simd4BppTo2Bpp(__m256i pixels) {
 	x = _mm256_or_si256(x, _mm256_slli_epi32(_mm256_srli_epi32(_mm256_and_si256(pixels, _mm256_set1_epi32(0x00ff0000)), 16+3), 11));
 	x = _mm256_slli_epi32(x, 16);
 	x = _mm256_srai_epi32(x, 16);
-	return _mm256_packs_epi32(x, _mm256_setzero_si256());
+	x = _mm256_packs_epi32(x, _mm256_setzero_si256());
+	return _mm256_permute4x64_epi64(x, _MM_SHUFFLE(3, 1, 2, 0));
 }
 
 static inline __m256i rgbBlendSIMD2Bpp(__m256i srcCols, __m256i destCols, __m256i alphas) {
@@ -399,11 +400,11 @@ static inline void drawPixelSIMD(byte *destPtr, const byte *srcP2, __m256i tint,
 	if (DestBytesPerPixel == 4)
 		destCol = _mm256_loadu_si256((const __m256i *)destPtr);
 	else
-		destCol = simd2BppTo4Bpp(_mm256_loadu_si256((const __m256i *)destPtr));
+		destCol = simd2BppTo4Bpp(_mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)destPtr)));
 	if (SrcBytesPerPixel == 4)
 		srcCols = _mm256_loadu_si256((const __m256i *)(srcP2 + xDir * xCtrBpp));
 	else
-		srcCols = simd2BppTo4Bpp(_mm256_loadu_si256((const __m256i *)(srcP2 + xDir * xCtrBpp)));
+		srcCols = simd2BppTo4Bpp(_mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(srcP2 + xDir * xCtrBpp))));
 
 	// we do this here because we need to check if we should skip the pixel before we blend it
 	__m256i mask1 = skipTrans ? _mm256_cmpeq_epi32(_mm256_and_si256(srcCols, maskedAlphas), transColors) : _mm256_setzero_si256();
@@ -502,9 +503,11 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 	if (args.yStart + yCtrHeight > args.destArea.h) {
 		yCtrHeight = args.destArea.h - args.yStart;
 	}
-	if (xCtrWidth % 8 != 0) {
+	/*if (xCtrWidth % 8 != 0) {
 		--yCtrHeight;
-	}
+	}*/
+
+	const int secondToLast = xCtrWidth - 8;
 
 	byte *destP = (byte *)args.destArea.getBasePtr(0, destY);
 	const byte *srcP = (const byte *)args.src.getBasePtr(
@@ -515,12 +518,23 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 
 		if (!Scale) {
 			// If we are not scaling the image
-			for (int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart; xCtr < xCtrWidth; destX += 8, xCtr += 8, xCtrBpp += SrcBytesPerPixel*8) {
+			int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart;
+			for (; xCtr < secondToLast; destX += 8, xCtr += 8, xCtrBpp += SrcBytesPerPixel*8) {
 				byte *destPtr = &destP[destX * DestBytesPerPixel];
-				// Skip pixels that are beyond the row
-				__m256i skipMask = _mm256_cmpgt_epi32(_mm256_add_epi32(_mm256_add_epi32(_mm256_set1_epi32(xCtr), addIndexes), _mm256_set1_epi32(1)), xCtrWidthSIMD);
-				drawPixelSIMD<DestBytesPerPixel, SrcBytesPerPixel>(destPtr, srcP, tint, alphas, maskedAlphas, transColors, xDir, xCtrBpp, args.srcAlpha, args.skipTrans, args.horizFlip, args.useTint, skipMask);
+				drawPixelSIMD<DestBytesPerPixel, SrcBytesPerPixel>(destPtr, srcP, tint, alphas, maskedAlphas, transColors, xDir, xCtrBpp, args.srcAlpha, args.skipTrans, args.horizFlip, args.useTint, _mm256_set1_epi32(0));
 			}
+
+			byte *destPtr = &destP[destX * DestBytesPerPixel];
+			__m256i srcCols = _mm256_setzero_si256();
+			__m256i destCols = _mm256_setzero_si256();
+			memcpy(&srcCols, srcP + xDir * xCtrBpp, (xCtrWidth - xCtr) * SrcBytesPerPixel);
+			memcpy(&destCols, destPtr, (xCtrWidth - xCtr) * DestBytesPerPixel);
+
+			// Skip pixels that are beyond the row
+			// __m256i skipMask = _mm256_cmpgt_epi32(_mm256_add_epi32(_mm256_add_epi32(_mm256_set1_epi32(xCtr), addIndexes), _mm256_set1_epi32(1)), xCtrWidthSIMD);
+			drawPixelSIMD<DestBytesPerPixel, SrcBytesPerPixel>((byte *)&destCols, (byte *)&srcCols, tint, alphas, maskedAlphas, transColors, xDir, 0, args.srcAlpha, args.skipTrans, args.horizFlip, args.useTint, _mm256_set1_epi32(0));
+			memcpy(destPtr, &destCols, (xCtrWidth - xCtr) * DestBytesPerPixel);
+
 			// Goto next row in source and destination image
 			destP += args.destArea.pitch;
 			srcP += args.vertFlip ? -args.src.pitch : args.src.pitch;
@@ -579,7 +593,7 @@ static void drawInner4BppWithConv(BITMAP::DrawInnerArgs &args) {
 	// Get the last x values of the last row
 	int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart;
 	// We have a picture that is a multiple of 8, so no extra pixels to draw
-	if (xCtrWidth % 8 == 0) return;
+	/*if (xCtrWidth % 8 == 0)*/ return;
 	// Drawing the last few not scaled pixels here.
 	// Same as the loop above but now we check if we are going to overflow,
 	// and thus we don't need to mask out pixels that go over the row.
@@ -676,9 +690,11 @@ static void drawInner2Bpp(BITMAP::DrawInnerArgs &args) {
 	if (args.yStart + yCtrHeight > args.destArea.h) {
 		yCtrHeight = args.destArea.h - args.yStart;
 	}
-	if (!Scale && xCtrWidth % 16 != 0) {
+	/*if (!Scale && xCtrWidth % 16 != 0) {
 		--yCtrHeight;
-	}
+	}*/
+
+	const int secondToLast = xCtrWidth - 16;
 
 	byte *destP = (byte *)args.destArea.getBasePtr(0, destY);
 	const byte *srcP = (const byte *)args.src.getBasePtr(
@@ -688,12 +704,24 @@ static void drawInner2Bpp(BITMAP::DrawInnerArgs &args) {
 		__m256i xCtrWidthSIMD = _mm256_set1_epi16(xCtrWidth); // This is the width of the row
 		if (!Scale) {
 			// If we are not scaling the image
-			for (int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart; xCtr < xCtrWidth; destX += 16, xCtr += 16, xCtrBpp += 32) {
+			int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart;
+			for (; xCtr < secondToLast; destX += 16, xCtr += 16, xCtrBpp += 32) {
 				byte *destPtr = &destP[destX * 2];
-				// Skip pixels that are beyond the row
-				__m256i skipMask = _mm256_cmpgt_epi16(_mm256_add_epi16(_mm256_add_epi16(_mm256_set1_epi16(xCtr), addIndexes), _mm256_set1_epi16(1)), xCtrWidthSIMD);
-				drawPixelSIMD2Bpp(destPtr, srcP, tint, alphas, transColors, xDir, xCtrBpp, args.srcAlpha, args.skipTrans, args.horizFlip, args.useTint, skipMask);
+				drawPixelSIMD2Bpp(destPtr, srcP, tint, alphas, transColors, xDir, xCtrBpp, args.srcAlpha, args.skipTrans, args.horizFlip, args.useTint, _mm256_set1_epi32(0));
 			}
+
+			byte *destPtr = &destP[destX * 2];
+			__m256i srcCols = _mm256_setzero_si256();
+			__m256i destCols = _mm256_setzero_si256();
+			const int copySize = (xCtrWidth - xCtr) * 2;
+			memcpy(&srcCols, srcP + xDir * xCtrBpp, copySize);
+			memcpy(&destCols, destPtr, copySize);
+
+			// Skip pixels that are beyond the row
+			// __m256i skipMask = _mm256_cmpgt_epi16(_mm256_add_epi16(_mm256_add_epi16(_mm256_set1_epi16(xCtr), addIndexes), _mm256_set1_epi16(1)), xCtrWidthSIMD);
+			drawPixelSIMD2Bpp((byte *)&destCols, (byte *)&srcCols, tint, alphas, transColors, xDir, 0, args.srcAlpha, args.skipTrans, args.horizFlip, args.useTint, _mm256_set1_epi32(0));
+			memcpy(destPtr, &destCols, copySize);
+
 			// Goto next row in source and destination image
 			destP += args.destArea.pitch;
 			srcP += args.vertFlip ? -args.src.pitch : args.src.pitch;
@@ -756,7 +784,7 @@ static void drawInner2Bpp(BITMAP::DrawInnerArgs &args) {
 	}
 
 	// We have a picture that is a multiple of 16, so no extra pixels to draw
-	if (xCtrWidth % 16 == 0) return;
+	/*if (xCtrWidth % 16 == 0)*/ return;
 	// Get the last x values of the last row
 	int xCtr = xCtrStart, xCtrBpp = xCtrBppStart, destX = args.xStart;
 	// Drawing the last few not scaled pixels here.

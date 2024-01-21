@@ -79,10 +79,10 @@ public:
 		// SSUM and TSUM
 		// Default values set to match those applied when loading from a TSUM chunk
 		Common::String description;
-		Common::String videoFile;
+		Common::Path videoFile;
 		
 		uint16 videoFormat = kLargeVideoFormat;
-		Common::Array<Common::String> palettes;
+		Common::Array<Common::Path> palettes;
 		SoundDescription sound;
 		
 		byte panningType = kPan360;
@@ -114,7 +114,8 @@ public:
 	// Used when winning/losing game
 	void setDestroyOnExit() { _destroyOnExit = true; }
 
-	bool isRunningAd() { return _isRunningAd; }
+	bool isRunningAd() const { return _isRunningAd; }
+	bool isRunningSpecialEffect() const;
 
 	void changeScene(const SceneChangeDescription &sceneDescription);
 	void pushScene(int16 itemID = -1);

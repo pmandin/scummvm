@@ -119,11 +119,11 @@ MoviePlayer::~MoviePlayer() {
  * @param id the id of the file
  */
 bool MoviePlayer::load(uint32 id) {
-	Common::String filename;
+	Common::Path filename;
 
 	if (SwordEngine::_systemVars.showText) {
 		Common::File f;
-		filename = Common::String::format("%s.txt", sequenceList[id]);
+		filename = Common::Path(Common::String::format("%s.txt", sequenceList[id]));
 
 		if (f.open(filename)) {
 			Common::String line;
@@ -148,12 +148,12 @@ bool MoviePlayer::load(uint32 id) {
 					ptr++;
 
 				if (startFrame > endFrame) {
-					warning("%s:%d: startFrame (%d) > endFrame (%d)", filename.c_str(), lineNo, startFrame, endFrame);
+					warning("%s:%d: startFrame (%d) > endFrame (%d)", filename.toString().c_str(), lineNo, startFrame, endFrame);
 					continue;
 				}
 
 				if (startFrame <= lastEnd) {
-					warning("%s:%d startFrame (%d) <= lastEnd (%d)", filename.c_str(), lineNo, startFrame, lastEnd);
+					warning("%s:%d startFrame (%d) <= lastEnd (%d)", filename.toString().c_str(), lineNo, startFrame, lastEnd);
 					continue;
 				}
 
@@ -173,16 +173,16 @@ bool MoviePlayer::load(uint32 id) {
 
 	switch (_decoderType) {
 	case kVideoDecoderDXA:
-		filename = Common::String::format("%s.dxa", sequenceList[id]);
+		filename = Common::Path(Common::String::format("%s.dxa", sequenceList[id]));
 		break;
 	case kVideoDecoderSMK:
-		filename = Common::String::format("%s.smk", sequenceList[id]);
+		filename = Common::Path(Common::String::format("%s.smk", sequenceList[id]));
 		break;
 	case kVideoDecoderPSX:
-		filename = Common::String::format("%s.str", (_vm->_systemVars.isDemo && id == 4) ? "intro" : sequenceListPSX[id]);
+		filename = Common::Path(Common::String::format("%s.str", (_vm->_systemVars.isDemo && id == 4) ? "intro" : sequenceListPSX[id]));
 		break;
 	case kVideoDecoderMP2:
-		filename = Common::String::format("%s.mp2", sequenceList[id]);
+		filename = Common::Path(Common::String::format("%s.mp2", sequenceList[id]));
 		break;
 	default:
 		break;
@@ -516,12 +516,12 @@ void MoviePlayer::drawFramePSX(const Graphics::Surface *frame) {
 ///////////////////////////////////////////////////////////////////////////////
 
 MoviePlayer *makeMoviePlayer(uint32 id, SwordEngine *vm, Text *textMan, ResMan *resMan, Sound *sound, OSystem *system) {
-	Common::String filename;
+	Common::Path filename;
 
 	// For the PSX version, we'll try the PlayStation stream files
 	if (vm->isPsx()) {
 		// The demo uses the normal file names for the intro cutscene
-		filename = ((vm->_systemVars.isDemo && id == 4) ? "intro" : Common::String(sequenceListPSX[id])) + ".str";
+		filename = ((vm->_systemVars.isDemo && id == 4) ? Common::Path("intro") : Common::Path(Common::String(sequenceListPSX[id]) + ".str"));
 
 		if (Common::File::exists(filename)) {
 #ifdef USE_RGB_COLOR
@@ -529,21 +529,21 @@ MoviePlayer *makeMoviePlayer(uint32 id, SwordEngine *vm, Text *textMan, ResMan *
 			Video::VideoDecoder *psxDecoder = new Video::PSXStreamDecoder(Video::PSXStreamDecoder::kCD2x);
 			return new MoviePlayer(vm, textMan, resMan, sound, system, psxDecoder, kVideoDecoderPSX);
 #else
-			GUI::MessageDialog dialog(Common::U32String::format(_("PSX stream cutscene '%s' cannot be played in paletted mode"), filename.c_str()), _("OK"));
+			GUI::MessageDialog dialog(Common::U32String::format(_("PSX stream cutscene '%s' cannot be played in paletted mode"), filename.toString().c_str()), _("OK"));
 			dialog.runModal();
 			return 0;
 #endif
 		}
 	}
 
-	filename = Common::String::format("%s.smk", sequenceList[id]);
+	filename = Common::Path(Common::String::format("%s.smk", sequenceList[id]));
 
 	if (Common::File::exists(filename)) {
 		Video::SmackerDecoder *smkDecoder = new Video::SmackerDecoder();
 		return new MoviePlayer(vm, textMan, resMan, sound, system, smkDecoder, kVideoDecoderSMK);
 	}
 
-	filename = Common::String::format("%s.dxa", sequenceList[id]);
+	filename = Common::Path(Common::String::format("%s.dxa", sequenceList[id]));
 
 	if (Common::File::exists(filename)) {
 		Video::VideoDecoder *dxaDecoder = new Video::DXADecoder();
@@ -551,7 +551,7 @@ MoviePlayer *makeMoviePlayer(uint32 id, SwordEngine *vm, Text *textMan, ResMan *
 	}
 
 	// Old MPEG2 cutscenes
-	filename = Common::String::format("%s.mp2", sequenceList[id]);
+	filename = Common::Path(Common::String::format("%s.mp2", sequenceList[id]));
 
 	if (Common::File::exists(filename)) {
 #ifdef USE_MPEG2

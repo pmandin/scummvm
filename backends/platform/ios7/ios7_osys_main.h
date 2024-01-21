@@ -142,7 +142,7 @@ public:
 	void startSoundsystem();
 	void stopSoundsystem();
 
-	Common::String getDefaultConfigFileName() override;
+	Common::Path getDefaultConfigFileName() override;
 
 	void logMessage(LogMessageType::Type type, const char *message) override;
 	void fatalError() override;
@@ -157,8 +157,9 @@ public:
 
 	bool isConnectionLimited() override;
 	void virtualController(bool connect);
+	bool isiOSAppOnMac() const;
 
-	virtual Common::String getDefaultLogFileName() override { return Common::String("/scummvm.log"); }
+	virtual Common::Path getDefaultLogFileName() override { return Common::Path("/scummvm.log"); }
 
 	virtual GUI::OptionsContainerWidget* buildBackendOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override;
 	virtual void applyBackendSettings() override;

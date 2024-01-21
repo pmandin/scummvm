@@ -88,6 +88,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	UIButton *_toggleTouchModeButton;
 	UITapGestureRecognizer *oneFingerTapGesture;
 	UITapGestureRecognizer *twoFingerTapGesture;
+	UILongPressGestureRecognizer *oneFingerLongPressGesture;
+	UILongPressGestureRecognizer *twoFingerLongPressGesture;
 #endif
 }
 
@@ -210,7 +212,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[twoFingerTapGesture setDelaysTouchesEnded:NO];
 
 	// Default long press duration is 0.5 seconds which suits us well
-	UILongPressGestureRecognizer *oneFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(oneFingerLongPress:)];
+	oneFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(oneFingerLongPress:)];
 	[oneFingerLongPressGesture setNumberOfTouchesRequired:1];
 	[oneFingerLongPressGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
 	[oneFingerLongPressGesture setDelaysTouchesBegan:NO];
@@ -218,7 +220,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[oneFingerLongPressGesture setCancelsTouchesInView:NO];
 	[oneFingerLongPressGesture canPreventGestureRecognizer:oneFingerTapGesture];
 
-	UILongPressGestureRecognizer *twoFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingerLongPress:)];
+	twoFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingerLongPress:)];
 	[twoFingerLongPressGesture setNumberOfTouchesRequired:2];
 	[twoFingerLongPressGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
 	[twoFingerLongPressGesture setDelaysTouchesBegan:NO];
@@ -387,7 +389,14 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 #if TARGET_OS_IOS
 - (void)triggerTouchModeChanged {
-	if ([self isKeyboardShown]) {
+	BOOL hwKeyboardConnected = NO;
+	if (@available(iOS 14.0, *)) {
+		if (GCKeyboard.coalescedKeyboard != nil) {
+			hwKeyboardConnected = YES;
+		}
+	}
+
+	if ([self isKeyboardShown] && !hwKeyboardConnected) {
 		[self hideKeyboard];
 	} else {
 		[self addEvent:InternalEvent(kInputTouchModeChanged, 0, 0)];
@@ -413,6 +422,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[_toggleTouchModeButton setHidden:!isEnabled];
 	[_menuButton setEnabled:isEnabled];
 	[_menuButton setHidden:!isEnabled];
+}
+
+- (BOOL)isiOSAppOnMac {
+	if (@available(iOS 14.0, *)) {
+		return [NSProcessInfo processInfo].isiOSAppOnMac;
+	}
+	return NO;
 }
 #endif
 
@@ -462,7 +478,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	if ( @available(iOS 11, tvOS 11, *) ) {
 		CGRect newFrame = self.frame;
 #if TARGET_OS_IOS
-		CGRect screenSize = [[UIScreen mainScreen] bounds];
+		CGRect screenSize = self.window.bounds;
 		UIEdgeInsets inset = [[[UIApplication sharedApplication] keyWindow] safeAreaInsets];
 		UIInterfaceOrientation orientation = [iOS7AppDelegate currentOrientation];
 
@@ -539,11 +555,27 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	}
 }
 
+#if TARGET_OS_IOS
+- (void)enableGestures:(BOOL)enabled {
+	[oneFingerTapGesture setEnabled:enabled];
+	[twoFingerTapGesture setEnabled:enabled];
+	[oneFingerLongPressGesture setEnabled:enabled];
+	[twoFingerLongPressGesture setEnabled:enabled];
+}
+#endif
+
 - (void)virtualController:(bool)connect {
 	if (@available(iOS 15.0, *)) {
 		for (GameController *c : _controllers) {
 			if ([c isKindOfClass:GamepadController.class]) {
 				[(GamepadController*)c virtualController:connect];
+#if TARGET_OS_IOS
+				if (connect) {
+					[self enableGestures:NO];
+				} else {
+					[self enableGestures:YES];
+				}
+#endif
 			}
 		}
 	}

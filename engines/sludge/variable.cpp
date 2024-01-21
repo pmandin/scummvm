@@ -188,6 +188,10 @@ int StackHandler::getStackSize() const {
 	return r;
 }
 
+static int stringCompareToIgnoreCase(const Common::String &s1, const Common::String &s2) {
+        return s1.compareToIgnoreCase(s2) > 0;
+}
+
 bool StackHandler::getSavedGamesStack(const Common::String &ext) {
 	// Make pattern
 	uint len = ext.size();
@@ -197,11 +201,14 @@ bool StackHandler::getSavedGamesStack(const Common::String &ext) {
 	// Get all saved files
 	Common::StringArray sa = g_system->getSavefileManager()->listSavefiles(pattern);
 
+	Common::sort(sa.begin(), sa.end(), stringCompareToIgnoreCase);
+
+
 	// Save file names to stacks
 	Variable newName;
 	newName.varType = SVT_NULL;
-	Common::StringArray::iterator it;
-	for (it = sa.begin(); it != sa.end(); ++it) {
+
+	for (Common::StringArray::iterator it = sa.begin(); it != sa.end(); ++it) {
 		(*it).erase((*it).size() - len, len);
 		newName.makeTextVar((*it));
 		if (!addVarToStack(newName, first))
@@ -306,7 +313,7 @@ bool Variable::loadStringToVar(int value) {
 	return (bool)(varData.theString != NULL);
 }
 
-Common::String Variable::getTextFromAnyVar() const {
+Common::String Variable::getTextFromAnyVar(bool skipLoad) const {
 	switch (varType) {
 	case SVT_STRING:
 		return varData.theString;
@@ -318,7 +325,7 @@ Common::String Variable::getTextFromAnyVar() const {
 
 		for (int i = 0; i < varData.fastArray->size; i++) {
 			builder2 = builder + " ";
-			grabText = varData.fastArray->fastVariables[i].getTextFromAnyVar();
+			grabText = varData.fastArray->fastVariables[i].getTextFromAnyVar(skipLoad);
 			builder.clear();
 			builder = builder2 + grabText;
 		}
@@ -334,7 +341,7 @@ Common::String Variable::getTextFromAnyVar() const {
 
 		while (stacky) {
 			builder2 = builder + " ";
-			grabText = stacky->thisVar.getTextFromAnyVar();
+			grabText = stacky->thisVar.getTextFromAnyVar(skipLoad);
 			builder.clear();
 			builder = builder2 + grabText;
 			stacky = stacky->next;
@@ -352,9 +359,11 @@ Common::String Variable::getTextFromAnyVar() const {
 	}
 
 	case SVT_OBJTYPE: {
-		ObjectType *thisType = g_sludge->_objMan->findObjectType(varData.intValue);
+		ObjectType *thisType = g_sludge->_objMan->findObjectType(varData.intValue, skipLoad);
 		if (thisType)
 			return thisType->screenName;
+		else
+			return Common::String::format("<unloaded id %d>", varData.intValue);
 		break;
 	}
 
@@ -492,7 +501,7 @@ bool addVarToStack(const Variable &va, VariableStack *&thisStack) {
 		return false;
 	newStack->next = thisStack;
 	thisStack = newStack;
-	debugC(2, kSludgeDebugStackMachine, "Variable %s was added to stack", va.getTextFromAnyVar().c_str());
+	debugC(2, kSludgeDebugStackMachine, "Variable %s was added to stack", va.getTextFromAnyVar(true).c_str());
 	return true;
 }
 
@@ -508,7 +517,7 @@ bool addVarToStackQuick(Variable &va, VariableStack *&thisStack) {
 
 	newStack->next = thisStack;
 	thisStack = newStack;
-	debugC(2, kSludgeDebugStackMachine, "Variable %s was added to stack quick", va.getTextFromAnyVar().c_str());
+	debugC(2, kSludgeDebugStackMachine, "Variable %s was added to stack quick", va.getTextFromAnyVar(true).c_str());
 	return true;
 }
 
@@ -582,7 +591,7 @@ void trimStack(VariableStack *&stack) {
 	VariableStack *killMe = stack;
 	stack = stack->next;
 
-	debugC(2, kSludgeDebugStackMachine, "Variable %s was removed from stack", killMe->thisVar.getTextFromAnyVar().c_str());
+	debugC(2, kSludgeDebugStackMachine, "Variable %s was removed from stack", killMe->thisVar.getTextFromAnyVar(true).c_str());
 
 	// When calling this, we've ALWAYS checked that stack != NULL
 	killMe->thisVar.unlinkVar();

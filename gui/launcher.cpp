@@ -400,18 +400,11 @@ void LauncherDialog::addGame() {
 		if (_browser->runModal() > 0) {
 			// User made his choice...
 #if defined(USE_CLOUD) && defined(USE_LIBCURL)
-			Common::String selectedDirectory = _browser->getResult().getPath();
-			Common::String bannedDirectory = CloudMan.getDownloadLocalDirectory();
-			if (selectedDirectory.size() && selectedDirectory.lastChar() != '/' && selectedDirectory.lastChar() != '\\')
-				selectedDirectory += '/';
-			if (bannedDirectory.size() && bannedDirectory.lastChar() != '/' && bannedDirectory.lastChar() != '\\') {
-				if (selectedDirectory.size()) {
-					bannedDirectory += selectedDirectory.lastChar();
-				} else {
-					bannedDirectory += '/';
-				}
-			}
-			if (selectedDirectory.size() && bannedDirectory.size() && selectedDirectory.equalsIgnoreCase(bannedDirectory)) {
+			Common::Path selectedDirectory = _browser->getResult().getPath();
+			Common::Path bannedDirectory = CloudMan.getDownloadLocalDirectory();
+			selectedDirectory.removeTrailingSeparators();
+			bannedDirectory.removeTrailingSeparators();
+			if (!selectedDirectory.empty() && !bannedDirectory.empty() && selectedDirectory.equalsIgnoreCase(bannedDirectory)) {
 				MessageDialog alert(_("This directory cannot be used yet, it is being downloaded into!"));
 				alert.runModal();
 				return;
@@ -630,7 +623,7 @@ void LauncherDialog::handleOtherEvent(const Common::Event &evt) {
 	Dialog::handleOtherEvent(evt);
 	if (evt.type == Common::EVENT_DROP_FILE) {
 		// If the path is a file, take the parent directory for the detection
-		Common::String path = evt.path;
+		Common::Path path = evt.path;
 		Common::FSNode node(path);
 		if (!node.isDirectory())
 			path = node.getParent().getPath();
@@ -638,7 +631,7 @@ void LauncherDialog::handleOtherEvent(const Common::Event &evt) {
 	}
 }
 
-bool LauncherDialog::doGameDetection(const Common::String &path) {
+bool LauncherDialog::doGameDetection(const Common::Path &path) {
 	// Allow user to add a new game to the list.
 	// 2) try to auto detect which game is in the directory, if we cannot
 	//    determine it uniquely present a list of candidates to the user
@@ -654,7 +647,12 @@ bool LauncherDialog::doGameDetection(const Common::String &path) {
 	Common::FSNode dir(path);
 	Common::FSList files;
 	if (!dir.getChildren(files, Common::FSNode::kListAll)) {
-		MessageDialog alert(_("ScummVM couldn't open the specified directory!"));
+		Common::U32String msg(_("ScummVM couldn't open the specified directory!"));
+#ifdef __ANDROID__
+		msg += Common::U32String("\n\n");
+		msg += _("Did you add this directory to the SAF? Press the help button [?] on the top for detailed instructions");
+#endif
+		MessageDialog alert(msg);
 		alert.runModal();
 		return true;
 	}
@@ -673,7 +671,12 @@ bool LauncherDialog::doGameDetection(const Common::String &path) {
 	int idx;
 	if (candidates.empty()) {
 		// No game was found in the specified directory
-		MessageDialog alert(_("ScummVM could not find any game in the specified directory!"));
+		Common::U32String msg(_("ScummVM could not find any game in the specified directory!"));
+#ifdef __ANDROID__
+		msg += Common::U32String("\n\n");
+		msg += _("Did you add this directory to the SAF? Press the help button [?] on the top for detailed instructions");
+#endif
+		MessageDialog alert(msg);
 		alert.runModal();
 		idx = -1;
 		return false;
@@ -1133,7 +1136,7 @@ void LauncherSimple::updateListing() {
 
 		if (scanEntries) {
 			Common::String path;
-			if (!iter->domain->tryGetVal("path", path) || !Common::FSNode(path).isDirectory()) {
+			if (!iter->domain->tryGetVal("path", path) || !Common::FSNode(Common::Path::fromConfig(path)).isDirectory()) {
 				color = ThemeEngine::kFontColorAlternate;
 				// If more conditions which grey out entries are added we should consider
 				// enabling this so that it is easy to spot why a certain game entry cannot
@@ -1573,7 +1576,7 @@ void LauncherGrid::updateListing() {
 		iter->domain->tryGetVal("language", language);
 		iter->domain->tryGetVal("platform", platform);
 		iter->domain->tryGetVal("extra", extra);
-		valid_path = (!iter->domain->tryGetVal("path", path) || !Common::FSNode(path).isDirectory()) ? false : true;
+		valid_path = (!iter->domain->tryGetVal("path", path) || !Common::FSNode(Common::Path::fromConfig(path)).isDirectory()) ? false : true;
 		gridList.push_back(GridItemInfo(k++, engineid, gameid, iter->description, iter->title, extra, Common::parseLanguage(language), Common::parsePlatform(platform), valid_path));
 		_domains.push_back(iter->key);
 	}

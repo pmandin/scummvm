@@ -78,7 +78,7 @@ private:
 
 
 void DialogState::downloadList() {
-	Networking::SessionRequest *rq = session.get(Common::String::format("https://downloads.scummvm.org/frs/icons/%s", listfname), "",
+	Networking::SessionRequest *rq = session.get(Common::String::format("https://downloads.scummvm.org/frs/icons/%s", listfname), Common::Path(),
 		new Common::Callback<DialogState, const Networking::DataResponse &>(this, &DialogState::downloadListCallback),
 		new Common::Callback<DialogState, const Networking::ErrorResponse &>(this, &DialogState::errorCallback),
 		true);
@@ -101,7 +101,7 @@ bool DialogState::takeOneFile() {
 	fileHash.erase(fname);
 
 	Common::String url = Common::String::format("https://downloads.scummvm.org/frs/icons/%s", fname.c_str());
-	Common::String localFile = normalizePath(ConfMan.get("iconspath") + "/" + fname, '/');
+	Common::Path localFile = ConfMan.getPath("iconspath").join(fname).normalize();
 
 	Networking::SessionRequest *rq = session.get(url, localFile,
 		new Common::Callback<DialogState, const Networking::DataResponse &>(this, &DialogState::downloadFileCallback),
@@ -237,6 +237,7 @@ void DownloadPacksDialog::close() {
 
 void DownloadPacksDialog::setState(IconProcessState state) {
 	g_state->state = state;
+	_errorText->setLabel(Common::U32String());
 
 	switch (state) {
 	case kDownloadStateNone:
@@ -389,7 +390,7 @@ void DownloadPacksDialog::setError(Common::U32String &msg) {
 }
 
 void DownloadPacksDialog::calculateList() {
-	Common::String iconsPath = ConfMan.get("iconspath");
+	Common::Path iconsPath = ConfMan.getPath("iconspath");
 	if (iconsPath.empty()) {
 		Common::U32String str(_("ERROR: No icons path set"));
 		setError(str);
@@ -434,7 +435,7 @@ void DownloadPacksDialog::calculateList() {
 }
 
 void DownloadPacksDialog::clearCache() {
-	Common::String iconsPath = ConfMan.get("iconspath");
+	Common::Path iconsPath = ConfMan.getPath("iconspath");
 	if (iconsPath.empty()) {
 		Common::U32String str(_("ERROR: No icons path set"));
 		setError(str);
@@ -462,11 +463,13 @@ void DownloadPacksDialog::clearCache() {
 
 	GUI::MessageDialog dialog(Common::U32String::format(_("You are about to remove %s %S of data, deleting all previously downloaded %S. Do you want to proceed?"), size.c_str(), _(sizeUnits).c_str(), _packname.c_str()), _("Proceed"), _("Cancel"));
 	if (dialog.runModal() == ::GUI::kMessageOK) {
+		// Cancel all downloads
+		g_state->session.abortRequest();
 
 		// Build list of previously downloaded icon files
 		for (auto ic = iconFiles.begin(); ic != iconFiles.end(); ++ic) {
 			Common::String fname = (*ic)->getName();
-			Common::FSNode fs(Common::Path(iconsPath).join(fname));
+			Common::FSNode fs(iconsPath.join(fname));
 			Common::WriteStream *str = fs.createWriteStream();
 
 			// Overwrite previously downloaded pack files with dummy data
@@ -476,9 +479,11 @@ void DownloadPacksDialog::clearCache() {
 		g_state->fileHash.clear();
 
 		// Fetch current packs list file and re-trigger downloads
-		g_state->downloadList();
-		calculateList();
+		setState(kDownloadStateList);
 		_cancelButton->setVisible(true);
+		refreshWidgets();
+
+		g_state->downloadList();
 	} else {
 		_clearCacheButton->setEnabled(true);
 	}

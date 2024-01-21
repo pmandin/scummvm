@@ -42,7 +42,7 @@
 namespace VCruise {
 
 VCruiseEngine::VCruiseEngine(OSystem *syst, const VCruiseGameDescription *gameDesc) : Engine(syst), _gameDescription(gameDesc) {
-	const Common::FSNode gameDataDir(ConfMan.get("path"));
+	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
 }
 
 VCruiseEngine::~VCruiseEngine() {
@@ -334,11 +334,11 @@ bool VCruiseEngine::canSaveAutosaveCurrently() {
 	return _runtime->canSave(false);
 }
 
-bool VCruiseEngine::canSaveGameStateCurrently() {
+bool VCruiseEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 	return _runtime->canSave(false);
 }
 
-bool VCruiseEngine::canLoadGameStateCurrently() {
+bool VCruiseEngine::canLoadGameStateCurrently(Common::U32String *msg) {
 	return _runtime->canLoad();
 }
 

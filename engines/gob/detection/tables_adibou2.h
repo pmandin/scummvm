@@ -17,6 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv3 license mentioned above, this code is also
+ * licensed under LGPL 2.1. See LICENSES/COPYING.LGPL file for the
+ * full text of the license.
+ *
  */
 
 /* Detection tables for Adibou / Addy Junior series. */
@@ -36,7 +42,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -50,7 +55,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -64,7 +68,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -79,7 +82,6 @@
 		GF_ENABLE_ADIBOU2_FREE_BANANAS_WORKAROUND | GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -94,7 +96,6 @@
 		GF_ENABLE_ADIBOU2_FREE_BANANAS_WORKAROUND | GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -109,7 +110,6 @@
 		GF_ENABLE_ADIBOU2_FREE_BANANAS_WORKAROUND | GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -124,7 +124,6 @@
 		GF_ENABLE_ADIBOU2_FREE_BANANAS_WORKAROUND | GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -138,7 +137,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -156,7 +154,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -171,7 +168,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -180,13 +176,13 @@
 	{
 		"adibou2",
 		"ADI Jr.",
-		AD_ENTRY1s("intro.stk", "718a51862406136c28639489a9ba950a", 956350),
+		AD_ENTRY2s("intro.stk", "718a51862406136c28639489a9ba950a", 956350,
+				"intro.inf", "d8710732c9bfe3ca52d3ce5aefc06089", 48),
 		DE_DEU,
 		kPlatformWindows,
 		GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -202,7 +198,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -219,7 +214,6 @@
 		ADGF_NO_FLAGS,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -235,7 +229,6 @@
 		GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -245,12 +238,13 @@
 	{
 		"adibou2",
 		"ADIBOO 2",
-		AD_ENTRY1s("intro.stk", "718a51862406136c28639489a9ba950a", 956350),
-		EN_ANY,
+		AD_ENTRY2s("intro.stk", "718a51862406136c28639489a9ba950a", 956350,
+				"intro.inf", "9369aa62939f5f7c11b1e02a45038050", 44),
+		EN_GRB,
 		kPlatformWindows,
 		GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND,
-		GUIO0()},
-	kGameTypeAdibou2,
+		GUIO0()
+	},
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -267,7 +261,6 @@
 		ADGF_DEMO,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -282,7 +275,6 @@
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },
@@ -297,7 +289,6 @@
 		ADGF_DEMO,
 		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GUIO_NOASPECT)
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480 | kFeaturesSCNDemo,
 	0, 0, 9
 },
@@ -312,7 +303,6 @@
 		ADGF_DEMO,
 		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GUIO_NOASPECT)
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480 | kFeaturesSCNDemo,
 	0, 0, 10
 },
@@ -327,7 +317,6 @@
 		ADGF_DEMO,
 		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GUIO_NOASPECT)
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480 | kFeaturesSCNDemo,
 	0, 0, 11
 },
@@ -343,7 +332,6 @@
 		ADGF_UNSTABLE,
 		GUIO0()
 	},
-	kGameTypeAdibou2,
 	kFeatures640x480,
 	0, 0, 0
 },

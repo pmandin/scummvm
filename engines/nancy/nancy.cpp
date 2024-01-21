@@ -119,11 +119,11 @@ Common::Error NancyEngine::saveGameStream(Common::WriteStream *stream, bool isAu
 	return synchronize(ser);
 }
 
-bool NancyEngine::canLoadGameStateCurrently() {
+bool NancyEngine::canLoadGameStateCurrently(Common::U32String *msg) {
 	return canSaveGameStateCurrently();
 }
 
-bool NancyEngine::canSaveGameStateCurrently() {
+bool NancyEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 	// TODO also disable during secondary movie
 	return State::Scene::hasInstance() &&
 			NancySceneState._state == State::Scene::kRun &&
@@ -160,7 +160,7 @@ void NancyEngine::errorString(const char *buf_input, char *buf_output, int buf_o
 }
 
 bool NancyEngine::hasFeature(EngineFeature f) const {
-	return  (f == kSupportsReturnToLauncher) ||
+	return	(f == kSupportsReturnToLauncher) ||
 			(f == kSupportsLoadingDuringRuntime) ||
 			(f == kSupportsSavingDuringRuntime) ||
 			(f == kSupportsChangingOptionsDuringRuntime) ||
@@ -236,7 +236,7 @@ void NancyEngine::setState(NancyState::NancyState state, NancyState::NancyState 
 		_gameFlow.prevState = _gameFlow.curState;
 	}
 
-	_gameFlow.curState = state;
+	_gameFlow.nextState = state;
 	_gameFlow.changingState = true;
 }
 
@@ -285,6 +285,9 @@ Common::Error NancyEngine::run() {
 		State::State *s;
 
 		if (_gameFlow.changingState) {
+			_gameFlow.curState = _gameFlow.nextState;
+			_gameFlow.nextState = NancyState::kNone;
+
 			s = getStateObject(_gameFlow.curState);
 			if (s) {
 				s->onStateEnter(_gameFlow.curState);
@@ -305,10 +308,10 @@ Common::Error NancyEngine::run() {
 		if (_gameFlow.changingState) {
 			_graphicsManager->clearObjects();
 
-			s = getStateObject(_gameFlow.prevState);
+			s = getStateObject(_gameFlow.curState);
 			if (s) {
-				if (s->onStateExit(_gameFlow.prevState)) {
-					destroyState(_gameFlow.prevState);
+				if (s->onStateExit(_gameFlow.nextState)) {
+					destroyState(_gameFlow.curState);
 				}
 			}
 		}
@@ -375,7 +378,7 @@ void NancyEngine::pauseEngineIntern(bool pause) {
 
 void NancyEngine::bootGameEngine() {
 	// Load paths
-	const Common::FSNode gameDataDir(ConfMan.get("path"));
+	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
 	SearchMan.addSubDirectoryMatching(gameDataDir, "game");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "datafiles");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "ciftree");
@@ -417,7 +420,19 @@ void NancyEngine::bootGameEngine() {
 							}
 	#define LOAD_BOOT(t) LOAD_BOOT_L(t, #t)
 
-	LOAD_BOOT(BSUM)
+	LOAD_BOOT_L(ImageChunk, "OB0")
+	LOAD_BOOT_L(ImageChunk, "FR0")
+	LOAD_BOOT_L(ImageChunk, "LG0")
+
+	// One weird version of nancy3 has a partner logo implemented the same way as the other image chunks
+	LOAD_BOOT_L(ImageChunk, "PLG0")
+
+	// For all other games (starting with nancy4) the partner logo is a larger struct,
+	// containing video and sound data as well. Those go unused, however, so we still
+	// treat is as a simple image. Note the O instead of the 0 above.
+	LOAD_BOOT_L(ImageChunk, "PLGO")
+
+	LOAD_BOOT(BSUM) // This checks for PLG0, do NOT reorder
 	LOAD_BOOT(VIEW)
 	LOAD_BOOT(PCAL)
 	LOAD_BOOT(INV)
@@ -437,19 +452,6 @@ void NancyEngine::bootGameEngine() {
 	LOAD_BOOT(RCLB)
 	LOAD_BOOT(TABL)
 
-	LOAD_BOOT_L(ImageChunk, "OB0")
-	LOAD_BOOT_L(ImageChunk, "FR0")
-	LOAD_BOOT_L(ImageChunk, "LG0")
-
-	chunkStream = iff->getChunkStream("PLG0");
-	if (!chunkStream) {
-		chunkStream = iff->getChunkStream("PLGO"); // nancy4 and above use an O instead of a zero
-	}	
-
-	if (chunkStream) {
-		_engineData.setVal("PLG0", new ImageChunk(chunkStream));
-	}
-
 	_cursorManager->init(iff->getChunkStream("CURS"));
 
 	_graphicsManager->init();
@@ -464,7 +466,7 @@ void NancyEngine::bootGameEngine() {
 
 	// Load convo texts and autotext
 	auto *bsum = GetEngineData(BSUM);
-	if (bsum && bsum->conversationTextsFilename.size() && bsum->autotextFilename.size())  {
+	if (bsum && !bsum->conversationTextsFilename.empty() && !bsum->autotextFilename.empty()) {
 		iff = _resource->loadIFF(bsum->conversationTextsFilename);
 		if (!iff) {
 			error("Could not load CONVO IFF");
@@ -595,14 +597,14 @@ void NancyEngine::readDatFile() {
 		error("nancy.dat is invalid");
 	}
 
-	byte major = datFile->readByte();
-	byte minor = datFile->readByte();
+	int8 major = datFile->readSByte();
+	int8 minor = datFile->readSByte();
 	if (major != _datFileMajorVersion) {
 		error("Incorrect nancy.dat version. Expected '%d.%d', found %d.%d",
 			_datFileMajorVersion, _datFileMinorVersion, major, minor);
 	} else {
-		if (minor != _datFileMinorVersion) {
-			warning("Incorrect nancy.dat version. Expected '%d.%d', found %d.%d. Game may still work, but expect bugs",
+		if (minor < _datFileMinorVersion) {
+			warning("Incorrect nancy.dat version. Expected at least '%d.%d', found %d.%d. Game may still work, but expect bugs",
 			_datFileMajorVersion, _datFileMinorVersion, major, minor);
 		}
 	}
@@ -622,7 +624,7 @@ void NancyEngine::readDatFile() {
 	uint32 nextGameOffset = gameType == numGames ? datFile->size() : datFile->readUint32LE();
 	datFile->seek(thisGameOffset);
 
-	_staticData.readData(*datFile, _gameDescription->desc.language, nextGameOffset);
+	_staticData.readData(*datFile, _gameDescription->desc.language, nextGameOffset, major, minor);
 }
 
 Common::Error NancyEngine::synchronize(Common::Serializer &ser) {

@@ -498,26 +498,7 @@ const Graphics::Surface *QuickTimeDecoder::VideoTrackHandler::decodeNextFrame() 
 	if (endOfTrack())
 		return 0;
 
-	// Playback rate logic, if rate != -1 then seek to our rate adjusted time!
-	if (_decoder->getRate() != 1 && _decoder->getRate() != -1) {
-		seek(_decoder->getTime());
-	}
-
 	if (_reversed) {
-		if (beforeCurEdit()) {
-			_curEdit--;
-
-			if (atFirstEdit()) {
-				return 0;
-			}
-
-			enterNewEditListEntry(false);
-
-			if (isEmptyEdit()) {
-				return 0;
-			}
-		}
-
 		// Subtract one to place us on the frame before the current displayed frame.
 		_curFrame--;
 
@@ -913,18 +894,8 @@ uint32 QuickTimeDecoder::VideoTrackHandler::getCurEditTrackDuration() const {
 	return _parent->editList[_curEdit].trackDuration * _parent->timeScale / _decoder->_timeScale;
 }
 
-bool QuickTimeDecoder::VideoTrackHandler::atFirstEdit() const {
-    return _curEdit == 0;
-}
-
 bool QuickTimeDecoder::VideoTrackHandler::atLastEdit() const {
 	return _curEdit == _parent->editList.size();
-}
-
-bool QuickTimeDecoder::VideoTrackHandler::beforeCurEdit() const {
-    // We're at the end of the edit once the next frame's time would
-    // bring us past the end of the edit.
-    return getRateAdjustedFrameTime() <= getCurEditTimeOffset();
 }
 
 bool QuickTimeDecoder::VideoTrackHandler::endOfCurEdit() const {

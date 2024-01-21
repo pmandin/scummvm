@@ -63,7 +63,7 @@ static Graphics::Surface *loadViaImageDecoder(const Common::Path &fileName, Comm
 		Common::FSNode fsnode(fileName);
 		if (!fsnode.exists() || !fsnode.isReadable() || fsnode.isDirectory()
 				|| !(stream = fsnode.createReadStream())) {
-			warning("LibRetroPipeline::loadViaImageDecoder: Invalid file path '%s'", fileName.toString().c_str());
+			warning("LibRetroPipeline::loadViaImageDecoder: Invalid file path '%s'", fileName.toString(Common::Path::kNativeSeparator).c_str());
 			return nullptr;
 		}
 	}
@@ -105,7 +105,7 @@ static const char *const g_libretroShaderAttributes[] = {
 };
 
 // some libretro shaders use texture without checking version
-static const char *g_compatVertex =
+static const char *const g_compatVertex =
 	"#if defined(GL_ES)\n"
 		"#if !defined(HAS_ROUND)\n"
 			"#define round(x) (sign(x) * floor(abs(x) + .5))\n"
@@ -116,7 +116,7 @@ static const char *g_compatVertex =
 		"#endif\n"
 	"#endif\n";
 
-static const char *g_compatFragment =
+static const char *const g_compatFragment =
 	"#if defined(GL_ES)\n"
 		"#if !defined(HAS_ROUND)\n"
 			"#define round(x) (sign(x) * floor(abs(x) + .5))\n"
@@ -345,7 +345,7 @@ void LibRetroPipeline::deactivateInternal() {
 	// Don't call Pipeline::deactivateInternal as our framebuffer is passed to _outputPipeline
 }
 
-bool LibRetroPipeline::open(const Common::String &shaderPreset, Common::SearchSet &archSet) {
+bool LibRetroPipeline::open(const Common::Path &shaderPreset, Common::SearchSet &archSet) {
 	close();
 
 	_shaderPreset = LibRetro::parsePreset(shaderPreset, archSet);
@@ -479,7 +479,7 @@ bool LibRetroPipeline::loadPasses(Common::SearchSet &archSet) {
 			Common::FSNode fsnode(fileName);
 			if (!fsnode.exists() || !fsnode.isReadable() || fsnode.isDirectory()
 					|| !(stream = fsnode.createReadStream())) {
-				warning("LibRetroPipeline::loadPasses: Invalid file path '%s'", fileName.toString().c_str());
+				warning("LibRetroPipeline::loadPasses: Invalid file path '%s'", fileName.toString(Common::Path::kNativeSeparator).c_str());
 				return false;
 			}
 		}
@@ -742,7 +742,7 @@ void LibRetroPipeline::setShaderTexUniforms(const Common::String &prefix, Shader
 }
 
 LibRetroPipeline::Texture LibRetroPipeline::loadTexture(const Common::Path &fileName, Common::Archive *container, Common::SearchSet &archSet) {
-	Common::String baseName(fileName.getLastComponent().toString());
+	Common::String baseName(fileName.baseName());
 	const char *extension = nullptr;
 	for (int dotPos = baseName.size() - 1; dotPos >= 0; --dotPos) {
 		if (baseName[dotPos] == '.') {

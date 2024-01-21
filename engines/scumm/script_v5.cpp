@@ -554,7 +554,7 @@ void ScummEngine_v5::o5_actorOps() {
 			// but for the Smirk close-up we want the same colors
 			// as the floppy version.
 
-			if (_game.id == GID_MONKEY && _currentRoom == 76) {
+			if (_game.id == GID_MONKEY && _currentRoom == 76 && enhancementEnabled(kEnhVisualChanges)) {
 				if (i == 3)
 					i = 1;
 				else if (i == 9)
@@ -2006,6 +2006,18 @@ void ScummEngine_v5::o5_putActorAtObject() {
 	else {
 		x = 240;
 		y = 120;
+
+		// WORKAROUND: When Guybrush dives down to the Mad Monkey, he
+		// is positioned near the anchor (though since it can't be
+		// found yet, it uses this default position). He's then lowered
+		// to the ocean floor by adjusting his elevation. But he will
+		// be drawn for a split second at the unelevated position. This
+		// is a bug in the original game, and we work around it by
+		// adjusting the elevation immediately.
+
+		if (_game.id == GID_MONKEY2 && a->_number == 1 && vm.slot[_currentScript].number == 58 && enhancementEnabled(kEnhMinorBugFixes)) {
+			a->setElevation(99);
+		}
 	}
 	a->putActor(x, y);
 }
@@ -2223,6 +2235,13 @@ void ScummEngine_v5::o5_roomOps() {
 			a = getVarOrDirectWord(PARAM_1);
 			b = getVarOrDirectWord(PARAM_2);
 		}
+
+		// Mac version, draw the screens 20 pixels lower to account for the extra 40 pixels
+		if (_game.platform == Common::kPlatformMacintosh && _game.version == 3 && _useMacScreenCorrectHeight) {
+			a += _screenDrawOffset;
+			b += _screenDrawOffset;
+		}
+
 		initScreens(a, b);
 		break;
 	case 4:		// SO_ROOM_PALETTE
@@ -2928,7 +2947,7 @@ void ScummEngine_v5::o5_verbOps() {
 			break;
 		case 5:		// SO_VERB_AT
 			vs->curRect.left = getVarOrDirectWord(PARAM_1);
-			vs->curRect.top = getVarOrDirectWord(PARAM_2);
+			vs->curRect.top = getVarOrDirectWord(PARAM_2) + _screenDrawOffset;
 			if (_game.platform == Common::kPlatformFMTowns && ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
 				if (_game.id == GID_ZAK && verb == 116)
 					// WORKAROUND: FM-TOWNS Zak used the extra 40 pixels at the bottom to increase the inventory to 10 items

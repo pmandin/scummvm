@@ -101,7 +101,7 @@ bool AchievementsManager::loadAchievementsData(const char *platform, const char 
 	Archive *cfgZip = nullptr;
 
 	if (!cfgZip && ConfMan.hasKey("extrapath")) {
-		Common::FSDirectory extrapath(ConfMan.get("extrapath"));
+		Common::FSDirectory extrapath(ConfMan.getPath("extrapath"));
 		cfgZip = Common::makeZipArchive(extrapath.createReadStreamForMember("achievements.dat"));
 	}
 
@@ -131,7 +131,7 @@ bool AchievementsManager::loadAchievementsData(const char *platform, const char 
 	}
 
 	String cfgFileName = String::format("%s-%s.ini", platform, appId);
-	SeekableReadStream *stream = cfgZip->createReadStreamForMember(cfgFileName);
+	SeekableReadStream *stream = cfgZip->createReadStreamForMember(Common::Path(cfgFileName));
 	if (!stream) {
 		delete cfgZip;
 		warning("%s is not found in achievements.dat. Achievements messages are unavailable", cfgFileName.c_str());

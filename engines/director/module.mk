@@ -60,7 +60,9 @@ MODULE_OBJS = \
 	lingo/xlibs/blitpict.o \
 	lingo/xlibs/cdromxobj.o \
 	lingo/xlibs/colorxobj.o \
+	lingo/xlibs/colorcursorxobj.o \
 	lingo/xlibs/consumer.o \
+	lingo/xlibs/cursorxobj.o \
 	lingo/xlibs/darkenscreen.o \
 	lingo/xlibs/developerStack.o \
 	lingo/xlibs/dialogsxobj.o \
@@ -70,13 +72,18 @@ MODULE_OBJS = \
 	lingo/xlibs/draw.o \
 	lingo/xlibs/ednox.o \
 	lingo/xlibs/eventq.o \
+	lingo/xlibs/fadegammadownxcmd.o \
+	lingo/xlibs/fadegammaupxcmd.o \
+	lingo/xlibs/fadegammaxcmd.o \
 	lingo/xlibs/fedracul.o \
 	lingo/xlibs/feimasks.o \
 	lingo/xlibs/feiprefs.o \
 	lingo/xlibs/fileexists.o \
 	lingo/xlibs/fileio.o \
+	lingo/xlibs/findereventsxcmd.o \
 	lingo/xlibs/findfolder.o \
 	lingo/xlibs/findsys.o \
+	lingo/xlibs/findwin.o \
 	lingo/xlibs/flushxobj.o \
 	lingo/xlibs/fplayxobj.o \
 	lingo/xlibs/gpid.o \
@@ -87,18 +94,25 @@ MODULE_OBJS = \
 	lingo/xlibs/jwxini.o \
 	lingo/xlibs/labeldrvxobj.o \
 	lingo/xlibs/maniacbg.o \
+	lingo/xlibs/mapnavigatorxobj.o \
+	lingo/xlibs/memcheckxobj.o \
 	lingo/xlibs/memoryxobj.o \
 	lingo/xlibs/misc.o \
 	lingo/xlibs/miscx.o \
+	lingo/xlibs/mmaskxobj.o \
 	lingo/xlibs/moovxobj.o \
 	lingo/xlibs/movemousexobj.o \
+	lingo/xlibs/movieidxxobj.o \
 	lingo/xlibs/movutils.o \
 	lingo/xlibs/orthoplayxobj.o \
 	lingo/xlibs/palxobj.o \
+	lingo/xlibs/panel.o \
 	lingo/xlibs/popupmenuxobj.o \
 	lingo/xlibs/porta.o \
 	lingo/xlibs/prefpath.o \
 	lingo/xlibs/printomatic.o \
+	lingo/xlibs/processxobj.o \
+	lingo/xlibs/qtcatmovieplayerxobj.o \
 	lingo/xlibs/qtmovie.o \
 	lingo/xlibs/qtvr.o \
 	lingo/xlibs/quicktime.o \
@@ -110,12 +124,16 @@ MODULE_OBJS = \
 	lingo/xlibs/unittest.o \
 	lingo/xlibs/valkyrie.o \
 	lingo/xlibs/videodiscxobj.o \
+	lingo/xlibs/vmisonxfcn.o \
 	lingo/xlibs/volumelist.o \
 	lingo/xlibs/widgetxobj.o \
+	lingo/xlibs/window.o \
 	lingo/xlibs/winxobj.o \
 	lingo/xlibs/wininfo.o \
+	lingo/xlibs/xcmdglue.o \
 	lingo/xlibs/xio.o \
 	lingo/xlibs/xplayanim.o \
+	lingo/xlibs/xsoundxfcn.o \
 	lingo/xlibs/yasix.o
 
 # HACK: Skip this when including the file for detection objects.

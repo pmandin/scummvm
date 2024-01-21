@@ -156,6 +156,11 @@ void Viewport::handleInput(NancyInput &input) {
 			direction = 0;
 		}
 
+		// Just pressed RMB down, cancel the timer (removes jank when auto move is on)
+		if (input.input & NancyInput::kRightMouseButtonDown) {
+			_nextMovementTime = 0;
+		}
+
 		// If we hover over an edge we don't want to click an element in the viewport underneath
 		// or to change the cursor, so we make the mouse input invalid
 		input.eatMouseInput();
@@ -207,13 +212,13 @@ void Viewport::handleInput(NancyInput &input) {
 	_movementLastFrame = direction;
 }
 
-void Viewport::loadVideo(const Common::String &filename, uint frameNr, uint verticalScroll, byte panningType, uint16 format, const Common::String &palette) {
+void Viewport::loadVideo(const Common::Path &filename, uint frameNr, uint verticalScroll, byte panningType, uint16 format, const Common::Path &palette) {
 	if (_decoder.isVideoLoaded()) {
 		_decoder.close();
 	}
 
-	if (!_decoder.loadFile(filename + ".avf")) {
-		error("Couldn't load video file %s", filename.c_str());
+	if (!_decoder.loadFile(filename.append(".avf"))) {
+		error("Couldn't load video file %s", filename.toString().c_str());
 	}
 
 	_videoFormat = format;
@@ -225,7 +230,7 @@ void Viewport::loadVideo(const Common::String &filename, uint frameNr, uint vert
 	setFrame(frameNr);
 	setVerticalScroll(verticalScroll);
 
-	if (palette.size()) {
+	if (!palette.empty()) {
 		GraphicsManager::loadSurfacePalette(_fullFrame, palette);
 		setPalette(palette);
 	}

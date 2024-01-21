@@ -30,11 +30,12 @@
 
 namespace Nancy {
 
-CursorManager::CursorManager()  :
+CursorManager::CursorManager() :
 	_isInitialized(false),
 	_curItemID(-1),
 	_curCursorType(kNormal),
 	_curCursorID(0),
+	_lastCursorID(10000), // nonsense default value to ensure cursor is drawn the first time
 	_hasItem(false),
 	_numCursorTypes(0),
 	_puzzleExitCursor((g_nancy->getGameType() >= kGameTypeNancy4) ? kMoveBackward : kExit),
@@ -45,13 +46,7 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	chunkStream->seek(0);
 
 	// First, we need to figure out the number of possible CursorTypes in the current game
-	// These grew as the engine got more complicated, so we use nancy.dat to store a related property
-	// TODO: Change nancy.dat so it just directly stores the number of cursor types
-	if (g_nancy->getGameType() == kGameTypeVampire) {
-		_numCursorTypes = g_nancy->getStaticData().numNonItemCursors / 2;
-	} else {
-		_numCursorTypes = g_nancy->getStaticData().numNonItemCursors / 3;
-	}
+	_numCursorTypes = g_nancy->getStaticData().numCursorTypes;
 
 	// The structure of CURS is weird:
 
@@ -78,7 +73,7 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	// however, this cannot happen until the engine is more mature and I'm more aware of what changes they made to the
 	// cursor code in later games.
 
-	uint numCursors = g_nancy->getStaticData().numNonItemCursors + g_nancy->getStaticData().numItems * _numCursorTypes;
+	uint numCursors = _numCursorTypes * (g_nancy->getGameType() == kGameTypeVampire ? 2 : 3) + g_nancy->getStaticData().numItems * _numCursorTypes;
 	_cursors.resize(numCursors);
 
 	for (uint i = 0; i < numCursors; ++i) {
@@ -255,7 +250,7 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 		itemID = 0;
 	} else {
 		// Item held
-		itemsOffset = g_nancy->getStaticData().numNonItemCursors;
+		itemsOffset = _numCursorTypes * (g_nancy->getGameType() == kGameTypeVampire ? 2 : 3);
 		_hasItem = true;
 	}
 
@@ -275,24 +270,28 @@ void CursorManager::warpCursor(const Common::Point &pos) {
 }
 
 void CursorManager::applyCursor() {
-	Graphics::ManagedSurface *surf;
-	Common::Rect bounds = _cursors[_curCursorID].bounds;
-	Common::Point hotspot = _cursors[_curCursorID].hotspot;
+	if (_curCursorID != _lastCursorID) {
+		Graphics::ManagedSurface *surf;
+		Common::Rect bounds = _cursors[_curCursorID].bounds;
+		Common::Point hotspot = _cursors[_curCursorID].hotspot;
 
-	if (_hasItem) {
-		surf = &_invCursorsSurface;
+		if (_hasItem) {
+			surf = &_invCursorsSurface;
 
-	} else {
-		surf = &g_nancy->_graphicsManager->_object0;
-	}
+		} else {
+			surf = &g_nancy->_graphicsManager->_object0;
+		}
 
-	Graphics::ManagedSurface temp(*surf, bounds);
+		Graphics::ManagedSurface temp(*surf, bounds);
 
-	CursorMan.replaceCursor(temp, hotspot.x, hotspot.y, g_nancy->_graphicsManager->getTransColor(), false);
-	if (g_nancy->getGameType() == kGameTypeVampire) {
-		byte palette[3 * 256];
-		surf->grabPalette(palette, 0, 256);
-		CursorMan.replaceCursorPalette(palette, 0, 256);
+		CursorMan.replaceCursor(temp, hotspot.x, hotspot.y, g_nancy->_graphicsManager->getTransColor(), false);
+		if (g_nancy->getGameType() == kGameTypeVampire) {
+			byte palette[3 * 256];
+			surf->grabPalette(palette, 0, 256);
+			CursorMan.replaceCursorPalette(palette, 0, 256);
+		}
+
+		_lastCursorID = _curCursorID;
 	}
 
 	if (_warpedMousePos.x != -500 && _warpedMousePos.y != -500) {

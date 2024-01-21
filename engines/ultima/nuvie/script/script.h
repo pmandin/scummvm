@@ -77,8 +77,8 @@ public:
 	uint8 start() {
 		return resume(start_nargs);
 	}
-	uint8 resume_with_location(MapCoord loc);
-	uint8 resume_with_direction(uint8 dir);
+	uint8 resume_with_location(const MapCoord &loc);
+	uint8 resume_with_direction(NuvieDir dir);
 	uint8 resume_with_spell_num(uint8 spell_num);
 	uint8 resume_with_obj(Obj *obj);
 	uint8 resume_with_nil();
@@ -114,11 +114,11 @@ public:
 	bool init();
 
 	/* Return instance of self */
-	static Script *get_script()           {
-		return (script);
+	static Script *get_script() {
+		return script;
 	}
 	Configuration *get_config() {
-		return (config);
+		return config;
 	}
 	SoundManager *get_sound_manager() {
 		return soundManager;
@@ -133,7 +133,7 @@ public:
 	bool call_player_post_move_action(bool didMove);
 	bool call_player_pass();
 	bool call_actor_update_all();
-	bool call_actor_init(Actor *actor, uint8 alignment);
+	bool call_actor_init(Actor *actor, ActorAlignment alignment);
 	bool call_actor_attack(Actor *actor, MapCoord location, Obj *weapon, Actor *foe);
 	bool call_actor_map_dmg(Actor *actor, MapCoord location);
 	bool call_actor_tile_dmg(Actor *actor, uint16 tile_num);
@@ -143,8 +143,8 @@ public:
 	uint8 call_actor_int_adj(Actor *actor);
 	bool call_look_obj(Obj *obj);
 	int call_obj_get_readiable_location(Obj *obj);
-	uint8 actor_get_max_magic_points(Actor *actor);
-	bool call_actor_get_obj(Actor *actor, Obj *obj, Obj *container = NULL);
+	uint8 actor_get_max_magic_points(const Actor *actor);
+	bool call_actor_get_obj(Actor *actor, Obj *obj, Obj *container = nullptr);
 	bool call_actor_subtract_movement_points(Actor *actor, uint8 points);
 	bool call_actor_resurrect(Actor *actor);
 	bool call_use_keg(Obj *obj); //we need this until we move all usecode into script.

@@ -780,8 +780,7 @@ int ConsoleDialog::vprintFormat(int dummy, const char *format, va_list argptr) {
 	const int size = buf.size();
 
 	print(buf.c_str());
-	buf.trim();
-	debug("%s", buf.c_str());
+	debugN("%s", buf.c_str());
 
 	return size;
 }
@@ -801,7 +800,6 @@ void ConsoleDialog::printCharIntern(int c) {
 		buffer(_currentPos) = (char)c;
 		_currentPos++;
 		if (_currentPos % kCharsPerLine == _pageWidth) {
-			warning("NEXT");
 			nextLine();
 			updateScrollBuffer();
 		}

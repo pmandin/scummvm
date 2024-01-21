@@ -1229,7 +1229,7 @@ void ScummEngine::restoreBackground(Common::Rect rect, byte backColor) {
 			} else
 #endif
 			{
-				byte *mask = (byte *)_textSurface.getBasePtr(rect.left, rect.top - _screenTop);
+				byte *mask = (byte *)_textSurface.getBasePtr(rect.left, rect.top - _screenTop - _screenDrawOffset);
 				fill(mask, _textSurface.pitch, CHARSET_MASK_TRANSPARENCY, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, _textSurface.format.bytesPerPixel);
 			}
 		}
@@ -1256,7 +1256,7 @@ void ScummEngine::restoreBackground(Common::Rect rect, byte backColor) {
 
 void ScummEngine::restoreCharsetBg() {
 	_nextLeft = _string[0].xpos;
-	_nextTop = _string[0].ypos + _screenTop;
+	_nextTop = _string[0].ypos + _screenTop + _screenDrawOffset;
 
 	if (_charset->_hasMask || _postGUICharMask) {
 		_postGUICharMask = false;
@@ -1264,7 +1264,7 @@ void ScummEngine::restoreCharsetBg() {
 		_charset->_str.left = -1;
 		_charset->_left = -1;
 
-		if (_macIndy3Gui && _charset->_textScreenID == kTextVirtScreen) {
+		if (_macGui && _game.id == GID_INDY3 && _charset->_textScreenID == kTextVirtScreen) {
 			mac_undrawIndy3TextBox();
 			return;
 		}
@@ -1426,7 +1426,7 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 	VirtScreen *vs;
 	byte *backbuff, *bgbuff;
 
-	if ((vs = findVirtScreen(y)) == nullptr)
+	if ((vs = findVirtScreen(y + _screenDrawOffset)) == nullptr)
 		return;
 
 	if (_game.version == 8) {
@@ -1468,8 +1468,8 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 	y2++;
 
 	// Adjust for the topline of the VirtScreen
-	y -= vs->topline;
-	y2 -= vs->topline;
+	y -= vs->topline - _screenDrawOffset;
+	y2 -= vs->topline - _screenDrawOffset;
 
 	// Clip the coordinates
 	if (x < 0)

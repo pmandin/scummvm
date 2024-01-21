@@ -38,12 +38,13 @@
 #include "crab/ui/ImageData.h"
 #include "crab/ui/PersonHandler.h"
 #include "crab/ui/ReplyButton.h"
+#include "crab/TTSHandler.h"
 
 namespace Crab {
 
 namespace pyrodactyl {
 namespace ui {
-class ReplyMenu : public Menu<ReplyButton> {
+class ReplyMenu : public Menu<ReplyButton>, public TTSHandler {
 	// Data about the background image
 	ImageData _bg;
 
@@ -60,7 +61,7 @@ public:
 
 	~ReplyMenu() {}
 
-	void load(const Common::String &filename);
+	void load(const Common::Path &filename);
 
 	int handleEvents(pyrodactyl::event::Info &info, pyrodactyl::event::ConversationData &dat,
 					 const Common::String &curId, PersonHandler &oh, const Common::Event &Event);

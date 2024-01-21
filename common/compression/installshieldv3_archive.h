@@ -37,8 +37,9 @@ public:
 	InstallShieldV3();
 	~InstallShieldV3() override;
 
-	bool open(const Common::String &filename);
+	bool open(const Common::Path &filename);
 	bool open(const Common::FSNode &node);
+	bool open(Common::SeekableReadStream *stream);
 	void close();
 	bool isOpen() const { return _stream != nullptr; }
 
@@ -60,7 +61,7 @@ private:
 
 	Common::SeekableReadStream *_stream;
 
-	typedef Common::HashMap<Common::String, FileEntry, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> FileMap;
+	typedef Common::HashMap<Path, FileEntry, Path::IgnoreCase_Hash, Path::IgnoreCase_EqualTo> FileMap;
 	FileMap _map;
 };
 

@@ -62,28 +62,29 @@ class CastMember;
 class Stxt;
 
 enum {
-	kDebugLingoExec		= 1 << 0,
-	kDebugCompile		= 1 << 1,
-	kDebugLoading		= 1 << 2,
-	kDebugImages		= 1 << 3,
-	kDebugText			= 1 << 4,
-	kDebugEvents		= 1 << 5,
-	kDebugParse			= 1 << 6,
-	kDebugCompileOnly	= 1 << 7,
-	kDebugSlow			= 1 << 8,
-	kDebugFast			= 1 << 9,
-	kDebugNoLoop		= 1 << 10,
-	kDebugNoBytecode	= 1 << 11,
-	kDebugFewFramesOnly	= 1 << 12,
-	kDebugPreprocess	= 1 << 13,
-	kDebugScreenshot	= 1 << 14,
-	kDebugDesktop		= 1 << 15,
-	kDebug32bpp			= 1 << 16,
-	kDebugEndVideo		= 1 << 17,
-	kDebugLingoStrict	= 1 << 18,
-	kDebugSound			= 1 << 19,
-	kDebugConsole		= 1 << 20,
-	kDebugXObj			= 1 << 21,
+	kDebugLingoExec	= 1,
+	kDebugCompile,
+	kDebugLoading,
+	kDebugImages,
+	kDebugText,
+	kDebugEvents,
+	kDebugParse,
+	kDebugCompileOnly,
+	kDebugSlow,
+	kDebugFast,
+	kDebugNoLoop,
+	kDebugNoBytecode,
+	kDebugFewFramesOnly,
+	kDebugPreprocess,
+	kDebugScreenshot,
+	kDebugDesktop,
+	kDebug32bpp,
+	kDebugEndVideo,
+	kDebugLingoStrict,
+	kDebugSound,
+	kDebugConsole,
+	kDebugXObj,
+	kDebugLingoThe,
 };
 
 enum {
@@ -169,14 +170,14 @@ public:
 	Lingo *getLingo() const { return _lingo; }
 	Window *getStage() const { return _stage; }
 	Window *getCurrentWindow() const { return _currentWindow; }
-	void setCurrentWindow(Window *window) { _currentWindow = window; };
+	void setCurrentWindow(Window *window);
 	Window *getCursorWindow() const { return _cursorWindow; }
 	void setCursorWindow(Window *window) { _cursorWindow = window; }
 	Movie *getCurrentMovie() const;
 	void setCurrentMovie(Movie *movie);
 	Common::String getCurrentPath() const;
 	Common::String getCurrentAbsolutePath();
-	Common::String getStartupPath() const;
+	Common::Path getStartupPath() const;
 
 	// graphics.cpp
 	bool hasFeature(EngineFeature f) const override;
@@ -206,6 +207,8 @@ public:
 	void draw();
 
 	Graphics::MacDrawPixPtr getInkDrawPixel();
+	uint32 getColorBlack();
+	uint32 getColorWhite();
 
 	void loadKeyCodes();
 	void setMachineType(int machineType);
@@ -255,9 +258,9 @@ public:
 	Common::List<Common::String> _extraSearchPath;
 
 	// Owner of all Archive objects.
-	Common::HashMap<Common::Path, Archive *, Common::Path::IgnoreCaseAndMac_Hash, Common::Path::IgnoreCaseAndMac_EqualsTo> _allSeenResFiles;
+	Common::HashMap<Common::Path, Archive *, Common::Path::IgnoreCaseAndMac_Hash, Common::Path::IgnoreCaseAndMac_EqualTo> _allSeenResFiles;
 	// Handles to resource files that were opened by OpenResFile.
-	Common::HashMap<Common::Path, Archive *, Common::Path::IgnoreCaseAndMac_Hash, Common::Path::IgnoreCaseAndMac_EqualsTo> _openResFiles;
+	Common::HashMap<Common::Path, Archive *, Common::Path::IgnoreCaseAndMac_Hash, Common::Path::IgnoreCaseAndMac_EqualTo> _openResFiles;
 	// List of all currently open resource files
 	Common::List<Common::Path> _allOpenResFiles;
 
@@ -305,7 +308,7 @@ private:
 
 public:
 	int _tickBaseline;
-	Common::String _traceLogFile;
+	Common::Path _traceLogFile;
 
 	uint16 _framesRan = 0; // used by kDebugFewFramesOnly
 };

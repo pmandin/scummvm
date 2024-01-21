@@ -246,11 +246,23 @@ void OSystem_iOS7::handleEvent_applicationClearState() {
 #if TARGET_OS_IOS
 static const char * const helpTabs[] = {
 
+_s("Getting help"),
+"",
+_s(
+"## Help, I'm lost!\n"
+"\n"
+"First, make sure you have the games and necessary game files ready. Check the **Where to Get the Games** section under the **General** tab. Once obtained, follow the steps outlined in the **Adding Games** tab to finish adding them on this device.\n"
+"\n"
+"Need more help? Refer to our [online documentation for iOS](https://docs.scummvm.org/en/latest/other_platforms/ios.html). Got questions? Swing by our [support forums](https://forums.scummvm.org/viewforum.php?f=15) or hop on our [Discord server](https://discord.gg/4cDsMNtcpG), which includes an [iOS support channel](https://discord.com/channels/581224060529148060/1149456560922316911).\n"
+"\n"
+"Oh, and heads up, many of our supported games are intentionally tricky, sometimes mind-bogglingly so. If you're stuck in a game, think about checking out a game walkthrough. Good luck!\n"
+),
+
 _s("Touch Controls"),
 "ios-help.zip",
 _s(
 "## Touch control modes\n"
-"The touch control mode can be changed by tapping or clicking on the controller icon in the upper right corner or by swiping two fingers from left to right.\n"
+"The touch control mode can be changed by tapping or clicking on the controller icon in the upper right corner, by swiping two fingers from left to right, or in the global settings from the Launcher go to **Global Options > Backend > Choose the preferred touch mode**. It's possible to configure the touch mode for three situations (ScummVM menus, 2D games and 3D games).\n"
 "\n"
 "### Direct mouse \n"
 "\n"
@@ -268,29 +280,26 @@ _s(
 "\n"
 "## Touch actions \n"
 "\n"
-"### One finger tap \n"
-"\n"
-"Tap one finger to perform a left mouse click"
-"\n"
-"### Two fingers tap\n"
-"\n"
-"Tap two fingers to perform a right mouse click\n"
-"\n"
-"### One finger long press\n"
-"\n"
-"Touch and hold one finger for at least 0.5 seconds to perform a left mouse button hold and drag, such as for selection from action wheel in Curse of Monkey Island.\n"
-"\n"
-"### Two fingers long press\n"
-"\n"
-"Touch and hold two fingers for at least 0.5 seconds to perform a right mouse button hold and drag, such as for selection from action wheel in Tony Tough.\n"
+"| Gesture           | Action            \n"
+"| ------------------|-------------------\n"
+"| `One finger tap`  | Left mouse click  \n"
+"| `Two fingers tap` | Right mouse click \n"
+"| `Two fingers double tap` | ESC \n"
+"| `One finger press & hold for >0.5s` | Left mouse button hold and drag, such as for selection from action wheel in Curse of Monkey Island \n"
+"| `Two fingers press & hold for >0.5s` | Right mouse button hold and drag, such as for selection from action wheel in Tony Tough \n"
+"| `Two fingers swipe (left to right)` | Toggles between the touch modes \n"
+"| `Two fingers swipe (right to left)` | Toggles virtual controller (>iOS 15) \n"
+"| `Two fingers swipe (top to bottom)` | Access Global Main Menu in games \n"
+"| `Pinch (zoom in/out)` | Enables/disables keyboard \n"
 "\n"
 "### Virtual Gamepad \n"
 "\n"
 "Devices running iOS 15 or later can connect virtual gamepad controller by swiping two fingers from right to left or through **Global Options > Backend**. The directional button can be configured to either a thumbstick or a dpad.\n"
+"**Note** While the virtual controller is connected it is not possible to perform mouse clicks using tap gestures since they are disabled as long as the virtual controller is visible. Left mouse clicks are performed by pressing the A button. Tap gestures are enabled again when virtual controller is disconnected.\n"
 "\n"
 "### Global Main Menu\n"
 "\n"
-"To open the Global Main Menu, tap on the menu icon at the top right of the screen or by swiping two fingers downwards.\n"
+"To open the Global Main Menu, tap on the menu icon at the top right of the screen or swipe two fingers downwards.\n"
 "\n"
 "  ![Menu icon](menu.png \"Menu icon\"){w=10em}\n"
 "\n"

@@ -132,12 +132,12 @@ String FindGameData(const String &path, bool(*fn_testfile)(const String &)) {
 	if (folder.getChildren(files, Common::FSNode::kListFilesOnly)) {
 		for (Common::FSList::iterator it = files.begin(); it != files.end(); ++it) {
 			Common::String test_file = it->getName();
-			Common::String filePath = it->getPath();
+			Common::Path filePath = it->getPath();
 
 			if (test_file.hasSuffixIgnoreCase(".ags") ||
 			        test_file.equalsIgnoreCase("ac2game.dat") ||
 			        test_file.hasSuffixIgnoreCase(".exe")) {
-				if (IsMainGameLibrary(test_file.c_str()) && fn_testfile(filePath.c_str())) {
+				if (IsMainGameLibrary(test_file.c_str()) && fn_testfile(filePath.toString('/'))) {
 					Debug::Printf("Found game data pak: %s", test_file.c_str());
 					return test_file.c_str();
 				}
@@ -192,7 +192,7 @@ HGameFileError OpenMainGameFile(const String &filename, MainGameSource &src) {
 	// Try to open given file
 	Stream *in = File::OpenFileRead(filename);
 	if (!in)
-		return new MainGameFileError(kMGFErr_FileOpenFailed, String::FromFormat("Filename: %s.", filename.GetCStr()));
+		return new MainGameFileError(kMGFErr_FileOpenFailed, String::FromFormat("Tried filename: %s.", filename.GetCStr()));
 	src.Filename = filename;
 	src.InputStream.reset(in);
 	return OpenMainGameFileBase(in, src);
@@ -209,7 +209,8 @@ HGameFileError OpenMainGameFileFromDefaultAsset(MainGameSource &src, AssetManage
 		in = mgr->OpenAsset(filename);
 	}
 	if (!in)
-		return new MainGameFileError(kMGFErr_FileOpenFailed, String::FromFormat("Filename: %s.", filename.GetCStr()));
+		return new MainGameFileError(kMGFErr_FileOpenFailed,
+									 String::FromFormat("Tried filenames: %s, %s.", MainGameSource::DefaultFilename_v3, MainGameSource::DefaultFilename_v2));
 	src.Filename = filename;
 	src.InputStream.reset(in);
 	return OpenMainGameFileBase(in, src);

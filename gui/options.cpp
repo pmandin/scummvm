@@ -146,25 +146,33 @@ enum {
 	kApplyCmd = 'appl'
 };
 
-static const char *savePeriodLabels[] = { _s("Never"), _s("Every 5 mins"), _s("Every 10 mins"), _s("Every 15 mins"), _s("Every 30 mins"), nullptr };
+static const char *const savePeriodLabels[] = { _s("Never"), _s("Every 5 mins"), _s("Every 10 mins"), _s("Every 15 mins"), _s("Every 30 mins"), nullptr };
 static const int savePeriodValues[] = { 0, 5 * 60, 10 * 60, 15 * 60, 30 * 60, -1 };
 
-static const char *guiBaseLabels[] = {
+static const char *const guiBaseLabels[] = {
+	// I18N: Extremely large GUI scale
+	_s("200% - Extremely large"),
+	// I18N: Very very large GUI scale
+	_s("175% - Very large"),
 	// I18N: Very large GUI scale
-	_s("Very large"),
+	_s("150% - Larger"),
 	// I18N: Large GUI scale
-	_s("Large"),
+	_s("125% - Large"),
 	// I18N: Medium GUI scale
-	_s("Medium"),
+	_s("100% - Medium"),
 	// I18N: Small GUI scale
-	_s("Small"),
+	_s("75% - Small"),
+	// I18N: Smaller GUI scale
+	_s("50% - Smaller"),
+	// I18N: Smallest GUI scale
+	_s("25% - Smallest"),
 	nullptr
 };
-static const int guiBaseValues[] = { 150, 125, 100, 75, -1 };
+static const int guiBaseValues[] = { 200, 175, 150, 125, 100, 75, 50, 25, -1 };
 
 // The keyboard mouse speed values range from 0 to 7 and correspond to speeds shown in the label
 // "10" (value 3) is the default speed corresponding to the speed before introduction of this control
-static const char *kbdMouseSpeedLabels[] = { "3", "5", "8", "10", "13", "15", "18", "20", nullptr };
+static const char *const kbdMouseSpeedLabels[] = { "3", "5", "8", "10", "13", "15", "18", "20", nullptr };
 
 OptionsDialog::OptionsDialog(const Common::String &domain, int x, int y, int w, int h)
 	: Dialog(x, y, w, h), _domain(domain), _graphicsTabId(-1), _midiTabId(-1), _pathsTabId(-1), _tabWidget(nullptr) {
@@ -428,17 +436,19 @@ void OptionsDialog::build() {
 		enableShaderControls(g_system->hasFeature(OSystem::kFeatureShaders));
 
 		if (g_system->hasFeature(OSystem::kFeatureShaders)) {
-			Common::String shader(ConfMan.get("shader", _domain));
+			Common::Path shader(ConfMan.getPath("shader", _domain));
 			if (ConfMan.isKeyTemporary("shader")) {
 				_shader->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
 			}
-			if (shader.empty() || shader == "default" || !ConfMan.hasKey("shader", _domain)) {
-				_shader->setLabel(_c("None", "shader"));
+			if (shader == Common::Path("default", Common::Path::kNoSeparator)) {
+				shader.clear();
+			}
+			if (shader.empty() || !ConfMan.hasKey("shader", _domain)) {
 				_shaderClearButton->setEnabled(false);
 			} else {
-				_shader->setLabel(shader);
 				_shaderClearButton->setEnabled(true);
 			}
+			_shader->setLabel(shader);
 		}
 	}
 
@@ -474,17 +484,19 @@ void OptionsDialog::build() {
 		if (ConfMan.isKeyTemporary("multi_midi"))
 			_multiMidiCheckbox->setOverride(true);
 
-		Common::String soundFont(ConfMan.get("soundfont", _domain));
+		Common::Path soundFont(ConfMan.getPath("soundfont", _domain));
 		if (ConfMan.isKeyTemporary("soundfont")) {
 			_soundFont->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
 		}
-		if (soundFont.empty() || !ConfMan.hasKey("soundfont", _domain)) {
-			_soundFont->setLabel(_c("None", "soundfont"));
+		if (soundFont.empty()) {
+			_soundFontClearButton->setEnabled(false);
+		} else if (!ConfMan.hasKey("soundfont", _domain)) {
+			soundFont.clear();
 			_soundFontClearButton->setEnabled(false);
 		} else {
-			_soundFont->setLabel(soundFont);
 			_soundFontClearButton->setEnabled(true);
 		}
+		_soundFont->setLabel(soundFont);
 
 		// MIDI gain setting
 		_midiGainSlider->setValue(ConfMan.getInt("midi_gain", _domain));
@@ -739,23 +751,28 @@ void OptionsDialog::apply() {
 		}
 	}
 
-	Common::U32String previousShader;
+	Common::Path previousShader;
 
 	// Shader options
 	if (g_system->hasFeature(OSystem::kFeatureShaders) && _shader) {
-		if (ConfMan.hasKey("shader", _domain) && !ConfMan.get("shader", _domain).empty())
-			previousShader = ConfMan.get("shader", _domain);
+		Common::Path shaderConf;
+		if (ConfMan.hasKey("shader", _domain)) {
+			shaderConf = ConfMan.getPath("shader", _domain);
+			if (!shaderConf.empty()) {
+				previousShader = ConfMan.getPath("shader", _domain);
+			}
+		}
 
-		Common::U32String shader(_shader->getLabel());
+		Common::Path shader(_shader->getLabel());
+		if (shader.empty()) {
+			shader = Common::Path("default", Common::Path::kNoSeparator);
+		}
 
-		if (shader == _c("None", "shader"))
-			shader = "default";
-
-		if (!ConfMan.hasKey("shader", _domain) || shader != ConfMan.get("shader", _domain))
+		if (!ConfMan.hasKey("shader", _domain) || shader != shaderConf)
 			graphicsModeChanged = true;
 
 		if (_enableGraphicSettings)
-			ConfMan.set("shader", shader.encode(), _domain);
+			ConfMan.setPath("shader", shader, _domain);
 		else
 			ConfMan.removeKey("shader", _domain);
 
@@ -768,7 +785,7 @@ void OptionsDialog::apply() {
 		g_system->setGraphicsMode(ConfMan.get("gfx_mode", _domain).c_str());
 		g_system->setStretchMode(ConfMan.get("stretch_mode", _domain).c_str());
 		g_system->setScaler(ConfMan.get("scaler", _domain).c_str(), ConfMan.getInt("scale_factor", _domain));
-		g_system->setShader(ConfMan.get("shader", _domain));
+		g_system->setShader(ConfMan.getPath("shader", _domain));
 
 		if (ConfMan.hasKey("aspect_ratio"))
 			g_system->setFeatureState(OSystem::kFeatureAspectRatioCorrection, ConfMan.getBool("aspect_ratio", _domain));
@@ -848,12 +865,9 @@ void OptionsDialog::apply() {
 			}
 
 			if (gfxError & OSystem::kTransactionShaderChangeFailed) {
-				if (previousShader == _c("None", "shader"))
-					previousShader = "default";
-
-				ConfMan.set("shader", previousShader.encode(), _domain);
-				if (previousShader.empty()) {
-					_shader->setLabel(_c("None", "shader"));
+				ConfMan.setPath("shader", previousShader, _domain);
+				if (previousShader.empty() || previousShader == Common::Path("default", Common::Path::kNoSeparator)) {
+					_shader->setLabel(Common::Path());
 					_shaderClearButton->setEnabled(false);
 				} else {
 					_shader->setLabel(previousShader);
@@ -869,19 +883,17 @@ void OptionsDialog::apply() {
 			dialog.runModal();
 		} else {
 			// Successful transaction. Check if we need to show test screen
-			Common::String shader;
+			Common::Path shader;
 			if (ConfMan.hasKey("shader", _domain))
-				shader = ConfMan.get("shader", _domain);
+				shader = ConfMan.getPath("shader", _domain);
 
 			// If shader was changed, show the test dialog
-			if (previousShader != shader && !shader.empty() && shader != "default") {
+			if (previousShader != shader && !shader.empty() &&
+					shader != Common::Path("default", Common::Path::kNoSeparator)) {
 				if (!testGraphicsSettings()) {
-					if (previousShader == _c("None", "shader"))
-						previousShader = "default";
-
-					ConfMan.set("shader", previousShader.encode(), _domain);
-					if (previousShader.empty()) {
-						_shader->setLabel(_c("None", "shader"));
+					ConfMan.setPath("shader", previousShader, _domain);
+					if (previousShader.empty() || previousShader == Common::Path("default", Common::Path::kNoSeparator)) {
+						_shader->setLabel(Common::Path());
 						_shaderClearButton->setEnabled(false);
 					} else {
 						_shader->setLabel(previousShader);
@@ -889,7 +901,7 @@ void OptionsDialog::apply() {
 					}
 
 					g_system->beginGFXTransaction();
-					g_system->setShader(ConfMan.get("shader", _domain));
+					g_system->setShader(ConfMan.getPath("shader", _domain));
 					g_system->endGFXTransaction();
 				}
 			}
@@ -984,13 +996,13 @@ void OptionsDialog::apply() {
 				_midiGainDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
 			}
 
-			Common::U32String soundFont(_soundFont->getLabel());
-			if (soundFont != ConfMan.get("soundfont", _domain)) {
+			Common::Path soundFont(_soundFont->getLabel());
+			if (soundFont != ConfMan.getPath("soundfont", _domain)) {
 				_soundFont->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
-				if (soundFont.empty() || (soundFont == _c("None", "soundfont")))
+				if (soundFont.empty())
 					ConfMan.removeKey("soundfont", _domain);
 				else
-					ConfMan.set("soundfont", soundFont.encode(), _domain);
+					ConfMan.setPath("soundfont", soundFont, _domain);
 			}
 		} else {
 			ConfMan.removeKey("gm_device", _domain);
@@ -1085,7 +1097,7 @@ void OptionsDialog::close() {
 void OptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data) {
 	switch (cmd) {
 	case kClearShaderCmd:
-		_shader->setLabel(_c("None", "shader"));
+		_shader->setLabel(Common::Path());
 		_shaderClearButton->setEnabled(false);
 		break;
 	case kMidiGainChanged:
@@ -1151,7 +1163,7 @@ void OptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data
 		_subSpeedLabel->markAsDirty();
 		break;
 	case kClearSoundFontCmd:
-		_soundFont->setLabel(_c("None", "soundfont"));
+		_soundFont->setLabel(Common::Path());
 		_soundFontClearButton->setEnabled(false);
 		break;
 	case kKbdMouseSpeedChanged:
@@ -1169,12 +1181,12 @@ void OptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data
 		g_gui.scheduleTopDialogRedraw();
 		break;
 	case kChooseShaderCmd: {
-		ShaderBrowserDialog browser(ConfMan.get("shader", _domain));
+		ShaderBrowserDialog browser(ConfMan.getPath("shader", _domain));
 		if (browser.runModal() > 0) {
 			// User made his choice...
 			_shader->setLabel(browser.getResult());
 
-			if (!browser.getResult().empty() && (browser.getResult().decode() != _c("None", "path")))
+			if (!browser.getResult().empty())
 				_shaderClearButton->setEnabled(true);
 			else
 				_shaderClearButton->setEnabled(false);
@@ -1307,7 +1319,7 @@ void OptionsDialog::setMIDISettingsState(bool enabled) {
 	_soundFontButton->setEnabled(enabled);
 	_soundFont->setEnabled(enabled);
 
-	if (enabled && !_soundFont->getLabel().empty() && (_soundFont->getLabel() != _c("None", "soundfont")))
+	if (enabled && !_soundFont->getLabel().empty())
 		_soundFontClearButton->setEnabled(enabled);
 	else
 		_soundFontClearButton->setEnabled(false);
@@ -1619,7 +1631,7 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 		_shaderButton = new ButtonWidget(boss, prefix + "grShaderButton", _("Shader:"), _("Specifies path to the shader used for scaling the game screen"), kChooseShaderCmd);
 	else
 		_shaderButton = new ButtonWidget(boss, prefix + "grShaderButton", _c("Shader Path:", "lowres"), _("Specifies path to the shader used for scaling the game screen"), kChooseShaderCmd);
-	_shader = new StaticTextWidget(boss, prefix + "grShader", _c("None", "shader"), _("Specifies path to the shader used for scaling the game screen"));
+	_shader = new PathWidget(boss, prefix + "grShader", Common::Path(), _c("None", "shader"), _("Specifies path to the shader used for scaling the game screen"));
 
 	_shaderClearButton = addClearButton(boss, prefix + "grShaderClearButton", kClearShaderCmd);
 
@@ -1774,7 +1786,14 @@ void OptionsDialog::addMIDIControls(GuiObject *boss, const Common::String &prefi
 		_soundFontButton = new ButtonWidget(boss, prefix + "mcFontButton", _("SoundFont:"), _("SoundFont is supported by some audio cards, FluidSynth and Timidity"), kChooseSoundFontCmd);
 	else
 		_soundFontButton = new ButtonWidget(boss, prefix + "mcFontButton", _c("SoundFont:", "lowres"), _("SoundFont is supported by some audio cards, FluidSynth and Timidity"), kChooseSoundFontCmd);
-	_soundFont = new StaticTextWidget(boss, prefix + "mcFontPath", _c("None", "soundfont"), _("SoundFont is supported by some audio cards, FluidSynth and Timidity"));
+
+	Common::U32String soundFountPlaceholder;
+	if (ConfMan.hasDefault("soundfont")) {
+		soundFountPlaceholder = _("Default");
+	} else {
+		soundFountPlaceholder = _c("None", "soundfont");
+	}
+	_soundFont = new PathWidget(boss, prefix + "mcFontPath", Common::Path(), soundFountPlaceholder, _("SoundFont is supported by some audio cards, FluidSynth and Timidity"));
 
 	_soundFontClearButton = addClearButton(boss, prefix + "mcFontClearButton", kClearSoundFontCmd);
 
@@ -2338,43 +2357,50 @@ void GlobalOptionsDialog::build() {
 
 #if !defined(__DC__)
 	const auto setPath =
-	[&](GUI::StaticTextWidget *const widget, const Common::String &pathType, const Common::U32String &defaultLabel) {
-		Common::String path(ConfMan.get(pathType));
+	[&](GUI::PathWidget *const widget, const Common::String &pathType) {
+		Common::Path path(ConfMan.getPath(pathType));
 		if (ConfMan.isKeyTemporary(pathType)) {
 			widget->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
 		}
-		if (path.empty() || !ConfMan.hasKey(pathType, _domain)) {
-			widget->setLabel(defaultLabel);
-		} else {
-			widget->setLabel(path);
+		if (!ConfMan.hasKey(pathType, _domain)) {
+			path.clear();
 		}
+		widget->setLabel(path);
 	};
 
-	setPath(_savePath, "savepath", _("Default"));
-	setPath(_themePath, "themepath", _c("None", "path"));
-	setPath(_iconPath, "iconspath", _("Default"));
+	setPath(_savePath, "savepath");
+	setPath(_themePath, "themepath");
+	setPath(_iconPath, "iconspath");
 #ifdef USE_DLC
-	setPath(_dlcPath, "dlcspath", _("Default"));
+	setPath(_dlcPath, "dlcspath");
 #endif
-	setPath(_extraPath, "extrapath", _c("None", "path"));
+	setPath(_extraPath, "extrapath");
 
 #ifdef DYNAMIC_MODULES
-	Common::String pluginsPath(ConfMan.get("pluginspath", _domain));
-	if (pluginsPath.empty() || !ConfMan.hasKey("pluginspath", _domain)) {
-		_pluginsPath->setLabel(_c("None", "path"));
-	} else {
-		_pluginsPath->setLabel(pluginsPath);
+	Common::Path pluginsPath(ConfMan.getPath("pluginspath", _domain));
+	if (!ConfMan.hasKey("pluginspath", _domain)) {
+		pluginsPath.clear();
 	}
+	_pluginsPath->setLabel(pluginsPath);
 #endif
 #endif
 
 	// Misc Tab
-	_guiBasePopUp->setSelected(2);
+	bool seenValue = false;
 	int value = ConfMan.getInt("gui_scale");
+
+	if (!value)
+		value = 100; // Setting default sane value
+
 	for (int i = 0; guiBaseLabels[i]; i++) {
-		if (value == guiBaseValues[i])
+		if (value == guiBaseValues[i]) {
+			seenValue = true;
 			_guiBasePopUp->setSelected(i);
+		}
 	}
+
+	if (!seenValue)
+		_guiBasePopUp->setSelected(ARRAYSIZE(guiBaseLabels) - 1);
 
 	_autosavePeriodPopUp->setSelected(1);
 	value = ConfMan.getInt("autosave_period");
@@ -2392,12 +2418,8 @@ void GlobalOptionsDialog::build() {
 
 #ifdef USE_CLOUD
 #ifdef USE_SDL_NET
-	Common::String rootPath(ConfMan.get("rootpath", "cloud"));
-	if (rootPath.empty() || !ConfMan.hasKey("rootpath", "cloud")) {
-		_rootPath->setLabel(_c("None", "path"));
-	} else {
-		_rootPath->setLabel(rootPath);
-	}
+	Common::Path rootPath(ConfMan.getPath("rootpath", "cloud"));
+	_rootPath->setLabel(rootPath);
 #endif
 #endif
 }
@@ -2429,7 +2451,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 		new ButtonWidget(boss, prefix + "SaveButton", _("Save Path:"), _("Specifies where your saved games are put"), kChooseSaveDirCmd);
 	else
 		new ButtonWidget(boss, prefix + "SaveButton", _c("Save Path:", "lowres"), _("Specifies where your saved games are put"), kChooseSaveDirCmd);
-	_savePath = new StaticTextWidget(boss, prefix + "SavePath", Common::U32String("/foo/bar"), _("Specifies where your saved games are put. A red coloring indicates the value is temporary and will not get saved"));
+	_savePath = new PathWidget(boss, prefix + "SavePath", Common::Path(), _("Default"), _("Specifies where your saved games are put. A red coloring indicates the value is temporary and will not get saved"));
 
 	_savePathClearButton = addClearButton(boss, prefix + "SavePathClearButton", kSavePathClearCmd);
 
@@ -2437,7 +2459,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 		new ButtonWidget(boss, prefix + "ThemeButton", _("Theme Path:"), Common::U32String(), kChooseThemeDirCmd);
 	else
 		new ButtonWidget(boss, prefix + "ThemeButton", _c("Theme Path:", "lowres"), Common::U32String(), kChooseThemeDirCmd);
-	_themePath = new StaticTextWidget(boss, prefix + "ThemePath", _c("None", "path"));
+	_themePath = new PathWidget(boss, prefix + "ThemePath", Common::Path(), _c("None", "path"));
 
 	_themePathClearButton = addClearButton(boss, prefix + "ThemePathClearButton", kThemePathClearCmd);
 
@@ -2445,7 +2467,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 		new ButtonWidget(boss, prefix + "IconButton", _("Icon Path:"), Common::U32String(), kChooseIconDirCmd);
 	else
 		new ButtonWidget(boss, prefix + "IconButton", _c("Icon Path:", "lowres"), Common::U32String(), kChooseIconDirCmd);
-	_iconPath = new StaticTextWidget(boss, prefix + "IconPath", _c("Default", "path"));
+	_iconPath = new PathWidget(boss, prefix + "IconPath", Common::Path(), _c("Default", "path"));
 
 	_iconPathClearButton = addClearButton(boss, prefix + "IconPathClearButton", kIconPathClearCmd);
 
@@ -2455,7 +2477,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 			new ButtonWidget(boss, prefix + "DLCButton", _("DLC Path:"), Common::U32String(), kChooseDLCDirCmd);
 		else
 			new ButtonWidget(boss, prefix + "DLCButton", _c("DLC Path:", "lowres"), Common::U32String(), kChooseDLCDirCmd);
-		_dlcPath = new StaticTextWidget(boss, prefix + "DLCPath", _c("Default", "path"));
+		_dlcPath = new PathWidget(boss, prefix + "DLCPath", Common::Path(), _c("Default", "path"));
 
 		_dlcPathClearButton = addClearButton(boss, prefix + "DLCPathClearButton", kDLCPathClearCmd);
 	}
@@ -2465,7 +2487,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 		new ButtonWidget(boss, prefix + "ExtraButton", _("Extra Path:"), _("Specifies path to additional data used by all games or ScummVM"), kChooseExtraDirCmd);
 	else
 		new ButtonWidget(boss, prefix + "ExtraButton", _c("Extra Path:", "lowres"), _("Specifies path to additional data used by all games or ScummVM"), kChooseExtraDirCmd);
-	_extraPath = new StaticTextWidget(boss, prefix + "ExtraPath", _c("None", "path"), _("Specifies path to additional data used by all games or ScummVM"));
+	_extraPath = new PathWidget(boss, prefix + "ExtraPath", Common::Path(), _c("None", "path"), _("Specifies path to additional data used by all games or ScummVM"));
 
 	_extraPathClearButton = addClearButton(boss, prefix + "ExtraPathClearButton", kExtraPathClearCmd);
 
@@ -2474,29 +2496,30 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 		new ButtonWidget(boss, prefix + "PluginsButton", _("Plugins Path:"), Common::U32String(), kChoosePluginsDirCmd);
 	else
 		new ButtonWidget(boss, prefix + "PluginsButton", _c("Plugins Path:", "lowres"), Common::U32String(), kChoosePluginsDirCmd);
-	_pluginsPath = new StaticTextWidget(boss, prefix + "PluginsPath", _c("None", "path"));
+	_pluginsPath = new PathWidget(boss, prefix + "PluginsPath", Common::Path(), _c("None", "path"));
 
 	_pluginsPathClearButton = addClearButton(boss, "GlobalOptions_Paths.PluginsPathClearButton", kPluginsPathClearCmd);
 #endif // DYNAMIC_MODULES
 #endif // !defined(__DC__)
 
-	Common::U32String confPath = ConfMan.getCustomConfigFileName();
+	Common::U32String confPath = ConfMan.getCustomConfigFileName().toString(Common::Path::kNativeSeparator);
 	if (confPath.empty())
-		confPath = g_system->getDefaultConfigFileName();
+		confPath = g_system->getDefaultConfigFileName().toString(Common::Path::kNativeSeparator);
 	StaticTextWidget *configPathWidget = new StaticTextWidget(boss, prefix + "ConfigPath", _("ScummVM config path: ") + confPath, confPath);
 	if (ConfMan.isKeyTemporary("config"))
 		configPathWidget->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
 
-	Common::U32String logPath = g_system->getDefaultLogFileName();
+	Common::Path logPath = g_system->getDefaultLogFileName();
 	bool colorOverride = false;
 
 	if (ConfMan.hasKey("logfile")) {
-		logPath = ConfMan.get("logfile");
+		logPath = ConfMan.getPath("logfile");
 
 		if (ConfMan.isKeyTemporary("logfile"))
 			colorOverride = true;
 	}
-	_logPath = new StaticTextWidget(boss, prefix + "LogPath", _("ScummVM log path: ") + logPath, logPath);
+	Common::U32String logPathS = logPath.toString(Common::Path::kNativeSeparator);
+	_logPath = new StaticTextWidget(boss, prefix + "LogPath", _("ScummVM log path: ") + logPathS, logPathS);
 
 	if (colorOverride)
 		_logPath->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
@@ -2508,7 +2531,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 
 	Common::U32String browserPath = _("<default>");
 	if (ConfMan.hasKey("browser_lastpath"))
-		browserPath = ConfMan.get("browser_lastpath");
+		browserPath = ConfMan.getPath("browser_lastpath").toString(Common::Path::kNativeSeparator);
 
 	// I18N: Referring to the last path memorized when adding a game
 	_browserPath = new StaticTextWidget(boss, prefix + "BrowserPath", _("Last browser path: ") + browserPath, browserPath);
@@ -2524,8 +2547,22 @@ void GlobalOptionsDialog::addGUIControls(GuiObject *boss, const Common::String &
 	_guiBasePopUpDesc = new StaticTextWidget(boss, prefix + "GUIBasePopupDesc", _("GUI scale:"));
 	_guiBasePopUp = new PopUpWidget(boss, prefix + "GUIBasePopup");
 
+	bool seenValue = false;
+	int oldGuiScale = ConfMan.getInt("gui_scale");
+
+	if (!oldGuiScale)
+		oldGuiScale = 100; // Setting default sane value
+
 	for (int i = 0; guiBaseLabels[i]; i++) {
+		if (guiBaseValues[i] == oldGuiScale)
+			seenValue = true;
+
 		_guiBasePopUp->appendEntry(_(guiBaseLabels[i]), guiBaseValues[i]);
+	}
+
+	if (!seenValue) {
+		Common::U32String customText = Common::U32String::format(_("%d%% - Custom"), oldGuiScale);
+		_guiBasePopUp->appendEntry(customText, oldGuiScale);
 	}
 
 	_rendererPopUpDesc = new StaticTextWidget(boss, prefix + "RendererPopupDesc", _("GUI renderer:"));
@@ -2743,7 +2780,7 @@ void GlobalOptionsDialog::addNetworkControls(GuiObject *boss, const Common::Stri
 		_rootPathButton = new ButtonWidget(boss, prefix + "RootPathButton", _c("/root/ Path:", "lowres"), _("Select which directory will be shown as /root/ in the Files Manager"), kChooseRootDirCmd);
 	else
 		_rootPathButton = new ButtonWidget(boss, prefix + "RootPathButton", _("/root/ Path:"), _("Select which directory will be shown as /root/ in the Files Manager"), kChooseRootDirCmd);
-	_rootPath = new StaticTextWidget(boss, prefix + "RootPath", Common::U32String("/foo/bar"), _("Select which directory will be shown as /root/ in the Files Manager"));
+	_rootPath = new PathWidget(boss, prefix + "RootPath", Common::Path(), _c("None", "path"), _("Select which directory will be shown as /root/ in the Files Manager"));
 	_rootPathClearButton = addClearButton(boss, prefix + "RootPathClearButton", kRootPathClearCmd);
 
 	uint32 port = Networking::LocalWebserver::getPort();
@@ -2891,38 +2928,38 @@ void GlobalOptionsDialog::apply() {
 	bool isRebuildNeeded = false;
 
 	const auto changePath =
-	[&](GUI::StaticTextWidget *const widget, const Common::String &pathType, const Common::U32String &defaultLabel) {
-		Common::U32String label(widget->getLabel());
-		if (label != ConfMan.get(pathType)) {
+	[&](GUI::PathWidget *const widget, const Common::String &pathType) {
+		Common::Path label(widget->getLabel());
+		if (label != ConfMan.getPath(pathType)) {
 			widget->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
-			if (label.empty() || (label == defaultLabel))
+			if (label.empty())
 				ConfMan.removeKey(pathType, _domain);
 			else
-				ConfMan.set(pathType, label.encode(), _domain);
+				ConfMan.setPath(pathType, label, _domain);
 		}
 	};
 
-	changePath(_savePath, "savepath", _("Default"));
-	changePath(_themePath, "themepath", _c("None", "path"));
-	changePath(_iconPath, "iconspath", _("Default"));
+	changePath(_savePath, "savepath");
+	changePath(_themePath, "themepath");
+	changePath(_iconPath, "iconspath");
 #ifdef USE_DLC
-	changePath(_dlcPath, "dlcspath", _("Default"));
+	changePath(_dlcPath, "dlcspath");
 #endif
-	changePath(_extraPath, "extrapath", _c("None", "path"));
+	changePath(_extraPath, "extrapath");
 
 #ifdef DYNAMIC_MODULES
-	Common::U32String pluginsPath(_pluginsPath->getLabel());
-	if (!pluginsPath.empty() && (pluginsPath != _c("None", "path")))
-		ConfMan.set("pluginspath", pluginsPath.encode(), _domain);
+	Common::Path pluginsPath(_pluginsPath->getLabel());
+	if (!pluginsPath.empty())
+		ConfMan.setPath("pluginspath", pluginsPath, _domain);
 	else
 		ConfMan.removeKey("pluginspath", _domain);
 #endif // DYNAMIC_MODULES
 
 #ifdef USE_CLOUD
 #ifdef USE_SDL_NET
-	Common::U32String rootPath(_rootPath->getLabel());
-	if (!rootPath.empty() && (rootPath != _c("None", "path")))
-		ConfMan.set("rootpath", rootPath.encode(), "cloud");
+	Common::Path rootPath(_rootPath->getLabel());
+	if (!rootPath.empty())
+		ConfMan.setPath("rootpath", rootPath, "cloud");
 	else
 		ConfMan.removeKey("rootpath", "cloud");
 #endif // USE_SDL_NET
@@ -3221,9 +3258,7 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 		if (browser.runModal() > 0) {
 			// User made his choice...
 			Common::FSNode dir(browser.getResult());
-			Common::String path = dir.getPath();
-			if (path.empty())
-				path = "/"; // absolute root
+			Common::Path path = dir.getPath();
 			_rootPath->setLabel(path);
 			g_gui.scheduleTopDialogRedraw();
 		}
@@ -3252,25 +3287,25 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 
 #endif
 	case kThemePathClearCmd:
-		_themePath->setLabel(_c("None", "path"));
+		_themePath->setLabel(Common::Path());
 		break;
 	case kIconPathClearCmd:
-		_iconPath->setLabel(_("Default"));
+		_iconPath->setLabel(Common::Path());
 		break;
 #ifdef USE_DLC
 	case kDLCPathClearCmd:
-		_dlcPath->setLabel(_("Default"));
+		_dlcPath->setLabel(Common::Path());
 		break;
 #endif
 	case kExtraPathClearCmd:
-		_extraPath->setLabel(_c("None", "path"));
+		_extraPath->setLabel(Common::Path());
 		break;
 	case kSavePathClearCmd:
-		_savePath->setLabel(_("Default"));
+		_savePath->setLabel(Common::Path());
 		break;
 #ifdef DYNAMIC_MODULES
 	case kPluginsPathClearCmd:
-		_pluginsPath->setLabel(_c("None", "path"));
+		_pluginsPath->setLabel(Common::Path());
 		break;
 #endif
 	case kBrowserPathClearCmd:
@@ -3280,10 +3315,10 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 
 		break;
 	case kViewLogCmd: {
-		Common::String logPath;
+		Common::Path logPath;
 
 		if (ConfMan.hasKey("logfile"))
-			logPath = ConfMan.get("logfile");
+			logPath = ConfMan.getPath("logfile");
 		else
 			logPath = g_system->getDefaultLogFileName();
 
@@ -3295,7 +3330,7 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 #ifdef USE_CLOUD
 #ifdef USE_SDL_NET
 	case kRootPathClearCmd:
-		_rootPath->setLabel(_c("None", "path"));
+		_rootPath->setLabel(Common::Path());
 		break;
 #endif
 #endif
@@ -3306,7 +3341,7 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 			Common::FSNode file(browser.getResult());
 			_soundFont->setLabel(file.getPath());
 
-			if (!file.getPath().empty() && (file.getPath().decode() != _c("None", "path")))
+			if (!file.getPath().empty())
 				_soundFontClearButton->setEnabled(true);
 			else
 				_soundFontClearButton->setEnabled(false);

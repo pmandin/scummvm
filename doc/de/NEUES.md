@@ -1,17 +1,37 @@
 Umfangreichere Informationen über die Änderungen des aktuellen Codes findest Du unter:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2.8.0 (XXXX-XX-XX)
+#### 2.9.0 (XX.XX.XXXX)
+
+ Neue Spiele:
+   - Unterstützung für Orion Burger hinzugefügt.
+
+ Allgemein:
+   - Fehler bei der Erkennung der GLSL-Version auf einigen OpenGL ES2-Plattformen behoben.
+
+ TsAGE:
+   - Unterstützung für russische Fan-Übersetzung hinzugefügt.
+
+
+#### 2.8.0 "Mysteries, Mammoths, and Muppets" (30.12.2023)
 
  Neue Spiele:
    - Unterstützung für die macOS-Versionen von Syberia und Syberia II hinzugefügt.
-   - Unterstützung für The Vampire Diaries und Nancy Drew: Secrets Can Kill hinzugefügt.
+   - Unterstützung für The Vampire Diaries, Nancy Drew: Secrets Can Kill,
+     Nancy Drew: Stay Tuned for Danger, Nancy Drew: Message in a Haunted Mansion,
+     Nancy Drew: Treasure in the Royal Tower und Nancy Drew: The Final Scene hinzugefügt.
    - Unterstützung für Reah: Face the Unknown und Schizm: Mysterious Journey hinzugefügt.
    - Unterstützung für Might and Magic Book One hinzugefügt.
    - Unterstützung für Muppet Tresure Island hinzugefügt.
    - Unterstützung für Primordia, Shardlight und Technobabylon hinzugefügt.
+   - Unterstützung für The Excavation of Hob's Barrow, Strangeland und Whispers
+     of a Machine hinzugefügt.
    - Unterstützung für Adibou 1 (Adi Jr.) hinzugefügt.
    - Unterstützung für Dark Side hinzugefügt.
+   - Unterstützung für Kingdom: The Far Reaches hinzugefügt.
+   - Unterstützung für Escape From Hell hinzugefügt.
+   - Unterstützung für Wrath of the Gods, Gadget: Invetion, Travel and Adventure,
+     The Dark Eye und 4 weitere Director-Titel hinzugefügt.
 
  Neue Plattformen:
    - Vollständig erneute Portierung für libretro hinzugefügt.
@@ -25,18 +45,27 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      (Embedded Audio Synthesis) hinzugefügt.
    - Unterstützung für YUV442 und YUV444 im Theora-Decoder hinzugefügt.
    - Spezielle CPU-Routinen zum Grafik-Blitting zu ManagedSurface hinzugefügt.
-   - Das Standard-GM-Gerät wurde für eine verbesserte Kompatibilität auf "auto" gesetzt.
+   - Unterstützung für General MIDI ist jetzt standardmäßig aktiviert.
 
  AGS:
-   - Code-Basis mit dem offiziellen AGS-Code in Version 3.6.0.51 synchronisiert.
+   - Code-Basis mit dem offiziellen AGS-Code in Version 3.6.0.53 synchronisiert.
    - Beschleunigung der Grafik-Manipulation auf moderner Hardware mit CPU-spezifischem Code.
    - Unterstützung für frühes Font-Rendering hinzugefügt, die dem originalen Interpreter entspricht.
+   - Unterstützung für die Wiedergabe von transcodierten Videos hinzugefügt, die nicht unterstützte
+     Codecs ersetzen können.
+   - Die Wiedergabe von MOD-Audio-Tracks ist jetzt vollständig.
+   - Fehler behoben, der dazu führt, dass die Hintergrundmusik nicht in allen Fällen korrekt wiederholt wird.
+   - Einige Fehler in diversen Spielen (z.B. Strangeland, Chronicle of Innsmouth) korrigiert.
+   - Mehrere Updates der Spiel-Erkennungs-Tabellen.
 
  Asylum:
    - Unterstützung für die chinesische Version von Sanitarium hinzugefügt.
 
  Dragons:
    - Die Copyright-Hinweise und das Hauptmenü werden nun korrekt übersetzt.
+
+ Freescape:
+   - Die Kollisions- und Projektil-Erkennung wurde mittels sweepAABB verbessert.
 
  GrimE:
    - Unterstützung für die chinesische Version von Grim Fandango hinzugefügt.
@@ -49,13 +78,27 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für die chinesische Version von EOB2 hinzugefügt.
    - Unterstützung für die PC-98-Version von EAB2 hinzugefügt.
 
+ Mohawk:
+   - Die Genauigkeit der Code-Erzeugung für die Domes wurde erheblich verbessert und entspricht nun dem Original.
+
+ Private:
+   - Unterstützung für die japanische Windows-Version hinzugefügt.
+
  SCUMM:
    - Unterstützung für die entpackten RuSCUMM-Patches für russische Übersetzungen hinzugefügt.
    - Der offizielle Roland MT-32-Patch für Monkey Island 1 kann nun auf allen EGA-Versionen
      und nicht nur der englischen Version angewendet werden.
    - Der Sound-Code für alle Spiele von Humongous Entertainment wurde komplett überarbeitet.
-   - Originalgetreue Nachbildung der Macintosh-Oberfläche für Indiana Jones and the Last Crusade.
+   - Originalgetreue Nachbildung der Macintosh-Oberfläche für Indiana Jones and the Last Crusade und Loom.
    - Korrektur der Charakter-Animation bei Richtungswechseln in Full Throttle, The Dig und The Curse of Monkey Island.
+   - In Loom kann über Strg+D nun eine Liste der bekannten Melodien angezeigt werden.
+   - Fehlerhafte Kanji-Zeichen in der japanischen SegaCD-Version von Monkey Island 1 korrigiert.
+     Die Schrift-Darstellung ist nun pixelgetreu.
+   - Unterstützung für die Macintosh- und DOS/V-Versionen von Indiana Jones and the Fate of Atlantis,
+     die von MicroMouse vertrieben wurden, hinzugefügt.
+   - Unterstützung für Netzwerk-Multiplayer-Spiele für Backyard Football, Backyard Baseball 2001 und
+     Backyard Football 2002 hinzugefügt.
+
 
  Sherlock:
    - Unterstützung für die chinesische Version von Serrated Scalpel hinzugefügt.
@@ -85,6 +128,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Sword2:
    - Unterstützung für die chinesische Übersetzung hinzugefügt.
 
+ Tinsel:
+   - Fehler behoben, der dazu geführt hat, dass keine Tonbänder mehr verfügbar sind.
+
  Twine:
    - Unterstützung für die japanische Übersetzung hinzugefügt.
 
@@ -111,8 +157,12 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Neue Engine-Option hinzugefügt, mit der die Gesundheits-Edelsteine durch
      eine HP/SP-Leiste ersetzt werden können.
 
+ RiscOS-Version:
+   - Doppeltes Buffering wird jetzt im Vollbildmodus genutzt, wenn V-Sync aktiviert ist.
+   - Unterstützung für Hardware-Farbpaletten hinzugefügt.
 
-#### 2.7.1 (2023-XX-XX)
+
+#### 2.7.1 (31.07.2023)
 
  Allgemein:
   - Die Wiedergabe-Geschwindigkeit von Theora-Videos wurde korrigiert.

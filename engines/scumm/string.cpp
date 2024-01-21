@@ -34,6 +34,7 @@
 #include "scumm/he/intern_he.h"
 #include "scumm/he/localizer.h"
 #endif
+#include "scumm/macgui/macgui.h"
 #include "scumm/resource.h"
 #include "scumm/scumm.h"
 #include "scumm/scumm_v2.h"
@@ -847,7 +848,7 @@ void ScummEngine::CHARSET_1() {
 		int s;
 
 		_string[0].xpos = a->getPos().x - _virtscr[kMainVirtScreen].xstart;
-		_string[0].ypos = a->getPos().y - a->getElevation() - _screenTop;
+		_string[0].ypos = a->getPos().y - a->getElevation() - _screenTop - _screenDrawOffset;
 
 		if (_game.version <= 5) {
 			if (VAR(VAR_V5_TALK_STRING_Y) < 0) {
@@ -881,7 +882,7 @@ void ScummEngine::CHARSET_1() {
 			_string[0].xpos = _screenWidth - 80;
 	}
 
-	_charset->_top = _string[0].ypos + _screenTop;
+	_charset->_top = _string[0].ypos + _screenTop + _screenDrawOffset;
 	_charset->_startLeft = _charset->_left = _string[0].xpos;
 	_charset->_right = _string[0].right;
 	_charset->_center = _string[0].center;
@@ -1107,7 +1108,7 @@ void ScummEngine::CHARSET_1() {
 	if (_isRTL)
 		fakeBidiString(_charsetBuffer + _charsetBufPos, true, sizeof(_charsetBuffer) - _charsetBufPos);
 
-	bool createTextBox = (_macIndy3Gui != nullptr);
+	bool createTextBox = (_macGui && _game.id == GID_INDY3);
 	bool drawTextBox = false;
 
 	while (handleNextCharsetCode(a, &c)) {
@@ -1140,7 +1141,7 @@ void ScummEngine::CHARSET_1() {
 
 		if (createTextBox) {
 			if (!_keepText)
-				mac_createIndy3TextBox(a);
+				_macGui->initTextAreaForActor(a, _charset->getColor());
 			createTextBox = false;
 			drawTextBox = true;
 		}
@@ -1185,9 +1186,6 @@ void ScummEngine::CHARSET_1() {
 		_nextLeft = _charset->_left;
 		_nextTop = _charset->_top;
 
-		if (drawTextBox)
-			mac_drawIndy3TextBox();
-
 		if (_game.version <= 2) {
 			_talkDelay += _defaultTextSpeed;
 			VAR(VAR_CHARCOUNT)++;
@@ -1195,6 +1193,9 @@ void ScummEngine::CHARSET_1() {
 			_talkDelay += (int)VAR(VAR_CHARINC);
 		}
 	}
+
+	if (drawTextBox)
+		mac_drawIndy3TextBox();
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	if (_game.platform == Common::kPlatformFMTowns && (c == 0 || c == 2 || c == 3))
@@ -1219,7 +1220,7 @@ void ScummEngine::drawString(int a, const byte *msg) {
 	if (_isRTL)
 		fakeBidiString(buf, false, sizeof(buf));
 
-	_charset->_top = _string[a].ypos + _screenTop;
+	_charset->_top = _string[a].ypos + _screenTop + _screenDrawOffset;
 	_charset->_startLeft = _charset->_left = _string[a].xpos;
 	_charset->_right = _string[a].right;
 	_charset->_center = _string[a].center;

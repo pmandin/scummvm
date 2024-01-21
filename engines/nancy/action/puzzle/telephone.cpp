@@ -241,6 +241,13 @@ void Telephone::execute() {
 			break;
 		case kCall: {
 			PhoneCall &call = _calls[_selected];
+
+			// Make sure we don't get stuck here. Happens in nancy3 when calling George's number
+			// Check ignored in nancy1 since the HintSystem AR is in the same scene as the Telephone
+			if (call.sceneChange._sceneChange.sceneID == kNoScene && g_nancy->getGameType() != kGameTypeNancy1) {
+				call.sceneChange._sceneChange = NancySceneState.getSceneInfo();
+			}
+
 			call.sceneChange.execute();
 
 			break;
@@ -275,7 +282,7 @@ void Telephone::handleInput(NancyInput &input) {
 		}
 	}
 
-	if (_callState != kWaiting) {
+	if (_callState != kWaiting && _callState != kRinging) {
 		return;
 	}
 
@@ -289,6 +296,10 @@ void Telephone::handleInput(NancyInput &input) {
 			_callState = kHangUp;
 		}
 
+		return;
+	}
+
+	if (_callState != kWaiting) {
 		return;
 	}
 

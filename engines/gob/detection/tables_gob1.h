@@ -17,6 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv3 license mentioned above, this code is also
+ * licensed under LGPL 2.1. See LICENSES/COPYING.LGPL file for the
+ * full text of the license.
+ *
  */
 
 /* Detection tables for Gobliiins. */
@@ -36,7 +42,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesEGA | kFeaturesAdLib,
 	0, 0, 0
 },
@@ -50,7 +55,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesEGA | kFeaturesAdLib,
 	0, 0, 0
 },
@@ -67,7 +71,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesNone,
 	0, 0, 0
 },
@@ -81,7 +84,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -98,7 +100,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -112,7 +113,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -126,7 +126,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -140,7 +139,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -154,7 +152,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -168,7 +165,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -176,13 +172,12 @@
 	{
 		"gob1",
 		"CD v1.02",
-		AD_ENTRY1("intro.stk", "8bd873137b6831c896ee8ad217a6a398"),
+		AD_ENTRY1s("intro.stk", "8bd873137b6831c896ee8ad217a6a398", 3295368),
 		EN_USA,
 		kPlatformDOS,
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -190,13 +185,12 @@
 	{
 		"gob1",
 		"CD v1.02",
-		AD_ENTRY1("intro.stk", "8bd873137b6831c896ee8ad217a6a398"),
+		AD_ENTRY1s("intro.stk", "8bd873137b6831c896ee8ad217a6a398", 3295368),
 		DE_DEU,
 		kPlatformDOS,
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -204,13 +198,12 @@
 	{
 		"gob1",
 		"CD v1.02",
-		AD_ENTRY1("intro.stk", "8bd873137b6831c896ee8ad217a6a398"),
+		AD_ENTRY1s("intro.stk", "8bd873137b6831c896ee8ad217a6a398", 3295368),
 		FR_FRA,
 		kPlatformDOS,
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -218,13 +211,12 @@
 	{
 		"gob1",
 		"CD v1.02",
-		AD_ENTRY1("intro.stk", "8bd873137b6831c896ee8ad217a6a398"),
+		AD_ENTRY1s("intro.stk", "8bd873137b6831c896ee8ad217a6a398", 3295368),
 		IT_ITA,
 		kPlatformDOS,
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -232,13 +224,12 @@
 	{
 		"gob1",
 		"CD v1.02",
-		AD_ENTRY1("intro.stk", "8bd873137b6831c896ee8ad217a6a398"),
+		AD_ENTRY1s("intro.stk", "8bd873137b6831c896ee8ad217a6a398", 3295368),
 		ES_ESP,
 		kPlatformDOS,
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -252,7 +243,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -266,7 +256,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -280,7 +269,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -294,7 +282,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -311,7 +298,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesNone,
 	0, 0, 0
 },
@@ -325,7 +311,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -339,7 +324,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -353,7 +337,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -367,7 +350,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -381,7 +363,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -395,7 +376,6 @@
 		ADGF_UNSTABLE,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -410,7 +390,6 @@
 		ADGF_CD,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesCD,
 	0, 0, 0
 },
@@ -428,7 +407,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -443,7 +421,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -458,7 +435,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -473,7 +449,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -488,7 +463,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -503,7 +477,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -518,7 +491,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -533,7 +505,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -548,7 +519,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -563,7 +533,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -577,7 +546,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -591,7 +559,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -605,7 +572,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -619,7 +585,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -633,7 +598,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, 0, 0
 },
@@ -645,12 +609,11 @@
 		"gob1",
 		"Demo",
 		AD_ENTRY1("intro.stk", "972f22c6ff8144a6636423f0354ca549"),
-		UNK_LANG,
+		EN_GRB,
 		kPlatformAmiga,
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesNone,
 	0, 0, 0
 },
@@ -658,13 +621,12 @@
 	{
 		"gob1",
 		"Interactive Demo",
-		AD_ENTRY1("intro.stk", "e72bd1e3828c7dec4c8a3e58c48bdfdb"),
+		AD_ENTRY1s("intro.stk", "e72bd1e3828c7dec4c8a3e58c48bdfdb", 280044),
 		UNK_LANG,
 		kPlatformDOS,
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesNone,
 	0, 0, 0
 },
@@ -673,12 +635,11 @@
 		"gob1",
 		"Interactive Demo",
 		AD_ENTRY1s("intro.stk", "a796096280d5efd48cf8e7dfbe426eb5", 193595),
-		UNK_LANG,
+		EN_GRB,
 		kPlatformDOS,
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesNone,
 	0, 0, 0
 },
@@ -692,7 +653,6 @@
 		ADGF_DEMO,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesNone,
 	0, 0, 0
 },
@@ -706,7 +666,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, "AVT003.TOT", 0
 },
@@ -720,7 +679,6 @@
 		ADGF_DEMO | ADGF_UNSTABLE,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, "AVT008.TOT", 0
 },
@@ -734,7 +692,6 @@
 		ADGF_DEMO | ADGF_UNSTABLE,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeGob1,
 	kFeaturesAdLib,
 	0, "AVT003.TOT", 0
 },

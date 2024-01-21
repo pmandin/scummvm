@@ -52,7 +52,7 @@ void saveGUISnapshot(Graphics::Surface surf, const Common::String &filename) {
 	Common::DumpFile outFile;
 	Common::String outName = Common::String::format("snapshots/%s", filename.c_str());
 
-	if (outFile.open(outName)) {
+	if (outFile.open(Common::Path(outName, '/'))) {
 		Image::writePNG(outFile, surf);
 		outFile.finalize();
 		outFile.close();
@@ -70,72 +70,65 @@ void handleSimpleDialog(GUI::Dialog &dialog, const Common::String &filename,Grap
 	dialog.close();
 }
 
-void dumpDialogs(const Common::String &message, int res, const Common::String &lang) {
+void dumpDialogs(const Common::String &message, const Common::String &lang) {
 #ifdef USE_TRANSLATION
 	// Update GUI language
 	TransMan.setLanguage(lang);
 #endif
 
-	// Update resolution
-	ConfMan.setInt("last_window_width", res, Common::ConfigManager::kApplicationDomain);
-	ConfMan.setInt("last_window_height", 600, Common::ConfigManager::kApplicationDomain);
-	g_system->beginGFXTransaction();
-		g_system->initSize(res, 600);
-	g_system->endGFXTransaction();
-
 	Graphics::Surface surf;
 	surf.create(g_system->getOverlayWidth(), g_system->getOverlayHeight(), g_system->getOverlayFormat());
 
-	Common::String filename = Common::String::format("%d-%s.png", res, lang.c_str());
+	Common::String suffix = Common::String::format("-%dx%d-%s.png", g_system->getOverlayWidth(), g_system->getOverlayHeight(), lang.c_str());
 
 	// Skipping Tooltips as not required
 
 	// MessageDialog
 	GUI::MessageDialog messageDialog(message);
-	handleSimpleDialog(messageDialog, "messageDialog-", surf);
+	handleSimpleDialog(messageDialog, "messageDialog" + suffix, surf);
 	// AboutDialog
 	GUI::AboutDialog aboutDialog;
-	handleSimpleDialog(aboutDialog, "aboutDialog-", surf);
+	handleSimpleDialog(aboutDialog, "aboutDialog" + suffix, surf);
 
 #if defined(USE_CLOUD) && defined(USE_LIBCURL)
 	// CloudConnectingWizard
 	GUI::CloudConnectionWizard cloudConnectingWizard;
-	handleSimpleDialog(cloudConnectingWizard, "cloudConnectingWizard-", surf);
+	handleSimpleDialog(cloudConnectingWizard, "cloudConnectingWizard" + suffix, surf);
 
 	// RemoteBrowserDialog
 	GUI::RemoteBrowserDialog remoteBrowserDialog(_("Select directory with game data"));
-	handleSimpleDialog(remoteBrowserDialog, "remoteBrowserDialog-", surf);
+	handleSimpleDialog(remoteBrowserDialog, "remoteBrowserDialog" + suffix, surf);
 
 	// DownloadIconPacksDialog
 	GUI::DownloadPacksDialog downloadIconPacksDialog(_("icon packs"), "LIST", "gui-icons*.dat");
-	handleSimpleDialog(downloadIconPacksDialog, "downloadIconPacksDialog-", surf);
+	handleSimpleDialog(downloadIconPacksDialog, "downloadIconPacksDialog" + suffix, surf);
 
 	// DownloadShaderPacksDialog
 	GUI::DownloadPacksDialog downloadShaderPacksDialog(_("shader packs"), "LIST-SHADERS", "shaders*.dat");
-	handleSimpleDialog(downloadShaderPacksDialog, "downloadShaderPacksDialog-", surf);
+	handleSimpleDialog(downloadShaderPacksDialog, "downloadShaderPacksDialog" + suffix, surf);
 #endif
 
 #ifdef USE_FLUIDSYNTH
 	// FluidSynthSettingsDialog
 	GUI::FluidSynthSettingsDialog fluidSynthSettingsDialog;
-	handleSimpleDialog(fluidSynthSettingsDialog, "fluidSynthSettings-", surf);
+	handleSimpleDialog(fluidSynthSettingsDialog, "fluidSynthSettings-" + suffix, surf);
 #endif
 
 	// ThemeBrowserDialog
 	GUI::ThemeBrowser themeBrowser;
-	handleSimpleDialog(themeBrowser, "themeBrowser-", surf);
+	handleSimpleDialog(themeBrowser, "themeBrowser-" + suffix, surf);
 
 	// BrowserDialog
 	GUI::BrowserDialog browserDialog(_("Select directory with game data"), true);
-	handleSimpleDialog(browserDialog, "browserDialog-", surf);
+	handleSimpleDialog(browserDialog, "browserDialog-" + suffix, surf);
 
 	// ChooserDialog
 	GUI::ChooserDialog chooserDialog(_("Pick the game:"));
-	handleSimpleDialog(chooserDialog, "chooserDialog-", surf);
+	handleSimpleDialog(chooserDialog, "chooserDialog-" + suffix, surf);
 
 	// MassAddDialog
 	GUI::MassAddDialog massAddDialog(Common::FSNode("."));
-	handleSimpleDialog(massAddDialog, "massAddDialog-", surf);
+	handleSimpleDialog(massAddDialog, "massAddDialog-" + suffix, surf);
 
 	// LauncherDialog
 #if 0
@@ -155,17 +148,38 @@ void dumpAllDialogs(const Common::String &message) {
 	int original_window_width = ConfMan.getInt("last_window_width", Common::ConfigManager::kApplicationDomain);
 	int original_window_height = ConfMan.getInt("last_window_height", Common::ConfigManager::kApplicationDomain);
 	Common::List<Common::String> list = Common::getLanguageList();
+	const int res[] = {320, 200,
+					   320, 240,
+					   640, 400,
+					   640, 480,
+					   800, 600,
+					   0};
 
+	// HACK: Pass info to backend to force window resize
+	ConfMan.setBool("force_resize", true, Common::ConfigManager::kApplicationDomain);
 	Common::FSNode dumpDir("snapshots");
+
 	if (!dumpDir.isDirectory())
 		dumpDir.createDirectory();
 
-	// Iterate through all languages available
-	for (Common::String lang : list) {
-		// Iterating through the resolutions doesn't work so you have to manually change it here.
-		// TODO: Find a way to iterate through the resolutions using code.
-		Common::Array<int> res_to_test = {800, 640, 320};
-		dumpDialogs(message, res_to_test[0], lang);
+	// Iterate through all resolutions available
+	for (const int *r = res; *r; r += 2) {
+		int w = r[0];
+		int h = r[1];
+
+		// Update resolution
+		ConfMan.setInt("last_window_width" , w, Common::ConfigManager::kApplicationDomain);
+		ConfMan.setInt("last_window_height", h, Common::ConfigManager::kApplicationDomain);
+		g_system->beginGFXTransaction();
+			g_system->initSize(w, h);
+		g_system->endGFXTransaction();
+
+		// Iterate through all langauges
+		for (Common::String &lang : list) {
+
+			dumpDialogs(message, lang);
+		}
+
 	}
 
 #ifdef USE_TRANSLATION
@@ -177,6 +191,11 @@ void dumpAllDialogs(const Common::String &message) {
 	g_system->beginGFXTransaction();
 		g_system->initSize(original_window_width, original_window_height);
 	g_system->endGFXTransaction();
+
+	// Clean up the temporary flag.
+	// Since we are still within the same method where we added,
+	// there is no need to flush config to the disk
+	ConfMan.removeKey("force_resize", Common::ConfigManager::kApplicationDomain);
 }
 
 } // End of namespace GUI

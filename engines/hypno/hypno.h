@@ -132,7 +132,7 @@ public:
 	void loadSceneLevel(const Common::String &current, const Common::String &next, const Common::String &prefix);
 	void loadSceneLevel(const char *buf, const Common::String &name, const Common::String &next, const Common::String &prefix);
 
-	LibFile *loadLib(const Filename &prefix, const Filename &filename, bool encrypted);
+	LibFile *loadLib(const Common::Path &prefix, const Common::Path &filename, bool encrypted);
 
 	// User input
 	void clickedHotspot(Common::Point);
@@ -144,13 +144,13 @@ public:
 	bool cursorMask(Common::Point);
 
 	virtual void loadGame(const Common::String &nextLevel, int score, int puzzleDifficulty, int combatDifficulty);
-	bool canLoadGameStateCurrently() override { return (isDemo() ? false : true); }
+	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override { return (isDemo() ? false : true); }
 	bool canSaveAutosaveCurrently() override { return false; }
-	bool canSaveGameStateCurrently() override { return (isDemo() ? false : true); }
+	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override { return (isDemo() ? false : true); }
 	Common::String _checkpoint;
 
-	Common::String _prefixDir;
-	Common::String convertPath(const Common::String &);
+	Common::Path _prefixDir;
+	Common::Path convertPath(const Common::String &);
 	void playVideo(MVideo &video);
 	void skipVideo(MVideo &video);
 
@@ -167,9 +167,9 @@ public:
 	uint32 _defaultCursorIdx;
 	void disableCursor();
 	void defaultCursor();
-	void changeCursor(const Common::String &cursor, uint32 n, bool centerCursor = false);
-	void changeCursor(const Common::String &cursor);
-	void changeCursor(const Graphics::Surface &entry, byte *palette, bool centerCursor = false);
+	virtual void changeCursor(const Common::String &cursor, uint32 n, bool centerCursor = false);
+	virtual void changeCursor(const Common::String &cursor);
+	virtual void changeCursor(const Graphics::Surface &entry, byte *palette, bool centerCursor = false);
 
 	// Actions
 	virtual void runMenu(Hotspots *hs, bool only_menu = false);
@@ -392,6 +392,7 @@ public:
 
 	void loadFonts() override;
 	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
+	void changeCursor(const Common::String &cursor) override;
 
 	void showCredits() override;
 	bool clickedSecondaryShoot(const Common::Point &mousePos) override;
@@ -424,6 +425,10 @@ public:
 	void findNextSegment(ArcadeShooting *arc) override;
 	void initSegment(ArcadeShooting *arc) override;
 	byte *getTargetColor(Common::String name, int levelId) override;
+
+	bool hasFeature(EngineFeature f) const override {
+		return (f == kSupportsReturnToLauncher);
+	}
 
 private:
 	Common::String getLocalizedString(const Common::String name);
@@ -541,6 +546,7 @@ private:
 class BoyzEngine : public HypnoEngine {
 public:
 	BoyzEngine(OSystem *syst, const ADGameDescription *gd);
+	~BoyzEngine();
 	Common::String _name;
 	Common::Array<int> _ids;
 	int _lastLevel;
@@ -650,6 +656,10 @@ public:
 
 	Common::BitArray _font05;
 	Common::BitArray _font08;
+
+	bool hasFeature(EngineFeature f) const override {
+		return (f == kSupportsReturnToLauncher);
+	}
 };
 
 } // End of namespace Hypno

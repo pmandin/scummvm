@@ -15,9 +15,11 @@ MODULE_OBJS = \
   action/secondaryvideo.o \
   action/puzzle/assemblypuzzle.o \
   action/puzzle/bballpuzzle.o \
+  action/puzzle/bulpuzzle.o \
   action/puzzle/bombpuzzle.o \
   action/puzzle/collisionpuzzle.o \
   action/puzzle/cubepuzzle.o \
+  action/puzzle/hamradiopuzzle.o \
   action/puzzle/leverpuzzle.o \
   action/puzzle/mazechasepuzzle.o \
   action/puzzle/mouselightpuzzle.o \

@@ -61,9 +61,9 @@ void Manager::load(rapidxml::xml_node<char> *node, ParagraphData &popup) {
 
 				for (auto n = loc->first_node("file"); n != nullptr; n = n->next_sibling("file")) {
 					uint id;
-					Common::String path;
+					Common::Path path;
 					loadNum(id, "name", n);
-					loadStr(path, "path", n);
+					loadPath(path, "path", n);
 					_eventMap[locName].addSeq(id, path);
 				}
 			}
@@ -118,6 +118,7 @@ void Manager::handleEvents(Info &info, const Common::String &playerId, Common::E
 				}
 
 				if (_oh.handleDlboxEvents(event)) {
+					_oh.onExit();
 					_eventMap[info.curLocID()].nextEvent(_activeSeq, info, playerId, result, _endSeq);
 					_oh._showJournal = false;
 				}
@@ -140,8 +141,15 @@ void Manager::handleEvents(Info &info, const Common::String &playerId, Common::E
 					if (info.personValid(_curEvent->_title))
 						info._journal.open(playerId, JE_PEOPLE, info.personGet(_curEvent->_title)._name);
 
+				unsigned int option = static_cast<unsigned int>(_reply.hoverIndex());
+				const auto &replyChoice = g_engine->_eventStore->_con[_curEvent->_special]._reply;
+				if (option < replyChoice.size()) {
+					_intro.onEntry(replyChoice[option]._text);
+				}
+
 				int choice = _reply.handleEvents(info, g_engine->_eventStore->_con[_curEvent->_special], _curEvent->_title, _oh, event);
 				if (choice >= 0) {
+					_reply.onExit();
 					_eventMap[info.curLocID()].nextEvent(_activeSeq, info, playerId, result, _endSeq, choice);
 					_oh._showJournal = false;
 				}
@@ -163,9 +171,10 @@ void Manager::handleEvents(Info &info, const Common::String &playerId, Common::E
 				if (hud._back.handleEvents(event) == BUAC_LCLICK || hud._pausekey.handleEvents(event))
 					_intro._showTraits = false;
 			} else {
-				if (_intro.handleEvents(event))
+				if (_intro.handleEvents(event)) {
+					_intro.onExit();
 					_eventMap[info.curLocID()].nextEvent(_activeSeq, info, playerId, result, _endSeq);
-
+				}
 				if (_intro._showTraits)
 					_per.Cache(info, level.playerId(), level);
 			}
@@ -282,11 +291,18 @@ void Manager::calcActiveSeq(Info &info, pyrodactyl::level::Level &level, const R
 		_player = (_curEvent->_title == level.playerId());
 
 		switch (_curEvent->_type) {
+		case EVENT_DIALOG:
+			_oh.onEntry(_curEvent->_dialog);
+			break;
 		case EVENT_ANIM:
 			g_engine->_eventStore->_anim[_curEvent->_special].start();
 			break;
 		case EVENT_REPLY:
+			_reply.onEntry(_curEvent->_dialog);
 			_reply.cache(info, g_engine->_eventStore->_con[_curEvent->_special]);
+			break;
+		case EVENT_SPLASH:
+			_intro.onEntry(_curEvent->_dialog);
 			break;
 		default:
 			break;

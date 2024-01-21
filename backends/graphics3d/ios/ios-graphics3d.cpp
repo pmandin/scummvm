@@ -30,6 +30,7 @@
 #include "graphics/opengl/context.h"
 #include "backends/graphics3d/opengl/texture.h"
 #include "graphics/blit.h"
+#include "common/translation.h"
 
 #include "engines/engine.h"
 
@@ -469,6 +470,17 @@ void iOSGraphics3dManager::hideOverlay() {
 
 	delete _overlayBackground;
 	_overlayBackground = nullptr;
+
+	if (_surfaceRenderer) {
+		_surfaceRenderer->prepareState();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		_surfaceRenderer->restorePreviousState();
+		updateScreen();
+		_surfaceRenderer->prepareState();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		_surfaceRenderer->restorePreviousState();
+		updateScreen();
+	}
 }
 
 bool iOSGraphics3dManager::showMouse(bool visible) {

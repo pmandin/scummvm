@@ -31,12 +31,13 @@ class PasswordPuzzle : public RenderActionRecord {
 public:
 	enum SolveState { kNotSolved, kFailed, kSolved };
 	PasswordPuzzle() : RenderActionRecord(7) {}
-	virtual ~PasswordPuzzle() {}
+	virtual ~PasswordPuzzle();
 
 	void init() override;
 
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
+	void onPause(bool paused) override;
 	void handleInput(NancyInput &input) override;
 
 	uint16 _fontID = 0;
@@ -60,8 +61,7 @@ public:
 	bool _playerHasHitReturn = false;
 	SolveState _solveState = kNotSolved;
 
-	uint _maxNameLength = 0;
-	uint _maxPasswordLength = 0;
+	uint _maxStringLength = 0;
 
 protected:
 	Common::String getRecordTypeName() const override { return "PasswordPuzzle"; }

@@ -54,7 +54,7 @@ class RandomSource;
 
 namespace Adl {
 
-Common::String getDiskImageName(const AdlGameDescription &adlDesc, byte volume);
+Common::Path getDiskImageName(const AdlGameDescription &adlDesc, byte volume);
 GameType getGameType(const AdlGameDescription &desc);
 GameVersion getGameVersion(const AdlGameDescription &desc);
 Common::Language getLanguage(const AdlGameDescription &desc);
@@ -263,11 +263,11 @@ protected:
 	// Engine
 	Common::Error loadGameState(int slot) override;
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false) override;
-	bool canSaveGameStateCurrently() override;
+	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override;
 	Common::String getSaveStateName(int slot) const override;
 	int getAutosaveSlot() const override { return 15; }
 
-	Common::String getDiskImageName(byte volume) const { return Adl::getDiskImageName(*_gameDescription, volume); }
+	Common::Path getDiskImageName(byte volume) const { return Adl::getDiskImageName(*_gameDescription, volume); }
 	GameType getGameType() const { return Adl::getGameType(*_gameDescription); }
 	GameVersion getGameVersion() const { return Adl::getGameVersion(*_gameDescription); }
 	Common::Language getLanguage() const { return Adl::getLanguage(*_gameDescription); }
@@ -466,7 +466,7 @@ private:
 	// Engine
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
-	bool canLoadGameStateCurrently() override;
+	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override;
 
 	// Text input
 	byte convertKey(uint16 ascii) const;

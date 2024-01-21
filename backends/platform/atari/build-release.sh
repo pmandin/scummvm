@@ -19,6 +19,8 @@ then
 	--backend=atari \
 	--host=${PLATFORM} \
 	--enable-release \
+	--disable-png \
+	--disable-enet \
 	--disable-mt32emu \
 	--disable-lua \
 	--disable-nuked-opl \
@@ -31,7 +33,8 @@ then
 	--opengl-mode=none \
 	--enable-verbose-build \
 	--enable-text-console \
-	--disable-engine=director,cine
+	--disable-engine=hugo,director,cine,ultima \
+	--disable-detection-full
 fi
 
 make -j 16
@@ -46,7 +49,7 @@ ${PLATFORM}-nm -C dist-generic/scummvm/scummvm.ttp | grep -vF ' .L' | grep ' [Tt
 ${PLATFORM}-strip -s dist-generic/scummvm/scummvm.ttp
 
 # remove unused files; absent gui-icons.dat massively speeds up startup time (used for the grid mode)
-rm -f dist-generic/scummvm/data/{gui-icons,achievements,macgui,shaders}.dat
+rm dist-generic/scummvm/data/{achievements,encoding,gui-icons,macgui,shaders}.dat
 
 # move themes into 'themes' folder (with compression level zero for faster depacking)
 mkdir -p dist-generic/scummvm/themes
@@ -64,7 +67,8 @@ cp ../backends/platform/atari/readme.txt dist-generic/scummvm
 unix2dos dist-generic/scummvm/readme.txt
 
 cd dist-generic
-zip -r -9 scummvm-fat.zip scummvm
+mv scummvm scummvm-2.8.0-atari-full
+zip -r -9 scummvm-2.8.0-atari-full.zip scummvm-2.8.0-atari-full
 cd -
 
-mv dist-generic/scummvm-fat.zip ..
+mv dist-generic/scummvm-2.8.0-atari-full.zip ..

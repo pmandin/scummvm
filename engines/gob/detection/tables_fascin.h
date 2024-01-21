@@ -17,6 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv3 license mentioned above, this code is also
+ * licensed under LGPL 2.1. See LICENSES/COPYING.LGPL file for the
+ * full text of the license.
+ *
  */
 
 /* Detection tables for Fascination. */
@@ -36,7 +42,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesAdLib,
 	"disk0.stk", 0, 0
 },
@@ -50,7 +55,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesAdLib,
 	"disk0.stk", 0, 0
 },
@@ -67,7 +71,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesAdLib,
 	"disk0.stk", 0, 0
 },
@@ -81,7 +84,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesAdLib,
 	"disk0.stk", 0, 0
 },
@@ -95,7 +97,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesAdLib,
 	"intro.stk", 0, 0
 },
@@ -109,7 +110,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesAdLib,
 	"disk0.stk", 0, 0
 },
@@ -126,7 +126,6 @@
 		ADGF_CD,
 		GUIO1(GUIO_NOSUBTITLES)
 	},
-	kGameTypeFascination,
 	kFeaturesCD,
 	"intro.stk", 0, 0
 },
@@ -140,7 +139,6 @@
 		ADGF_CD,
 		GUIO1(GUIO_NOSUBTITLES)
 	},
-	kGameTypeFascination,
 	kFeaturesCD,
 	"intro.stk", 0, 0
 },
@@ -154,7 +152,6 @@
 		ADGF_CD,
 		GUIO1(GUIO_NOSUBTITLES)
 	},
-	kGameTypeFascination,
 	kFeaturesCD,
 	"intro.stk", 0, 0
 },
@@ -168,7 +165,6 @@
 		ADGF_CD,
 		GUIO1(GUIO_NOSUBTITLES)
 	},
-	kGameTypeFascination,
 	kFeaturesCD,
 	"intro.stk", 0, 0
 },
@@ -182,7 +178,6 @@
 		ADGF_CD,
 		GUIO1(GUIO_NOSUBTITLES)
 	},
-	kGameTypeFascination,
 	kFeaturesCD,
 	"intro.stk", 0, 0
 },
@@ -196,7 +191,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },
@@ -213,7 +207,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },
@@ -222,12 +215,11 @@
 		"fascination",
 		"",
 		AD_ENTRY1s("disk0.stk", "7062117e9c5adfb6bfb2dac3ff74df9e", 189951),
-		EN_ANY,
+		EN_GRB,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },
@@ -241,7 +233,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },
@@ -255,7 +246,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },
@@ -270,7 +260,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },
@@ -287,7 +276,6 @@
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
-	kGameTypeFascination,
 	kFeaturesNone,
 	"disk0.stk", 0, 0
 },

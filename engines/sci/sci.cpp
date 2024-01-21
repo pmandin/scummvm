@@ -135,12 +135,13 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	_console(nullptr),
 	_tts(nullptr),
 	_rng("sci"),
-	_forceHiresGraphics(false) {
+	_forceHiresGraphics(false),
+	_inErrorString(false) {
 
 	assert(g_sci == nullptr);
 	g_sci = this;
 
-	const Common::FSNode gameDataDir(ConfMan.get("path"));
+	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
 
 	SearchMan.addSubDirectoryMatching(gameDataDir, "actors");	// KQ6 hi-res portraits
 	SearchMan.addSubDirectoryMatching(gameDataDir, "aud");	// resource.aud and audio files
@@ -539,7 +540,7 @@ void SciEngine::suggestDownloadGK2SubTitlesPatch() {
 bool SciEngine::initGame() {
 	// Script 0 needs to be allocated here before anything else!
 	int script0Segment = _gamestate->_segMan->getScriptSegment(0, SCRIPT_GET_LOCK);
-	DataStack *stack = _gamestate->_segMan->allocateStack(VM_STACK_SIZE, nullptr);
+	DataStack *stack = _gamestate->_segMan->allocateStack(VM_STACK_SIZE);
 
 	_gamestate->_msgState = new MessageState(_gamestate->_segMan);
 	_gamestate->gcCountDown = GC_INTERVAL - 1;
@@ -587,9 +588,6 @@ bool SciEngine::initGame() {
 }
 
 void SciEngine::initGraphics() {
-	if (hasMacIconBar())
-		_gfxMacIconBar = new GfxMacIconBar();
-
 #ifdef ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
 		_gfxPalette32 = new GfxPalette32(_resMan);
@@ -630,7 +628,7 @@ void SciEngine::initGraphics() {
 		_gfxCompare = new GfxCompare(_gamestate->_segMan, _gfxCache, _gfxScreen, _gfxCoordAdjuster);
 		_gfxTransitions = new GfxTransitions(_gfxScreen, _gfxPalette16);
 		_gfxPaint16 = new GfxPaint16(_resMan, _gamestate->_segMan, _gfxCache, _gfxPorts, _gfxCoordAdjuster, _gfxScreen, _gfxPalette16, _gfxTransitions, _audio);
-		_gfxAnimate = new GfxAnimate(_gamestate, _scriptPatcher, _gfxCache, _gfxPorts, _gfxPaint16, _gfxScreen, _gfxPalette16, _gfxCursor, _gfxTransitions);
+		_gfxAnimate = new GfxAnimate(_gamestate, _scriptPatcher, _gfxCache, _gfxCompare, _gfxPorts, _gfxPaint16, _gfxScreen, _gfxPalette16, _gfxCursor, _gfxTransitions);
 		_gfxText16 = new GfxText16(_gfxCache, _gfxPorts, _gfxPaint16, _gfxScreen, _gfxMacFontManager);
 		_gfxControls16 = new GfxControls16(_gamestate->_segMan, _gfxPorts, _gfxPaint16, _gfxText16, _gfxScreen);
 		_gfxMenu = new GfxMenu(_eventMan, _gamestate->_segMan, _gfxPorts, _gfxPaint16, _gfxText16, _gfxScreen, _gfxCursor);
@@ -640,6 +638,9 @@ void SciEngine::initGraphics() {
 		_gfxPorts->init(_features->usesOldGfxFunctions(), _gfxPaint16, _gfxText16);
 		_gfxPaint16->init(_gfxAnimate, _gfxText16);
 
+		if (hasMacIconBar()) {
+			_gfxMacIconBar = new GfxMacIconBar(_resMan, _eventMan, _gamestate->_segMan, _gfxScreen, _gfxPalette16);
+		}
 #ifdef ENABLE_SCI32
 	}
 #endif
@@ -676,11 +677,32 @@ void SciEngine::runGame() {
 	do {
 		_gamestate->_executionStackPosChanged = false;
 		run_vm(_gamestate);
-		exitGame();
+
+		// Stop audio and sound components, unless loading a game.
+		// EngineState::saveLoadWithSerializer has already handled that.
+		if (_gamestate->abortScriptProcessing != kAbortLoadGame) {
+			if (_audio) { // SCI16
+				_audio->stopAllAudio();
+			}
+			_sync->stop();
+			_soundCmd->clearPlayList();
+		}
+
+		// Clear execution stack
+		_gamestate->_executionStack.clear();
+		_gamestate->xs = nullptr;
+
+		// Close all opened file handles
+		_gamestate->_fileHandles.clear();
+		_gamestate->_fileHandles.resize(5);
 
 		_guestAdditions->sciEngineRunGameHook();
 
 		if (_gamestate->abortScriptProcessing == kAbortRestartGame) {
+			// SCI16 game has been restarted with kRestartGame16.
+			// Reset engine state and prepare the VM to call the play method
+			// on the next iteration, but set the gameIsRestarting flag so
+			// that scripts can detect the restart with kGameIsRestarting.
 			_gamestate->_segMan->resetSegMan();
 			initGame();
 			initStackBaseWithSelector(SELECTOR(play));
@@ -693,8 +715,10 @@ void SciEngine::runGame() {
 			_gamestate->abortScriptProcessing = kAbortNone;
 			_guestAdditions->reset();
 		} else if (_gamestate->abortScriptProcessing == kAbortLoadGame) {
+			// Game has been restored from within the game or the launcher.
+			// Prepare the VM to call the replay method of the game object
+			// on the next iteration.
 			_gamestate->abortScriptProcessing = kAbortNone;
-			_gamestate->_executionStack.clear();
 			initStackBaseWithSelector(SELECTOR(replay));
 			_guestAdditions->patchGameSaveRestore();
 			setLauncherLanguage();
@@ -712,14 +736,22 @@ void SciEngine::runGame() {
 // When `error` is called, this function adds additional SCI engine context to the message
 // to help with bug reporting. It is critical that this function not crash, or else the
 // original error message will be lost and the debugger will be unavailable. This function
-// must not cause a second `error` call, or else it will infinitely recurse and crash with
-// stack overflow. This function must be cautious about the state it inspects, because it
-// can be called at any time during the engine lifecycle.
+// must not cause a second `error` call, or the original error message will also be unavailable,
+// although we detect this to prevent infinite recursion and crashing with a stack overflow.
+// This function must be cautious about the state it inspects, because it can be called at
+// any time during the engine lifecycle.
 void SciEngine::errorString(const char *buf_input, char *buf_output, int buf_output_size) {
+	// safeguard to prevent infinite recursion in case there's a code path that calls `error`.
+	if (_inErrorString) {
+		warning("error called during errorString");
+		Common::strlcpy(buf_output, buf_input, buf_output_size);
+		return;
+	}
+	_inErrorString = true;
+
 	// Detailed context can only be included if VM execution has begun.
 	EngineState *s = _gamestate;
-	Kernel *kernel = g_sci ? g_sci->getKernel() : nullptr;
-	if (s != nullptr && !s->_executionStack.empty() && kernel != nullptr) {
+	if (s != nullptr && !s->_executionStack.empty() && _kernel != nullptr) {
 		// Determine the name of the current function and the pc
 		Common::String function;
 		// Query the top-most stack frame even if it's not committed yet within the VM cycle.
@@ -729,7 +761,7 @@ void SciEngine::errorString(const char *buf_input, char *buf_output, int buf_out
 		case EXEC_STACK_TYPE_CALL: { // Script function
 			if (call.debugSelector != -1) {
 				const char *objectName = s->_segMan->getObjectName(call.sendp);
-				function = Common::String::format("%s::%s", objectName, kernel->getSelectorName(call.debugSelector).c_str());
+				function = Common::String::format("%s::%s", objectName, _kernel->getSelectorName(call.debugSelector).c_str());
 			} else if (call.debugExportId != -1) {
 				function = Common::String::format("export %d", call.debugExportId);
 			} else if (call.debugLocalCallOffset != -1) {
@@ -739,9 +771,9 @@ void SciEngine::errorString(const char *buf_input, char *buf_output, int buf_out
 		}
 		case EXEC_STACK_TYPE_KERNEL: { // Kernel function
 			if (call.debugKernelSubFunction == -1) {
-				function = Common::String::format("k%s", kernel->getKernelName(call.debugKernelFunction).c_str());
+				function = Common::String::format("k%s", _kernel->getKernelName(call.debugKernelFunction).c_str());
 			} else {
-				function = Common::String::format("k%s", kernel->getKernelName(call.debugKernelFunction, call.debugKernelSubFunction).c_str());
+				function = Common::String::format("k%s", _kernel->getKernelName(call.debugKernelFunction, call.debugKernelSubFunction).c_str());
 			}
 			// Kernel calls do not have a pc. walk the stack back to the most recent for script number.
 			Common::List<ExecStack>::const_iterator it;
@@ -792,25 +824,7 @@ void SciEngine::errorString(const char *buf_input, char *buf_output, int buf_out
 		// VM not initialized yet, so just copy over the target name and error message.
 		snprintf(buf_output, buf_output_size, "[%s]: %s", _targetName.c_str(), buf_input);
 	}
-}
-
-void SciEngine::exitGame() {
-	if (_gamestate->abortScriptProcessing != kAbortLoadGame) {
-		_gamestate->_executionStack.clear();
-		if (_audio) {
-			_audio->stopAllAudio();
-		}
-		_sync->stop();
-		_soundCmd->clearPlayList();
-	}
-
-	// TODO Free parser segment here
-
-	// TODO Free scripts here
-
-	// Close all opened file handles
-	_gamestate->_fileHandles.clear();
-	_gamestate->_fileHandles.resize(5);
+	_inErrorString = false;
 }
 
 // Invoked by debugger when a severe error occurs
@@ -1039,14 +1053,14 @@ void SciEngine::updateSoundMixerVolumes() {
 }
 
 void SciEngine::loadMacExecutable() {
-	Common::String filename = _resMan->getMacExecutableName();
+	Common::Path filename = _resMan->getMacExecutableName();
 	if (filename.empty())
 		return;
 
 	if (!_macExecutable.open(filename) || !_macExecutable.hasResFork()) {
 		// KQ6/Freddy require the executable to load their icon bar palettes
 		if (hasMacIconBar())
-			error("Could not load Mac resource fork '%s'", filename.c_str());
+			error("Could not load Mac resource fork '%s'", filename.toString().c_str());
 	}
 }
 
@@ -1055,7 +1069,7 @@ void SciEngine::loadMacFonts() {
 	// If we're unable to load Mac fonts, then fall back to using SCI fonts.
 	// Mac font support was added after these games were supported, so it's
 	// important to not require that fonts be present.
-	switch (g_sci->getGameId()) {
+	switch (getGameId()) {
 	case GID_CASTLEBRAIN:
 	case GID_FREDDYPHARKAS:
 	// case GID_KQ5: // not supported yet
@@ -1072,8 +1086,8 @@ void SciEngine::loadMacFonts() {
 				_gfxMacFontManager = nullptr;
 			}
 		} else {
-			Common::String filename = _resMan->getMacExecutableName();
-			warning("Macintosh executable \"%s\" not found, using SCI fonts", filename.c_str());
+			Common::Path filename = _resMan->getMacExecutableName();
+			warning("Macintosh executable \"%s\" not found, using SCI fonts", filename.toString().c_str());
 		}
 		break;
 	case GID_LSL6:

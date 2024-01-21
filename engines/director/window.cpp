@@ -74,6 +74,14 @@ Window::~Window() {
 		delete _puppetTransition;
 }
 
+void Window::decRefCount() {
+	*_refCount -= 1;
+	if (*_refCount <= 0) {
+		g_director->_wm->removeWindow(this);
+		g_director->_wm->removeMarked();
+	}
+}
+
 void Window::invertChannel(Channel *channel, const Common::Rect &destRect) {
 	const Graphics::Surface *mask;
 
@@ -231,6 +239,8 @@ void Window::setTitleVisible(bool titleVisible) {
 }
 
 Datum Window::getStageRect() {
+	ensureMovieIsLoaded();
+
 	Common::Rect rect = getInnerDimensions();
 	Datum d;
 	d.type = RECT;
@@ -252,6 +262,8 @@ bool Window::setStageRect(Datum datum) {
 	// Unpack rect from datum
 	Common::Rect rect = Common::Rect(datum.u.farr->arr[0].asInt(), datum.u.farr->arr[1].asInt(), datum.u.farr->arr[2].asInt(), datum.u.farr->arr[3].asInt());
 
+	ensureMovieIsLoaded();
+
 	setInnerDimensions(rect);
 
 	return true;
@@ -269,6 +281,7 @@ void Window::setModal(bool modal) {
 
 void Window::setFileName(Common::String filename) {
 	setNextMovie(filename);
+	ensureMovieIsLoaded();
 }
 
 void Window::reset() {
@@ -315,10 +328,8 @@ Common::Point Window::getMousePos() {
 
 void Window::setVisible(bool visible, bool silent) {
 	// setting visible triggers movie load
-	if (!_currentMovie && !silent) {
-		Common::String movieName = getName();
-		setNextMovie(movieName);
-	}
+	if (!_currentMovie && !silent)
+		ensureMovieIsLoaded();
 
 	BaseMacWindow::setVisible(visible);
 
@@ -326,24 +337,44 @@ void Window::setVisible(bool visible, bool silent) {
 		_wm->setActiveWindow(_id);
 }
 
+void Window::ensureMovieIsLoaded() {
+	if (!_currentMovie) {
+		if (_fileName.empty()) {
+			Common::String movieName = getName();
+			setNextMovie(movieName);
+		}
+	} else if (_nextMovie.movie.empty()) { // The movie is loaded and no next movie to load
+		return;
+	}
+
+	if (_nextMovie.movie.empty()) {
+		warning("Window::ensureMovieIsLoaded(): No movie to load");
+		return;
+	}
+
+	loadNextMovie();
+}
+
 bool Window::setNextMovie(Common::String &movieFilenameRaw) {
-	Common::Path movieFilename = findMoviePath(movieFilenameRaw);
+	_fileName = findMoviePath(movieFilenameRaw);
 
 	bool fileExists = false;
 	Common::File file;
-	if (!movieFilename.empty() && file.open(movieFilename)) {
+	if (!_fileName.empty() && file.open(_fileName)) {
 		fileExists = true;
 		file.close();
 	}
 
-	debug(1, "Window::setNextMovie: '%s' -> '%s' -> '%s'", movieFilenameRaw.c_str(), convertPath(movieFilenameRaw).c_str(), movieFilename.toString().c_str());
+	debug(1, "Window::setNextMovie: '%s' -> '%s' -> '%s'", movieFilenameRaw.c_str(), convertPath(movieFilenameRaw).c_str(), _fileName.toString(Common::Path::kNativeSeparator).c_str());
 
 	if (!fileExists) {
-		warning("Movie %s does not exist", movieFilename.toString().c_str());
+		warning("Movie %s does not exist", _fileName.toString(Common::Path::kNativeSeparator).c_str());
+		_fileName.clear();
 		return false;
 	}
 
-	_nextMovie.movie = movieFilename.toString(g_director->_dirSeparator);
+	_nextMovie.movie = _fileName.toString(g_director->_dirSeparator);
+
 	return true;
 }
 
@@ -361,7 +392,7 @@ void Window::loadNewSharedCast(Cast *previousSharedCast) {
 	Common::Path previousSharedCastPath;
 	Common::Path newSharedCastPath = getSharedCastPath();
 	if (previousSharedCast && previousSharedCast->getArchive()) {
-		previousSharedCastPath = Common::Path(previousSharedCast->getArchive()->getPathName(), g_director->_dirSeparator);
+		previousSharedCastPath = previousSharedCast->getArchive()->getPathName();
 	}
 
 	// Check if previous and new sharedCasts are the same
@@ -370,7 +401,7 @@ void Window::loadNewSharedCast(Cast *previousSharedCast) {
 		previousSharedCast->releaseCastMemberWidget();
 		_currentMovie->_sharedCast = previousSharedCast;
 
-		debugC(1, kDebugLoading, "Skipping loading already loaded shared cast, path: %s", previousSharedCastPath.toString().c_str());
+		debugC(1, kDebugLoading, "Skipping loading already loaded shared cast, path: %s", previousSharedCastPath.toString(Common::Path::kNativeSeparator).c_str());
 		return;
 	}
 
@@ -406,6 +437,8 @@ bool Window::loadNextMovie() {
 	archivePath.appendInPlace(Common::lastPathComponent(_nextMovie.movie, g_director->_dirSeparator));
 	Archive *mov = g_director->openArchive(archivePath);
 
+	_nextMovie.movie.clear(); // Clearing it, so we will not attempt to load again
+
 	if (!mov)
 		return false;
 
@@ -417,7 +450,6 @@ bool Window::loadNextMovie() {
 	debug(0, "@@@@   Switching to movie '%s' in '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str(), _currentPath.c_str());
 	debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
-	g_lingo->resetLingo();
 	loadNewSharedCast(previousSharedCast);
 	return true;
 }
@@ -425,9 +457,9 @@ bool Window::loadNextMovie() {
 bool Window::step() {
 	// finish last movie
 	if (_currentMovie && _currentMovie->getScore()->_playState == kPlayStopped) {
-		debugC(3, kDebugEvents, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-		debugC(3, kDebugEvents, "@@@@   Finishing movie '%s' in '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str(), _currentPath.c_str());
-		debugC(3, kDebugEvents, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+		debugC(5, kDebugEvents, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+		debugC(5, kDebugEvents, "@@@@   Finishing movie '%s' in '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str(), _currentPath.c_str());
+		debugC(5, kDebugEvents, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
 		_currentMovie->getScore()->stopPlay();
 		debugC(1, kDebugEvents, "Finished playback of movie '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str());
@@ -444,7 +476,8 @@ bool Window::step() {
 	if (!_nextMovie.movie.empty()) {
 		if (!loadNextMovie())
 			return (_vm->getGameGID() == GID_TESTALL);
-		_nextMovie.movie.clear();
+
+		g_lingo->resetLingo();
 	}
 
 	// play current movie
@@ -484,9 +517,9 @@ bool Window::step() {
 			}
 			// fall through
 		case kPlayStarted:
-			debugC(3, kDebugEvents, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-			debugC(3, kDebugEvents, "@@@@   Stepping movie '%s' in '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str(), _currentPath.c_str());
-			debugC(3, kDebugEvents, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+			debugC(5, kDebugEvents, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			debugC(5, kDebugEvents, "@@@@   Stepping movie '%s' in '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str(), _currentPath.c_str());
+			debugC(5, kDebugEvents, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 			_currentMovie->getScore()->step();
 			return true;
 		default:

@@ -669,7 +669,12 @@ void SmushPlayer::handleTextResource(uint32 subType, int32 subSize, Common::Seek
 }
 
 const char *SmushPlayer::getString(int id) {
-	return _strings->get(id);
+	if (_strings != nullptr) {
+		return _strings->get(id);
+	} else {
+		warning("Couldn't load string with id {%d}, are you maybe missing a TRS subtitle file?", id);
+		return nullptr;
+	}
 }
 
 bool SmushPlayer::readString(const char *file) {
@@ -1020,7 +1025,7 @@ void SmushPlayer::parseNextFrame() {
 			delete _base;
 
 			ScummFile *tmp = new ScummFile(_vm);
-			if (!g_scumm->openFile(*tmp, _seekFile))
+			if (!g_scumm->openFile(*tmp, Common::Path(_seekFile)))
 				error("SmushPlayer: Unable to open file %s", _seekFile.c_str());
 			_base = tmp;
 			_base->readUint32BE();

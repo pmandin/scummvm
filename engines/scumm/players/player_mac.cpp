@@ -40,7 +40,7 @@ Player_Mac::Player_Mac(ScummEngine *scumm, Audio::Mixer *mixer, int numberOfChan
 	assert(mixer);
 }
 
-void Player_Mac::init(const Common::String &instrumentFile) {
+void Player_Mac::init(const Common::Path &instrumentFile) {
 	_instrumentFile = instrumentFile;
 	_channel = new Player_Mac::Channel[_numberOfChannels];
 
@@ -312,6 +312,11 @@ int Player_Mac::noteToPitchModifier(byte note, Instrument *instrument) {
 	} else {
 		return 0;
 	}
+}
+
+void Player_Mac::overrideChannelMask(int newMask) {
+	Common::StackLock lock(_mutex);
+	_channelMask = newMask;
 }
 
 int Player_Mac::readBuffer(int16 *data, const int numSamples) {

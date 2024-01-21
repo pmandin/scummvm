@@ -39,7 +39,7 @@ public:
 	void execute() override;
 	void handleInput(NancyInput &input) override;
 
-	Common::String _imageName;
+	Common::Path _imageName;
 	Common::Array<Common::Rect> _srcRects;
 	Common::Array<Common::Rect> _destRects;
 	Common::Array<Common::Rect> _upHotspots;
@@ -56,7 +56,6 @@ public:
 	Graphics::ManagedSurface _image;
 	Common::Array<byte> _currentSequence;
 	Time _solveSoundPlayTime;
-
 
 protected:
 	Common::String getRecordTypeName() const override { return "RotatingLockPuzzle"; }

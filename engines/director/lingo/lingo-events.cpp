@@ -161,7 +161,9 @@ void Movie::queueFrameEvent(Common::Queue<LingoEvent> &queue, LEvent event, int 
 	// 	entity = score->getCurrentFrameNum();
 	// } else {
 
-	assert(_score->_currentFrame != nullptr);
+	if (_score->_currentFrame == nullptr)
+		return;
+
 	CastMemberID scriptId = _score->_currentFrame->_mainChannels.actionId;
 	if (!scriptId.member)
 		return;
@@ -331,7 +333,7 @@ void Movie::queueUserEvent(LEvent event, int targetId) {
 void Movie::processEvent(LEvent event, int targetId) {
 	Common::Queue<LingoEvent> queue;
 	queueEvent(queue, event, targetId);
-	_vm->setCurrentMovie(this);
+	_vm->setCurrentWindow(this->getWindow());
 	_lingo->processEvents(queue);
 }
 

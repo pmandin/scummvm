@@ -89,9 +89,10 @@ namespace Kingdom {
 	class KingdomGame : public Engine {
 	public:
 		KingdomGame(OSystem *syst, const ADGameDescription *gameDesc);
-		~KingdomGame();
+		~KingdomGame() override;
 
-		virtual Common::Error run();
+		bool hasFeature(EngineFeature f) const override;
+		Common::Error run() override;
 
 		// Detection related functions
 		const ADGameDescription *_gameDescription;
@@ -104,6 +105,8 @@ namespace Kingdom {
 		Logic *_logic;
 
 		KingArtEntry *_kingartEntries;
+		uint32 _kingartCount;
+
 		void displayDebugHotSpots();
 
 	public:
@@ -174,8 +177,6 @@ namespace Kingdom {
 		int _tickCount;
 		uint32 _oldTime;
 
-		Common::SeekableReadStream *_rezPointers[510];
-		int _rezSize[510];
 		int _iconPic[7];
 		uint16 _userInput;
 		uint16 _mouseButton;
@@ -188,8 +189,7 @@ namespace Kingdom {
 		void initHelp();
 		void fadeToBlack1();
 		void fadeToBlack2();
-		void loadAResource(int reznum);
-		void releaseAResource(int reznum);
+		Common::SeekableReadStream *loadAResource(int reznum);
 		void showPic(int reznum);
 		void fShowPic(int reznum);
 		void initCursor();
@@ -223,14 +223,15 @@ namespace Kingdom {
 		void drawCursor();
 		void cursorType();
 		void loadKingArt();
+		void unloadKingArt();
 		void setCursor(int cursor);
 		int getAKey();
 		int checkMouseMapAS();
 		void cursorTypeExit();
 		void saveGame();
 		void restoreGame();
-		virtual Common::Error loadGameState(int slot);
-		virtual Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false);
+		Common::Error loadGameState(int slot) override;
+		Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false) override;
 		Common::String getSavegameFilename(int slot);
 		void writeSavegameHeader(Common::OutSaveFile *out, KingdomSavegameHeader &header);
 		void synchronize(Common::Serializer &s);

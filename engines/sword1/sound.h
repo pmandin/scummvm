@@ -154,6 +154,7 @@ public:
 
 	void getVolumes();
 	void setVolumes();
+	byte clampVolume(int32 volume);
 
 	Common::Mutex _soundMutex;
 	Audio::Mixer *_mixer;
@@ -206,7 +207,7 @@ private:
 		bool *endiannessCheck = nullptr, uint32 *sizeForEndiannessCheck = nullptr);
 	int32 getSpeechSize(byte *compData, uint32 compSize);
 
-	bool prepareMusicStreaming(Common::String filename, int newHandleId, int32 tuneId,
+	bool prepareMusicStreaming(const Common::Path &filename, int newHandleId, int32 tuneId,
 							   uint32 volume, int8 pan, MusCompMode assignedMode);
 	void serveSample(Common::File *file, int32 i);
 	void reduceMusicVolume();

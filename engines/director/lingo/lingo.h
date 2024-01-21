@@ -154,6 +154,7 @@ struct Datum {	/* interpreter stack type */
 	Datum(const Common::String &val);
 	Datum(AbstractObject *val);
 	Datum(const CastMemberID &val);
+	Datum(const Common::Point &point);
 	Datum(const Common::Rect &rect);
 	void reset();
 
@@ -177,7 +178,7 @@ struct Datum {	/* interpreter stack type */
 	const char *type2str(bool ilk = false) const;
 
 	int equalTo(Datum &d, bool ignoreCase = false) const;
-	CompareResult compareTo(Datum &d) const;
+	uint32 compareTo(Datum &d) const;
 
 	bool operator==(Datum &d) const;
 	bool operator>(Datum &d) const;

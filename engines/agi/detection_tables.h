@@ -344,6 +344,9 @@ static const AGIGameDescription gameDescriptions[] = {
 	// Gold Rush! (PC 3.5") 2.01 12/22/88 [AGI 3.002.149]
 	GAME3("goldrush", "2.01 1988-12-22 3.5\"", "grdir", "6a285235745f69b4b421403659497216", 0x3149, GID_GOLDRUSH),
 
+	// Gold Rush! (PC 3.5") 2.01 12/22/88 [AGI 3.002.149] with fanmade Spanish translation
+	GAME_LVFPN("goldrush", "2.01 1988-12-22 3.5\"", "grdir", "64ef3b1949c262b92694381cb36d79b9", 3080, Common::ES_ESP, 0x3149, 0, GID_GOLDRUSH, Common::kPlatformDOS, GType_V2, GAMEOPTIONS_DEFAULT),
+
 	// Gold Rush!  2.01 12/22/88 - pirated copy, according to https://bugs.scummvm.org/ticket/3220
 	GAME3_PIRATED("goldrush", "2.01 1988-12-22", "grdir", "3ae052117feb483f01a9017025fbb366", 2399, GID_GOLDRUSH),
 	GAME3_PIRATED("goldrush", "2.01 1988-12-22", "grdir", "1ef85c37fcf7224f9731f20f169c8c53", 2399, GID_GOLDRUSH),
@@ -474,6 +477,10 @@ static const AGIGameDescription gameDescriptions[] = {
 	// King's Quest 2 (PC 5.25"/3.5") 2.2 [AGI 2.426]
 	GAME("kq2", "2.2 1987-05-07 5.25\"/3.5\"", "b944c4ff18fb8867362dc21cc688a283", 0x2917, GID_KQ2),
 
+	// King's Quest 2 (PC 5.25"/3.5") 2.2 [AGI 2.426] with fanmade Spanish translation
+	// TRAC #14604
+	GAME_LPS("kq2", "2.2 1987-05-07 5.25\"/3.5\"", "252354b72d7062228cfe1b6f8211c761", 543, Common::ES_ESP, 0x2917, GID_KQ2, Common::kPlatformDOS),
+
 	// King's Quest 2 (Russian)
 	GAME_LPS("kq2", "", "35211c574ececebdc723b23e35f99275", 543, Common::RU_RUS, 0x2917, GID_KQ2, Common::kPlatformDOS),
 
@@ -545,6 +552,10 @@ static const AGIGameDescription gameDescriptions[] = {
 	// King's Quest 4 (PC 3.5") 2.2 9/27/88 [AGI 3.002.086]
 	// Menus not tested
 	GAME3("kq4", "2.2 1988-09-27 3.5\"", "kq4dir", "7470b3aeb49d867541fc66cc8454fb7d", 0x3086, GID_KQ4),
+
+	// King's Quest 4 (PC 5.25") 2.2 9/27/88 [AGI 3.002.086]
+	// TRAC #13734
+	GAME3_PS("kq4", "2.2 1988-09-27 5.25\"", "kq4dir", "106219d71140823f6bec1d9747128796", 2786, 0x3086, 0, GID_KQ4, Common::kPlatformDOS),
 
 	// King's Quest 4 (PC 5.25") 2.3 9/27/88 [AGI 3.002.086]
 	GAME3("kq4", "2.3 1988-09-27", "kq4dir", "6d7714b8b61466a5f5981242b993498f", 0x3086, GID_KQ4),
@@ -830,11 +841,23 @@ static const AGIGameDescription gameDescriptions[] = {
 	// Menus not tested
 	GAME("sq2", "2.0C/A 5.25\"/ST", "bd71fe54869e86945041700f1804a651", 0x2917, GID_SQ2),
 
+	// Space Quest 2 (PC 3.5") 2.0C [AGI 2.917]
+	// TRAC #14287
+	GAME_PS("sq2", "2.0C 3.5\"", "b394eaae1dfe4203378e02641178959c", 426, 0x2917, GID_SQ2, Common::kPlatformDOS),
+
+	// Space Quest 2 (PC 5.25") 2.0C [AGI 2.917]
+	// TRAC #14286
+	GAME_PS("sq2", "2.0C 5.25\"", "7d29fccae8765ae298cfe720a6d771b1", 426, 0x2917, GID_SQ2, Common::kPlatformDOS),
+
+	// Space Quest 2 (PC 5.25") 2.0D [AGI 2.936]
+	// TRAC #13274
+	GAME_LPS("sq2", "2.0D 1988-03-14 5.25\"", "0884ea4e127e333986568775fb21600b", 426, Common::EN_USA, 0x2936, GID_SQ2, Common::kPlatformDOS),
+
 	// Space Quest 2 (PC 3.5") 2.0F [AGI 2.936]
 	GAME("sq2", "2.0F 1989-01-05 3.5\"", "28add5125484302d213911df60d2aded", 0x2936, GID_SQ2),
 
 	// Space Quest 2 (PC 5.25") 2.0F [AGI 2.936]
-	GAME("sq2", "2.0F 1989-01-05 3.5\"", "bb5a44d0bea416f2cd4c3385eaa21af4", 0x2936, GID_SQ2),
+	GAME("sq2", "2.0F 1989-01-05 5.25\"", "bb5a44d0bea416f2cd4c3385eaa21af4", 0x2936, GID_SQ2),
 
 	// Space Quest 2 (CoCo3 360k) [AGI 2.023]
 	GAME_PS("sq2", "", "12973d39b892dc9d280257fd271e9597", 768, 0x2440, GID_SQ2, Common::kPlatformCoCo3),

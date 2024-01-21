@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ScummVM Documentation'
-copyright = '2020-2023, CadiH'
+copyright = '2020-2024, CadiH'
 author = 'CadiH'
 
 
@@ -67,7 +67,7 @@ html_static_path = ['_static']
 
 html_js_files = ['version.js']
 
-html_extra_path = ['images/donate/ppdonate.png','images/donate/GOG_button_small.png']
+html_extra_path = ['images/donate/ppdonate.png','images/donate/ZOOM_button_small.png']
 html_favicon = 'scummvm.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,

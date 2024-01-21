@@ -20,12 +20,14 @@
  */
 
 #include "common/translation.h"
+#include "backends/keymapper/keymap.h"
 #include "graphics/thumbnail.h"
 #include "graphics/scaler.h"
 
 
 #include "freescape/freescape.h"
 #include "freescape/games/dark/dark.h"
+#include "freescape/games/driller/driller.h"
 #include "freescape/games/eclipse/eclipse.h"
 #include "freescape/detection.h"
 
@@ -142,7 +144,11 @@ Common::Error FreescapeMetaEngine::createInstance(OSystem *syst, Engine **engine
 }
 
 Common::KeymapArray FreescapeMetaEngine::initKeymaps(const char *target) const {
-	return Freescape::FreescapeEngine::initKeymaps(target);
+	Freescape::FreescapeEngine *engine = (Freescape::FreescapeEngine *)g_engine;
+	Common::Keymap *engineKeyMap = new Common::Keymap(Common::Keymap::kKeymapTypeGame, "freescape", "Freescape game");
+	if (engine)
+		engine->initKeymaps(engineKeyMap, target);
+	return Common::Keymap::arrayOf(engineKeyMap);
 }
 
 void FreescapeMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {

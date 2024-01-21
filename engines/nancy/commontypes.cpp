@@ -349,7 +349,7 @@ void SoundChannelInfo::readData(Common::SeekableReadStream &stream) {
 	}
 }
 
-void StaticData::readData(Common::SeekableReadStream &stream, Common::Language language, uint32 endPos) {
+void StaticData::readData(Common::SeekableReadStream &stream, Common::Language language, uint32 endPos, int8 majorVersion, int8 minorVersion) {
 	uint16 num = 0;
 	int languageID = -1;
 
@@ -357,7 +357,7 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 	byte *patchBuf = nullptr;
 	uint32 patchBufSize = 0;
 	Common::Array<Common::Array<Common::String>> confManProps;
-	Common::Array<Common::Array<Common::String>> fileIDs;
+	Common::Array<Common::Array<Common::Path>> fileIDs;
 
 	while (stream.pos() < endPos) {
 		uint32 nextSectionOffset = stream.readUint32LE();
@@ -368,10 +368,13 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 			numItems = stream.readUint16LE();
 			numEventFlags = stream.readUint16LE();
 
-			num = stream.readUint16LE();
-			mapAccessSceneIDs.resize(num);
-			for (uint16 i = 0; i < num; ++i) {
-				mapAccessSceneIDs[i] = stream.readUint16LE();
+			// TODO remove once updated nancy.dat is pushed
+			if (minorVersion == 0) {
+				num = stream.readUint16LE();
+				mapAccessSceneIDs.resize(num);
+				for (uint16 i = 0; i < num; ++i) {
+					mapAccessSceneIDs[i] = stream.readUint16LE();
+				}
 			}
 
 			num = stream.readUint16LE();
@@ -380,9 +383,25 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 				genericEventFlags[i] = stream.readUint16LE();
 			}
 
-			numNonItemCursors = stream.readUint16LE();
-			numCurtainAnimationFrames = stream.readUint16LE();
+			numCursorTypes = stream.readUint16LE();
+			if (minorVersion == 0) {
+				// TODO remove once updated nancy.dat is pushed
+				numCursorTypes /= (g_nancy->getGameType() == kGameTypeVampire ? 2 : 3);
+				stream.skip(2);
+			}
+			
 			logoEndAfter = stream.readUint32LE();
+			if (minorVersion == 1) {
+				wonGameSceneID = stream.readUint16LE();
+			}
+
+			break;
+		case MKTAG('M', 'A', 'P', 'A') :
+			num = stream.readUint16LE();
+			mapAccessSceneIDs.resize(num);
+			for (uint16 i = 0; i < num; ++i) {
+				mapAccessSceneIDs[i] = stream.readUint16LE();
+			}
 
 			break;
 		case MKTAG('S', 'C', 'H', 'N') :
@@ -564,7 +583,7 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 				num2 = stream.readUint16LE();
 				fileIDs[i].resize(num2);
 				for (uint j = 0; j < num2; ++j) {
-					fileIDs[i][j] = stream.readString();
+					fileIDs[i][j] = Common::Path(stream.readString());
 				}
 			}
 
