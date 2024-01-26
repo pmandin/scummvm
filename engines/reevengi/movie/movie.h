@@ -33,7 +33,7 @@ class SaveGame;
 
 class MoviePlayer {
 protected:
-	Common::String _fname;
+	Common::Path _fname;
 	Common::Mutex _frameMutex;
 	Video::VideoDecoder *_videoDecoder;     //< Initialize this to your needed subclass of VideoDecoder in the constructor
 	const Graphics::Surface *_internalSurface;
@@ -146,7 +146,7 @@ protected:
 	 * @see play
 	 * @param filename      The filename to be handled.
 	 */
-	virtual bool loadFile(const Common::String &filename);
+	virtual bool loadFile(const Common::Path &filename);
 
 	/**
 	 * Saves subclass related state of the video to a savegame

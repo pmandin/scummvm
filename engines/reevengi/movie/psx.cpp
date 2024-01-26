@@ -38,7 +38,7 @@ PsxPlayer::PsxPlayer(bool emul_cd) : MoviePlayer() {
 	_videoDecoder = new Video::PSXStreamDecoder(Video::PSXStreamDecoder::kCD2x);
 }
 
-bool PsxPlayer::loadFile(const Common::String &filename) {
+bool PsxPlayer::loadFile(const Common::Path &filename) {
 	//_fname = Common::String("Video/") + filename + ".pss";
 	_fname = filename;
 

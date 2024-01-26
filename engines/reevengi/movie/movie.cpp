@@ -176,7 +176,7 @@ bool MoviePlayer::play(const Common::String &filename, bool looping, int x, int 
 	return true;
 }
 
-bool MoviePlayer::loadFile(const Common::String &filename) {
+bool MoviePlayer::loadFile(const Common::Path &filename) {
 	return _videoDecoder->loadFile(filename);
 }
 
@@ -246,7 +246,7 @@ public:
 	}
 	~NullPlayer() {}
 	bool play(const Common::String &filename, bool looping, int x, int y, bool start = true, bool showSubtitles = false) override { return true; }
-	bool loadFile(const Common::String &filename) override { return true; }
+	bool loadFile(const Common::Path &filename) override { return true; }
 	void stop() override {}
 	void pause(bool p) override {}
 	void saveState(SaveGame *state) {}

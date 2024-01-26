@@ -37,7 +37,7 @@ AviPlayer::AviPlayer() : MoviePlayer() {
 	_videoDecoder = new Video::AVIDecoder();
 }
 
-bool AviPlayer::loadFile(const Common::String &filename) {
+bool AviPlayer::loadFile(const Common::Path &filename) {
 	//_fname = Common::String("Video/") + filename + ".pss";
 	_fname = filename;
 
