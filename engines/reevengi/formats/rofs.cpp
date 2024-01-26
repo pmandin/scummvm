@@ -77,25 +77,34 @@ void RofsArchive::close() {
 }
 
 bool RofsArchive::hasFile(const Common::Path &name) const {
-	return _map.contains(name.toString());
+	return (_map.find(name) != _map.end());
 }
 
 int RofsArchive::listMembers(Common::ArchiveMemberList &list) const {
-	for (FileMap::const_iterator it = _map.begin(); it != _map.end(); it++)
-		list.push_back(getMember(it->_key));
+	int count = 0;
 
-	return _map.size();
+	for (FileMap::const_iterator i = _map.begin(); i != _map.end(); ++i) {
+		list.push_back(Common::ArchiveMemberList::value_type(new Common::GenericArchiveMember(i->_key, *this)));
+		++count;
+	}
+
+	return count;
 }
 
 const Common::ArchiveMemberPtr RofsArchive::getMember(const Common::Path &name) const {
-	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name.toString(), *this));
+	if (!hasFile(name))
+		return Common::ArchiveMemberPtr();
+
+	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, *this));
 }
 
 Common::SeekableReadStream *RofsArchive::createReadStreamForMember(const Common::Path &name) const {
-	if (!_stream || !_map.contains(name.toString()))
+	FileMap::const_iterator fDesc = _map.find(name);
+
+	if (fDesc == _map.end())
 		return nullptr;
 
-	const RofsFileEntry &entry = _map[name.toString()];
+	const RofsFileEntry &entry = fDesc->_value;
 
 	Common::SeekableSubReadStream subStream(_stream, entry.offset, entry.offset + entry.compressedSize);
 
@@ -161,7 +170,7 @@ void RofsArchive::enumerateFiles(Common::String &dirPrefix) {
 		readFileHeader(entry);
 		_stream->seek(arcPos);
 
-		_map[name] = entry;
+		_map[Common::Path(name)] = entry;
 	}
 }
 
