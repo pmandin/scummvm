@@ -59,7 +59,7 @@ public:
 private:
 	Common::SeekableReadStream *_stream;
 
-	typedef Common::HashMap<Common::String, RofsFileEntry, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> FileMap;
+	typedef Common::HashMap<Common::Path, RofsFileEntry, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> FileMap;
 	FileMap _map;
 
 	// Archive parsing
