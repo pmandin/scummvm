@@ -32,7 +32,7 @@ class PsxPlayer : public MoviePlayer {
 private:
 	bool _emul_cd;
 
-	bool loadFile(const Common::String &filename) override;
+	bool loadFile(const Common::Path &filename) override;
 	//bool _demo;
 
 public:

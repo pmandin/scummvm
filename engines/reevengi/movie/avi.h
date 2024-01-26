@@ -30,7 +30,7 @@ class AviPlayer : public MoviePlayer {
 public:
 	AviPlayer();
 private:
-	bool loadFile(const Common::String &filename) override;
+	bool loadFile(const Common::Path &filename) override;
 	//bool _demo;
 };
 

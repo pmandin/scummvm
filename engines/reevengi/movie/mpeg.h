@@ -32,7 +32,7 @@ class MpegPlayer : public MoviePlayer {
 public:
 	MpegPlayer();
 private:
-	bool loadFile(const Common::String &filename) override;
+	bool loadFile(const Common::Path &filename) override;
 	//bool _demo;
 };
 
