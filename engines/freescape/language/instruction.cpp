@@ -90,7 +90,7 @@ Token::Type FCLInstruction::getType() {
 }
 
 bool FreescapeEngine::executeObjectConditions(GeometricObject *obj, bool shot, bool collided, bool activated) {
-	bool executed = false;;
+	bool executed = false;
 	assert(obj != nullptr);
 	if (!obj->_conditionSource.empty()) {
 		_firstSound = true;
@@ -528,6 +528,9 @@ void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
 			Math::AABB boundingBox = createPlayerAABB(_position, _playerHeight);
 			if (obj->_boundingBox.collides(boundingBox)) {
 				_playerWasCrushed = true;
+				_avoidRenderingFrames = 60 * 3;
+				if (isEclipse())
+					playSoundFx(2, true);
 				_shootingFrames = 0;
 			}
 		}

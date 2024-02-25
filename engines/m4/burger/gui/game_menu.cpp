@@ -49,6 +49,8 @@ namespace GUI {
 #define LockMouseSprite mouse_lock_sprite
 #define UnlockMouseSprite mouse_unlock_sprite
 
+static bool buttonClosesDialog;
+
 void UpdateThumbNails(int32 firstSlot, guiMenu *myMenu);
 void CreateSaveMenu(RGB8 *myPalette);
 void CreateLoadMenu(RGB8 *myPalette);
@@ -770,8 +772,13 @@ bool button_Handler(void *theItem, int32 eventType, int32 event, int32 x, int32 
 		//		  digi_play(inv_click_snd, 2, 255, -1, inv_click_snd_room_lock);
 		currMenu = (guiMenu *)myItem->myMenu;
 		currTag = myItem->tag;
+		buttonClosesDialog = false;
+
 		(myItem->callback)((void *)myItem, (void *)myItem->myMenu);
-		myScreen = vmng_screen_find((void *)myItem->myMenu, &status);
+
+		status = 0;
+		myScreen = buttonClosesDialog ? nullptr : vmng_screen_find((void *)myItem->myMenu, &status);
+
 		if ((!myScreen) || (status != SCRN_ACTIVE)) {
 			*currItem = nullptr;
 		} else {
@@ -2631,23 +2638,21 @@ void cb_Game_Resume(void *, void *) {
 void cb_Game_Save(void *, void *) {
 	// Destroy the game menu
 	DestroyGameMenu();
+	menu_Shutdown(true);
+	buttonClosesDialog = true;
 
 	// Create the save game menu
-//	CreateSaveMenu(nullptr);
-	if (!g_engine->useOriginalSaveLoad())
-		menu_Shutdown(true);
 	g_engine->showSaveScreen();
 }
 
 void cb_Game_Load(void *, void *) {
 	// Destroy the game menu
 	DestroyGameMenu();
+	menu_Shutdown(true);
+	buttonClosesDialog = true;
 
 	// Create the save game menu
-//	CreateLoadMenu(nullptr);
-	if (!g_engine->useOriginalSaveLoad())
-		menu_Shutdown(true);
-	g_engine->showLoadScreen();
+	g_engine->showLoadScreen(M4Engine::kLoadFromGameDialog);
 }
 
 void cb_Game_Main(void *, void *) {
@@ -2655,7 +2660,6 @@ void cb_Game_Main(void *, void *) {
 	DestroyGameMenu();
 
 	if (!_GM(gameMenuFromMain)) {
-
 		// Save the game so we can resume from here if possible
 		if (_GM(interfaceWasVisible) && player_commands_allowed()) {
 			other_save_game_for_resurrection();
@@ -2670,14 +2674,14 @@ void cb_Game_Main(void *, void *) {
 		menu_Shutdown(true);
 	}
 
-	// Go to the main menu in room 494
-	_G(game).new_section = 4;
-	_G(game).new_room = 494;
+	// Go to the main menu
+	_G(game).setRoom(_G(executing) == WHOLE_GAME ? 903 : 901);
 }
 
 void cb_Game_Options(void *, void *) {
 	// Destroy the game menu
 	DestroyGameMenu();
+	buttonClosesDialog = true;
 
 	// Create the options menu
 	CreateOptionsMenu(nullptr);
@@ -2755,6 +2759,7 @@ void cb_Options_Game_Cancel(void *, void *) {
 
 	// Destroy the options menu
 	DestroyOptionsMenu();
+	buttonClosesDialog = true;
 
 	// Create the options menu
 	CreateGameMenuMain(nullptr);
@@ -2763,6 +2768,7 @@ void cb_Options_Game_Cancel(void *, void *) {
 void cb_Options_Game_Done(void *, void *) {
 	// Destroy the options menu
 	DestroyOptionsMenu();
+	buttonClosesDialog = true;
 
 	// Create the options menu
 	CreateGameMenuMain(nullptr);
@@ -3264,6 +3270,8 @@ void cb_SaveLoad_Cancel(void *, void *theMenu) {
 			CreateGameMenuMain(nullptr);
 		}
 	}
+
+	buttonClosesDialog = true;
 }
 
 

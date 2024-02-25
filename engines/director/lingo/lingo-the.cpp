@@ -21,6 +21,7 @@
 
 #include "common/config-manager.h"
 #include "common/fs.h"
+#include "common/platform.h"
 #include "director/types.h"
 #include "graphics/macgui/macbutton.h"
 
@@ -161,6 +162,7 @@ TheEntity entities[] = {
 	{ kTheVideoForWindowsPresent,	"videoForWindowsPresent",	false, 400, true },	//		D4 f
 	{ kTheWindow,			"window",			true,  400, false },	//			D4
 	{ kTheWindowList,		"windowList",		false, 400, false },	//			D4 p
+	{ kTheXtras,			"xtras",			false, 500, false },	//			D4 p
 	{ kTheNOEntity, nullptr, false, 0, false }
 };
 
@@ -429,7 +431,10 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = 1;
 		break;
 	case kTheCommandDown:
-		d = (movie->_keyFlags & Common::KBD_META) ? 1 : 0;
+		if (g_director->getPlatform() == Common::kPlatformWindows)
+			d = (movie->_keyFlags & Common::KBD_CTRL) ? 1 : 0;
+		else
+			d = (movie->_keyFlags & Common::KBD_META) ? 1 : 0;
 		break;
 	case kTheControlDown:
 		d = (movie->_keyFlags & Common::KBD_CTRL) ? 1 : 0;
@@ -714,7 +719,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = 0;	// Let's pretend the movie is compactified
 		break;
 	case kTheMovieFileSize:
-		d = movie->getArchive()->getFileSize();
+		d = (int)movie->getArchive()->getFileSize();
 		break;
 	case kTheMoviePath:
 	case kThePathName:
@@ -1151,7 +1156,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		g_director->getCurrentWindow()->setStageColor(g_director->transformColor(d.asInt()));
 
 		// Redraw the stage
-		score->renderSprites(score->getCurrentFrameNum(), kRenderForceUpdate);
+		score->renderSprites(kRenderForceUpdate);
 		g_director->getCurrentWindow()->render();
 		break;
 	case kTheSwitchColorDepth:
@@ -1640,7 +1645,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		break;
 	case kTheRect:
 		if (d.type == RECT || (d.type == ARRAY && d.u.farr->arr.size() >= 4)) {
-			score->renderSprites(score->getCurrentFrameNum(), kRenderForceUpdate);
+			score->renderSprites(kRenderForceUpdate);
 			channel->setBbox(
 				d.u.farr->arr[0].u.i, d.u.farr->arr[1].u.i,
 				d.u.farr->arr[2].u.i, d.u.farr->arr[3].u.i
@@ -1942,6 +1947,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 			g_lingo->lingoError("Lingo::getObjectProp: Object <%s> has no property '%s'", obj.asString(true).c_str(), propName.c_str());
 		}
 		g_lingo->push(d);
+		g_debugger->propReadHook(propName);
 		return;
 	}
 	if (obj.type == PARRAY) {
@@ -1950,6 +1956,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 			d = obj.u.parr->arr[index - 1].v;
 		}
 		g_lingo->push(d);
+		g_debugger->propReadHook(propName);
 		return;
 	}
 	if (obj.type == RECT) {
@@ -1965,6 +1972,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 			g_lingo->lingoError("Lingo::getObjectProp: Rect <%s> has no property '%s'", obj.asString(true).c_str(), propName.c_str());
 		}
 		g_lingo->push(d);
+		g_debugger->propReadHook(propName);
 		return;
 	}
 	if (obj.type == CASTREF) {
@@ -2061,6 +2069,7 @@ void Lingo::setObjectProp(Datum &obj, Common::String &propName, Datum &val) {
 	if (obj.type == OBJECT) {
 		if (obj.u.obj->hasProp(propName)) {
 			obj.u.obj->setProp(propName, val);
+			g_debugger->propWriteHook(propName);
 		} else {
 			g_lingo->lingoError("Lingo::setObjectProp: Object <%s> has no property '%s'", obj.asString(true).c_str(), propName.c_str());
 		}
@@ -2072,6 +2081,7 @@ void Lingo::setObjectProp(Datum &obj, Common::String &propName, Datum &val) {
 			PCell cell = PCell(propName, val);
 			obj.u.parr->arr.push_back(cell);
 		}
+		g_debugger->propWriteHook(propName);
 	} else if (obj.type == CASTREF) {
 		Movie *movie = _vm->getCurrentMovie();
 		if (!movie) {

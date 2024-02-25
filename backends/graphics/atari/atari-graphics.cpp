@@ -31,6 +31,7 @@
 #include "backends/graphics/atari/atari-graphics-superblitter.h"
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymap.h"
+#include "backends/platform/atari/dlmalloc.h"
 
 #include "common/config-manager.h"
 #include "common/str.h"
@@ -46,6 +47,7 @@
 #define MAX_V_SHAKE  16
 
 bool g_unalignedPitch = false;
+mspace g_mspace = nullptr;
 
 static const Graphics::PixelFormat PIXELFORMAT_CLUT8 = Graphics::PixelFormat::createFormatCLUT8();
 static const Graphics::PixelFormat PIXELFORMAT_RGB332 = Graphics::PixelFormat(1, 3, 3, 2, 0, 5, 2, 0, 0);
@@ -1132,17 +1134,16 @@ bool AtariGraphicsManager::isOverlayDirectRendering() const {
 }
 
 AtariGraphicsManager::Screen::Screen(AtariGraphicsManager *manager, int width, int height, const Graphics::PixelFormat &format, const Palette *palette_)
-	: _manager(manager) {
+	: _manager(manager)
+	, palette(palette_) {
 	const AtariMemAlloc &allocFunc = _manager->getStRamAllocFunc();
 
-	palette = palette_;
-
-	width += (_manager->_tt ? 0 : 2 * MAX_HZ_SHAKE);
-	height += 2 * MAX_V_SHAKE;
-
-	const int bitsPerPixel = _manager->getBitsPerPixel(format);
-
-	surf.init(width, height, width * bitsPerPixel / 8, nullptr, format);
+	surf.init(
+		width + (_manager->_tt ? 0 : 2 * MAX_HZ_SHAKE),
+		height + 2 * MAX_V_SHAKE,
+		(width + (_manager->_tt ? 0 : 2 * MAX_HZ_SHAKE)) * _manager->getBitsPerPixel(format) / 8,
+		nullptr,
+		format);
 
 	void *pixelsUnaligned = allocFunc(sizeof(uintptr) + (surf.h * surf.pitch) + ALIGN - 1);
 	if (!pixelsUnaligned) {
@@ -1156,7 +1157,10 @@ AtariGraphicsManager::Screen::Screen(AtariGraphicsManager *manager, int width, i
 
 	memset(surf.getPixels(), 0, surf.h * surf.pitch);
 
-	_offsettedSurf.init(surf.w, surf.h, surf.pitch, surf.getBasePtr(_manager->_tt ? 0 : MAX_HZ_SHAKE, MAX_V_SHAKE), surf.format);
+	_offsettedSurf.init(
+		width, height, surf.pitch,
+		surf.getBasePtr((surf.w - width) / 2, (surf.h - height) / 2),
+		surf.format);
 }
 
 AtariGraphicsManager::Screen::~Screen() {

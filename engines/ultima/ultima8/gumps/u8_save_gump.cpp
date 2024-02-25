@@ -218,6 +218,10 @@ void U8SaveGump::onMouseClick(int button, int32 mx, int32 my) {
 	}
 }
 
+void U8SaveGump::onMouseDouble(int button, int32 mx, int32 my) {
+	onMouseClick(button, mx, my);
+}
+
 void U8SaveGump::ChildNotify(Gump *child, uint32 message) {
 	EditWidget *widget = dynamic_cast<EditWidget *>(child);
 	if (widget && message == EditWidget::EDIT_ENTER) {
@@ -325,6 +329,10 @@ Gump *U8SaveGump::showLoadSaveGump(Gump *parent, bool save) {
 		gump->addPage(s);
 	}
 
+	int lastSave = ConfMan.hasKey("lastSave") ? ConfMan.getInt("lastSave") : -1;
+	if (lastSave > 0) {
+		gump->showPage((lastSave - 1) / 6);
+	}
 
 	gump->setRelativePosition(CENTER);
 

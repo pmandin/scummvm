@@ -143,15 +143,9 @@ int AgiEngine::agiInit() {
 	}
 
 	if (getPlatform() == Common::kPlatformAmiga)
-		_game.gameFlags |= ID_AMIGA;
-
-	if (getFeatures() & GF_AGDS)
-		_game.gameFlags |= ID_AGDS;
-
-	if (_game.gameFlags & ID_AMIGA)
 		debug(1, "Amiga padded game detected.");
 
-	if (_game.gameFlags & ID_AGDS)
+	if (getFeatures() & GF_AGDS)
 		debug(1, "AGDS mode enabled.");
 
 	ec = _loader->init();   // load vol files, etc
@@ -185,35 +179,28 @@ int AgiEngine::agiInit() {
  */
 
 void AgiEngine::agiUnloadResources() {
-	int i;
-
 	// Make sure logic 0 is always loaded
-	for (i = 1; i < MAX_DIRECTORY_ENTRIES; i++) {
+	for (int i = 1; i < MAX_DIRECTORY_ENTRIES; i++) {
 		_loader->unloadResource(RESOURCETYPE_LOGIC, i);
 	}
-	for (i = 0; i < MAX_DIRECTORY_ENTRIES; i++) {
+	for (int i = 0; i < MAX_DIRECTORY_ENTRIES; i++) {
 		_loader->unloadResource(RESOURCETYPE_VIEW, i);
 		_loader->unloadResource(RESOURCETYPE_PICTURE, i);
 		_loader->unloadResource(RESOURCETYPE_SOUND, i);
 	}
 }
 
-int AgiEngine::agiDeinit() {
-	int ec;
-
+void AgiEngine::agiDeinit() {
 	if (!_loader)
-		return errOK;
+		return;
 
 	_words->clearEgoWords(); // remove all words from memory
 	agiUnloadResources();    // unload resources in memory
 	_loader->unloadResource(RESOURCETYPE_LOGIC, 0);
-	ec = _loader->deinit();
 	_objects.clear();
 	_words->unloadDictionary();
 
 	clearImageStack();
-
-	return ec;
 }
 
 int AgiEngine::agiLoadResource(int16 resourceType, int16 resourceNr) {
@@ -240,8 +227,8 @@ int AgiEngine::agiLoadResource(int16 resourceType, int16 resourceNr) {
 	return i;
 }
 
-int AgiEngine::agiUnloadResource(int16 resourceType, int16 resourceNr) {
-	return _loader->unloadResource(resourceType, resourceNr);
+void AgiEngine::agiUnloadResource(int16 resourceType, int16 resourceNr) {
+	_loader->unloadResource(resourceType, resourceNr);
 }
 
 struct GameSettings {
@@ -456,8 +443,6 @@ void AgiEngine::initialize() {
 	_gfx->initVideo();
 
 	_text->init(_systemUI);
-
-	_game.gameFlags = 0;
 
 	_text->charAttrib_Set(15, 0);
 

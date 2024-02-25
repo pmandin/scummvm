@@ -898,10 +898,10 @@ bool RaycastDeferredLoader::loadInner() {
 	case kInitDrawSurface : {
 		auto *viewportData = GetEngineData(VIEW);
 		assert(viewportData);
-		
+
 		Common::Rect viewport = viewportData->bounds;
 		_owner.moveTo(viewport);
-		_owner._drawSurface.create(viewport.width(), viewport.height(), g_nancy->_graphicsManager->getInputPixelFormat());
+		_owner._drawSurface.create(viewport.width(), viewport.height(), g_nancy->_graphics->getInputPixelFormat());
 		_owner.setTransparent(true);
 
 		_loadState = kInitPlayerLocationRotation;
@@ -998,7 +998,7 @@ bool RaycastDeferredLoader::loadInner() {
 			if (_x >= _owner._mapFullWidth) {
 				_x = 0;
 			}
-			
+
 			for (; _x < _owner._mapFullWidth && !shouldBreak; ++_x) {
 				uint32 wallMapVal = _owner._wallMap[_y * _owner._mapFullHeight + _x];
 
@@ -1048,11 +1048,11 @@ bool RaycastDeferredLoader::loadInner() {
 		if (!shouldBreak) {
 			for (auto &a : _owner._specialWallTextures) {
 				for (auto &tex : a._value) {
-					tex.setTransparentColor(g_nancy->_graphicsManager->getTransColor());
+					tex.setTransparentColor(g_nancy->_graphics->getTransColor());
 				}
 			}
 
-			_owner.validateMap();			
+			_owner.validateMap();
 			_isDone = true;
 		}
 
@@ -1144,7 +1144,7 @@ void RaycastPuzzle::handleInput(NancyInput &input) {
 	if (input.input & NancyInput::kRaycastMap) {
 		_map.setVisible(!_map.isVisible());
 	}
-	
+
 	uint32 time = g_nancy->getTotalPlayTime();
 	uint32 deltaTime = time - _lastMovementTime;
 	_lastMovementTime = time;
@@ -1312,7 +1312,7 @@ void RaycastPuzzle::handleInput(NancyInput &input) {
 
 		// Make sure the player doesn't clip diagonally into a wall
 		// Improvement: in the original engine the player just gets stuck when hitting a corner;
-		// instead, we move along smoothly 
+		// instead, we move along smoothly
 		if (cellTopLeft && !cellLeft && !cellTop && (yCell < collisionSize) && (xCell < collisionSize)) {
 			if (yCell > xCell) {
 				newX = (((int32)newX) & 0xFF80) + collisionSize;
@@ -1369,8 +1369,8 @@ void RaycastPuzzle::drawMap() {
 	auto *bootSummary = GetEngineData(BSUM);
 	assert(bootSummary);
 
-	_mapBaseSurface.create(_mapFullWidth, _mapFullHeight, g_nancy->_graphicsManager->getInputPixelFormat());
-	_map._drawSurface.create(_mapFullWidth, _mapFullHeight, g_nancy->_graphicsManager->getInputPixelFormat());
+	_mapBaseSurface.create(_mapFullWidth, _mapFullHeight, g_nancy->_graphics->getInputPixelFormat());
+	_map._drawSurface.create(_mapFullWidth, _mapFullHeight, g_nancy->_graphics->getInputPixelFormat());
 	Common::Rect mapPos(bootSummary->textboxScreenPosition);
 	mapPos.setWidth(_mapFullWidth * 2);
 	mapPos.setHeight(_mapFullHeight * 2);
@@ -1448,10 +1448,10 @@ void RaycastPuzzle::updateMap() {
 }
 
 void RaycastPuzzle::createTextureLightSourcing(Common::Array<Graphics::ManagedSurface> *array, const Common::Path &textureName) {
-	Graphics::PixelFormat format = g_nancy->_graphicsManager->getInputPixelFormat();
+	Graphics::PixelFormat format = g_nancy->_graphics->getInputPixelFormat();
 	array->resize(8);
 
-	uint16 transColor = g_nancy->_graphicsManager->getTransColor();
+	uint16 transColor = g_nancy->_graphics->getTransColor();
 
 	g_nancy->_resource->loadImage(textureName, (*array)[0]);
 
@@ -1486,7 +1486,7 @@ void RaycastPuzzle::createTextureLightSourcing(Common::Array<Graphics::ManagedSu
 					((uint16 *)(*array)[i].getPixels())[offset] = format.RGBToColor(r, g, b);
 				}
 			}
-			
+
 		}
 	}
 }
@@ -1961,17 +1961,18 @@ void RaycastPuzzle::drawMaze() {
 			float ceilingLeftY  =	_sinTable[leftAngle]  * -(ceilingViewAngle / _cosTable[_leftmostAngle])  + (float)_playerX;
 			float ceilingRightY =	_sinTable[rightAngle] * -(ceilingViewAngle / _cosTable[_rightmostAngle]) + (float)_playerX;
 
-			floorSrcFracX	= (uint32)(floorLeftX	* 65536.0);
-			floorSrcFracY	= (uint32)(floorLeftY	* 65536.0);
+			// Casting between negative float and uint is undefined behavior, hence the cast to signed int first
+			floorSrcFracX	= (uint32)((int32)(floorLeftX	* 65536.0));
+			floorSrcFracY	= (uint32)((int32)(floorLeftY	* 65536.0));
 
-			ceilingSrcFracX = (uint32)(ceilingLeftX * 65536.0);
-			ceilingSrcFracY = (uint32)(ceilingLeftY * 65536.0);
+			ceilingSrcFracX = (uint32)((int32)(ceilingLeftX * 65536.0));
+			ceilingSrcFracY = (uint32)((int32)(ceilingLeftY * 65536.0));
 
-			floorSrcIncrementX 		= (uint32)(((floorRightX	- floorLeftX)	/ (float)viewBounds.width()) * 65536.0);
-			floorSrcIncrementY 		= (uint32)(((floorRightY	- floorLeftY)	/ (float)viewBounds.width()) * 65536.0);
+			floorSrcIncrementX 		= (uint32)((int32)(((floorRightX	- floorLeftX)	/ (float)viewBounds.width()) * 65536.0));
+			floorSrcIncrementY 		= (uint32)((int32)(((floorRightY	- floorLeftY)	/ (float)viewBounds.width()) * 65536.0));
 
-			ceilingSrcIncrementX 	= (uint32)(((ceilingRightX	- ceilingLeftX) / (float)viewBounds.width()) * 65536.0);
-			ceilingSrcIncrementY 	= (uint32)(((ceilingRightY	- ceilingLeftY) / (float)viewBounds.width()) * 65536.0);
+			ceilingSrcIncrementX 	= (uint32)((int32)(((ceilingRightX	- ceilingLeftX) / (float)viewBounds.width()) * 65536.0));
+			ceilingSrcIncrementY 	= (uint32)((int32)(((ceilingRightY	- ceilingLeftY) / (float)viewBounds.width()) * 65536.0));
 		}
 
 		for (int x = viewBounds.left; x < viewBounds.right; ++x) {

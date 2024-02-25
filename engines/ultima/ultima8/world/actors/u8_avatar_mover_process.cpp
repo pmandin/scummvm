@@ -156,12 +156,14 @@ void U8AvatarMoverProcess::handleCombatMode() {
 
 		if (canAttack()) {
 			// double left click = attack
-//			debugC(kDebugActor, "AvatarMover: combat attack");
+			if (hasMovementFlags(MOVE_ANY_DIRECTION)) {
+				waitFor(avatar->doAnim(Animation::attack, direction));
+			} else {
+				if (checkTurn(mousedir, false))
+					return;
 
-			if (checkTurn(mousedir, false))
-				return;
-
-			waitFor(avatar->doAnim(Animation::attack, mousedir));
+				waitFor(avatar->doAnim(Animation::attack, mousedir));
+			}
 			_lastAttack = Kernel::get_instance()->getFrameNum();
 
 			// attacking gives str/dex
@@ -188,12 +190,14 @@ void U8AvatarMoverProcess::handleCombatMode() {
 
 		if (canAttack()) {
 			// double right click = kick
-//			debugC(kDebugActor, "AvatarMover: combat kick");
+			if (hasMovementFlags(MOVE_ANY_DIRECTION)) {
+				waitFor(avatar->doAnim(Animation::kick, direction));
+			} else {
+				if (checkTurn(mousedir, false))
+					return;
 
-			if (checkTurn(mousedir, false))
-				return;
-
-			waitFor(avatar->doAnim(Animation::kick, mousedir));
+				waitFor(avatar->doAnim(Animation::kick, mousedir));
+			}
 			_lastAttack = Kernel::get_instance()->getFrameNum();
 
 			// kicking gives str/dex
@@ -475,6 +479,23 @@ void U8AvatarMoverProcess::handleNormalMode() {
 		else if ((hasMovementFlags(MOVE_MOUSE_DIRECTION) && mouselength == 0) || hasMovementFlags(MOVE_STEP)) {
 			nextanim = Animation::jumpUp;
 		}
+		else if (!hasMovementFlags(MOVE_MOUSE_DIRECTION)) {
+			// check if there's something we can climb up onto here
+			Animation::Sequence climbanim = Animation::climb72;
+			while (climbanim >= Animation::climb16) {
+				if (avatar->tryAnim(climbanim, direction) ==
+					Animation::SUCCESS) {
+					nextanim = climbanim;
+				}
+				climbanim = static_cast<Animation::Sequence>(climbanim - 1);
+			}
+
+			if (nextanim >= Animation::climb16 && nextanim <= Animation::climb72) {
+				// climbing gives str/dex
+				avatar->accumulateStr(2 + nextanim - Animation::climb16);
+				avatar->accumulateDex(2 * (2 + nextanim - Animation::climb16));
+			}
+		}
 
 		nextanim = Animation::checkWeapon(nextanim, lastanim);
 		waitFor(avatar->doAnim(nextanim, direction));
@@ -506,7 +527,7 @@ void U8AvatarMoverProcess::handleNormalMode() {
 			jump(Animation::jump, direction);
 		}
 		else {
-			if (nextanim != Animation::jumpUp) {
+			if (nextanim >= Animation::climb16 && nextanim <= Animation::climb72) {
 				// climbing gives str/dex
 				avatar->accumulateStr(2 + nextanim - Animation::climb16);
 				avatar->accumulateDex(2 * (2 + nextanim - Animation::climb16));

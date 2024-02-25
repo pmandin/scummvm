@@ -33,7 +33,7 @@ namespace Action {
 // after a scene change, or for permanent storage (used in nancy's journal)
 // Does not own or display any image data; it draws to a surface inside
 // GraphicsManager, which other ActionRecords (Overlay and PeepholePuzzle) can use.
-class Autotext : public ActionRecord, public Misc::HypertextParser {
+class Autotext : public virtual ActionRecord, public Misc::HypertextParser {
 public:
 	Autotext() {}
 	virtual ~Autotext() {}
@@ -44,6 +44,8 @@ public:
 protected:
 	Common::String getRecordTypeName() const override { return "Autotext"; }
 
+	virtual void readExtraData(Common::SeekableReadStream &stream);
+
 	uint16 _transparency = kPlayOverlayPlain;
 	uint16 _surfaceID = 0;
 	uint16 _fontID = 0;
@@ -52,17 +54,16 @@ protected:
 	uint16 _surfWidth = 0;
 	uint16 _surfHeight = 0;
 
-	// Data for displaying images inside text; not supported yet
-	Common::Path _imageName;
-
-	Common::Array<uint16> _imageLineIDs;
-	Common::Array<Common::Rect> _imageSrcs;
-
 	bool _useAutotextChunk = false;
 
-	// Only one of these is valid
+	// Only one of these can be valid
 	Common::String _textKey;
 	Common::String _embeddedText;
+
+	uint16 _order = kListFIFO;
+	bool _shouldDrawMarks = false;
+
+	Common::Array<uint16> _hotspotScenes;
 
 	Graphics::ManagedSurface _image;
 };

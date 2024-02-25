@@ -338,6 +338,30 @@ Symbol Lingo::getHandler(const Common::String &name) {
 	return sym;
 }
 
+
+void LingoArchive::patchCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName, uint32 preprocFlags) {
+	debugC(1, kDebugCompile, "Patching code for type %s(%d) with id %d in '%s%s'\n"
+			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), formatStringForDump(code.encode()).c_str());
+	if (!getScriptContext(type, id)) {
+		// If there's no existing script context, don't try and patch it.
+		warning("Script not defined for type %d, id %d", type, id);
+		return;
+	}
+
+	ScriptContext *sc = g_lingo->_compiler->compileLingo(code, nullptr, type, CastMemberID(id, cast->_castLibID), scriptName, false, preprocFlags);
+
+	if (sc) {
+		for (auto &it : sc->_functionHandlers) {
+			it._value.ctx = scriptContexts[type][id];
+			scriptContexts[type][id]->_functionHandlers[it._key] = it._value;
+			functionHandlers[it._key] = it._value;
+		}
+		sc->_functionHandlers.clear();
+		delete sc;
+	}
+}
+
+
 void LingoArchive::addCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName, uint32 preprocFlags) {
 	debugC(1, kDebugCompile, "Add code for type %s(%d) with id %d in '%s%s'\n"
 			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), formatStringForDump(code.encode()).c_str());
@@ -1478,6 +1502,7 @@ void Lingo::executePerFrameHook(int frame, int subframe) {
 			for (uint i = 0; i < _actorList.u.farr->arr.size(); i++) {
 				Datum actor = _actorList.u.farr->arr[i];
 				Symbol method = actor.u.obj->getMethod("stepFrame");
+				debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>, frame %d, subframe %d", actor.asString(true).c_str(), frame, subframe);
 				if (method.nargs == 1)
 					push(actor);
 				LC::call(method, method.nargs, false);

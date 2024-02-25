@@ -2217,7 +2217,7 @@ void Runtime::terminateScript() {
 			return;
 	}
 
-	drawCompass();
+	redrawTray();
 
 	if (exitToMenu && _gameState == kGameStateIdle) {
 		quitToMenu();
@@ -3874,7 +3874,8 @@ void Runtime::updateSounds(uint32 timestamp) {
 			newVolume += static_cast<int32>(ramp);
 
 		if (newVolume != _musicVolume) {
-			_musicPlayer->setVolume(applyVolumeScale(newVolume));
+			if (_musicPlayer)
+				_musicPlayer->setVolume(applyVolumeScale(newVolume));
 			_musicVolume = newVolume;
 		}
 
@@ -4671,7 +4672,9 @@ bool Runtime::isTrayVisible() const {
 		// This is important in some situations, e.g. after "reuniting" with Hannah in the lower temple, if you go left,
 		// a ghost will give you a key.  Since that animation has sound, you'll return to idle in that animation,
 		// which will keep the tray hidden because it has sound.
-		if (_gameID == GID_REAH && _loadedAnimationHasSound)
+		//
+		// Ignore this condition if we're at the last frame (fixes inventory not drawing after trading weights in Reah)
+		if (_gameID == GID_REAH && _loadedAnimationHasSound && _animDisplayingFrame != _animLastFrame)
 			return false;
 
 		// Don't display tray during the intro cinematic.
@@ -5523,8 +5526,8 @@ void Runtime::restoreSaveGameSnapshot() {
 	_musicActive = mainState->musicActive;
 
 	if (_musicActive) {
-		bool musicMutedBeforeRestore = (_musicMute && _musicMuteDisabled);
-		bool musicMutedAfterRestore = (_musicMute && mainState->musicMuteDisabled);
+		bool musicMutedBeforeRestore = (_musicMute && !_musicMuteDisabled);
+		bool musicMutedAfterRestore = (_musicMute && !mainState->musicMuteDisabled);
 		bool isNewTrack = (_scoreTrack != mainState->scoreTrack);
 
 		_musicMuteDisabled = mainState->musicMuteDisabled;

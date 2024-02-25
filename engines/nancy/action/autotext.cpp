@@ -40,19 +40,26 @@ void Autotext::readData(Common::SeekableReadStream &stream) {
 	_surfWidth = stream.readUint16LE();
 	_surfHeight = stream.readUint16LE();
 
-	readFilename(stream, _imageName);
+	Common::Path imageName;
+	readFilename(stream, imageName);
 
 	uint16 numImages = stream.readUint16LE();
+	if (numImages) {
+		for (uint i = 0; i < numImages; ++i) {
+			uint16 line = stream.readUint16LE();
+			Common::Rect src;
+			readRect(stream, src);
+			addImage(line, src);
+		}
 
-	_imageLineIDs.resize(numImages);
-	_imageSrcs.resize(numImages);
-	for (uint i = 0; i < numImages; ++i) {
-		_imageLineIDs[i] = stream.readUint16LE();
-		readRect(stream, _imageSrcs[i]);
+		setImageName(imageName);
 	}
-
 	stream.skip((5 - numImages) * (2 + 16));
 
+	readExtraData(stream);
+}
+
+void Autotext::readExtraData(Common::SeekableReadStream &stream) {
 	_useAutotextChunk = stream.readByte();
 	readFilename(stream, _textKey);
 
@@ -77,32 +84,67 @@ void Autotext::execute() {
 		const CVTX *autotext = (const CVTX *)g_nancy->getEngineData("AUTOTEXT");
 		assert(autotext);
 
-		bool isLIFO = (g_nancy->getGameType() == kGameTypeNancy7) && _surfaceID > 5; // This is nancy7-specific, later games implement LIFO in a different way
-		if (isLIFO) {
-			_surfaceID -= 3;
+		if (g_nancy->getGameType() == kGameTypeNancy7) {
+			// In nancy7 ONLY, ids 6, 7 & 8 mean LIFO ordering for a suface
+			if (_surfaceID > 5) {
+				_order = kListLIFO;
+				_surfaceID -= 3;
+			}
 		}
 
 		Common::String stringToPush;
 		auto &entriesForSurface = journalData->journalEntries[_surfaceID];
 		bool foundThisKey = false;
-		for (auto &stringID : entriesForSurface) {
-			stringToPush += autotext->texts[stringID];
-			if (stringID == _textKey) {
+		for (auto &entry : entriesForSurface) {
+			Common::String &stringID = entry.stringID;
+			Common::String withTags = autotext->texts[stringID];
+
+			if (entry.mark % 10) {
+				withTags = Common::String::format("<%u>", entry.mark % 10) + withTags;
+			}
+
+			bool hasHotspot = false;
+
+			if (entry.mark >= 10 && entry.sceneID != kNoScene) {
+				// The original engine uses tags <H#> and <L>
+				withTags = "<H>" + withTags + "<L>";
+				hasHotspot = true;
+			}
+
+			if (_order == kListFIFO) {
+				// Add to end of string
+				stringToPush += withTags;
+
+				if (hasHotspot) {
+					_hotspotScenes.push_back(entry.sceneID);
+				}
+			} else {
+				// Add to front of string
+				stringToPush = withTags + stringToPush;
+
+				if (hasHotspot) {
+					_hotspotScenes.insert_at(0, entry.sceneID);
+				}
+			}
+
+			if (!_textKey.empty() && stringID == _textKey) {
 				foundThisKey = true;
 			}
 		}
 
-		if (!foundThisKey) {
+		// A text key may not be present in the data (see AutotextEntryList), so do not attempt to add to the list then
+		if (!foundThisKey && !_textKey.empty()) {
 			// Key inside this Autotext instance wasn't found inside existing list, push it back and add it to string to draw
-			if (!isLIFO) {
-				// Push at end
-				entriesForSurface.push_back(_textKey);
+			if (_order == kListFIFO) {
+				// Add to end of string
 				stringToPush += autotext->texts[_textKey];
 			} else {
-				// Insert at front
-				entriesForSurface.insert_at(0, _textKey);
+				// Add to front of string
 				stringToPush = autotext->texts[_textKey] + stringToPush;
 			}
+
+			// Entry is always added to end; on-screen ordering happens when reading list
+			entriesForSurface.push_back(JournalData::Entry(_textKey));
 		}
 
 		addTextLine(stringToPush);
@@ -125,21 +167,35 @@ void Autotext::execute() {
 		// Guesstimate the height of the surface
 		uint surfHeight = _textLines[0].size() / 144 * _surfWidth;
 		surfHeight = MAX<uint>(surfHeight, _surfHeight + 20);
-		Graphics::ManagedSurface &surf = g_nancy->_graphicsManager->getAutotextSurface(_surfaceID);
-		surf.create(_surfWidth + 1, surfHeight, g_nancy->_graphicsManager->getInputPixelFormat());
+		Graphics::ManagedSurface &surf = g_nancy->_graphics->getAutotextSurface(_surfaceID);
+		Common::Rect &surfBounds = g_nancy->_graphics->getAutotextSurfaceBounds(_surfaceID);
+		surf.create(_surfWidth + 1, surfHeight, g_nancy->_graphics->getInputPixelFormat());
 		if (_transparency) {
-			surf.clear(g_nancy->_graphicsManager->getTransColor());
+			surf.clear(g_nancy->_graphics->getTransColor());
 		}
 
 		_fullSurface.create(surf, surf.getBounds());
 		if(_transparency == kPlayOverlayTransparent) {
-			_fullSurface.setTransparentColor(g_nancy->_graphicsManager->getTransColor());
+			_fullSurface.setTransparentColor(g_nancy->_graphics->getTransColor());
 		}
 
 		Common::Rect textBounds = surf.getBounds();
 		textBounds.left += _offset.x;
 		textBounds.top += _offset.y;
-		drawAllText(textBounds, _fontID, _fontID);
+
+		const Font *font = g_nancy->_graphics->getFont(_fontID);
+		assert(font);
+		uint d = (font->getFontHeight() + 1) / 2 + 1;
+
+		textBounds.top += d + 1;
+		textBounds.left += d;
+
+		// Original engine uses a particular value in the TBOX chunk in all
+		// text rendering, including Autotext
+		auto *tbox = GetEngineData(TBOX);
+
+		drawAllText(textBounds, tbox->leftOffset - textBounds.left, _fontID, _fontID);
+		surfBounds = Common::Rect(_fullSurface.w, _drawnTextHeight);
 	}
 
 	_isDone = true;

@@ -62,6 +62,7 @@
 #include "scumm/players/player_sid.h"
 #include "scumm/players/player_pce.h"
 #include "scumm/players/player_apple2.h"
+#include "scumm/players/player_mac_indy3.h"
 #include "scumm/players/player_v1.h"
 #include "scumm/players/player_v2.h"
 #include "scumm/players/player_v2cms.h"
@@ -2167,6 +2168,11 @@ void ScummEngine::setupMusic(int midi, const Common::Path &macInstrumentFile) {
 #endif
 	} else if (_game.platform == Common::kPlatformAmiga && _game.version <= 4) {
 		_musicEngine = new Player_V4A(this, _mixer);
+	} else if (_game.platform == Common::kPlatformMacintosh && _game.id == GID_INDY3) {
+		_musicEngine = new Player_Mac_Indy3(this, _mixer);
+		if (ConfMan.hasKey("mac_v3_low_quality_music") && ConfMan.getBool("mac_v3_low_quality_music"))
+			_musicEngine->setQuality(Player_Mac_Indy3::kQualLo);
+		_sound->_musicType = MDT_MACINTOSH;
 	} else if (_game.platform == Common::kPlatformMacintosh && _game.id == GID_LOOM) {
 		_musicEngine = new Player_V3M(this, _mixer, ConfMan.getBool("mac_v3_low_quality_music"));
 		((Player_V3M *)_musicEngine)->init(macInstrumentFile);
@@ -2336,10 +2342,7 @@ void ScummEngine::syncSoundSettings() {
 
 	if (_musicEngine) {
 		_musicEngine->setMusicVolume(soundVolumeMusic);
-	}
-
-	if (_townsPlayer) {
-		_townsPlayer->setSfxVolume(soundVolumeSfx);
+		_musicEngine->setSfxVolume(soundVolumeSfx);
 	}
 
 	if (ConfMan.getBool("speech_mute"))
@@ -3214,7 +3217,7 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 	if (_completeScreenRedraw) {
 		clearCharsetMask();
 		_charset->_hasMask = false;
-		bool restoreFMTownsSounds = (_townsPlayer != nullptr);
+		bool restoreSounds = true;
 
 		if (_game.id == GID_LOOM) {
 			if (_currentRoom == 70) {
@@ -3281,7 +3284,7 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 						runScript(38, false, false, args);
 					}
 
-					restoreFMTownsSounds = false;
+					restoreSounds = false;
 
 				} else if (VAR(saveLoadVar) == 2) {
 					// This is our old hack. If verbs should be shown restore them.
@@ -3344,7 +3347,7 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 					beginCutscene(args);
 					startScene(saveLoadRoom, nullptr, 0);
 					endCutscene();
-					restoreFMTownsSounds = false;
+					restoreSounds = false;
 				}
 			}
 
@@ -3355,8 +3358,8 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 			redrawVerbs();
 		}
 
-		if (restoreFMTownsSounds)
-			_townsPlayer->restoreAfterLoad();
+		if (restoreSounds)
+			_musicEngine->restoreAfterLoad();
 	}
 }
 
@@ -3408,8 +3411,7 @@ void ScummEngine_v5::scummLoop_handleSaveLoad() {
 		clearCharsetMask();
 		_charset->_hasMask = false;
 
-		if (_townsPlayer)
-			_townsPlayer->restoreAfterLoad();
+		_musicEngine->restoreAfterLoad();
 
 		redrawVerbs();
 
@@ -3768,11 +3770,7 @@ bool ScummEngine::startManiac() {
 
 			if (path.isRelativeTo(currentPath)) {
 				path = path.relativeTo(currentPath);
-				// Do a case-insensitive non-path-mode match of the remainder.
-				// While strictly speaking it's too broad, this matchString
-				// ignores the presence or absence of trailing path separators
-				// in either currentPath or path.
-				if (path.toString('/').matchString("*maniac*", true, nullptr)) {
+				if (path.baseName().equalsIgnoreCase("maniac")) {
 					maniacTarget = iter->_key;
 					break;
 				}

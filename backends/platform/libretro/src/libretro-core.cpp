@@ -100,16 +100,20 @@ static uint32 perf_ref_audio_buff_occupancy = 0;
 
 static float frame_rate = 0;
 static uint16 sample_rate = 0;
-static uint16 samples_per_frame = 0;               // length in samples per frame
-static size_t samples_per_frame_buffer_size = 0;
+static float audio_samples_per_frame   = 0.0f; // length in samples per frame
+static float audio_samples_accumulator = 0.0f;
 
-static int16 *sound_buffer = NULL;               // pointer to output buffer
-static int16 *sound_buffer_empty = NULL;         // pointer to zeroed output buffer, to regulate GUI FPS
+static int16 *audio_sample_buffer = NULL; // pointer to output buffer
 
 static bool input_bitmask_supported = false;
 static bool updating_variables = false;
 static int opt_frameskip_threshold_display = 0;
 static int opt_frameskip_no_display = 0;
+
+
+void process_key_event_wrapper(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers) {
+	LIBRETRO_G_SYSTEM->processKeyEvent(down, keycode, character, key_modifiers);
+}
 
 static void log_scummvm_exit_code(void) {
 	if (retro_get_scummvm_res() == Common::kNoError)
@@ -121,20 +125,50 @@ static void log_scummvm_exit_code(void) {
 }
 
 static void audio_buffer_init(uint16 sample_rate, uint16 frame_rate) {
-	samples_per_frame = sample_rate / frame_rate;
+	audio_samples_accumulator = 0.0f;
+	audio_samples_per_frame   = (float)sample_rate / (float)frame_rate;
+	uint32 audio_sample_buffer_size  = ((uint32)audio_samples_per_frame + 1) * 2 * sizeof(int16);
+	audio_sample_buffer       = audio_sample_buffer ? (int16 *)realloc(audio_sample_buffer, audio_sample_buffer_size) : (int16 *)malloc(audio_sample_buffer_size);
 
-	samples_per_frame_buffer_size = samples_per_frame << sizeof(int16);
-
-	sound_buffer = sound_buffer ? (int16 *)realloc(sound_buffer, samples_per_frame_buffer_size) : (int16 *)malloc(samples_per_frame_buffer_size);
-	sound_buffer_empty = sound_buffer_empty ? (int16 *)realloc(sound_buffer_empty, samples_per_frame_buffer_size) : (int16 *)malloc(samples_per_frame_buffer_size);
-
-	if (sound_buffer && sound_buffer_empty) {
-		memset(sound_buffer, 0, samples_per_frame_buffer_size);
-		memset(sound_buffer_empty, 0, samples_per_frame_buffer_size);
-	} else
+	if (audio_sample_buffer)
+		memset(audio_sample_buffer, 0, audio_sample_buffer_size);
+	else
 		retro_log_cb(RETRO_LOG_ERROR, "audio_buffer_init error.\n");
+}
 
-	audio_status |= AUDIO_STATUS_UPDATE_LATENCY;
+static void audio_run(void) {
+	int16 *audio_buffer_ptr;
+	uint32 samples_to_read;
+	uint32 samples_produced;
+
+	/* Audio_samples_per_frame is decimal;
+	 * get integer component */
+	samples_to_read = (uint32)audio_samples_per_frame;
+
+	/* Account for fractional component */
+	audio_samples_accumulator += audio_samples_per_frame - (float)samples_to_read;
+
+	if (audio_samples_accumulator >= 1.0f) {
+		samples_to_read++;
+		audio_samples_accumulator -= 1.0f;
+	}
+
+	samples_produced = ((Audio::MixerImpl *)g_system->getMixer())->mixCallback((byte *) audio_sample_buffer, samples_to_read * 2 * sizeof(int16));
+	audio_status = samples_produced ? (audio_status & ~AUDIO_STATUS_MUTE) : (audio_status | AUDIO_STATUS_MUTE);
+
+	/* Workaround for a RetroArch audio driver
+	 * limitation: a maximum of 1024 frames
+	 * can be written per call of audio_batch_cb(),
+	 * so we have to send samples in chunks */
+	audio_buffer_ptr = audio_sample_buffer;
+	while (samples_produced > 0) {
+		uint32 samples_to_write = (samples_produced > AUDIO_BATCH_FRAMES_MAX) ? AUDIO_BATCH_FRAMES_MAX : samples_produced;
+
+		audio_batch_cb(audio_buffer_ptr, samples_to_write);
+
+		samples_produced -= samples_to_write;
+		audio_buffer_ptr += samples_to_write << 1;
+	}
 }
 
 static void retro_audio_buff_status_cb(bool active, unsigned occupancy, bool underrun_likely) {
@@ -192,7 +226,6 @@ void retro_osd_notification(const char *msg) {
 static void update_variables(void) {
 	struct retro_variable var;
 	updating_variables = true;
-	const char *osd_msg = "";
 
 	var.key = "scummvm_gamepad_cursor_only";
 	var.value = NULL;
@@ -755,6 +788,14 @@ const char *retro_get_save_dir(void) {
 	return savedir;
 }
 
+const char *retro_get_playlist_dir(void) {
+	const char *playlistdir = NULL;
+
+	environ_cb(RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY, &playlistdir);
+
+	return playlistdir;
+}
+
 void retro_init(void) {
 	struct retro_log_callback log;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -794,7 +835,7 @@ void retro_init(void) {
 		retro_log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 -will use that instead of XRGB1555.\n");
 #endif
 
-	retro_keyboard_callback cb = {LIBRETRO_G_SYSTEM->processKeyEvent};
+	retro_keyboard_callback cb = {process_key_event_wrapper};
 	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
@@ -805,7 +846,13 @@ void retro_init(void) {
 
 void retro_deinit(void) {
 	LIBRETRO_G_SYSTEM->destroy();
-	free(sound_buffer);
+
+	if (audio_sample_buffer)
+		free(audio_sample_buffer);
+
+	audio_sample_buffer       = NULL;
+	audio_samples_per_frame   = 0.0f;
+	audio_samples_accumulator = 0.0f;
 	log_scummvm_exit_code();
 }
 
@@ -976,90 +1023,74 @@ void retro_run(void) {
 	environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &audio_video_enable);
 
 	bool skip_frame = false;
-	size_t samples_count = 0;
 
 	if (g_system) {
 
-		/* ScummVM is not based on fixed framerate like libretro, and engines/scripts
-		can call multiple screen updates between two retro_run calls. Hence if consecutive screen updates
-		are detected we will loop within the same retro_run call until next pollEvent or
-		delayMillis call in ScummVM thread. */
-		do {
-			/* Determine frameskip need based on settings */
-			if ((frameskip_type == 2) || (performance_switch & PERF_SWITCH_ON))
-				skip_frame = (audio_status & AUDIO_STATUS_BUFFER_UNDERRUN);
-			else if (frameskip_type == 1)
-				skip_frame = !(current_frame % frameskip_no == 0);
-			else if (frameskip_type == 3)
-				skip_frame = (retro_audio_buff_occupancy < frameskip_threshold);
+		/* Determine frameskip need based on settings */
+		if ((frameskip_type == 2) || (performance_switch & PERF_SWITCH_ON))
+			skip_frame = (audio_status & AUDIO_STATUS_BUFFER_UNDERRUN);
+		else if (frameskip_type == 1)
+			skip_frame = !(current_frame % frameskip_no == 0);
+		else if (frameskip_type == 3)
+			skip_frame = (retro_audio_buff_occupancy < frameskip_threshold);
 
-			/* No frame skipping if
-			- no incoming audio (e.g. GUI)
-			- doing a THREAD_SWITCH_UPDATE loop */
-			skip_frame = skip_frame && !(audio_status & AUDIO_STATUS_MUTE) && !(LIBRETRO_G_SYSTEM->getThreadSwitchCaller() & THREAD_SWITCH_UPDATE);
+		/* No frame skipping if
+		- no incoming audio (e.g. GUI)
+		- doing a THREAD_SWITCH_UPDATE loop */
+		skip_frame = skip_frame && !(audio_status & AUDIO_STATUS_MUTE);
 
-			/* Reset frameskip counter if not flagged */
-			if ((!skip_frame && frameskip_counter) || frameskip_counter >= FRAMESKIP_MAX) {
-				retro_log_cb(RETRO_LOG_DEBUG, "%d frame(s) skipped (%ld)\n", frameskip_counter, current_frame);
-				skip_frame = false;
-				frameskip_counter = 0;
+		/* Reset frameskip counter if not flagged */
+		if ((!skip_frame && frameskip_counter) || frameskip_counter >= FRAMESKIP_MAX) {
+			retro_log_cb(RETRO_LOG_DEBUG, "%d frame(s) skipped (%ld)\n", frameskip_counter, current_frame);
+			skip_frame = false;
+			frameskip_counter = 0;
 			/* Keep on skipping frames if flagged */
-			} else if (skip_frame) {
-				frameskip_counter++;
-				/* Performance counter */
-				if ((performance_switch & PERF_SWITCH_ON) && !(performance_switch & PERF_SWITCH_OVER)) {
-					frameskip_events += frameskip_counter;
-					if (frameskip_events > PERF_SWITCH_FRAMESKIP_EVENTS) {
-						increase_performance();
-						frameskip_events = 0;
-						perf_ref_frame = current_frame;
-						perf_ref_audio_buff_occupancy = 0;
-					}
-				}
-			}
-
-			/* Performance tuner reset if average buffer occupacy is above the required threshold again */
-			if (!skip_frame && (performance_switch & PERF_SWITCH_ON) && performance_switch > PERF_SWITCH_ON) {
-				perf_ref_audio_buff_occupancy += retro_audio_buff_occupancy;
-				if ((current_frame - perf_ref_frame) % (PERF_SWITCH_RESET_REST) == 0) {
-					uint32 avg_audio_buff_occupancy = perf_ref_audio_buff_occupancy / (current_frame + 1 - perf_ref_frame);
-					if (avg_audio_buff_occupancy > PERF_SWITCH_RESET_THRESHOLD || avg_audio_buff_occupancy == retro_audio_buff_occupancy)
-						increase_accuracy();
-					perf_ref_frame = current_frame - 1;
-					perf_ref_audio_buff_occupancy = 0;
+		} else if (skip_frame) {
+			frameskip_counter++;
+			/* Performance counter */
+			if ((performance_switch & PERF_SWITCH_ON) && !(performance_switch & PERF_SWITCH_OVER)) {
+				frameskip_events += frameskip_counter;
+				if (frameskip_events > PERF_SWITCH_FRAMESKIP_EVENTS) {
+					increase_performance();
 					frameskip_events = 0;
+					perf_ref_frame = current_frame;
+					perf_ref_audio_buff_occupancy = 0;
 				}
 			}
-			/* Switch to ScummVM thread, unless frameskipping is ongoing */
-			if (!skip_frame)
-				retro_switch_to_emu_thread();
+		}
 
-			if (retro_emu_thread_exited()) {
-				exit_to_frontend();
-				return;
+		/* Performance tuner reset if average buffer occupacy is above the required threshold again */
+		if (!skip_frame && (performance_switch & PERF_SWITCH_ON) && performance_switch > PERF_SWITCH_ON) {
+			perf_ref_audio_buff_occupancy += retro_audio_buff_occupancy;
+			if ((current_frame - perf_ref_frame) % (PERF_SWITCH_RESET_REST) == 0) {
+				uint32 avg_audio_buff_occupancy = perf_ref_audio_buff_occupancy / (current_frame + 1 - perf_ref_frame);
+				if (avg_audio_buff_occupancy > PERF_SWITCH_RESET_THRESHOLD || avg_audio_buff_occupancy == retro_audio_buff_occupancy)
+					increase_accuracy();
+				perf_ref_frame = current_frame - 1;
+				perf_ref_audio_buff_occupancy = 0;
+				frameskip_events = 0;
 			}
+		}
 
-			/* Retrieve audio */
-			samples_count = 0;
-			if (audio_video_enable & 2)
-				samples_count = ((Audio::MixerImpl *)g_system->getMixer())->mixCallback((byte *) sound_buffer, samples_per_frame_buffer_size);
+		/* Switch to ScummVM thread, unless frameskipping is ongoing */
+		if (!skip_frame)
+			retro_switch_to_emu_thread();
 
-			audio_status = samples_count ? (audio_status & ~AUDIO_STATUS_MUTE) : (audio_status | AUDIO_STATUS_MUTE);
+		if (retro_emu_thread_exited()) {
+			exit_to_frontend();
+			return;
+		}
 
-			/* Retrieve video */
-			if ((audio_video_enable & 1) && !skip_frame) {
-				const Graphics::Surface &screen = LIBRETRO_G_SYSTEM->getScreen();
-				video_cb(screen.getPixels(), screen.w, screen.h, screen.pitch);
-			}
+		/* Retrieve audio */
+		if (audio_video_enable & 2)
+			audio_run();
 
-			if (audio_status & AUDIO_STATUS_MUTE)
-				audio_batch_cb((int16 *) sound_buffer_empty, samples_per_frame_buffer_size >> sizeof(int16));
-			else
-				audio_batch_cb((int16 *) sound_buffer, samples_count);
-
-			current_frame++;
-
-		} while (LIBRETRO_G_SYSTEM->getThreadSwitchCaller() & THREAD_SWITCH_UPDATE);
+		/* Retrieve video */
+		if ((audio_video_enable & 1) && !skip_frame) {
+			const Graphics::Surface &screen = LIBRETRO_G_SYSTEM->getScreen();
+			video_cb(screen.getPixels(), screen.w, screen.h, screen.pitch);
+		}
+		current_frame++;
 
 		poll_cb();
 		LIBRETRO_G_SYSTEM->processInputs();

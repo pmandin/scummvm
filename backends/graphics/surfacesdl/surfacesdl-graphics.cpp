@@ -683,6 +683,11 @@ void SurfaceSdlGraphicsManager::setGraphicsModeIntern() {
 
 		_scalerPlugin = &_scalerPlugins[_videoMode.scalerIndex]->get<ScalerPluginObject>();
 		_scaler = _scalerPlugin->createInstance(format);
+
+		if (_mouseScaler != nullptr) {
+			delete _mouseScaler;
+			_mouseScaler = _scalerPlugin->createInstance(_cursorFormat);
+		}
 	}
 
 	_scaler->setFactor(_videoMode.scaleFactor);
@@ -2235,10 +2240,6 @@ void SurfaceSdlGraphicsManager::blitCursor() {
 	const int h = _mouseCurState.h;
 
 	if (!w || !h || !_mouseOrigSurface) {
-		return;
-	}
-
-	if (!_mouseOrigSurface) {
 		return;
 	}
 

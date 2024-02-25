@@ -68,6 +68,15 @@ static const M4GameDescription gameDescriptions[] = {
 		GType_Burger,
 		kFeaturesCD
 	},
+	// TODO: The production of the Russian version is totally screwed up.
+	// In the German version, the vocab field for each hotspot loaded in adv_hotspot.cpp
+	// has the English version, and this is separate from the text shown on-screen
+	// which is German in the German version, and English in the English version.
+	// But for the Russian they changed this text to be Russian, as well as changed
+	// all rooms' pre_parser/parser methods to use it. As such, to support it we'd need to:
+	// 1) Add the Russian text to all the room methods. Hell no.
+	// 2) Or prepare a data file that strips the vocab for each room,
+	// and uses it when the Russian version is being played.
 	{
 		{
 			"burger",
@@ -87,6 +96,19 @@ static const M4GameDescription gameDescriptions[] = {
 			"Demo",
 			AD_ENTRY1s("burger.has", "fc3f363b6153240a448bd3b7be9318da", 62159),
 			Common::EN_ANY,
+			Common::kPlatformDOS,
+			ADGF_DEMO | ADGF_TESTING,
+			GUIO1(GUIO_NOASPECT)
+		},
+		GType_Burger,
+		kFeaturesDemo
+	},
+	{
+		{
+			"burger",
+			"Demo",
+			AD_ENTRY1s("burger.has", "eee638f804c53b640218fbbb8c681fdc", 88137),
+			Common::DE_DEU,
 			Common::kPlatformDOS,
 			ADGF_DEMO | ADGF_TESTING,
 			GUIO1(GUIO_NOASPECT)

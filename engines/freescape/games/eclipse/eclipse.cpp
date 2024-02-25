@@ -27,27 +27,6 @@
 
 namespace Freescape {
 
-static const char *rawMessagesTable[] = {
-	"HEART  FAILURE",
-	"SUN ECLIPSED",
-	"CRUSHED TO DEATH",
-	"FATAL FALL",
-	"CURSE OVERCOME",
-	"TOTAL ECLIPSE",
-	"TOO HOT TO REST!",
-	"RESTING...",
-	" ANKH FOUND ",
-	"WAY  BLOCKED",
-	"5 ANKHS REQUIRED",
-	"$2M REWARD",
-	"MAKE THE MATCH",
-	"TOUCH TO COLLECT",
-	"NO ENTRY",
-	"REMOVE LID",
-	"POISON AIR",
-	"MATCH MADE",
-	NULL};
-
 EclipseEngine::EclipseEngine(OSystem *syst, const ADGameDescription *gd) : FreescapeEngine(syst, gd) {
 	if (isDOS())
 		initDOS();
@@ -65,17 +44,6 @@ EclipseEngine::EclipseEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_playerDepth = 8;
 	_stepUpDistance = 32;
 
-	const char **messagePtr = rawMessagesTable;
-	if (isDOS()) {
-		debugC(1, kFreescapeDebugParser, "String table:");
-		while (*messagePtr) {
-			Common::String message(*messagePtr);
-			_messagesList.push_back(message);
-			debugC(1, kFreescapeDebugParser, "%s", message.c_str());
-			messagePtr++;
-		}
-	}
-
 	_playerStepIndex = 2;
 	_playerSteps.clear();
 	_playerSteps.push_back(1);
@@ -92,36 +60,62 @@ EclipseEngine::EclipseEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 
 	_initialEnergy = 16;
 	_initialShield = 10; // TODO
+
+	_endArea = 1;
+	_endEntrance = 33;
 }
 
 void EclipseEngine::initGameState() {
-	_flyMode = false;
-	_hasFallen = false;
-	_noClipMode = false;
-	_playerWasCrushed = false;
-	_shootingFrames = 0;
-	_underFireFrames = 0;
-	_yaw = 0;
-	_pitch = 0;
-
-	for (int i = 0; i < k8bitMaxVariable; i++) // TODO: check maximum variable
-		_gameStateVars[i] = 0;
-
-	for (auto &it : _areaMap)
-		it._value->resetArea();
-
-	_gameStateBits = 0;
+	FreescapeEngine::initGameState();
 
 	_playerHeightNumber = 1;
 	_playerHeight = _playerHeights[_playerHeightNumber];
-	removeTimers();
-	startCountdown(_initialCountdown);
-	_lastMinute = 0;
-	_demoIndex = 0;
-	_demoEvents.clear();
 
 	_gameStateVars[k8bitVariableEnergy] = _initialEnergy;
 	_gameStateVars[k8bitVariableShield] = _initialShield;
+}
+
+void EclipseEngine::loadAssets() {
+	FreescapeEngine::loadAssets();
+
+	_timeoutMessage = _messagesList[1];
+	_noShieldMessage = _messagesList[0];
+	//_noEnergyMessage = _messagesList[16];
+	_fallenMessage = _messagesList[3];
+	_crushedMessage = _messagesList[2];
+}
+
+bool EclipseEngine::checkIfGameEnded() {
+	if (_hasFallen && _avoidRenderingFrames == 0) {
+		_hasFallen = false;
+		playSoundFx(4, false);
+
+		if (_gameStateVars[k8bitVariableShield] > 4) {
+			_gameStateVars[k8bitVariableShield] -= 4;
+			return false; // Game can continue
+		}
+		if (!_fallenMessage.empty())
+			insertTemporaryMessage(_fallenMessage, _countdown - 4);
+		_gameStateControl = kFreescapeGameStateEnd;
+	}
+
+	FreescapeEngine::checkIfGameEnded();
+	return false;
+}
+
+void EclipseEngine::endGame() {
+	if (_gameStateControl == kFreescapeGameStateEnd) {
+		removeTimers();
+		if (_countdown > 0)
+			_countdown -= 10;
+		else
+			_countdown = 0;
+	}
+
+	if (_endGameKeyPressed && _countdown == 0) {
+		_gameStateControl = kFreescapeGameStateRestart;
+	}
+	_endGameKeyPressed = false;
 }
 
 void EclipseEngine::gotoArea(uint16 areaID, int entranceID) {
@@ -142,6 +136,14 @@ void EclipseEngine::gotoArea(uint16 areaID, int entranceID) {
 
 	_lastPosition = _position;
 
+	if (areaID == _startArea && entranceID == _startEntrance)
+		playSound(9, true);
+	if (areaID == _endArea && entranceID == _endEntrance) {
+		_flyMode = true;
+		_pitch = 20;
+	} else
+		playSound(5, false);
+
 	if (_currentArea->_skyColor > 0 && _currentArea->_skyColor != 255) {
 		_gfx->_keyColor = 0;
 	} else
@@ -157,8 +159,23 @@ void EclipseEngine::drawBackground() {
 	clearBackground();
 	_gfx->drawBackground(_currentArea->_skyColor);
 	if (_currentArea && _currentArea->getAreaID() == 1) {
-		_gfx->drawEclipse(15, 10);
+		if (_countdown <= 15 * 60) // Last 15 minutes
+			_gfx->drawBackground(5);
+		if (_countdown <= 10) // Last 10 seconds
+			_gfx->drawBackground(1);
+
+		float progress = 0;
+		if (_countdown >= 0)
+			progress = float(_countdown) / _initialCountdown;
+
+		_gfx->drawEclipse(15, 10, progress);
 	}
+}
+
+void EclipseEngine::titleScreen() {
+	if (isDOS())
+		playSoundFx(2, true);
+	FreescapeEngine::titleScreen();
 }
 
 
@@ -179,6 +196,108 @@ void EclipseEngine::borderScreen() {
 			}
 		} else {
 			FreescapeEngine::borderScreen();
+		}
+	}
+}
+
+void EclipseEngine::drawInfoMenu() {
+	PauseToken pauseToken = pauseEngine();
+	_savedScreen = _gfx->getScreenshot();
+	uint32 color = 0;
+	switch (_renderMode) {
+		case Common::kRenderCGA:
+			color = 1;
+			break;
+		case Common::kRenderZX:
+			color = 6;
+			break;
+		default:
+			color = 14;
+	}
+	uint8 r, g, b;
+	_gfx->readFromPalette(color, r, g, b);
+	uint32 front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
+
+	Graphics::Surface *surface = new Graphics::Surface();
+	surface->create(_screenW, _screenH, _gfx->_texturePixelFormat);
+
+	surface->fillRect(Common::Rect(88, 48, 231, 103), black);
+	surface->frameRect(Common::Rect(88, 48, 231, 103), front);
+
+	surface->frameRect(Common::Rect(90, 50, 229, 101), front);
+
+	drawStringInSurface("L-LOAD S-SAVE", 105, 56, front, black, surface);
+	if (isSpectrum())
+		drawStringInSurface("1-TERMINATE", 105, 64, front, black, surface);
+	else
+		drawStringInSurface("ESC-TERMINATE", 105, 64, front, black, surface);
+
+	drawStringInSurface("T-TOGGLE", 128, 81, front, black, surface);
+	drawStringInSurface("SOUND ON/OFF", 113, 88, front, black, surface);
+
+	Common::Event event;
+	bool cont = true;
+	while (!shouldQuit() && cont) {
+		while (_eventManager->pollEvent(event)) {
+
+			// Events
+			switch (event.type) {
+				case Common::EVENT_KEYDOWN:
+				if (event.kbd.keycode == Common::KEYCODE_l) {
+					_gfx->setViewport(_fullscreenViewArea);
+					_eventManager->purgeKeyboardEvents();
+					loadGameDialog();
+					_gfx->setViewport(_viewArea);
+				} else if (event.kbd.keycode == Common::KEYCODE_s) {
+					_gfx->setViewport(_fullscreenViewArea);
+					_eventManager->purgeKeyboardEvents();
+					saveGameDialog();
+					_gfx->setViewport(_viewArea);
+				} else if (isDOS() && event.kbd.keycode == Common::KEYCODE_t) {
+					playSound(6, true);
+				} else if ((isDOS() || isCPC()) && event.kbd.keycode == Common::KEYCODE_ESCAPE) {
+					_forceEndGame = true;
+					cont = false;
+				} else if (isSpectrum() && event.kbd.keycode == Common::KEYCODE_1) {
+					_forceEndGame = true;
+					cont = false;
+				} else
+					cont = false;
+				break;
+			case Common::EVENT_SCREEN_CHANGED:
+				_gfx->computeScreenViewport();
+				break;
+
+			default:
+				break;
+			}
+		}
+		drawFrame();
+		drawFullscreenSurface(surface);
+
+		_gfx->flipBuffer();
+		g_system->updateScreen();
+		g_system->delayMillis(15); // try to target ~60 FPS
+	}
+
+	_savedScreen->free();
+	delete _savedScreen;
+	surface->free();
+	delete surface;
+	pauseToken.clear();
+}
+
+void EclipseEngine::pressedKey(const int keycode) {
+	if (keycode == Common::KEYCODE_r) {
+		if (_currentArea->getAreaID() == 1) {
+			playSoundFx(3, false);
+			if (_temporaryMessages.empty())
+				insertTemporaryMessage(_messagesList[6], _countdown - 2);
+		} else {
+			if (_temporaryMessages.empty())
+				insertTemporaryMessage(_messagesList[7], _countdown - 2);
+			_countdown = _countdown - 5;
 		}
 	}
 }

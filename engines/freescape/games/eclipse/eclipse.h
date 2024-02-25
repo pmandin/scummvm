@@ -19,6 +19,10 @@
  *
  */
 
+#include "common/file.h"
+
+#include "freescape/sound.h"
+
 namespace Freescape {
 
 enum EclipseReleaseFlags {
@@ -33,8 +37,12 @@ public:
 	void gotoArea(uint16 areaID, int entranceID) override;
 
 	void borderScreen() override;
+	void titleScreen() override;
+	void drawInfoMenu() override;
 
+	void loadAssets() override;
 	void loadAssetsDOSFullGame() override;
+	void pressedKey(const int keycode) override;
 
 	uint32 _initialEnergy;
 	uint32 _initialShield;
@@ -48,7 +56,6 @@ public:
 	void initGameState() override;
 	void executePrint(FCLInstruction &instruction) override;
 
-
 	void drawBackground() override;
 	void drawDOSUI(Graphics::Surface *surface) override;
 	void drawCPCUI(Graphics::Surface *surface) override;
@@ -56,6 +63,12 @@ public:
 	void drawAnalogClock(Graphics::Surface *surface, int x, int y, uint32 colorHand1, uint32 colorHand2, uint32 colorBack);
 	void drawAnalogClockHand(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color);
 
+	soundFx *load1bPCM(Common::SeekableReadStream *file, int offset);
+
+	bool checkIfGameEnded() override;
+	void endGame() override;
+	void loadSoundsFx(Common::SeekableReadStream *file, int offset, int number) override;
+	void playSoundFx(int index, bool sync) override;
 
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;

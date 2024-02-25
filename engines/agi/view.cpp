@@ -28,8 +28,8 @@ namespace Agi {
 void AgiEngine::updateView(ScreenObjEntry *screenObj) {
 	int16 celNr, lastCelNr;
 
-	if (screenObj->flags & fDontupdate) {
-		screenObj->flags &= ~fDontupdate;
+	if (screenObj->flags & fDontUpdate) {
+		screenObj->flags &= ~fDontUpdate;
 		return;
 	}
 
@@ -385,7 +385,7 @@ void AgiEngine::unpackViewCelDataAGI256(AgiViewCel *celData, byte *compressedDat
 
 /**
  * Unloads all data in a view resource
- * @param n number of view resource
+ * @param viewNr number of view resource
  */
 void AgiEngine::unloadView(int16 viewNr) {
 	AgiView *viewData = &_game.views[viewNr];
@@ -580,19 +580,18 @@ void AgiEngine::clipViewCoordinates(ScreenObjEntry *screenObj) {
 	}
 
 	if (getVersion() < 0x2000) {
-		screenObj->flags |= fDontupdate;
+		screenObj->flags |= fDontUpdate;
 	}
-
 }
 
 /**
  * Set the view table entry as updating.
- * @param v pointer to view table entry
+ * @param viewPtr pointer to view table entry
  */
-void AgiEngine::startUpdate(ScreenObjEntry *v) {
-	if (~v->flags & fUpdate) {
+void AgiEngine::startUpdate(ScreenObjEntry *viewPtr) {
+	if (~viewPtr->flags & fUpdate) {
 		_sprites->eraseSprites();
-		v->flags |= fUpdate;
+		viewPtr->flags |= fUpdate;
 		_sprites->buildAllSpriteLists();
 		_sprites->drawAllSpriteLists();
 	}
@@ -600,7 +599,7 @@ void AgiEngine::startUpdate(ScreenObjEntry *v) {
 
 /**
  * Set the view table entry as non-updating.
- * @param v pointer to view table entry
+ * @param viewPtr pointer to view table entry
  */
 void AgiEngine::stopUpdate(ScreenObjEntry *viewPtr) {
 	if (viewPtr->flags & fUpdate) {

@@ -105,8 +105,11 @@ static const byte v0WalkboxSlantedModifier[0x16] = {
 };
 
 Actor::Actor(ScummEngine *scumm, int id) :
-	_vm(scumm), _number(id) {
-	assert(_vm != nullptr);
+	_vm(scumm), _number(id), _visible(false), _shadowMode(0), _flip(false), _frame(0), _walkbox(0), _talkPosX(0), _talkPosY(0),
+	_talkScript(0), _walkScript(0), _ignoreTurns(false), _drawToBackBuf(false), _layer(0), _heOffsX(0), _heOffsY(0), _heSkipLimbs(false),
+	_heCondMask(0), _hePaletteNum(0), _heXmapNum(0), _elevation(0), _facing(0), _targetFacing(0), _speedx(0), _speedy(0),
+	_animProgress(0), _animSpeed(0), _costumeNeedsInit(false) {
+		assert(_vm != nullptr);
 }
 
 void ActorHE::initActor(int mode) {
@@ -158,7 +161,7 @@ void Actor::initActor(int mode) {
 		memset(_animVariable, 0, sizeof(_animVariable));
 		memset(_palette, 0, sizeof(_palette));
 		memset(_sound, 0, sizeof(_sound));
-		memset(&_cost, 0, sizeof(CostumeData));
+		_cost.reset();
 		_walkdata.reset();
 		_walkdata.point3.x = 32000;
 		_walkScript = 0;
@@ -544,8 +547,8 @@ int Actor::calcMovementFactor(const Common::Point& next) {
 	_walkdata.deltaYFactor = deltaYFactor;
 
 	if (_vm->_game.version >= 7) {
-		_walkdata.nextDir = ((int)(atan2((double)deltaXFactor, (double)-deltaYFactor) * 180 / M_PI) + 360) % 360;
-		startWalkAnim((_moving & MF_IN_LEG) ? 2 : 1, _walkdata.nextDir);
+		_walkdata.facing = ((int)(atan2((double)deltaXFactor, (double)-deltaYFactor) * 180 / M_PI) + 360) % 360;
+		startWalkAnim((_moving & MF_IN_LEG) ? 2 : 1, _walkdata.facing);
 		_moving |= MF_IN_LEG;
 	} else {
 		_targetFacing = (ABS(diffY) * 3 > ABS(diffX)) ? (deltaYFactor > 0 ? 180 : 0) : (deltaXFactor > 0 ? 90 : 270);
@@ -602,11 +605,9 @@ int Actor::actorWalkStep() {
 
 	if (_vm->_game.version < 7) {
 		int nextFacing = updateActorDirection(true);
-		if (!(_moving & MF_IN_LEG) || _facing != nextFacing) {
-			if (_walkFrame != _frame || _facing != nextFacing)
-				startWalkAnim(1, nextFacing);
-			_moving |= MF_IN_LEG;
-		}
+		if ((_walkFrame != _frame && !(_moving & MF_IN_LEG)) || _facing != nextFacing)
+			startWalkAnim(1, nextFacing);
+		_moving |= MF_IN_LEG;
 	}
 
 	if (_walkbox != _walkdata.curbox && _vm->checkXYInBoxBounds(_walkdata.curbox, _pos.x, _pos.y))
@@ -875,7 +876,7 @@ void Actor::startWalkActor(int destX, int destY, int dir) {
 
 void Actor::startWalkAnim(int cmd, int angle) {
 	if (_vm->_game.version >= 7)
-		angle = remapDirection(normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), angle == -1 ? _walkdata.nextDir : angle), false);
+		angle = remapDirection(normalizeAngle(_vm->_costumeLoader->hasManyDirections(_costume), angle == -1 ? _walkdata.facing : angle), false);
 	else if (angle == -1)
 		angle = _facing;
 
@@ -3873,7 +3874,7 @@ void Actor::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsSint32LE(_walkdata.deltaYFactor, VER(8));
 	s.syncAsUint16LE(_walkdata.xfrac, VER(8));
 	s.syncAsUint16LE(_walkdata.yfrac, VER(8));
-	s.syncAsSint16LE(_walkdata.nextDir, VER(111));
+	s.syncAsSint16LE(_walkdata.facing, VER(111));
 
 	s.syncAsUint16LE(_walkdata.point3.x, VER(42));
 	s.syncAsUint16LE(_walkdata.point3.y, VER(42));

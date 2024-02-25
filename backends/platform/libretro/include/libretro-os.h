@@ -81,7 +81,8 @@ private:
 	uint8 _cursorStatus;
 	Common::String s_systemDir;
 	Common::String s_saveDir;
-	static Common::List<Common::Event> _events;
+	Common::String s_playlistDir;
+	Common::List<Common::Event> _events;
 
 public:
 	Audio::MixerImpl *_mixer;
@@ -113,6 +114,7 @@ public:
 	void quit() override {}
 private:
 	bool checkPathSetting(const char *setting, Common::String const &defaultPath, bool isDirectory = true);
+	void setLibretroDir(const char * path, Common::String &var);
 
 	/* Graphics */
 public:
@@ -175,7 +177,7 @@ private:
 	/* Inputs */
 public:
 	void processInputs(void);
-	static void processKeyEvent(bool down, unsigned keycode, uint32 character, uint16 key_modifiers);
+	void processKeyEvent(bool down, unsigned keycode, uint32 character, uint16 key_modifiers);
 	void setShakePos(int shakeXOffset, int shakeYOffset) override {}
 private:
 	void updateMouseXY(float deltaAcc, float * cumulativeXYAcc, int doing_x);

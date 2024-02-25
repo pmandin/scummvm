@@ -69,7 +69,7 @@ struct SaveInfoSection {
 
 #define SaveInfoSectionSize (4+4+4 + 4+4 + 4+2)
 
-#define CURRENT_VER 112
+#define CURRENT_VER 113
 #define INFOSECTION_VERSION 2
 
 #pragma mark -
@@ -2053,6 +2053,9 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 		_musicEngine->saveLoadWithSerializer(s);
 	}
 
+	// At least from now on, VAR_SOUNDCARD will have a reliable value.
+	if (s.isLoading() && (_game.heversion < 70 && _game.version <= 6))
+		setSoundCardVarToCurrentConfig();
 
 	//
 	// Save/load the charset renderer state

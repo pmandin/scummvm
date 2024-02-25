@@ -436,7 +436,7 @@ void LB::b_power(int nargs) {
 	Datum d1 = g_lingo->pop();
 	Datum d2 = g_lingo->pop();
 	Datum res(pow(d2.asFloat(), d1.asFloat()));
-	g_lingo->push(d1);
+	g_lingo->push(res);
 }
 
 void LB::b_random(int nargs) {
@@ -1210,7 +1210,9 @@ void LB::b_getNthFileNameInFolder(int nargs) {
 		return;
 	}
 
-	Common::Path path = findPath(pathRaw, true, true, true);
+	// getNthFileNameInFolder requires an absolute path as an input.
+	// relative paths will not match anything.
+	Common::Path path = findAbsolutePath(pathRaw, true);
 	// for directory, we either return the correct path, which we can access recursively.
 	// or we get a wrong path, which will lead us to a non-exist file node
 
@@ -1401,8 +1403,7 @@ void LB::b_nothing(int nargs) {
 
 void LB::b_delay(int nargs) {
 	Datum d = g_lingo->pop();
-	g_director->getCurrentMovie()->getScore()->_nextFrameTime = g_system->getMillis() + (float)d.asInt() / 60 * 1000;
-	debugC(5, kDebugLoading, "b_delay(): delaying %d ticks, next frame time at %d", d.asInt(), g_director->getCurrentMovie()->getScore()->_nextFrameTime);
+	g_director->getCurrentMovie()->getScore()->setDelay(d.asInt());
 }
 
 void LB::b_do(int nargs) {
@@ -2277,10 +2278,15 @@ void LB::b_installMenu(int nargs) {
 }
 
 void LB::b_label(int nargs) {
+	// label functions as marker when the input is an int
 	Datum d = g_lingo->pop();
-	uint16 label = g_lingo->func_label(d);
-
-	g_lingo->push(label);
+	int marker;
+	if (d.type == STRING) {
+		marker = g_lingo->func_label(d);
+	} else {
+		marker = g_lingo->func_marker(d.asInt());
+	}
+	g_lingo->push(marker);
 }
 
 void LB::b_marker(int nargs) {
@@ -2711,11 +2717,16 @@ void LB::b_spriteBox(int nargs) {
 	if (!channel)
 		return;
 
-	// This automatically sets the sctretch mode
+	// This automatically sets the stretch mode
 	channel->_sprite->_stretch = true;
 
 	g_director->getCurrentWindow()->addDirtyRect(channel->getBbox());
-	channel->setBbox(l, t, r, b);
+	channel->setBbox(
+		l < r ? l : r,
+		t < b ? t : b,
+		r > l ? r : l,
+		b > t ? b : t
+	);
 	if (channel->_sprite->_cast)
 		channel->_sprite->_cast->setModified(true);
 	channel->_dirty = true;
@@ -2819,7 +2830,7 @@ void LB::b_updateStage(int nargs) {
 	movie->getWindow()->render();
 
 	// play any puppet sounds that have been queued
-	score->playSoundChannel(score->getCurrentFrameNum(), true);
+	score->playSoundChannel(true);
 
 	if (score->_cursorDirty) {
 		score->renderCursor(movie->getWindow()->getMousePos());

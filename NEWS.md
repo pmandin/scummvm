@@ -7,7 +7,12 @@ For a more comprehensive changelog of the latest experimental code, see:
   - Added support for Orion Burger.
 
  General:
-  - Fixed GLSL version parsing on some OpenGL ES2 platforms
+  - Fixed GLSL version parsing on some OpenGL ES2 platforms.
+  - Added optional dependency for libopenmpt for sound.
+
+ MM:
+   - Added MT32/LAPC-1 support for Xeen engine.
+   - Fixed Xeen regression which caused some sound effects to stop abruptly.
 
  TsAGE:
    - Added support for Russian CD fan-translation for Ringworld.
@@ -152,6 +157,13 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Add support for Ultima VIII Spanish fan translation.
    - Support Pentagram save game files.
    - Added configurable double-click time for Ultima VIII.
+   - Original behaviour fix for placement of thrown weapons
+   - Original behaviour fix for pushing actors and objects
+   - Original behaviour fix for dropping objects
+   - Original behaviour fix for actor passability
+   - Fix cases of co-ordinates not wrapping around when a map boundary is crossed
+   - Hide menu when creating save thumbnails
+   - Fix some alloctor/deleter mismatches
 
  Voyeur:
    - Added support for German fan translation.
@@ -2140,7 +2152,7 @@ For a more comprehensive changelog of the latest experimental code, see:
  Windows port:
    - Changed default savegames location for Windows NT4/2000/XP/Vista/7.
      (The migration batch file can be used to copy savegames from the old
-      default location, to the new default location).
+     default location, to the new default location).
 
 
 #### 1.4.1 "Subwoofer Release" (2012-01-27)

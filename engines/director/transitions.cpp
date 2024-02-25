@@ -191,7 +191,7 @@ void Window::playTransition(uint frame, uint16 transDuration, uint8 transArea, u
 	Score *score = g_director->getCurrentMovie()->getScore();
 	if (t.area) {
 		// Changed area transition
-		score->renderSprites(t.frame);
+		score->renderSprites();
 
 		if (_dirtyRects.size() == 0)
 			return;
@@ -217,7 +217,7 @@ void Window::playTransition(uint frame, uint16 transDuration, uint8 transArea, u
 		render(false, &nextFrame);
 	} else {
 		// Full stage transition
-		score->renderSprites(t.frame, kRenderForceUpdate);
+		score->renderSprites(kRenderForceUpdate);
 		render(true, &nextFrame);
 
 		clipRect = _innerDims;
@@ -390,6 +390,8 @@ void Window::playTransition(uint frame, uint16 transDuration, uint8 transArea, u
 
 		case kTransPushUp:									// 14
 			rto.translate(0, h - t.yStepSize * i);
+			rfrom.bottom -= h - clipRect.findIntersectingRect(rto).height();
+			rto.clip(clipRect);
 			_composeSurface->blitFrom(nextFrame, rfrom, Common::Point(rto.left, rto.top));
 
 			rfrom.translate(0, t.yStepSize * i);

@@ -602,6 +602,7 @@ protected:
 	virtual void setupScummVars();
 	virtual void resetScummVars();
 	void setVideoModeVarToCurrentConfig();
+	void setSoundCardVarToCurrentConfig();
 
 	void setupCharsetRenderer(const Common::Path &macFontFile);
 	void setupCostumeRenderer();
@@ -974,6 +975,7 @@ protected:
 	const byte *_scriptOrgPointer = nullptr;
 	const byte * const *_lastCodePtr = nullptr;
 	byte _opcode = 0;
+	bool _debug = false;
 	byte _currentScript = 0xFF; // Let debug() work on init stage
 	int _scummStackPos = 0;
 	int _vmStack[256];

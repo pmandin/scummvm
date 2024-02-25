@@ -35,30 +35,7 @@
 #include "common/system.h"
 #include "common/textconsole.h"
 
-namespace {
-// Creates a unique log file name each time this function is called.
-// We never want to override an existing log file, so here we create one
-// based on the current game and system time.
-//
-// For example: dumps/agi.kq.20221013214511.log
-Common::Path generateLogFileName(Agi::AgiGame *state, Agi::AgiEngine *vm) {
-	TimeDate date;
-	vm->_system->getTimeAndDate(date, true);
-	return Common::Path(Common::String::format("dumps/agi.%s.%d%02d%02d%02d%02d%02d.log",
-								  vm->getTargetName().c_str(),
-								  date.tm_year + 1900,
-								  date.tm_mon + 1,
-								  date.tm_mday,
-								  date.tm_hour,
-								  date.tm_min,
-								  date.tm_sec), '/');
-}
-} // namespace
-
 namespace Agi {
-
-#define getFeatures() state->_vm->getFeatures()
-#define getLanguage() state->_vm->getLanguage()
 
 void cmdIncrement(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	uint16 varNr = parameter[0];
@@ -487,7 +464,7 @@ void cmdSetCel(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	vm->setCel(screenObj, celNr);
 	if (vm->getVersion() >= 0x2000) {
-		screenObj->flags &= ~fDontupdate;
+		screenObj->flags &= ~fDontUpdate;
 	}
 }
 
@@ -498,7 +475,7 @@ void cmdSetCelF(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	byte   value = vm->getVar(varNr);
 
 	vm->setCel(screenObj, value);
-	screenObj->flags &= ~fDontupdate;
+	screenObj->flags &= ~fDontUpdate;
 }
 
 void cmdSetView(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
@@ -785,7 +762,7 @@ void cmdSaveGame(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 void cmdLoadGame(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	if (vm->getVersion() >= 0x2272) {
-		// this was only donce since 2.272
+		// this was only done since 2.272
 		state->_vm->_sound->stopSound();
 	}
 
@@ -793,7 +770,7 @@ void cmdLoadGame(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	if (state->automaticSave) {
 		if (vm->loadGameAutomatic()) {
-			// automatic restore succeded
+			// automatic restore succeeded
 			return;
 		}
 		// fall back to regular dialog otherwise
@@ -832,8 +809,20 @@ void cmdLog(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 		Common::DumpFile *&dumpFile = vm->_logFile;
 		if (!dumpFile) {
+			// Creates a unique log file based on game and system time.
+			// For example: dumps/agi.kq.20221013214511.log
+			TimeDate date;
+			vm->_system->getTimeAndDate(date, true);
+			Common::Path logFileName(Common::String::format("dumps/agi.%s.%d%02d%02d%02d%02d%02d.log",
+				vm->getTargetName().c_str(),
+				date.tm_year + 1900,
+				date.tm_mon + 1,
+				date.tm_mday,
+				date.tm_hour,
+				date.tm_min,
+				date.tm_sec), '/');
+
 			dumpFile = new Common::DumpFile();
-			Common::Path logFileName = generateLogFileName(state, vm);
 			dumpFile->open(logFileName);
 		}
 		// The logs will only be written if the "dumps" folder has been created by
@@ -948,7 +937,7 @@ void cmdObjStatusF(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 // unk_177: Disable menus completely -- j5
 // unk_181: Deactivate keypressed control (default control of ego)
 void cmdSetSimple(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
-	if (!(getFeatures() & GF_AGI256)) {
+	if (!(state->_vm->getFeatures() & GF_AGI256)) {
 		// set.simple is called by Larry 1 on Apple IIgs at the store, after answering the 555-6969 phone.
 		// load.sound(16) is called right before it. Interpreter is 2.440-like.
 		// it's called with parameter 16.
@@ -1028,17 +1017,7 @@ void cmdShowMouse(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	}
 }
 
-// Seems to have been added for AGI3, at least according to PC AGI
-// Space Quest 2 on Apple IIgs (using AGI ) calls it during the spaceship cutscene in the intro
-// but show.mouse is never called afterwards. Game running under emulator doesn't seem to hide the mouse cursor.
-// TODO: figure out, what exactly happens. Probably some hacked-in command and not related to mouse cursor for that game?
 void cmdHideMouse(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
-	if (vm->getVersion() < 0x3000) {
-		// was not available before 3.086
-		warning("hide.mouse, although not available for current AGI version");
-		return;
-	}
-
 	if ((vm->getGameID() == GID_MH1) && (vm->getPlatform() == Common::kPlatformApple2GS)) {
 		// Called right after beating arcade sequence on day 4 in the hospital Parameter is "1".
 		// Right before cutscene. show.mouse isn't called. Probably different function.
@@ -1115,9 +1094,10 @@ void cmdAdjEgoMoveToXY(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	int8 x, y;
 
 	switch (opCodeTable[182].parameterSize) {
-	// The 2 arguments version is used at least in Amiga Gold Rush!
-	// (v2.05 1989-03-09, Amiga AGI 2.316) in logics 130 and 150
-	// (Using arguments (0, 0), (0, 7), (0, 8), (9, 9) and (-9, 9)).
+	// The 2 parameter version is used in:
+	// Amiga/Atari ST Gold Rush!   - Logic 130, 150
+	// Amiga/Atari ST Manhunter 1  - Logic 0
+	// Amiga Manhunter 2           - Logic 0
 	case 2:
 		// Both arguments are signed 8-bit (i.e. in range -128 to +127).
 		x = (int8) parameter[0];
@@ -1358,7 +1338,7 @@ void cmdDraw(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	sprites->buildRegularSpriteList();
 	sprites->drawRegularSpriteList();
 	sprites->showSprite(screenObj);
-	screenObj->flags &= ~fDontupdate;
+	screenObj->flags &= ~fDontUpdate;
 
 	debugC(4, kDebugLevelScripts, "vt entry #%d flags = %02x", objectNr, screenObj->flags);
 }
@@ -1553,7 +1533,7 @@ void cmdReverseLoop(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleRevLoop;
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	state->_vm->setFlag(screenObj->loop_flag, false);
 
@@ -1568,7 +1548,7 @@ void cmdReverseLoopV1(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleRevLoop;
 	state->_vm->setCel(screenObj, 0);
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	//screenObj->parm3 = 0;
 }
@@ -1580,7 +1560,7 @@ void cmdEndOfLoop(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleEndOfLoop;
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	vm->setFlag(screenObj->loop_flag, false);
 
@@ -1595,7 +1575,7 @@ void cmdEndOfLoopV1(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	debugC(4, kDebugLevelScripts, "o%d, f%d", objectNr, loopFlag);
 	screenObj->cycle = kCycleEndOfLoop;
 	state->_vm->setCel(screenObj, 0);
-	screenObj->flags |= (fDontupdate | fUpdate | fCycling);
+	screenObj->flags |= (fDontUpdate | fUpdate | fCycling);
 	screenObj->loop_flag = loopFlag;
 	//screenObj->parm3 = 0;
 }
@@ -1708,7 +1688,6 @@ void cmdMoveObj(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	uint16 stepSize = parameter[3];
 	uint16 moveFlag = parameter[4];
 	ScreenObjEntry *screenObj = &state->screenObjTable[objectNr];
-	// _D (_D_WARN "o=%d, x=%d, y=%d, s=%d, f=%d", p0, p1, p2, p3, p4);
 
 	screenObj->motionType = kMotionMoveObj;
 	screenObj->move_x = moveX;
@@ -1732,7 +1711,7 @@ void cmdMoveObj(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	if (objectNr == 0)
 		state->playerControl = false;
 
-	// AGI 2.272 (ddp, xmas) doesn't call move_obj!
+	// AGI 2.272 (ddp, xmas) doesn't call moveObj
 	if (vm->getVersion() > 0x2272)
 		vm->moveObj(screenObj);
 }
@@ -1762,7 +1741,7 @@ void cmdMoveObjF(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	if (objectNr == 0)
 		state->playerControl = false;
 
-	// AGI 2.272 (ddp, xmas) doesn't call move_obj!
+	// AGI 2.272 (ddp, xmas) doesn't call moveObj
 	if (vm->getVersion() > 0x2272)
 		vm->moveObj(screenObj);
 }
@@ -1851,11 +1830,11 @@ void cmdVersion(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 void cmdConfigureScreen(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	TextMgr *textMgr = state->_vm->_text;
-	uint16 lineMinPrint = parameter[0];
+	uint16 gameRow = parameter[0];
 	uint16 promptRow = parameter[1];
 	uint16 statusRow = parameter[2];
 
-	textMgr->configureScreen(lineMinPrint);
+	textMgr->configureScreen(gameRow);
 	textMgr->statusRow_Set(statusRow);
 	textMgr->promptRow_Set(promptRow);
 }
@@ -1904,7 +1883,6 @@ void cmdStatus(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 
 void cmdQuit(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	uint16 withoutPrompt = parameter[0];
-//	const char *buttons[] = { "Quit", "Continue", NULL };
 
 	state->_vm->_sound->stopSound();
 	if (withoutPrompt) {
@@ -2274,7 +2252,7 @@ void cmdSetPriBase(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	state->_vm->_gfx->setPriorityTable(priorityBase);
 }
 
-void cmdMousePosn(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
+void cmdGetMousePosn(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	uint16 destVarNr1 = parameter[0];
 	uint16 destVarNr2 = parameter[1];
 	int16 mouseX = vm->_mouse.pos.x;
@@ -2346,7 +2324,15 @@ void cmdNewRoomVV1(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 }
 
 void cmdUnknown(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
-	warning("Skipping unknown opcode %2X", *(state->_curLogic->data + state->_curLogic->cIP - 1));
+	byte opcode = *(state->_curLogic->data + state->_curLogic->cIP - 1);
+	Common::String parameterString;
+	for (int i = 0; i < vm->getOpCodesTable()[opcode].parameterSize; i++) {
+		if (i > 0) {
+			parameterString += ",";
+		}
+		parameterString += Common::String::format(" %2X (%d)", parameter[i], parameter[i]);
+	}
+	warning("Unknown opcode: %2X (%d), parameters:%s", opcode, opcode, parameterString.c_str());
 }
 
 /**
@@ -2440,7 +2426,7 @@ int AgiEngine::runLogic(int16 logicNr) {
 			return 1;
 		default:
 			if (!_opCodes[op].functionPtr) {
-				error("Illegal opcode %x in logic %d, ip %d", op, state->curLogicNr, state->_curLogic->cIP);
+				error("Illegal opcode %2X (%d) in logic %d, ip %d", op, op, state->curLogicNr, state->_curLogic->cIP);
 			}
 
 			curParameterSize = _opCodes[op].parameterSize;
