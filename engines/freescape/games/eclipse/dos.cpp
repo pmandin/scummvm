@@ -56,7 +56,7 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 
 		loadMessagesFixedSize(&file, 0x710f, 16, 17);
 		loadSoundsFx(&file, 0xd670, 1);
-		loadSpeakerFx(&file, 0x7396 + 0x200, 0x72a1 + 0x200);
+		loadSpeakerFxDOS(&file, 0x7396 + 0x200, 0x72a1 + 0x200);
 		loadFonts(&file, 0xd403);
 		load8bitBinary(&file, 0x3ce0, 16);
 		for (auto &it : _areaMap) {
@@ -66,6 +66,12 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 		}
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte *)&kEGADefaultPalette, 0, 16);
+
+		_indicators.push_back(loadBundledImage("eclipse_ankh_indicator"));
+
+		for (auto &it : _indicators)
+			it->convertToInPlace(_gfx->_texturePixelFormat);
+
 	} else if (_renderMode == Common::kRenderCGA) {
 		file.open("SCN1C.DAT");
 		if (file.isOpen()) {
@@ -95,12 +101,15 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 
 void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 	int score = _gameStateVars[k8bitVariableScore];
-	int shield = _gameStateVars[k8bitVariableShield];
+	int shield = _gameStateVars[k8bitVariableShield] * 100 / _maxShield;
+	shield = shield < 0 ? 0 : shield;
+
 	uint32 yellow = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0x55);
 	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
 	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0xFF);
 	uint32 red = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0x00, 0x00);
 	uint32 blue = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0xFF);
+	uint32 green = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x55, 0xFF, 0x55);
 	uint32 redish = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0x55, 0x55);
 
 	Common::String message;
@@ -116,8 +125,14 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 	Common::String scoreStr = Common::String::format("%07d", score);
 	drawStringInSurface(scoreStr, 136, 6, black, white, surface, 'Z' - '0' + 1);
 
-	Common::String shieldStr = Common::String::format("%02d", shield * 100 / _maxShield);
-	drawStringInSurface(shieldStr, 171, 162, black, redish, surface);
+	int x = 171;
+	if (shield < 10)
+		x = 179;
+	else if (shield < 100)
+		x = 175;
+
+	Common::String shieldStr = Common::String::format("%d", shield);
+	drawStringInSurface(shieldStr, x, 162, black, redish, surface);
 
 	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 135, black, yellow, surface, 'Z' - '$' + 1);
 	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 135, black, yellow, surface, 'Z' - '$' + 1);
@@ -135,6 +150,8 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 	Common::Rect jarWater(124, 192 - _gameStateVars[k8bitVariableEnergy], 148, 192);
 	surface->fillRect(jarWater, blue);
 
+	drawIndicator(surface, 41, 4, 16);
+	drawEclipseIndicator(surface, 228, 0, yellow, green);
 }
 
 soundFx *EclipseEngine::load1bPCM(Common::SeekableReadStream *file, int offset) {

@@ -267,6 +267,7 @@ public:
 	void resetInput();
 	void generateDemoInput();
 	virtual void pressedKey(const int keycode);
+	virtual void releasedKey(const int keycode);
 	virtual bool onScreenControls(Common::Point mouse);
 	void move(CameraMovement direction, uint8 scale, float deltaTime);
 	void resolveCollisions(Math::Vector3d newPosition);
@@ -382,8 +383,13 @@ public:
 	virtual void playSoundFx(int index, bool sync);
 	virtual void loadSoundsFx(Common::SeekableReadStream *file, int offset, int number);
 	Common::HashMap<uint16, soundFx *> _soundsFx;
-	void loadSpeakerFx(Common::SeekableReadStream *file, int offsetFreq, int offsetDuration);
+	void loadSpeakerFxDOS(Common::SeekableReadStream *file, int offsetFreq, int offsetDuration);
+	void loadSpeakerFxZX(Common::SeekableReadStream *file, int sfxTable, int sfxData);
 	Common::HashMap<uint16, soundSpeakerFx *> _soundsSpeakerFx;
+
+	void playSoundZX(Common::Array<soundUnitZX> *data);
+	Common::HashMap<uint16, Common::Array<soundUnitZX>*> _soundsSpeakerFxZX;
+	int _nextSoundToPlay = 1;
 
 	// Rendering
 	int _screenW, _screenH;
@@ -442,6 +448,7 @@ public:
 	virtual bool checkIfGameEnded();
 	virtual void endGame();
 	bool _endGameKeyPressed;
+	bool _endGamePlayerEndArea;
 	bool _forceEndGame;
 	bool _playerWasCrushed;
 	ObjectArray _sensors;

@@ -30,6 +30,10 @@ enum EclipseReleaseFlags {
 	GF_ZX_DEMO_MICROHOBBY = (1 << 1),
 };
 
+enum {
+	kVariableEclipseAnkhs = 32,
+};
+
 class EclipseEngine : public FreescapeEngine {
 public:
 	EclipseEngine(OSystem *syst, const ADGameDescription *gd);
@@ -39,13 +43,21 @@ public:
 	void borderScreen() override;
 	void titleScreen() override;
 	void drawInfoMenu() override;
+	void drawIndicator(Graphics::Surface *surface, int xPosition, int yPosition, int separation);
+
+	void drawSensorShoot(Sensor *sensor) override;
 
 	void loadAssets() override;
 	void loadAssetsDOSFullGame() override;
 	void pressedKey(const int keycode) override;
+	void releasedKey(const int keycode) override;
 
 	uint32 _initialEnergy;
 	uint32 _initialShield;
+
+	bool _resting;
+	int _lastThirtySeconds;
+	void updateTimeVariables() override;
 
 	void initDOS();
 	void initCPC();
@@ -62,6 +74,7 @@ public:
 	void drawZXUI(Graphics::Surface *surface) override;
 	void drawAnalogClock(Graphics::Surface *surface, int x, int y, uint32 colorHand1, uint32 colorHand2, uint32 colorBack);
 	void drawAnalogClockHand(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color);
+	void drawEclipseIndicator(Graphics::Surface *surface, int x, int y, uint32 color1, uint32 color2);
 
 	soundFx *load1bPCM(Common::SeekableReadStream *file, int offset);
 

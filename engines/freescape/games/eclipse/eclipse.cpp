@@ -56,10 +56,10 @@ EclipseEngine::EclipseEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_angleRotations.push_back(15);
 
 	_maxEnergy = 27;
-	_maxShield = 10; // TODO
+	_maxShield = 50;
 
 	_initialEnergy = 16;
-	_initialShield = 10; // TODO
+	_initialShield = 50;
 
 	_endArea = 1;
 	_endEntrance = 33;
@@ -73,6 +73,11 @@ void EclipseEngine::initGameState() {
 
 	_gameStateVars[k8bitVariableEnergy] = _initialEnergy;
 	_gameStateVars[k8bitVariableShield] = _initialShield;
+
+	int seconds, minutes, hours;
+	getTimeFromCountdown(seconds, minutes, hours);
+	_lastThirtySeconds = seconds / 30;
+	_resting = false;
 }
 
 void EclipseEngine::loadAssets() {
@@ -90,8 +95,9 @@ bool EclipseEngine::checkIfGameEnded() {
 		_hasFallen = false;
 		playSoundFx(4, false);
 
-		if (_gameStateVars[k8bitVariableShield] > 4) {
-			_gameStateVars[k8bitVariableShield] -= 4;
+		// If shield is less than 11 after a fall, the game ends
+		if (_gameStateVars[k8bitVariableShield] > 15 + 11) {
+			_gameStateVars[k8bitVariableShield] -= 15;
 			return false; // Game can continue
 		}
 		if (!_fallenMessage.empty())
@@ -104,6 +110,11 @@ bool EclipseEngine::checkIfGameEnded() {
 }
 
 void EclipseEngine::endGame() {
+	FreescapeEngine::endGame();
+
+	if (!_endGamePlayerEndArea)
+		return;
+
 	if (_gameStateControl == kFreescapeGameStateEnd) {
 		removeTimers();
 		if (_countdown > 0)
@@ -113,6 +124,8 @@ void EclipseEngine::endGame() {
 	}
 
 	if (_endGameKeyPressed && _countdown == 0) {
+		if (isSpectrum())
+			playSound(5, true);
 		_gameStateControl = kFreescapeGameStateRestart;
 	}
 	_endGameKeyPressed = false;
@@ -136,19 +149,25 @@ void EclipseEngine::gotoArea(uint16 areaID, int entranceID) {
 
 	_lastPosition = _position;
 
-	if (areaID == _startArea && entranceID == _startEntrance)
-		playSound(9, true);
-	if (areaID == _endArea && entranceID == _endEntrance) {
+	if (areaID == _startArea && entranceID == _startEntrance) {
+		_yaw = 180;
+		_pitch = 0;
+
+		if (isSpectrum())
+			playSound(7, true);
+		else
+			playSound(9, true);
+	} if (areaID == _endArea && entranceID == _endEntrance) {
 		_flyMode = true;
 		_pitch = 20;
-	} else
-		playSound(5, false);
+	} else {
+		if (isSpectrum())
+			playSound(7, false);
+		else
+			playSound(5, false);
+	}
 
-	if (_currentArea->_skyColor > 0 && _currentArea->_skyColor != 255) {
-		_gfx->_keyColor = 0;
-	} else
-		_gfx->_keyColor = 255;
-
+	_gfx->_keyColor = 0;
 	swapPalette(areaID);
 	_currentArea->_usualBackgroundColor = isCPC() ? 1 : 0;
 
@@ -168,7 +187,15 @@ void EclipseEngine::drawBackground() {
 		if (_countdown >= 0)
 			progress = float(_countdown) / _initialCountdown;
 
-		_gfx->drawEclipse(15, 10, progress);
+		uint8 color1 = 15;
+		uint8 color2 = 10;
+
+		if (isSpectrum() || isCPC()) {
+			color1 = 2;
+			color2 = 10;
+		}
+
+		_gfx->drawEclipse(color1, color2, progress);
 	}
 }
 
@@ -191,8 +218,11 @@ void EclipseEngine::borderScreen() {
 				drawFullscreenMessageAndWait(_messagesList[23]);
 			} else if (_variant & GF_ZX_DEMO_CRASH) {
 				drawFullscreenMessageAndWait(_messagesList[9]);
+				playSound(3, true);
 				drawFullscreenMessageAndWait(_messagesList[10]);
+				playSound(3, true);
 				drawFullscreenMessageAndWait(_messagesList[11]);
+				playSound(3, true);
 			}
 		} else {
 			FreescapeEngine::borderScreen();
@@ -295,11 +325,17 @@ void EclipseEngine::pressedKey(const int keycode) {
 			if (_temporaryMessages.empty())
 				insertTemporaryMessage(_messagesList[6], _countdown - 2);
 		} else {
+			_resting = true;
 			if (_temporaryMessages.empty())
 				insertTemporaryMessage(_messagesList[7], _countdown - 2);
 			_countdown = _countdown - 5;
 		}
 	}
+}
+
+void EclipseEngine::releasedKey(const int keycode) {
+	if (keycode == Common::KEYCODE_r)
+		_resting = false;
 }
 
 void EclipseEngine::drawAnalogClock(Graphics::Surface *surface, int x, int y, uint32 colorHand1, uint32 colorHand2, uint32 colorBack) {
@@ -325,6 +361,159 @@ void EclipseEngine::drawAnalogClockHand(Graphics::Surface *surface, int x, int y
 	double w = magnitude * cos(degrees * degtorad);
 	double h = magnitude * sin(degrees * degtorad);
 	surface->drawLine(x, y, x+(int)w, y+(int)h, color);
+}
+
+// Copied from BITMAP::circlefill in engines/ags/lib/allegro/surface.cpp
+void fillCircle(Graphics::Surface *surface, int x, int y, int radius, int color) {
+	int cx = 0;
+	int cy = radius;
+	int df = 1 - radius;
+	int d_e = 3;
+	int d_se = -2 * radius + 5;
+
+	do {
+		surface->hLine(x - cy, y - cx, x + cy, color);
+
+		if (cx)
+			surface->hLine(x - cy, y + cx, x + cy, color);
+
+		if (df < 0) {
+			df += d_e;
+			d_e += 2;
+			d_se += 2;
+		} else {
+			if (cx != cy) {
+				surface->hLine(x - cx, y - cy, x + cx, color);
+
+				if (cy)
+					surface->hLine(x - cx, y + cy, x + cx, color);
+			}
+
+			df += d_se;
+			d_e += 2;
+			d_se += 4;
+			cy--;
+		}
+
+		cx++;
+
+	} while (cx <= cy);
+}
+
+void EclipseEngine::drawEclipseIndicator(Graphics::Surface *surface, int x, int y, uint32 color1, uint32 color2) {
+	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
+
+	// These calls will cover the pixels of the hardcoded eclipse image
+	surface->fillRect(Common::Rect(x, y, x + 50, y + 20), black);
+
+	float progress = 0;
+	if (_countdown >= 0)
+		progress = float(_countdown) / _initialCountdown;
+
+	int difference = 14 * progress;
+
+	fillCircle(surface, x + 7, y + 10, 7, color1); // Sun
+	fillCircle(surface, x + 7 + difference, y + 10, 7, color2); // Moon
+}
+
+void EclipseEngine::drawIndicator(Graphics::Surface *surface, int xPosition, int yPosition, int separation) {
+	if (_indicators.size() == 0)
+		return;
+
+	for (int i = 0; i < 5; i++) {
+		if (_gameStateVars[kVariableEclipseAnkhs] > i)
+			continue;
+		surface->copyRectToSurface(*_indicators[0], xPosition + separation * i, yPosition, Common::Rect(_indicators[0]->w, _indicators[0]->h));
+	}
+}
+
+void EclipseEngine::drawSensorShoot(Sensor *sensor) {
+	Math::Vector3d target;
+	float distance = 5;
+	int axisToSkip = -1;
+
+	if (sensor->_axis == 0x1 || sensor->_axis == 0x2)
+		axisToSkip = 0;
+
+	if (sensor->_axis == 0x10 || sensor->_axis == 0x20)
+		axisToSkip = 2;
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			if (i == j) {
+				target = sensor->getOrigin();
+				if (i != axisToSkip)
+					target.setValue(i, target.getValue(i) + distance);
+
+				_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+				target = sensor->getOrigin();
+
+				if (i != axisToSkip)
+					target.setValue(i, target.getValue(i) - distance);
+
+				_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+			} else {
+				target = sensor->getOrigin();
+				if (i != axisToSkip)
+					target.setValue(i, target.getValue(i) + distance);
+
+				if (j != axisToSkip)
+					target.setValue(j, target.getValue(j) + distance);
+
+				_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+				target = sensor->getOrigin();
+				if (i != axisToSkip)
+					target.setValue(i, target.getValue(i) + distance);
+
+				if (j != axisToSkip)
+					target.setValue(j, target.getValue(j) - distance);
+
+				_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+				target = sensor->getOrigin();
+
+				if (i != axisToSkip)
+					target.setValue(i, target.getValue(i) - distance);
+
+				if (j != axisToSkip)
+					target.setValue(j, target.getValue(j) - distance);
+
+				_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+				target = sensor->getOrigin();
+				if (i != axisToSkip)
+					target.setValue(i, target.getValue(i) - distance);
+
+				if (j != axisToSkip)
+					target.setValue(j, target.getValue(j) + distance);
+
+				_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+			}
+		}
+	}
+}
+
+void EclipseEngine::updateTimeVariables() {
+	if (_gameStateControl != kFreescapeGameStatePlaying)
+		return;
+	// This function only executes "on collision" room/global conditions
+	int seconds, minutes, hours;
+	getTimeFromCountdown(seconds, minutes, hours);
+	if (_lastThirtySeconds != seconds / 30) {
+		_lastThirtySeconds = seconds / 30;
+
+		if (!_resting && _gameStateVars[k8bitVariableEnergy] > 0) {
+			_gameStateVars[k8bitVariableEnergy] -= 1;
+		}
+
+		if (_gameStateVars[k8bitVariableShield] < _maxShield) {
+			_gameStateVars[k8bitVariableShield] += 1;
+		}
+
+		executeLocalGlobalConditions(false, false, true);
+	}
 }
 
 void EclipseEngine::executePrint(FCLInstruction &instruction) {

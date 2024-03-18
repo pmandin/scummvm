@@ -184,6 +184,11 @@ void DarkEngine::initGameState() {
 
 	_endArea = 1;
 	_endEntrance = 26;
+
+	int seconds, minutes, hours;
+	getTimeFromCountdown(seconds, minutes, hours);
+	_lastMinute = minutes;
+	_lastTenSeconds = seconds / 10;
 }
 
 void DarkEngine::loadAssets() {
@@ -378,6 +383,9 @@ bool DarkEngine::checkIfGameEnded() {
 	if (_gameStateVars[kVariableDarkECD] > 0) {
 		int index = _gameStateVars[kVariableDarkECD] - 1;
 		bool destroyed = tryDestroyECD(index);
+		if (isSpectrum())
+			playSound(7, false);
+
 		if (destroyed) {
 			_gameStateVars[kVariableActiveECDs] -= 4;
 			_gameStateVars[k8bitVariableScore] += 52750;
@@ -385,7 +393,10 @@ bool DarkEngine::checkIfGameEnded() {
 		} else {
 			restoreECD(*_currentArea, index);
 			insertTemporaryMessage(_messagesList[1], _countdown - 2);
-			playSound(19, true);
+			if (isSpectrum())
+				playSound(30, false);
+			else
+				playSound(19, true);
 		}
 		_gameStateVars[kVariableDarkECD] = 0;
 	}
@@ -393,6 +404,11 @@ bool DarkEngine::checkIfGameEnded() {
 }
 
 void DarkEngine::endGame() {
+	FreescapeEngine::endGame();
+
+	if (!_endGamePlayerEndArea)
+		return;
+
 	if (_gameStateControl == kFreescapeGameStateEnd) {
 		if (!_ticksFromEnd)
 			_ticksFromEnd = _ticks;
@@ -499,11 +515,18 @@ void DarkEngine::gotoArea(uint16 areaID, int entranceID) {
 	if (areaID == _startArea && entranceID == _startEntrance) {
 		_yaw = 90;
 		_pitch = 0;
-		playSound(9, true);
+		if (isSpectrum())
+			playSound(11, true);
+		else
+			playSound(9, true);
 	} else if (areaID == _endArea && entranceID == _endEntrance) {
 		_pitch = 10;
-	} else
-		playSound(5, false);
+	} else {
+		if (isSpectrum())
+			playSound(0x1c, false);
+		else
+			playSound(5, false);
+	}
 
 	debugC(1, kFreescapeDebugMove, "starting player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
 	clearTemporalMessages();
@@ -635,6 +658,12 @@ void DarkEngine::drawIndicator(Graphics::Surface *surface, int xPosition, int yP
 }
 
 void DarkEngine::drawSensorShoot(Sensor *sensor) {
+	if (_gameStateControl == kFreescapeGameStatePlaying) {
+		// Avoid playing new sounds, so the endgame can progress
+		if (isSpectrum())
+			playSound(2, true);
+	}
+
 	Math::Vector3d target;
 	target = _position;
 	target.y() = target.y() - _playerHeight;

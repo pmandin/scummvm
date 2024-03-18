@@ -27,7 +27,7 @@
 #include "common/savefile.h"
 #include "engines/util.h"
 #include "graphics/managed_surface.h"
-#include "graphics/palette.h"
+#include "graphics/paletteman.h"
 #include "m4/m4.h"
 #include "m4/adv_r/adv_control.h"
 #include "m4/adv_r/adv_file.h"
@@ -135,6 +135,13 @@ void M4Engine::m4_inflight() {
 			m4EndScene();
 		}
 	}
+}
+
+void M4Engine::syncSoundSettings() {
+	Engine::syncSoundSettings();
+
+	int volume = ConfMan.getBool("sfx_mute") ? 0 : CLIP(ConfMan.getInt("sfx_volume"), 0, 255);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kPlainSoundType, volume);
 }
 
 bool M4Engine::canLoadGameStateCurrently(Common::U32String *msg) {

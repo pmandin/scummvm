@@ -65,13 +65,11 @@ void EclipseEngine::loadAssetsCPCDemo() {
 	}
 	loadColorPalette();
 	swapPalette(1);
-	//_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
-	//_indicators.push_back(loadBundledImage("dark_crouch_indicator"));
-	//_indicators.push_back(loadBundledImage("dark_walk_indicator"));
-	//_indicators.push_back(loadBundledImage("dark_jet_indicator"));
 
-	//for (auto &it : _indicators)
-	//	it->convertToInPlace(_gfx->_texturePixelFormat);
+	_indicators.push_back(loadBundledImage("eclipse_ankh_indicator"));
+
+	for (auto &it : _indicators)
+		it->convertToInPlace(_gfx->_texturePixelFormat);
 }
 
 void EclipseEngine::drawCPCUI(Graphics::Surface *surface) {
@@ -95,12 +93,23 @@ void EclipseEngine::drawCPCUI(Graphics::Surface *surface) {
 	uint32 other = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
 	int score = _gameStateVars[k8bitVariableScore];
+	int shield = _gameStateVars[k8bitVariableShield] * 100 / _maxShield;
+	shield = shield < 0 ? 0 : shield;
 
 	if (!_currentAreaMessages.empty())
 		drawStringInSurface(_currentAreaMessages[0], 102, 135, back, front, surface);
 
 	Common::String scoreStr = Common::String::format("%07d", score);
 	drawStringInSurface(scoreStr, 136, 6, back, other, surface, 'Z' - '0' + 1);
+
+	int x = 171;
+	if (shield < 10)
+		x = 179;
+	else if (shield < 100)
+		x = 175;
+
+	Common::String shieldStr = Common::String::format("%d", shield);
+	drawStringInSurface(shieldStr, x, 162, back, other, surface);
 
 	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 135, back, front, surface, 'Z' - '$' + 1);
 	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 135, back, front, surface, 'Z' - '$' + 1);
@@ -111,6 +120,8 @@ void EclipseEngine::drawCPCUI(Graphics::Surface *surface) {
 		drawStringInSurface("<", 240, 135, back, front, surface, 'Z' - '$' + 1);
 	}
 	drawAnalogClock(surface, 90, 172, back, other, front);
+	drawIndicator(surface, 45, 4, 12);
+	drawEclipseIndicator(surface, 228, 0, front, other);
 }
 
 } // End of namespace Freescape
