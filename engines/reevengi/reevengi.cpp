@@ -142,6 +142,9 @@ Common::Error ReevengiEngine::run() {
 		testLoadMovie();
 	} else {
 		entity = loadEntity(_defEntity, _defIsPlayer);
+		if (entity && (_gameType==RType_RE1)) {
+			entity->_numAnim = 3;
+		}
 
 		loadRoom();
 		if (_roomScene) {
@@ -183,6 +186,8 @@ Common::Error ReevengiEngine::run() {
 			if (entity) {
 				g_driver->setColor(1.0, 1.0, 1.0);
 				entity->draw(_playerX, _playerY, _playerZ, _playerA);
+
+				entity->_numFrame = (-_clock->getGameTic()) % entity->getNumAnimFrames();
 			}
 			testView3DEnd();
 		}
