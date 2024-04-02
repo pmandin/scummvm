@@ -158,12 +158,64 @@ void *RE2Entity::getEmdSection(int numSection) {
 int RE2Entity::getNumAnims(void) {
 	emd_anim_header_t *emd_anim_header;
 
-	if (!_emdPtr)
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(getNumSection(ENTITY_ANIM_FRAMES));
+	if (!emd_anim_header)
 		return 0;
 
-	emd_anim_header = (emd_anim_header_t *) getEmdSection(getNumSection(ENTITY_ANIM_FRAMES));
-
 	return (FROM_LE_16(emd_anim_header->offset) / sizeof(emd_anim_header_t));
+}
+
+int RE2Entity::getNumAnimFrames(void) {
+	emd_anim_header_t *emd_anim_header;
+
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(getNumSection(ENTITY_ANIM_FRAMES));
+	if (!emd_anim_header)
+		return 1;
+
+	return (FROM_LE_16(emd_anim_header[_numAnim].count));
+}
+
+void RE2Entity::getAnimAngles(int numMesh, int *x, int *y, int *z) {
+	emd_anim_header_t *emd_anim_header;
+	emd_skel_header_t *emd_skel_header;
+	uint32 *ptr_skel_frame;
+	uint8 *ptr_angles;
+	int start_byte, num_skel_frame, max_frames;
+
+	if (!_emdPtr)
+		return;
+	if (_numAnim>=getNumAnims())
+		return;
+	max_frames = getNumAnimFrames();
+
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(getNumSection(ENTITY_ANIM_FRAMES));
+	ptr_skel_frame = (uint32 *)
+		(&((char *) (emd_anim_header))[FROM_LE_16(emd_anim_header[_numAnim].offset)]);
+	num_skel_frame = FROM_LE_32(ptr_skel_frame[_numFrame % max_frames]) & ((1<<12)-1);
+
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(getNumSection(ENTITY_SKELETON));
+	ptr_angles = (uint8 *)
+		(&((char *) (emd_skel_header))[
+			FROM_LE_16(emd_skel_header->anim_offset)
+			+ num_skel_frame*FROM_LE_16(emd_skel_header->size)
+			+ sizeof(emd_skel_anim_t)
+		]);
+
+	*x = *y = *z = 0;
+
+	start_byte = (numMesh>>1) * 9;
+	if ((numMesh & 1)==0) {
+		/* XX, YX, YY, ZZ, -Z */
+		*x = ptr_angles[start_byte] + ((ptr_angles[start_byte+1] & 15)<<8);
+		*y = (ptr_angles[start_byte+1]>>4) + (ptr_angles[start_byte+2]<<4);
+		*z = ptr_angles[start_byte+3] + ((ptr_angles[start_byte+4] & 15)<<8);
+	} else {
+		/* X-, XX, YY, ZY, ZZ */
+		ptr_angles += 4;
+		*x = (ptr_angles[start_byte]>>4) + (ptr_angles[start_byte+1]<<4);
+		*y = ptr_angles[start_byte+2] + ((ptr_angles[start_byte+3] & 15)<<8);
+		*z = (ptr_angles[start_byte+3]>>4) + (ptr_angles[start_byte+4]<<4);
+	}
 }
 
 int RE2Entity::getNumChildren(int numMesh) {
@@ -207,6 +259,7 @@ void RE2Entity::drawMesh(int numMesh) {
 	emd_mesh_object_t *emd_mesh_array;
 	emd_mesh_t *emd_mesh;
 	uint i, tx_w, tx_h;
+	int angles[3];
 
 	if (!_emdPtr)
 		return;
@@ -222,7 +275,11 @@ void RE2Entity::drawMesh(int numMesh) {
 		(int16) FROM_LE_16(emd_skel_relpos->z)
 	);
 
-	// TODO: Handle animation
+	// rotate for current animation frame
+	getAnimAngles(numMesh, &angles[0], &angles[1], &angles[2]);
+	g_driver->rotate((angles[0] * 360.0f) / 4096.0f, 1.0f, 0.0f, 0.0f);
+	g_driver->rotate((angles[1] * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
+	g_driver->rotate((angles[2] * 360.0f) / 4096.0f, 0.0f, 0.0f, 1.0f);
 
 	/* Offset 7: Meshes */
 	emd_mesh_header = (emd_mesh_header_t *) getEmdSection(getNumSection(ENTITY_MESHES));

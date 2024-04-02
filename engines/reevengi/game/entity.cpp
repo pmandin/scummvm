@@ -77,6 +77,10 @@ int Entity::getNumAnims(void) {
 	return 0;
 }
 
+int Entity::getNumAnimFrames(void) {
+	return 1;
+}
+
 int Entity::getNumChildren(int numMesh) {
 	return 0;
 }
