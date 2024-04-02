@@ -31,6 +31,9 @@ namespace Reevengi {
 
 class Entity {
 public:
+	int _numAnim;	/* Animation in entity */
+	int _numFrame;	/* Frame in animation */
+
 	Entity(Common::SeekableReadStream *stream);
 	virtual ~Entity();
 
@@ -38,19 +41,18 @@ public:
 
 	void draw(int x, int y, int z, int a);
 
+	virtual int getNumAnims(void);	/* Number of animations for this entity */
+	virtual int getNumAnimFrames(void);	/* Number of frames for a given animation */
+
 protected:
 	// raw data file for entity
 	byte *_emdPtr;
 	int32 _emdSize;
 
-	int _numAnim;	/* Animation in entity */
-	int _numFrame;	/* Frame in animation */
-
 	void setTexture(int numTexId);
 
 	virtual void *getEmdSection(int numSection);
 
-	virtual int getNumAnims(void);
 	virtual int getNumChildren(int numMesh);
 	virtual int getChild(int numMesh, int numChild);
 

@@ -33,6 +33,9 @@ class RE2Entity : public Entity {
 public:
 	RE2Entity(Common::SeekableReadStream *stream);
 
+	int getNumAnims(void) override;
+	int getNumAnimFrames(void) override;
+
 protected:
 	static const int ENTITY_ANIM_FRAMES=0;
 	static const int ENTITY_SKELETON=1;
@@ -42,7 +45,8 @@ protected:
 	virtual int getNumSection(int sectionType);
 	void *getEmdSection(int numSection) override;
 
-	int getNumAnims(void) override;
+	void getAnimAngles(int numMesh, int *x, int *y, int *z);
+
 	int getNumChildren(int numMesh) override;
 	int getChild(int numMesh, int numChild) override;
 

@@ -33,10 +33,14 @@ class RE1Entity : public Entity {
 public:
 	RE1Entity(Common::SeekableReadStream *stream);
 
+	int getNumAnims(void) override;
+	int getNumAnimFrames(void) override;
+
 protected:
 	void *getEmdSection(int numSection) override;
 
-	int getNumAnims(void) override;
+	void getAnimAngles(int numMesh, int *x, int *y, int *z);
+
 	int getNumChildren(int numMesh) override;
 	int getChild(int numMesh, int numChild) override;
 

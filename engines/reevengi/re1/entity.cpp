@@ -152,13 +152,53 @@ void *RE1Entity::getEmdSection(int numSection) {
 int RE1Entity::getNumAnims(void) {
 	emd_anim_header_t *emd_anim_header;
 
-	if (!_emdPtr)
-		return 0;
-
 	/* Offset 1: Animation frames */
 	emd_anim_header = (emd_anim_header_t *) getEmdSection(EMD_ANIM_FRAMES);
+	if (!emd_anim_header)
+		return 0;
 
 	return (FROM_LE_16((emd_anim_header->offset) / sizeof(emd_anim_header_t)));
+}
+
+int RE1Entity::getNumAnimFrames(void) {
+	emd_anim_header_t *emd_anim_header;
+
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(EMD_ANIM_FRAMES);
+	if (!emd_anim_header)
+		return 1;
+
+	return (FROM_LE_16(emd_anim_header[_numAnim].count));
+}
+
+void RE1Entity::getAnimAngles(int numMesh, int *x, int *y, int *z) {
+	emd_anim_header_t *emd_anim_header;
+	emd_skel_header_t *emd_skel_header;
+	uint32 *ptr_skel_frame;
+	int16 *ptr_angles;
+	int num_skel_frame, max_frames;
+
+	if (!_emdPtr)
+		return;
+	if (_numAnim>=getNumAnims())
+		return;
+	max_frames = getNumAnimFrames();
+
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(EMD_ANIM_FRAMES);
+	ptr_skel_frame = (uint32 *)
+		(&((char *) (emd_anim_header))[FROM_LE_16(emd_anim_header[_numAnim].offset)]);
+	num_skel_frame = FROM_LE_32(ptr_skel_frame[_numFrame % max_frames]) & ((1<<16)-1);
+
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
+	ptr_angles = (int16 *)
+		(&((char *) (emd_skel_header))[
+			FROM_LE_16(emd_skel_header->anim_offset)
+			+ num_skel_frame*FROM_LE_16(emd_skel_header->size)
+			+ sizeof(emd_skel_anim_t)
+		]);
+
+	*x = FROM_LE_16(ptr_angles[numMesh*3]) & 4095;
+	*y = FROM_LE_16(ptr_angles[numMesh*3+1]) & 4095;
+	*z = FROM_LE_16(ptr_angles[numMesh*3+2]) & 4095;
 }
 
 int RE1Entity::getNumChildren(int numMesh) {
@@ -196,12 +236,13 @@ int RE1Entity::getChild(int numMesh, int numChild) {
 }
 
 void RE1Entity::drawMesh(int numMesh) {
-	uint32 *hdr_offsets, skel_offset, mesh_offset;
+	//uint32 *hdr_offsets, skel_offset, mesh_offset;
 	emd_skel_header_t *emd_skel_header;
 	emd_skel_relpos_t *emd_skel_relpos;
 	emd_mesh_header_t *emd_mesh_header;
 	emd_mesh_t *emd_mesh, *emd_mesh_array;
 	uint i, tx_w, tx_h;
+	int angles[3];
 
 	if (!_emdPtr)
 		return;
@@ -217,7 +258,11 @@ void RE1Entity::drawMesh(int numMesh) {
 		(int16) FROM_LE_16(emd_skel_relpos->z)
 	);
 
-	// TODO: Handle animation
+	// rotate for current animation frame
+	getAnimAngles(numMesh, &angles[0], &angles[1], &angles[2]);
+	g_driver->rotate((angles[0] * 360.0f) / 4096.0f, 1.0f, 0.0f, 0.0f);
+	g_driver->rotate((angles[1] * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
+	g_driver->rotate((angles[2] * 360.0f) / 4096.0f, 0.0f, 0.0f, 1.0f);
 
 	/* Offset 2: Meshes */
 	emd_mesh_header = (emd_mesh_header_t *) getEmdSection(EMD_MESHES);
