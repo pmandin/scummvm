@@ -182,6 +182,8 @@ void RE2Entity::getAnimAngles(int numMesh, int *x, int *y, int *z) {
 	uint8 *ptr_angles;
 	int start_byte, num_skel_frame, max_frames;
 
+	Entity::getAnimAngles(numMesh, x, y, z);
+
 	if (!_emdPtr)
 		return;
 	if (_numAnim>=getNumAnims())
@@ -200,8 +202,6 @@ void RE2Entity::getAnimAngles(int numMesh, int *x, int *y, int *z) {
 			+ num_skel_frame*FROM_LE_16(emd_skel_header->size)
 			+ sizeof(emd_skel_anim_t)
 		]);
-
-	*x = *y = *z = 0;
 
 	start_byte = (numMesh>>1) * 9;
 	if ((numMesh & 1)==0) {

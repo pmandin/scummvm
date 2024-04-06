@@ -177,6 +177,8 @@ void RE1Entity::getAnimAngles(int numMesh, int *x, int *y, int *z) {
 	int16 *ptr_angles;
 	int num_skel_frame, max_frames;
 
+	Entity::getAnimAngles(numMesh, x, y, z);
+
 	if (!_emdPtr)
 		return;
 	if (_numAnim>=getNumAnims())

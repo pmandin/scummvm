@@ -39,7 +39,7 @@ public:
 protected:
 	void *getEmdSection(int numSection) override;
 
-	void getAnimAngles(int numMesh, int *x, int *y, int *z);
+	void getAnimAngles(int numMesh, int *x, int *y, int *z) override;
 
 	int getNumChildren(int numMesh) override;
 	int getChild(int numMesh, int numChild) override;
