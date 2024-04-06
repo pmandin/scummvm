@@ -200,17 +200,12 @@ RofsFileStream::RofsFileStream(const RofsFileEntry *entry, Common::SeekableReadS
 	memset(_fileBuffer, 0, _entry.uncompressedSize);
 
 	decryptFile(_entry.compressed);
-	/*if (_entry.compressed) {
-		_arcStream->seek(0);
-		depackFile();
-	}*/
 /*
 	Common::DumpFile adf;
 	adf.open("img0.jpg");
 	adf.write(_fileBuffer, _entry.uncompressedSize);
 	adf.close();
 */
-
 	_arcStream = nullptr;
 }
 
@@ -293,7 +288,12 @@ void RofsFileStream::decryptFile(bool isCompressed) {
 		decryptBlock(&_fileBuffer[offset], blockKey, blockLen);
 
 		if (isCompressed) {
-			uint32 dstBlock = 32768;
+			/* Depack remaining size, limited to 32K max */
+			uint32 dstBlock = _entry.uncompressedSize - offset;
+			if (dstBlock>32768) {
+				dstBlock = 32768;
+			}
+
 			depack_block(&_fileBuffer[offset], blockLen, &dstBlock);
 			if (dstBlock!=0) {
 				blockLen = dstBlock;
