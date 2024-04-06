@@ -53,6 +53,8 @@ protected:
 
 	virtual void *getEmdSection(int numSection);
 
+	virtual void getAnimAngles(int numMesh, int *x, int *y, int *z);
+
 	virtual int getNumChildren(int numMesh);
 	virtual int getChild(int numMesh, int numChild);
 

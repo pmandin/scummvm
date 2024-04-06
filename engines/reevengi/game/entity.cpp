@@ -81,6 +81,10 @@ int Entity::getNumAnimFrames(void) {
 	return 1;
 }
 
+void Entity::getAnimAngles(int numMesh, int *x, int *y, int *z) {
+	*x = *y = *z = 0;
+}
+
 int Entity::getNumChildren(int numMesh) {
 	return 0;
 }
