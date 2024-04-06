@@ -46,7 +46,7 @@ Room::Room(ReevengiEngine *game, Common::SeekableReadStream *stream): _game(game
 }
 
 Room::~Room() {
-	delete _roomPtr;
+	delete[] _roomPtr;
 	_roomPtr = nullptr;
 	_roomSize = 0;
 }

@@ -210,7 +210,7 @@ RofsFileStream::RofsFileStream(const RofsFileEntry *entry, Common::SeekableReadS
 }
 
 RofsFileStream::~RofsFileStream() {
-	delete _fileBuffer;
+	delete[] _fileBuffer;
 	_fileBuffer = nullptr;
 }
 
