@@ -63,6 +63,9 @@ EclipseEngine::EclipseEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 
 	_endArea = 1;
 	_endEntrance = 33;
+
+	_lastThirtySeconds = 0;
+	_resting = false;
 }
 
 void EclipseEngine::initGameState() {
@@ -91,21 +94,26 @@ void EclipseEngine::loadAssets() {
 }
 
 bool EclipseEngine::checkIfGameEnded() {
-	if (_hasFallen && _avoidRenderingFrames == 0) {
-		_hasFallen = false;
-		playSoundFx(4, false);
+	if (_gameStateControl == kFreescapeGameStatePlaying) {
+		if (_hasFallen && _avoidRenderingFrames == 0) {
+			_hasFallen = false;
+			playSoundFx(4, false);
 
-		// If shield is less than 11 after a fall, the game ends
-		if (_gameStateVars[k8bitVariableShield] > 15 + 11) {
-			_gameStateVars[k8bitVariableShield] -= 15;
-			return false; // Game can continue
+			// If shield is less than 11 after a fall, the game ends
+			if (_gameStateVars[k8bitVariableShield] > 15 + 11) {
+				_gameStateVars[k8bitVariableShield] -= 15;
+				return false; // Game can continue
+			}
+			if (!_fallenMessage.empty())
+				insertTemporaryMessage(_fallenMessage, _countdown - 4);
+			_gameStateControl = kFreescapeGameStateEnd;
+		} else if (getGameBit(16)) {
+			_gameStateControl = kFreescapeGameStateEnd;
+			insertTemporaryMessage(_messagesList[4], INT_MIN);
 		}
-		if (!_fallenMessage.empty())
-			insertTemporaryMessage(_fallenMessage, _countdown - 4);
-		_gameStateControl = kFreescapeGameStateEnd;
-	}
 
-	FreescapeEngine::checkIfGameEnded();
+		FreescapeEngine::checkIfGameEnded();
+	}
 	return false;
 }
 
@@ -117,13 +125,20 @@ void EclipseEngine::endGame() {
 
 	if (_gameStateControl == kFreescapeGameStateEnd) {
 		removeTimers();
-		if (_countdown > 0)
-			_countdown -= 10;
-		else
-			_countdown = 0;
+		if (getGameBit(16)) {
+			if (_countdown > - 3600)
+				_countdown -= 10;
+			else
+				_countdown = -3600;
+		} else {
+			if (_countdown > 0)
+				_countdown -= 10;
+			else
+				_countdown = 0;
+		}
 	}
 
-	if (_endGameKeyPressed && _countdown == 0) {
+	if (_endGameKeyPressed && (_countdown == 0 || _countdown == -3600)) {
 		if (isSpectrum())
 			playSound(5, true);
 		_gameStateControl = kFreescapeGameStateRestart;
@@ -141,11 +156,12 @@ void EclipseEngine::gotoArea(uint16 areaID, int entranceID) {
 	_currentAreaMessages.clear();
 	_currentAreaMessages.push_back(_currentArea->_name);
 
-	if (entranceID == -1)
-		return;
-
-	assert(entranceID > 0);
-	traverseEntrance(entranceID);
+	if (entranceID > 0)
+		traverseEntrance(entranceID);
+	else if (entranceID == -1)
+		debugC(1, kFreescapeDebugMove, "Loading game, no change in position");
+	else
+		error("Invalid area change!");
 
 	_lastPosition = _position;
 
@@ -157,9 +173,18 @@ void EclipseEngine::gotoArea(uint16 areaID, int entranceID) {
 			playSound(7, true);
 		else
 			playSound(9, true);
+
+		if (isEclipse2()) {
+			_yaw = 120;
+			_gameStateControl = kFreescapeGameStateStart;
+		}
+
 	} if (areaID == _endArea && entranceID == _endEntrance) {
 		_flyMode = true;
-		_pitch = 20;
+		if (isDemo())
+			_pitch = 20;
+		else
+			_pitch = 10;
 	} else {
 		if (isSpectrum())
 			playSound(7, false);
@@ -178,13 +203,13 @@ void EclipseEngine::drawBackground() {
 	clearBackground();
 	_gfx->drawBackground(_currentArea->_skyColor);
 	if (_currentArea && _currentArea->getAreaID() == 1) {
-		if (_countdown <= 15 * 60) // Last 15 minutes
+		if (ABS(_countdown) <= 15 * 60) // Last 15 minutes
 			_gfx->drawBackground(5);
-		if (_countdown <= 10) // Last 10 seconds
+		if (ABS(_countdown) <= 10) // Last 10 seconds
 			_gfx->drawBackground(1);
 
 		float progress = 0;
-		if (_countdown >= 0)
+		if (_countdown >= 0 || getGameBit(16))
 			progress = float(_countdown) / _initialCountdown;
 
 		uint8 color1 = 15;
@@ -266,6 +291,7 @@ void EclipseEngine::drawInfoMenu() {
 	drawStringInSurface("T-TOGGLE", 128, 81, front, black, surface);
 	drawStringInSurface("SOUND ON/OFF", 113, 88, front, black, surface);
 
+	Texture *menuTexture = _gfx->createTexture(surface);
 	Common::Event event;
 	bool cont = true;
 	while (!shouldQuit() && cont) {
@@ -304,7 +330,7 @@ void EclipseEngine::drawInfoMenu() {
 			}
 		}
 		drawFrame();
-		drawFullscreenSurface(surface);
+		_gfx->drawTexturedRect2D(_fullscreenViewArea, _fullscreenViewArea, menuTexture);
 
 		_gfx->flipBuffer();
 		g_system->updateScreen();
@@ -315,6 +341,7 @@ void EclipseEngine::drawInfoMenu() {
 	delete _savedScreen;
 	surface->free();
 	delete surface;
+	delete menuTexture;
 	pauseToken.clear();
 }
 
@@ -421,7 +448,10 @@ void EclipseEngine::drawIndicator(Graphics::Surface *surface, int xPosition, int
 		return;
 
 	for (int i = 0; i < 5; i++) {
-		if (_gameStateVars[kVariableEclipseAnkhs] > i)
+		if (isSpectrum()) {
+			if (_gameStateVars[kVariableEclipseAnkhs] <= i)
+				continue;
+		} else if (_gameStateVars[kVariableEclipseAnkhs] > i)
 			continue;
 		surface->copyRectToSurface(*_indicators[0], xPosition + separation * i, yPosition, Common::Rect(_indicators[0]->w, _indicators[0]->h));
 	}
@@ -496,6 +526,11 @@ void EclipseEngine::drawSensorShoot(Sensor *sensor) {
 }
 
 void EclipseEngine::updateTimeVariables() {
+	if (isEclipse2() && _gameStateControl == kFreescapeGameStateStart) {
+		executeLocalGlobalConditions(false, true, false);
+		_gameStateControl = kFreescapeGameStatePlaying;
+	}
+
 	if (_gameStateControl != kFreescapeGameStatePlaying)
 		return;
 	// This function only executes "on collision" room/global conditions

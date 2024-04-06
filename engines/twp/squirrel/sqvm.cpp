@@ -132,6 +132,11 @@ SQVM::SQVM(SQSharedState *ss)
 
 void SQVM::Finalize()
 {
+	FinalizeCore();
+}
+
+void SQVM::FinalizeCore()
+{
     if(_releasehook) { _releasehook(_foreignptr,0); _releasehook = NULL; }
     if(_openouters) CloseOuters(&_stack._vals[0]);
     _roottable.Null();
@@ -149,7 +154,7 @@ void SQVM::Finalize()
 
 SQVM::~SQVM()
 {
-    Finalize();
+    FinalizeCore();
     REMOVE_FROM_CHAIN(&_ss(this)->_gc_chain,this);
 }
 
@@ -172,7 +177,7 @@ bool SQVM::ArithMetaMethod(SQInteger op,const SQObjectPtr &o1,const SQObjectPtr 
             return CallMetaMethod(closure,mm,2,dest);
         }
     }
-    Raise_Error(_SC("arith op %c on between '%s' and '%s'"),op,GetTypeName(o1),GetTypeName(o2));
+    Raise_Error(_SC("arith op %c on between '%s' and '%s'"),(char)op,GetTypeName(o1),GetTypeName(o2));
     return false;
 }
 
@@ -241,10 +246,6 @@ bool SQVM::ObjCmp(const SQObjectPtr &o1,const SQObjectPtr &o2,SQInteger &result)
         default:
             _RET_SUCCEED( _userpointer(o1) < _userpointer(o2)?-1:1 );
         }
-        assert(0);
-        //if(type(res)!=OT_INTEGER) { Raise_CompareError(o1,o2); return false; }
-        //  _RET_SUCCEED(_integer(res));
-
     }
     else{
         if(sq_isnumeric(o1) && sq_isnumeric(o2)){
@@ -264,8 +265,6 @@ bool SQVM::ObjCmp(const SQObjectPtr &o1,const SQObjectPtr &o2,SQInteger &result)
         else { Raise_CompareError(o1,o2); return false; }
 
     }
-    assert(0);
-    _RET_SUCCEED(0); //cannot happen
 }
 
 bool SQVM::CMP_OP(CmpOP op, const SQObjectPtr &o1,const SQObjectPtr &o2,SQObjectPtr &res)
@@ -1046,18 +1045,19 @@ exception_restore:
                 }
                               }
                 continue;
-            case _OP_THROW: Raise_Error(TARGET); SQ_THROW(); continue;
+            case _OP_THROW: Raise_Error(TARGET); SQ_THROW();
             case _OP_NEWSLOTA:
                 _GUARD(NewSlotA(STK(arg1),STK(arg2),STK(arg3),(arg0&NEW_SLOT_ATTRIBUTES_FLAG) ? STK(arg2-1) : SQObjectPtr(),(arg0&NEW_SLOT_STATIC_FLAG)?true:false,false));
                 continue;
             case _OP_GETBASE:{
-                SQClosure *clo = _closure(ci->_closure);
-                if(clo->_base) {
-                    TARGET = clo->_base;
+                if (ci) {
+                    SQClosure *clo = _closure(ci->_closure);
+                    if (clo && clo->_base) {
+                        TARGET = clo->_base;
+                        continue;
+                    }
                 }
-                else {
-                    TARGET.Null();
-                }
+                TARGET.Null();
                 continue;
             }
             case _OP_CLOSE:
@@ -1095,7 +1095,7 @@ exception_trap:
                     }
             }
             if(ci->_generator) ci->_generator->Kill();
-            bool mustbreak = ci && ci->_root;
+            bool mustbreak = ci->_root;
             LeaveFrame();
             if(mustbreak) break;
         }
@@ -1103,7 +1103,6 @@ exception_trap:
         _lasterror = currerror;
         return false;
     }
-    assert(0);
 }
 
 bool SQVM::CreateClassInstance(SQClass *theclass, SQObjectPtr &inst, SQObjectPtr &constructor)
@@ -1488,9 +1487,6 @@ bool SQVM::NewSlot(const SQObjectPtr &self,const SQObjectPtr &key,const SQObject
                         return false;
                     }
                     rawcall = false;
-                }
-                else {
-                    rawcall = true;
                 }
             }
         }

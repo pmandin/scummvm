@@ -37,6 +37,72 @@ extern byte kCPCPaletteBorderData[4][3];
 
 extern Graphics::ManagedSurface *readCPCImage(Common::SeekableReadStream *file, bool mode0);
 
+void EclipseEngine::loadAssetsCPCFullGame() {
+	Common::File file;
+
+	if (isEclipse2())
+		file.open("TE2.BI1");
+	else
+		file.open("TESCR.SCR");
+
+	if (!file.isOpen())
+		error("Failed to open TESCR.SCR/TE2.BI1");
+
+	_title = readCPCImage(&file, true);
+	_title->setPalette((byte*)&kCPCPaletteTitleData, 0, 4);
+
+	file.close();
+	if (isEclipse2())
+		file.open("TE2.BI3");
+	else
+		file.open("TECON.SCR");
+
+	if (!file.isOpen())
+		error("Failed to open TECON.SCR/TE2.BI3");
+
+	_border = readCPCImage(&file, true);
+	_border->setPalette((byte*)&kCPCPaletteTitleData, 0, 4);
+
+	file.close();
+	if (isEclipse2())
+		file.open("TE2.BI2");
+	else
+		file.open("TECODE.BIN");
+
+	if (!file.isOpen())
+		error("Failed to open TECODE.BIN/TE2.BI2");
+
+	if (isEclipse2()) {
+		loadFonts(&file, 0x60bc);
+		loadMessagesFixedSize(&file, 0x326, 16, 30);
+		load8bitBinary(&file, 0x62b4, 16);
+	} else {
+		loadFonts(&file, 0x6076);
+		loadMessagesFixedSize(&file, 0x326, 16, 30);
+		load8bitBinary(&file, 0x626e, 16);
+	}
+
+	for (auto &it : _areaMap) {
+		it._value->addStructure(_areaMap[255]);
+
+		if (isEclipse2() && it._value->getAreaID() == 1)
+			continue;
+
+		if (isEclipse2() && it._value->getAreaID() == _startArea)
+			continue;
+
+		for (int16 id = 183; id < 207; id++)
+			it._value->addObjectFromArea(id, _areaMap[255]);
+	}
+	loadColorPalette();
+	swapPalette(1);
+
+	_indicators.push_back(loadBundledImage("eclipse_ankh_indicator"));
+
+	for (auto &it : _indicators)
+		it->convertToInPlace(_gfx->_texturePixelFormat);
+}
+
 void EclipseEngine::loadAssetsCPCDemo() {
 	Common::File file;
 
@@ -96,8 +162,15 @@ void EclipseEngine::drawCPCUI(Graphics::Surface *surface) {
 	int shield = _gameStateVars[k8bitVariableShield] * 100 / _maxShield;
 	shield = shield < 0 ? 0 : shield;
 
-	if (!_currentAreaMessages.empty())
-		drawStringInSurface(_currentAreaMessages[0], 102, 135, back, front, surface);
+	Common::String message;
+	int deadline;
+	getLatestMessages(message, deadline);
+	if (deadline <= _countdown) {
+		drawStringInSurface(message, 102, 135, back, front, surface);
+		_temporaryMessages.push_back(message);
+		_temporaryMessageDeadlines.push_back(deadline);
+	} else if (!_currentAreaMessages.empty())
+		drawStringInSurface(_currentArea->_name, 102, 135, back, front, surface);
 
 	Common::String scoreStr = Common::String::format("%07d", score);
 	drawStringInSurface(scoreStr, 136, 6, back, other, surface, 'Z' - '0' + 1);

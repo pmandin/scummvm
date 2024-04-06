@@ -28,9 +28,62 @@
 namespace Freescape {
 
 void EclipseEngine::initZX() {
-	_viewArea = Common::Rect(56, 28, 265, 132+6);
+	_viewArea = Common::Rect(56, 36, 265, 139);
 	_maxEnergy = 63;
 	_maxShield = 63;
+}
+
+void EclipseEngine::loadAssetsZXFullGame() {
+	Common::File file;
+	bool isTotalEclipse2 = _targetName.hasPrefix("totaleclipse2");
+
+	file.open("totaleclipse.zx.title");
+	if (file.isOpen()) {
+		_title = loadAndCenterScrImage(&file);
+	} else
+		error("Unable to find totaleclipse.zx.title");
+
+	file.close();
+	file.open("totaleclipse.zx.border");
+	if (file.isOpen()) {
+		_border = loadAndCenterScrImage(&file);
+	} else
+		error("Unable to find totaleclipse.zx.border");
+	file.close();
+
+	file.open("totaleclipse.zx.data");
+	if (!file.isOpen())
+		error("Failed to open totaleclipse.zx.data");
+
+	if (isTotalEclipse2) {
+		loadMessagesFixedSize(&file, 0x2ac, 16, 30);
+		loadFonts(&file, 0x61c3);
+		loadSpeakerFxZX(&file, 0x8c6, 0x91a);
+		load8bitBinary(&file, 0x63bb, 4);
+	} else {
+		loadMessagesFixedSize(&file, 0x2ac, 16, 23);
+		loadFonts(&file, 0x6163);
+		loadSpeakerFxZX(&file, 0x816, 0x86a);
+		load8bitBinary(&file, 0x635b, 4);
+	}
+
+	for (auto &it : _areaMap) {
+		it._value->addStructure(_areaMap[255]);
+
+		if (isTotalEclipse2 && it._value->getAreaID() == 1)
+			continue;
+
+		if (isEclipse2() && it._value->getAreaID() == _startArea)
+			continue;
+
+		for (int16 id = 183; id < 207; id++)
+			it._value->addObjectFromArea(id, _areaMap[255]);
+	}
+
+	_indicators.push_back(loadBundledImage("eclipse_ankh_indicator"));
+
+	for (auto &it : _indicators)
+		it->convertToInPlace(_gfx->_texturePixelFormat);
 }
 
 void EclipseEngine::loadAssetsZXDemo() {
@@ -75,13 +128,10 @@ void EclipseEngine::loadAssetsZXDemo() {
 			it._value->addObjectFromArea(id, _areaMap[255]);
 	}
 
-	/*_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
-	_indicators.push_back(loadBundledImage("dark_crouch_indicator"));
-	_indicators.push_back(loadBundledImage("dark_walk_indicator"));
-	_indicators.push_back(loadBundledImage("dark_jet_indicator"));
+	_indicators.push_back(loadBundledImage("eclipse_ankh_indicator"));
 
 	for (auto &it : _indicators)
-		it->convertToInPlace(_gfx->_texturePixelFormat);*/
+		it->convertToInPlace(_gfx->_texturePixelFormat);
 }
 
 void EclipseEngine::drawZXUI(Graphics::Surface *surface) {
@@ -109,8 +159,17 @@ void EclipseEngine::drawZXUI(Graphics::Surface *surface) {
 	int shield = _gameStateVars[k8bitVariableShield] * 100 / _maxShield;
 	shield = shield < 0 ? 0 : shield;
 
-	if (!_currentAreaMessages.empty())
-		drawStringInSurface(_currentAreaMessages[0], 102, 141, back, front, surface);
+	uint32 yellow = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0);
+
+	Common::String message;
+	int deadline;
+	getLatestMessages(message, deadline);
+	if (deadline <= _countdown) {
+		drawStringInSurface(message, 102, 141, back, yellow, surface);
+		_temporaryMessages.push_back(message);
+		_temporaryMessageDeadlines.push_back(deadline);
+	} else if (!_currentAreaMessages.empty())
+		drawStringInSurface(_currentArea->_name, 102, 141, back, yellow, surface);
 
 	Common::String scoreStr = Common::String::format("%07d", score);
 	drawStringInSurface(scoreStr, 133, 11, back, gray, surface, 'Z' - '0' + 1);
@@ -125,17 +184,17 @@ void EclipseEngine::drawZXUI(Graphics::Surface *surface) {
 
 	drawStringInSurface(shieldStr, x, 161, back, red, surface);
 
-	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 141, back, front, surface, 'Z' - '$' + 1);
-	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 141, back, front, surface, 'Z' - '$' + 1);
-	drawStringInSurface(Common::String('7' - _playerHeightNumber), 240, 141, back, front, surface, 'Z' - '$' + 1);
+	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 141, back, yellow, surface, 'Z' - '$' + 1);
+	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 141, back, yellow, surface, 'Z' - '$' + 1);
+	drawStringInSurface(Common::String('7' - _playerHeightNumber), 240, 141, back, yellow, surface, 'Z' - '$' + 1);
 
 	if (_shootingFrames > 0) {
-		drawStringInSurface("4", 232, 141, back, front, surface, 'Z' - '$' + 1);
-		drawStringInSurface("<", 240, 141, back, front, surface, 'Z' - '$' + 1);
+		drawStringInSurface("4", 232, 141, back, yellow, surface, 'Z' - '$' + 1);
+		drawStringInSurface("<", 240, 141, back, yellow, surface, 'Z' - '$' + 1);
 	}
 	drawAnalogClock(surface, 89, 172, back, back, gray);
+	drawIndicator(surface, 65, 7, 8);
 	drawEclipseIndicator(surface, 215, 3, front, gray);
-
 }
 
 } // End of namespace Freescape

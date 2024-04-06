@@ -56,6 +56,7 @@
 
 #include "graphics/cursorman.h"
 #include "graphics/fontman.h"
+#include "graphics/paletteman.h"
 #include "graphics/pixelformat.h"
 #include "image/bmp.h"
 
@@ -63,6 +64,7 @@
 
 // FIXME: HACK for error()
 Engine *g_engine = 0;
+bool Engine::_quitRequested;
 
 // Output formatter for debug() and error() which invokes
 // the errorString method of the active engine, if any.
@@ -152,6 +154,7 @@ Engine::Engine(OSystem *syst)
 		_lastAutosaveTime(_system->getMillis()) {
 
 	g_engine = this;
+	_quitRequested = false;
 	Common::setErrorOutputFormatter(defaultOutputFormatter);
 	Common::setErrorHandler(defaultErrorHandler);
 
@@ -178,6 +181,16 @@ Engine::Engine(OSystem *syst)
 	// Note: Using this dummy palette will actually disable cursor
 	// palettes till the user enables it again.
 	CursorMan.pushCursorPalette(NULL, 0, 0);
+
+	// If we go from engine A to engine B via launcher, the palette
+	// is not touched during this process, since our GUI is 16-bit
+	// or 32-bit.
+	//
+	// This may lead to residual palette entries held in the backend
+	// from a previous engine. Here we make sure we reset the palette.
+	byte dummyPalette[768];
+	memset(dummyPalette, 0, 768);
+	g_system->getPaletteManager()->setPalette(dummyPalette, 0, 256);
 
 	defaultSyncSoundSettings();
 }
@@ -972,11 +985,13 @@ void Engine::quitGame() {
 
 	event.type = Common::EVENT_QUIT;
 	g_system->getEventManager()->pushEvent(event);
+	_quitRequested = true;
 }
 
 bool Engine::shouldQuit() {
 	Common::EventManager *eventMan = g_system->getEventManager();
-	return (eventMan->shouldQuit() || eventMan->shouldReturnToLauncher());
+	return eventMan->shouldQuit() || eventMan->shouldReturnToLauncher()
+		|| _quitRequested;
 }
 
 GUI::Debugger *Engine::getOrCreateDebugger() {

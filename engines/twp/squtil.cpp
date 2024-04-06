@@ -22,9 +22,9 @@
 #include "twp/detection.h"
 #include "twp/lighting.h"
 #include "twp/object.h"
+#include "twp/resmanager.h"
 #include "twp/room.h"
 #include "twp/squtil.h"
-#include "twp/thread.h"
 #include "twp/squirrel/squirrel.h"
 #include "twp/squirrel/sqvm.h"
 #include "twp/squirrel/sqstring.h"
@@ -33,6 +33,7 @@
 #include "twp/squirrel/sqstdaux.h"
 #include "twp/squirrel/sqfuncproto.h"
 #include "twp/squirrel/sqclosure.h"
+#include "twp/thread.h"
 
 namespace Twp {
 
@@ -121,22 +122,6 @@ SQInteger sqpush(HSQUIRRELVM v, Rectf value) {
 	sq_pushinteger(v, value.top());
 	sq_newslot(v, -3, SQFalse);
 	return 1;
-}
-
-template<>
-SQInteger sqpush(HSQUIRRELVM v, Common::JSONValue *node) {
-	if (node->isIntegerNumber()) {
-		return sqpush(v, (int)node->asIntegerNumber());
-	} else if (node->isString()) {
-		return sqpush(v, node->asString());
-	} else if (node->isString()) {
-		return sqpush(v, (float)node->asNumber());
-	} else if (node->isNull()) {
-		sq_pushnull(v);
-		return 1;
-	} else {
-		return sq_throwerror(v, "This kind of node is not supported");
-	}
 }
 
 template<>
@@ -264,7 +249,7 @@ void sqcall(const char *name, const Common::Array<HSQOBJECT> &args) {
 
 int getId(HSQOBJECT table) {
 	SQInteger result = 0;
-	sqgetf(table, "_id", result);
+	(void)sqgetf(table, "_id", result);
 	return (int)result;
 }
 
@@ -291,24 +276,7 @@ Common::SharedPtr<Room> sqroom(HSQUIRRELVM v, int i) {
 }
 
 Common::SharedPtr<Object> sqobj(int id) {
-	for (size_t i = 0; i < g_twp->_actors.size(); i++) {
-		Common::SharedPtr<Object> actor = g_twp->_actors[i];
-		if (getId(actor->_table) == id)
-			return actor;
-	}
-
-	for (size_t i = 0; i < g_twp->_rooms.size(); i++) {
-		Common::SharedPtr<Room> room = g_twp->_rooms[i];
-		for (size_t j = 0; j < room->_layers.size(); j++) {
-			Common::SharedPtr<Layer> layer = room->_layers[j];
-			for (size_t k = 0; k < layer->_objects.size(); k++) {
-				Common::SharedPtr<Object> obj = layer->_objects[k];
-				if (getId(obj->_table) == id)
-					return obj;
-			}
-		}
-	}
-	return nullptr;
+	return g_twp->_resManager->_allObjects[id];
 }
 
 Common::SharedPtr<Object> sqobj(HSQOBJECT table) {
@@ -475,19 +443,22 @@ SQRESULT sqgetarray(HSQUIRRELVM v, int i, Common::Array<Common::SharedPtr<SoundD
 	return result;
 }
 
-void sqgetpairs(HSQOBJECT obj, void func(const Common::String &k, HSQOBJECT &obj, void *data), void *data) {
+SQRESULT sqgetpairs(HSQOBJECT obj, void func(const Common::String &k, HSQOBJECT &obj, void *data), void *data) {
 	HSQUIRRELVM v = g_twp->getVm();
 	sq_pushobject(v, obj);
 	sq_pushnull(v);
 	while (SQ_SUCCEEDED(sq_next(v, -2))) {
 		Common::String key;
 		HSQOBJECT o;
-		sqget(v, -1, o);
-		sqget(v, -2, key);
+		if (SQ_FAILED(sqget(v, -1, o)))
+			return sq_throwerror(v, "failed to get object");
+		if (SQ_FAILED(sqget(v, -2, key)))
+			return sq_throwerror(v, "failed to get key");
 		func(key, o, data);
 		sq_pop(v, 2);
 	}
 	sq_pop(v, 2);
+	return SQ_OK;
 }
 
 } // namespace Twp

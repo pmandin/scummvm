@@ -158,7 +158,6 @@ SQInteger SQLexer::Lex()
             case _SC('>'):
                 NEXT();
                 RETURN_TOKEN(TK_ATTR_CLOSE);
-                continue;
             default:
                 RETURN_TOKEN('/');
             }
@@ -277,7 +276,6 @@ SQInteger SQLexer::Lex()
                     NEXT();
                     RETURN_TOKEN(c);
                 }
-                RETURN_TOKEN(0);
             }
         }
     }

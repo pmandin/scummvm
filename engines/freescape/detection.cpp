@@ -33,6 +33,7 @@ static const PlainGameDescriptor freescapeGames[] = {
 	{"spacestationoblivion", "Space Station Oblivion"},
 	{"darkside", "Dark Side"},
 	{"totaleclipse", "Total Eclipse"},
+	{"totaleclipse2", "Total Eclipse 2"},
 	{"castlemaster", "Castle Master"},
 	{0, 0}};
 
@@ -295,7 +296,7 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 	{
 		"driller",
-		"Packed data",
+		"This release requires unpacking, check the wiki for instructions: https://wiki.scummvm.org/index.php?title=Driller/Demos#AtariST_demos",
 		{
 			{"driller.prg", 0, "ae9b03e247def6f0793174b1cb4352b5", 1821},
 			{"data", 0, "0c927fbc6c390afd0d0c15b2d7f8766f", 10893},
@@ -317,7 +318,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		ADGF_NO_FLAGS,
+		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOMIDI)
 	},
 	// Cinemaware release
@@ -441,7 +442,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmstradCPC,
-		ADGF_UNSTABLE,
+		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -454,7 +455,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmstradCPC,
-		ADGF_UNSTABLE | ADGF_DEMO,
+		ADGF_TESTING | ADGF_DEMO,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -468,7 +469,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		ADGF_UNSTABLE | ADGF_DEMO | GF_ZX_DEMO_MICROHOBBY,
+		ADGF_TESTING | ADGF_DEMO | GF_ZX_DEMO_MICROHOBBY,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -482,7 +483,59 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		ADGF_UNSTABLE | ADGF_DEMO | GF_ZX_DEMO_CRASH,
+		ADGF_TESTING | ADGF_DEMO | GF_ZX_DEMO_CRASH,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"totaleclipse",
+		"",
+		{
+			{"totaleclipse.zx.data", 0, "5bc0c4ff50407d16bb409776eda7f4a8", 36055},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformZX,
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"totaleclipse2",
+		"",
+		{
+			{"totaleclipse.zx.data", 0, "5e80cb6a518d5ab2192b845801b1a32e", 35661},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformZX,
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"totaleclipse",
+		"",
+		{
+			{"TECODE.BIN", 0, "369d87a5a38df89cb8aa396995bb49d5", 35794},
+			{"TECON.SCR", 0, "f6381a7e07b3bdcd569cb7423a269fd3", 16512},
+			{"TESCR.SCR", 0, "9635f9401dae0936e22c556065c254f6", 16512},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmstradCPC,
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"totaleclipse2",
+		"",
+		{
+			{"TE2.BI1", 0, "fc6e1a240e76a68e02ce1db5ad9a689a", 16512},
+			{"TE2.BI2", 0, "c346262234e509ba5576c0a3362bc414", 35456},
+			{"TE2.BI3", 0, "d73485df2eccb90592bb598693b10555", 16512},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmstradCPC,
+		ADGF_TESTING,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -498,8 +551,50 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO3(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA)
+	},
+	{
+		"totaleclipse",
+		"",
+		{
+			{"S.EXE", 0, "959703c1cd37b0d9744c492240a8178b", 13327},
+			{"TOTEH.EXE", 0, "c68d59874ab2a93cc9cc1b1d3aed8f17", 60628},
+			{"TOTEC.EXE", 0, "6c058c48255945a12479c8420321db75", 56900},
+			{"TOTET.EXE", 0, "2bc2b0892ca91a77c58e9bedabf45afe", 63732},
+			{"TOTEE.EXE", 0, "2ba865d2bdcda0c934baec7b31fb4ab2", 64196},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_TESTING,
+		GUIO3(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA)
+	},
+	{
+		"totaleclipse",
+		"",
+		{
+			{"0.TEC", 0, "e8b362cd913a2d58f8601e4df11a643a", 89500},
+			{"1.TEC", 0, "3a2e304706bde3e34ac2a730eff8567b", 305286},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmiga,
+		ADGF_UNSUPPORTED,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{ // Stampede Atari, Issue 7
+		"totaleclipse",
+		"",
+		{
+			{"0.TEC", 0, "c20a3bfea7147f73dc4fcd8aecf4faf8", 49402},
+			{"1.TEC", 0, "fb65655f60b11040285aa947d4ed1193", 263453},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		ADGF_UNSUPPORTED,
+		GUIO1(GUIO_NOMIDI)
 	},
 	{
 		"spacestationoblivion",

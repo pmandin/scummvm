@@ -400,7 +400,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		{
 			{ NULL, NULL }
 		},
-		"RETROK_ESCAPE"
+		"RETROK_SPACE"
 	},
 	{
 		"scummvm_mapper_b",
@@ -436,7 +436,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		{
 			{ NULL, NULL }
 		},
-		"RETROK_SPACE"
+		"RETROK_ESCAPE"
 	},
 	{
 		"scummvm_mapper_select",
@@ -631,24 +631,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 			{ NULL, NULL }
 		},
 		"RETROK_RIGHT"
-	},
-	{
-		"scummvm_auto_performance_tuner",
-		"Auto performance tuner",
-		NULL,
-		"In-game automatic change of timing/frameskip settings if low performances are detected. Timing/frameskip settings will be changed in sequence, if audio buffer underruns are detected and for the current game session only, and restored in sequence if audio buffers recovers. Single saved settings will not be affected but will be overridden in-game.",
-		NULL,
-		NULL,
-		{
-			{"disabled", NULL},
-			{"enabled", NULL},
-			{NULL, NULL},
-		},
-#if defined(DEFAULT_PERF_TUNER)
-		"enabled"
-#else
-		"disabled"
-#endif
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
 };

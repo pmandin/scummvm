@@ -19,6 +19,8 @@
  *
  */
 
+#include "common/file.h"
+
 #include "ultima/ultima8/gumps/shape_viewer_gump.h"
 
 #include "ultima/ultima8/graphics/render_surface.h"
@@ -39,8 +41,8 @@
 #include "ultima/ultima8/graphics/mouse_shape_archive.h"
 #include "ultima/ultima8/graphics/texture.h"
 
-#include "ultima/ultima8/filesys/file_system.h"
 #include "ultima/ultima8/convert/u8/convert_shape_u8.h"
+#include "ultima/ultima8/graphics/palette.h"
 #include "ultima/ultima8/graphics/palette_manager.h"
 #include "ultima/ultima8/usecode/usecode.h"
 
@@ -187,9 +189,8 @@ void ShapeViewerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool /*s
 			const ShapeFrame *frame = shape->getFrame(_curFrame);
 			if (frame && frame->hasPoint(relx, rely)) {
 				uint8 rawpx = frame->getPixel(relx, rely);
-				uint8 px_r = shape->getPalette()->_palette[rawpx * 3];
-				uint8 px_g = shape->getPalette()->_palette[rawpx * 3 + 1];
-				uint8 px_b = shape->getPalette()->_palette[rawpx * 3 + 2];
+				uint8 px_r, px_g, px_b;
+				shape->getPalette()->get(rawpx, px_r, px_g, px_b);
 
 				Common::sprintf_s(buf2, "px: (%d, %d)(%d, %d): %d (%d, %d, %d)", relx, rely, frame->_xoff, frame->_yoff, rawpx, px_r, px_g, px_b);
 				rendtext = font->renderText(buf2, remaining);
@@ -356,21 +357,24 @@ void ShapeViewerGump::U8ShapeViewer() {
 	ShapeArchive *mouseShapes = new MouseShapeArchive(gamedata->getMouse(), GameData::OTHER);
 	archives.push_back(ShapeArchiveEntry("mouse", mouseShapes, DisposeAfterUse::YES));
 
-	FileSystem *filesys = FileSystem::get_instance();
-	Common::SeekableReadStream *eintro = filesys->ReadFile("static/eintro.skf");
-	if (eintro) {
+	auto *eintro = new Common::File();
+	if (eintro->open("static/eintro.skf")) {
 		ShapeArchive *eintroshapes = new ShapeArchive(eintro, GameData::OTHER,
 		        PaletteManager::get_instance()->getPalette(PaletteManager::Pal_Game),
 		        &U8SKFShapeFormat);
 		archives.push_back(ShapeArchiveEntry("eintro", eintroshapes, DisposeAfterUse::YES));
+	} else {
+		delete eintro;
 	}
 
-	Common::SeekableReadStream *endgame = filesys->ReadFile("static/endgame.skf");
-	if (endgame) {
+	auto *endgame = new Common::File();
+	if (endgame->open("static/endgame.skf")) {
 		ShapeArchive *endgameshapes = new ShapeArchive(endgame, GameData::OTHER,
 		        PaletteManager::get_instance()->getPalette(PaletteManager::Pal_Game),
 		        &U8SKFShapeFormat);
 		archives.push_back(ShapeArchiveEntry("endgame", endgameshapes, DisposeAfterUse::YES));
+	} else {
+		delete endgame;
 	}
 
 	Gump *desktopGump = Ultima8Engine::get_instance()->getDesktopGump();

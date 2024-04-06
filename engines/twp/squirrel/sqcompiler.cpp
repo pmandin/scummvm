@@ -149,7 +149,7 @@ public:
     bool IsEndOfStatement() { return ((_lex._prevtoken == _SC('\n')) || (_token == SQUIRREL_EOB) || (_token == _SC('}')) || (_token == _SC(';'))); }
     void OptionalSemicolon()
     {
-        if(_token == _SC(';')) { Lex(); return; }        
+        if(_token == _SC(';')) { Lex(); return; }
     }
     void MoveIfCurrentTargetIsLocal() {
         SQInteger trg = _fs->TopTarget();
@@ -192,8 +192,10 @@ public:
                     _lex._currentline, _lex._currentcolumn);
             }
             _vm->_lasterror = SQString::Create(_ss(_vm), _compilererror, -1);
+			_fs = nullptr;
             return false;
         }
+		_fs = nullptr;
         return true;
     }
     void Statements()
@@ -389,7 +391,7 @@ public:
 
             switch(op){
             case TK_NEWSLOT:
-                if(ds == OBJECT || ds == BASE)
+                if(ds == OBJECT)
                     EmitDerefOp(_OP_NEWSLOT);
                 else //if _derefstate != DEREF_NO_DEREF && DEREF_FIELD so is the index of a local
                     Error(_SC("can't 'create' a local slot"));
@@ -468,7 +470,7 @@ public:
     void LogicalOrExp()
     {
         LogicalAndExp();
-        for(;;) if(_token == TK_OR) {
+        if(_token == TK_OR) {
             SQInteger first_exp = _fs->PopTarget();
             SQInteger trg = _fs->PushTarget();
             _fs->AddInstruction(_OP_OR, trg, 0, first_exp, 0);
@@ -481,8 +483,7 @@ public:
             _fs->SnoozeOpt();
             _fs->SetInstructionParam(jpos, 1, (_fs->GetCurrentPos() - jpos));
             _es.etype = EXPR;
-            break;
-        }else return;
+        }
     }
     void LogicalAndExp()
     {
@@ -914,7 +915,7 @@ public:
             }
         break;
         }
-        return (!_es.donot_get || ( _es.donot_get && (_token == _SC('.') || _token == _SC('['))));
+        return (!_es.donot_get || ((_token == _SC('.') || _token == _SC('['))));
     }
     void FunctionCallArgs(bool rawcall = false)
     {
@@ -989,7 +990,7 @@ public:
             SQInteger key = _fs->PopTarget();
             SQInteger attrs = hasattrs ? _fs->PopTarget():-1;
             ((void)attrs);
-            assert((hasattrs && (attrs == key-1)) || !hasattrs);
+            assert(!hasattrs || (attrs == key-1));
             unsigned char flags = (hasattrs?NEW_SLOT_ATTRIBUTES_FLAG:0)|(isstatic?NEW_SLOT_STATIC_FLAG:0);
             SQInteger table = _fs->TopTarget(); //<<BECAUSE OF THIS NO COMMON EMIT FUNC IS POSSIBLE
             if(separator == _SC(',')) { //hack recognizes a table from the separator
@@ -1176,7 +1177,7 @@ public:
         }
         _fs->AddInstruction(_OP_JMP, 0, jmppos - _fs->GetCurrentPos() - 1, 0);
         if(jzpos>  0) _fs->SetInstructionParam(jzpos, 1, _fs->GetCurrentPos() - jzpos);
-        
+
         END_BREAKBLE_BLOCK(continuetrg);
 
 		END_SCOPE();

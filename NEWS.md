@@ -5,6 +5,7 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  New games:
   - Added support for Orion Burger.
+  - Added support for Total Eclipse and Total Eclipse 2.
 
  General:
   - Fixed GLSL version parsing on some OpenGL ES2 platforms.
@@ -13,6 +14,9 @@ For a more comprehensive changelog of the latest experimental code, see:
  MM:
    - Added MT32/LAPC-1 support for Xeen engine.
    - Fixed Xeen regression which caused some sound effects to stop abruptly.
+
+ Tony:
+   - Fix crash with rapid cursor switching.
 
  TsAGE:
    - Added support for Russian CD fan-translation for Ringworld.

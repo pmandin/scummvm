@@ -18,7 +18,7 @@
 void sq_base_register(HSQUIRRELVM v);
 
 struct SQExceptionTrap{
-    SQExceptionTrap() {}
+    SQExceptionTrap() : _stackbase(0), _stacksize(0), _ip(nullptr), _extarget(0) {}
     SQExceptionTrap(SQInteger ss, SQInteger stackbase,SQInstruction *ip, SQInteger ex_target){ _stacksize = ss; _stackbase = stackbase; _ip = ip; _extarget = ex_target;}
     SQInteger _stackbase;
     SQInteger _stacksize;
@@ -118,6 +118,7 @@ public:
     SQObjectType GetType() {return OT_THREAD;}
 #endif
     void Finalize();
+    void FinalizeCore();
     void GrowCallStack() {
         SQInteger newsize = _alloccallsstacksize*2;
         _callstackdata.resize(newsize);
@@ -145,8 +146,8 @@ public:
 
     SQObjectPtrVec _stack;
 
-    SQInteger _top;
-    SQInteger _stackbase;
+    SQInteger _top = 0;
+    SQInteger _stackbase = 0;
     SQOuter *_openouters;
     SQObjectPtr _roottable;
     SQObjectPtr _lasterror;
@@ -159,16 +160,15 @@ public:
     SQObjectPtr temp_reg;
 
 
-    CallInfo* _callsstack;
-    SQInteger _callsstacksize;
-    SQInteger _alloccallsstacksize;
+    CallInfo* _callsstack = nullptr;
+    SQInteger _callsstacksize = 0;
+    SQInteger _alloccallsstacksize = 0;
     sqvector<CallInfo>  _callstackdata;
 
     ExceptionsTraps _etraps;
     CallInfo *ci;
     SQUserPointer _foreignptr;
     //VMs sharing the same state
-    SQSharedState *_sharedstate;
     SQInteger _nnativecalls;
     SQInteger _nmetamethodscall;
     SQRELEASEHOOK _releasehook;

@@ -22,6 +22,7 @@
 #include "ultima/ultima8/gumps/cru_energy_gump.h"
 
 #include "ultima/ultima8/world/actors/main_actor.h"
+#include "ultima/ultima8/graphics/palette.h"
 #include "ultima/ultima8/graphics/palette_manager.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/graphics/texture.h"
@@ -30,9 +31,7 @@
 namespace Ultima {
 namespace Ultima8 {
 
-static const uint32 ENERGY_BAR_R = 154;
-static const uint32 ENERGY_BAR_G = 4;
-static const uint32 ENERGY_BAR_B = 4;
+static const uint ENERGY_BAR_COLOR = 245;
 
 DEFINE_RUNTIME_CLASSTYPE_CODE(CruEnergyGump)
 
@@ -73,12 +72,8 @@ void CruEnergyGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scale
 	if (!gamepal)
 		return;
 
-	int r = ENERGY_BAR_R;
-	int g = ENERGY_BAR_G;
-	int b = ENERGY_BAR_B;
-	gamepal->transformRGB(r, g, b);
-	uint32 color = TEX32_PACK_RGB(r, g, b);
-	surf->fill32(color, 34, 7, width, 14);
+	Rect rect(34, 7, 34 + width, 21);
+	surf->fillRect(rect, gamepal->_native[ENERGY_BAR_COLOR]);
 }
 
 void CruEnergyGump::saveData(Common::WriteStream *ws) {

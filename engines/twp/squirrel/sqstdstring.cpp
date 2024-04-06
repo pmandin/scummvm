@@ -112,6 +112,7 @@ SQRESULT sqstd_format(HSQUIRRELVM v,SQInteger nformatstringidx,SQInteger *outlen
                 {
                 size_t flen = scstrlen(fmt);
                 SQInteger fpos = flen - 1;
+				assert(fpos >= 0);
                 SQChar f = fmt[fpos];
                 const SQChar *prec = (const SQChar *)_PRINT_INT_PREC;
                 while(*prec != _SC('\0')) {
@@ -220,6 +221,8 @@ static SQInteger _string_rstrip(HSQUIRRELVM v)
     const SQChar *str,*end;
     sq_getstring(v,2,&str);
     SQInteger len = sq_getsize(v,2);
+	if(len < 0)
+        len = 0;
     __strip_r(str,len,&end);
     sq_pushstring(v,str,end - str);
     return 1;
@@ -331,7 +334,7 @@ static SQInteger _string_startswith(HSQUIRRELVM v)
     SQInteger len = sq_getsize(v,2);
     SQInteger cmplen = sq_getsize(v,3);
     SQBool ret = SQFalse;
-    if(cmplen <= len) {
+    if((len >=0) && (cmplen >=0) && (cmplen <= len)) {
         ret = memcmp(str,cmp,sq_rsl(cmplen)) == 0 ? SQTrue : SQFalse;
     }
     sq_pushbool(v,ret);

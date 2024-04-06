@@ -25,6 +25,7 @@
 #include "common/events.h"
 #include "common/savefile.h"
 #include "common/translation.h"
+#include "common/debug-channels.h"
 #include "engines/util.h"
 #include "graphics/cursorman.h"
 #include "graphics/screen.h"
@@ -55,12 +56,15 @@
 
 namespace Twp {
 
+#define TWP_SAVEGAME_VERSION 1
+
 TwpEngine *g_twp;
 
 TwpEngine::TwpEngine(OSystem *syst, const TwpGameDescription *gameDesc)
 	: Engine(syst),
 	  _gameDescription(gameDesc),
-	  _randomSource("Twp") {
+	  _randomSource("Twp"),
+	  _useFlag(UseFlag::ufNone) {
 	g_twp = this;
 	_dialog.reset(new Dialog());
 	_dialog->_tgt.reset(new EngineDialogTarget());
@@ -100,16 +104,16 @@ TwpEngine::~TwpEngine() {
 	delete _screen;
 }
 
-Math::Vector2d TwpEngine::winToScreen(Math::Vector2d pos) {
+Math::Vector2d TwpEngine::winToScreen(const Math::Vector2d &pos) {
 	return Math::Vector2d(pos.getX(), SCREEN_HEIGHT - pos.getY());
 }
 
-Math::Vector2d TwpEngine::roomToScreen(Math::Vector2d pos) {
+Math::Vector2d TwpEngine::roomToScreen(const Math::Vector2d &pos) {
 	Math::Vector2d screenSize = _room->getScreenSize();
 	return Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT) * (pos - _gfx.cameraPos()) / screenSize;
 }
 
-Math::Vector2d TwpEngine::screenToRoom(Math::Vector2d pos) {
+Math::Vector2d TwpEngine::screenToRoom(const Math::Vector2d &pos) {
 	Math::Vector2d screenSize = _room->getScreenSize();
 	return (pos * screenSize) / Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT) + _gfx.cameraPos();
 }
@@ -122,7 +126,7 @@ Common::String TwpEngine::getGameId() const {
 	return _gameDescription->desc.gameId;
 }
 
-bool TwpEngine::clickedAtHandled(Math::Vector2d roomPos) {
+bool TwpEngine::clickedAtHandled(const Math::Vector2d &roomPos) {
 	bool result = false;
 	int x = roomPos.getX();
 	int y = roomPos.getY();
@@ -226,12 +230,12 @@ void TwpEngine::walkFast(bool state) {
 	}
 }
 
-void TwpEngine::clickedAt(Math::Vector2d scrPos) {
+void TwpEngine::clickedAt(const Math::Vector2d &scrPos) {
 	if (_room && !_actorSwitcher.isMouseOver()) {
 		Math::Vector2d roomPos = screenToRoom(scrPos);
 		Common::SharedPtr<Object> obj = objAt(roomPos);
 
-		if (_cursor.doubleClick) {
+		if (!_hud->_active && _cursor.doubleClick) {
 			walkFast(true);
 			_holdToMove = true;
 			return;
@@ -240,23 +244,21 @@ void TwpEngine::clickedAt(Math::Vector2d scrPos) {
 		if (_cursor.isLeftDown()) {
 			// button left: execute selected verb
 			bool handled = clickedAtHandled(roomPos);
-			if (!handled && obj) {
+			if (!handled && obj && (!_hud->_active || _uiInv.isOver())) {
 				Verb vb = verb();
 				sqcall("onVerbClick");
 				handled = execSentence(nullptr, vb.id, _noun1, _noun2);
 			}
-			if (!handled) {
-				if (_actor && (scrPos.getY() > 172)) {
-					// Just clicking on the ground
-					cancelSentence(_actor);
-					if (_actor->_room == _room)
-						Object::walk(_actor, roomPos);
-					_hud->_verb = _hud->actorSlot(_actor)->verbs[0];
-					_holdToMove = true;
-				}
+			if (!handled && !_hud->_active && _actor && (!_hud->_active || _uiInv.isOver())) {
+				// Just clicking on the ground
+				cancelSentence(_actor);
+				if (_actor->_room == _room)
+					Object::walk(_actor, roomPos);
+				_hud->_verb = _hud->actorSlot(_actor)->verbs[0];
+				_holdToMove = true;
 			}
 
-		} else if (_cursor.isRightDown()) {
+		} else if (_cursor.isRightDown() && (!_hud->_active || _uiInv.isOver())) {
 			// button right: execute default verb
 			if (obj) {
 				VerbId verb;
@@ -279,30 +281,31 @@ Verb TwpEngine::verb() {
 
 Common::String TwpEngine::cursorText() {
 	Common::String result;
-	if (_dialog->getState() == DialogState::None && _inputState.getInputActive()) {
-		if (_hud->isVisible() && _hud->_over) {
-			return _hud->_verb.id.id > 1 ? _textDb->getText(verb().text) : "";
-		}
+	if (_dialog->getState() != DialogState::None || !_inputState.getInputActive())
+		return result;
 
-		// give can be used only on inventory and talkto to talkable objects (actors)
-		result = !_noun1 || (_hud->_verb.id.id == VERB_GIVE && !_noun1->inInventory()) || (_hud->_verb.id.id == VERB_TALKTO && !(_noun1->getFlags() & TALKABLE)) ? "" : _textDb->getText(_noun1->getName());
+	if (_hud->_active && !_uiInv.isOver()) {
+		return _hud->_verb.id.id > 1 ? _textDb->getText(verb().text) : "";
+	}
 
-		// add verb if not walk to or if noun1 is present
-		if ((_hud->_verb.id.id > 1) || (result.size() > 0)) {
-			// if inventory, use default verb instead of walkto
-			Common::String verbText = verb().text;
-			result = result.size() > 0 ? Common::String::format("%s %s", _textDb->getText(verbText).c_str(), result.c_str()) : _textDb->getText(verbText);
-			if (_useFlag == UseFlag::ufUseWith)
-				result += " " + _textDb->getText(10000);
-			else if (_useFlag == UseFlag::ufUseOn)
-				result += " " + _textDb->getText(10001);
-			else if (_useFlag == UseFlag::ufUseIn)
-				result += " " + _textDb->getText(10002);
-			else if (_useFlag == UseFlag::ufGiveTo)
-				result += " " + _textDb->getText(10003);
-			if (_noun2)
-				result += " " + _textDb->getText(_noun2->getName());
-		}
+	// give can be used only on inventory and talkto to talkable objects (actors)
+	result = !_noun1 || (_hud->_verb.id.id == VERB_GIVE && !_noun1->inInventory()) || (_hud->_verb.id.id == VERB_TALKTO && !(_noun1->getFlags() & TALKABLE)) ? "" : _textDb->getText(_noun1->getName());
+
+	// add verb if not walk to or if noun1 is present
+	if ((_hud->_verb.id.id > 1) || (result.size() > 0)) {
+		// if inventory, use default verb instead of walkto
+		Common::String verbText = verb().text;
+		result = result.size() > 0 ? Common::String::format("%s %s", _textDb->getText(verbText).c_str(), result.c_str()) : _textDb->getText(verbText);
+		if (_useFlag == UseFlag::ufUseWith)
+			result += " " + _textDb->getText(10000);
+		else if (_useFlag == UseFlag::ufUseOn)
+			result += " " + _textDb->getText(10001);
+		else if (_useFlag == UseFlag::ufUseIn)
+			result += " " + _textDb->getText(10002);
+		else if (_useFlag == UseFlag::ufGiveTo)
+			result += " " + _textDb->getText(10003);
+		if (_noun2)
+			result += " " + _textDb->getText(_noun2->getName());
 	}
 	return result;
 }
@@ -443,6 +446,7 @@ public:
 };
 
 void TwpEngine::update(float elapsed) {
+	const uint32 startUpdateTime = _system->getMillis();
 	_time += elapsed;
 	_frameCounter++;
 
@@ -514,7 +518,7 @@ void TwpEngine::update(float elapsed) {
 			_sentence.setText(cursorText());
 
 			// call clickedAt if any button down
-			if ((_inputState.getInputActive() && _dialog->getState() == DialogState::None) && !_hud->isOver()) {
+			if ((_inputState.getInputActive() && _dialog->getState() == DialogState::None)) {
 				if (_cursor.isLeftDown() || _cursor.isRightDown()) {
 					clickedAt(scrPos);
 				} else if (_cursor.leftDown || _cursor.rightDown) {
@@ -551,6 +555,7 @@ void TwpEngine::update(float elapsed) {
 
 	// update actorswitcher
 	_actorSwitcher.update(actorSwitcherSlots(), elapsed);
+	const uint32 endMiscTime = _system->getMillis();
 
 	// update cutscene
 	if (_cutscene) {
@@ -558,6 +563,7 @@ void TwpEngine::update(float elapsed) {
 			_cutscene.reset();
 		}
 	}
+	const uint32 endUpdateCutsceneTime = _system->getMillis();
 
 	// update threads: make a copy of the threads because during threads update, new threads can be added
 	Common::Array<Common::SharedPtr<ThreadBase> > threads(_threads);
@@ -570,7 +576,6 @@ void TwpEngine::update(float elapsed) {
 			threadsToRemove.push_back(thread);
 		}
 	}
-
 	// remove threads that are terminated
 	for (auto it = threadsToRemove.begin(); it != threadsToRemove.end(); it++) {
 		Common::SharedPtr<ThreadBase> thread(*it);
@@ -579,6 +584,7 @@ void TwpEngine::update(float elapsed) {
 			_threads.remove_at(i);
 		}
 	}
+	const uint32 endUpdateThreadTime = _system->getMillis();
 
 	// update callbacks
 	for (auto it = _callbacks.begin(); it != _callbacks.end();) {
@@ -590,6 +596,7 @@ void TwpEngine::update(float elapsed) {
 		it++;
 	}
 
+	const uint32 endUpdateCallbacksTime = _system->getMillis();
 	// update tasks
 	Common::Array<Common::SharedPtr<Task> > tasks(_tasks);
 	Common::Array<Common::SharedPtr<Task> > tasksToRemove;
@@ -609,13 +616,18 @@ void TwpEngine::update(float elapsed) {
 			_tasks.remove_at(i);
 		}
 	}
+	const uint32 endUpdateTasksTimes = _system->getMillis();
 
 	// update objects
 	if (_room) {
 		_room->update(elapsed);
 	}
+	const uint32 endUpdateTimeRoom = _system->getMillis();
 
 	// update inventory
+	const bool hudActive = (_room->_fullscreen == FULLSCREENROOM && (scrPos.getY() < 180.f));
+	_hud->_active = hudActive;
+	_uiInv._active = hudActive;
 	if (!_actor) {
 		_uiInv.update(elapsed);
 	} else {
@@ -625,6 +637,14 @@ void TwpEngine::update(float elapsed) {
 	}
 
 	updateTriggers();
+	const uint32 endUpdateTime = _system->getMillis();
+	_stats.totalUpdateTime = endUpdateTime - startUpdateTime;
+	_stats.updateRoomTime = endUpdateTimeRoom - endUpdateTasksTimes;
+	_stats.updateTasksTime = endUpdateTasksTimes - endUpdateCallbacksTime;
+	_stats.updateMiscTime = endMiscTime - startUpdateTime;
+	_stats.updateCutsceneTime = endUpdateCutsceneTime - endMiscTime;
+	_stats.updateThreadsTime = endUpdateThreadTime - endUpdateCutsceneTime;
+	_stats.updateCallbacksTime = endUpdateCallbacksTime - endUpdateThreadTime;
 }
 
 void TwpEngine::setShaderEffect(RoomEffect effect) {
@@ -1008,7 +1028,9 @@ Common::Error TwpEngine::run() {
 		time = newTime;
 		update(_speed * delta / 1000.f);
 
+		const uint32 startDrawTime = _system->getMillis();
 		draw();
+		_stats.drawTime = _system->getMillis() - startDrawTime;
 		_cursor.update();
 
 		// Delay for a bit. All events loops should have a delay
@@ -1022,6 +1044,10 @@ Common::Error TwpEngine::run() {
 }
 
 Common::Error TwpEngine::loadGameState(int slot) {
+	Common::Error result = Engine::loadGameState(slot);
+	if (result.getCode() == Common::kNoError)
+		return Common::kNoError;
+
 	Common::InSaveFile *file = getSaveFileManager()->openRawFile(getSaveStateName(slot));
 	if (file) {
 		return loadGameStream(file);
@@ -1030,10 +1056,12 @@ Common::Error TwpEngine::loadGameState(int slot) {
 }
 
 Common::Error TwpEngine::loadGameStream(Common::SeekableReadStream *stream) {
-	SaveGame savegame;
-	if (_saveGameManager->getSaveGame(stream, savegame)) {
-		_saveGameManager->loadGame(savegame);
+	if (!_saveGameManager->loadGame(*stream)) {
+		return Common::kUnknownError;
 	}
+	Common::String md5 = stream->readString(0, 32);
+	uint16 savegameVersion = stream->readUint16LE();
+	debug("Load game with MD5: %s, version: %u", md5.c_str(), savegameVersion);
 	return Common::kNoError;
 }
 
@@ -1042,27 +1070,35 @@ bool TwpEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 }
 
 Common::Error TwpEngine::saveGameState(int slot, const Common::String &desc, bool isAutosave) {
-	Common::String name = getSaveStateName(slot);
-	Common::OutSaveFile *saveFile = _saveFileMan->openForSaving(name, false);
-	if (!saveFile)
-		return Common::kWritingFailed;
+	Common::Error result = Engine::saveGameState(slot, desc, isAutosave);
+	if (result.getCode() != Common::kNoError)
+		return result;
 
-	Common::Error result = saveGameStream(saveFile, isAutosave);
-	if (result.getCode() == Common::kNoError) {
-		name = name + ".png";
-		Common::OutSaveFile *thumbnail = _saveFileMan->openForSaving(name, false);
-		g_twp->capture(*thumbnail, Math::Vector2d(320, 180));
-		thumbnail->finalize();
+	if (DebugMan.isDebugChannelEnabled(kDebugSave)) {
+		Common::OutSaveFile *saveFile = _saveFileMan->openForSaving(Common::String::format("Savegame%d.save", slot), false);
+		if (!saveFile)
+			return Common::kWritingFailed;
+
+		result = saveGameStream(saveFile, isAutosave);
+		if (result.getCode() == Common::kNoError) {
+			Common::OutSaveFile *thumbnail = _saveFileMan->openForSaving(Common::String::format("Savegame%d.png", slot), false);
+			Graphics::Surface surface;
+			g_twp->capture(surface, 320, 180);
+			Image::writePNG(*thumbnail, surface);
+			thumbnail->finalize();
+			delete thumbnail;
+		}
 
 		saveFile->finalize();
+		delete saveFile;
 	}
-
-	delete saveFile;
 	return result;
 }
 
 Common::Error TwpEngine::saveGameStream(Common::WriteStream *stream, bool isAutosave) {
 	_saveGameManager->saveGame(stream);
+	stream->writeString(_gameDescription->desc.filesDescriptions[0].md5);
+	stream->writeUint16LE(TWP_SAVEGAME_VERSION);
 	return Common::kNoError;
 }
 
@@ -1087,7 +1123,9 @@ static void onGetPairs(const Common::String &k, HSQOBJECT &oTable, void *data) {
 			if (!sqrawexists(oTable, "flags"))
 				sqsetf(oTable, "flags", 0);
 			Common::SharedPtr<Object> obj(new Object(oTable, k));
-			setId(obj->_table, g_twp->_resManager->newObjId());
+			const int id = g_twp->_resManager->newObjId();
+			setId(obj->_table, id);
+			g_twp->_resManager->_allObjects[id] = obj;
 			obj->_node = Common::SharedPtr<Node>(new Node(k));
 			obj->_nodeAnim = Common::SharedPtr<Anim>(new Anim(obj.get()));
 			obj->_node->addChild(obj->_nodeAnim.get());
@@ -1108,8 +1146,11 @@ static void onGetPairs(const Common::String &k, HSQOBJECT &oTable, void *data) {
 				}
 			}
 
-			sqgetf(params->room->_table, k, obj->_table);
-			setId(obj->_table, g_twp->_resManager->newObjId());
+			if(SQ_FAILED(sqgetf(params->room->_table, k, obj->_table)))
+				error("Failed to get room object");
+			const int id = g_twp->_resManager->newObjId();
+			setId(obj->_table, id);
+			g_twp->_resManager->_allObjects[id] = obj;
 			debugC(kDebugGame, "Create object: %s #%d", k.c_str(), obj->getId());
 
 			// add it to the root table if not a pseudo room
@@ -1119,7 +1160,8 @@ static void onGetPairs(const Common::String &k, HSQOBJECT &oTable, void *data) {
 			if (sqrawexists(obj->_table, "initState")) {
 				// info fmt"initState {obj.key}"
 				SQInteger state;
-				sqgetf(obj->_table, "initState", state);
+				if(SQ_FAILED(sqgetf(obj->_table, "initState", state)))
+					error("Failed to get initState");
 				obj->setState(state, true);
 			} else {
 				obj->setState(0, true);
@@ -1151,7 +1193,8 @@ Common::SharedPtr<Room> TwpEngine::defineRoom(const Common::String &name, HSQOBJ
 	} else {
 		result.reset(new Room(name, table));
 		Common::String background;
-		sqgetf(table, "background", background);
+		if(SQ_FAILED(sqgetf(table, "background", background)))
+			error("Failed to get room background");
 		GGPackEntryReader entry;
 		entry.open(*_pack, background + ".wimpy");
 		Room::load(result, entry);
@@ -1176,7 +1219,9 @@ Common::SharedPtr<Room> TwpEngine::defineRoom(const Common::String &name, HSQOBJ
 					sq_pop(v, 1);
 
 					// assign an id
-					setId(obj->_table, g_twp->_resManager->newObjId());
+					const int id = _resManager->newObjId();
+					setId(obj->_table, id);
+					_resManager->_allObjects[id] = obj;
 					// info fmt"Create object with new table: {obj.name} #{obj.id}"
 
 					// adds the object to the room table
@@ -1189,7 +1234,8 @@ Common::SharedPtr<Room> TwpEngine::defineRoom(const Common::String &name, HSQOBJ
 				} else {
 					if (pseudo) {
 						// if it's a pseudo room we need to clone each object
-						sqgetf(result->_table, obj->_key, obj->_table);
+						if(SQ_FAILED(sqgetf(result->_table, obj->_key, obj->_table)))
+							error("Failed to get room object");
 						sq_pushobject(v, obj->_table);
 						sq_clone(v, -1);
 						sq_getstackobj(v, -1, &obj->_table);
@@ -1227,7 +1273,8 @@ Common::SharedPtr<Room> TwpEngine::defineRoom(const Common::String &name, HSQOBJ
 	params.pseudo = pseudo;
 	params.v = v;
 	params.room = result;
-	sqgetpairs(result->_table, onGetPairs, &params);
+	if (SQ_FAILED(sqgetpairs(result->_table, onGetPairs, &params)))
+		error("Falied to define objects");
 
 	// declare the room in the root table
 	setId(result->_table, g_twp->_resManager->newRoomId());
@@ -1437,7 +1484,7 @@ void TwpEngine::execNutEntry(HSQUIRRELVM v, const Common::String &entry) {
 	}
 }
 
-void TwpEngine::cameraAt(Math::Vector2d at) {
+void TwpEngine::cameraAt(const Math::Vector2d &at) {
 	_camera->setRoom(_room);
 	_camera->setAt(at);
 }
@@ -1493,7 +1540,7 @@ private:
 	int _zOrder = INT_MAX;
 };
 
-Common::SharedPtr<Object> TwpEngine::objAt(Math::Vector2d pos) {
+Common::SharedPtr<Object> TwpEngine::objAt(const Math::Vector2d &pos) {
 	Common::SharedPtr<Object> result;
 	objsAt(pos, GetByZOrder(result));
 	return result;
@@ -1749,7 +1796,7 @@ Scaling *TwpEngine::getScaling(const Common::String &name) {
 	return nullptr;
 }
 
-void TwpEngine::capture(Common::WriteStream &stream, Math::Vector2d size) {
+void TwpEngine::capture(Graphics::Surface &surface, int width, int height) {
 	// render scene into texture
 	Common::Array<byte> data;
 	RenderTexture rt(Math::Vector2d(SCREEN_WIDTH, SCREEN_HEIGHT));
@@ -1763,10 +1810,11 @@ void TwpEngine::capture(Common::WriteStream &stream, Math::Vector2d size) {
 	Graphics::Surface s;
 	s.init(SCREEN_WIDTH, SCREEN_HEIGHT, 4 * SCREEN_WIDTH, data.data(), fmt);
 	s.flipVertical(Common::Rect(s.w, s.h));
-	s.scale(size.getX(), size.getY());
 
+	Graphics::Surface *scaledSurface = s.scale(width, height);
 	// and save to stream
-	Image::writePNG(stream, s);
+	surface.copyFrom(*scaledSurface);
+	delete scaledSurface;
 }
 
 HSQUIRRELVM TwpEngine::getVm() { return _vm->get(); }

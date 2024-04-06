@@ -38,18 +38,18 @@ struct SaveGame {
 class SaveGameManager {
 public:
 	static bool getSaveGame(Common::SeekableReadStream *stream, SaveGame &savegame);
-	bool loadGame(const SaveGame &savegame);
+	bool loadGame(Common::SeekableReadStream &stream);
 	void saveGame(Common::WriteStream *stream);
 
 private:
 	void loadGameScene(const Common::JSONObject &json);
 	void loadDialog(const Common::JSONObject &json);
-	void loadCallbacks(const Common::JSONObject &json);
-	void loadGlobals(const Common::JSONObject &json);
-	void loadActors(const Common::JSONObject &json);
+	SQRESULT loadCallbacks(const Common::JSONObject &json);
+	SQRESULT loadGlobals(const Common::JSONObject &json);
+	SQRESULT loadActors(const Common::JSONObject &json);
 	void loadInventory(const Common::JSONValue *json);
-	void loadRooms(const Common::JSONObject &json);
-	void loadObjects(const Common::JSONObject &json);
+	SQRESULT loadRooms(const Common::JSONObject &json);
+	SQRESULT loadObjects(const Common::JSONObject &json);
 
 public:
 	bool _allowSaveGame = true;

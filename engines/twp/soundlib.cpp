@@ -130,10 +130,10 @@ static SQInteger playObjectSound(HSQUIRRELVM v) {
 		return sq_throwerror(v, "failed to get actor or object");
 	SQInteger loopTimes = 1;
 	float fadeInTime = 0.0f;
-	if (nArgs >= 4) {
-		sqget(v, 4, loopTimes);
-		sqget(v, 5, fadeInTime);
-	}
+	if ((nArgs >= 4) && SQ_FAILED(sqget(v, 4, loopTimes)))
+		return sq_throwerror(v, "failed to get loopTimes");
+	if ((nArgs >= 5) && SQ_FAILED(sqget(v, 5, fadeInTime)))
+		return sq_throwerror(v, "failed to get fadeInTime");
 
 	if (obj->_sound) {
 		g_twp->_audio->stop(obj->_sound);
@@ -154,11 +154,8 @@ static SQInteger playObjectSound(HSQUIRRELVM v) {
 // _flourescentSoundID = playSound(soundFlourescentOn)
 static SQInteger playSound(HSQUIRRELVM v) {
 	Common::SharedPtr<SoundDefinition> sound = sqsounddef(v, 2);
-	if (!sound) {
-		SQInteger soundId = 0;
-		sqget(v, 2, soundId);
-		return sq_throwerror(v, Common::String::format("failed to get sound: %lld", soundId).c_str());
-	}
+	if (!sound)
+		return sq_throwerror(v, "failed to get sound");
 	int soundId = g_twp->_audio->play(sound, Audio::Mixer::SoundType::kPlainSoundType);
 	sqpush(v, soundId);
 	return 1;
@@ -209,15 +206,13 @@ static SQInteger loopMusic(HSQUIRRELVM v) {
 	SQInteger loopTimes = -1;
 	float fadeInTime = 0.f;
 	SQInteger numArgs = sq_gettop(v);
-	Common::SharedPtr<SoundDefinition> sound = sqsounddef(v, 2);
+	Common::SharedPtr<SoundDefinition> sound(sqsounddef(v, 2));
 	if (!sound)
 		return sq_throwerror(v, "failed to get music");
-	if (numArgs == 3) {
-		sqget(v, 3, loopTimes);
-	}
-	if (numArgs == 4) {
-		sqget(v, 4, fadeInTime);
-	}
+	if ((numArgs >= 3) && SQ_FAILED(sqget(v, 3, loopTimes)))
+		return sq_throwerror(v, "failed to get loopTimes");
+	if ((numArgs >= 4) && SQ_FAILED(sqget(v, 4, fadeInTime)))
+		return sq_throwerror(v, "failed to get fadeInTime");
 	int soundId = g_twp->_audio->play(sound, Audio::Mixer::kMusicSoundType, loopTimes, fadeInTime);
 	sqpush(v, soundId);
 	return 1;

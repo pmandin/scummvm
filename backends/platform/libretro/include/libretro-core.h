@@ -24,7 +24,6 @@ extern retro_log_printf_t retro_log_cb;
 extern retro_input_state_t retro_input_cb;
 
 bool retro_get_input_bitmask_supported(void);
-void reset_performance_tuner(void);
 void retro_osd_notification(const char* msg);
 int retro_get_input_device(void);
 const char * retro_get_core_dir(void);
@@ -35,6 +34,7 @@ const char * retro_get_playlist_dir(void);
 bool retro_setting_get_timing_inaccuracies_enabled(void);
 float retro_setting_get_frame_rate(void);
 uint16 retro_setting_get_sample_rate(void);
+uint16 retro_setting_get_audio_samples_buffer_size(void);
 int retro_setting_get_analog_deadzone(void);
 bool retro_setting_get_analog_response_is_quadratic(void);
 float retro_setting_get_mouse_speed(void);
