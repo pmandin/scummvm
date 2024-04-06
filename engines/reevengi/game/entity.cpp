@@ -48,7 +48,7 @@ Entity::Entity(Common::SeekableReadStream *stream): _numAnim(0), _numFrame(0),
 }
 
 Entity::~Entity() {
-	delete _emdPtr;
+	delete[] _emdPtr;
 	_emdPtr = nullptr;
 	_emdSize = 0;
 }

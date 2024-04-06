@@ -70,9 +70,9 @@ TimDecoder::~TimDecoder() {
 
 void TimDecoder::destroy() {
 	_surface.free();
-	delete _colorMap;
+	delete[] _colorMap;
 	_colorMap = nullptr;
-	delete _timPalette;
+	delete[] _timPalette;
 	_timPalette = nullptr;
 }
 

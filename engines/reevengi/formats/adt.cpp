@@ -46,8 +46,10 @@ AdtDecoder::~AdtDecoder() {
 }
 
 void AdtDecoder::destroy() {
-	delete[] _dstPointer;
-	_dstPointer = nullptr;
+	if (_dstPointer) {
+		free(_dstPointer);
+		_dstPointer = nullptr;
+	}
 
 	_dstBufLen = 0;
 
