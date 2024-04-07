@@ -446,18 +446,20 @@ void GfxTinyGL::drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, i
 				tw = BITMAP_TEXTURE_SIZE-tx;	// Need to render extra part with another texture
 			}
 
-			tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[rowTexNum*_maskTexPitch + colTexNum]);
+			if (rowTexNum*_maskTexPitch + colTexNum < _maskNumTex) {
+				tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[rowTexNum*_maskTexPitch + colTexNum]);
 
-			tglBegin(TGL_QUADS);
-			tglTexCoord2f(tx+0.5, ty+0.5);
-			tglVertex2f(dstX+x, dstY+y);
-			tglTexCoord2f(tx-0.5 + tw, ty+0.5);
-			tglVertex2f(dstX+x + tw, dstY+y);
-			tglTexCoord2f(tx-0.5 + tw, ty-0.5 + th);
-			tglVertex2f(dstX+x + tw, dstY+y + th);
-			tglTexCoord2f(tx+0.5, ty-0.5 + th);
-			tglVertex2f(dstX+x, dstY+y + th);
-			tglEnd();
+				tglBegin(TGL_QUADS);
+				tglTexCoord2f(tx+0.5, ty+0.5);
+				tglVertex2f(dstX+x, dstY+y);
+				tglTexCoord2f(tx-0.5 + tw, ty+0.5);
+				tglVertex2f(dstX+x + tw, dstY+y);
+				tglTexCoord2f(tx-0.5 + tw, ty-0.5 + th);
+				tglVertex2f(dstX+x + tw, dstY+y + th);
+				tglTexCoord2f(tx+0.5, ty-0.5 + th);
+				tglVertex2f(dstX+x, dstY+y + th);
+				tglEnd();
+			}
 
 			x += tw;
 		}
