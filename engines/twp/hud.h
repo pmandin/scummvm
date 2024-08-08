@@ -54,16 +54,28 @@ struct Verb {
 	Common::String fun;
 	Common::String text;
 	Common::String key;
-	int flags{};
+	int flags = 0;
 
 	Verb();
 	Verb(VerbId id, const Common::String &image, const Common::String &fun, const Common::String &text, const Common::String &key, int flags = 0);
 };
 
+struct VerbSlot {
+	Verb _verb;
+	float _shakeTime = 0.f;
+	Common::ScopedPtr<Motor> _shake;
+	Math::Vector2d _shakeOffset;
+	bool _over = false;
+	bool _hightlight = false;
+
+	VerbSlot() {}
+	VerbSlot(Verb verb) : _verb(verb) {}
+};
+
 struct ActorSlot {
 public:
 	VerbUiColors verbUiColors;
-	Verb verbs[MAX_VERBS];
+	VerbSlot verbSlots[MAX_VERBS];
 	bool selectable = false;
 	Common::SharedPtr<Object> actor;
 
@@ -71,9 +83,9 @@ public:
 	ActorSlot();
 
 	Verb *getVerb(int id) {
-		for (auto &verb : verbs) {
-			if (verb.id.id == id) {
-				return &verb;
+		for (auto &verbSlot : verbSlots) {
+			if (verbSlot._verb.id.id == id) {
+				return &verbSlot._verb;
 			}
 		}
 		return nullptr;
@@ -112,6 +124,9 @@ public:
 	void update(float elapsed, const Math::Vector2d &pos, Common::SharedPtr<Object> hotspot, bool mouseClick);
 
 	void setVisible(bool visible) override;
+	void selectVerb(const Verb &verb);
+
+	Math::Vector2d getVerbPos(const VerbSlot &verbSlot) const;
 
 private:
 	void drawCore(const Math::Matrix4 &trsf) final;

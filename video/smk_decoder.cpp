@@ -451,7 +451,7 @@ bool SmackerDecoder::rewind() {
 	return true;
 }
 
-void SmackerDecoder::forceSeekToFrame(uint frame) {
+const Graphics::Surface *SmackerDecoder::forceSeekToFrame(uint frame) {
 	uint seekFrame;
 	if (frame >= 10)
 		seekFrame = MAX<uint>(frame - 10, 0);
@@ -459,13 +459,13 @@ void SmackerDecoder::forceSeekToFrame(uint frame) {
 		seekFrame = 0;
 
 	if (!isVideoLoaded())
-		return;
+		return nullptr;
 
 	if (seekFrame >= getFrameCount())
-		return;
+		return nullptr;
 
 	if (!rewind())
-		return;
+		return nullptr;
 
 	stopAudio();
 	SmackerVideoTrack *videoTrack = (SmackerVideoTrack *)getTrack(0);
@@ -484,14 +484,19 @@ void SmackerDecoder::forceSeekToFrame(uint frame) {
 	}
 
 	if (!_fileStream->seek(startPos + offset, SEEK_SET))
-		return;
+		return nullptr;
 
+	const Graphics::Surface *surface = nullptr;
 	while (getCurFrame() < (int)frame) {
-		decodeNextFrame();
+		surface = decodeNextFrame();
 	}
 
 	_lastTimeChange = videoTrack->getFrameTime(frame);
-	_startTime = g_system->getMillis() - (_lastTimeChange.msecs() / getRate()).toInt();
+	if (isPlaying()) {
+		_startTime = g_system->getMillis() - (_lastTimeChange.msecs() / getRate()).toInt();
+	}
+	resetPauseStartTime();
+	return surface;
 }
 
 void SmackerDecoder::readNextPacket() {

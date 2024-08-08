@@ -28,13 +28,13 @@
 
 #include "common/util.h"
 #include "common/textconsole.h"
-#include "common/math.h"
+#include "common/intrinsics.h"
 #include "common/stream.h"
 #include "common/substream.h"
 #include "common/file.h"
 #include "common/str.h"
 #include "common/bitstream.h"
-#include "common/huffman.h"
+#include "common/compression/huffman.h"
 #include "common/system.h"
 
 #include "graphics/yuv_to_rgb.h"

@@ -23,6 +23,7 @@
 #define DIRECTOR_CHANNEL_H
 
 #include "director/cursor.h"
+#include "director/sprite.h"
 
 namespace Graphics {
 	struct Surface;
@@ -45,7 +46,12 @@ public:
 
 	DirectorPlotData getPlotData();
 	const Graphics::Surface *getMask(bool forceMatte = false);
-	Common::Rect getBbox(bool unstretched = false);
+
+	inline int getWidth() { return _sprite->_width; };
+	inline int getHeight() { return _sprite->_height; };
+	inline Common::Point getPosition() { return _sprite->getPosition(); };
+	// Return the area of screen to be used for drawing content.
+	inline Common::Rect getBbox(bool unstretched = false) { return _sprite->getBbox(unstretched); };
 
 	bool isStretched();
 	bool isDirty(Sprite *nextSprite = nullptr);
@@ -57,12 +63,13 @@ public:
 	bool isActiveVideo();
 	bool isVideoDirectToStage();
 
-	void setWidth(int w);
-	void setHeight(int h);
-	void setBbox(int l, int t, int r, int b);
+	inline void setWidth(int w) { _sprite->setWidth(w); replaceWidget(); _dirty = true; };
+	inline void setHeight(int h) { _sprite->setHeight(h); replaceWidget(); _dirty = true; };
+	inline void setBbox(int l, int t, int r, int b) { _sprite->setBbox(l, t, r, b); replaceWidget(); _dirty = true; };
 	void setPosition(int x, int y, bool force = false);
 	void setCast(CastMemberID memberID);
 	void setClean(Sprite *nextSprite, bool partial = false);
+	void setStretch(bool enabled);
 	bool getEditable();
 	void setEditable(bool editable);
 	void replaceSprite(Sprite *nextSprite);
@@ -96,12 +103,9 @@ public:
 	bool _dirty;
 	bool _visible;
 	uint _constraint;
-	Common::Point _currentPoint;
 	Graphics::ManagedSurface *_mask;
 
 	int _priority;
-	int _width;
-	int _height;
 
 	// Used in digital movie sprites
 	double _movieRate;

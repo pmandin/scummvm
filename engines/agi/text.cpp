@@ -387,7 +387,9 @@ bool TextMgr::messageBox(const char *textPtr) {
 	uint32 windowTimer = _vm->getVar(VM_VAR_WINDOW_AUTO_CLOSE_TIMER);
 	debugC(3, kDebugLevelText, "blocking window v21=%d", windowTimer);
 
-	windowTimer = windowTimer * 10; // 1 = 0.5 seconds
+	// 1 = 0.5 seconds. NB: ScummVM runs at 40 fps, not 20, so we have
+	// to multiply by 20, not 10, to get the number of cycles.
+	windowTimer = windowTimer * 20;
 	_messageBoxCancelled = false;
 
 	_vm->inGameTimerResetPassedCycles();
@@ -546,7 +548,16 @@ bool TextMgr::isMouseWithinMessageBox() {
 
 void TextMgr::closeWindow() {
 	if (_messageState.window_Active) {
-		_gfx->render_Block(_messageState.backgroundPos_x, _messageState.backgroundPos_y, _messageState.backgroundSize_Width, _messageState.backgroundSize_Height);
+		// Close the window by copying the game screen to the display screen.
+		// Our graphics code was designed with the assumption that the window would
+		// always be contained within the game screen, but MUMG nursery rhymes pass
+		// y=0 to print.at to place the text at the top of the game screen with the
+		// window border over the menu bar. We now support this, but the background
+		// position is in game screen coordinates, so it will have a negative y value
+		// that we must limit to zero before copying. Bugs #13820, #15241
+		const int16 x = _messageState.backgroundPos_x;
+		const int16 y = MAX<int16>(0, _messageState.backgroundPos_y);
+		_gfx->render_Block(x, y, _messageState.backgroundSize_Width, _messageState.backgroundSize_Height);
 	}
 	_messageState.dialogue_Open = false;
 	_messageState.window_Active = false;
@@ -731,7 +742,7 @@ void TextMgr::promptKeyPress(uint16 newKey) {
 	if (_messageState.dialogue_Open) {
 		maxChars = TEXT_STRING_MAX_SIZE - 4;
 	} else {
-		maxChars = TEXT_STRING_MAX_SIZE - strlen(_vm->_game.strings[0]); // string 0 is the prompt string prefix
+		maxChars = TEXT_STRING_MAX_SIZE - strlen(_vm->_game.getString(0)); // string 0 is the prompt string prefix
 	}
 
 	if (_promptCursorPos)
@@ -824,8 +835,6 @@ void TextMgr::promptEchoLine() {
 }
 
 void TextMgr::promptRedraw() {
-	char *textPtr = nullptr;
-
 	if (_promptEnabled) {
 		if (_optionCommandPromptWindow) {
 			// Abort, in case command prompt window is active
@@ -837,7 +846,7 @@ void TextMgr::promptRedraw() {
 		charPos_Set(_promptRow, 0);
 		// agi_printf(str_wordwrap(msg, state.string[0], 40) );
 
-		textPtr = _vm->_game.strings[0];
+		const char *textPtr = _vm->_game.getString(0);
 		textPtr = stringPrintf(textPtr);
 		textPtr = stringWordWrap(textPtr, 40);
 
@@ -1245,7 +1254,7 @@ char *TextMgr::stringPrintf(const char *originalText) {
 				break;
 			case 's':
 				i = strtoul(originalText, nullptr, 10);
-				safeStrcat(resultString, stringPrintf(_vm->_game.strings[i]));
+				safeStrcat(resultString, stringPrintf(_vm->_game.getString(i)));
 				break;
 			case 'm':
 				i = strtoul(originalText, nullptr, 10) - 1;

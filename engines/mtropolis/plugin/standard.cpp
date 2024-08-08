@@ -236,6 +236,33 @@ MediaCueMessengerModifier::MediaCueMessengerModifier() : _isActive(false), _cueS
 	_mediaCue.sourceModifier = this;
 }
 
+MediaCueMessengerModifier::MediaCueMessengerModifier(const MediaCueMessengerModifier &other)
+	: Modifier(other), _cueSourceType(other._cueSourceType), _cueSourceModifier(other._cueSourceModifier), _enableWhen(other._enableWhen), _disableWhen(other._disableWhen), _mediaCue(other._mediaCue), _isActive(other._isActive) {
+	_cueSource.destruct<uint64, &CueSourceUnion::asUnset>();
+
+	switch (_cueSourceType) {
+	case kCueSourceInteger:
+		_cueSource.construct<int32, &CueSourceUnion::asInt>(other._cueSource.asInt);
+		break;
+	case kCueSourceIntegerRange:
+		_cueSource.construct<IntRange, &CueSourceUnion::asIntRange>(other._cueSource.asIntRange);
+		break;
+	case kCueSourceVariableReference:
+		_cueSource.construct<uint32, &CueSourceUnion::asVarRefGUID>(other._cueSource.asVarRefGUID);
+		break;
+	case kCueSourceLabel:
+		_cueSource.construct<Label, &CueSourceUnion::asLabel>(other._cueSource.asLabel);
+		break;
+	case kCueSourceString:
+		_cueSource.construct<Common::String, &CueSourceUnion::asString>(other._cueSource.asString);
+		break;
+	default:
+		_cueSource.construct<uint64, &CueSourceUnion::asUnset>(0);
+		break;
+	}
+}
+
+
 MediaCueMessengerModifier::~MediaCueMessengerModifier() {
 	switch (_cueSourceType) {
 	case kCueSourceInteger:
@@ -249,6 +276,9 @@ MediaCueMessengerModifier::~MediaCueMessengerModifier() {
 		break;
 	case kCueSourceLabel:
 		_cueSource.destruct<Label, &CueSourceUnion::asLabel>();
+		break;
+	case kCueSourceString:
+		_cueSource.destruct<Common::String, &CueSourceUnion::asString>();
 		break;
 	default:
 		_cueSource.destruct<uint64, &CueSourceUnion::asUnset>();
@@ -304,6 +334,10 @@ bool MediaCueMessengerModifier::load(const PlugInModifierLoaderContext &context,
 		_cueSourceType = kCueSourceLabel;
 		if (!_cueSource.asLabel.load(data.executeAt.value.asLabel))
 			return false;
+		break;
+	case Data::PlugInTypeTaggedValue::kString:
+		_cueSourceType = kCueSourceString;
+		_cueSource.asString = data.executeAt.value.asString;
 		break;
 	default:
 		return false;
@@ -1138,11 +1172,6 @@ MiniscriptInstructionOutcome ListVariableModifier::scriptSetCount(MiniscriptThre
 
 	size_t newSize = asInteger;
 	if (newSize > storage->_list->getSize()) {
-		if (storage->_list->getSize() == 0) {
-			thread->error("Restoring an empty list by setting its count isn't implemented");
-			return kMiniscriptInstructionOutcomeFailed;
-		}
-
 		storage->_list->expandToMinimumSize(newSize);
 	} else if (newSize < storage->_list->getSize()) {
 		storage->_list->truncateToSize(newSize);
@@ -1368,6 +1397,45 @@ bool SysInfoModifier::readAttribute(MiniscriptThread *thread, DynamicValue &resu
 	} else if (attrib == "currentram") {
 		result.setInt(256 * 1024 * 1024);
 		return true;
+	} else if (attrib == "architecture") {
+		ProjectPlatform platform = thread->getRuntime()->getProject()->getPlatform();
+
+		if (platform == kProjectPlatformWindows)
+			result.setString("80x86");
+		else if (platform == kProjectPlatformMacintosh)
+			result.setString("PowerPC"); // MC680x0 for 68k
+		else {
+			thread->error("Couldn't resolve architecture");
+			return false;
+		}
+
+		return true;
+	} else if (attrib == "sysversion") {
+		ProjectPlatform platform = thread->getRuntime()->getProject()->getPlatform();
+
+		if (platform == kProjectPlatformMacintosh)
+			result.setString("9.0.4");
+		else if (platform == kProjectPlatformWindows)
+			result.setString("4.0");	// Windows version?  MindGym checks for < 4
+		else {
+			thread->error("Couldn't resolve architecture");
+			return false;
+		}
+
+		return true;
+	} else if (attrib == "processor" || attrib == "nativecpu") {
+		ProjectPlatform platform = thread->getRuntime()->getProject()->getPlatform();
+
+		if (platform == kProjectPlatformMacintosh)
+			result.setString("604");		// PowerPC 604
+		else if (platform == kProjectPlatformWindows)
+			result.setString("Pentium");
+		else {
+			thread->error("Couldn't resolve architecture");
+			return false;
+		}
+
+		return true;
 	}
 
 	return false;
@@ -1417,6 +1485,27 @@ const char *PanningModifier::getDefaultName() const {
 	return "Panning Modifier"; // ???
 }
 
+FadeModifier::FadeModifier() {
+}
+
+FadeModifier::~FadeModifier() {
+}
+
+bool FadeModifier::load(const PlugInModifierLoaderContext &context, const Data::Standard::FadeModifier &data) {
+	return true;
+}
+
+void FadeModifier::disable(Runtime *runtime) {
+}
+
+Common::SharedPtr<Modifier> FadeModifier::shallowClone() const {
+	return Common::SharedPtr<Modifier>(new FadeModifier(*this));
+}
+
+const char *FadeModifier::getDefaultName() const {
+	return "Fade Modifier"; // ???
+}
+
 StandardPlugInHacks::StandardPlugInHacks() : allowGarbledListModData(false) {
 }
 
@@ -1427,7 +1516,8 @@ StandardPlugIn::StandardPlugIn()
 	, _objRefVarModifierFactory(this)
 	, _listVarModifierFactory(this)
 	, _sysInfoModifierFactory(this)
-	, _panningModifierFactory(this) {
+	, _panningModifierFactory(this)
+	, _fadeModifierFactory(this) {
 }
 
 StandardPlugIn::~StandardPlugIn() {
@@ -1442,6 +1532,7 @@ void StandardPlugIn::registerModifiers(IPlugInModifierRegistrar *registrar) cons
 	registrar->registerPlugInModifier("SysInfo", &_sysInfoModifierFactory);
 
 	registrar->registerPlugInModifier("panning", &_panningModifierFactory);
+	registrar->registerPlugInModifier("fade", &_fadeModifierFactory);
 }
 
 const StandardPlugInHacks &StandardPlugIn::getHacks() const {

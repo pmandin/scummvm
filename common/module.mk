@@ -2,12 +2,14 @@ MODULE := common
 
 MODULE_OBJS := \
 	archive.o \
+	base64.o \
 	btea.o \
 	concatstream.o \
 	config-manager.o \
 	coroutines.o \
 	dbcs-str.o \
 	debug.o \
+	engine_data.o \
 	error.o \
 	events.o \
 	file.o \
@@ -43,7 +45,8 @@ MODULE_OBJS := \
 	ustr.o \
 	util.o \
 	xpfloat.o \
-	zip-set.o
+	zip-set.o \
+	std/std.o
 
 ifdef ENABLE_EVENTRECORDER
 MODULE_OBJS += \

@@ -97,7 +97,8 @@ enum {
 	kCmdExtraPathClear = 'PEXC',
 	kCmdGameBrowser = 'PGME',
 	kCmdSaveBrowser = 'PSAV',
-	kCmdSavePathClear = 'PSAC'
+	kCmdSavePathClear = 'PSAC',
+	kCmdCheckIntegrity = 'PCHI'
 };
 
 const GroupingMode groupingModes[] = {
@@ -259,7 +260,7 @@ void LauncherDialog::build() {
 #endif
 		new StaticTextWidget(this, _title + ".Version", Common::U32String(gScummVMFullVersion));
 
-	new ButtonWidget(this, _title + ".HelpButton", Common::U32String("?"), _("Help"), kHelpCmd);
+	new ButtonWidget(this, _title + ".HelpButton", Common::U32String("?"), _("Click here to see Help"), kHelpCmd);
 
 	if (!g_system->hasFeature(OSystem::kFeatureNoQuit)) {
 		// I18N: Button Quit ScummVM program. Q is the shortcut, Ctrl+Q, put it in parens for non-latin (~Q~)
@@ -532,15 +533,15 @@ void LauncherDialog::loadGame(int item) {
 	EngineMan.upgradeTargetIfNecessary(target);
 
 	// Look for the plugin
-	const Plugin *metaEnginePlugin = nullptr;
 	const Plugin *enginePlugin = nullptr;
-	EngineMan.findTarget(target, &metaEnginePlugin);
+	QualifiedGameDescriptor game = EngineMan.findTarget(target);
 
-	// If we found a relevant plugin, find the matching engine plugin.
-	if (metaEnginePlugin) {
-		enginePlugin = PluginMan.getEngineFromMetaEngine(metaEnginePlugin);
-	}
+#if defined(UNCACHED_PLUGINS) && defined(DYNAMIC_MODULES) && !defined(DETECTION_STATIC)
+	// Unload all MetaEnginesDetection if we're using uncached plugins to save extra memory.
+	PluginMan.unloadDetectionPlugin();
+#endif
 
+	enginePlugin = PluginMan.findEnginePlugin(game.engineId);
 	if (enginePlugin) {
 		assert(enginePlugin->getType() == PLUGIN_TYPE_ENGINE);
 		const MetaEngine &metaEngine = enginePlugin->get<MetaEngine>();
@@ -561,6 +562,8 @@ void LauncherDialog::loadGame(int item) {
 		MessageDialog dialog(_("ScummVM could not find any engine capable of running the selected game!"), _("OK"));
 		dialog.runModal();
 	}
+
+	PluginMan.loadDetectionPlugin(); // only for uncached manager
 }
 
 Common::Array<LauncherEntry> LauncherDialog::generateEntries(const Common::ConfigManager::DomainMap &domains) {
@@ -588,7 +591,7 @@ Common::Array<LauncherEntry> LauncherDialog::generateEntries(const Common::Confi
 
 		Common::StringMap &engineMap = _engines[engineid];
 		if (!engineMap.contains(gameid)) {
-			const Plugin *plugin = EngineMan.findPlugin(engineid);
+			const Plugin *plugin = EngineMan.findDetectionPlugin(engineid);
 			if (plugin) {
 				PlainGameDescriptor gd = plugin->get<MetaEngineDetection>().findGame(gameid.c_str());
 				if (gd.description)
@@ -1222,7 +1225,7 @@ void LauncherSimple::groupEntries(const Common::Array<LauncherEntry> &metadata) 
 			attrs.push_back(_metadataParser._gameInfo[buildQualifiedGameName(iter->engineid, iter->gameid)].company_id);
 		}
 		_list->setGroupHeaderFormat(Common::U32String(""), Common::U32String(""));
-		// I18N: List grouping when no pubisher is specified
+		// I18N: List grouping when no publisher is specified
 		metadataNames[""] = _("Unknown Publisher");
 		Common::HashMap<Common::String, MetadataCompany, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo>::iterator i = _metadataParser._companyInfo.begin();
 		for (; i != _metadataParser._companyInfo.end(); ++i) {

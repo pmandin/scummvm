@@ -22,6 +22,7 @@
 #include "mohawk/myst.h"
 #include "mohawk/myst_graphics.h"
 #include "mohawk/resource.h"
+#include "mohawk/myst_scripts.h"
 
 #include "common/substream.h"
 #include "common/system.h"
@@ -93,8 +94,7 @@ void MystGraphics::loadMenuFont() {
 
 	Common::SeekableReadStream *fontStream = SearchMan.createReadStreamForMember(menuFontName);
 	if (fontStream) {
-		_menuFont = Graphics::loadTTFFont(*fontStream, fontSize);
-		delete fontStream;
+		_menuFont = Graphics::loadTTFFont(fontStream, DisposeAfterUse::YES, fontSize);
 	} else
 #endif
 	{
@@ -225,7 +225,8 @@ void MystGraphics::applyImagePatches(uint16 id, const MohawkSurface *mhkSurface)
 	}
 
 	// Fix map picture with inverted colors in Myst ME Polish version
-	if (id == 9934 && _vm->isGameVariant(GF_ME) && _vm->getLanguage() == Common::PL_POL) {
+	if (id == _vm->_stack->getMap() && _vm->isGameVariant(GF_ME) && _vm->getLanguage() == Common::PL_POL) {
+		debug(3, "Fix for Inverted Map Colors in Myst ME Polish Version Triggered!");
 		mhkSurface->getSurface()->convertToInPlace(Graphics::PixelFormat(4, 8, 8, 8, 8, 8, 16, 0, 24));
 	}
 }

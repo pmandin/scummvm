@@ -29,12 +29,13 @@ namespace Scumm {
 
 
 // GUI-options, primarily used by detection_tables.h
-#define GUIO_TRIM_FMTOWNS_TO_200_PIXELS                GUIO_GAMEOPTIONS1
-#define GUIO_ENHANCEMENTS                              GUIO_GAMEOPTIONS2
-#define GUIO_AUDIO_OVERRIDE                            GUIO_GAMEOPTIONS3
-#define GUIO_ORIGINALGUI                               GUIO_GAMEOPTIONS4
-#define GUIO_LOWLATENCYAUDIO                           GUIO_GAMEOPTIONS5
-#define GUIO_NETWORK                                   GUIO_GAMEOPTIONS6
+#define GAMEOPTION_TRIM_FMTOWNS_TO_200_PIXELS                GUIO_GAMEOPTIONS1
+#define GAMEOPTION_ENHANCEMENTS                              GUIO_GAMEOPTIONS2
+#define GAMEOPTION_AUDIO_OVERRIDE                            GUIO_GAMEOPTIONS3
+#define GAMEOPTION_ORIGINALGUI                               GUIO_GAMEOPTIONS4
+#define GAMEOPTION_LOWLATENCYAUDIO                           GUIO_GAMEOPTIONS5
+#define GAMEOPTION_NETWORK                                   GUIO_GAMEOPTIONS6
+#define GAMEOPTION_COPY_PROTECTION                           GUIO_GAMEOPTIONS7
 
 /* Game enhancements */
 
@@ -348,7 +349,13 @@ enum GameFeatures {
 	 * The "Ultimate Talkie" versions of Monkey Island, which have been
 	 * patched so that most workarounds/bugfixes no longer apply to them.
 	 */
-	GF_ULTIMATE_TALKIE = 1 << 18
+	GF_ULTIMATE_TALKIE = 1 << 18,
+
+	/**
+	 *  HE99 games which were ported to a C++ codebase with HE99 opcodes
+	 *  and several HE100 GFX/Wiz features.
+	 */
+	GF_HE_995 = 1 << 19
 };
 
 enum ScummGameId {

@@ -352,7 +352,7 @@ int CineEngine::scummVMSaveLoadDialog(bool isSave) {
 		desc = dialog->getResultString();
 
 		if (desc.empty()) {
-			// create our own description for the saved game, the user didnt enter it
+			// create our own description for the saved game, the user didn't enter it
 			desc = dialog->createDefaultSaveDescription(slot);
 		}
 	}
@@ -905,18 +905,18 @@ int16 makeMenuChoice(const CommandeType commandList[], uint16 height, uint16 X, 
 			}
 		} else {
 			int selectionValueDiff = 0;
-			while (!g_cine->_keyInputList.empty()) {
-				switch (g_cine->_keyInputList.back().keycode) {
-				case Common::KEYCODE_UP:
+			while (!g_cine->_actionList.empty()) {
+				switch (g_cine->_actionList.back()) {
+				case kActionMenuOptionUp:
 					selectionValueDiff--;
 					break;
-				case Common::KEYCODE_DOWN:
+				case kActionMenuOptionDown:
 					selectionValueDiff++;
 					break;
 				default:
 					break;
 				}
-				g_cine->_keyInputList.pop_back();
+				g_cine->_actionList.pop_back();
 			}
 
 			if (selectionValueDiff != 0) {

@@ -132,18 +132,20 @@ void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset)
 	int r, g, b;
 	uint numberOfAreas = _areaMap.size();
 
+	// This loop will load all the available palettes, which are more
+	// than the current areas. This indicates that more areas
+	// were originally planned, but they are not in the final game
 	if (isDriller())
-		// This loop will load all the available palettes, which are more
-		// than the current areas in Driller. This indicates that more areas
-		// were originally planned, but they are not in the final game
 		numberOfAreas += 2;
 	else if (isDark())
-		numberOfAreas -= 2;
+		numberOfAreas += 5;
 
 	for (uint i = 0; i < numberOfAreas; i++) {
 		int label = readField(file, 8);
+		if (label == 255)
+			break;
 		auto palette = new byte[16][3];
-		debugC(1, kFreescapeDebugParser, "Loading palette for area: %d at %lx", label, file->pos());
+		debugC(1, kFreescapeDebugParser, "Loading palette for area: %d at %llx", label, file->pos());
 		for (int c = 0; c < 16; c++) {
 			int v = file->readUint16BE();
 			r = (v & 0xf00) >> 8;
@@ -165,7 +167,7 @@ void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset)
 void FreescapeEngine::swapPalette(uint16 levelID) {
 	if (isAmiga() || isAtariST()) {
 		// The following palette was not available in the demo, so we select another one
-		if (isDemo() && levelID == 32)
+		if (isDriller() && isDemo() && levelID == 32)
 			levelID = 31;
 
 		_gfx->_palette = _paletteByArea[levelID];
@@ -173,9 +175,6 @@ void FreescapeEngine::swapPalette(uint16 levelID) {
 		_gfx->_inkColor = _areaMap[levelID]->_inkColor;
 		_gfx->_paperColor = _areaMap[levelID]->_paperColor;
 		_gfx->_underFireBackgroundColor = _areaMap[levelID]->_underFireBackgroundColor;
-
-		if (isSpectrum() && _gfx->_paperColor >= 9)
-			_gfx->_paperColor = 1;
 
 		if (!_border)
 			return;

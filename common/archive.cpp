@@ -132,7 +132,7 @@ Common::Error Archive::dumpArchive(const Path &destPath) {
 
 	for (auto &f : files) {
 		Common::Path filePath = f->getPathInArchive().punycodeEncode();
-		debug(1, "File: %s", filePath.toString().c_str());
+		debug(1, "dumpArchive(): File: %s", filePath.toString().c_str());
 
 		// skip if f represents a directory
 		if (filePath.isSeparatorTerminated()) continue;
@@ -252,7 +252,7 @@ bool MemcachingCaseInsensitiveArchive::CacheKey_EqualTo::operator()(const CacheK
 
 uint MemcachingCaseInsensitiveArchive::CacheKey_Hash::operator()(const CacheKey &x) const {
 	return static_cast<uint>(x.path.hashIgnoreCase() * 1000003u) ^ static_cast<uint>(x.altStreamType);
-};
+}
 
 SearchSet::ArchiveNodeList::iterator SearchSet::find(const String &name) {
 	ArchiveNodeList::iterator it = _list.begin();

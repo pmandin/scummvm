@@ -20,8 +20,8 @@
  */
 
 #include "ultima/ultima8/gumps/desktop_gump.h"
-#include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/texture.h"
+#include "ultima/ultima8/gfx/render_surface.h"
+#include "ultima/ultima8/gfx/texture.h"
 #include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/gumps/target_gump.h"
 
@@ -70,22 +70,14 @@ void DesktopGump::PaintChildren(RenderSurface *surf, int32 lerp_factor, bool sca
 	}
 }
 
-void DesktopGump::RenderSurfaceChanged(RenderSurface *surf) {
-	// Resize the desktop gump to match the RenderSurface
-	Rect new_dims;
-	surf->GetSurfaceDims(new_dims);
-	_dims.setWidth(new_dims.width());
-	_dims.setHeight(new_dims.height());
-
-	Gump::RenderSurfaceChanged();
-}
-
 void DesktopGump::RenderSurfaceChanged() {
 	// Resize the desktop gump to match the parent
-	Rect new_dims;
-	_parent->GetDims(new_dims);
-	_dims.setWidth(new_dims.width());
-	_dims.setHeight(new_dims.height());
+	if (_parent) {
+		Rect new_dims;
+		_parent->GetDims(new_dims);
+		_dims.setWidth(new_dims.width());
+		_dims.setHeight(new_dims.height());
+	}
 
 	Gump::RenderSurfaceChanged();
 }

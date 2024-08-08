@@ -63,6 +63,8 @@ public:
 	Frame *getFrame() const { return _frame; }
 	Score *getScore() const { return _score; }
 
+	void reset();
+
 	void updateEditable();
 
 	bool respondsToMouse();
@@ -73,7 +75,7 @@ public:
 	uint16 getPattern();
 	void setPattern(uint16 pattern);
 
-	void setCast(CastMemberID memberID);
+	void setCast(CastMemberID memberID, bool replaceDims = true);
 	bool isQDShape();
 	Graphics::Surface *getQDMatte();
 	void createQDMatte();
@@ -82,6 +84,17 @@ public:
 	uint32 getBackColor();
 	void setAutoPuppet(AutoPuppetProperty property, bool value);
 	bool getAutoPuppet(AutoPuppetProperty property);
+
+	inline int getWidth() { return _width; }
+	void setWidth(int w);
+	inline int getHeight() { return _height; }
+	void setHeight(int h);
+
+	Common::Rect getBbox(bool unstretched);
+	void setBbox(int l, int t, int r, int b);
+
+	Common::Point getPosition();
+	void setPosition(int x, int y);
 
 	Frame *_frame;
 	Score *_score;
@@ -98,16 +111,21 @@ public:
 	SpriteType _spriteType;
 	byte _inkData;
 	InkType _ink;
-	uint16 _trails;
+	bool _trails;
 
 	CastMemberID _castId;
 	uint16 _pattern;
 	CastMember *_cast;
 
 	byte _thickness;
+
+	// These fields are used for tracking the position, width and height of the sprite,
+	// as received from the score frame data.
+	// Don't change these; instead adjust the equivalent properties in Channel.
 	Common::Point _startPoint;
 	int16 _width;
 	int16 _height;
+
 	bool _moveable;
 	bool _editable;
 	bool _puppet;
@@ -117,9 +135,9 @@ public:
 	uint32 _foreColor;
 
 	byte _blend;
-	
+
 	byte _volume;
-	byte _stretch;
+	bool _stretch;
 };
 
 } // End of namespace Director

@@ -426,6 +426,7 @@ void TextDialog::show() {
 	if (!_vm->shouldQuit()) {
 		_vm->_events->waitForNextFrame();
 		_vm->_events->_pendingKeys.clear();
+		_vm->_events->_pendingActions.clear();
 	}
 
 	// Restore the background
@@ -451,15 +452,21 @@ MessageDialog::MessageDialog(MADSEngine *vm, int maxChars, ...)
 /*------------------------------------------------------------------------*/
 
 Dialogs *Dialogs::init(MADSEngine *vm) {
-	if (vm->getGameID() == GType_RexNebular)
+	switch (vm->getGameID()) {
+	case GType_RexNebular:
 		return new Nebular::DialogsNebular(vm);
-	//else if (vm->getGameID() == GType_Phantom)
-	//	return new Phantom::DialogsPhantom(vm);
-
-	// Throw a warning for now, since the associated Dialogs class isn't implemented yet
-	warning("Dialogs: Unknown game");
-	// HACK: Reuse the implemented Nebular dialogs for now, to avoid crashing later on
-	return new Nebular::DialogsNebular(vm);
+	case GType_Phantom:
+		// return new Phantom::DialogsPhantom(vm);
+	case GType_Dragonsphere:
+		// return new DragonSphere::DialogsDragonSphere(vm);
+	case GType_Forest:
+		// return new Forest::DialogsForest(vm);
+	default:
+		// Throw a warning for now, since the associated Dialogs class isn't implemented yet
+		warning("Dialogs: Unknown game");
+		// HACK: Reuse the implemented Nebular dialogs for now, to avoid crashing later on
+		return new Nebular::DialogsNebular(vm);
+	}
 }
 
 Dialogs::Dialogs(MADSEngine *vm)

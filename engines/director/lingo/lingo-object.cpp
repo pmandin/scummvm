@@ -26,14 +26,17 @@
 #include "director/director.h"
 #include "director/movie.h"
 #include "director/window.h"
+#include "director/lingo/lingo-ast.h"
 #include "director/lingo/lingo-code.h"
 #include "director/lingo/lingo-the.h"
 
 #include "director/lingo/xlibs/aiff.h"
 #include "director/lingo/xlibs/applecdxobj.h"
 #include "director/lingo/xlibs/askuser.h"
+#include "director/lingo/xlibs/backdrop.h"
 #include "director/lingo/xlibs/barakeobj.h"
 #include "director/lingo/xlibs/batqt.h"
+#include "director/lingo/xlibs/bimxobj.h"
 #include "director/lingo/xlibs/blitpict.h"
 #include "director/lingo/xlibs/cdromxobj.h"
 #include "director/lingo/xlibs/closebleedwindowxcmd.h"
@@ -45,6 +48,7 @@
 #include "director/lingo/xlibs/developerStack.h"
 #include "director/lingo/xlibs/dialogsxobj.h"
 #include "director/lingo/xlibs/dirutil.h"
+#include "director/lingo/xlibs/dllglue.h"
 #include "director/lingo/xlibs/dpwavi.h"
 #include "director/lingo/xlibs/dpwqtw.h"
 #include "director/lingo/xlibs/draw.h"
@@ -64,10 +68,14 @@
 #include "director/lingo/xlibs/findwin.h"
 #include "director/lingo/xlibs/flushxobj.h"
 #include "director/lingo/xlibs/fplayxobj.h"
+#include "director/lingo/xlibs/genutils.h"
 #include "director/lingo/xlibs/getscreenrectsxfcn.h"
 #include "director/lingo/xlibs/getscreensizexfcn.h"
 #include "director/lingo/xlibs/gpid.h"
+#include "director/lingo/xlibs/henry.h"
 #include "director/lingo/xlibs/hitmap.h"
+#include "director/lingo/xlibs/inixobj.h"
+#include "director/lingo/xlibs/instobj.h"
 #include "director/lingo/xlibs/jwxini.h"
 #include "director/lingo/xlibs/iscd.h"
 #include "director/lingo/xlibs/ispippin.h"
@@ -80,12 +88,16 @@
 #include "director/lingo/xlibs/misc.h"
 #include "director/lingo/xlibs/miscx.h"
 #include "director/lingo/xlibs/mmaskxobj.h"
+#include "director/lingo/xlibs/mmovie.h"
 #include "director/lingo/xlibs/moovxobj.h"
+#include "director/lingo/xlibs/movemousejp.h"
 #include "director/lingo/xlibs/movemousexobj.h"
 #include "director/lingo/xlibs/movieidxxobj.h"
 #include "director/lingo/xlibs/movutils.h"
+#include "director/lingo/xlibs/mystisle.h"
 #include "director/lingo/xlibs/openbleedwindowxcmd.h"
 #include "director/lingo/xlibs/orthoplayxobj.h"
+#include "director/lingo/xlibs/paco.h"
 #include "director/lingo/xlibs/palxobj.h"
 #include "director/lingo/xlibs/panel.h"
 #include "director/lingo/xlibs/popupmenuxobj.h"
@@ -104,6 +116,7 @@
 #include "director/lingo/xlibs/soundjam.h"
 #include "director/lingo/xlibs/spacemgr.h"
 #include "director/lingo/xlibs/stagetc.h"
+#include "director/lingo/xlibs/syscolor.h"
 #include "director/lingo/xlibs/unittest.h"
 #include "director/lingo/xlibs/valkyrie.h"
 #include "director/lingo/xlibs/videodiscxobj.h"
@@ -117,8 +130,13 @@
 #include "director/lingo/xlibs/xio.h"
 #include "director/lingo/xlibs/xplayanim.h"
 #include "director/lingo/xlibs/xsoundxfcn.h"
+#include "director/lingo/xlibs/xwin.h"
 #include "director/lingo/xlibs/yasix.h"
+#include "director/lingo/xtras/directsound.h"
+#include "director/lingo/xtras/keypoll.h"
+#include "director/lingo/xtras/qtvrxtra.h"
 #include "director/lingo/xtras/scrnutil.h"
+#include "director/lingo/xtras/timextra.h"
 
 namespace Director {
 
@@ -182,103 +200,124 @@ void Lingo::cleanupMethods() {
 	Window::cleanupMethods();
 }
 
+#define XLIBDEF(class, flags, version) \
+	{ class::fileNames, class::open, class::close, flags, version }
+
 static struct XLibProto {
-	const char **names;
+	const XlibFileDesc *names;
 	XLibOpenerFunc opener;
 	XLibCloserFunc closer;
 	int type;
 	int version;
 } xlibs[] = {
-	{ AiffXObj::fileNames,				AiffXObj::open,				AiffXObj::close,			kXObj,					400 },	// D4
-	{ AppleCDXObj::fileNames,			AppleCDXObj::open,			AppleCDXObj::close,			kXObj,					300 },	// D3
-	{ AskUser::fileNames,				AskUser::open,				AskUser::close,				kXObj,					400 },	// D4
-	{ BarakeObj::fileNames,				BarakeObj::open,			BarakeObj::close,			kXObj,					400 },	// D4
-	{ BatQT::fileNames,					BatQT::open,				BatQT::close,				kXObj,					400 },	// D4
-	{ BlitPictXObj::fileNames,			BlitPictXObj::open,			BlitPictXObj::close,		kXObj,					400 },	// D4
-	{ CDROMXObj::fileNames,				CDROMXObj::open,			CDROMXObj::close,			kXObj,					200 },	// D2
-	{ CloseBleedWindowXCMD::fileNames,			CloseBleedWindowXCMD::open,			CloseBleedWindowXCMD::close,		kXObj,					300 },	// D3
-	{ ColorXObj::fileNames,				ColorXObj::open,			ColorXObj::close,			kXObj,					400 },	// D4
-	{ ColorCursorXObj::fileNames,		ColorCursorXObj::open,		ColorCursorXObj::close,		kXObj,					400 },	// D4
-	{ ConsumerXObj::fileNames,			ConsumerXObj::open,			ConsumerXObj::close,		kXObj,					400 },	// D4
-	{ CursorXObj::fileNames,			CursorXObj::open,			CursorXObj::close,			kXObj,					400 },	// D4
-	{ DarkenScreen::fileNames,			DarkenScreen::open,			DarkenScreen::close,		kXObj,					300 },	// D3
-	{ DeveloperStack::fileNames,		DeveloperStack::open,		DeveloperStack::close,		kXObj,					300 },	// D3
-	{ DialogsXObj::fileNames,			DialogsXObj::open,			DialogsXObj::close,			kXObj,					400 },	// D4
-	{ DirUtilXObj::fileNames,			DirUtilXObj::open,			DirUtilXObj::close,			kXObj,					400 },	// D4
-	{ DPwAVI::fileNames,				DPwAVI::open,				DPwAVI::close,				kXObj,					400 },	// D4
-	{ DPwQTw::fileNames,				DPwQTw::open,				DPwQTw::close,				kXObj,					400 },	// D4
-	{ DrawXObj::fileNames,				DrawXObj::open,				DrawXObj::close,			kXObj,					400 },	// D4
-	{ Ednox::fileNames,					Ednox::open,				Ednox::close,				kXObj,					300 },	// D3
-	{ EventQXObj::fileNames,			EventQXObj::open,			EventQXObj::close,			kXObj,					400 },	// D4
-	{ FEDraculXObj::fileNames,			FEDraculXObj::open,			FEDraculXObj::close,		kXObj,					400 },	// D4
-	{ FEIMasksXObj::fileNames,			FEIMasksXObj::open,			FEIMasksXObj::close,		kXObj,					400 },	// D4
-	{ FEIPrefsXObj::fileNames,			FEIPrefsXObj::open,			FEIPrefsXObj::close,		kXObj,					400 },	// D4
-	{ FadeGammaDownXCMD::fileNames,		FadeGammaDownXCMD::open,	FadeGammaDownXCMD::close,	kXObj,					400 },	// D4
-	{ FadeGammaUpXCMD::fileNames,		FadeGammaUpXCMD::open,		FadeGammaUpXCMD::close,		kXObj,					400 },	// D4
-	{ FadeGammaXCMD::fileNames,			FadeGammaXCMD::open,		FadeGammaXCMD::close,		kXObj,					400 },	// D4
-	{ FileExists::fileNames,			FileExists::open,			FileExists::close,			kXObj,					300 },	// D3
-	{ FileIO::fileNames,				FileIO::open,				FileIO::close,				kXObj | kXtraObj,		200 },	// D2
-	{ FindFolder::fileNames,			FindFolder::open,			FindFolder::close,			kXObj,					300 },	// D3
-	{ FindSys::fileNames,				FindSys::open,				FindSys::close,				kXObj,					400 },	// D4
-	{ FindWin::fileNames,				FindWin::open,				FindWin::close,				kXObj,					400 },	// D4
-	{ FinderEventsXCMD::fileNames,		FinderEventsXCMD::open,		FinderEventsXCMD::close,	kXObj,					400 },	// D4
-	{ FlushXObj::fileNames,				FlushXObj::open,			FlushXObj::close,			kXObj,					300 },	// D3
-	{ FPlayXObj::fileNames,				FPlayXObj::open,			FPlayXObj::close,			kXObj,					200 },	// D2
-	{ GetScreenRectsXFCN::fileNames,			GetScreenRectsXFCN::open,			GetScreenRectsXFCN::close,		kXObj,					300 },	// D3
-	{ GetScreenSizeXFCN::fileNames,			GetScreenSizeXFCN::open,			GetScreenSizeXFCN::close,		kXObj,					300 },	// D3
-	{ GpidXObj::fileNames,				GpidXObj::open,				GpidXObj::close,			kXObj,					400 },	// D4
-	{ HitMap::fileNames,				HitMap::open,				HitMap::close,				kXObj,					400 },	// D4
-	{ IsCD::fileNames,					IsCD::open,					IsCD::close,				kXObj,					300 },	// D3
-	{ IsPippin::fileNames,				IsPippin::open,				IsPippin::close,			kXObj,					400 },	// D4
-	{ JITDraw3XObj::fileNames,			JITDraw3XObj::open,			JITDraw3XObj::close,		kXObj,					400 },	// D4
-	{ JourneyWareXINIXObj::fileNames,	JourneyWareXINIXObj::open,	JourneyWareXINIXObj::close,	kXObj,					400 },	// D4
-	{ LabelDrvXObj::fileNames,			LabelDrvXObj::open,			LabelDrvXObj::close,		kXObj,					400 },	// D4
-	{ ManiacBgXObj::fileNames,			ManiacBgXObj::open,			ManiacBgXObj::close,		kXObj,					300 },	// D3
-	{ MapNavigatorXObj::fileNames,		MapNavigatorXObj::open,		MapNavigatorXObj::close,	kXObj,					400 },	// D4
-	{ MemCheckXObj::fileNames,			MemCheckXObj::open,			MemCheckXObj::close,		kXObj,					400 },	// D4
-	{ MemoryXObj::fileNames,			MemoryXObj::open,			MemoryXObj::close,			kXObj,					300 },	// D3
-	{ Misc::fileNames,					Misc::open,					Misc::close,				kXObj,					400 },	// D4
-	{ MiscX::fileNames,					MiscX::open,				MiscX::close,				kXObj,					400 },	// D4
-	{ MMaskXObj::fileNames,				MMaskXObj::open,			MMaskXObj::close,			kXObj,					400 },	// D4
-	{ MoovXObj::fileNames, 				MoovXObj::open, 			MoovXObj::close,			kXObj,					300 },  // D3
-	{ MoveMouseXObj::fileNames,			MoveMouseXObj::open,		MoveMouseXObj::close,		kXObj,					400 },	// D4
-	{ MovieIdxXObj::fileNames,			MovieIdxXObj::open,			MovieIdxXObj::close,		kXObj,					400 },	// D4
-	{ MovUtilsXObj::fileNames,			MovUtilsXObj::open,			MovUtilsXObj::close,		kXObj,					400 },	// D4
-	{ OpenBleedWindowXCMD::fileNames,			OpenBleedWindowXCMD::open,			OpenBleedWindowXCMD::close,		kXObj,					300 },	// D3
-	{ OrthoPlayXObj::fileNames,			OrthoPlayXObj::open,		OrthoPlayXObj::close,		kXObj,					400 },	// D4
-	{ PalXObj::fileNames,				PalXObj::open,				PalXObj::close,				kXObj,					400 },	// D4
-	{ PanelXObj::fileNames,				PanelXObj::open,			PanelXObj::close,			kXObj,					200 },	// D2
-	{ PopUpMenuXObj::fileNames,			PopUpMenuXObj::open,		PopUpMenuXObj::close,		kXObj,					200 },	// D2
-	{ Porta::fileNames,					Porta::open,				Porta::close,				kXObj,					300 },	// D3
-	{ PortaXCMD::fileNames,			PortaXCMD::open,			PortaXCMD::close,		kXObj,					300 },	// D3
-	{ PrefPath::fileNames,				PrefPath::open,				PrefPath::close,			kXObj,					400 },	// D4
-	{ PrintOMaticXObj::fileNames,		PrintOMaticXObj::open,		PrintOMaticXObj::close,		kXObj,					400 },	// D4
-	{ ProcessXObj::fileNames,			ProcessXObj::open,			ProcessXObj::close,		kXObj,					400 },	// D4
-	{ QTCatMoviePlayerXObj::fileNames,	QTCatMoviePlayerXObj::open,	QTCatMoviePlayerXObj::close,kXObj,					400 },	// D4
-	{ QTMovie::fileNames,				QTMovie::open,				QTMovie::close,				kXObj,					400 },	// D4
-	{ QTVR::fileNames,					QTVR::open,					QTVR::close,				kXObj,					400 },	// D4
-	{ Quicktime::fileNames,				Quicktime::open,			Quicktime::close,			kXObj,					300 },	// D3
-	{ RearWindowXObj::fileNames,		RearWindowXObj::open,		RearWindowXObj::close,		kXObj,					400 },	// D4
-	{ RegisterComponent::fileNames,		RegisterComponent::open,	RegisterComponent::close,	kXObj,					400 },	// D4
-	{ RemixXCMD::fileNames,			RemixXCMD::open,			RemixXCMD::close,		kXObj,					300 },	// D3
-	{ ScrnUtilXtra::fileNames,			ScrnUtilXtra::open,			ScrnUtilXtra::close,		kXtraObj,					500 },	// D5
-	{ SerialPortXObj::fileNames,		SerialPortXObj::open,		SerialPortXObj::close,		kXObj,					200 },	// D2
-	{ SoundJam::fileNames,				SoundJam::open,				SoundJam::close,			kXObj,					400 },	// D4
-	{ SpaceMgr::fileNames,				SpaceMgr::open,				SpaceMgr::close,			kXObj,					400 },	// D4
-	{ StageTCXObj::fileNames,			StageTCXObj::open,			StageTCXObj::close,			kXObj,					400 },	// D4
-	{ UnitTest::fileNames,				UnitTest::open,				UnitTest::close,			kXObj,					400 },	// D4
-	{ VMisOnXFCN::fileNames,			VMisOnXFCN::open,			VMisOnXFCN::close,			kXObj,					400 },	// D4
-	{ ValkyrieXObj::fileNames,			ValkyrieXObj::open,			ValkyrieXObj::close,		kXObj,					400 },	// D4
-	{ VideodiscXObj::fileNames,			VideodiscXObj::open,		VideodiscXObj::close,		kXObj,					200 },	// D2
-	{ VolumeList::fileNames,			VolumeList::open,			VolumeList::close,			kXObj,					300 },	// D3
-	{ WinInfoXObj::fileNames,			WinInfoXObj::open,			WinInfoXObj::close,			kXObj,					400 },  // D4
-	{ WidgetXObj::fileNames,			WidgetXObj::open,			WidgetXObj::close, 			kXObj,					400 },  // D4
-	{ WindowXObj::fileNames,			WindowXObj::open,			WindowXObj::close,			kXObj,					200 },	// D2
-	{ XCMDGlueXObj::fileNames,			XCMDGlueXObj::open,			XCMDGlueXObj::close,		kXObj,					200 },	// D2
-	{ XSoundXFCN::fileNames,			XSoundXFCN::open,			XSoundXFCN::close,			kXObj,					400 },	// D4
-	{ XioXObj::fileNames,				XioXObj::open,				XioXObj::close,				kXObj,					400 },	// D3
-	{ XPlayAnim::fileNames,				XPlayAnim::open,			XPlayAnim::close,			kXObj,					300 },	// D3
-	{ Yasix::fileNames,					Yasix::open,				Yasix::close,				kXObj,					300 },	// D3
+	XLIBDEF(AiffXObj,			kXObj,			400),	// D4
+	XLIBDEF(AppleCDXObj,		kXObj,			300),	// D3
+	XLIBDEF(AskUser,			kXObj,			400),	// D4
+	XLIBDEF(BackdropXObj,		kXObj,			400),	// D4
+	XLIBDEF(BarakeObj,			kXObj,			400),	// D4
+	XLIBDEF(BatQT,				kXObj,			400),	// D4
+	XLIBDEF(BIMXObj,			kXObj,			400),	// D4
+	XLIBDEF(BlitPictXObj,		kXObj,			400),	// D4
+	XLIBDEF(CDROMXObj,			kXObj,			200),	// D2
+	XLIBDEF(CloseBleedWindowXCMD,kXObj,			300),	// D3
+	XLIBDEF(ColorXObj,			kXObj,			400),	// D4
+	XLIBDEF(ColorCursorXObj,	kXObj,			400),	// D4
+	XLIBDEF(ConsumerXObj,		kXObj,			400),	// D4
+	XLIBDEF(CursorXObj,			kXObj,			400),	// D4
+	XLIBDEF(DLLGlueXObj,		kXObj,			400),	// D4
+	XLIBDEF(DPWAVIXObj,			kXObj,			300),	// D3
+	XLIBDEF(DPWQTWXObj,			kXObj,			300),	// D3
+	XLIBDEF(DarkenScreen,		kXObj,			300),	// D3
+	XLIBDEF(DeveloperStack,		kXObj,			300),	// D3
+	XLIBDEF(DialogsXObj,		kXObj,			400),	// D4
+	XLIBDEF(DirUtilXObj,		kXObj,			400),	// D4
+	XLIBDEF(DirectsoundXtra,	kXtraObj,		500),	// D5
+	XLIBDEF(DrawXObj,			kXObj,			400),	// D4
+	XLIBDEF(Ednox,				kXObj,			300),	// D3
+	XLIBDEF(EventQXObj,			kXObj,			400),	// D4
+	XLIBDEF(FEDraculXObj,		kXObj,			400),	// D4
+	XLIBDEF(FEIMasksXObj,		kXObj,			400),	// D4
+	XLIBDEF(FEIPrefsXObj,		kXObj,			400),	// D4
+	XLIBDEF(FadeGammaDownXCMD,	kXObj,			400),	// D4
+	XLIBDEF(FadeGammaUpXCMD,	kXObj,			400),	// D4
+	XLIBDEF(FadeGammaXCMD,		kXObj,			400),	// D4
+	XLIBDEF(FileExists,			kXObj,			300),	// D3
+	XLIBDEF(FileIO,				kXObj | kXtraObj,200),	// D2
+	XLIBDEF(FindFolder,			kXObj,			300),	// D3
+	XLIBDEF(FindSys,			kXObj,			400),	// D4
+	XLIBDEF(FindWin,			kXObj,			400),	// D4
+	XLIBDEF(FinderEventsXCMD,	kXObj,			400),	// D4
+	XLIBDEF(FlushXObj,			kXObj,			300),	// D3
+	XLIBDEF(FPlayXObj,			kXObj,			200),	// D2
+	XLIBDEF(GenUtilsXObj,		kXObj,			400),	// D4
+	XLIBDEF(GetScreenRectsXFCN,	kXObj,			300),	// D3
+	XLIBDEF(GetScreenSizeXFCN,	kXObj,			300),	// D3
+	XLIBDEF(GpidXObj,			kXObj,			400),	// D4
+	XLIBDEF(HenryXObj,			kXObj,					400),	// D4
+	XLIBDEF(HitMap,				kXObj,			400),	// D4
+	XLIBDEF(IniXObj,			kXObj,			400),	// D4
+	XLIBDEF(InstObjXObj,		kXObj,			400),	// D4
+	XLIBDEF(IsCD,				kXObj,			300),	// D3
+	XLIBDEF(IsPippin,			kXObj,			400),	// D4
+	XLIBDEF(JITDraw3XObj,		kXObj,			400),	// D4
+	XLIBDEF(JourneyWareXINIXObj,kXObj,			400),	// D4
+	XLIBDEF(KeypollXtra,		kXtraObj,		500),	// D5
+	XLIBDEF(LabelDrvXObj,		kXObj,			400),	// D4
+	XLIBDEF(MMovieXObj,			kXObj,			400),	// D4
+	XLIBDEF(ManiacBgXObj,		kXObj,			300),	// D3
+	XLIBDEF(MapNavigatorXObj,	kXObj,			400),	// D4
+	XLIBDEF(MemCheckXObj,		kXObj,			400),	// D4
+	XLIBDEF(MemoryXObj,			kXObj,			300),	// D3
+	XLIBDEF(Misc,				kXObj,			400),	// D4
+	XLIBDEF(MiscX,				kXObj,			400),	// D4
+	XLIBDEF(MMaskXObj,			kXObj,			400),	// D4
+	XLIBDEF(MoovXObj,			kXObj,			300),	// D3
+	XLIBDEF(MovUtilsXObj,		kXObj,			400),	// D4
+	XLIBDEF(MoveMouseJPXObj,			kXObj,					400),	// D4
+	XLIBDEF(MoveMouseXObj,		kXObj,			400),	// D4
+	XLIBDEF(MovieIdxXObj,		kXObj,			400),	// D4
+	XLIBDEF(MovUtilsXObj,		kXObj,			400),	// D4
+	XLIBDEF(MystIsleXObj,			kXObj,					400),	// D4
+	XLIBDEF(OpenBleedWindowXCMD,kXObj,			300),	// D3
+	XLIBDEF(OrthoPlayXObj,		kXObj,			400),	// D4
+	XLIBDEF(PACoXObj,			kXObj,			300),	// D3
+	XLIBDEF(PalXObj,			kXObj,			400),	// D4
+	XLIBDEF(PanelXObj,			kXObj,			200),	// D2
+	XLIBDEF(PopUpMenuXObj,		kXObj,			200),	// D2
+	XLIBDEF(Porta,				kXObj,			300),	// D3
+	XLIBDEF(PortaXCMD,			kXObj,			300),	// D3
+	XLIBDEF(PrefPath,			kXObj,			400),	// D4
+	XLIBDEF(PrintOMaticXObj,	kXObj,			400),	// D4
+	XLIBDEF(ProcessXObj,		kXObj,			400),	// D4
+	XLIBDEF(QTCatMoviePlayerXObj,kXObj,			400),	// D4
+	XLIBDEF(QTMovie,			kXObj,			400),	// D4
+	XLIBDEF(QTVR,				kXObj,			400),	// D4
+	XLIBDEF(QtvrxtraXtra,		kXtraObj,		500),	// D5
+	XLIBDEF(Quicktime,			kXObj,			300),	// D3
+	XLIBDEF(RearWindowXObj,		kXObj,			400),	// D4
+	XLIBDEF(RegisterComponent,	kXObj,			400),	// D4
+	XLIBDEF(RemixXCMD,			kXObj,			300),	// D3
+	XLIBDEF(ScrnUtilXtra,		kXtraObj,		500),	// D5
+	XLIBDEF(SerialPortXObj,		kXObj,			200),	// D2
+	XLIBDEF(SoundJam,			kXObj,			400),	// D4
+	XLIBDEF(SpaceMgr,			kXObj,			400),	// D4
+	XLIBDEF(StageTCXObj,		kXObj,			400),	// D4
+	XLIBDEF(SysColorXObj,			kXObj,					400),	// D4
+	XLIBDEF(TimextraXtra,		kXtraObj,		500),	// D5
+	XLIBDEF(UnitTestXObj,		kXObj,			400),	// D4
+	XLIBDEF(VMisOnXFCN,			kXObj,			400),	// D4
+	XLIBDEF(ValkyrieXObj,		kXObj,			400),	// D4
+	XLIBDEF(VideodiscXObj,		kXObj,			200),	// D2
+	XLIBDEF(VolumeList,			kXObj,			300),	// D3
+	XLIBDEF(WinInfoXObj,		kXObj,			400),	// D4
+	XLIBDEF(WidgetXObj, 		kXObj,			400),	// D4
+	XLIBDEF(WindowXObj,			kXObj,			200),	// D2
+	XLIBDEF(XCMDGlueXObj,		kXObj,			200),	// D2
+	XLIBDEF(XSoundXFCN,			kXObj,			400),	// D4
+	XLIBDEF(XWINXObj,			kXObj,			300),	// D3
+	XLIBDEF(XioXObj,			kXObj,			400),	// D3
+	XLIBDEF(XPlayAnim,			kXObj,			300),	// D3
+	XLIBDEF(Yasix,				kXObj,			300),	// D3
 	{ nullptr, nullptr, nullptr, 0, 0 }
 };
 
@@ -287,9 +326,16 @@ void Lingo::initXLibs() {
 		if (lib->version > _vm->getVersion())
 			continue;
 
-		for (uint i = 0; lib->names[i]; i++) {
-			_xlibOpeners[lib->names[i]] = lib->opener;
-			_xlibClosers[lib->names[i]] = lib->closer;
+		for (uint i = 0; lib->names[i].name; i++) {
+			// If this entry belongs to a specific game, skip it unless matched
+			if (lib->names[i].gameId && strcmp(lib->names[i].gameId, g_director->getGameId()))
+				continue;
+
+			if (_xlibOpeners.contains(lib->names[i].name))
+				warning("Lingo::initXLibs(): Duplicate entry for %s", lib->names[i].name);
+
+			_xlibOpeners[lib->names[i].name] = lib->opener;
+			_xlibClosers[lib->names[i].name] = lib->closer;
 		}
 	}
 }
@@ -405,11 +451,13 @@ ScriptContext::ScriptContext(const ScriptContext &sc) : Object<ScriptContext>(sc
 	}
 	_constants = sc._constants;
 	_properties = sc._properties;
+	_propertyNames = sc._propertyNames;
 
 	_id = sc._id;
 }
 
-ScriptContext::~ScriptContext() {}
+ScriptContext::~ScriptContext() {
+}
 
 Common::String ScriptContext::asString() {
 	return Common::String::format("script: %d \"%s\" %d %p", _id, _name.c_str(), _inheritanceLevel, (void *)this);
@@ -456,8 +504,9 @@ Symbol ScriptContext::getMethod(const Common::String &methodName) {
 		if (_properties.contains("ancestor") && _properties["ancestor"].type == OBJECT
 				&& (_properties["ancestor"].u.obj->getObjType() & (kScriptObj | kXtraObj))) {
 			// ancestor method
-			debugC(3, kDebugLingoExec, "Calling method '%s' on ancestor: <%s>", methodName.c_str(), _properties["ancestor"].asString(true).c_str());
-			return _properties["ancestor"].u.obj->getMethod(methodName);
+			sym = _properties["ancestor"].u.obj->getMethod(methodName);
+			if (sym.type != VOIDSYM)
+				debugC(3, kDebugLingoExec, "Calling method '%s' on ancestor: <%s>", methodName.c_str(), _properties["ancestor"].asString(true).c_str());
 		}
 	}
 
@@ -494,10 +543,26 @@ Datum ScriptContext::getProp(const Common::String &propName) {
 			return _properties["ancestor"].u.obj->getProp(propName);
 		}
 	}
+	_propertyNames.push_back(propName);
 	return _properties[propName]; // return new property
 }
 
-bool ScriptContext::setProp(const Common::String &propName, const Datum &value) {
+Common::String ScriptContext::getPropAt(uint32 index) {
+	uint32 target = 1;
+	for (auto &it : _propertyNames) {
+		if (target == index) {
+			return it;
+		}
+		target += 1;
+	}
+	return Common::String();
+}
+
+uint32 ScriptContext::getPropCount() {
+	return _propertyNames.size();
+}
+
+bool ScriptContext::setProp(const Common::String &propName, const Datum &value, bool force) {
 	if (_disposed) {
 		error("Property '%s' accessed on disposed object <%s>", propName.c_str(), Datum(this).asString(true).c_str());
 	}
@@ -505,14 +570,20 @@ bool ScriptContext::setProp(const Common::String &propName, const Datum &value) 
 		_properties[propName] = value;
 		return true;
 	}
-	if (_objType == kScriptObj) {
+	if (force) {
+		// used by e.g. the script compiler to add properties
+		_propertyNames.push_back(propName);
+		_properties[propName] = value;
+		return true;
+	} else if (_objType == kScriptObj) {
 		if (_properties.contains("ancestor") && _properties["ancestor"].type == OBJECT
 				&& (_properties["ancestor"].u.obj->getObjType() & (kScriptObj | kXtraObj))) {
 			debugC(3, kDebugLingoExec, "Getting prop '%s' from ancestor: <%s>", propName.c_str(), _properties["ancestor"].asString(true).c_str());
-			return _properties["ancestor"].u.obj->setProp(propName, value);
+			return _properties["ancestor"].u.obj->setProp(propName, value, force);
 		}
 	} else if (_objType == kFactoryObj) {
 		// D3 style anonymous objects/factories, set whatever properties you like
+		_propertyNames.push_back(propName);
 		_properties[propName] = value;
 		return true;
 	}
@@ -632,7 +703,7 @@ Datum Window::getProp(const Common::String &propName) {
 	return Datum();
 }
 
-bool Window::setProp(const Common::String &propName, const Datum &value) {
+bool Window::setProp(const Common::String &propName, const Datum &value, bool force) {
 	Common::String fieldName = Common::String::format("%d%s", kTheWindow, propName.c_str());
 	if (g_lingo->_theEntityFields.contains(fieldName)) {
 		return setField(g_lingo->_theEntityFields[fieldName]->field, value);

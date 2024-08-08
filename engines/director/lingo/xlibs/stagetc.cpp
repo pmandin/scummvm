@@ -41,9 +41,9 @@ I      mGetHandle            --Copies a portion of the stage onto a cast member
 namespace Director {
 
 const char *StageTCXObj::xlibName = "StageTC";
-const char *StageTCXObj::fileNames[] = {
-	"STAGETC",
-	0
+const XlibFileDesc StageTCXObj::fileNames[] = {
+	{ "STAGETC",	nullptr },
+	{ nullptr,		nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -69,7 +69,7 @@ void StageTCXObj::close(ObjectType type) {
 }
 
 
-StageTCXObject::StageTCXObject(ObjectType ObjectType) :Object<StageTCXObject>("StageTCXObj") {
+StageTCXObject::StageTCXObject(ObjectType ObjectType) :Object<StageTCXObject>("StageTC") {
 	_objType = ObjectType;
 }
 

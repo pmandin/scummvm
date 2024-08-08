@@ -1617,9 +1617,10 @@ bool OpenGLGraphicsManager::gameNeedsAspectRatioCorrection() const {
 		const uint height = getHeight();
 
 		// In case we enable aspect ratio correction we force a 4/3 ratio.
-		// But just for 320x200 and 640x400 games, since other games do not need
-		// this.
-		return (width == 320 && height == 200) || (width == 640 && height == 400);
+		// But just for 320x200, 640x400 and Hercules games, since other
+		// games do not need this.
+		return (width == 320 && height == 200) || (width == 640 && height == 400) ||
+		       (width == 720 && height == 348) || (width == 720 && height == 350);
 	}
 
 	return false;
@@ -1759,9 +1760,9 @@ bool OpenGLGraphicsManager::saveScreenshot(const Common::Path &filename) const {
 
 	Common::Array<uint8> pixels;
 	pixels.resize(lineSize * height);
-#ifdef EMSCRIPTEN	
+#ifdef EMSCRIPTEN
 	// WebGL doesn't support GL_RGB, see https://registry.khronos.org/webgl/specs/latest/1.0/#5.14.12:
-	// "Only two combinations of format and type are accepted. The first is format RGBA and type UNSIGNED_BYTE. 
+	// "Only two combinations of format and type are accepted. The first is format RGBA and type UNSIGNED_BYTE.
 	// The second is an implementation-chosen format. " and the implementation-chosen formats are buggy:
 	// https://github.com/KhronosGroup/WebGL/issues/2747
 	GL_CALL(glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, &pixels.front()));

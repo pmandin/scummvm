@@ -24,6 +24,9 @@
 
 #include "common/events.h"
 
+#include "engines/metaengine.h"
+#include "engines/savestate.h"
+
 namespace Hypno {
 
 static const chapterEntry rawChapterTable[] = {
@@ -938,32 +941,6 @@ void BoyzEngine::loadAssets() {
 	_defaultCursorIdx = uint32(-1);
 	resetSceneState();
 	_nextLevel = "<start>";
-}
-
-void BoyzEngine::loadFonts() {
-	Common::File file;
-
-	if (!file.open("block05.fgx"))
-		error("Cannot open font");
-
-	byte *font = (byte *)malloc(file.size());
-	file.read(font, file.size());
-
-	_font05.set_size(file.size()*8);
-	_font05.set_bits((byte *)font);
-
-	file.close();
-	free(font);
-	if (!file.open("scifi08.fgx"))
-		error("Cannot open font");
-
-	font = (byte *)malloc(file.size());
-	file.read(font, file.size());
-
-	_font08.set_size(file.size()*8);
-	_font08.set_bits((byte *)font);
-
-	free(font);
 }
 
 void BoyzEngine::drawString(const Common::String &font, const Common::String &str, int x, int y, int w, uint32 color) {

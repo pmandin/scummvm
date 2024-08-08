@@ -40,7 +40,7 @@
 		EN_GRB,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -53,7 +53,7 @@
 		EN_USA,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -66,7 +66,7 @@
 		EN_USA,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -79,7 +79,7 @@
 		FR_FRA,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -87,12 +87,12 @@
 { // Supplied by blackwhiteeagle in bug report #2934
 	{
 		"gob2",
-		"",
+		"v1.02",
 		AD_ENTRY1("intro.stk", "3e4e7db0d201587dd2df4003b2993ef6"),
 		DE_DEU,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -105,7 +105,7 @@
 		DE_DEU,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -118,7 +118,7 @@
 		IT_ITA,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -126,12 +126,12 @@
 {
 	{
 		"gob2",
-		"",
+		"v1.02",
 		AD_ENTRY1("intro.stk", "cd3e1df8b273636ee32e34b7064f50e8"),
 		RU_RUS,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -144,7 +144,7 @@
 		ES_ESP,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -170,6 +170,19 @@
 		"gob2",
 		"CD v2.01",
 		AD_ENTRY1s("intro.stk", "3025f05482b646c18c2c79c615a3a1df", 5011726),
+		PL_POL,
+		kPlatformDOS,
+		ADGF_CD,
+		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+	},
+	kFeaturesCD,
+	0, 0, 0
+},
+{ // Supplied by pykman in bug report #5365
+	{
+		"gob2",
+		"CD v1.02",
+		AD_ENTRY1s("intro.stk", "978afddcac81bb95a04757b61f78471c", 619825),
 		PL_POL,
 		kPlatformDOS,
 		ADGF_CD,
@@ -329,7 +342,7 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "285d7340f98ebad65d465585da12910b", 837286,
-				"musmac1.mid",	"834e55205b710d0af5f14a6f2320dd8e", 8661),
+				   "musmac1.mid", "834e55205b710d0af5f14a6f2320dd8e", 8661),
 		FR_FRA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -343,7 +356,7 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "25a99827cd59751a80bed9620fb677a0", 893302,
-				"musmac1.mid",	"834e55205b710d0af5f14a6f2320dd8e", 8661),
+				   "musmac1.mid", "834e55205b710d0af5f14a6f2320dd8e", 8661),
 		EN_USA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -357,7 +370,7 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "25a99827cd59751a80bed9620fb677a0", 893302,
-				"musmac1.mid",	"834e55205b710d0af5f14a6f2320dd8e", 8661),
+				   "musmac1.mid", "834e55205b710d0af5f14a6f2320dd8e", 8661),
 		FR_FRA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -371,7 +384,7 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "25a99827cd59751a80bed9620fb677a0", 893302,
-				"musmac1.mid",	"834e55205b710d0af5f14a6f2320dd8e", 8661),
+				   "musmac1.mid", "834e55205b710d0af5f14a6f2320dd8e", 8661),
 		DE_DEU,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -385,11 +398,11 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "6efac0a14c0de4d57dde8592456c8acf", 845172,
-				"musmac1.mid",	"834e55205b710d0af5f14a6f2320dd8e", 8661),
+				   "musmac1.mid", "834e55205b710d0af5f14a6f2320dd8e", 8661),
 		EN_USA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -399,11 +412,11 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "6efac0a14c0de4d57dde8592456c8acf", 845172,
-				"musmac1.mid",	"834e55205b710d0af5f14a6f2320dd8e", 8661),
+				   "musmac1.mid", "834e55205b710d0af5f14a6f2320dd8e", 8661),
 		FR_FRA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -411,12 +424,12 @@
 { // Found in french ADI 2 Francais-Maths CM1
 	{
 		"gob2",
-		"",
+		"v1.03",
 		AD_ENTRY1s("intro.stk", "24489330a1d67ff978211f574822a5a6", 883756),
 		FR_FRA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -429,7 +442,7 @@
 		FR_FRA,
 		kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -455,11 +468,11 @@
 		"gob2",
 		"v1.02",
 		AD_ENTRY2s("intro.stk", "b45b984ee8017efd6ea965b9becd4d66", 828443,
-				"musmac1.mid",	"7f96f491448c7a001b32df89cf8d2af2", 1658),
+				   "musmac1.mid", "7f96f491448c7a001b32df89cf8d2af2", 1658),
 		EN_ANY,
 		kPlatformMacintosh,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -469,11 +482,11 @@
 		"gob2",
 		"",
 		AD_ENTRY2s("intro.stk", "a13ecb4f6d8fd881ebbcc02e45cb5475", 837275,
-				"musmac1.mid",	"7f96f491448c7a001b32df89cf8d2af2", 1658),
+				   "musmac1.mid", "7f96f491448c7a001b32df89cf8d2af2", 1658),
 		FR_FRA,
 		kPlatformMacintosh,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesAdLib,
 	0, 0, 0
@@ -486,7 +499,7 @@
 		"gob2",
 		"",
 		AD_ENTRY1s("intro.stk", "eebf2810122cfd17399260cd1468e994", 554014),
-		EN_ANY,
+		EN_GRB,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
@@ -528,7 +541,7 @@
 		ES_ESP,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesNone,
 	0, 0, 0
@@ -541,7 +554,7 @@
 		PL_POL,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
-		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+		GUIO3(GUIO_NOSUBTITLES, GUIO_NOSPEECH, GAMEOPTION_COPY_PROTECTION)
 	},
 	kFeaturesNone,
 	0, 0, 0

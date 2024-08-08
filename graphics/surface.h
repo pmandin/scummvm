@@ -32,6 +32,7 @@ struct Point;
 }
 
 #include "graphics/pixelformat.h"
+#include "graphics/transform_struct.h"
 
 namespace Graphics {
 
@@ -388,7 +389,7 @@ public:
 	 * @param dstaletteCount The color count in the for the dstPalette.
 	 * @param method      The dithering method if destination format has a bpp of 1. Default is Floyd-Steinberg.
 	 */
-	Graphics::Surface *convertTo(const PixelFormat &dstFormat, const byte *srcPalette = 0, int srcPaletteCount = 0, const byte *dstPalette = 0, int dstPaletteCount = 0, DitherMethod method = kDitherFloyd) const;
+	Graphics::Surface *convertTo(const PixelFormat &dstFormat, const byte *srcPalette = 0, int srcPaletteCount = 256, const byte *dstPalette = 0, int dstPaletteCount = 0, DitherMethod method = kDitherFloyd) const;
 
 protected:
 	void ditherFloyd(const byte *srcPalette, int srcPaletteCount, Surface *dstSurf, const byte *dstPalette, int dstPaletteCount, DitherMethod method, const PixelFormat &dstFormat) const;
@@ -511,6 +512,11 @@ public:
 	 * @param skipTransparent  if set to true, then do not touch pixels with alpha=0
 	 */
 	bool setAlpha(uint8 alpha, bool skipTransparent = false);
+
+	/**
+	 * Checks if the given surface contains alpha transparency
+	 */
+	AlphaType detectAlpha() const;
 
 	/**
 	 * Scale the data to the given size.

@@ -37,15 +37,15 @@ DEFINE_RUNTIME_CLASSTYPE_CODE(PathfinderProcess)
 
 PathfinderProcess::PathfinderProcess() : Process(),
 		_currentStep(0), _targetItem(0), _hitMode(false),
-		_targetX(0), _targetY(0), _targetZ(0) {
+		_target() {
 }
 
 PathfinderProcess::PathfinderProcess(Actor *actor, ObjId itemid, bool hit) :
 		_currentStep(0), _targetItem(itemid), _hitMode(hit),
-		_targetX(0), _targetY(0), _targetZ(0) {
+		_target() {
 	assert(actor);
 	_itemNum = actor->getObjId();
-	_type = PATHFINDER_PROC_TYPE; // CONSTANT !
+	_type = PATHFINDER_PROC_TYPE;
 
 	Item *item = getItem(itemid);
 	if (!item) {
@@ -58,7 +58,7 @@ PathfinderProcess::PathfinderProcess(Actor *actor, ObjId itemid, bool hit) :
 
 	assert(_targetItem);
 
-	item->getLocation(_targetX, _targetY, _targetZ);
+	_target = item->getLocation();
 
 	Pathfinder pf;
 	pf.init(actor);
@@ -78,15 +78,16 @@ PathfinderProcess::PathfinderProcess(Actor *actor, ObjId itemid, bool hit) :
 	actor->setActorFlag(Actor::ACT_PATHFINDING);
 }
 
-PathfinderProcess::PathfinderProcess(Actor *actor, int32 x, int32 y, int32 z) :
-		_targetX(x), _targetY(y), _targetZ(z), _targetItem(0), _currentStep(0),
+PathfinderProcess::PathfinderProcess(Actor *actor, const Point3 &target) :
+		_target(target), _targetItem(0), _currentStep(0),
 		_hitMode(false) {
 	assert(actor);
 	_itemNum = actor->getObjId();
+	_type = PATHFINDER_PROC_TYPE;
 
 	Pathfinder pf;
 	pf.init(actor);
-	pf.setTarget(_targetX, _targetY, _targetZ);
+	pf.setTarget(_target);
 
 	bool ok = pf.pathfind(_path);
 
@@ -126,7 +127,6 @@ void PathfinderProcess::run() {
 	bool ok = true;
 
 	if (_targetItem) {
-		int32 curx, cury, curz;
 		Item *item = getItem(_targetItem);
 		if (!item) {
 			warning("PathfinderProcess: target missing");
@@ -135,9 +135,9 @@ void PathfinderProcess::run() {
 			return;
 		}
 
-		item->getLocation(curx, cury, curz);
-		if (ABS(curx - _targetX) >= 32 || ABS(cury - _targetY) >= 32 ||
-		        ABS(curz - _targetZ) >= 8) {
+		Point3 cur = item->getLocation();
+		if (ABS(cur.x - _target.x) >= 32 || ABS(cur.y - _target.y) >= 32 ||
+		        ABS(cur.z - _target.z) >= 8) {
 			// target moved
 			ok = false;
 		}
@@ -186,10 +186,10 @@ void PathfinderProcess::run() {
 					_hitMode = false;
 				}
 				pf.setTarget(item, _hitMode);
-				item->getLocation(_targetX, _targetY, _targetZ);
+				_target = item->getLocation();
 			}
 		} else {
-			pf.setTarget(_targetX, _targetY, _targetZ);
+			pf.setTarget(_target);
 		}
 		if (ok)
 			ok = pf.pathfind(_path);
@@ -228,9 +228,9 @@ void PathfinderProcess::saveData(Common::WriteStream *ws) {
 	Process::saveData(ws);
 
 	ws->writeUint16LE(_targetItem);
-	ws->writeUint16LE(static_cast<uint16>(_targetX));
-	ws->writeUint16LE(static_cast<uint16>(_targetY));
-	ws->writeUint16LE(static_cast<uint16>(_targetZ));
+	ws->writeUint16LE(static_cast<uint16>(_target.x));
+	ws->writeUint16LE(static_cast<uint16>(_target.y));
+	ws->writeUint16LE(static_cast<uint16>(_target.z));
 	ws->writeByte(_hitMode ? 1 : 0);
 	ws->writeUint16LE(static_cast<uint16>(_currentStep));
 
@@ -244,10 +244,15 @@ void PathfinderProcess::saveData(Common::WriteStream *ws) {
 bool PathfinderProcess::loadData(Common::ReadStream *rs, uint32 version) {
 	if (!Process::loadData(rs, version)) return false;
 
+	// Type previously missing from constructor
+	if (_type == 0) {
+		_type = PATHFINDER_PROC_TYPE;
+	}
+
 	_targetItem = rs->readUint16LE();
-	_targetX = rs->readUint16LE();
-	_targetY = rs->readUint16LE();
-	_targetZ = rs->readUint16LE();
+	_target.x = rs->readUint16LE();
+	_target.y = rs->readUint16LE();
+	_target.z = rs->readUint16LE();
 	_hitMode = (rs->readByte() != 0);
 	_currentStep = rs->readUint16LE();
 

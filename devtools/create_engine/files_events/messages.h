@@ -40,6 +40,8 @@ struct FocusMessage : public Message {
 };
 
 struct UnfocusMessage : public Message {};
+struct MouseEnterMessage : public Message {};
+struct MouseLeaveMessage : public Message {};
 
 struct KeypressMessage : public Message, public Common::KeyState {
 	KeypressMessage() : Message() {}
@@ -71,6 +73,7 @@ struct MouseUpMessage : public MouseMessage {
 	MouseUpMessage(Common::EventType type, const Common::Point &pos) :
 		MouseMessage(type, pos) {}
 };
+typedef MouseMessage MouseMoveMessage;
 
 struct GameMessage : public Message {
 	Common::String _name;

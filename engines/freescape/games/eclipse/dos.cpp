@@ -72,7 +72,7 @@ static const CGAPaletteEntry rawCGAPaletteByArea[] {
 };
 
 void EclipseEngine::initDOS() {
-	_viewArea = Common::Rect(40, 32, 280, 132);
+	_viewArea = Common::Rect(40, 33, 280, 133);
 	_rawCGAPaletteByArea = (const CGAPaletteEntry *)&rawCGAPaletteByArea;
 }
 
@@ -90,10 +90,10 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 		if (!file.isOpen())
 			error("Failed to open TOTEE.EXE");
 
-		loadMessagesFixedSize(&file, 0x710f, 16, 17);
+		loadMessagesFixedSize(&file, 0x710f, 16, 20);
 		loadSoundsFx(&file, 0xd670, 1);
 		loadSpeakerFxDOS(&file, 0x7396 + 0x200, 0x72a1 + 0x200);
-		loadFonts(&file, 0xd403);
+		loadFonts(&file, 0xd403, _font);
 		load8bitBinary(&file, 0x3ce0, 16);
 		for (auto &it : _areaMap) {
 			it._value->addStructure(_areaMap[255]);
@@ -120,9 +120,9 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 		if (!file.isOpen())
 			error("Failed to open TOTEC.EXE");
 
-		loadMessagesFixedSize(&file, 0x594f, 16, 17);
+		loadMessagesFixedSize(&file, 0x594f, 16, 20);
 		load1bPCM(&file, 0xd038 - 4);
-		loadFonts(&file, 0xb785);
+		loadFonts(&file, 0xb785, _font);
 		load8bitBinary(&file, 0x2530, 4);
 		for (auto &it : _areaMap) {
 			it._value->addStructure(_areaMap[255]);
@@ -145,7 +145,7 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
 	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0xFF);
 	uint32 red = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0x00, 0x00);
-	uint32 blue = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0xFF);
+	uint32 blue = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x55, 0x55, 0xFF);
 	uint32 green = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x55, 0xFF, 0x55);
 	uint32 redish = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0x55, 0x55);
 
@@ -171,7 +171,7 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 	Common::String shieldStr = Common::String::format("%d", shield);
 	drawStringInSurface(shieldStr, x, 162, black, redish, surface);
 
-	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 135, black, yellow, surface, 'Z' - '$' + 1);
+	drawStringInSurface(Common::String('0' - _angleRotationIndex), 79, 135, black, yellow, surface, 'Z' - '$' + 1);
 	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 135, black, yellow, surface, 'Z' - '$' + 1);
 	drawStringInSurface(Common::String('7' - _playerHeightNumber), 240, 135, black, yellow, surface, 'Z' - '$' + 1);
 
@@ -189,6 +189,8 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 
 	drawIndicator(surface, 41, 4, 16);
 	drawEclipseIndicator(surface, 228, 0, yellow, green);
+	surface->fillRect(Common::Rect(225, 168, 235, 187), white);
+	drawCompass(surface, 229, 177, _yaw, 10, black);
 }
 
 soundFx *EclipseEngine::load1bPCM(Common::SeekableReadStream *file, int offset) {
@@ -213,6 +215,11 @@ soundFx *EclipseEngine::load1bPCM(Common::SeekableReadStream *file, int offset) 
 }
 
 void EclipseEngine::loadSoundsFx(Common::SeekableReadStream *file, int offset, int number) {
+	if (isAmiga() || isAtariST()) {
+		FreescapeEngine::loadSoundsFx(file, offset, number);
+		return;
+	}
+
 	for (int i = 0; i < 5; i++) {
 		_soundsFx[i] = load1bPCM(file, offset);
 		offset += (_soundsFx[i]->size / 8) + 4;
@@ -221,6 +228,11 @@ void EclipseEngine::loadSoundsFx(Common::SeekableReadStream *file, int offset, i
 
 
 void EclipseEngine::playSoundFx(int index, bool sync) {
+	if (isAmiga() || isAtariST()) {
+		FreescapeEngine::playSoundFx(index, sync);
+		return;
+	}
+
 	if (_soundsFx.size() == 0) {
 		debugC(1, kFreescapeDebugMedia, "WARNING: Sounds are not loaded");
 		return;

@@ -416,7 +416,7 @@ void GobEngine::pauseGame() {
 Common::Error GobEngine::initGameParts() {
 	_resourceSizeWorkaround = false;
 
-	// just detect some devices some of which will be always there if the music is not disabled
+	// Just detect some devices some of which will be always there if the music is not disabled
 	_noMusic = MidiDriver::getMusicType(MidiDriver::detectDevice(MDT_PCSPK | MDT_MIDI | MDT_ADLIB)) == MT_NULL ? true : false;
 
 	_endiannessMethod = kEndiannessMethodSystem;
@@ -574,17 +574,6 @@ Common::Error GobEngine::initGameParts() {
 		break;
 
 	case kGameTypeDynasty:
-		_init     = new Init_v3(this);
-		_video    = new Video_v2(this);
-		_inter    = new Inter_v5(this);
-		_mult     = new Mult_v2(this);
-		_draw     = new Draw_v2(this);
-		_map      = new Map_v2(this);
-		_goblin   = new Goblin_v4(this);
-		_scenery  = new Scenery_v2(this);
-		_saveLoad = new SaveLoad(this);
-		break;
-
 	case kGameTypeDynastyWood:
 		_init     = new Init_v3(this);
 		_video    = new Video_v2(this);

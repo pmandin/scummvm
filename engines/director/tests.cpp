@@ -120,8 +120,9 @@ void Window::testFontScaling() {
 		k.loadStream(in);
 
 		Graphics::Surface *res = k.getSurface()->convertTo(_wm->_pixelformat, k.getPalette(), k.getPaletteSize(), _wm->getPalette(), _wm->getPaletteSize(), Graphics::kDitherNaive);
+		surface.blitFrom(*res, Common::Point(400, 280));
+		delete res;
 
-		surface.blitFrom(res, Common::Point(400, 280));
 		in.close();
 	} else {
 		warning("b_importFileInto(): Cannot open file %s", path.toString().c_str());
@@ -132,7 +133,7 @@ void Window::testFontScaling() {
 	Common::Event event;
 
 	while (true) {
-		if (g_system->getEventManager()->pollEvent(event))
+		if (g_director->pollEvent(event))
 			if (event.type == Common::EVENT_QUIT)
 				break;
 

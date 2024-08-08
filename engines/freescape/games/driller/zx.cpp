@@ -58,11 +58,11 @@ void DrillerEngine::loadAssetsZXFullGame() {
 		loadMessagesFixedSize(&file, 0x20e4, 14, 20);
 
 	if (_variant & GF_ZX_RETAIL)
-		loadFonts(&file, 0x62ca);
+		loadFonts(&file, 0x62ca, _font);
 	else if (_variant & GF_ZX_BUDGET)
-		loadFonts(&file, 0x5aa8);
+		loadFonts(&file, 0x5aa8, _font);
 	else if (_variant & GF_ZX_DISC)
-		loadFonts(&file, 0x63f0);
+		loadFonts(&file, 0x63f0, _font);
 
 	if (_variant & GF_ZX_DISC)
 		loadGlobalObjects(&file, 0x1d13, 8);
@@ -151,6 +151,9 @@ void DrillerEngine::drawZXUI(Graphics::Surface *surface) {
 		Common::Rect shieldBar(106 - shield, 181, 106, 187);
 		surface->fillRect(shieldBar, front);
 	}
+
+	drawCompass(surface, 103, 160, _yaw, 10, front);
+	drawCompass(surface, 220 - 3, 160, _pitch - 30, 10, front);
 }
 
 } // End of namespace Freescape

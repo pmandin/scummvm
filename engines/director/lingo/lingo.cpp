@@ -107,6 +107,10 @@ Symbol& Symbol::operator=(const Symbol &s) {
 	return *this;
 }
 
+bool Symbol::operator==(Symbol &s) const {
+	return ctx == s.ctx && (name->equalsIgnoreCase(*s.name));
+}
+
 void Symbol::reset() {
 	*refCount -= 1;
 	// Coverity thinks that we always free memory, as it assumes
@@ -172,6 +176,8 @@ Lingo::Lingo(DirectorEngine *vm) : _vm(vm) {
 	_currentChannelId = -1;
 	_globalCounter = 0;
 	_freezeState = false;
+	_freezePlay = false;
+	_playDone = false;
 	_abort = false;
 	_expectError = false;
 	_caughtError = false;
@@ -358,6 +364,9 @@ void LingoArchive::patchCode(const Common::U32String &code, ScriptType type, uin
 			it._value.ctx = scriptContexts[type][id];
 			scriptContexts[type][id]->_functionHandlers[it._key] = it._value;
 			functionHandlers[it._key] = it._value;
+			if (g_lingo->_eventHandlerTypeIds.contains(it._key)) {
+				scriptContexts[type][id]->_eventHandlers[g_lingo->_eventHandlerTypeIds[it._key]] = it._value;
+			}
 		}
 		sc->_functionHandlers.clear();
 		delete sc;
@@ -606,10 +615,23 @@ Common::String Lingo::formatFunctionBody(Symbol &sym) {
 	return result;
 }
 
-void Lingo::execute() {
+bool Lingo::execute() {
 	uint localCounter = 0;
 
 	while (!_abort && !_freezeState && _state->script && (*_state->script)[_state->pc] != STOP) {
+		if ((_exec._state == kPause) || (_exec._shouldPause && _exec._shouldPause())) {
+			// if execution is in pause -> poll event + update screen
+			_exec._state = kPause;
+			Common::EventManager *eventMan = g_system->getEventManager();
+			while (_exec._state == kPause && !eventMan->shouldQuit() && (!g_engine || !eventMan->shouldReturnToLauncher())) {
+				Common::Event event;
+				while (eventMan->pollEvent(event)) {
+				}
+				g_system->delayMillis(10);
+				g_system->updateScreen();
+			}
+		}
+
 		if (_globalCounter > 1000 && debugChannelSet(-1, kDebugFewFramesOnly)) {
 			warning("Lingo::execute(): Stopping due to debug few frames only");
 			_vm->getCurrentMovie()->getScore()->_playState = kPlayStopped;
@@ -625,10 +647,6 @@ void Lingo::execute() {
 			score->updateWidgets(true);
 
 			g_system->updateScreen();
-			if (_vm->getCurrentMovie()->getScore()->_playState == kPlayStopped) {
-				_freezeState = true;
-				break;
-			}
 		}
 
 		uint current = _state->pc;
@@ -670,7 +688,11 @@ void Lingo::execute() {
 		}
 	}
 
-	if (_freezeState) {
+	bool result = !_freezeState;
+	if (_freezePlay) {
+		debugC(5, kDebugLingoExec, "Lingo::execute(): Called play, pausing execution to the play buffer");
+		freezePlayState();
+	} else if (_freezeState) {
 		debugC(5, kDebugLingoExec, "Lingo::execute(): Context is frozen, pausing execution");
 		freezeState();
 	} else if (_abort || _vm->getCurrentMovie()->getScore()->_playState == kPlayStopped) {
@@ -681,8 +703,11 @@ void Lingo::execute() {
 	}
 	_abort = false;
 	_freezeState = false;
+	_freezePlay = false;
 
 	g_debugger->stepHook();
+	// return true if execution finished, false if the context froze for later
+	return result;
 }
 
 void Lingo::executeScript(ScriptType type, CastMemberID id) {
@@ -826,6 +851,9 @@ int Lingo::getAlignedType(const Datum &d1, const Datum &d2, bool equality) {
 		opType = FLOAT;
 	} else if ((d1Type == STRING && d2Type == INT) || (d1Type == INT && d2Type == STRING)) {
 		opType = STRING;
+	} else if ((d1Type == SYMBOL && d2Type != SYMBOL) || (d2Type == SYMBOL && d1Type != SYMBOL)) {
+		// some fun undefined behaviour: adding anything to a symbol returns an int.
+		opType = INT;
 	} else if (d1Type == d2Type) {
 		opType = d1Type;
 	}
@@ -1034,6 +1062,11 @@ int Datum::asInt() const {
 			res = (int)u.f;
 		}
 		break;
+	case SYMBOL:
+		// Undefined behaviour, but relied on by bad game code that e.g. adds things to symbols.
+		// Return a 32-bit number that's sort of related.
+		res = (int)((uint64)u.s & 0xffffffffL);
+		break;
 	default:
 		warning("Incorrect operation asInt() for type: %s", type2str());
 	}
@@ -1087,8 +1120,6 @@ Common::String Datum::asString(bool printonly) const {
 		break;
 	case FLOAT:
 		s = Common::String::format(g_lingo->_floatPrecisionFormat.c_str(), u.f);
-		if (printonly)
-			s += "f";		// 0.0f
 		break;
 	case STRING:
 		if (!printonly) {
@@ -1223,11 +1254,11 @@ Common::String Datum::asString(bool printonly) const {
 	return s;
 }
 
-CastMemberID Datum::asMemberID(CastType castType) const {
+CastMemberID Datum::asMemberID(CastType castType, int castLib) const {
 	if (type == CASTREF || type == FIELDREF)
 		return *u.cast;
 
-	return g_lingo->resolveCastMember(*this, DEFAULT_CAST_LIB, castType);
+	return g_lingo->resolveCastMember(*this, castLib, castType);
 }
 
 Common::Point Datum::asPoint() const {
@@ -1341,6 +1372,7 @@ int Datum::equalTo(Datum &d, bool ignoreCase) const {
 	case PICTUREREF:
 		return 0; // Original always returns 0 on picture reference comparison
 	default:
+		debugC(1, kDebugLingoExec, "Datum::equalTo(): Invalid equality check between types %s and %s", type2str(), d.type2str());
 		break;
 	}
 	return 0;
@@ -1417,7 +1449,7 @@ uint32 Datum::compareTo(Datum &d) const {
 			return kCompareGreater;
 		}
 	} else {
-		warning("Invalid comparison between types %s and %s", type2str(), d.type2str());
+		warning("Datum::compareTo(): Invalid comparison between types %s and %s", type2str(), d.type2str());
 		return kCompareError;
 	}
 }
@@ -1528,11 +1560,19 @@ void Lingo::cleanLocalVars() {
 Common::String Lingo::formatAllVars() {
 	Common::String result;
 
+	Common::Array<Common::String> keyBuffer;
+
 	result += Common::String("  Local vars:\n");
 	if (_state->localVars) {
-		for (auto &i : *_state->localVars) {
-			result += Common::String::format("    %s - [%s] %s\n", i._key.c_str(), i._value.type2str(), i._value.asString(true).c_str());
+		for (auto &it : *_state->localVars) {
+			keyBuffer.push_back(it._key);
 		}
+		Common::sort(keyBuffer.begin(), keyBuffer.end());
+		for (auto &i : keyBuffer) {
+			Datum &val = _state->localVars->getVal(i);
+			result += Common::String::format("    %s - [%s] %s\n", i.c_str(), val.type2str(), formatStringForDump(val.asString(true)).c_str());
+		}
+		keyBuffer.clear();
 	} else {
 		result += Common::String("    (no local vars)\n");
 	}
@@ -1541,16 +1581,28 @@ Common::String Lingo::formatAllVars() {
 	if (_state->me.type == OBJECT && _state->me.u.obj->getObjType() & (kFactoryObj | kScriptObj)) {
 		ScriptContext *script = static_cast<ScriptContext *>(_state->me.u.obj);
 		result += Common::String("  Instance/property vars: \n");
-		for (auto &i : script->_properties) {
-			result += Common::String::format("    %s - [%s] %s\n", i._key.c_str(), i._value.type2str(), i._value.asString(true).c_str());
+		for (uint32 i = 1; i <= script->getPropCount(); i++) {
+			keyBuffer.push_back(script->getPropAt(i));
 		}
+		Common::sort(keyBuffer.begin(), keyBuffer.end());
+		for (auto &i : keyBuffer) {
+			Datum val = script->getProp(i);
+			result += Common::String::format("    %s - [%s] %s\n", i.c_str(), val.type2str(), formatStringForDump(val.asString(true)).c_str());
+		}
+		keyBuffer.clear();
 		result += Common::String("\n");
 	}
 
 	result += Common::String("  Global vars:\n");
-	for (auto &i : _globalvars) {
-		result += Common::String::format("    %s - [%s] %s\n", i._key.c_str(), i._value.type2str(), i._value.asString(true).c_str());
+	for (auto &it : _globalvars) {
+		keyBuffer.push_back(it._key);
 	}
+	Common::sort(keyBuffer.begin(), keyBuffer.end());
+	for (auto &i : keyBuffer) {
+		Datum &val = _globalvars.getVal(i);
+		result += Common::String::format("    %s - [%s] %s\n", i.c_str(), val.type2str(), formatStringForDump(val.asString(true)).c_str());
+	}
+	keyBuffer.clear();
 	result += Common::String("\n");
 	return result;
 }
@@ -1835,6 +1887,31 @@ CastMemberID Lingo::resolveCastMember(const Datum &memberID, const Datum &castLi
 void Lingo::exposeXObject(const char *name, Datum obj) {
 	_globalvars[name] = obj;
 	_globalvars[name].ignoreGlobal = true;
+}
+
+void Lingo::addBreakpoint(Breakpoint &bp) {
+	bp.id = _bpNextId;
+	_breakpoints.push_back(bp);
+	_bpNextId++;
+}
+
+bool Lingo::delBreakpoint(int id) {
+	for (auto it = _breakpoints.begin(); it != _breakpoints.end(); ++it) {
+		if (it->id == id) {
+			it = _breakpoints.erase(it);
+			return true;
+		}
+	}
+	return false;
+}
+
+Breakpoint *Lingo::getBreakpoint(int id) {
+	for (auto &it : _breakpoints) {
+		if (it.id == id) {
+			return &it;
+		}
+	}
+	return nullptr;
 }
 
 PictureReference::~PictureReference() {

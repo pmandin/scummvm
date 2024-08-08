@@ -19,11 +19,11 @@
  *
  */
 
-#include "base/version.h"
 #include "common/config-manager.h"
 
 #include "scumm/he/intern_he.h"
 #include "scumm/he/net/net_lobby.h"
+#include "scumm/he/net/net_defines.h"
 
 namespace Scumm {
 
@@ -126,6 +126,11 @@ void Lobby::processLine(Common::String line) {
 		Common::String command = root["cmd"]->asString();
 		if (command == "heartbeat") {
 			handleHeartbeat();
+		} else if (command == "disconnect") {
+			int type = root["type"]->asIntegerNumber();
+			Common::String message = root["message"]->asString();
+			systemAlert(type, message);
+			disconnect();
 		} else if (command == "login_resp") {
 			int errorCode = root["error_code"]->asIntegerNumber();
 			int userId = root["id"]->asIntegerNumber();
@@ -451,7 +456,7 @@ void Lobby::login(const char *userName, const char *password) {
 	loginRequestParameters.setVal("user", new Common::JSONValue(_userName));
 	loginRequestParameters.setVal("pass", new Common::JSONValue((Common::String)password));
 	loginRequestParameters.setVal("game", new Common::JSONValue((Common::String)_gameName));
-	loginRequestParameters.setVal("version", new Common::JSONValue(gScummVMFullVersion));
+	loginRequestParameters.setVal("version", new Common::JSONValue(NETWORK_VERSION));
 	loginRequestParameters.setVal("competitive_mods", new Common::JSONValue(ConfMan.getBool("enable_competitive_mods")));
 
 	send(loginRequestParameters);
@@ -603,9 +608,9 @@ void Lobby::sendGameResults(int userId, int arrayIndex, int lastFlag) {
 	setProfileRequest.setVal("cmd", new Common::JSONValue("game_results"));
 	setProfileRequest.setVal("user", new Common::JSONValue((long long int)userId));
 
-	ScummEngine_v90he::ArrayHeader *ah = (ScummEngine_v90he::ArrayHeader *)_vm->getResourceAddress(rtString, arrayIndex & ~0x33539000);
-	int32 size = (FROM_LE_32(ah->dim1end) - FROM_LE_32(ah->dim1start) + 1) *
-		(FROM_LE_32(ah->dim2end) - FROM_LE_32(ah->dim2start) + 1);
+	ScummEngine_v90he::ArrayHeader *ah = (ScummEngine_v90he::ArrayHeader *)_vm->getResourceAddress(rtString, arrayIndex & ~MAGIC_ARRAY_NUMBER);
+	int32 size = (FROM_LE_32(ah->acrossMax) - FROM_LE_32(ah->acrossMin) + 1) *
+		(FROM_LE_32(ah->downMax) - FROM_LE_32(ah->downMin) + 1);
 
 	Common::JSONArray arrayData;
 	for (int i = 0; i < size; i++) {

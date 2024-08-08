@@ -32,7 +32,7 @@
 #define MAXDIALOGSLOTS 9
 #define MAXCHOICES 6
 #define SLIDINGSPEED 25.f
-#define SLOTMARGIN 8.f
+#define SLOTMARGIN 4.f
 
 namespace Twp {
 
@@ -47,13 +47,16 @@ public:
 	Text _text;
 	Common::SharedPtr<YStatement> _stmt;
 	Dialog *_dlg = nullptr;
+	float _shakeTime = 0.f;
+	bool _over = false;
+	Common::ScopedPtr<Motor> _shake;
 };
 
 struct DialogContext {
 	Common::String actor;
 	Common::String dialogName;
 	bool parrot = true;
-	int limit = MAXDIALOGSLOTS;
+	int limit = MAXCHOICES;
 };
 
 enum DialogState {
@@ -131,6 +134,15 @@ public:
 	bool _isChoice = false;
 };
 
+class IsShutup : public YackVisitor {
+public:
+	virtual ~IsShutup() override {}
+	void visit(const YShutup &node) override { _isShutup = true; }
+
+public:
+	bool _isShutup = false;
+};
+
 class ExpVisitor : public YackVisitor {
 public:
 	explicit ExpVisitor(Dialog *dialog);
@@ -182,7 +194,9 @@ public:
 	void update(float dt);
 	DialogState getState() const { return _state; }
 
-	void setMousePos(const Math::Vector2d& pos) { _mousePos = pos; }
+	void setMousePos(const Math::Vector2d &pos) { _mousePos = pos; }
+	Math::Vector2d getNextChoicePos(const Math::Vector2d &pos);
+	Math::Vector2d getPreviousChoicePos(const Math::Vector2d &pos);
 
 	void start(const Common::String &actor, const Common::String &name, const Common::String &node);
 	void selectLabel(int line, const Common::String &name);
@@ -206,6 +220,9 @@ private:
 	int numSlots() const;
 	void clearSlots();
 
+	Math::Vector2d getChoicePos(int index) const;
+	int getActiveSlot(const Math::Vector2d &pos) const;
+
 	virtual void drawCore(const Math::Matrix4 &trsf) override final;
 
 public:
@@ -221,6 +238,7 @@ private:
 	Common::SharedPtr<YLabel> _lbl;
 	DialogSlot _slots[MAXDIALOGSLOTS];
 	Math::Vector2d _mousePos;
+	float _fadeTime = 0.f;
 };
 
 } // namespace Twp

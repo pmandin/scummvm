@@ -45,10 +45,10 @@
 namespace Director {
 
 
-const char *WidgetXObj::xlibName = "widget";
-const char *WidgetXObj::fileNames[] = {
-	"widget",
-	nullptr
+const char *WidgetXObj::xlibName = "Widget";
+const XlibFileDesc WidgetXObj::fileNames[] = {
+	{ "widget",	nullptr },
+	{ nullptr,	nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -74,7 +74,7 @@ void WidgetXObj::close(ObjectType type) {
 	}
 }
 
-WidgetXObject::WidgetXObject(ObjectType ObjectType) :Object<WidgetXObject>("WidgetXObj") {
+WidgetXObject::WidgetXObject(ObjectType ObjectType) :Object<WidgetXObject>("Widget") {
 	_objType = ObjectType;
 }
 

@@ -638,7 +638,6 @@ void ScummEngine::checkExecVerbs() {
 		}
 
 		VirtScreen *zone = findVirtScreen(_mouse.y);
-		// This could be kUnkVirtScreen.
 		// Fixes bug #2773: "MANIACNES: Crash on click in speechtext-area"
 		if (!zone)
 			return;
@@ -723,7 +722,6 @@ void ScummEngine_v2::checkExecVerbs() {
 		const byte code = _mouseAndKeyboardStat & MBS_LEFT_CLICK ? 1 : 2;
 		const int inventoryArea = (_game.platform == Common::kPlatformNES) ? 48: 32;
 
-		// This could be kUnkVirtScreen.
 		// Fixes bug #2773: "MANIACNES: Crash on click in speechtext-area"
 		if (!zone)
 			return;
@@ -731,7 +729,7 @@ void ScummEngine_v2::checkExecVerbs() {
 		if (zone->number == kVerbVirtScreen && _mouse.y <= zone->topline + 8) {
 			// Click into V2 sentence line
 			runInputScript(kSentenceClickArea, 0, 0);
-		} else if (zone->number == kVerbVirtScreen && _mouse.y > zone->topline + inventoryArea) {
+		} else if (zone->number == kVerbVirtScreen && _mouse.y >= zone->topline + inventoryArea) {
 			// Click into V2 inventory
 			int object = checkV2Inventory(_mouse.x, _mouse.y);
 			if (object > 0)
@@ -1135,7 +1133,7 @@ void ScummEngine::drawVerb(int verb, int mode) {
 
 		if (isRtl)
 			vs->curRect.left = _charset->_str.left;
-		vs->curRect.right = _charset->_str.right;
+		vs->curRect.right = (_game.version <= 2) ? MIN<int>(vs->curRect.left + (getResourceSize(rtVerb, verb) - 1) * 8, _screenWidth) : _charset->_str.right;
 		vs->curRect.bottom = _charset->_str.bottom;
 		vs->oldRect = _charset->_str;
 		_charset->_str.left = _charset->_str.right;

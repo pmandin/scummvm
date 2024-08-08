@@ -54,6 +54,7 @@
 #include "sci/graphics/controls16.h"
 #include "sci/graphics/coordadjuster.h"
 #include "sci/graphics/cursor.h"
+#include "sci/graphics/gfxdrivers.h"
 #include "sci/graphics/macfont.h"
 #include "sci/graphics/maciconbar.h"
 #include "sci/graphics/menu.h"
@@ -285,7 +286,7 @@ Common::Error SciEngine::run() {
 	// Add the after market patches for the specified game, if they exist
 	_resMan->addNewGMPatch(_gameId);
 	_resMan->addNewD110Patch(_gameId);
-	_gameObjectAddress = _resMan->findGameObject(true, isBE());
+	_gameObjectAddress = _resMan->findGameObject(true);
 
 	_scriptPatcher = new ScriptPatcher();
 	SegManager *segMan = new SegManager(_resMan, _scriptPatcher);
@@ -318,9 +319,33 @@ Common::Error SciEngine::run() {
 	}
 
 	if (getSciVersion() < SCI_VERSION_2) {
+		Common::RenderMode renderMode = Common::kRenderDefault;
+
+		bool undither = ConfMan.getBool("disable_dithering");
+		if (ConfMan.hasKey("render_mode"))
+			renderMode = Common::parseRenderMode(ConfMan.get("render_mode"));
+
+		// Check if the selected render mode is available for the game. This is quite specific for each game.
+		// Sometime it is only EGA, sometimes only CGA b/w without CGA 4 colors, etc. Also set default mode if undithering is enabled.
+		Common::Platform p = getPlatform();
+		if ((renderMode == Common::kRenderEGA && (((getSciVersion() <= SCI_VERSION_0_LATE || getSciVersion() == SCI_VERSION_1_EGA_ONLY) && undither) ||
+			(getSciVersion() >= SCI_VERSION_1_EARLY && getSciVersion() <= SCI_VERSION_1_1 && !SCI1_EGADriver::validateMode(p)))) ||
+			(renderMode == Common::kRenderVGAGrey && !SCI1_VGAGreyScaleDriver::validateMode(p)) ||
+			(renderMode == Common::kRenderCGA && !SCI0_CGADriver::validateMode(p)) ||
+			(renderMode == Common::kRenderCGA_BW && !SCI0_CGABWDriver::validateMode(p)) ||
+			((renderMode == Common::kRenderHercA || renderMode == Common::kRenderHercG) && !SCI0_HerculesDriver::validateMode(p)) ||
+			(renderMode == Common::kRenderPC98_8c && ((getSciVersion() <= SCI_VERSION_01 && !SCI0_PC98Gfx8ColorsDriver::validateMode(p)) ||
+			(getSciVersion() > SCI_VERSION_01 && !SCI1_PC98Gfx8ColorsDriver::validateMode(p)))) ||
+			(renderMode == Common::kRenderPC98_16c && undither))
+				renderMode = Common::kRenderDefault;
+
+		// Disable undithering for CGA, Hercules and other unsuitable video modes
+		if (renderMode != Common::kRenderDefault)
+			undither = false;
+
 		// Initialize the game screen
-		_gfxScreen = new GfxScreen(_resMan);
-		_gfxScreen->enableUndithering(ConfMan.getBool("disable_dithering"));
+		_gfxScreen = new GfxScreen(_resMan, renderMode);
+		_gfxScreen->enableUndithering(undither);
 	}
 
 	_kernel = new Kernel(_resMan, segMan);

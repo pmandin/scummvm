@@ -150,7 +150,7 @@ void DrillerEngine::loadAssetsCPCFullGame() {
 		error("Failed to open DRILL.BIN");
 
 	loadMessagesFixedSize(&file, 0x214c, 14, 20);
-	loadFonts(&file, 0x5b69);
+	loadFonts(&file, 0x5b69, _font);
 	loadGlobalObjects(&file, 0x1d07, 8);
 	load8bitBinary(&file, 0x5ccb, 16);
 }
@@ -225,6 +225,9 @@ void DrillerEngine::drawCPCUI(Graphics::Surface *surface) {
 		Common::Rect shieldBar(88 - shield, 177, 88, 183);
 		surface->fillRect(shieldBar, front);
 	}
+
+	drawCompass(surface, 87, 156, _yaw, 10, front);
+	drawCompass(surface, 230, 156, _pitch - 30, 10, front);
 }
 
 } // End of namespace Freescape

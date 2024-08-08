@@ -34,7 +34,9 @@ class BitmapCastMember : public CastMember {
 public:
 	BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream, uint32 castTag, uint16 version, uint8 flags1 = 0);
 	BitmapCastMember(Cast *cast, uint16 castId, Image::ImageDecoder *img, uint8 flags1 = 0);
+	BitmapCastMember(Cast *cast, uint16 castId, BitmapCastMember &source);
 	~BitmapCastMember();
+
 	Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) override;
 
 	bool isModified() override;
@@ -60,11 +62,11 @@ public:
 
 	Picture *_picture = nullptr;
 	Graphics::Surface *_ditheredImg;
-	Graphics::FloodFill *_matte;
+	Graphics::Surface *_matte;
 
 	uint16 _pitch;
-	uint16 _regX;
-	uint16 _regY;
+	int16 _regX;
+	int16 _regY;
 	uint16 _flags2;
 	uint16 _bytes;
 	CastMemberID _clut;

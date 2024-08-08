@@ -26,7 +26,7 @@
 
 void OSystem_libretro::updateMouseXY(float deltaAcc, float *cumulativeXYAcc, int doing_x) {
 	int *mouseXY;
-	const int16 *screen_wh;
+	int16 screen_wh;
 	int *relMouseXY;
 	int cumulativeXYAcc_int;
 
@@ -39,12 +39,12 @@ void OSystem_libretro::updateMouseXY(float deltaAcc, float *cumulativeXYAcc, int
 	if (doing_x) {
 		_cursorStatus |= CURSOR_STATUS_DOING_X;
 		mouseXY = &_mouseX;
-		screen_wh = &(LIBRETRO_GRAPHICS_MANAGER->getScreen().w);
+		screen_wh = getScreenWidth();
 		relMouseXY = &_relMouseX;
 	} else {
 		_cursorStatus |= CURSOR_STATUS_DOING_Y;
 		mouseXY = &_mouseY;
-		screen_wh = &(LIBRETRO_GRAPHICS_MANAGER->getScreen().h);
+		screen_wh = getScreenHeight();
 		relMouseXY = &_relMouseY;
 	}
 	*cumulativeXYAcc += deltaAcc;
@@ -53,7 +53,7 @@ void OSystem_libretro::updateMouseXY(float deltaAcc, float *cumulativeXYAcc, int
 		// Set mouse position
 		*mouseXY += cumulativeXYAcc_int;
 		*mouseXY = (*mouseXY < 0) ? 0 : *mouseXY;
-		*mouseXY = (*mouseXY >= *screen_wh) ? *screen_wh : *mouseXY;
+		*mouseXY = (*mouseXY >= screen_wh) ? screen_wh : *mouseXY;
 		// Update accumulator
 		*cumulativeXYAcc -= (float)cumulativeXYAcc_int;
 	}
@@ -149,13 +149,15 @@ void OSystem_libretro::processInputs(void) {
 		getMouseXYFromButton(false, y_coor_cursor);
 
 	if (_cursorStatus & CURSOR_STATUS_DOING_JOYSTICK) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		Common::Event ev;
 		ev.type = Common::EVENT_MOUSEMOVE;
-		ev.mouse.x = _mouseX;
-		ev.mouse.y = _mouseY;
+		ev.mouse.x = mouse.x;
+		ev.mouse.y = mouse.y;
 		ev.relMouse.x = _cursorStatus & CURSOR_STATUS_DOING_X ? _relMouseX : 0;
 		ev.relMouse.y = _cursorStatus & CURSOR_STATUS_DOING_Y ? _relMouseY : 0;
 		_events.push_back(ev);
+		setMousePosition(_mouseX,_mouseY);
 	}
 
 	// Handle special functions
@@ -175,19 +177,21 @@ void OSystem_libretro::processInputs(void) {
 	// Handle mouse buttons
 	retropad_value = mapper_get_mapper_key_status(RETROKE_LEFT_BUTTON);
 	if (retropad_value & (1 << RETRO_DEVICE_KEY_CHANGED)) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		Common::Event ev;
 		ev.type = eventID[0][(retropad_value & (1 << RETRO_DEVICE_KEY_STATUS)) ? 0 : 1];
-		ev.mouse.x = _mouseX;
-		ev.mouse.y = _mouseY;
+		ev.mouse.x = mouse.x;
+		ev.mouse.y = mouse.y;
 		_events.push_back(ev);
 	}
 
 	retropad_value = mapper_get_mapper_key_status(RETROKE_RIGHT_BUTTON);
 	if (retropad_value & (1 << RETRO_DEVICE_KEY_CHANGED)) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		Common::Event ev;
 		ev.type = eventID[1][(retropad_value & (1 << RETRO_DEVICE_KEY_STATUS)) ? 0 : 1];
-		ev.mouse.x = _mouseX;
-		ev.mouse.y = _mouseY;
+		ev.mouse.x = mouse.x;
+		ev.mouse.y = mouse.y;
 		_events.push_back(ev);
 	}
 
@@ -214,8 +218,8 @@ void OSystem_libretro::processInputs(void) {
 	int p_x = retro_input_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
 	int p_y = retro_input_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
 	int p_press = retro_input_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
-	int px = (int)((p_x + 0x7fff) * LIBRETRO_GRAPHICS_MANAGER->getScreen().w / 0xffff);
-	int py = (int)((p_y + 0x7fff) * LIBRETRO_GRAPHICS_MANAGER->getScreen().h / 0xffff);
+	int px = (int)((p_x + 0x7fff) * getScreenWidth() / 0xffff);
+	int py = (int)((p_y + 0x7fff) * getScreenHeight() / 0xffff);
 	// printf("(%d,%d) p:%d\n",px,py,pp);
 
 	static int ptrhold = 0;
@@ -234,21 +238,24 @@ void OSystem_libretro::processInputs(void) {
 		ev.mouse.x = _mouseX;
 		ev.mouse.y = _mouseY;
 		_events.push_back(ev);
+		setMousePosition(_mouseX,_mouseY);
 	}
 
 	if (ptrhold > 10 && _ptrmouseButton == 0) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		_ptrmouseButton = 1;
 		Common::Event ev;
 		ev.type = eventID[0][_ptrmouseButton ? 0 : 1];
-		ev.mouse.x = _mouseX;
-		ev.mouse.y = _mouseY;
+		ev.mouse.x = mouse.x;
+		ev.mouse.y = mouse.y;
 		_events.push_back(ev);
 	} else if (ptrhold == 0 && _ptrmouseButton == 1) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		_ptrmouseButton = 0;
 		Common::Event ev;
 		ev.type = eventID[0][_ptrmouseButton ? 0 : 1];
-		ev.mouse.x = _mouseX;
-		ev.mouse.y = _mouseY;
+		ev.mouse.x = mouse.x;
+		ev.mouse.y = mouse.y;
 		_events.push_back(ev);
 	}
 
@@ -288,24 +295,26 @@ void OSystem_libretro::processInputs(void) {
 	}
 
 	if (_cursorStatus & CURSOR_STATUS_DOING_MOUSE) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		Common::Event ev;
 		ev.type = Common::EVENT_MOUSEMOVE;
-		ev.mouse.x = _mouseX;
-		ev.mouse.y = _mouseY;
+		ev.mouse.x = mouse.x;
+		ev.mouse.y = mouse.y;
 		ev.relMouse.x = _cursorStatus & CURSOR_STATUS_DOING_X ? _relMouseX : 0;
 		ev.relMouse.y = _cursorStatus & CURSOR_STATUS_DOING_Y ? _relMouseY : 0;
 		_events.push_back(ev);
+		setMousePosition(_mouseX,_mouseY);
 	}
 
 	for (int i = 0; i < 2; i++) {
+		Common::Point mouse = convertWindowToVirtual(_mouseX,_mouseY);
 		Common::Event ev;
 		bool down = retro_input_cb(0, RETRO_DEVICE_MOUSE, 0, retroButtons[i]);
 		if (down != _mouseButtons[i]) {
 			_mouseButtons[i] = down;
-
 			ev.type = eventID[i][down ? 0 : 1];
-			ev.mouse.x = _mouseX;
-			ev.mouse.y = _mouseY;
+			ev.mouse.x = mouse.x;
+			ev.mouse.y = mouse.y;
 			_events.push_back(ev);
 		}
 	}

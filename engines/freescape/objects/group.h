@@ -57,13 +57,13 @@ public:
 	int _scale;
 	int _step;
 	bool _active;
-	bool _finished;
 
 	ObjectType getType() override { return ObjectType::kGroupType; };
 	bool isDrawable() override { return true; }
-	void draw(Renderer *gfx) override;
+	void draw(Renderer *gfx, float offset = 0.0) override;
 	void scale(int scale_) override { _scale = scale_; };
-	Object *duplicate() override { error("cannot duplicate Group"); };
+	bool isActive() { return !isDestroyed() && !isInvisible() && _step > 0 && _active; };
+	Object *duplicate() override;
 };
 
 } // End of namespace Freescape

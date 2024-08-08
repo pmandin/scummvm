@@ -25,6 +25,7 @@
 #include "mads/mads.h"
 #include "mads/audio.h"
 #include "mads/dragonsphere/dragonsphere_scenes.h"
+#include "mads/forest/forest_scenes.h"
 #include "mads/nebular/nebular_scenes.h"
 #include "mads/phantom/phantom_scenes.h"
 
@@ -134,6 +135,9 @@ void Scene::loadSceneLogic() {
 		break;
 	case GType_Phantom:
 		_sceneLogic = Phantom::SceneFactory::createScene(_vm);
+		break;
+	case GType_Forest:
+		_sceneLogic = Forest::SceneFactory::createScene(_vm);
 		break;
 #endif
 	default:
@@ -626,6 +630,11 @@ void Scene::checkKeyboard() {
 	if (events.isKeyPressed()) {
 		Common::KeyState evt = events.getKey();
 		_vm->_game->handleKeypress(evt);
+	}
+
+	if (events.isActionTriggered()) {
+		Common::CustomEventType evt = events.getAction();
+		_vm->_game->handleAction(evt);
 	}
 
 	if ((events._mouseStatus & 3) == 3 && _vm->_game->_player._stepEnabled) {

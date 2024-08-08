@@ -48,7 +48,8 @@ Movie::Movie(Window *window) {
 	_flags = 0;
 	_stageColor = _window->_wm->_colorWhite;
 
-	_currentClickOnSpriteId = 0;
+	_currentActiveSpriteId = 0;
+	_currentMouseSpriteId = 0;
 	_currentEditableTextChannel = 0;
 	_lastEventTime = _vm->getMacTicks();
 	_lastKeyTime = _lastEventTime;
@@ -97,11 +98,16 @@ Movie::Movie(Window *window) {
 }
 
 Movie::~Movie() {
-	if (_sharedCast && _sharedCast->getArchive())
-		g_director->_allOpenResFiles.remove(_sharedCast->getArchive()->getPathName());
+	if (_sharedCast && _sharedCast->getArchive()) {
+		debug(0, "@@   Clearing shared cast '%s'", _sharedCast->getArchive()->getPathName().toString().c_str());
 
-	if (_cast && _cast->getArchive())
+		g_director->_allOpenResFiles.remove(_sharedCast->getArchive()->getPathName());
+	}
+
+	if (_cast && _cast->getArchive()) {
+		debug(0, "@@   Clearing movie cast '%s'", _cast->getArchive()->getPathName().toString().c_str());
 		g_director->_allOpenResFiles.remove(_cast->getArchive()->getPathName());
+	}
 
 	delete _cast;
 	delete _sharedCast;
@@ -125,7 +131,6 @@ void Movie::setArchive(Archive *archive) {
 		// D4 or lower, only 1 cast
 		_cast->setArchive(archive);
 	}
-
 	// Frame Labels
 	if ((r = archive->getMovieResourceIfPresent(MKTAG('V', 'W', 'L', 'B')))) {
 		_score->loadLabels(*r);
@@ -210,6 +215,13 @@ bool Movie::loadArchive() {
 		it._value->loadCast();
 	}
 	_stageColor = _vm->transformColor(_cast->_stageColor);
+	// Need to check if the default palette is valid; if not, assume it's the Mac one.
+	if (g_director->hasPalette(_cast->_defaultPalette)) {
+		_defaultPalette = _cast->_defaultPalette;
+	} else {
+		_defaultPalette = CastMemberID(kClutSystemMac, -1);
+	}
+	g_director->_lastPalette = CastMemberID();
 
 	bool recenter = false;
 	// If the stage dimensions are different, delete it and start again.
@@ -324,7 +336,7 @@ void Movie::loadFileInfo(Common::SeekableReadStreamEndian &stream) {
 		_cast->dumpScript(_script.c_str(), kMovieScript, 0);
 
 	if (!_script.empty())
-		_cast->_lingoArchive->addCode(_script, kMovieScript, 0);
+		_cast->_lingoArchive->addCode(_script, kMovieScript, 0, nullptr, kLPPTrimGarbage);
 
 	_changedBy = fileInfo.strings[1].readString();
 	_createdBy = fileInfo.strings[2].readString();
@@ -358,6 +370,8 @@ void Movie::clearSharedCast() {
 	if (!_sharedCast)
 		return;
 
+	debug(0, "@@   Clearing shared cast '%s'", _sharedCast->getArchive()->getPathName().toString().c_str());
+
 	g_director->_allOpenResFiles.remove(_sharedCast->getArchive()->getPathName());
 
 	delete _sharedCast;
@@ -377,7 +391,7 @@ void Movie::loadSharedCastsFrom(Common::Path &filename) {
 	sharedCast->setPathName(filename);
 
 	debug(0, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-	debug(0, "@@@@   Loading shared cast '%s'", sharedCast->getFileName().c_str());
+	debug(0, "@@@@   Loading shared cast '%s' in '%s'", sharedCast->getFileName().c_str(), filename.getParent().toString().c_str());
 	debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
 	_sharedCast = new Cast(this, DEFAULT_CAST_LIB, true, false);
@@ -415,15 +429,28 @@ CastMember *Movie::getCastMember(CastMemberID memberID) {
 	return result;
 }
 
+Cast *Movie::getCast(CastMemberID memberID) {
+	if (memberID.castLib == SHARED_CAST_LIB)
+		return _sharedCast;
+
+	if (_casts.contains(memberID.castLib)) {
+		return _casts.getVal(memberID.castLib);
+	} else if (memberID.castLib != 0) {
+		warning("Movie::getCast: Unknown castLib %d", memberID.castLib);
+		return nullptr;
+	}
+	return nullptr;
+}
+
 CastMember* Movie::createOrReplaceCastMember(CastMemberID memberID, CastMember* cast) {
 	warning("Movie::createOrReplaceCastMember: stubbed: functions only handles create");
 	CastMember *result = nullptr;
 
 	if (_casts.contains(memberID.castLib)) {
 		// Delete existing cast member
-		_casts.getVal(memberID.castLib)->eraseCastMember(memberID);
+		_casts.getVal(memberID.castLib)->eraseCastMember(memberID.member);
 
-		_casts.getVal(memberID.castLib)->setCastMember(memberID, cast);
+		_casts.getVal(memberID.castLib)->setCastMember(memberID.member, cast);
 	}
 
 	return result;
@@ -431,9 +458,39 @@ CastMember* Movie::createOrReplaceCastMember(CastMemberID memberID, CastMember* 
 
 bool Movie::eraseCastMember(CastMemberID memberID) {
 	if (_casts.contains(memberID.castLib)) {
-		return _casts.getVal(memberID.castLib)->eraseCastMember(memberID);
+		return _casts.getVal(memberID.castLib)->eraseCastMember(memberID.member);
 	}
 
+	return false;
+}
+
+bool Movie::duplicateCastMember(CastMemberID source, CastMemberID target) {
+	Cast *sourceCast = nullptr;
+	Cast *targetCast = nullptr;
+	if (_casts.contains(target.castLib)) {
+		if (_casts[target.castLib]->getCastMember(source.member)) {
+			sourceCast = _casts[target.castLib];
+		} else if (_sharedCast && _sharedCast->getCastMember(source.member)) {
+			sourceCast = _sharedCast;
+		}
+	}
+	// for shared + movie casts, duplications from the shared cast should be
+	// in the shared cast namespace
+	if (source.castLib == target.castLib) {
+		targetCast = sourceCast;
+	} else if (_casts.contains(target.castLib)) {
+		targetCast = _casts.getVal(target.castLib);
+	}
+	if (!sourceCast) {
+		warning("Movie::duplicateCastMember(): couldn't find source cast member %s", source.asString().c_str());
+	} else if (!targetCast) {
+		warning("Movie::duplicateCastMember(): couldn't find destination castLib %d", target.castLib);
+	} else {
+		CastMember *sourceMember = sourceCast->getCastMember(source.member);
+		CastMemberInfo *sourceInfo = sourceCast->getCastMemberInfo(source.member);
+		debugC(3, kDebugLoading, "Movie::DuplicateCastMember(): copying cast data from %s to %s (%s)", source.asString().c_str(), target.asString().c_str(), castType2str(sourceMember->_type));
+		return targetCast->duplicateCastMember(sourceMember, sourceInfo, target.member);
+	}
 	return false;
 }
 
@@ -518,6 +575,11 @@ CastMemberInfo *Movie::getCastMemberInfo(CastMemberID memberID) {
 		warning("Movie::getCastMemberInfo: Unknown castLib %d", memberID.castLib);
 	}
 	return result;
+}
+
+bool Movie::isValidCastMember(CastMemberID memberID, CastType type) {
+	CastMember *test = getCastMember(memberID);
+	return test && ((test->_type == type) || (type == kCastTypeAny));
 }
 
 const Stxt *Movie::getStxt(CastMemberID memberID) {

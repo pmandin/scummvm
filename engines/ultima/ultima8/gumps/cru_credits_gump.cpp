@@ -26,13 +26,13 @@
 
 #include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/kernel/mouse.h"
-#include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/palette_manager.h"
-#include "ultima/ultima8/graphics/texture.h"
-#include "ultima/ultima8/graphics/fonts/rendered_text.h"
-#include "ultima/ultima8/graphics/fonts/font.h"
-#include "ultima/ultima8/graphics/fonts/font_manager.h"
-#include "ultima/ultima8/graphics/fonts/shape_font.h"
+#include "ultima/ultima8/gfx/render_surface.h"
+#include "ultima/ultima8/gfx/palette_manager.h"
+#include "ultima/ultima8/gfx/texture.h"
+#include "ultima/ultima8/gfx/fonts/rendered_text.h"
+#include "ultima/ultima8/gfx/fonts/font.h"
+#include "ultima/ultima8/gfx/fonts/font_manager.h"
+#include "ultima/ultima8/gfx/fonts/shape_font.h"
 #include "ultima/ultima8/audio/music_process.h"
 
 namespace Ultima {
@@ -52,7 +52,8 @@ CruCreditsGump::CruCreditsGump(Common::SeekableReadStream *txtrs,
 		_timer(0), _background(nullptr), _nextScreenStart(0), _screenNo(-1)
 {
 	Image::BitmapDecoder decoder;
-	_background = RenderSurface::CreateSecondaryRenderSurface(640, 480);
+	Graphics::Screen *sc = Ultima8Engine::get_instance()->getScreen();
+	_background = new RenderSurface(640, 480, sc->format);
 
 	uint32 color = TEX32_PACK_RGB(0, 0, 0);
 	_background->fill32(color, 0, 0, 640, 480); // black background
@@ -60,7 +61,8 @@ CruCreditsGump::CruCreditsGump(Common::SeekableReadStream *txtrs,
 	if (decoder.loadStream(*bmprs)) {
 		// This does an extra copy via the ManagedSurface, but it's a once-off.
 		const Graphics::Surface *bmpsurf = decoder.getSurface();
-		Graphics::ManagedSurface ms(bmpsurf);
+		Graphics::ManagedSurface ms;
+		ms.copyFrom(*bmpsurf);
 		ms.setPalette(decoder.getPalette(), 0, decoder.getPaletteColorCount());
 		Common::Rect srcRect(640, 480);
 		_background->Blit(ms, srcRect, 0, 0);

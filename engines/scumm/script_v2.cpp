@@ -377,7 +377,7 @@ void ScummEngine_v2::decodeParseString() {
 		c &= 0x7f;
 
 		if (c < 8) {
-			// Special codes as seen in CHARSET_1 etc. My guess is that they
+			// Special codes as seen in displayDialog etc. My guess is that they
 			// have a similar function as the corresponding embedded stuff in modern
 			// games. Hence for now we convert them to the modern format.
 			// This might allow us to reuse the existing code.
@@ -405,9 +405,9 @@ void ScummEngine_v2::decodeParseString() {
 	// So we add some extra spaces at the end of the string if it's too short; this
 	// unblocks the cutscene and also lets Sandy react as intended.
 	//
-	// (Not using `_enableEnhancements` because some users could be really confused
+	// (Not using enhancementEnabled because some users could be really confused
 	// by the game hanging and they may not know about the Esc key.)
-	if (_game.id == GID_MANIAC && _game.platform != Common::kPlatformNES && _language == Common::FR_FRA && vm.slot[_currentScript].number == 155 && _roomResource == 31 && _actorToPrintStrFor == 9) {
+	if (_game.id == GID_MANIAC && _game.platform != Common::kPlatformNES && _language == Common::FR_FRA && _currentScript != 0xFF && vm.slot [_currentScript].number == 155 && _roomResource == 31 && _actorToPrintStrFor == 9) {
 		while (ptr - buffer < 100) {
 			*ptr++ = ' ';
 		}
@@ -419,7 +419,7 @@ void ScummEngine_v2::decodeParseString() {
 	// as I know, this is the only version with the typo.
 	else if (_game.id == GID_MANIAC && _game.version == 1
 		&& _game.platform == Common::kPlatformDOS
-		&& !(_game.features & GF_DEMO) && _language == Common::EN_ANY
+		&& !(_game.features & GF_DEMO) && _language == Common::EN_ANY && _currentScript != 0xFF
 		&& vm.slot[_currentScript].number == 260 && enhancementEnabled(kEnhTextLocFixes)
 		&& strncmp((char *)buffer + 26, " tring ", 7) == 0) {
 		for (byte *p = ptr; p >= buffer + 29; p--)
@@ -812,7 +812,7 @@ void ScummEngine_v2::o2_resourceRoutines() {
 		return;
 
 	// HACK V2 Maniac Mansion tries to load an invalid sound resource in demo script.
-	if (_game.id == GID_MANIAC && _game.version == 2 && vm.slot[_currentScript].number == 9 && type == rtSound && resid == 1)
+	if (_game.id == GID_MANIAC && _game.version == 2 && _currentScript != 0xFF && vm.slot [_currentScript].number == 9 && type == rtSound && resid == 1)
 		return;
 
 	if ((opcode & 0x0f) == 1) {
@@ -1472,6 +1472,7 @@ void ScummEngine_v2::o2_delay() {
 	delay |= fetchScriptByte() << 16;
 	delay = 0xFFFFFF - delay;
 
+	assert(_currentScript != 0xFF);
 	vm.slot[_currentScript].delay = delay;
 	vm.slot[_currentScript].status = ssPaused;
 	o5_breakHere();
@@ -1549,7 +1550,7 @@ void ScummEngine_v2::o2_endCutscene() {
 	// Reset user state to values before cutscene
 	setUserState(vm.cutSceneData[0] | USERSTATE_SET_IFACE | USERSTATE_SET_CURSOR | USERSTATE_SET_FREEZE);
 
-	if ((_game.id == GID_MANIAC) && !(_game.platform == Common::kPlatformNES)) {
+	if (_game.id == GID_MANIAC && _game.version < 2 && _game.platform != Common::kPlatformNES) {
 		camera._mode = (byte) vm.cutSceneData[3];
 		if (camera._mode == kFollowActorCameraMode) {
 			actorFollowCamera(VAR(VAR_EGO));
@@ -1653,7 +1654,7 @@ void ScummEngine_v2::setUserState(byte state) {
 
 	// Draw all verbs and inventory
 	redrawVerbs();
-	runInventoryScript(1);
+	runInventoryScriptEx(1);
 }
 
 void ScummEngine_v2::o2_getActorWalkBox() {
@@ -1687,8 +1688,14 @@ void ScummEngine_v2::resetSentence() {
 	VAR(VAR_SENTENCE_PREPOSITION) = 0;
 }
 
-void ScummEngine_v2::runInventoryScript(int i) {
+void ScummEngine_v2::runInventoryScript(int) {
 	redrawV2Inventory();
+}
+
+void ScummEngine_v2::runInventoryScriptEx(int) {
+	redrawV2Inventory();
+	if (_game.version > 0)
+		drawSentence();
 }
 
 } // End of namespace Scumm

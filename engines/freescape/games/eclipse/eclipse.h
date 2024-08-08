@@ -57,14 +57,17 @@ public:
 
 	bool _resting;
 	int _lastThirtySeconds;
+	int _lastSecond;
 	void updateTimeVariables() override;
 
 	void initDOS();
 	void initCPC();
 	void initZX();
+	void initAmigaAtari();
 
 	void loadAssetsZXFullGame() override;
 	void loadAssetsCPCFullGame() override;
+	void loadAssetsAtariFullGame() override;
 	void loadAssetsCPCDemo() override;
 	void loadAssetsZXDemo() override;
 
@@ -77,6 +80,7 @@ public:
 	void drawZXUI(Graphics::Surface *surface) override;
 	void drawAnalogClock(Graphics::Surface *surface, int x, int y, uint32 colorHand1, uint32 colorHand2, uint32 colorBack);
 	void drawAnalogClockHand(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color);
+	void drawCompass(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color);
 	void drawEclipseIndicator(Graphics::Surface *surface, int x, int y, uint32 color1, uint32 color2);
 
 	soundFx *load1bPCM(Common::SeekableReadStream *file, int offset);

@@ -62,8 +62,6 @@ struct StripTable {
 	int zrun[120];		// FIXME: Why only 120 here?
 };
 
-static const byte bitMasks[9] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
-
 enum {
 	kNoDelay = 0,
 	// This should actually be 3 in all games using it;
@@ -338,7 +336,7 @@ void ScummEngine::initScreens(int b, int h) {
 	int i;
 	int adj = 0;
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		_res->nukeResource(rtBuffer, i + 1);
 		_res->nukeResource(rtBuffer, i + 5);
 	}
@@ -360,18 +358,15 @@ void ScummEngine::initScreens(int b, int h) {
 		clearTextSurface();
 	}
 
-	if (!getResourceAddress(rtBuffer, 4)) {
-		// Since the size of screen 3 is fixed, there is no need to reallocate
-		// it if its size changed.
-		// Not sure what it is good for, though. I think it may have been used
-		// in pre-V7 for the games messages (like 'Pause', Yes/No dialogs,
-		// version display, etc.). I don't know about V7, maybe the same is the
-		// case there. If so, we could probably just remove it completely.
-		if (_game.version >= 7) {
-			initVirtScreen(kUnkVirtScreen, (_screenHeight / 2) - 10, _screenWidth, 13, false, false);
-		} else {
-			initVirtScreen(kUnkVirtScreen, 80, _screenWidth, 13, false, false);
-		}
+	if (_game.version >= 7) {
+		initVirtScreen(kBannerVirtScreen, (_screenHeight / 2) - 10, _screenWidth, 13, false, false);
+	} else if (_game.platform == Common::kPlatformFMTowns) {
+		// HACK: The original only ever renders in 640x480 mode. The banners' top and bottom borders are exactly one unscaled pixel high. This will
+		// still allow the text to fit in nicely. It does not work with scaled (2 pixel height) borders, though. So we add two extra pixels...
+		int bannerHeight = (_textSurfaceMultiplier == 1) ? 12 : 20;
+		initVirtScreen(kBannerVirtScreen, (b + adj + h) / 2 - bannerHeight / _textSurfaceMultiplier, _screenWidth * _textSurfaceMultiplier, bannerHeight, false, false);
+	} else {
+		initVirtScreen(kBannerVirtScreen, 80, _screenWidth, 12, false, false);
 	}
 
 	if ((_game.platform == Common::kPlatformNES) && (h != _screenHeight)) {
@@ -379,7 +374,7 @@ void ScummEngine::initScreens(int b, int h) {
 		// Otherwise we would have to do lots of coordinate adjustments all over
 		// the code.
 		adj = 16;
-		initVirtScreen(kUnkVirtScreen, 0, _screenWidth, adj, false, false);
+		initVirtScreen(kBannerVirtScreen, 0, _screenWidth, adj, false, false);
 	}
 
 	initVirtScreen(kMainVirtScreen, b + adj, _screenWidth, h - b, true, true);
@@ -462,6 +457,9 @@ void ScummEngine::initVirtScreen(VirtScreenNumber slot, int top, int width, int 
 VirtScreen *ScummEngine::findVirtScreen(int y) {
 	VirtScreen *vs = _virtscr;
 	int i;
+
+	if (_forceBannerVirtScreen)
+		return &vs[3];
 
 	for (i = 0; i < 3; i++, vs++) {
 		if (y >= vs->topline && y < vs->topline + vs->h) {
@@ -609,7 +607,13 @@ void ScummEngine::updateDirtyScreen(VirtScreenNumber slot) {
 				w += 8;
 				continue;
 			}
-			drawStripToScreen(vs, start * 8, w, top, bottom);
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+			if (_game.platform == Common::kPlatformFMTowns && vs->number == kBannerVirtScreen) {
+				int scl = _textSurfaceMultiplier;
+				towns_drawStripToScreen(vs, start * 8 * scl, (vs->topline + top) * scl, start * 8 * scl, top * scl, w * scl, bottom - top);
+			} else 
+#endif
+				drawStripToScreen(vs, start * 8, w, top, bottom);
 			w = 8;
 		}
 		start = i + 1;
@@ -1148,7 +1152,7 @@ void ScummEngine_v71he::redrawBGAreas() {
 
 void ScummEngine_v72he::redrawBGAreas() {
 	ScummEngine_v71he::redrawBGAreas();
-	_wiz->flushWizBuffer();
+	_wiz->flushAWizBuffer();
 }
 #endif
 
@@ -1307,12 +1311,8 @@ void ScummEngine::clearCharsetMask() {
 }
 
 void ScummEngine::clearTextSurface() {
-#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
-	if (_townsScreen)
-		_townsScreen->fillLayerRect(1, 0, 0, _textSurface.w, _textSurface.h, 0);
-#endif
-
-	fill((byte *)_textSurface.getPixels(),  _textSurface.pitch,
+	towns_fillTopLayerRect(0, 0, _textSurface.w, _textSurface.h, 0);
+	fill((byte *)_textSurface.getPixels(), _textSurface.pitch,
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 		_game.platform == Common::kPlatformFMTowns ? 0 :
 #endif
@@ -1501,7 +1501,14 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 	if (width <= 0 || height <= 0)
 		return;
 
-	markRectAsDirty(vs->number, x, x2, y, y2);
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+	// Some FM-Towns games draw directly on layer 2, without setting the virtscreen dirty, bypassing the normal drawing
+	// routines. It can make a difference, e. g. bug no. 15027 ("INDY3 (FMTowns): Map lines are drawn incorrectly, plus
+	// more issues when leaving Germany"). Making the virtscreen dirty, would cause some wrong colors, due to the way the
+	// scripts handle the shadow palette there.
+	if (!_townsScreen || _game.platform != Common::kPlatformFMTowns || _game.version != 3 || vs->number == kTextVirtScreen)
+#endif
+		markRectAsDirty(vs->number, x, x2, y, y2);
 
 	backbuff = vs->getPixels(x, y);
 	bgbuff = vs->getBackPixels(x, y);
@@ -1533,12 +1540,16 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 		}
 	} else if (_game.heversion >= 72) {
 		// Flags are used for different methods in HE games
+		uint32 colorToBack         = (!(_game.heversion > 99 || _isHE995)) ? 0x8000 : 0x1000000;
+		uint32 colorCopyForeToBack = (!(_game.heversion > 99 || _isHE995)) ? 0x4000 : 0x2000000;
+		uint32 colorCopyBackToFore = (!(_game.heversion > 99 || _isHE995)) ? 0x2000 : 0x4000000;
+
 		uint32 flags = color;
-		if ((flags & 0x2000) || (flags & 0x4000000)) {
+		if (flags & colorCopyBackToFore) {
 			blit(backbuff, vs->pitch, bgbuff, vs->pitch, width, height, vs->format.bytesPerPixel);
-		} else if ((flags & 0x4000) || (flags & 0x2000000)) {
+		} else if (flags & colorCopyForeToBack) {
 			blit(bgbuff, vs->pitch, backbuff, vs->pitch, width, height, vs->format.bytesPerPixel);
-		} else if ((flags & 0x8000) || (flags & 0x1000000)) {
+		} else if (flags & colorToBack) {
 			flags &= (flags & 0x1000000) ? 0xFFFFFF : 0x7FFF;
 			fill(backbuff, vs->pitch, flags, width, height, vs->format.bytesPerPixel);
 			fill(bgbuff, vs->pitch, flags, width, height, vs->format.bytesPerPixel);
@@ -1565,11 +1576,37 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 		} else {
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 			if (_game.platform == Common::kPlatformFMTowns) {
-				color = ((color & 0x0f) << 4) | (color & 0x0f);
-				byte *mask = (byte *)_textSurface.getBasePtr(x * _textSurfaceMultiplier, (y - _screenTop + vs->topline) * _textSurfaceMultiplier);
-				fill(mask, _textSurface.pitch, color, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, _textSurface.format.bytesPerPixel);
+				if (_game.version == 3 && vs->number != kTextVirtScreen) {
+					// The original FM-Towns v3 interpreter overdraws both width
+					// and height by 1 pixel. I don't know if it is voluntary or
+					// not, so I have added safety checks.
+					if (x + width < vs->w)
+						width++;
+					if (y + height < vs->h)
+						height++;
+				}
 
-				if (_game.id == GID_MONKEY2 || _game.id == GID_INDY4 || ((_game.id == GID_INDY3 || _game.id == GID_ZAK) && vs->number != kTextVirtScreen) || (_game.id == GID_LOOM && vs->number == kMainVirtScreen))
+				color = ((color & 0x0f) << 4) | (color & 0x0f);
+				// Some FM-Towns games draw directly on layer 2, without setting the virtscreeb dirty, bypassing the
+				// normal drawing routines. It can make a difference, e. g. bug no. 15027 ("INDY3 (FMTowns): Map lines
+				// are drawn incorrectly, plus more issues when leaving Germany"). Making the virtscreen dirty, would
+				// cause some wrong colors, due to the way the scripts handle the shadow palette there.
+				if (_game.version == 3 && vs->number != kTextVirtScreen) {
+					towns_fillTopLayerRect(x * _textSurfaceMultiplier,
+						(y - _screenTop + vs->topline) * _textSurfaceMultiplier, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, color);
+					// We still need to continue and make the same changes to the textSurface (the original FM-Towns
+					// SCUMM3 interpreters don't have that, everything goes directly onto screen layer 2 there).
+				}
+
+				if (vs->number == kBannerVirtScreen) {
+					byte *mask = _virtscr[kBannerVirtScreen].getPixels(x, y);
+					fill(mask, vs->pitch, color, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, vs->format.bytesPerPixel);
+				} else {
+					byte *mask = (byte *)_textSurface.getBasePtr(x * _textSurfaceMultiplier, (y - _screenTop + vs->topline) * _textSurfaceMultiplier);
+					fill(mask, _textSurface.pitch, color, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, _textSurface.format.bytesPerPixel);
+				}
+
+				if (_game.id != GID_MONKEY && !(_game.version == 3 && vs->number == kTextVirtScreen))
 					return;
 			}
 #endif
@@ -1585,7 +1622,7 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 }
 
 void ScummEngine::drawLine(int x1, int y1, int x2, int y2, int color) {
-	if (_game.platform == Common::kPlatformFMTowns) {
+	if (_game.platform == Common::kPlatformFMTowns && _game.version == 5) {
 		drawBox(x1, y1, x2, y2, color);
 		return;
 	}
@@ -1667,12 +1704,17 @@ void ScummEngine::drawLine(int x1, int y1, int x2, int y2, int color) {
 
 void ScummEngine::drawPixel(VirtScreen *vs, int x, int y, int16 color, bool useBackbuffer) {
 	int factor = _isIndy4Jap ? 0 : 8;
+	int wScale = (vs->number == kBannerVirtScreen && _textSurfaceMultiplier == 2) ? 2 : 1;
 	if (x >= 0 && y >= 0 && _screenWidth + factor > x && _screenHeight > y) {
-		if (useBackbuffer)
+		if (useBackbuffer) {
 			*(vs->getBackPixels(x, y + _screenTop - vs->topline)) = color;
-		else
-			*(vs->getPixels(x, y + _screenTop - vs->topline)) = color;
-		markRectAsDirty(vs->number, x, x + 1, y + _screenTop - vs->topline, y + 1 + _screenTop - vs->topline);
+		} else {
+			// Is it elegant to do the kBannerVirtScreen horizontal scaling here like this? Certainly not,
+			// but it is just what the original interpreter does. So it will at least not break anything.
+			for (int i = 0; i < wScale; ++i)
+				*(vs->getPixels(x * wScale + i, y + _screenTop - vs->topline)) = color;
+		}
+		markRectAsDirty(vs->number, x * wScale, (x + 1) * wScale, y + _screenTop - vs->topline, y + 1 + _screenTop - vs->topline);
 	}
 }
 
@@ -1696,48 +1738,132 @@ void ScummEngine::moveScreen(int dx, int dy, int height) {
 }
 
 void ScummEngine_v5::clearFlashlight() {
-	_flashlight.isDrawn = false;
+	_flashlight.eraseFlag = false;
 	_flashlight.buffer = nullptr;
 }
 
+static const byte townsCurveData[] = { 0x01, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0x7F, 0xFF };
+
+static const byte v1FwdCurveData[] = {
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0xFF,
+	0x00, 0x00, 0xFF, 0xFF,
+	0x00, 0x00, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF
+};
+
+static const byte v1BkwdCurveData[] = {
+	0xFF, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0x00, 0x00,
+	0xFF, 0xFF, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF
+};
+
+
+static const byte v2FwdCurveData[] = {
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x0F, 0xFF,
+	0x00, 0x00, 0xFF, 0xFF,
+	0x00, 0x0F, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0xFF,
+	0x0F, 0xFF, 0xFF, 0xFF,
+	0x0F, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF
+};
+
+static const byte v2BkwdCurveData[] = {
+	0x00, 0x00, 0x00, 0x00,
+	0xFF, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0x00, 0x00,
+	0xFF, 0xFF, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF
+};
+
+static const byte v4FwdCurveData[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+	0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
+
+static const byte v4BkwdCurveData[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
+
 void ScummEngine_v5::drawFlashlight() {
-	int i, j, x, y;
+	int x, y;
 	VirtScreen *vs = &_virtscr[kMainVirtScreen];
-	byte backgroundColor = 0;
+	byte blackColor = 0x00;
 
 	// NES uses 0x1d for black
 	if (g_scumm->_game.platform == Common::kPlatformNES)
-		backgroundColor = 0x1d;
+		blackColor = 0x1D;
 
 	// Remove the flash light first if it was previously drawn
-	if (_flashlight.isDrawn) {
+	if (_flashlight.eraseFlag) {
 		markRectAsDirty(kMainVirtScreen, _flashlight.x, _flashlight.x + _flashlight.w,
 										_flashlight.y, _flashlight.y + _flashlight.h, USAGE_BIT_DIRTY);
 
 		if (_flashlight.buffer) {
-			fill(_flashlight.buffer, vs->pitch, backgroundColor, _flashlight.w, _flashlight.h, vs->format.bytesPerPixel);
+			fill(_flashlight.buffer, vs->pitch, blackColor, _flashlight.w, _flashlight.h, vs->format.bytesPerPixel);
 		}
-		_flashlight.isDrawn = false;
+
+		_flashlight.eraseFlag = false;
 	}
 
 	if (_flashlight.xStrips == 0 || _flashlight.yStrips == 0)
 		return;
 
-	// Calculate the area of the flashlight
+	// Calculate the position of the flashlight.
 	if (_game.id == GID_ZAK || _game.id == GID_MANIAC) {
-		x = _mouse.x + vs->xstart;
-		y = _mouse.y - vs->topline;
+		x = (_mouse.x + vs->xstart);
+		y = (_mouse.y - vs->topline);
 	} else {
 		Actor *a = derefActor(VAR(VAR_EGO), "drawFlashlight");
 		x = a->getPos().x;
 		y = a->getPos().y;
 	}
+
+	// The original only shows the flashlight in locations whose:
+	// - X position is a multiple of 8;
+	// - Y position is a multiple of 2.
+	//
+	// Failing to do so will create temporary glitches on the corners
+	// of the flashlight when attempting moving the mouse too fast...
+	// I'm not sure FM-Towns does this, so I'm leaving it off,
+	// which mean it will glitch just like with the old code...
+	if (_game.platform != Common::kPlatformFMTowns) {
+		x &= ~7;
+		y &= ~1;
+	}
+
 	_flashlight.w = _flashlight.xStrips * 8;
 	_flashlight.h = _flashlight.yStrips * 8;
 	_flashlight.x = x - _flashlight.w / 2 - _screenStartStrip * 8;
 	_flashlight.y = y - _flashlight.h / 2;
 
-	if (_game.id == GID_LOOM)
+	if (_game.id == GID_LOOM && _game.version == 3 && _game.platform == Common::kPlatformFMTowns)
 		_flashlight.y -= 12;
 
 	// Clip the flashlight at the borders
@@ -1751,7 +1877,7 @@ void ScummEngine_v5::drawFlashlight() {
 		_flashlight.y = vs->h - _flashlight.h;
 
 	// Redraw any actors "under" the flashlight
-	for (i = _flashlight.x / 8; i < (_flashlight.x + _flashlight.w) / 8; i++) {
+	for (int i = _flashlight.x / 8; i < (_flashlight.x + _flashlight.w) / 8; i++) {
 		assert(0 <= i && i < _gdi->_numStrips);
 		setGfxUsageBit(_screenStartStrip + i, USAGE_BIT_DIRTY);
 		vs->tdirty[i] = 0;
@@ -1766,34 +1892,141 @@ void ScummEngine_v5::drawFlashlight() {
 
 	// C64 & NES does not round the flashlight
 	if (_game.platform != Common::kPlatformC64 && _game.platform != Common::kPlatformNES) {
-		// Round the corners. To do so, we simply hard-code a set of nicely
-		// rounded corners.
-		static const int corner_data[] = { 8, 6, 4, 3, 2, 2, 1, 1 };
-		int minrow = 0;
-		int maxcol = (_flashlight.w - 1) * vs->format.bytesPerPixel;
-		int maxrow = (_flashlight.h - 1) * vs->pitch;
+		// Round the corners. Different versions have different rounding parameters.
+		if (vs->format.bytesPerPixel == 1) {
+			int width, height, heightLoc;
+			byte maskValue;
+			bool isIndy3VGA = (_game.id == GID_INDY3 && (_game.features & GF_OLD256));
 
-		for (i = 0; i < 8; i++, minrow += vs->pitch, maxrow -= vs->pitch) {
-			int d = corner_data[i];
+			height = _flashlight.h - 1;
 
-			for (j = 0; j < d; j++) {
-				if (vs->format.bytesPerPixel == 2) {
+			byte *buffPtr = _flashlight.buffer;
+
+			if (_game.platform == Common::kPlatformFMTowns) {
+				for (int i = 0; i < 8; ++i) {
+					heightLoc = vs->pitch * height;
+					width = _flashlight.w - 1;
+
+					for (byte j = 128, idx = 0; j; j >>= 1, idx++) {
+						if ((j & townsCurveData[i]) != 0)
+							maskValue = 0xFF; // Pixel ON
+						else
+							maskValue = 0x00; // Pixel OFF
+
+						buffPtr[idx] &= maskValue;
+						buffPtr[idx + heightLoc] &= maskValue;
+						buffPtr[idx + width] &= maskValue;
+						buffPtr[idx + width + heightLoc] &= maskValue;
+
+						width -= 2;
+					}
+
+					buffPtr += vs->pitch;
+					height -= 2;
+				}
+			} else {
+				const byte *fwdCurvePtr, *bkwdCurvePtr;
+		
+				switch (_game.version) {
+				case 1:
+					fwdCurvePtr = v1FwdCurveData;
+					bkwdCurvePtr = v1BkwdCurveData;
+					break;
+				case 2:
+					fwdCurvePtr = v2FwdCurveData;
+					bkwdCurvePtr = v2BkwdCurveData;
+					break;
+				case 3:
+					if (isIndy3VGA) {
+						fwdCurvePtr = v4FwdCurveData;
+						bkwdCurvePtr = v4BkwdCurveData;
+					} else {
+						fwdCurvePtr = v2FwdCurveData;
+						bkwdCurvePtr = v2BkwdCurveData;
+					}
+
+					break;
+				default:
+					fwdCurvePtr = bkwdCurvePtr = v4FwdCurveData;
+				}
+
+				if (_game.version <= 3 && !isIndy3VGA) {
+					width = _flashlight.w - 8;
+
+					for (int i = 8, curveHorizLine = 0; i > 0; i--, curveHorizLine += 4) {
+						heightLoc = vs->pitch * height;
+
+						// v1 and v2 use a nibble mask on an half resolution buffer! ARGH!
+						// We have to double the maskings in order to match the original,
+						// without handling an half-res flashlight buffer...
+						for (byte j = 0, ptInCurveHorizLine = 0; j < 8; j += 2, ptInCurveHorizLine++) {
+							// Top left
+							buffPtr[j]     &= (fwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0xF0) ? 0xFF : 0x00;
+							buffPtr[j + 1] &= (fwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0x0F) ? 0xFF : 0x00;
+
+							// Bottom left
+							buffPtr[j + heightLoc]     &= (fwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0xF0) ? 0xFF : 0x00;
+							buffPtr[j + heightLoc + 1] &= (fwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0x0F) ? 0xFF : 0x00;
+
+							// Top right
+							buffPtr[j + width]     &= (bkwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0x0F) ? 0xFF : 0x00;
+							buffPtr[j + width + 1] &= (bkwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0xF0) ? 0xFF : 0x00;
+
+							// Bottom right
+							buffPtr[j + width + heightLoc]     &= (bkwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0x0F) ? 0xFF : 0x00;
+							buffPtr[j + width + heightLoc + 1] &= (bkwdCurvePtr[ptInCurveHorizLine + curveHorizLine] & 0xF0) ? 0xFF : 0x00;
+						}
+
+						height -= 2;
+						buffPtr += vs->pitch;
+					}
+				} else {
+					byte maskValueFwd, maskValueBkwd;
+
+					for (int i = 0; i < 8; ++i) {
+						heightLoc = vs->pitch * height;
+
+						width = _flashlight.w - 8;
+
+						for (byte j = 8, idx = 0; j; j--, idx++) {
+							maskValueFwd = fwdCurvePtr[i * 8 + idx];
+							maskValueBkwd = isIndy3VGA ? bkwdCurvePtr[i * 8 + idx] : bkwdCurvePtr[i * 8 + j - 1];
+
+							buffPtr[idx] &= maskValueFwd; // Top left
+							buffPtr[idx + heightLoc] &= maskValueFwd; // Bottom left
+							buffPtr[idx + width] &= maskValueBkwd; // Top right
+							buffPtr[idx + width + heightLoc] &= maskValueBkwd; // Bottom right
+						}
+
+						buffPtr += vs->pitch;
+						height -= 2;
+					}
+				}
+			}
+		} else {
+			// The bytesPerPixel == 2 case should only happen for the PC-Engine version of Loom...
+			// I'd rather avoid attempting to reverse what happens here in the original and just
+			// use the old code...
+
+			static const int corner_data[] = { 8, 6, 4, 3, 2, 2, 1, 1 };
+			int minrow = 0;
+			int maxcol = (_flashlight.w - 1) * vs->format.bytesPerPixel;
+			int maxrow = (_flashlight.h - 1) * vs->pitch;
+
+			for (int i = 0; i < 8; i++, minrow += vs->pitch, maxrow -= vs->pitch) {
+				int d = corner_data[i];
+
+				for (int j = 0; j < d; j++) {
 					WRITE_UINT16(&_flashlight.buffer[minrow + 2 * j], 0);
 					WRITE_UINT16(&_flashlight.buffer[minrow + maxcol - 2 * j], 0);
 					WRITE_UINT16(&_flashlight.buffer[maxrow + 2 * j], 0);
 					WRITE_UINT16(&_flashlight.buffer[maxrow + maxcol - 2 * j], 0);
 				}
-				else {
-					_flashlight.buffer[minrow + j] = backgroundColor;
-					_flashlight.buffer[minrow + maxcol - j] = backgroundColor;
-					_flashlight.buffer[maxrow + j] = backgroundColor;
-					_flashlight.buffer[maxrow + maxcol - j] = backgroundColor;
-				}
 			}
 		}
 	}
 
-	_flashlight.isDrawn = true;
+	_flashlight.eraseFlag = true;
 }
 
 int ScummEngine_v0::getCurrentLights() const {
@@ -2156,7 +2389,7 @@ void Gdi::drawBitmap(const byte *ptr, VirtScreen *vs, int x, const int y, const 
 		for (int i = 0; i < numzbuf; i++) {
 			byte *dst1, *dst2;
 
-			dst1 = dst2 = (byte *)vs->pixels + y * vs->pitch + x * 8;
+			dst1 = dst2 = (byte *)vs->getPixels(0,0) + y * vs->pitch + x * 8;
 			if (vs->hasTwoBuffers)
 				dst2 = vs->backBuf + y * vs->pitch + x * 8;
 			byte *mask_ptr = getMaskBuffer(x, y, i);
@@ -2223,8 +2456,13 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 	// palette so that it matches the way these lines have been redrawn in the
 	// FM-TOWNS release.  We take care not to apply this palette change to the
 	// text or inventory, as they still require the original colors.
+	//
+	// Also, the background was redrawn for censorship reasons in the German
+	// release, so we have to take care of the different resource size there.
 	if (_vm->_game.id == GID_INDY3 && (_vm->_game.features & GF_OLD256) && _vm->_game.platform != Common::kPlatformFMTowns
-		&& _vm->_roomResource == 46 && smapLen == 43159 && vs->number == kMainVirtScreen && _vm->enhancementEnabled(kEnhMinorBugFixes)) {
+		&& _vm->_roomResource == 46 && vs->number == kMainVirtScreen
+		&& (smapLen == 43159 || (smapLen == 42953 && _vm->_language == Common::DE_DEU))
+		&& _vm->enhancementEnabled(kEnhMinorBugFixes)) {
 		if (_roomPalette[11] == 11 && _roomPalette[86] == 86)
 			_roomPalette[11] = 86;
 		if (_roomPalette[13] == 13 && _roomPalette[80] == 80)
@@ -2453,6 +2691,8 @@ void GdiV2::decodeMask(int x, int y, const int width, const int height,
 }
 
 #ifdef ENABLE_HE
+static const byte bitMasks[9] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
+
 /**
  * Draw a bitmap onto a virtual screen. This is main drawing method for room backgrounds
  * used throughout HE71+ versions.
@@ -2461,19 +2701,15 @@ void GdiV2::decodeMask(int x, int y, const int width, const int height,
  * the generic Gdi::drawBitmap() method.
  */
 void Gdi::drawBMAPBg(const byte *ptr, VirtScreen *vs) {
-	const byte *z_plane_ptr;
-	byte *mask_ptr;
-	const byte *zplane_list[9];
+	const byte *zPlanePtr;
+	byte *maskPtr;
+	const byte *zPlaneList[9];
 
-	const byte *bmap_ptr = _vm->findResourceData(MKTAG('B','M','A','P'), ptr);
-	assert(bmap_ptr);
+	const byte *bmapPtr = _vm->findResourceData(MKTAG('B','M','A','P'), ptr);
+	assert(bmapPtr);
 
-	byte code = *bmap_ptr++;
+	byte code = *bmapPtr++;
 	byte *dst = vs->getBackPixels(0, 0);
-
-	// The following few lines more or less duplicate decompressBitmap(), only
-	// for an area spanning multiple strips. In particular, the codecs 13 & 14
-	// in decompressBitmap call drawStripHE()
 
 	switch (code) {
 	case BMCOMP_NMAJMIN_H4:
@@ -2483,7 +2719,7 @@ void Gdi::drawBMAPBg(const byte *ptr, VirtScreen *vs) {
 	case BMCOMP_NMAJMIN_H8:
 		_decomp_shr = code - BMCOMP_NMAJMIN_H0; // Bits per pixel
 		_decomp_mask = bitMasks[_decomp_shr];
-		drawStripHE(dst, vs->pitch, bmap_ptr, vs->w, vs->h, false);
+		drawStripHE(dst, vs->pitch, bmapPtr, vs->w, vs->h, false);
 		break;
 	case BMCOMP_NMAJMIN_HT4:
 	case BMCOMP_NMAJMIN_HT5:
@@ -2492,34 +2728,49 @@ void Gdi::drawBMAPBg(const byte *ptr, VirtScreen *vs) {
 	case BMCOMP_NMAJMIN_HT8:
 		_decomp_shr = code - BMCOMP_NMAJMIN_HT0; // Bits per pixel
 		_decomp_mask = bitMasks[_decomp_shr];
-		drawStripHE(dst, vs->pitch, bmap_ptr, vs->w, vs->h, false);
+		drawStripHE(dst, vs->pitch, bmapPtr, vs->w, vs->h, false);
 		break;
 	case BMCOMP_SOLID_COLOR_FILL:
-		fill(dst, vs->pitch, *bmap_ptr, vs->w, vs->h, vs->format.bytesPerPixel);
+	{
+		WizRawPixel color = (WizRawPixel)(*bmapPtr);
+		if (_vm->_game.heversion > 99 && _vm->VAR_COLOR_BLACK != 0xFF && _vm->VAR(_vm->VAR_COLOR_BLACK) == color)
+			break;
+
+		if (_vm->_game.heversion > 90)
+			color = ((ScummEngine_v71he *)_vm)->_wiz->convert8BppToRawPixel(*bmapPtr, (WizRawPixel *)_vm->getHEPaletteSlot(1));
+
+		WizSimpleBitmap dstBitmap;
+		dstBitmap.bufferPtr = WizPxShrdBuffer(dst, false);
+		dstBitmap.bitmapWidth = vs->w;
+		dstBitmap.bitmapHeight = vs->h;
+		Common::Rect fillRect(0, 0, (dstBitmap.bitmapWidth - 1), (dstBitmap.bitmapHeight - 1));
+
+		((ScummEngine_v71he *)_vm)->_wiz->pgDrawSolidRect(&dstBitmap, &fillRect, color);
 		break;
+	}
 	default:
 		// Alternative russian freddi3 uses badly formatted bitmaps
 		debug(0, "Gdi::drawBMAPBg: default case %d", code);
 	}
 
-	((ScummEngine_v71he *)_vm)->restoreBackgroundHE(Common::Rect(vs->w, vs->h));
+	((ScummEngine_v71he *)_vm)->backgroundToForegroundBlit(Common::Rect(vs->w, vs->h));
 
-	int numzbuf = getZPlanes(ptr, zplane_list, true);
+	int numzbuf = getZPlanes(ptr, zPlaneList, true);
 	if (numzbuf <= 1)
 		return;
 
 	uint32 offs;
 	for (int stripnr = 0; stripnr < _numStrips; stripnr++) {
 		for (int i = 1; i < numzbuf; i++) {
-			if (!zplane_list[i])
+			if (!zPlaneList[i])
 				continue;
 
-			offs = READ_LE_UINT16(zplane_list[i] + stripnr * 2 + 8);
-			mask_ptr = getMaskBuffer(stripnr, 0, i);
+			offs = READ_LE_UINT16(zPlaneList[i] + stripnr * 2 + 8);
+			maskPtr = getMaskBuffer(stripnr, 0, i);
 
 			if (offs) {
-				z_plane_ptr = zplane_list[i] + offs;
-				decompressMaskImg(mask_ptr, z_plane_ptr, vs->h);
+				zPlanePtr = zPlaneList[i] + offs;
+				decompressMaskImg(maskPtr, zPlanePtr, vs->h);
 			}
 		}
 
@@ -2547,33 +2798,81 @@ void Gdi::drawBMAPBg(const byte *ptr, VirtScreen *vs) {
 }
 
 void Gdi::drawBMAPObject(const byte *ptr, VirtScreen *vs, int obj, int x, int y, int w, int h) {
-	const byte *bmap_ptr = _vm->findResourceData(MKTAG('B','M','A','P'), ptr);
-	assert(bmap_ptr);
+	const byte *bmapPtr = _vm->findResourceData(MKTAG('B','M','A','P'), ptr);
+	assert(bmapPtr);
 
-	byte code = *bmap_ptr++;
+	byte code = *bmapPtr++;
 	int scrX = _vm->_screenStartStrip * 8 * _vm->_bytesPerPixel;
+	WizPxShrdBuffer dst(_vm->_virtscr[kMainVirtScreen].backBuf + scrX, false);
 
-	if (code == 8 || code == 9) {
-		Common::Rect rScreen(0, 0, vs->w, vs->h);
-		byte *dst = (byte *)_vm->_virtscr[kMainVirtScreen].backBuf + scrX;
-		Wiz::copyWizImage(dst, bmap_ptr, vs->pitch, kDstScreen, vs->w, vs->h, x - scrX, y, w, h, &rScreen, 0, 0, 0, _vm->_bytesPerPixel);
+	int scrWidth = _vm->_game.heversion > 98 ? _vm->_screenWidth : vs->w;
+	int scrHeight = _vm->_game.heversion > 98 ? _vm->_screenHeight : vs->h;
+
+	switch (code) {
+	case BMCOMP_RLE8BIT:
+	case BMCOMP_TRLE8BIT:
+	{
+		Common::Rect rScreen(0, 0, scrWidth, scrHeight);
+		if (_vm->_game.heversion <= 98) {
+			rScreen.right -= 1;
+			rScreen.bottom -= 1;
+		}
+
+		int xCoord = x + (_vm->_game.heversion > 98 ? scrX : -scrX);
+
+		((ScummEngine_v71he *)_vm)->_wiz->auxDecompTRLEImage(dst(), bmapPtr, scrWidth, scrHeight, xCoord, y, w, h, &rScreen, nullptr);
+		break;
+	}
+	case BMCOMP_SOLID_COLOR_FILL:
+	{
+		ScummEngine_v71he *tmpVm = ((ScummEngine_v71he *)_vm);
+		WizRawPixel color = tmpVm->_wiz->convert8BppToRawPixel(*bmapPtr, (WizRawPixel *)_vm->getHEPaletteSlot(1));
+
+		if ((_vm->_game.heversion < 100) || (tmpVm->VAR_WIZ_TRANSPARENT_COLOR != 0xFF && _vm->VAR(tmpVm->VAR_WIZ_TRANSPARENT_COLOR) == *bmapPtr))
+			break;
+
+		WizSimpleBitmap dstBitmap;
+		dstBitmap.bufferPtr = dst;
+		dstBitmap.bitmapWidth = w;
+		dstBitmap.bitmapHeight = h;
+		Common::Rect fillRect(x + scrX, y, x + scrX + w - 1, y + h - 1);
+
+		((ScummEngine_v71he *)_vm)->_wiz->pgDrawSolidRect(&dstBitmap, &fillRect, color);
+		break;
+	}
+	default:
+		error("Gdi::drawBMAPObject(): Unhandled code %d", code);
 	}
 
-	Common::Rect rect1(x, y, x + w, y + h);
-	Common::Rect rect2(scrX, 0, vs->w + scrX, vs->h);
+	Common::Rect renderArea, clipArea, backgroundCoords;
 
-	if (rect1.intersects(rect2)) {
-		rect1.clip(rect2);
-		rect1.left -= rect2.left;
-		rect1.right -= rect2.left;
-		rect1.top -= rect2.top;
-		rect1.bottom -= rect2.top;
+	if (_vm->_game.heversion > 98) {
+		((ScummEngine_v71he *)_vm)->_wiz->makeSizedRectAt(&renderArea, x + scrX, y, w, h);			
 
-		((ScummEngine_v71he *)_vm)->restoreBackgroundHE(rect1);
+		((ScummEngine_v71he *)_vm)->_wiz->makeSizedRect(&clipArea, scrWidth, scrHeight);
+		((ScummEngine_v71he *)_vm)->_wiz->findRectOverlap(&renderArea, &clipArea);
+
+		// Unless the image was entirely clipped, copy newly decompressed
+		// pixels from the background buffer into the foreground buffer...
+		if (((ScummEngine_v71he *)_vm)->_wiz->isRectValid(renderArea)) {
+			((ScummEngine_v71he *)_vm)->backgroundToForegroundBlit(renderArea);
+		}
+	} else {
+		((ScummEngine_v71he *)_vm)->_wiz->makeSizedRectAt(&renderArea, x, y, w, h);
+		((ScummEngine_v71he *)_vm)->_wiz->makeSizedRectAt(&backgroundCoords, scrX, 0, scrWidth, scrHeight);
+		((ScummEngine_v71he *)_vm)->_wiz->findRectOverlap(&renderArea, &backgroundCoords);
+
+		if (((ScummEngine_v71he *)_vm)->_wiz->isRectValid(renderArea)) {
+			// Convert the coords to buffer relative coords and then copy the
+			// background pixels to the foreground buffer as well...
+			((ScummEngine_v71he *)_vm)->_wiz->moveRect(&renderArea, -backgroundCoords.left, -backgroundCoords.top);
+			((ScummEngine_v71he *)_vm)->backgroundToForegroundBlit(renderArea);
+		}
 	}
+
 }
 
-void ScummEngine_v70he::restoreBackgroundHE(Common::Rect rect, int dirtybit) {
+void ScummEngine_v70he::backgroundToForegroundBlit(Common::Rect rect, int dirtybit) {
 	byte *src, *dst;
 	VirtScreen *vs = &_virtscr[kMainVirtScreen];
 
@@ -2587,16 +2886,16 @@ void ScummEngine_v70he::restoreBackgroundHE(Common::Rect rect, int dirtybit) {
 	rect.left = MIN((int)rect.left, (int)vs->w - 1);
 
 	rect.right = MAX(0, (int)rect.right);
-	rect.right = MIN((int)rect.right, (int)vs->w);
+	rect.right = MIN((int)rect.right, (int)vs->w - 1);
 
 	rect.top = MAX(0, (int)rect.top);
 	rect.top = MIN((int)rect.top, (int)vs->h - 1);
 
 	rect.bottom = MAX(0, (int)rect.bottom);
-	rect.bottom = MIN((int)rect.bottom, (int)vs->h);
+	rect.bottom = MIN((int)rect.bottom, (int)vs->h - 1);
 
-	const int rw = rect.width();
-	const int rh = rect.height();
+	const int rw = rect.width() + 1;
+	const int rh = rect.height() + 1;
 
 	if (rw == 0 || rh == 0)
 		return;
@@ -2607,6 +2906,8 @@ void ScummEngine_v70he::restoreBackgroundHE(Common::Rect rect, int dirtybit) {
 	assert(rw <= _screenWidth && rw > 0);
 	assert(rh <= _screenHeight && rh > 0);
 	blit(dst, _virtscr[kMainVirtScreen].pitch, src, _virtscr[kMainVirtScreen].pitch, rw, rh, vs->format.bytesPerPixel);
+
+	rect.bottom++;
 	markRectAsDirty(kMainVirtScreen, rect, dirtybit);
 }
 #endif
@@ -2858,8 +3159,7 @@ void GdiHE::decompressTMSK(byte *dst, const byte *tmsk, const byte *src, int hei
 
 		maskCount--;
 
-		*dst |= srcbits;
-		*dst &= ~maskbits;
+		*dst = (*dst & (~maskbits)) | (srcbits & maskbits);
 
 		dst += _numStrips;
 		height--;
@@ -4251,7 +4551,7 @@ void ScummEngine::transitionEffect(int a) {
 	if (_game.version >= 3 || _game.platform == Common::kPlatformNES) {
 		numOfIterations = transitionEffects[a].numOfIterations;
 	} else {
-		numOfIterations = (a == 0 || a == 4) ? ceil((height / 8.0) / 2) : height / 8;
+		numOfIterations = (a == 0 || a == 4) ? ceil((double)height / 16.0) : height / 8;
 	}
 
 	for (i = 0; i < 16; i++) {
@@ -4480,7 +4780,7 @@ void ScummEngine::scrollEffect(int dir) {
 
 	// Keep in mind: this effect is only present in v5 and v6, so VAR_FADE_DELAY is
 	// never uninitialized. The following check is here for good measure only.
-	int delay = (VAR_FADE_DELAY != 0xFF) ? VAR(VAR_FADE_DELAY) : kPictureDelay;
+	int delay = (VAR_FADE_DELAY != 0xFF) ? VAR(VAR_FADE_DELAY) : (int)kPictureDelay;
 
 	// Amiga handles timing a whole frame at a time
 	// instead of using quarter frames; the following
@@ -4513,7 +4813,7 @@ void ScummEngine::scrollEffect(int dir) {
 			{
 				src = vs->getPixels(0, y - step);
 				_system->copyRectToScreen(src,
-					vsPitch,
+					vsPitch * m,
 					0, (vs->h - step) * m,
 					vs->w * m, step * m);
 			}
@@ -4535,7 +4835,7 @@ void ScummEngine::scrollEffect(int dir) {
 			{
 				src = vs->getPixels(0, vs->h - y);
 				_system->copyRectToScreen(src,
-					vsPitch,
+					vsPitch * m,
 					0, 0,
 					vs->w * m, step * m);
 			}
@@ -4549,13 +4849,15 @@ void ScummEngine::scrollEffect(int dir) {
 		x = 1 + step;
 		while (x < vs->w) {
 			moveScreen(-step * m, 0, vs->h * m);
-
-			src = vs->getPixels(x - step, 0);
-			_system->copyRectToScreen(src,
-				vsPitch,
-				(vs->w - step) * m, 0,
-				step * m, vs->h * m);
-
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+			if (_townsScreen) {
+				towns_drawStripToScreen(vs, vs->w - step, vs->topline, x - step, vs->topline, step, vs->h);
+			} else
+#endif
+			{
+				src = vs->getPixels(x - step, 0);
+				_system->copyRectToScreen(src, vsPitch * m, (vs->w - step) * m, 0, step * m, vs->h * m);
+			}
 			waitForTimer(delay, true);
 			x += step;
 		}
@@ -4565,12 +4867,15 @@ void ScummEngine::scrollEffect(int dir) {
 		x = 1 + step;
 		while (x < vs->w) {
 			moveScreen(step * m, 0, vs->h * m);
-
-			src = vs->getPixels(vs->w - x, 0);
-			_system->copyRectToScreen(src,
-				vsPitch,
-				0, 0,
-				step, vs->h);
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+			if (_townsScreen) {
+				towns_drawStripToScreen(vs, 0, vs->topline, vs->w - x, vs->topline, step, vs->h);
+			} else
+#endif
+			{
+				src = vs->getPixels(vs->w - x, 0);
+				_system->copyRectToScreen(src, vsPitch * m, 0, 0, step * m, vs->h * m);
+			}
 
 			waitForTimer(delay, true);
 			x += step;

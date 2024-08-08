@@ -396,6 +396,9 @@ String Path::baseName() const {
 
 	if (separatorPos != String::npos) {
 		begin += separatorPos + 1;
+	} else if (isEscaped()) {
+		// unescape uses the real start, not the escape marker
+		begin++;
 	}
 	end += last;
 
@@ -1114,6 +1117,25 @@ Path Path::fromConfig(const String &value) {
 
 	// If the path is not punyencoded this will be a no-op
 	return Path(value, '/').punycodeDecode();
+}
+
+Path Path::fromCommandLine(const String &value) {
+	if (value.empty()) {
+		return Path();
+	}
+
+	// WIN32 accepts / and \ as separators
+#if defined(WIN32)
+	if (strchr(value.c_str(), Path::kNativeSeparator)) {
+		String value_ = value;
+		// User may have mixed \ and /
+		// As / is forbidden in paths under WIN32, this will never be a collision
+		value_.replace(Path::kNativeSeparator, '/');
+		return Path(value_, '/');
+	}
+#endif
+	// Unlike for options the paths provided by the user are not punyencoded
+	return Path(value, '/');
 }
 
 } // End of namespace Common

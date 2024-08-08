@@ -35,7 +35,6 @@ void EclipseEngine::initZX() {
 
 void EclipseEngine::loadAssetsZXFullGame() {
 	Common::File file;
-	bool isTotalEclipse2 = _targetName.hasPrefix("totaleclipse2");
 
 	file.open("totaleclipse.zx.title");
 	if (file.isOpen()) {
@@ -55,22 +54,26 @@ void EclipseEngine::loadAssetsZXFullGame() {
 	if (!file.isOpen())
 		error("Failed to open totaleclipse.zx.data");
 
-	if (isTotalEclipse2) {
+	if (isEclipse2()) {
 		loadMessagesFixedSize(&file, 0x2ac, 16, 30);
-		loadFonts(&file, 0x61c3);
+		loadFonts(&file, 0x61c3, _font);
 		loadSpeakerFxZX(&file, 0x8c6, 0x91a);
 		load8bitBinary(&file, 0x63bb, 4);
 	} else {
 		loadMessagesFixedSize(&file, 0x2ac, 16, 23);
-		loadFonts(&file, 0x6163);
+		loadFonts(&file, 0x6163, _font);
 		loadSpeakerFxZX(&file, 0x816, 0x86a);
 		load8bitBinary(&file, 0x635b, 4);
+
+		// These paper colors are also invalid, but to signal the use of a special effect (only in zx release)
+		_areaMap[42]->_paperColor = 0;
+		_areaMap[42]->_underFireBackgroundColor = 0;
 	}
 
 	for (auto &it : _areaMap) {
 		it._value->addStructure(_areaMap[255]);
 
-		if (isTotalEclipse2 && it._value->getAreaID() == 1)
+		if (isEclipse2() && it._value->getAreaID() == 1)
 			continue;
 
 		if (isEclipse2() && it._value->getAreaID() == _startArea)
@@ -110,13 +113,13 @@ void EclipseEngine::loadAssetsZXDemo() {
 	if (_variant & GF_ZX_DEMO_MICROHOBBY) {
 		loadMessagesFixedSize(&file, 0x2ac, 16, 23);
 		loadMessagesFixedSize(&file, 0x56e6, 264, 1);
-		loadFonts(&file, 0x5f7b);
+		loadFonts(&file, 0x5f7b, _font);
 		load8bitBinary(&file, 0x6173, 4);
 	} else if (_variant & GF_ZX_DEMO_CRASH) {
 		loadSpeakerFxZX(&file, 0x65c, 0x6b0);
 		loadMessagesFixedSize(&file, 0x364, 16, 9);
 		loadMessagesFixedSize(&file, 0x5901, 264, 5);
-		loadFonts(&file, 0x6589);
+		loadFonts(&file, 0x6589, _font);
 		load8bitBinary(&file, 0x6781, 4);
 	} else
 		error("Unknown ZX Spectrum demo variant");
@@ -152,11 +155,16 @@ void EclipseEngine::drawZXUI(Graphics::Surface *surface) {
 	_gfx->readFromPalette(7, r, g, b);
 	uint32 gray = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
+	_gfx->readFromPalette(5, r, g, b);
+	uint32 blue = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+
 	_gfx->readFromPalette(2, r, g, b);
 	uint32 red = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
+
 	int score = _gameStateVars[k8bitVariableScore];
 	int shield = _gameStateVars[k8bitVariableShield] * 100 / _maxShield;
+	int energy = _gameStateVars[k8bitVariableEnergy];
 	shield = shield < 0 ? 0 : shield;
 
 	uint32 yellow = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0);
@@ -182,7 +190,16 @@ void EclipseEngine::drawZXUI(Graphics::Surface *surface) {
 	else if (shield < 100)
 		x = 175;
 
+	if (energy < 0)
+		energy = 0;
+
 	drawStringInSurface(shieldStr, x, 161, back, red, surface);
+
+	Common::Rect jarBackground(120, 162, 144, 192 - 4);
+	surface->fillRect(jarBackground, back);
+
+	Common::Rect jarWater(120, 192 - energy - 4, 144, 192 - 4);
+	surface->fillRect(jarWater, blue);
 
 	drawStringInSurface(Common::String('0' + _angleRotationIndex - 3), 79, 141, back, yellow, surface, 'Z' - '$' + 1);
 	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 141, back, yellow, surface, 'Z' - '$' + 1);
@@ -193,6 +210,10 @@ void EclipseEngine::drawZXUI(Graphics::Surface *surface) {
 		drawStringInSurface("<", 240, 141, back, yellow, surface, 'Z' - '$' + 1);
 	}
 	drawAnalogClock(surface, 89, 172, back, back, gray);
+
+	surface->fillRect(Common::Rect(227, 168, 235, 187), gray);
+	drawCompass(surface, 231, 177, _yaw, 10, back);
+
 	drawIndicator(surface, 65, 7, 8);
 	drawEclipseIndicator(surface, 215, 3, front, gray);
 }

@@ -90,9 +90,9 @@
 namespace Director {
 
 const char *DrawXObj::xlibName = "Draw";
-const char *DrawXObj::fileNames[] = {
-	"DRAW",
-	0
+const XlibFileDesc DrawXObj::fileNames[] = {
+	{ "DRAW",	nullptr },
+	{ nullptr,	nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -132,7 +132,7 @@ void DrawXObj::close(ObjectType type) {
 }
 
 
-DrawXObject::DrawXObject(ObjectType ObjectType) :Object<DrawXObject>("DrawXObj") {
+DrawXObject::DrawXObject(ObjectType ObjectType) :Object<DrawXObject>("Draw") {
 	_objType = ObjectType;
 }
 

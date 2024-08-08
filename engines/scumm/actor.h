@@ -29,6 +29,12 @@
 
 namespace Scumm {
 
+#define CHORE_REDIRECT_INIT        56
+#define CHORE_REDIRECT_WALK        57
+#define CHORE_REDIRECT_STAND       58
+#define CHORE_REDIRECT_START_TALK  59
+#define CHORE_REDIRECT_STOP_TALK   60
+
 enum {
 	V12_X_MULTIPLIER = 8,
 	V12_Y_MULTIPLIER = 2,
@@ -142,7 +148,7 @@ public:
 	bool _heSkipLimbs;
 	uint32 _heCondMask;
 	uint32 _hePaletteNum;
-	uint32 _heXmapNum;
+	uint32 _heShadow;
 
 protected:
 	struct ActorWalkData {
@@ -217,8 +223,8 @@ public:
 	void setActorWalkSpeed(uint newSpeedX, uint newSpeedY);
 protected:
 	virtual int calcMovementFactor(const Common::Point& next);
-	int actorWalkStep();
-	int remapDirection(int dir, bool is_walking);
+	virtual int actorWalkStep();
+	virtual int remapDirection(int dir, bool is_walking);
 	virtual void setupActorScale();
 
 	void setBox(int box);
@@ -309,6 +315,11 @@ public:
 			_elevation = newElevation;
 			_needRedraw = true;
 		}
+
+		if (_vm->_game.heversion >= 70) {
+			_needRedraw = true;
+			_needBgReset = true;
+		}
 	}
 
 	void setPalette(int idx, int val) {
@@ -322,6 +333,10 @@ public:
 		if (sy != -1)
 			_scaley = sy;
 		_needRedraw = true;
+
+		if (_vm->_game.heversion >= 70) {
+			_needBgReset = true;
+		}
 	}
 
 	void classChanged(int cls, bool value);
@@ -347,13 +362,12 @@ public:
 
 protected:
 	int calcMovementFactor(const Common::Point& next) override;
-	int actorWalkStep();
-
 	void setupActorScale() override;
 	void findPathTowardsOld(byte box, byte box2, byte box3, Common::Point &p2, Common::Point &p3);
-
+	uint _stepThreshold;
 private:
-	uint _stepX, _stepThreshold;
+	virtual int actorWalkStep() override;
+	uint _stepX;
 	const int _facingXYratio;
 };
 
@@ -368,6 +382,9 @@ public:
 protected:
 	bool isPlayer() override;
 	void prepareDrawActorCostume(BaseCostumeRenderer *bcr) override;
+private:
+	int actorWalkStep() override;
+	int remapDirection(int dir, bool is_walking) override;
 };
 
 class Actor_v7 final : public Actor {

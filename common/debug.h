@@ -24,8 +24,6 @@
 
 #include "common/scummsys.h"
 
-#include "engines/metaengine.h"
-
 #ifdef DISABLE_TEXT_CONSOLE
 
 inline void debug(const char *s, ...) {}
@@ -163,11 +161,9 @@ extern bool gDebugChannelsOnly;
 enum GlobalDebugLevels {
 	kDebugGlobalDetection = 100000,
 	kDebugLevelEventRec,
-	kDebugLevelGUI,
+	kDebugLevelMainGUI,
 	kDebugLevelMacGUI,
 };
-
-extern const DebugChannelDef gDebugChannels[];
 
 /** @} */
 

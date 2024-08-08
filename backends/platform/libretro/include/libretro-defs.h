@@ -26,12 +26,6 @@
 // System analog stick range is -0x8000 to 0x8000
 #define ANALOG_RANGE 0x8000
 
-/* TODO: remove the following definition when libretro-common
-will be updated to include it */
-#ifndef RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY
-#define RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY 79
-#endif
-
 #define DEFAULT_SAMPLE_RATE     	48000
 #define DEFAULT_REFRESH_RATE    	60
 #define FRAMESKIP_MAX           	DEFAULT_REFRESH_RATE / 2
@@ -43,7 +37,14 @@ will be updated to include it */
 #define AUDIO_STATUS_BUFFER_ACTIVE      (1 << 2)
 #define AUDIO_STATUS_BUFFER_UNDERRUN    (1 << 3)
 #define AUDIO_STATUS_UPDATE_LATENCY     (1 << 4)
-#define AUDIO_STATUS_UPDATE_AV_INFO	(1 << 5)
+#define AUDIO_STATUS_UPDATE_AV_INFO	    (1 << 5)
+
+// Video status
+#define VIDEO_GRAPHIC_MODE_REQUEST_SW     (1 << 0)
+#define VIDEO_GRAPHIC_MODE_REQUEST_HW     (1 << 1)
+#define VIDEO_GRAPHIC_MODE_HAVE_OPENGL    (1 << 2)
+#define VIDEO_GRAPHIC_MODE_HAVE_OPENGLES2 (1 << 3)
+#define VIDEO_GRAPHIC_MODE_RESET_PENDING  (1 << 4)
 
 // Preliminary scan results
 #define TEST_GAME_OK_TARGET_FOUND        0

@@ -25,8 +25,8 @@
 #include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/actors/animation_tracker.h"
 
-#ifdef DEBUG
-#include "ultima/ultima8/graphics/render_surface.h"
+#ifdef DEBUG_PATHFINDER
+#include "graphics/screen.h"
 #include "ultima/ultima8/gumps/game_map_gump.h"
 #endif
 
@@ -34,7 +34,7 @@ namespace Ultima {
 namespace Ultima8 {
 
 
-#ifdef DEBUG
+#ifdef DEBUG_PATHFINDER
 ObjId Pathfinder::_visualDebugActor = 0xFFFF;
 #endif
 
@@ -51,7 +51,7 @@ struct PathNode {
 static unsigned int expandednodes = 0;
 
 void PathfindingState::load(const Actor *_actor) {
-	_actor->getLocation(_x, _y, _z);
+	_point = _actor->getLocation();
 	_lastAnim = _actor->getLastAnim();
 	_direction = _actor->getDir();
 	_firstStep = _actor->hasActorFlags(Actor::ACT_FIRSTSTEP);
@@ -59,34 +59,33 @@ void PathfindingState::load(const Actor *_actor) {
 	_combat = _actor->isInCombat();
 }
 
-bool PathfindingState::checkPoint(int32 x, int32 y, int32 z,
+bool PathfindingState::checkPoint(const Point3 &pt,
 								  int sqr_range) const {
-	int distance = (_x - x) * (_x - x) + (_y - y) * (_y - y) + (_z - z) * (_z - z);
+	int distance = _point.sqrDist(pt);
 	return distance < sqr_range;
 }
 
 bool PathfindingState::checkItem(const Item *item, int xyRange, int zRange) const {
-	int32 itemX, itemY, itemZ;
 	int32 itemXd, itemYd, itemZd;
 	int32 itemXmin, itemYmin;
 
-	item->getLocationAbsolute(itemX, itemY, itemZ);
+	Point3 pt = item->getLocationAbsolute();
 	item->getFootpadWorld(itemXd, itemYd, itemZd);
 
-	itemXmin = itemX - itemXd;
-	itemYmin = itemY - itemYd;
+	itemXmin = pt.x - itemXd;
+	itemYmin = pt.y - itemYd;
 
 	int range = 0;
-	if (_x - itemX > range)
-		range = _x - itemX;
-	if (itemXmin - _x > range)
-		range = itemXmin - _x;
-	if (_y - itemY > range)
-		range = _y - itemY;
-	if (itemYmin - _y > range)
-		range = itemYmin - _y;
+	if (_point.x - pt.x > range)
+		range = _point.x - pt.x;
+	if (itemXmin - _point.x > range)
+		range = itemXmin - _point.x;
+	if (_point.y - pt.y > range)
+		range = _point.y - pt.y;
+	if (itemYmin - _point.y > range)
+		range = itemYmin - _point.y;
 
-	// FIXME: check _z properly
+	// FIXME: check _point.z properly
 
 	return (range <= xyRange);
 }
@@ -115,8 +114,8 @@ bool PathNodeCmp::operator()(const PathNode *n1, const PathNode *n2) const {
 }
 
 Pathfinder::Pathfinder() : _actor(nullptr), _targetItem(nullptr),
-		_hitMode(false), _expandTime(0), _targetX(0), _targetY(0),
-		_targetZ(0), _actorXd(0), _actorYd(0), _actorZd(0) {
+		_hitMode(false), _expandTime(0), _target(),
+		_actorXd(0), _actorYd(0), _actorZd(0) {
 	expandednodes = 0;
 	_visited.reserve(1500);
 }
@@ -143,22 +142,19 @@ void Pathfinder::init(Actor *actor, PathfindingState *state) {
 		_start.load(_actor);
 }
 
-void Pathfinder::setTarget(int32 x, int32 y, int32 z) {
-	_targetX = x;
-	_targetY = y;
-	_targetZ = z;
+void Pathfinder::setTarget(const Point3 &pt) {
+	_target = pt;
 	_targetItem = 0;
 	_hitMode = false;
 }
 
 void Pathfinder::setTarget(Item *item, bool hit) {
-	_targetItem = item;
-	while (_targetItem->getParentAsContainer())
-		_targetItem = _targetItem->getParentAsContainer();
+	Container *root = item->getRootContainer();
+	_targetItem = root ? root : item;
 
 	// set target to centre of item for the cost heuristic
-	item->getCentre(_targetX, _targetY, _targetZ);
-	_targetZ = item->getZ();
+	_target = item->getCentre();
+	_target.z = item->getZ();
 
 	if (hit) {
 		assert(_start._combat);
@@ -174,7 +170,7 @@ bool Pathfinder::canReach() {
 	return pathfind(path);
 }
 
-bool Pathfinder::alreadyVisited(int32 x, int32 y, int32 z) const {
+bool Pathfinder::alreadyVisited(const Point3 &pt) const {
 	//
 	// There are more efficient search structures we could use for
 	// this, but for the number of points we end up having even on
@@ -185,7 +181,7 @@ bool Pathfinder::alreadyVisited(int32 x, int32 y, int32 z) const {
 	//
 	Common::Array<PathfindingState>::const_iterator iter;
 	for (iter = _visited.begin(); iter != _visited.end(); iter++) {
-		if (iter->checkPoint(x, y, z, 8*8))
+		if (iter->checkPoint(pt, 8*8))
 			return true;
 	}
 
@@ -202,7 +198,7 @@ bool Pathfinder::checkTarget(const PathNode *node) const {
 			return node->state.checkItem(_targetItem, 32, 8);
 		}
 	} else {
-		return node->state.checkPoint(_targetX, _targetY, _targetZ, 48*48);
+		return node->state.checkPoint(_target, 48*48);
 	}
 }
 
@@ -212,17 +208,17 @@ unsigned int Pathfinder::costHeuristic(PathNode *node) const {
 #if 0
 	double sqrddist;
 
-	sqrddist = (_targetX - node->state._x + _actorXd / 2) *
-	           (_targetX - node->state._x + _actorXd / 2);
-	sqrddist += (_targetY - node->state._y + _actorYd / 2) *
-	            (_targetY - node->state._y + _actorYd / 2);
+	sqrddist = (_target.x - node->state._point.x + _actorXd / 2) *
+	           (_target.x - node->state._point.x + _actorXd / 2);
+	sqrddist += (_target.y - node->state._point.y + _actorYd / 2) *
+	            (_target.y - node->state._point.y + _actorYd / 2);
 
 	unsigned int dist = static_cast<unsigned int>(sqrt(sqrddist));
 #else
 	// This calculates the distance to the target using only lines in
 	// the 8 available directions (instead of the straight line above)
-	int xd = ABS(_targetX - node->state._x + _actorXd / 2);
-	int yd = ABS(_targetY - node->state._y + _actorYd / 2);
+	int xd = ABS(_target.x - node->state._point.x + _actorXd / 2);
+	int yd = ABS(_target.y - node->state._point.y + _actorYd / 2);
 	double m = (xd < yd) ? xd : yd;
 	unsigned int dist = ABS(xd - yd) + static_cast<unsigned int>(m * 1.41421356);
 
@@ -244,17 +240,13 @@ unsigned int Pathfinder::costHeuristic(PathNode *node) const {
 	return node->heuristicTotalCost;
 }
 
+#ifdef DEBUG_PATHFINDER
 
-#ifdef DEBUG
-
-static void drawbox(const Item *item) {
-	RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
+static void drawbox(Graphics::ManagedSurface *screen, const Item *item) {
 	int32 cx, cy, cz;
-
 	Ultima8Engine::get_instance()->getGameMapGump()->GetCameraLocation(cx, cy, cz);
 
-	Rect d;
-	screen->GetSurfaceDims(d);
+	Common::Rect d = screen->getBounds();
 
 	int32 ix, iy, iz;
 	item->getLocation(ix, iy, iz);
@@ -280,74 +272,74 @@ static void drawbox(const Item *item) {
 	x3 = (d.width() / 2) + (ix - iy + yd) / 4;
 	y3 = (d.height() / 2) + (ix + iy - yd) / 8 - iz;
 
-	screen->fill32(TEX32_PACK_RGB(0x00, 0x00, 0xFF), x0 - 1, y0 - 1, 3, 3);
+	uint32 color = screen->format.RGBToColor(0x00, 0x00, 0xFF);
+	screen->fillRect(Common::Rect(x0 - 1, y0 - 1, x0 + 2, y0 + 2), color);
 
-	screen->drawLine32(TEX32_PACK_RGB(0x00, 0xFF, 0x00), x0, y0, x1, y1);
-	screen->drawLine32(TEX32_PACK_RGB(0x00, 0xFF, 0x00), x0, y0, x2, y2);
-	screen->drawLine32(TEX32_PACK_RGB(0x00, 0xFF, 0x00), x0, y0, x3, y3);
+	color = screen->format.RGBToColor(0x00, 0xFF, 0x00);
+	screen->drawLine(x0, y0, x1, y1, color);
+	screen->drawLine(x0, y0, x2, y2, color);
+	screen->drawLine(x0, y0, x3, y3, color);
 }
 
-static void drawdot(int32 x, int32 y, int32 Z, int size, uint32 rgb) {
-	RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
+static void drawdot(Graphics::ManagedSurface *screen, int32 x, int32 y, int32 Z, int size, uint32 rgb) {
 	int32 cx, cy, cz;
 
 	Ultima8Engine::get_instance()->getGameMapGump()->GetCameraLocation(cx, cy, cz);
 
-	Rect d;
-	screen->GetSurfaceDims(d);
+	Common::Rect d = screen->getBounds();
 	x -= cx;
 	y -= cy;
 	Z -= cz;
 	int32 x0, y0;
 	x0 = (d.width() / 2) + (x - y) / 4;
 	y0 = (d.height() / 2) + (x + y) / 8 - Z;
-	screen->Fill32(rgb, x0 - size, y0 - size, 2 * size + 1, 2 * size + 1);
+	screen->fillRect(Common::Rect(x0 - size, y0 - size, x0 + size + 1, y0 + size + 1), rgb);
 }
 
-static void drawedge(const PathNode *from, const PathNode *to, uint32 rgb) {
-	RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
+static void drawedge(Graphics::ManagedSurface *screen, const PathNode *from, const PathNode *to, uint32 rgb) {
 	int32 cx, cy, cz;
 
 	Ultima8Engine::get_instance()->getGameMapGump()->GetCameraLocation(cx, cy, cz);
 
-	Rect d;
-	screen->GetSurfaceDims(d);
+	Common::Rect d = screen->getBounds();
 
 	int32 x0, y0, x1, y1;
 
-	cx = from->state._x - cx;
-	cy = from->state._y - cy;
-	cz = from->state._z - cz;
+	cx = from->state._point.x - cx;
+	cy = from->state._point.y - cy;
+	cz = from->state._point.z - cz;
 
 	x0 = (d.width() / 2) + (cx - cy) / 4;
 	y0 = (d.height() / 2) + (cx + cy) / 8 - cz;
 
 	Ultima8Engine::get_instance()->getGameMapGump()->GetCameraLocation(cx, cy, cz);
 
-	cx = to->state._x - cx;
-	cy = to->state._y - cy;
-	cz = to->state._z - cz;
+	cx = to->state._point.x - cx;
+	cy = to->state._point.y - cy;
+	cz = to->state._point.z - cz;
 
 	x1 = (d.width() / 2) + (cx - cy) / 4;
 	y1 = (d.height() / 2) + (cx + cy) / 8 - cz;
 
-	screen->drawLine32(rgb, x0, y0, x1, y1);
+	screen->drawLine(x0, y0, x1, y1, rgb);
 }
 
-static void drawpath(PathNode *to, uint32 rgb, bool done) {
+static void drawpath(Graphics::ManagedSurface *screen, PathNode *to, uint32 rgb, bool done) {
 	PathNode *n1 = to;
 	PathNode *n2 = to->parent;
+	uint32 color1 = screen->format.RGBToColor(0xFF, 0x00, 0x00);
+	uint32 color2 = screen->format.RGBToColor(0xFF, 0xFF, 0xFF);
 
 	while (n2) {
-		drawedge(n1, n2, rgb);
+		drawedge(screen, n1, n2, rgb);
 
 		if (done && n1 == to)
-			drawdot(n1->state._x, n1->state._y, n1->state._z, 2, TEX32_PACK_RGB(0xFF, 0x00, 0x00));
+			drawdot(screen, n1->state._point.x, n1->state._point.y, n1->state._point.z, 2, color1);
 		else
-			drawdot(n1->state._x, n1->state._y, n1->state._z, 1, TEX32_PACK_RGB(0xFF, 0xFF, 0xFF));
+			drawdot(screen, n1->state._point.x, n1->state._point.y, n1->state._point.z, 1, color2);
 
 
-		drawdot(n2->state._x, n2->state._y, n2->state._z, 2, TEX32_PACK_RGB(0xFF, 0xFF, 0xFF));
+		drawdot(screen, n2->state._point.x, n2->state._point.y, n2->state._point.z, 2, color2);
 
 		n1 = n2;
 		n2 = n1->parent;
@@ -366,12 +358,12 @@ void Pathfinder::newNode(PathNode *oldnode, PathfindingState &state,
 
 	double sqrddist;
 
-	sqrddist = ((newnode->state._x - oldnode->state._x) *
-	            (newnode->state._x - oldnode->state._x));
-	sqrddist += ((newnode->state._y - oldnode->state._y) *
-	             (newnode->state._y - oldnode->state._y));
-	sqrddist += ((newnode->state._z - oldnode->state._z) *
-	             (newnode->state._z - oldnode->state._z));
+	sqrddist = ((newnode->state._point.x - oldnode->state._point.x) *
+	            (newnode->state._point.x - oldnode->state._point.x));
+	sqrddist += ((newnode->state._point.y - oldnode->state._point.y) *
+	             (newnode->state._point.y - oldnode->state._point.y));
+	sqrddist += ((newnode->state._point.z - oldnode->state._point.z) *
+	             (newnode->state._point.z - oldnode->state._point.z));
 
 	unsigned int dist;
 	dist = static_cast<unsigned int>(sqrt(sqrddist));
@@ -394,20 +386,20 @@ void Pathfinder::newNode(PathNode *oldnode, PathfindingState &state,
 
 	debugC(kDebugPath, "Trying dir %d, steps %d from (%d, %d) to (%d, %d), cost %d, heurtotcost %d",
 		   state._direction, steps,
-		   oldnode->state._x, oldnode->state._y, newnode->state._x, newnode->state._y,
+		   oldnode->state._point.x, oldnode->state._point.y, newnode->state._point.x, newnode->state._point.y,
 		   newnode->cost, newnode->heuristicTotalCost);
 
-#ifdef DEBUG
+#ifdef DEBUG_PATHFINDER
 	if (_actor->getObjId() == _visualDebugActor) {
-		RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
-		screen->BeginPainting();
-		drawpath(newnode, TEX32_PACK_RGB(0xFF, 0xFF, 0x00), done);
-		screen->EndPainting();
+		Graphics::Screen *screen = Ultima8Engine::get_instance()->getScreen();
+		uint32 color = screen->format.RGBToColor(0xFF, 0xFF, 0x00);
+		drawpath(screen, newnode, color, done);
+		screen->update();
 		g_system->delayMillis(50);
 		if (!done) {
-			screen->BeginPainting();
-			drawpath(newnode, TEX32_PACK_RGB(0xB0, 0xB0, 0x00), done);
-			screen->EndPainting();
+			color = screen->format.RGBToColor(0xB0, 0xB0, 0x00);
+			drawpath(screen, newnode, color, done);
+			screen->update();
 		}
 	}
 #endif
@@ -436,39 +428,42 @@ void Pathfinder::expandNode(PathNode *node) {
 		if (!tracker.init(_actor, walkanim, dir, &state)) continue;
 
 		// determine how far the _actor will travel if the animation runs to completion
-		int32 max_endx, max_endy;
-		tracker.evaluateMaxAnimTravel(max_endx, max_endy, dir);
-		if (alreadyVisited(max_endx, max_endy, state._z)) continue;
+		Point3 max_end;
+		tracker.evaluateMaxAnimTravel(max_end.x, max_end.y, dir);
+		max_end.z = state._point.z;
+		if (alreadyVisited(max_end))
+			continue;
 
-		const int x_travel = ABS(max_endx - state._x);
-		const int y_travel = ABS(max_endy - state._y);
+		const int x_travel = ABS(max_end.x - state._point.x);
+		const int y_travel = ABS(max_end.y - state._point.y);
 		const int xy_maxtravel = MAX(x_travel, y_travel);
 
 		int sqrddist = x_travel * x_travel + y_travel * y_travel;
 		if (sqrddist > 400) {
 			// range is greater than 20; see if a node has been visited at range 10
-			if (alreadyVisited(state._x + x_travel * 10 / xy_maxtravel,
-			                   state._y + y_travel * 10 / xy_maxtravel,
-			                   state._z)) {
+			Point3 pt = state._point;
+			pt.x += x_travel * 10 / xy_maxtravel;
+			pt.y += y_travel * 10 / xy_maxtravel;
+			if (alreadyVisited(pt)) {
 				continue;
 			}
 		}
 
 		uint32 steps = 0, beststeps = 0;
 		int bestsqdist;
-		bestsqdist = (_targetX - node->state._x + _actorXd / 2) *
-					 (_targetX - node->state._x + _actorXd / 2);
-		bestsqdist += (_targetY - node->state._y + _actorYd / 2) *
-					  (_targetY - node->state._y + _actorYd / 2);
+		bestsqdist = (_target.x - node->state._point.x + _actorXd / 2) *
+					 (_target.x - node->state._point.x + _actorXd / 2);
+		bestsqdist += (_target.y - node->state._point.y + _actorYd / 2) *
+					  (_target.y - node->state._point.y + _actorYd / 2);
 
 		while (tracker.step()) {
 			steps++;
 			tracker.updateState(state);
 
-			sqrddist = (_targetX - state._x + _actorXd / 2) *
-			           (_targetX - state._x + _actorXd / 2);
-			sqrddist += (_targetY - state._y + _actorYd / 2) *
-			            (_targetY - state._y + _actorYd / 2);
+			sqrddist = (_target.x - state._point.x + _actorXd / 2) *
+			           (_target.x - state._point.x + _actorXd / 2);
+			sqrddist += (_target.y - state._point.y + _actorYd / 2) *
+			            (_target.y - state._point.y + _actorYd / 2);
 
 			if (sqrddist < bestsqdist) {
 				bestsqdist = sqrddist;
@@ -479,7 +474,7 @@ void Pathfinder::expandNode(PathNode *node) {
 
 		if (tracker.isDone()) {
 			tracker.updateState(state);
-			if (!alreadyVisited(state._x, state._y, state._z)) {
+			if (!alreadyVisited(state._point)) {
 				newNode(node, state, 0);
 				_visited.push_back(state);
 			}
@@ -503,18 +498,19 @@ bool Pathfinder::pathfind(Std::vector<PathfindingAction> &path) {
 		debugC(kDebugPath, "Actor %u pathfinding to item %u", _actor->getObjId(), _targetItem->getObjId());
 		debugC(kDebugPath, "Target Item: %s", _targetItem->dumpInfo().c_str());
 	} else {
-		debugC(kDebugPath, "Actor %u pathfinding to (%d, %d, %d)", _actor->getObjId(), _targetX, _targetY, _targetZ);
+		debugC(kDebugPath, "Actor %u pathfinding to (%d, %d, %d)", _actor->getObjId(), _target.x, _target.y, _target.z);
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG_PATHFINDER
 	if (_actor->getObjId() == _visualDebugActor) {
-		RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
-		screen->BeginPainting();
-		if (_targetItem)
-			drawbox(_targetItem);
-		else
-			drawdot(_targetX, _targetY, _targetZ, 2, TEX32_PACK_RGB(0x00, 0x00, 0xFF));
-		screen->EndPainting();
+		Graphics::Screen *screen = Ultima8Engine::get_instance()->getScreen();
+		if (_targetItem) {
+			drawbox(screen, _targetItem);
+		} else {
+			uint32 color = screen->format.RGBToColor(0x00, 0x00, 0xFF);
+			drawdot(screen, _targetX, _targetY, _targetZ, 2, color);
+		}
+		screen->update();
 	}
 #endif
 
@@ -542,8 +538,8 @@ bool Pathfinder::pathfind(Std::vector<PathfindingAction> &path) {
 		_nodes.pop();
 
 		debugC(kDebugPath, "Trying node: (%d, %d, %d) target=(%d, %d, %d)",
-			node->state._x, node->state._y, node->state._z,
-			_targetX, _targetY, _targetZ);
+			node->state._point.x, node->state._point.y, node->state._point.z,
+			_target.x, _target.y, _target.z);
 
 		if (checkTarget(node)) {
 			// done!

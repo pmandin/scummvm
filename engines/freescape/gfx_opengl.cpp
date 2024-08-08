@@ -23,7 +23,6 @@
 // available at https://github.com/TomHarte/Phantasma/ (MIT)
 
 #include "common/config-manager.h"
-#include "common/math.h"
 #include "common/system.h"
 #include "math/glmath.h"
 
@@ -35,11 +34,11 @@
 
 namespace Freescape {
 
-Renderer *CreateGfxOpenGL(int screenW, int screenH, Common::RenderMode renderMode) {
-	return new OpenGLRenderer(screenW, screenH, renderMode);
+Renderer *CreateGfxOpenGL(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics) {
+	return new OpenGLRenderer(screenW, screenH, renderMode, authenticGraphics);
 }
 
-OpenGLRenderer::OpenGLRenderer(int screenW, int screenH, Common::RenderMode renderMode) : Renderer(screenW, screenH, renderMode) {
+OpenGLRenderer::OpenGLRenderer(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics) : Renderer(screenW, screenH, renderMode, authenticGraphics) {
 	_verts = (Vertex *)malloc(sizeof(Vertex) * kVertexArraySize);
 	_coords = (Coord *)malloc(sizeof(Coord) * kCoordsArraySize);
 	_texturePixelFormat = OpenGLTexture::getRGBAPixelFormat();
@@ -156,7 +155,42 @@ void OpenGLRenderer::drawTexturedRect2D(const Common::Rect &screenRect, const Co
 	glFlush();
 }
 
-void OpenGLRenderer::updateProjectionMatrix(float fov, float nearClipPlane, float farClipPlane) {
+void OpenGLRenderer::drawSkybox(Texture *texture, Math::Vector3d camera) {
+	OpenGLTexture *glTexture = static_cast<OpenGLTexture *>(texture);
+
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+	glBindTexture(GL_TEXTURE_2D, glTexture->_id);
+	glVertexPointer(3, GL_FLOAT, 0, _skyVertices);
+	glNormalPointer(GL_FLOAT, 0, _skyNormals);
+	glTexCoordPointer(2, GL_FLOAT, 0, _skyUvs);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	glPolygonMode(GL_BACK, GL_FILL);
+
+	glPushMatrix();
+	{
+		glTranslatef(camera.x(), camera.y(), camera.z());
+		glDrawArrays(GL_QUADS, 0, 16);
+	}
+	glPopMatrix();
+
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_DEPTH_TEST);
+	glFlush();
+}
+
+void OpenGLRenderer::updateProjectionMatrix(float fov, float yminValue, float ymaxValue, float nearClipPlane, float farClipPlane) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	// Determining xmaxValue and ymaxValue still needs some work for matching the 3D view in freescape games
@@ -167,7 +201,7 @@ void OpenGLRenderer::updateProjectionMatrix(float fov, float nearClipPlane, floa
 	// debug("max values: %f %f", xmaxValue, ymaxValue);
 
 	glFrustum(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);*/
-	glFrustum(1.5, -1.5, -0.625, 0.625, nearClipPlane, farClipPlane);
+	glFrustum(1.5, -1.5, yminValue, ymaxValue, nearClipPlane, farClipPlane);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -284,7 +318,7 @@ void OpenGLRenderer::renderPlayerShootRay(byte color, const Common::Point positi
 void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, byte color) {
 	uint8 r1, g1, b1, r2, g2, b2;
 	byte *stipple = nullptr;
-	getRGBAt(color, r1, g1, b1, r2, g2, b2, stipple);
+	getRGBAt(color, 0, r1, g1, b1, r2, g2, b2, stipple);
 
 	int triangleAmount = 20;
 	float twicePi = (float)(2.0 * M_PI);
@@ -435,6 +469,14 @@ void OpenGLRenderer::renderFace(const Common::Array<Math::Vector3d> &vertices) {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
+void OpenGLRenderer::depthTesting(bool enabled) {
+	if (enabled) {
+		glEnable(GL_DEPTH_TEST);
+	} else {
+		glDisable(GL_DEPTH_TEST);
+	}
+}
+
 void OpenGLRenderer::polygonOffset(bool enabled) {
 	if (enabled) {
 		glEnable(GL_POLYGON_OFFSET_FILL);
@@ -447,7 +489,7 @@ void OpenGLRenderer::polygonOffset(bool enabled) {
 
 void OpenGLRenderer::setStippleData(byte *data) {
 	if (!data)
-		return;
+		data = _defaultStippleArray;
 
 	_variableStippleArray = data;
 	//for (int i = 0; i < 128; i++)
@@ -490,7 +532,7 @@ void OpenGLRenderer::clear(uint8 r, uint8 g, uint8 b, bool ignoreViewport) {
 void OpenGLRenderer::drawFloor(uint8 color) {
 	uint8 r1, g1, b1, r2, g2, b2;
 	byte *stipple;
-	assert(getRGBAt(color, r1, g1, b1, r2, g2, b2, stipple)); // TODO: move check inside this function
+	assert(getRGBAt(color, 0, r1, g1, b1, r2, g2, b2, stipple)); // TODO: move check inside this function
 	glColor3ub(r1, g1, b1);
 
 	glEnableClientState(GL_VERTEX_ARRAY);

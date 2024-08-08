@@ -50,10 +50,15 @@ public:
 	virtual void clear(uint8 r, uint8 g, uint8 b, bool ignoreViewport = false) override;
 	virtual void setViewport(const Common::Rect &rect) override;
 	virtual void positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest) override;
-	virtual void updateProjectionMatrix(float fov, float nearClipPlane, float farClipPlane) override;
+	virtual void updateProjectionMatrix(float fov, float yminValue, float ymaxValue, float nearClipPlane, float farClipPlane) override;
 
 	virtual void useColor(uint8 r, uint8 g, uint8 b) override;
 	virtual void polygonOffset(bool enabled) override;
+	virtual void depthTesting(bool enabled) override;
+	virtual void setStippleData(byte *data) override;
+	virtual void useStipple(bool enabled) override;
+
+	TGLubyte *_variableStippleArray;
 
 	Texture *createTexture(const Graphics::Surface *surface) override;
 	void freeTexture(Texture *texture) override;

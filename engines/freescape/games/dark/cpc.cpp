@@ -62,14 +62,9 @@ void DarkEngine::loadAssetsCPCFullGame() {
 		error("Failed to open DARKCODE.BIN");
 
 	loadMessagesFixedSize(&file, 0x5d9, 16, 27);
-	loadFonts(&file, 0x60f3);
+	loadFonts(&file, 0x60f3, _font);
 	loadGlobalObjects(&file, 0x9a, 23);
 	load8bitBinary(&file, 0x6255, 16);
-	for (auto &it : _areaMap) {
-		addWalls(it._value);
-		addECDs(it._value);
-		addSkanner(it._value);
-	}
 	_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
 	_indicators.push_back(loadBundledImage("dark_crouch_indicator"));
 	_indicators.push_back(loadBundledImage("dark_walk_indicator"));

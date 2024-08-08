@@ -85,6 +85,9 @@ enum {
 	kDebugConsole,
 	kDebugXObj,
 	kDebugLingoThe,
+	kDebugImGui,
+	kDebugPaused,
+	kDebugPauseOnLoad,
 };
 
 enum {
@@ -188,6 +191,7 @@ public:
 	void shiftPalette(int startIndex, int endIndex, bool reverse);
 	void clearPalettes();
 	PaletteV4 *getPalette(const CastMemberID &id);
+	bool hasPalette(const CastMemberID &id);
 	void loadDefaultPalettes();
 
 	const Common::HashMap<CastMemberID, PaletteV4> &getLoadedPalettes() { return _loadedPalettes; }
@@ -228,9 +232,11 @@ public:
 	bool desktopEnabled();
 
 	// events.cpp
+	bool pollEvent(Common::Event &event);
 	bool processEvents(bool captureClick = false, bool skipWindowManager = false);
 	void processEventQUIT();
 	uint32 getMacTicks();
+	Common::Array<Common::Event> _injectedEvents;
 
 	// game-quirks.cpp
 	void gameQuirks(const char *target, Common::Platform platform);
@@ -314,6 +320,9 @@ public:
 	Common::Path _traceLogFile;
 
 	uint16 _framesRan = 0; // used by kDebugFewFramesOnly
+	bool _noFatalLingoError = false;
+
+	bool _firstMovie = true;
 };
 
 // An extension of MacPlotData for interfacing with inks and patterns without

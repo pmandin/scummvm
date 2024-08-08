@@ -21,12 +21,12 @@
 
 #include "common/config-manager.h"
 #include "common/events.h"
-#include "common/math.h"
 #include "common/random.h"
 #include "common/timer.h"
 #include "graphics/cursorman.h"
 #include "image/neo.h"
 #include "image/scr.h"
+#include "math/utils.h"
 
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
@@ -113,6 +113,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_syncSound = false;
 	_firstSound = false;
 	_playerHeightNumber = 1;
+	_playerHeightMaxNumber = 1;
 	_angleRotationIndex = 0;
 
 	// TODO: this is not the same for every game
@@ -127,8 +128,10 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 
 	_border = nullptr;
 	_title = nullptr;
+	_background = nullptr;
 	_titleTexture = nullptr;
 	_borderTexture = nullptr;
+	_skyTexture = nullptr;
 	_uiTexture = nullptr;
 	_fontLoaded = false;
 	_dataBundle = nullptr;
@@ -136,6 +139,8 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_lastFrame = 0;
 	_nearClipPlane = 2;
 	_farClipPlane = 8192 + 1802; // Added some extra distance to avoid flickering
+	_yminValue = -0.625;
+	_ymaxValue = 0.625;
 
 	// These depends on the specific game
 	_playerHeight = 0;
@@ -161,6 +166,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_lastMinute = -1;
 	_frameLimiter = nullptr;
 	_vsyncEnabled = false;
+	_executingGlobalCode = false;
 
 	_underFireFrames = 0;
 	_shootingFrames = 0;
@@ -200,10 +206,16 @@ FreescapeEngine::~FreescapeEngine() {
 		delete _border;
 	}
 
+	if (_background) {
+		_background->free();
+		delete _background;
+	}
+
 	if (_gfx->_isAccelerated) {
 		delete _borderTexture;
 		delete _uiTexture;
 		delete _titleTexture;
+		delete _skyTexture;
 	}
 
 	for (auto &it : _areaMap) {
@@ -251,18 +263,63 @@ void FreescapeEngine::drawTitle() {
 	_gfx->setViewport(_viewArea);
 }
 
+static uint8 kCosineSineTable [72][2] {
+	// Each "dw" contains (cos, sin) (one byte each):
+	// [-64, 64]
+	// 72 steps is a whole turn.
+	{ 0x40, 0x00 }, { 0x40, 0x06 }, { 0x3f, 0x0b }, { 0x3e, 0x11 },
+	{ 0x3c, 0x16 }, { 0x3a, 0x1b }, { 0x37, 0x20 }, { 0x34, 0x25 },
+	{ 0x31, 0x29 }, { 0x2d, 0x2d }, { 0x29, 0x31 }, { 0x25, 0x34 },
+	{ 0x20, 0x37 }, { 0x1b, 0x3a }, { 0x16, 0x3c }, { 0x11, 0x3e },
+	{ 0x0b, 0x3f }, { 0x06, 0x40 }, { 0x00, 0x40 }, { 0xfa, 0x40 },
+	{ 0xf5, 0x3f }, { 0xef, 0x3e }, { 0xea, 0x3c }, { 0xe5, 0x3a },
+	{ 0xe0, 0x37 }, { 0xdb, 0x34 }, { 0xd7, 0x31 }, { 0xd3, 0x2d },
+	{ 0xcf, 0x29 }, { 0xcc, 0x25 }, { 0xc9, 0x20 }, { 0xc6, 0x1b },
+	{ 0xc4, 0x16 }, { 0xc2, 0x11 }, { 0xc1, 0x0b }, { 0xc0, 0x06 },
+	{ 0xc0, 0x00 }, { 0xc0, 0xfa }, { 0xc1, 0xf5 }, { 0xc2, 0xef },
+	{ 0xc4, 0xea }, { 0xc6, 0xe5 }, { 0xc9, 0xe0 }, { 0xcc, 0xdb },
+	{ 0xcf, 0xd7 }, { 0xd3, 0xd3 }, { 0xd7, 0xcf }, { 0xdb, 0xcc },
+	{ 0xe0, 0xc9 }, { 0xe5, 0xc6 }, { 0xea, 0xc4 }, { 0xef, 0xc2 },
+	{ 0xf5, 0xc1 }, { 0xfa, 0xc0 }, { 0x00, 0xc0 }, { 0x06, 0xc0 },
+	{ 0x0b, 0xc1 }, { 0x11, 0xc2 }, { 0x16, 0xc4 }, { 0x1b, 0xc6 },
+	{ 0x20, 0xc9 }, { 0x25, 0xcc }, { 0x29, 0xcf }, { 0x2d, 0xd3 },
+	{ 0x31, 0xd7 }, { 0x34, 0xdb }, { 0x37, 0xe0 }, { 0x3a, 0xe5 },
+	{ 0x3c, 0xea }, { 0x3e, 0xef }, { 0x3f, 0xf5 }, { 0x40, 0xfa }
+};
+
 // Taken from the Myst 3 codebase, it should be abstracted
-Math::Vector3d FreescapeEngine::directionToVector(float pitch, float heading) {
+Math::Vector3d FreescapeEngine::directionToVector(float pitch, float heading, bool useTable) {
 	Math::Vector3d v;
 
-	float radHeading = Common::deg2rad(heading);
-	float radPitch = Common::deg2rad(pitch);
+	if (useTable) {
+		int pitchInt = (int)pitch;
+		int headingInt = (int)heading;
 
-	v.setValue(0, cos(radPitch) * cos(radHeading));
-	v.setValue(1, sin(radPitch));
-	v.setValue(2, cos(radPitch) * sin(radHeading));
+		if (pitchInt < 0)
+			pitchInt = 360 + pitchInt;
+		if (pitchInt == 360)
+			pitchInt = 0;
+
+		if (headingInt < 0)
+			headingInt = 360 + headingInt;
+		if (headingInt == 360)
+			headingInt = 0;
+
+		int headingIndex = headingInt / 5;
+		int pitchIndex = pitchInt / 5;
+
+		v.setValue(0, ((int8)kCosineSineTable[pitchIndex][0] / 64.0) * ((int8)kCosineSineTable[headingIndex][0] / 64.0));
+		v.setValue(1, (int8)kCosineSineTable[pitchIndex][1] / 64.0);
+		v.setValue(2, ((int8)kCosineSineTable[pitchIndex][0] / 64.0) * (int8)kCosineSineTable[headingIndex][1] / 64.0);
+	} else {
+		float radHeading = Math::deg2rad(heading);
+		float radPitch = Math::deg2rad(pitch);
+
+		v.setValue(0, cos(radPitch) * cos(radHeading));
+		v.setValue(1, sin(radPitch));
+		v.setValue(2, cos(radPitch) * sin(radHeading));
+	}
 	v.normalize();
-
 	return v;
 }
 
@@ -320,6 +377,12 @@ void FreescapeEngine::clearBackground() {
 void FreescapeEngine::drawBackground() {
 	clearBackground();
 	_gfx->drawBackground(_currentArea->_skyColor);
+
+	if (isCastle() && _background) {
+		if (!_skyTexture)
+			_skyTexture = _gfx->createTexture(_background);
+		_gfx->drawSkybox(_skyTexture, _position);
+	}
 }
 
 void FreescapeEngine::drawFrame() {
@@ -327,7 +390,7 @@ void FreescapeEngine::drawFrame() {
 	if (_currentArea->isOutside())
 		farClipPlane *= 100;
 
-	_gfx->updateProjectionMatrix(90.0, _nearClipPlane, farClipPlane);
+	_gfx->updateProjectionMatrix(90.0, _yminValue, _ymaxValue, _nearClipPlane, farClipPlane);
 	_gfx->positionCamera(_position, _position + _cameraFront);
 
 	if (_underFireFrames > 0) {
@@ -347,9 +410,13 @@ void FreescapeEngine::drawFrame() {
 	}
 
 	drawBackground();
-	if (_avoidRenderingFrames == 0) // Avoid rendering inside objects
-		_currentArea->draw(_gfx, _ticks / 10);
-	else
+	if (_avoidRenderingFrames == 0) { // Avoid rendering inside objects
+		_currentArea->draw(_gfx, _ticks / 10, _position, _cameraFront);
+		if (_gameStateControl == kFreescapeGameStatePlaying &&
+		    _currentArea->hasActiveGroups() && _ticks % 50 == 0) {
+			executeMovementConditions();
+		}
+	} else
 		_avoidRenderingFrames--;
 
 	if (_underFireFrames > 0) {
@@ -472,27 +539,6 @@ void FreescapeEngine::processInput() {
 				break;
 			case Common::KEYCODE_u:
 				rotate(180, 0);
-				break;
-			case Common::KEYCODE_q:
-				rotate(-_angleRotations[_angleRotationIndex], 0);
-				break;
-			case Common::KEYCODE_w:
-				rotate(_angleRotations[_angleRotationIndex], 0);
-				break;
-			case Common::KEYCODE_s:
-				increaseStepSize();
-				break;
-			case Common::KEYCODE_x:
-				decreaseStepSize();
-				break;
-			case Common::KEYCODE_r:
-				if (isEclipse())
-					pressedKey(Common::KEYCODE_r);
-				else
-					rise();
-				break;
-			case Common::KEYCODE_f:
-				lower();
 				break;
 			case Common::KEYCODE_n:
 				_noClipMode = !_noClipMode;
@@ -621,7 +667,7 @@ Common::Error FreescapeEngine::run() {
 	// Initialize graphics
 	_screenW = g_system->getWidth();
 	_screenH = g_system->getHeight();
-	_gfx = createRenderer(_screenW, _screenH, _renderMode);
+	_gfx = createRenderer(_screenW, _screenH, _renderMode, ConfMan.getBool("authentic_graphics"));
 	_speaker = new SizedPCSpeaker();
 	_speaker->setVolume(50);
 	_crossairPosition.x = _screenW / 2;
@@ -685,7 +731,10 @@ Common::Error FreescapeEngine::run() {
 
 		if (_shootingFrames == 0) {
 			if (_delayedShootObject) {
-				executeObjectConditions(_delayedShootObject, true, false, false);
+				bool rockTravel = isSpectrum() && isCastle() && getGameBit(k8bitGameBitTravelRock);
+				// If rock travel is enabled for other platforms than ZX and CPC,
+				// then this variable should be false since the game scripts will take care
+				executeObjectConditions(_delayedShootObject, true, rockTravel, false);
 				executeLocalGlobalConditions(true, false, false); // Only execute "on shot" room/global conditions
 				_delayedShootObject = nullptr;
 			}
@@ -801,7 +850,7 @@ bool FreescapeEngine::checkIfGameEnded() {
 			insertTemporaryMessage(_forceEndGameMessage, _countdown - 4);
 		_gameStateControl = kFreescapeGameStateEnd;
 	}
-	return false; // TODO
+	return false;
 }
 
 void FreescapeEngine::setGameBit(int index) {
@@ -872,7 +921,8 @@ void FreescapeEngine::rotate(float xoffset, float yoffset) {
 }
 
 void FreescapeEngine::updateCamera() {
-	_cameraFront = directionToVector(_pitch, _yaw);
+	bool useTable = _demoMode;
+	_cameraFront = directionToVector(_pitch, _yaw, useTable);
 	// _right = _front x _up;
 	Math::Vector3d v = Math::Vector3d::crossProduct(_cameraFront, _upVector);
 	v.normalize();
@@ -892,6 +942,7 @@ void FreescapeEngine::drawStringInSurface(const Common::String &str, int x, int 
 	if (!_fontLoaded)
 		return;
 	Common::String ustr = str;
+	uint32 transparent = _gfx->_texturePixelFormat.ARGBToColor(0, 0, 0, 0);
 	ustr.toUppercase();
 
 	int sizeX = 8;
@@ -899,28 +950,40 @@ void FreescapeEngine::drawStringInSurface(const Common::String &str, int x, int 
 	int sep = isCastle() ? 9 : 8;
 	int additional = isCastle() || isEclipse() ? 0 : 1;
 
-	if (isDOS() || isSpectrum() || isCPC() || isC64()) {
-		for (uint32 c = 0; c < ustr.size(); c++) {
-			assert(ustr[c] >= 32);
-			for (int j = 0; j < sizeY; j++) {
-				for (int i = 0; i < sizeX; i++) {
-					if (_font.get(sizeX * sizeY * (offset + ustr[c] - 32) + additional + j * 8 + i))
-						surface->setPixel(x + 8 - i + sep * c, y + j, fontColor);
-					else
-						surface->setPixel(x + 8 - i + sep * c, y + j, backColor);
-				}
+	for (uint32 c = 0; c < ustr.size(); c++) {
+		assert(ustr[c] >= 32);
+		int position = sizeX * sizeY * (offset + ustr[c] - 32);
+		for (int j = 0; j < sizeY; j++) {
+			for (int i = 0; i < sizeX; i++) {
+				if (_font.get(position + additional + j * 8 + i) && fontColor != transparent)
+					surface->setPixel(x + 8 - i + sep * c, y + j, fontColor);
+				else if (backColor != transparent)
+					surface->setPixel(x + 8 - i + sep * c, y + j, backColor);
 			}
 		}
-	} else if (isAmiga() || isAtariST()) {
-		for (uint32 c = 0; c < ustr.size(); c++) {
-			assert(ustr[c] >= 32);
-			int position = 8 * (33*(offset + ustr[c] - 32) + 1);
-			for (int j = 0; j < 8; j++) {
-				for (int i = 0; i < 8; i++) {
-					if (_font.get(position + j * 32 + i))
-						surface->setPixel(x + 8 - i + 8 * c, y + j, fontColor);
-					else
-						surface->setPixel(x + 8 - i + 8 * c, y + j, backColor);
+	}
+}
+
+void FreescapeEngine::drawStringInSurface(const Common::String &str, int x, int y, uint32 primaryColor, uint32 secondaryColor, uint32 backColor, Graphics::Surface *surface, int offset) {
+	if (!_fontLoaded)
+		return;
+	Common::String ustr = str;
+	ustr.toUppercase();
+
+	int multiplier1 = isDriller() ? 33 : 16;
+	int multiplier2 = isDriller() ? 32 : 16;
+
+	for (uint32 c = 0; c < ustr.size(); c++) {
+		assert(ustr[c] >= 32);
+		int position = 8 * (multiplier1*(offset + ustr[c] - 32) + 1);
+		for (int j = 0; j < 8; j++) {
+			for (int i = 0; i < 8; i++) {
+				if (_font.get(position + j * multiplier2 + i + 8)) {
+					surface->setPixel(x + 8 - i + 8 * c, y + j, secondaryColor);
+				} else if (_font.get(position + j * multiplier2 + i)) {
+					surface->setPixel(x + 8 - i + 8 * c, y + j, primaryColor);
+				} else {
+					surface->setPixel(x + 8 - i + 8 * c, y + j, backColor);
 				}
 			}
 		}
@@ -961,6 +1024,8 @@ Common::Error FreescapeEngine::loadGameStream(Common::SeekableReadStream *stream
 	_ticks = 0;
 	if (!_currentArea || _currentArea->getAreaID() != areaID)
 		gotoArea(areaID, -1); // Do not change position nor rotation
+
+	_playerHeight = 32 * (_playerHeightNumber + 1) - 16 / _currentArea->_scale;
 	return loadGameStreamExtended(stream);
 }
 

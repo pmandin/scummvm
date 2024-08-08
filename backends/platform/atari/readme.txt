@@ -305,11 +305,6 @@ Yes, it's a hack. :) Owners of a CRT monitor can achieve the same effect by the
 analog knobs -- stretch and move the 320x200 picture unless black borders are no
 longer visible. This hack provides a more elegant and per-game functionality.
 
-Realtime aspect ratio correction (CTRL+ALT+a) should be used with caution in
-Direct rendering mode because there's no way to refresh the screen. So if you
-change the setting and there isn't any game screen update coming, screen will
-stay black.
-
 
 Audio mixing
 ------------
@@ -510,6 +505,9 @@ Known issues
 
 - When using FreeMiNT, ScummVM requires a recent kernel (>= 2021), otherwise
   keyboard handling wont work properly.
+
+- When using EmuTOS, ScummVM requires a recent release (>= 1.3), otherwise
+  various screen- and sound-related issues may appear.
 
 Future plans
 ------------

@@ -192,6 +192,7 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_thirdPointerId(-1),
 	_trackball_scale(2),
 	_joystick_scale(10),
+	_engineRunning(false),
 	_defaultConfigFileName(),
 	_defaultLogFileName(),
 	_systemPropertiesSummaryStr(""),
@@ -570,6 +571,30 @@ void OSystem_Android::initBackend() {
 	BaseBackend::initBackend();
 }
 
+void OSystem_Android::engineInit() {
+	_engineRunning = true;
+	updateOnScreenControls();
+
+	JNI::setCurrentGame(ConfMan.getActiveDomainName());
+}
+
+void OSystem_Android::engineDone() {
+	_engineRunning = false;
+	updateOnScreenControls();
+	JNI::setCurrentGame("");
+}
+
+void OSystem_Android::updateOnScreenControls() {
+	int enableMask = SHOW_ON_SCREEN_ALL;
+	if (!ConfMan.getBool("onscreen_control")) {
+		enableMask = SHOW_ON_SCREEN_NONE;
+	} else if (!_engineRunning) {
+		// Don't show the menu icon if the engine is not running
+		enableMask &= ~SHOW_ON_SCREEN_MENU;
+	}
+	JNI::showOnScreenControls(enableMask);
+}
+
 Common::Path OSystem_Android::getDefaultConfigFileName() {
 	// if possible, skip JNI call which is more costly (performance wise)
 	if (_defaultConfigFileName.empty()) {
@@ -945,6 +970,7 @@ bool OSystem_Android::setGraphicsMode(int mode, uint flags) {
 	if (render3d && !supports3D) {
 		debug(5, "switching to 3D graphics");
 		delete _graphicsManager;
+		_graphicsManager = nullptr;
 		AndroidGraphics3dManager *manager = new AndroidGraphics3dManager();
 		_graphicsManager = manager;
 		androidGraphicsManager = manager;
@@ -952,6 +978,7 @@ bool OSystem_Android::setGraphicsMode(int mode, uint flags) {
 	} else if (!render3d && supports3D) {
 		debug(5, "switching to 2D graphics");
 		delete _graphicsManager;
+		_graphicsManager = nullptr;
 		AndroidGraphicsManager *manager = new AndroidGraphicsManager();
 		_graphicsManager = manager;
 		androidGraphicsManager = manager;

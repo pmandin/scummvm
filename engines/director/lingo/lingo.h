@@ -47,11 +47,11 @@ class ScriptContext;
 class DirectorEngine;
 class Frame;
 class LingoCompiler;
+struct Breakpoint;
 
 typedef void (*inst)(void);
 #define	STOP (inst)0
 #define ENTITY_INDEX(t,id) ((t) * 100000 + (id))
-#define printWithArgList g_lingo->printSTUBWithArglist
 
 int calcStringAlignment(const char *s);
 int calcCodeAlignment(int l);
@@ -103,6 +103,7 @@ struct Symbol {	/* symbol table entry */
 	Symbol();
 	Symbol(const Symbol &s);
 	Symbol& operator=(const Symbol &s);
+	bool operator==(Symbol &s) const;
 	void reset();
 	~Symbol();
 };
@@ -166,7 +167,7 @@ struct Datum {	/* interpreter stack type */
 	double asFloat() const;
 	int asInt() const;
 	Common::String asString(bool printonly = false) const;
-	CastMemberID asMemberID(CastType castType = kCastTypeAny) const;
+	CastMemberID asMemberID(CastType castType = kCastTypeAny, int castLib = 0) const;
 	Common::Point asPoint() const;
 
 	bool isRef() const;
@@ -256,23 +257,39 @@ struct CFrame {	/* proc/func call stack frame */
 	bool			allowRetVal;		/* whether to allow a return value */
 	Datum			defaultRetVal;		/* default return value */
 	int				paramCount;			/* original number of arguments submitted */
+	Common::Array<Datum> paramList;		/* original argument list */
 };
 
 struct LingoEvent {
 	LEvent event;
 	int eventId;
+	EventHandlerSourceType eventHandlerSourceType;
 	ScriptType scriptType;
-	CastMemberID scriptId;
 	bool passByDefault;
-	int channelId;
+	uint16 channelId;
+	CastMemberID scriptId;
+	Common::Point mousePos;
 
-	LingoEvent (LEvent e, int ei, ScriptType st, CastMemberID si, bool pass, int ci = -1) {
+	LingoEvent (LEvent e, int ei, ScriptType st, bool pass, CastMemberID si = CastMemberID(), Common::Point mp = Common::Point(-1, -1)) {
 		event = e;
 		eventId = ei;
+		eventHandlerSourceType = kNoneHandler;
 		scriptType = st;
-		scriptId = si;
 		passByDefault = pass;
-		channelId = ci;
+		channelId = 0;
+		scriptId = si;
+		mousePos = mp;
+	}
+
+	LingoEvent (LEvent e, int ei, EventHandlerSourceType ehst, bool pass, Common::Point mp = Common::Point(-1, -1)) {
+		event = e;
+		eventId = ei;
+		eventHandlerSourceType = ehst;
+		scriptType = kNoneScript;
+		passByDefault = pass;
+		channelId = 0;
+		scriptId = CastMemberID();
+		mousePos = mp;
 	}
 };
 
@@ -319,6 +336,11 @@ struct LingoState {
 	Datum me;								// current me object
 
 	~LingoState();
+};
+
+enum LingoExecState {
+	kRunning,
+	kPause,
 };
 
 class Lingo {
@@ -374,19 +396,20 @@ public:
 	// lingo-events.cpp
 private:
 	void initEventHandlerTypes();
-	void processEvent(LEvent event, ScriptType st, CastMemberID scriptId, int channelId = -1);
+	bool processEvent(LEvent event, ScriptType st, CastMemberID scriptId, int channelId = -1);
 
 public:
 	ScriptType event2script(LEvent ev);
 	Symbol getHandler(const Common::String &name);
 
-	void processEvents(Common::Queue<LingoEvent> &queue);
+	void processEvents(Common::Queue<LingoEvent> &queue, bool isInputEvent);
 
 public:
-	void execute();
+	bool execute();
 	void switchStateFromWindow();
 	void freezeState();
-	void pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRetVal, int paramCount);
+	void freezePlayState();
+	void pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRetVal, int paramCount, int nargs);
 	void popContext(bool aborting = false);
 	void cleanLocalVars();
 	void varAssign(const Datum &var, const Datum &value);
@@ -413,7 +436,8 @@ public:
 	Datum getVoid();
 	void pushVoid();
 
-	void printSTUBWithArglist(const char *funcname, int nargs, const char *prefix = "STUB:");
+	void printArgs(const char *funcname, int nargs, const char *prefix = nullptr);
+	inline void printSTUBWithArglist(const char *funcname, int nargs) { printArgs(funcname, nargs, "STUB: "); }
 	void convertVOIDtoString(int arg, int nargs);
 	void dropStack(int nargs);
 	void drop(uint num);
@@ -478,6 +502,8 @@ public:
 	int _currentChannelId;
 
 	bool _freezeState;
+	bool _freezePlay;
+	bool _playDone;
 	bool _abort;
 	bool _expectError;
 	bool _caughtError;
@@ -497,6 +523,7 @@ public:
 
 	OpenXLibsHash _openXLibs;
 	OpenXLibsStateHash _openXLibsState;
+	Common::StringArray _openXtras;
 
 	Common::String _floatPrecisionFormat;
 
@@ -532,6 +559,12 @@ public:
 	Datum _perFrameHook;
 
 	Datum _windowList;
+	Symbol _currentInputEvent;
+
+	struct {
+		LingoExecState _state = kRunning;
+		bool (*_shouldPause)() = nullptr;
+	} _exec;
 
 public:
 	void executeImmediateScripts(Frame *frame);
@@ -544,6 +577,18 @@ private:
 
 public:
 	Common::String normalizeString(const Common::String &str);
+
+public:
+	void addBreakpoint(Breakpoint &bp);
+	bool delBreakpoint(int id);
+	Breakpoint *getBreakpoint(int id);
+
+	const Common::Array<Breakpoint> &getBreakpoints() const { return _breakpoints; }
+	Common::Array<Breakpoint> &getBreakpoints() { return _breakpoints; }
+
+private:
+	int _bpNextId = 1;
+	Common::Array<Breakpoint> _breakpoints;
 };
 
 extern Lingo *g_lingo;

@@ -21,7 +21,6 @@
 
 #include "base/plugins.h"
 #include "common/file.h"
-#include "common/translation.h"
 #include "twp/detection.h"
 #include "twp/detection_tables.h"
 
@@ -43,7 +42,7 @@ const DebugChannelDef TwpMetaEngineDetection::debugFlagList[] = {
 
 TwpMetaEngineDetection::TwpMetaEngineDetection()
 	: AdvancedMetaEngineDetection(Twp::gameDescriptions,
-								  sizeof(Twp::TwpGameDescription), Twp::twpGames) {
+								  Twp::twpGames) {
 }
 
 DetectedGame TwpMetaEngineDetection::toDetectedGame(const ADDetectedGame &adGame, ADDetectedGameExtraInfo *extraInfo) const {

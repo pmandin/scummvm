@@ -19,6 +19,9 @@
  *
  */
 
+#include "backends/modular-backend.h"
+#include "backends/graphics/graphics.h"
+
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
 #include "common/tokenizer.h"
@@ -35,6 +38,7 @@
 #include "director/score.h"
 #include "director/sound.h"
 #include "director/window.h"
+#include "director/debugger/debugtools.h"
 
 /**
  * When detection is compiled dynamically, directory globs end up in detection plugin and
@@ -171,7 +175,7 @@ Common::String DirectorEngine::getCurrentPath() const { return _currentWindow->g
 Common::String DirectorEngine::getCurrentAbsolutePath() {
 	Common::String currentPath = getCurrentPath();
 	Common::String result;
-	result += (getPlatform() == Common::kPlatformWindows) ? "C:\\" : "";
+	result += (getPlatform() == Common::kPlatformWindows && _version >= 400) ? "C:\\" : "";
 	result += convertPath(currentPath);
 	return result;
 }
@@ -285,6 +289,15 @@ Common::Error DirectorEngine::run() {
 		g_system->updateScreen();
 	}
 
+#ifdef USE_IMGUI
+	ImGuiCallbacks callbacks;
+	bool drawImGui = debugChannelSet(-1, kDebugImGui);
+	callbacks.init = DT::onImGuiInit;
+	callbacks.render = drawImGui ? DT::onImGuiRender : nullptr;
+	callbacks.cleanup = DT::onImGuiCleanup;
+	_system->setImGuiCallbacks(callbacks);
+#endif
+
 	bool loop = true;
 
 	while (loop) {
@@ -309,6 +322,14 @@ Common::Error DirectorEngine::run() {
 
 		draw();
 		g_director->delayMillis(10);
+#ifdef USE_IMGUI
+		// For performance reasons, disable the renderer callback if the ImGui debug flag isn't set
+		if (debugChannelSet(-1, kDebugImGui) != drawImGui) {
+			drawImGui = !drawImGui;
+			callbacks.render = drawImGui ? DT::onImGuiRender : nullptr;
+			_system->setImGuiCallbacks(callbacks);
+		}
+#endif
 	}
 
 	return Common::kNoError;

@@ -111,10 +111,32 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			0
 		}
 	},
+	{
+		GAMEOPTION_AUTHENTIC_GRAPHICS,
+		{
+			_s("Authentic graphics"),
+			_s("Keep graphics as close as possible to the original"),
+			"authentic_graphics",
+			false,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_TRAVEL_ROCK,
+		{
+			_s("Enable rock travel"),
+			_s("Enable traveling using a rock shoot at start"),
+			"rock_travel",
+			false,
+			0,
+			0
+		}
+	},
 	AD_EXTRA_GUI_OPTIONS_TERMINATOR
 };
 
-class FreescapeMetaEngine : public AdvancedMetaEngine {
+class FreescapeMetaEngine : public AdvancedMetaEngine<ADGameDescription> {
 public:
 	const char *getName() const override {
 		return "freescape";

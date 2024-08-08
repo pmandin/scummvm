@@ -90,6 +90,7 @@ public:
 
 	void handleCommand(CommandSender *sender, uint32 cmd, uint32 data) override;
 	void handleMouseDown(int x, int y, int button, int clickCount) override;
+	void handleMouseUp(int x, int y, int button, int clickCount) override;
 	void handleMouseWheel(int x, int y, int direction) override;
 	void handleMouseMoved(int x, int y, int button) override;
 };
@@ -101,6 +102,9 @@ protected:
 	Common::HashMap<int, const Graphics::ManagedSurface *> _platformIcons;
 	Common::HashMap<int, const Graphics::ManagedSurface *> _languageIcons;
 	Common::HashMap<int, const Graphics::ManagedSurface *> _extraIcons;
+	Common::HashMap<int, Graphics::AlphaType> _platformIconsAlpha;
+	Common::HashMap<int, Graphics::AlphaType> _languageIconsAlpha;
+	Common::HashMap<int, Graphics::AlphaType> _extraIconsAlpha;
 	Graphics::ManagedSurface *_disabledIconOverlay;
 	// Images are mapped by filename -> surface.
 	Common::HashMap<Common::String, const Graphics::ManagedSurface *> _loadedSurfaces;
@@ -172,9 +176,9 @@ public:
 	void unloadSurfaces(Common::HashMap<T, const Graphics::ManagedSurface *> &surfaces);
 
 	const Graphics::ManagedSurface *filenameToSurface(const Common::String &name);
-	const Graphics::ManagedSurface *languageToSurface(Common::Language languageCode);
-	const Graphics::ManagedSurface *platformToSurface(Common::Platform platformCode);
-	const Graphics::ManagedSurface *demoToSurface(const Common::String extraString);
+	const Graphics::ManagedSurface *languageToSurface(Common::Language languageCode, Graphics::AlphaType &alphaType);
+	const Graphics::ManagedSurface *platformToSurface(Common::Platform platformCode, Graphics::AlphaType &alphaType);
+	const Graphics::ManagedSurface *demoToSurface(const Common::String extraString, Graphics::AlphaType &alphaType);
 	const Graphics::ManagedSurface *disabledThumbnail();
 
 	/// Update _visibleEntries from _allEntries and returns true if reload is required.
@@ -231,6 +235,7 @@ public:
 class GridItemWidget : public ContainerWidget, public CommandSender {
 protected:
 	Graphics::ManagedSurface _thumbGfx;
+	Graphics::AlphaType _thumbAlpha;
 
 	GridItemInfo	*_activeEntry;
 	GridWidget		*_grid;

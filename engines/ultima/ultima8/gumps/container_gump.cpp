@@ -22,14 +22,14 @@
 #include "ultima/ultima.h"
 #include "ultima/ultima8/gumps/container_gump.h"
 
-#include "ultima/ultima8/graphics/shape.h"
-#include "ultima/ultima8/graphics/shape_frame.h"
-#include "ultima/ultima8/graphics/render_surface.h"
+#include "ultima/ultima8/gfx/shape.h"
+#include "ultima/ultima8/gfx/shape_frame.h"
+#include "ultima/ultima8/gfx/render_surface.h"
 #include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/kernel/kernel.h"
 #include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/games/game_data.h"
-#include "ultima/ultima8/graphics/main_shape_archive.h"
+#include "ultima/ultima8/gfx/main_shape_archive.h"
 #include "ultima/ultima8/gumps/slider_gump.h"
 #include "ultima/ultima8/gumps/gump_notify_process.h"
 #include "ultima/ultima8/world/item_factory.h"
@@ -273,16 +273,8 @@ void ContainerGump::GetItemLocation(int32 lerp_factor) {
 	}
 
 	int32 gx, gy;
-	Item *topitem = it;
-
-	Container *p = it->getParentAsContainer();
-	if (p) {
-		while (p->getParentAsContainer()) {
-			p = p->getParentAsContainer();
-		}
-
-		topitem = p;
-	}
+	Container *root = it->getRootContainer();
+	Item *topitem = root ? root : it;
 
 	Gump *gump = GetRootGump()->FindGump<GameMapGump>();
 	assert(gump);
@@ -390,13 +382,19 @@ void ContainerGump::onMouseDouble(int button, int32 mx, int32 my) {
 		if (item) {
 			debugC(kDebugObject, "%s", item->dumpInfo().c_str());
 
+			if (objID == _owner) {
+				// call the 'use' event
+				item->use();
+				return;
+			}
+
 			if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
 				debugC(kDebugObject, "Can't use: avatarInStasis");
 				return;
 			}
 
 			MainActor *avatar = getMainActor();
-			if (objID == _owner || avatar->canReach(item, 128)) { // CONSTANT!
+			if (avatar->canReach(item, 128)) { // CONSTANT!
 				// call the 'use' event
 				item->use();
 			} else {
@@ -543,10 +541,9 @@ void ContainerGump::DropItem(Item *item, int mx, int my) {
 		// try to combine items
 		if (item->canMergeWith(targetitem)) {
 			uint16 newquant = targetitem->getQuality() + item->getQuality();
-			// easter egg as in original: items stack to max quantity of 666
-			if (newquant > 666) {
-				item->setQuality(newquant - 666);
-				targetitem->setQuality(666);
+			if (newquant > Item::MAX_QUANTITY) {
+				item->setQuality(newquant - Item::MAX_QUANTITY);
+				targetitem->setQuality(Item::MAX_QUANTITY);
 				// maybe this isn't needed? original doesn't do it here..
 				targetitem->callUsecodeEvent_combine();
 			} else {

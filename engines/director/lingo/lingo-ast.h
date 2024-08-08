@@ -222,8 +222,10 @@ struct Node {
 	bool isExpression;
 	bool isStatement;
 	bool isLoop;
+	uint32 startOffset;
+	uint32 endOffset;
 
-	Node(NodeType t) : type(t), isExpression(false), isStatement(false), isLoop(false) {}
+	Node(NodeType t) : type(t), isExpression(false), isStatement(false), isLoop(false), startOffset(0), endOffset(0) {}
 	virtual ~Node() {}
 	virtual bool accept(NodeVisitor *visitor) = 0;
 };

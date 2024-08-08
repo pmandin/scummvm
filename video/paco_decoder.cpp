@@ -37,7 +37,7 @@ namespace Video {
 enum frameTypes {
 	NOP = 0, // nop
 	// 1 - old initialisation data?
-	PALLETE = 2, // - new initialisation data (usually 0x30 0x00 0x00 ... meaning 8-bit with default QuickTime palette)
+	PALETTE = 2, // - new initialisation data (usually 0x30 0x00 0x00 ... meaning 8-bit with default QuickTime palette)
 	DELAY = 3, //  - delay information
 	AUDIO = 4, // - audio data (8-bit unsigned PCM)
 	// 5 - should not be present
@@ -77,6 +77,10 @@ bool PacoDecoder::loadStream(Common::SeekableReadStream *stream) {
 	uint16 height = stream->readUint16BE();
 	int16 frameRate = stream->readUint16BE();
 	frameRate = ABS(frameRate); // Negative framerate is indicative of audio, but not always
+	if (frameRate == 0) {
+		// 0 is equivalent to playing back at the fastest rate
+		frameRate = 60;
+	}
 	uint16 flags = stream->readUint16BE();
 	bool hasAudio = (flags & 0x100) == 0x100;
 
@@ -111,11 +115,11 @@ int PacoDecoder::getAudioSamplingRate() {
 	 * Search for the first audio packet and use it.
 	 */
 	const Common::Array<int> samplingRates = {5563, 7418, 11127, 22254};
-	int index;
+	int index = 0;
 
 	int64 startPos = _fileStream->pos();
 
-	while (true){
+	while (_fileStream->pos() < _fileStream->size()) {
 		int64 currentPos = _fileStream->pos();
 		int frameType = _fileStream->readByte();
 		int v = _fileStream->readByte();
@@ -204,6 +208,9 @@ Graphics::PixelFormat PacoDecoder::PacoVideoTrack::getPixelFormat() const {
 }
 
 void PacoDecoder::readNextPacket() {
+	if (_curFrame >= _videoTrack->getFrameCount())
+		return;
+
 	uint32 nextFrame = _fileStream->pos() + _frameSizes[_curFrame];
 
 	debug(2, " frame %3d size %d @ %lX", _curFrame, _frameSizes[_curFrame], long(_fileStream->pos()));
@@ -219,15 +226,22 @@ void PacoDecoder::readNextPacket() {
 
 		switch (frameType) {
 		case AUDIO:
-			_audioTrack->queueSound(_fileStream, chunkSize - 4);
+			if (_audioTrack)
+				_audioTrack->queueSound(_fileStream, chunkSize - 4);
 			break;
 		case VIDEO:
-			_videoTrack->handleFrame(_fileStream, chunkSize - 4, _curFrame);
+			if (_videoTrack)
+				_videoTrack->handleFrame(_fileStream, chunkSize - 4, _curFrame);
 			break;
-		case PALLETE:
-			_videoTrack->handlePalette(_fileStream);
+		case PALETTE:
+			if (_videoTrack)
+				_videoTrack->handlePalette(_fileStream);
 			break;
 		case EOC:
+			if (_videoTrack)
+				_videoTrack->handleEOC();
+			break;
+		case NOP:
 			break;
 		default:
 			error("PacoDecoder::decodeFrame(): unknown main chunk type (type = 0x%02X)", frameType);

@@ -22,6 +22,7 @@
 #ifndef FREESCAPE_GFX_H
 #define FREESCAPE_GFX_H
 
+#include "common/hashmap.h"
 #include "common/rendermode.h"
 #include "common/rect.h"
 
@@ -58,13 +59,14 @@ public:
 
 class Renderer {
 public:
-	Renderer(int screenW, int screenH, Common::RenderMode renderMode);
+	Renderer(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics);
 	virtual ~Renderer();
 
 	Graphics::PixelFormat _currentPixelFormat;
 	Graphics::PixelFormat _palettePixelFormat;
 	Graphics::PixelFormat _texturePixelFormat;
 	bool _isAccelerated;
+	bool _authenticGraphics;
 
 	virtual void init() = 0;
 	virtual void setViewport(const Common::Rect &rect) = 0;
@@ -74,6 +76,7 @@ public:
 	 */
 	virtual void flipBuffer() {}
 	virtual void useColor(uint8 r, uint8 g, uint8 b) = 0;
+	virtual void depthTesting(bool enabled) {};
 	virtual void polygonOffset(bool enabled) = 0;
 
 	virtual Texture *createTexture(const Graphics::Surface *surface) = 0;
@@ -88,10 +91,10 @@ public:
 
 	virtual void renderCrossair(const Common::Point crossairPosition) = 0;
 
-	virtual void renderCube(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours);
-	virtual void renderRectangle(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours);
-	virtual void renderPolygon(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<uint16> *ordinates, Common::Array<uint8> *colours);
-	virtual void renderPyramid(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<uint16> *ordinates, Common::Array<uint8> *colours, int type);
+	virtual void renderCube(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours, Common::Array<uint8> *ecolours, float offset = 0.0);
+	virtual void renderRectangle(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours, Common::Array<uint8> *ecolours, float offset = 0.0);
+	virtual void renderPolygon(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<float> *ordinates, Common::Array<uint8> *colours, Common::Array<uint8> *ecolours, float offset = 0.0);
+	virtual void renderPyramid(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<float> *ordinates, Common::Array<uint8> *colours, Common::Array<uint8> *ecolours, int type);
 	virtual void renderFace(const Common::Array<Math::Vector3d> &vertices) = 0;
 
 	void setColorRemaps(ColorReMap *colorRemaps);
@@ -100,6 +103,7 @@ public:
 	virtual void drawBackground(uint8 color);
 
 	void drawEclipse(uint8 color1, uint8 color2, float difference);
+	virtual void drawSkybox(Texture *texture, Math::Vector3d camera) {};
 	virtual void drawCelestialBody(Math::Vector3d position, float radius, uint8 color) {};
 
 	Common::Rect viewport() const;
@@ -111,7 +115,7 @@ public:
 	uint8 indexFromColor(uint8 r, uint8 g, uint8 b);
 	uint8 mapEGAColor(uint8 index);
 
-	bool getRGBAt(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
+	bool getRGBAt(uint8 index, uint8 ecolor, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
 	bool getRGBAtC64(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2);
 	bool getRGBAtCGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
 	bool getRGBAtCPC(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
@@ -146,7 +150,7 @@ public:
 	 */
 
 	virtual void positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest) = 0;
-	virtual void updateProjectionMatrix(float fov, float nearClipPlane, float farClipPlane) = 0;
+	virtual void updateProjectionMatrix(float fov, float yminValue, float ymaxValue, float nearClipPlane, float farClipPlane) = 0;
 
 	Math::Matrix4 getMvpMatrix() const { return _mvpMatrix; }
 	virtual Graphics::Surface *getScreenshot() = 0;
@@ -173,10 +177,10 @@ protected:
 };
 
 Graphics::RendererType determinateRenderType();
-Renderer *CreateGfxOpenGL(int screenW, int screenH, Common::RenderMode renderMode);
-Renderer *CreateGfxOpenGLShader(int screenW, int screenH, Common::RenderMode renderMode);
+Renderer *CreateGfxOpenGL(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics);
+Renderer *CreateGfxOpenGLShader(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics);
 Renderer *CreateGfxTinyGL(int screenW, int screenH, Common::RenderMode renderMode);
-Renderer *createRenderer(int screenW, int screenH, Common::RenderMode renderMode);
+Renderer *createRenderer(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics);
 
 } // End of namespace Freescape
 

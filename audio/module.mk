@@ -5,8 +5,10 @@ MODULE_OBJS := \
 	adlib_ms.o \
 	audiostream.o \
 	casio.o \
+	chip.o \
 	cms.o \
 	fmopl.o \
+	mac_plugin.o \
 	mididrv.o \
 	mididrv_ms.o \
 	midiparser_qt.o \

@@ -23,7 +23,6 @@
 // available at https://github.com/TomHarte/Phantasma/ (MIT)
 
 #include "common/config-manager.h"
-#include "common/math.h"
 #include "common/system.h"
 #include "math/glmath.h"
 
@@ -41,11 +40,11 @@ static const GLfloat bitmapVertices[] = {
 	1.0, 1.0,
 };
 
-Renderer *CreateGfxOpenGLShader(int screenW, int screenH, Common::RenderMode renderMode) {
-	return new OpenGLShaderRenderer(screenW, screenH, renderMode);
+Renderer *CreateGfxOpenGLShader(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics) {
+	return new OpenGLShaderRenderer(screenW, screenH, renderMode, authenticGraphics);
 }
 
-OpenGLShaderRenderer::OpenGLShaderRenderer(int screenW, int screenH, Common::RenderMode renderMode) : Renderer(screenW, screenH, renderMode) {
+OpenGLShaderRenderer::OpenGLShaderRenderer(int screenW, int screenH, Common::RenderMode renderMode, bool authenticGraphics) : Renderer(screenW, screenH, renderMode, authenticGraphics) {
 	_verts = nullptr;
 	_triangleShader = nullptr;
 	_triangleVBO = 0;
@@ -137,13 +136,13 @@ void OpenGLShaderRenderer::drawTexturedRect2D(const Common::Rect &screenRect, co
 	_bitmapShader->unbind();
 }
 
-void OpenGLShaderRenderer::updateProjectionMatrix(float fov, float nearClipPlane, float farClipPlane) {
+void OpenGLShaderRenderer::updateProjectionMatrix(float fov, float yminValue, float ymaxValue, float nearClipPlane, float farClipPlane) {
 	// Determining xmaxValue and ymaxValue still needs some work for matching the 3D view in freescape games
 	/*float aspectRatio = _screenW / (float)_screenH;
 	float xmaxValue = nearClipPlane * tan(Common::deg2rad(fov) / 2);
 	float ymaxValue = xmaxValue / aspectRatio;
 	_projectionMatrix = Math::makeFrustumMatrix(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);*/
-	_projectionMatrix = Math::makeFrustumMatrix(1.5, -1.5, -0.625, 0.625, nearClipPlane, farClipPlane);
+	_projectionMatrix = Math::makeFrustumMatrix(1.5, -1.5, yminValue, ymaxValue, nearClipPlane, farClipPlane);
 }
 
 void OpenGLShaderRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest) {
@@ -298,7 +297,7 @@ void OpenGLShaderRenderer::renderPlayerShootRay(byte color, const Common::Point 
 void OpenGLShaderRenderer::drawCelestialBody(Math::Vector3d position, float radius, byte color) {
 	uint8 r1, g1, b1, r2, g2, b2;
 	byte *stipple = nullptr;
-	getRGBAt(color, r1, g1, b1, r2, g2, b2, stipple);
+	getRGBAt(color, 0, r1, g1, b1, r2, g2, b2, stipple);
 
 	useColor(r1, g1, b1);
 
@@ -434,6 +433,14 @@ void OpenGLShaderRenderer::renderFace(const Common::Array<Math::Vector3d> &verti
 	glDrawArrays(GL_TRIANGLES, 0, vi + 3);
 }
 
+void OpenGLShaderRenderer::depthTesting(bool enabled) {
+	if (enabled) {
+		glEnable(GL_DEPTH_TEST);
+	} else {
+		glDisable(GL_DEPTH_TEST);
+	}
+}
+
 void OpenGLShaderRenderer::polygonOffset(bool enabled) {
 	if (enabled) {
 		glEnable(GL_POLYGON_OFFSET_FILL);
@@ -449,15 +456,13 @@ void OpenGLShaderRenderer::setStippleData(byte *data) {
 	if (!data)
 		return;
 
-	for (int i = 0; i < 8; i++) {
-		byte b = data[i];
-		for (int j = 0; j < 8; j++) {
-			//debug("%d", 8*i + j);
-			_variableStippleArray[i + 8*j] = b & 0x1;
-			b = b >> 1;
-		}
+	int stippleData[128];
+
+	for (int i = 0; i < 128; i++) {
+		stippleData[i] = 0;
+		stippleData[i] = data[i];
 	}
-	_triangleShader->setUniform("stipple", 64, (const int*)&_variableStippleArray);
+	_triangleShader->setUniform("stipple", 128, (const int*)&stippleData);
 }
 
 void OpenGLShaderRenderer::useStipple(bool enabled) {

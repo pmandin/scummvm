@@ -46,6 +46,10 @@
 #include "scumm/help.h"
 #endif
 
+#ifdef USE_ENET
+#include "scumm/he/net/net_defines.h"
+#endif
+
 using Graphics::kTextAlignCenter;
 using Graphics::kTextAlignLeft;
 using GUI::WIDGET_ENABLED;
@@ -1179,6 +1183,13 @@ GUI::CheckboxWidget *ScummOptionsContainerWidget::createOriginalGUICheckbox(GuiO
 	);
 }
 
+GUI::CheckboxWidget *ScummOptionsContainerWidget::createCopyProtectionCheckbox(GuiObject *boss, const Common::String &name) {
+	return new GUI::CheckboxWidget(boss, name,
+		_("Enable copy protection"),
+		_("Enable any copy protection that would otherwise be bypassed by default.")
+	);
+}
+
 void ScummOptionsContainerWidget::updateAdjustmentSlider(GUI::SliderWidget *slider, GUI::StaticTextWidget *value) {
 	int adjustment = slider->getValue();
 	const char *sign = "";
@@ -1250,7 +1261,7 @@ bool ScummGameOptionsWidget::save() {
 
 void ScummGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const {
 	layouts.addDialog(layoutName, overlayedLayout);
-	layouts.addLayout(GUI::ThemeLayout::kLayoutVertical).addPadding(0, 0, 8, 8);
+	layouts.addLayout(GUI::ThemeLayout::kLayoutVertical).addPadding(0, 0, 0, 0);
 
 	bool hasEnhancements = false;
 
@@ -1310,6 +1321,7 @@ LoomEgaGameOptionsWidget::LoomEgaGameOptionsWidget(GuiObject *boss, const Common
 
 	createEnhancementsWidget(widgetsBoss(), "LoomEgaGameOptionsDialog");
 	_enableOriginalGUICheckbox = createOriginalGUICheckbox(widgetsBoss(), "LoomEgaGameOptionsDialog.EnableOriginalGUI");
+	_enableCopyProtectionCheckbox = createCopyProtectionCheckbox(widgetsBoss(), "LoomEgaGameOptionsDialog.EnableCopyProtection");
 }
 
 void LoomEgaGameOptionsWidget::load() {
@@ -1324,6 +1336,7 @@ void LoomEgaGameOptionsWidget::load() {
 	updateOvertureTicksValue();
 
 	_enableOriginalGUICheckbox->setState(ConfMan.getBool("original_gui", _domain));
+	_enableCopyProtectionCheckbox->setState(ConfMan.getBool("copy_protection", _domain));
 }
 
 bool LoomEgaGameOptionsWidget::save() {
@@ -1331,6 +1344,7 @@ bool LoomEgaGameOptionsWidget::save() {
 
 	ConfMan.setInt("loom_overture_ticks", _overtureTicksSlider->getValue(), _domain);
 	ConfMan.setBool("original_gui", _enableOriginalGUICheckbox->getState(), _domain);
+	ConfMan.setBool("copy_protection", _enableCopyProtectionCheckbox->getState(), _domain);
 	return true;
 }
 
@@ -1340,7 +1354,8 @@ void LoomEgaGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Commo
 			.addPadding(0, 0, 0, 0)
 			.addLayout(GUI::ThemeLayout::kLayoutVertical, 4)
 				.addPadding(0, 0, 10, 0)
-				.addWidget("EnableOriginalGUI", "Checkbox");
+				.addWidget("EnableOriginalGUI", "Checkbox")
+				.addWidget("EnableCopyProtection", "Checkbox");
 	addEnhancementsLayout(layouts)
 		.closeLayout()
 			.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
@@ -1372,7 +1387,7 @@ void LoomEgaGameOptionsWidget::updateOvertureTicksValue() {
 
 // Mac Loom/MI1 options
 LoomMonkeyMacGameOptionsWidget::LoomMonkeyMacGameOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain, int gameId) :
-	ScummOptionsContainerWidget(boss, name, "LoomMonkeyMacGameOptionsWidget", domain), _sndQualitySlider(nullptr), _sndQualityValue(nullptr), _enableOriginalGUICheckbox(nullptr), _quality(0) {
+	ScummOptionsContainerWidget(boss, name, "LoomMonkeyMacGameOptionsWidget", domain), _sndQualitySlider(nullptr), _sndQualityValue(nullptr), _enableOriginalGUICheckbox(nullptr), _enableCopyProtectionCheckbox(nullptr), _quality(0) {
 	GUI::StaticTextWidget *text = new GUI::StaticTextWidget(widgetsBoss(), "LoomMonkeyMacGameOptionsWidget.SndQualityLabel", _("Music Quality:"));
 	text->setAlign(Graphics::TextAlign::kTextAlignEnd);
 
@@ -1387,6 +1402,9 @@ LoomMonkeyMacGameOptionsWidget::LoomMonkeyMacGameOptionsWidget(GuiObject *boss, 
 	updateQualitySlider();
 	createEnhancementsWidget(widgetsBoss(), "LoomMonkeyMacGameOptionsWidget");
 	_enableOriginalGUICheckbox = createOriginalGUICheckbox(widgetsBoss(), "LoomMonkeyMacGameOptionsWidget.EnableOriginalGUI");
+
+	if (gameId == GID_MONKEY)
+		_enableCopyProtectionCheckbox = createCopyProtectionCheckbox(widgetsBoss(), "LoomMonkeyMacGameOptionsWidget.EnableCopyProtection");
 }
 
 void LoomMonkeyMacGameOptionsWidget::load() {
@@ -1407,12 +1425,19 @@ void LoomMonkeyMacGameOptionsWidget::load() {
 	_sndQualitySlider->setValue(_quality);
 	updateQualitySlider();
 	_enableOriginalGUICheckbox->setState(ConfMan.getBool("original_gui", _domain));
+
+	if (_enableCopyProtectionCheckbox)
+		_enableCopyProtectionCheckbox->setState(ConfMan.getBool("copy_protection", _domain));
 }
 
 bool LoomMonkeyMacGameOptionsWidget::save() {
 	bool res = ScummOptionsContainerWidget::save();
 	ConfMan.setInt("mac_snd_quality", _quality, _domain);
 	ConfMan.setBool("original_gui", _enableOriginalGUICheckbox->getState(), _domain);
+
+	if (_enableCopyProtectionCheckbox)
+		ConfMan.setBool("copy_protection", _enableCopyProtectionCheckbox->getState(), _domain);
+
 	return res;
 }
 
@@ -1423,6 +1448,10 @@ void LoomMonkeyMacGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const
 			.addLayout(GUI::ThemeLayout::kLayoutVertical, 4)
 				.addPadding(0, 0, 10, 0)
 				.addWidget("EnableOriginalGUI", "Checkbox");
+
+	if (_enableCopyProtectionCheckbox)
+		layouts.addWidget("EnableCopyProtection", "Checkbox");
+
 	addEnhancementsLayout(layouts)
 			.closeLayout()
 			.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
@@ -1669,7 +1698,7 @@ HENetworkGameOptionsWidget::HENetworkGameOptionsWidget(GuiObject *boss, const Co
 	_audioOverride = nullptr;
 	const Common::String guiOptionsString = ConfMan.get("guioptions", domain);
 	const Common::String guiOptions = parseGameGUIOptions(guiOptionsString);
-	if (guiOptions.contains(GUIO_AUDIO_OVERRIDE))
+	if (guiOptions.contains(GAMEOPTION_AUDIO_OVERRIDE))
 		_audioOverride = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.AudioOverride", _("Load modded audio"), _("Replace music, sound effects, and speech clips with modded audio files, if available."));
 
 	GUI::StaticTextWidget *text = new GUI::StaticTextWidget(widgetsBoss(), "HENetworkGameOptionsDialog.SessionServerLabel", _("Multiplayer Server:"));
@@ -1688,10 +1717,16 @@ HENetworkGameOptionsWidget::HENetworkGameOptionsWidget(GuiObject *boss, const Co
 		_enableSessionServer = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.EnableSessionServer", _("Enable connection to Multiplayer Server"), _("Toggles the connection to the server that allows hosting and joining online multiplayer games over the Internet."), kEnableSessionCmd);
 		_enableLANBroadcast = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.EnableLANBroadcast", _("Host games over LAN"), _("Allows the game sessions to be discovered over your local area network."));
 
+		if (_gameid == "moonbase")
+			_generateRandomMaps = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.GenerateRandomMaps", _("Generate random maps"), _("Allow random map generation (Based from Moonbase Console)."));
+
 		_sessionServerAddr = new GUI::EditTextWidget(widgetsBoss(), "HENetworkGameOptionsDialog.SessionServerAddress", Common::U32String(""), _("Address of the server to connect to for hosting and joining online game sessions."));
 
 		_serverResetButton = addClearButton(widgetsBoss(), "HENetworkGameOptionsDialog.ServerReset", kResetServersCmd);
 	}
+
+	// Display network version
+	_networkVersion = new GUI::StaticTextWidget(widgetsBoss(), "HENetworkGameOptionsDialog.NetworkVersion", Common::String::format("Multiplayer Version: %s", NETWORK_VERSION));
 }
 
 void HENetworkGameOptionsWidget::load() {
@@ -1716,6 +1751,7 @@ void HENetworkGameOptionsWidget::load() {
 	} else {
 		bool enableSessionServer = true;
 		bool enableLANBroadcast = true;
+		bool generateRandomMaps = false;
 		Common::String sessionServerAddr = "multiplayer.scummvm.org";
 
 		if (ConfMan.hasKey("enable_session_server", _domain))
@@ -1730,6 +1766,10 @@ void HENetworkGameOptionsWidget::load() {
 			sessionServerAddr = ConfMan.get("session_server", _domain);
 		_sessionServerAddr->setEditString(sessionServerAddr);
 		_sessionServerAddr->setEnabled(enableSessionServer);
+
+		if (ConfMan.hasKey("generate_random_maps", _domain))
+			generateRandomMaps = ConfMan.getBool("generate_random_maps", _domain);
+		_generateRandomMaps->setState(generateRandomMaps);
 	}
 }
 
@@ -1745,6 +1785,8 @@ bool HENetworkGameOptionsWidget::save() {
 		ConfMan.setBool("enable_session_server", _enableSessionServer->getState(), _domain);
 		ConfMan.setBool("enable_lan_broadcast", _enableLANBroadcast->getState(), _domain);
 		ConfMan.set("session_server", _sessionServerAddr->getEditString(), _domain);
+		if (_gameid == "moonbase")
+			ConfMan.setBool("generate_random_maps", _generateRandomMaps->getState(), _domain);
 	}
 	return true;
 }
@@ -1763,6 +1805,7 @@ void HENetworkGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Com
 					.addWidget("ServerReset", "", 15, 15)
 				.closeLayout()
 				.addWidget("EnableCompetitiveMods", "Checkbox")
+				.addWidget("NetworkVersion", "")
 			.closeLayout()
 		.closeDialog();
 #endif
@@ -1772,12 +1815,14 @@ void HENetworkGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Com
 				.addPadding(0, 0, 12, 0)
 				.addWidget("EnableSessionServer", "Checkbox")
 				.addWidget("EnableLANBroadcast", "Checkbox")
+				.addWidget("GenerateRandomMaps", "Checkbox")
 				.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
 					.addPadding(0, 0, 12, 0)
 					.addWidget("SessionServerLabel", "OptionsLabel")
 					.addWidget("SessionServerAddress", "EditTextWidget")
 					.addWidget("ServerReset", "", 15, 15)
 				.closeLayout()
+				.addWidget("NetworkVersion", "")
 			.closeLayout()
 		.closeDialog();
 	}

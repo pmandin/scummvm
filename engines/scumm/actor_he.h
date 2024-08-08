@@ -27,31 +27,42 @@
 
 namespace Scumm {
 
-struct AuxBlock {
-	bool visible;
-	Common::Rect r;
+#define ACTOR_GENERAL_FLAG_IGNORE_ERASE 0x00000001
 
-	void reset() {
-		visible = false;
-		r.left = r.top = 0;
-		r.right = r.bottom = -1;
-	}
+#define HE100_CHORE_REDIRECT_INIT        1024
+#define HE100_CHORE_REDIRECT_WALK        1025
+#define HE100_CHORE_REDIRECT_STAND       1026
+#define HE100_CHORE_REDIRECT_START_TALK  1027
+#define HE100_CHORE_REDIRECT_STOP_TALK   1028
 
-	void clear() {
-		reset();
-		r.right = 0;
-		r.bottom = 0;
-	}
+ struct HEEraseAuxEntry {
+	int actor;
+	int32 x1, y1, x2, y2;
 };
 
-struct AuxEntry {
-	int actorNum;
-	int subIndex;
+struct HEAnimAuxEntry {
+	int actor;
+	int auxIndex;
+};
+
+struct HEAnimAuxData {
+	byte *auxDefaultSearchBlock;
+	byte *externalDataPtr;
+	const byte *auxDataBlock;
+	int actor;
+};
+
+struct HEAuxFileRelInfo {
+	int globFileOffset;
+	Common::File fileHandle;
+	int globType;
+	int globNum;
+	int roomNum;
 };
 
 class ActorHE : public Actor {
 public:
-	ActorHE(ScummEngine *scumm, int id) : Actor(scumm, id) {}
+	ActorHE(ScummEngine *scumm, int id);
 
 	void initActor(int mode) override;
 
@@ -59,7 +70,7 @@ public:
 
 	void drawActorToBackBuf(int x, int y);
 
-	void setHEFlag(int bit, int set);
+	void setActorEraseType(int eraseValue);
 
 	void setCondition(int slot, int set);
 	bool isConditionSet(int slot) const;
@@ -70,15 +81,23 @@ public:
 	void setTalkCondition(int slot);
 	bool isTalkConditionSet(int slot) const;
 
+	void clearActorUpdateInfo();
+	void setActorUpdateArea(int x1, int y1, int x2, int y2);
+
 public:
 	/** This rect is used to clip actor drawing. */
 	Common::Rect _clipOverride;
 
 	bool _heNoTalkAnimation;
 	bool _heTalking;
-	byte _heFlags;
+	byte _generalFlags;
 
-	AuxBlock _auxBlock;
+	int _auxActor;
+	int32 _auxEraseX1, _auxEraseY1, _auxEraseX2, _auxEraseY2;
+
+	// 80 is the maximum number of strips that any hi-res HE game is going to have
+	int _screenUpdateTableMin[80];
+	int _screenUpdateTableMax[80];
 
 	struct {
 		int16 posX;

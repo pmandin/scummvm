@@ -90,7 +90,7 @@ public:
 	void stopPlay();
 	void setDelay(uint32 ticks);
 
-	void setCurrentFrame(uint16 frameId) { _nextFrame = frameId; }
+	void setCurrentFrame(uint16 frameId);
 	uint16 getCurrentFrameNum() { return _curFrameNumber; }
 	int getNextFrame() { return _nextFrame; }
 	uint16 getFramesNum() { return _numFrames; }
@@ -115,10 +115,12 @@ public:
 	bool checkSpriteIntersection(uint16 spriteId, Common::Point pos);
 	Common::List<Channel *> getSpriteIntersections(const Common::Rect &r);
 	uint16 getSpriteIdByMemberId(CastMemberID id);
+	bool refreshPointersForCastMemberID(CastMemberID id);
 
 	bool renderTransition(uint16 frameId, RenderMode mode);
 	void renderFrame(uint16 frameId, RenderMode mode = kRenderModeNormal);
-	void renderSprites(RenderMode mode = kRenderModeNormal);
+	void incrementFilmLoops();
+	void updateSprites(RenderMode mode = kRenderModeNormal);
 	bool renderPrePaletteCycle(RenderMode mode = kRenderModeNormal);
 	void setLastPalette();
 	bool isPaletteColorCycling();
@@ -143,13 +145,15 @@ private:
 	bool checkShotSimilarity(const Graphics::Surface *surface1, const Graphics::Surface *surface2);
 
 	bool processImmediateFrameScript(Common::String s, int id);
-	bool processFrozenScripts();
+	bool processFrozenScripts(bool recursion = false, int count = 0);
 
 public:
 	Common::Array<Channel *> _channels;
 	Common::SortedArray<Label *> *_labels;
 	Common::HashMap<uint16, Common::String> _actions;
 	Common::HashMap<uint16, bool> _immediateActions;
+
+	Common::Array<Frame *> _scoreCache;
 
 	// On demand frames loading
 	uint32 _version;
@@ -182,6 +186,7 @@ public:
 	bool _waitForClickCursor;
 	bool _cursorDirty;
 	bool _activeFade;
+	bool _exitFrameCalled;
 	Cursor _defaultCursor;
 	CursorRef _currentCursor;
 	bool _skipTransition;

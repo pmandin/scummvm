@@ -48,6 +48,7 @@
 #define GUIO_MIDISEGACD      "\x10"
 #define GUIO_MIDIMT32        "\x11"
 #define GUIO_MIDIGM          "\x12"
+#define GUIO_MIDIMAC		 "\x17"
 
 #define GUIO_NOASPECT        "\x13"
 
@@ -58,8 +59,8 @@
 #define GUIO_RENDERVGA			"\x1c"
 #define GUIO_RENDERAMIGA		"\x1d"
 #define GUIO_RENDERFMTOWNS		"\x1e"
-#define GUIO_RENDERPC9821		"\x1f"
-#define GUIO_RENDERPC9801		"\x20"
+#define GUIO_RENDERPC98_256C	"\x1f"
+#define GUIO_RENDERPC98_16C		"\x20"
 #define GUIO_RENDERAPPLE2GS		"\x21"
 #define GUIO_RENDERATARIST		"\x22"
 #define GUIO_RENDERMACINTOSH	"\x23"
@@ -69,6 +70,8 @@
 #define GUIO_RENDERCPC      	"\x27"
 #define GUIO_RENDERZX	    	"\x28"
 #define GUIO_RENDERC64	    	"\x29"
+#define GUIO_RENDERVGAGREY    	"\x2A"
+#define GUIO_RENDERPC98_8C   	"\x2B"
 
 #define GUIO_LINKSPEECHTOSFX "\x30"
 #define GUIO_LINKMUSICTOSFX  "\x31"

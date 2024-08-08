@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "common/crc.h"
 #include "twp/twp.h"
 #include "twp/detection.h"
@@ -262,7 +263,7 @@ static SQInteger sqChr(HSQUIRRELVM v) {
 		return sq_throwerror(v, "failed to get value");
 	Common::String s;
 	s += char(value);
-	sqpush(v, s);
+	sqpush(v, Common::move(s));
 	return 1;
 }
 
@@ -311,13 +312,13 @@ static SQInteger findScreenPosition(HSQUIRRELVM v) {
 		if (!actorSlot)
 			return 0;
 		for (int i = 1; i < MAX_VERBS; i++) {
-			Verb vb = actorSlot->verbs[i];
+			const Verb &vb = actorSlot->verbSlots[i]._verb;
 			if (vb.id.id == verb) {
 				SpriteSheet *verbSheet = g_twp->_resManager->spriteSheet("VerbSheet");
 				const SpriteSheetFrame *verbFrame = &verbSheet->getFrame(Common::String::format("%s_en", vb.image.c_str()));
 				Math::Vector2d pos(verbFrame->spriteSourceSize.left + verbFrame->frame.width() / 2.f, verbFrame->sourceSize.getY() - verbFrame->spriteSourceSize.top - verbFrame->spriteSourceSize.height() + verbFrame->frame.height() / 2.f);
 				debugC(kDebugGenScript, "findScreenPosition(%lld) => %f,%f", verb, pos.getX(), pos.getY());
-				sqpush(v, pos);
+				sqpush(v, Common::move(pos));
 				return 1;
 			}
 		}
@@ -334,7 +335,7 @@ static SQInteger findScreenPosition(HSQUIRRELVM v) {
 	Math::Vector2d rPos = g_twp->roomToScreen(obj->_node->getAbsPos());
 	Math::Vector2d pos(rPos.getX() + obj->_node->getSize().getX() / 2.f, rPos.getY() + obj->_node->getSize().getY() / 2.f);
 	debugC(kDebugGenScript, "findScreenPosition(%s) => (%f,%f)", obj->_name.c_str(), pos.getX(), pos.getY());
-	sqpush(v, pos);
+	sqpush(v, Common::move(pos));
 	return 1;
 }
 
@@ -342,30 +343,112 @@ static SQInteger frameCounter(HSQUIRRELVM v) {
 	return sqpush(v, g_twp->_frameCounter);
 }
 
+static Common::String toPlatform(const Common::String &value) {
+	const char *platformsSrc[] = {"xbox", "switch", "playstation", "playstation2"};
+	const char *platformsDst[] = {"XBOX", "SWITCH", "PS4", "PS4"};
+	for (int i = 0; i < ARRAYSIZE(platformsSrc); i++) {
+		if (value == platformsSrc[i]) {
+			return platformsDst[i];
+		}
+	}
+	return "0";
+}
+
 static SQInteger getUserPref(HSQUIRRELVM v) {
 	Common::String key;
 	if (SQ_FAILED(sqget(v, 2, key))) {
-		return sq_throwerror(v, "failed to get key");
+		return sq_throwerror(v, _SC("failed to get key"));
 	}
-	// TODO: use ConfMan to search for key
 
-	// if configuration
-	int numArgs = sq_gettop(v);
-	if (numArgs == 3) {
-		HSQOBJECT obj;
-		sq_getstackobj(v, 3, &obj);
-		sqpush(v, obj);
+	if (key == "platform" && ConfMan.hasKey(key)) {
+		sqpush(v, toPlatform(ConfMan.get(key)));
 		return 1;
 	}
-	return 0;
+
+	SQInteger numArgs = sq_gettop(v) - 1;
+	// is there a fault value as argument ?
+	if (numArgs > 1) {
+		SQObjectType type = sq_gettype(v, 3);
+		if (type == SQObjectType::OT_STRING) {
+			Common::String str;
+			if (SQ_FAILED(sqget(v, 3, str))) {
+				return sq_throwerror(v, _SC("failed to get string"));
+			}
+			sqpush(v, ConfMan.hasKey(key) ? ConfMan.get(key) : str);
+			return 1;
+		}
+		if (type == SQObjectType::OT_INTEGER) {
+			SQInteger integer;
+			if (SQ_FAILED(sqget(v, 3, integer))) {
+				return sq_throwerror(v, _SC("failed to get integer"));
+			}
+			if (ConfMan.hasKey(key)) {
+				Common::String value = ConfMan.get(key);
+				bool bValue = false;
+				if (parseBool(value, bValue)) {
+					sqpush(v, bValue);
+					return 1;
+				}
+				sqpush(v, ConfMan.getInt(key));
+				return 1;
+			}
+
+			sqpush(v, integer);
+			return 1;
+		}
+		if (type == SQObjectType::OT_FLOAT) {
+			SQFloat fl;
+			if (SQ_FAILED(sqget(v, 3, fl))) {
+				return sq_throwerror(v, _SC("failed to get float"));
+			}
+			sqpush(v, ConfMan.hasKey(key) ? atof(ConfMan.get(key).c_str()) : fl);
+			return 1;
+		}
+		return sq_throwerror(v, _SC("failed to get user preferences"));
+	}
+
+	if (ConfMan.hasKey(key)) {
+		Common::String value = ConfMan.get(key);
+		bool isNumber = !value.empty();
+		bool isFloat = false;
+		for (size_t i = 0; i < value.size(); i++) {
+			if (!isFloat && value[i] == '.') {
+				isFloat = true;
+				continue;
+			}
+			if (!Common::isDigit(value[i])) {
+				isNumber = false;
+				break;
+			}
+		}
+		if (!isNumber) {
+			sqpush(v, value);
+			return 1;
+		}
+		if (isFloat) {
+			sqpush(v, atof(value.c_str()));
+			return 1;
+		}
+		sqpush(v, (SQInteger)atol(value.c_str()));
+		return 1;
+	}
+
+	sq_pushnull(v);
+	return 1;
 }
 
 static SQInteger getPrivatePref(HSQUIRRELVM v) {
 	Common::String key;
 	if (SQ_FAILED(sqget(v, 2, key))) {
 		return sq_throwerror(v, "failed to get key");
-		// } else if (g_twp->getPrefs().hasPrivPref(key)) {
-		// 	return sqpush(v, g_twp->getPrefs().privPrefAsJson(key));
+	} else if (ConfMan.hasKey(key)) {
+		Common::String value = ConfMan.get(key);
+		char *errpos;
+		int ivalue = (int)strtol(value.c_str(), &errpos, 0);
+		if (value.c_str() == errpos) {
+			return sqpush(v, ConfMan.get(key));
+		}
+		return sqpush(v, ivalue);
 	} else if (sq_gettop(v) == 3) {
 		HSQOBJECT obj;
 		sq_getstackobj(v, 3, &obj);
@@ -377,7 +460,7 @@ static SQInteger getPrivatePref(HSQUIRRELVM v) {
 }
 
 static SQInteger incutscene(HSQUIRRELVM v) {
-	sqpush(v, g_twp->_cutscene != nullptr);
+	sqpush(v, g_twp->_cutscene.id != 0);
 	return 1;
 }
 
@@ -481,7 +564,7 @@ static SQInteger loadArray(HSQUIRRELVM v) {
 	debugC(kDebugGenScript, "loadArray: %s", orgFilename);
 	Common::String filename = ResManager::getKey(orgFilename);
 	GGPackEntryReader entry;
-	entry.open(*g_twp->_pack, g_twp->_pack->assetExists(filename.c_str()) ? filename : orgFilename);
+	entry.open(*g_twp->_pack, g_twp->_pack->assetExists(filename.c_str()) ? Common::move(filename) : orgFilename);
 	sq_newarray(v, 0);
 	while (!entry.eos()) {
 		Common::String line = entry.readLine();
@@ -492,20 +575,40 @@ static SQInteger loadArray(HSQUIRRELVM v) {
 }
 
 static SQInteger markAchievement(HSQUIRRELVM v) {
-	// TODO: markAchievement
-	warning("markAchievement not implemented");
+	Common::String id;
+	if (SQ_FAILED(sqget(v, 2, id)))
+		return sq_throwerror(v, "failed to get id");
+
+	SQInteger numArgs = sq_gettop(v);
+	switch (numArgs) {
+	case 2:
+		AchMan.setAchievement(id);
+		break;
+	case 4: {
+		SQInteger count, total;
+		if (SQ_FAILED(sqget(v, 3, count)))
+			return sq_throwerror(v, "failed to get count");
+		if (SQ_FAILED(sqget(v, 4, total)))
+			return sq_throwerror(v, "failed to get total");
+		AchMan.setStatInt(Common::String::format("ST%s", id.substr(3).c_str()), count);
+		if (count == total) {
+			AchMan.setAchievement(id);
+		}
+	} break;
+	default:
+		error("TODO: markAchievement not implemented");
+		break;
+	}
 	return 0;
 }
 
 static SQInteger markProgress(HSQUIRRELVM v) {
-	// TODO: markProgress
-	warning("markProgress not implemented");
+	warning("TODO: markProgress not implemented");
 	return 0;
 }
 
 static SQInteger markStat(HSQUIRRELVM v) {
-	// TODO: markStat
-	warning("markStat not implemented");
+	warning("TODO: markStat not implemented");
 	return 0;
 }
 
@@ -658,7 +761,7 @@ static SQInteger refreshUI(HSQUIRRELVM v) {
 // }
 static SQInteger screenSize(HSQUIRRELVM v) {
 	Math::Vector2d screen = g_twp->_room->getScreenSize();
-	sqpush(v, screen);
+	sqpush(v, Common::move(screen));
 	return 1;
 }
 
@@ -669,13 +772,59 @@ static SQInteger setDebugger(HSQUIRRELVM v) {
 }
 
 static SQInteger setPrivatePref(HSQUIRRELVM v) {
-	// TODO: setPrivatePref
+	Common::String key;
+	if (SQ_FAILED(sqget(v, 2, key))) {
+		return sq_throwerror(v, _SC("failed to get key"));
+	}
+	SQObjectType type = sq_gettype(v, 3);
+	switch (type) {
+	case SQObjectType::OT_STRING: {
+		Common::String str;
+		if (SQ_FAILED(sqget(v, 3, str))) {
+			return sq_throwerror(v, _SC("failed to get str"));
+		}
+		ConfMan.set(key, str);
+		return 0;
+	}
+	case SQObjectType::OT_INTEGER:
+		SQInteger integer;
+		if (SQ_FAILED(sqget(v, 3, integer))) {
+			return sq_throwerror(v, _SC("failed to get integer"));
+		}
+		ConfMan.setInt(key, (int)integer);
+		return 0;
+	default:
+		break;
+	}
 	warning("setPrivatePref not implemented");
 	return 0;
 }
 
 static SQInteger setUserPref(HSQUIRRELVM v) {
-	// TODO: setUserPref
+	Common::String key;
+	if (SQ_FAILED(sqget(v, 2, key))) {
+		return sq_throwerror(v, _SC("failed to get key"));
+	}
+	SQObjectType type = sq_gettype(v, 3);
+	switch (type) {
+	case SQObjectType::OT_STRING: {
+		Common::String str;
+		if (SQ_FAILED(sqget(v, 3, str))) {
+			return sq_throwerror(v, _SC("failed to get str"));
+		}
+		ConfMan.set(key, str);
+		return 0;
+	}
+	case SQObjectType::OT_INTEGER:
+		SQInteger integer;
+		if (SQ_FAILED(sqget(v, 3, integer))) {
+			return sq_throwerror(v, _SC("failed to get integer"));
+		}
+		ConfMan.setInt(key, (int)integer);
+		return 0;
+	default:
+		break;
+	}
 	warning("setUserPref not implemented");
 	return 0;
 }
@@ -713,7 +862,7 @@ static SQInteger setVerb(HSQUIRRELVM v) {
 	debugC(kDebugGenScript, "setVerb %lld, %lld, %lld, %s", actorSlot, verbSlot, id, text.c_str());
 	VerbId verbId;
 	verbId.id = id;
-	g_twp->_hud->_actorSlots[actorSlot - 1].verbs[verbSlot] = Verb(verbId, image, fun, text, key, flags);
+	g_twp->_hud->_actorSlots[actorSlot - 1].verbSlots[verbSlot]._verb = Verb(verbId, image, fun, text, key, flags);
 	return 0;
 }
 
@@ -903,7 +1052,7 @@ static SQInteger translate(HSQUIRRELVM v) {
 		return sq_throwerror(v, "Failed to get text");
 	Common::String newText = g_twp->getTextDb().getText(text);
 	debugC(kDebugGenScript, "translate(%s): %s", text, newText.c_str());
-	sqpush(v, newText);
+	sqpush(v, Common::move(newText));
 	return 1;
 }
 

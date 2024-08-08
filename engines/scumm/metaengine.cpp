@@ -243,8 +243,8 @@ bool ScummEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsHelp) ||
 		(
 			f == kSupportsChangingOptionsDuringRuntime &&
-			(Common::String(_game.guioptions).contains(GUIO_AUDIO_OVERRIDE) ||
-			 Common::String(_game.guioptions).contains(GUIO_NETWORK))
+			(Common::String(_game.guioptions).contains(GAMEOPTION_AUDIO_OVERRIDE) ||
+			 Common::String(_game.guioptions).contains(GAMEOPTION_NETWORK))
 		) ||
 		(f == kSupportsQuitDialogOverride && (_useOriginalGUI || !ChainedGamesMan.empty()));
 }
@@ -259,7 +259,8 @@ bool Scumm::ScummEngine::enhancementEnabled(int32 cls) {
  *
  * This is heavily based on our MD5 detection scheme.
  */
-Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine) {
+Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine,
+	const DetectedGame &gameDescriptor, const void *metaEngineDescriptor) {
 	assert(syst);
 	assert(engine);
 	const char *gameid = ConfMan.get("gameid").c_str();
@@ -431,6 +432,8 @@ Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine) {
 			break;
 		case 98:
 		case 95:
+			*engine = new ScummEngine_v95he(syst, res);
+			break;
 		case 90:
 			*engine = new ScummEngine_v90he(syst, res);
 			break;
@@ -656,6 +659,14 @@ static const ExtraGuiOption fmtownsTrimTo200 = {
 	0
 };
 
+static const ExtraGuiOption fmtownsForceHiResMode = {
+	_s("Run in original 640 x 480 resolution"),
+	_s("This allows more accurate pause/restart banners, but might impact performance or shader/scaler usage."),
+	"force_fmtowns_hires_mode",
+	false,
+	0,
+	0};
+
 static const ExtraGuiOption macV3LowQualityMusic = {
 	_s("Play simplified music"),
 	_s("This music was intended for low-end Macs, and uses only one channel."),
@@ -731,6 +742,15 @@ static const ExtraGuiOption enableCOMISong = {
 	0
 };
 
+static const ExtraGuiOption enableCopyProtection = {
+	_s("Enable copy protection"),
+	_s("Enable any copy protection that would otherwise be bypassed by default."),
+	"copy_protection",
+	false,
+	0,
+	0
+};
+
 const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &target) const {
 	ExtraGuiOptions options;
 	// Query the GUI options
@@ -741,16 +761,19 @@ const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &
 	const Common::Platform platform = Common::parsePlatform(ConfMan.get("platform", target));
 	const Common::String language = ConfMan.get("language", target);
 
-	if (target.empty() || guiOptions.contains(GUIO_ORIGINALGUI)) {
+	if (target.empty() || guiOptions.contains(GAMEOPTION_ORIGINALGUI)) {
 		options.push_back(enableOriginalGUI);
 	}
-	if (target.empty() || guiOptions.contains(GUIO_ENHANCEMENTS)) {
+	if (target.empty() || guiOptions.contains(GAMEOPTION_COPY_PROTECTION)) {
+		options.push_back(enableCopyProtection);
+	}
+	if (target.empty() || guiOptions.contains(GAMEOPTION_ENHANCEMENTS)) {
 		options.push_back(enableEnhancements);
 	}
-	if (target.empty() || guiOptions.contains(GUIO_LOWLATENCYAUDIO)) {
+	if (target.empty() || guiOptions.contains(GAMEOPTION_LOWLATENCYAUDIO)) {
 		options.push_back(enableLowLatencyAudio);
 	}
-	if (target.empty() || guiOptions.contains(GUIO_AUDIO_OVERRIDE)) {
+	if (target.empty() || guiOptions.contains(GAMEOPTION_AUDIO_OVERRIDE)) {
 		options.push_back(audioOverride);
 	}
 	if (target.empty() || gameid == "comi") {
@@ -767,8 +790,12 @@ const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &
 		options.push_back(smoothScrolling);
 		if (target.empty() || gameid == "loom")
 			options.push_back(semiSmoothScrolling);
-		if (guiOptions.contains(GUIO_TRIM_FMTOWNS_TO_200_PIXELS))
+		if (guiOptions.contains(GAMEOPTION_TRIM_FMTOWNS_TO_200_PIXELS))
 			options.push_back(fmtownsTrimTo200);
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+		if (platform == Common::kPlatformFMTowns && Common::parseLanguage(language) != Common::JA_JPN)
+			options.push_back(fmtownsForceHiResMode);
+#endif
 	}
 
 	// The Steam Mac versions of Loom and Indy 3 are more akin to the VGA

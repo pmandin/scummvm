@@ -52,9 +52,9 @@
 namespace Director {
 
 const char *FEDraculXObj::xlibName = "FEDracul";
-const char *FEDraculXObj::fileNames[] = {
-	"FEDracul",
-	nullptr
+const XlibFileDesc FEDraculXObj::fileNames[] = {
+	{ "FEDracul",	nullptr },
+	{ nullptr,		nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -82,7 +82,7 @@ void FEDraculXObj::close(ObjectType type) {
 }
 
 
-FEDraculXObject::FEDraculXObject(ObjectType ObjectType) : Object<FEDraculXObject>("FEDraculXObj") {
+FEDraculXObject::FEDraculXObject(ObjectType ObjectType) : Object<FEDraculXObject>("FEDracul") {
 	_objType = ObjectType;
 }
 

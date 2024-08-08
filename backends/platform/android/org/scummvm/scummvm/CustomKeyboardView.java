@@ -30,12 +30,10 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-//import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -1071,7 +1069,7 @@ public class CustomKeyboardView extends View implements View.OnClickListener {
 
 	private void sendAccessibilityEventForUnicodeCharacter(int eventType, int code) {
 		if (mAccessibilityManager.isEnabled()) {
-			AccessibilityEvent event = AccessibilityEvent.obtain(eventType);
+			AccessibilityEvent event = CompatHelpers.AccessibilityEventConstructor.make(eventType);
 			onInitializeAccessibilityEvent(event);
 			final String text;
 			switch (code) {

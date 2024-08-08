@@ -25,7 +25,6 @@
 #include "common/endian.h"
 #include "common/events.h"
 #include "common/file.h"
-#include "common/math.h"
 #include "common/ptr.h"
 #include "common/random.h"
 #include "common/savefile.h"
@@ -43,6 +42,8 @@
 #include "image/ani.h"
 #include "image/bmp.h"
 #include "image/icocur.h"
+
+#include "math/utils.h"
 
 #include "audio/decoders/wave.h"
 #include "audio/decoders/vorbis.h"
@@ -1467,8 +1468,8 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, MidiDriver *midiDrv, cons
 	: _system(system), _mixer(mixer), _midiDrv(midiDrv), _roomNumber(1), _screenNumber(0), _direction(0), _hero(0), _disc(0), _swapOutRoom(0), _swapOutScreen(0), _swapOutDirection(0),
 	  _haveHorizPanAnimations(false), _loadedRoomNumber(0), _activeScreenNumber(0),
 	  _gameState(kGameStateBoot), _gameID(gameID), _havePendingScreenChange(false), _forceScreenChange(false), _havePendingPreIdleActions(false), _havePendingReturnToIdleState(false), _havePendingPostSwapScreenReset(false),
-	  _havePendingCompletionCheck(false), _havePendingPlayAmbientSounds(false), _ambientSoundFinishTime(0), _escOn(false), _debugMode(false), _fastAnimationMode(false), _lowQualityGraphicsMode(false),
-	  _musicTrack(0), _musicActive(true), _musicMute(false), _musicMuteDisabled(false),
+	  _havePendingCompletionCheck(false), _havePendingPlayAmbientSounds(false), _ambientSoundFinishTime(0), _escOn(false), _debugMode(false), _fastAnimationMode(false), _preloadSounds(false),
+	  _lowQualityGraphicsMode(false), _musicTrack(0), _musicActive(true), _musicMute(false), _musicMuteDisabled(false),
 	  _scoreSectionEndTime(0), _musicVolume(getDefaultSoundVolume()), _musicVolumeRampStartTime(0), _musicVolumeRampStartVolume(0), _musicVolumeRampRatePerMSec(0), _musicVolumeRampEnd(0),
 	  _panoramaDirectionFlags(0),
 	  _loadedAnimation(0), _loadedAnimationHasSound(false),
@@ -1501,9 +1502,11 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, MidiDriver *midiDrv, cons
 
 #ifdef USE_FREETYPE2
 	if (_gameID == GID_AD2044) {
-		Common::File f;
-		if (f.open("gfx/AD2044.TTF"))
-			_subtitleFontKeepalive.reset(Graphics::loadTTFFont(f, 16, Graphics::kTTFSizeModeCharacter, 108, 72, Graphics::kTTFRenderModeLight));
+		Common::File *f = new Common::File();
+		if (f->open("gfx/AD2044.TTF"))
+			_subtitleFontKeepalive.reset(Graphics::loadTTFFont(f, DisposeAfterUse::YES, 16, Graphics::kTTFSizeModeCharacter, 108, 72, Graphics::kTTFRenderModeLight));
+		else
+			delete f;
 	} else
 		_subtitleFontKeepalive.reset(Graphics::loadTTFFontFromArchive("NotoSans-Regular.ttf", 16, Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeLight));
 
@@ -1666,6 +1669,10 @@ void Runtime::setDebugMode(bool debugMode) {
 
 void Runtime::setFastAnimationMode(bool fastAnimationMode) {
 	_fastAnimationMode = fastAnimationMode;
+}
+
+void Runtime::setPreloadSounds(bool preloadSounds) {
+	_preloadSounds = preloadSounds;
 }
 
 void Runtime::setLowQualityGraphicsMode(bool lowQualityGraphicsMode) {
@@ -3492,12 +3499,37 @@ SoundCache *Runtime::loadCache(SoundInstance &sound) {
 		return nullptr;
 	}
 
+	if (_preloadSounds) {
+		if (stream->size() > static_cast<int64>(0xffffffffu)) {
+			warning("Sound stream is too large");
+			delete stream;
+			return nullptr;
+		}
+
+		uint32 streamSize = static_cast<uint32>(stream->size());
+
+		byte *streamContents = new byte[streamSize];
+
+		if (stream->read(streamContents, streamSize) != streamSize) {
+			warning("Couldn't preload sound contents for sound '%s'", sound.name.c_str());
+			delete[] streamContents;
+			delete stream;
+			return nullptr;
+		}
+
+		Common::MemoryReadStream *memStream = new Common::MemoryReadStream(streamContents, streamSize);
+		delete stream;
+
+		stream = memStream;
+	}
+
 	Common::SharedPtr<SoundLoopInfo> loopInfo;
 
 	if (_gameID == GID_SCHIZM) {
 		loopInfo = SoundLoopInfo::readFromWaveFile(*stream);
 		if (!stream->seek(0)) {
 			warning("Couldn't reset stream to 0 after reading sample table for sound '%s'", sound.name.c_str());
+			delete stream;
 			return nullptr;
 		}
 	}
@@ -5100,7 +5132,7 @@ bool Runtime::computeEffectiveVolumeAndBalance(SoundInstance &snd) {
 	uint effectiveVolume = applyVolumeScale(snd.volume);
 	int32 effectiveBalance = applyBalanceScale(snd.balance);
 
-	double radians = Common::deg2rad<double>(_listenerAngle);
+	double radians = Math::deg2rad<double>(_listenerAngle);
 	int32 cosAngle = static_cast<int32>(cos(radians) * (1 << 15));
 	int32 sinAngle = static_cast<int32>(sin(radians) * (1 << 15));
 

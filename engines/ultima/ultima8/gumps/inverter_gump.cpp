@@ -21,7 +21,7 @@
 
 #include "ultima/ultima8/gumps/inverter_gump.h"
 
-#include "ultima/ultima8/graphics/render_surface.h"
+#include "ultima/ultima8/gfx/render_surface.h"
 #include "ultima/ultima8/ultima8.h"
 
 namespace Ultima {
@@ -92,7 +92,8 @@ void InverterGump::PaintChildren(RenderSurface *surf, int32 lerp_factor, bool sc
 
 	// need a backbuffer
 	if (!_buffer) {
-		_buffer = RenderSurface::CreateSecondaryRenderSurface(width, height);
+		Graphics::Screen *screen = Ultima8Engine::get_instance()->getScreen();
+		_buffer = new RenderSurface(width, height, screen->format);
 	}
 
 	_buffer->BeginPainting();

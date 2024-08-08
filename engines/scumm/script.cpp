@@ -42,6 +42,14 @@ void ScummEngine::runScript(int script, bool freezeResistant, bool recursive, in
 	byte scriptType;
 	int slot;
 
+	// WORKAROUND for crash (#15256) in Maniac Mansion C64 demo:
+	// Attempting to, as any character, give the can of Pepsi to any other character
+	// attempts to start script 43. Unfortunately script 43 does not exist in
+	// the resources and crashes the game even on the original executable :-)
+	if (enhancementEnabled(kEnhGameBreakingBugFixes) && _game.id == GID_MANIAC &&
+		_game.version == 0 && (_game.features & GF_DEMO) && script == 43)
+		return;
+
  	if (!script)
 		return;
 
@@ -653,7 +661,7 @@ int ScummEngine::readVar(uint var) {
 					return powerStatModified;
 				case 1:  // Power swing
 					powerStat = vm.localvar[_currentScript][var];
-					powerStatModified = 20 + powerStat * 7 / 10;;
+					powerStatModified = 10 + powerStat * 17 / 20;;
 					return powerStatModified;
 				default:
 					break;
@@ -813,6 +821,7 @@ int ScummEngine::pop() {
 void ScummEngine::stopObjectCode() {
 	ScriptSlot *ss;
 
+	assert(_currentScript != 0xFF);
 	ss = &vm.slot[_currentScript];
 	if (_game.version <= 2) {
 		if (ss->where == WIO_GLOBAL || ss->where == WIO_LOCAL) {
@@ -854,6 +863,10 @@ void ScummEngine::runInventoryScript(int i) {
 		args[0] = i;
 		runScript(VAR(VAR_INVENTORY_SCRIPT), 0, 0, args);
 	}
+}
+
+void ScummEngine::runInventoryScriptEx(int i) {
+	runInventoryScript(i);
 }
 
 void ScummEngine::freezeScripts(int flag) {
@@ -977,7 +990,7 @@ void ScummEngine::runExitScript() {
 	// The same sound effect is also used in the underwater cavern (room
 	// 33), so we do the same fade out as in that room's exit script.
 	if (_game.id == GID_DIG && _currentRoom == 44 && enhancementEnabled(kEnhAudioChanges)) {
-		int scriptCmds[] = { 14, 215, 0x600, 0, 30, 0, 0, 0 };
+		int scriptCmds[] = { 14, 215, 0x600, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		_sound->soundKludge(scriptCmds, ARRAYSIZE(scriptCmds));
 	}
 }

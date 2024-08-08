@@ -99,6 +99,7 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"klaymen1",        "Klaymen Episodes: Pilot"},
 	{"knossos",         "K'NOSSOS"},
 	{"kulivocko",       "Kulivocko"},
+	{"leyendabiblio",   "La Leyenda de la Biblioteca"},
 	{"lifein3minutes",  "Life In 3 Minutes"},
 	{"lonelyrobot",     "Project Lonely Robot"},
 	{"looky",           "Looky"},
@@ -124,8 +125,10 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"one",             "One"},
 	{"onehelluvaday",   "One Helluva Day"},
 	{"openquest",       "Open Quest"},
+	{"operacionbomba",  "Operación: Bomba"},
 	{"paintaria",       "Paintaria"},
 	{"palladion",       "Palladion"},
+	{"pangea",          "Pangea 1/2"},
 	{"papasdaughters1", "Papa's Daughters"},
 	{"papasdaughters2", "Papa's Daughters Go to the Sea"},
 	{"petka02",         "Red Comrades 0.2: Operation F."},
@@ -142,7 +145,9 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"reversion2",      "Reversion: The Meeting"},
 	{"reversion3",      "Reversion: The Return"},
 	{"rhiannon",        "Rhiannon: Curse of the four Branches"},
+	{"rhiannonghosts",  "Rhiannon: Ghosts of the Past"},
 	{"ritter",          "1 1/2 Ritter: Auf der Suche nach der hinreissenden Herzelinde"},
+	{"roadsantiago",    "The Road to Santiago"},
 	{"rosemary",        "Rosemary"},
 	{"royalmahjong",    "Royal Mahjong: King's Journey"},
 	{"satanandsons",    "Satan and Sons"},
@@ -860,6 +865,10 @@ static const WMEGameDescription gameDescriptions[] = {
 		WME_ENTRY2s("actors.dcp", "170c7ade10edd7ff6d24b16f2eecd818", 453328582,
 					"stageplay.dcp", "ed67b4d6e35c19597241eb1d863aa315", 226453373), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_8_10),
 
+	WME_WINENTRY("darkfallls", "",
+		WME_ENTRY2s("actors.dcp", "17df9d381d49100d2bd79c5f3eefe53c", 454049405,
+					"stageplay.dcp", "037dcab0c7204a8c09f12aec4c4dd5e7", 198193043), Common::DE_DEU, ADGF_UNSTABLE | GF_3D, WME_1_8_10),
+
 	// Twilight: Dark Summer (Ario) (Persian)
 	WME_WINENTRY("darksummer", "",
 		WME_ENTRY1s("data.dcp", "da1142983240a5bb62c32f79a863eac5", 1030873185), Common::FA_IRN, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
@@ -1392,10 +1401,16 @@ static const WMEGameDescription gameDescriptions[] = {
 		WME_ENTRY2s("english.dcp", "e21c7278071cd2ee216ae72d5a39de29", 12008908,
 					"data.dcp", "43ba03f37a0f97249c1e0c3cf7d6f9a9", 167980), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_0),
 
-	// Ghost in the Sheet (aka S.C.A.R.E.) (German)
+	// Ghost in the Sheet (aka S.C.A.R.E.) (2007) (German)
 	WME_WINENTRY("ghostsheet", "",
 		WME_ENTRY2s("german.dcp", "7fe6c0b28ebdfa55f432805ebc524cc3", 209496295,
 					"data.dcp", "4e4e5fdff0f7a5f4aa5db51c5c7e94d3", 3759113), Common::DE_DEU, ADGF_UNSTABLE, WME_1_8_0),
+
+	// Ghost in the Sheet (aka Mystery Places - Das Geheimnis von Sektor Omega) (2011) (German)
+	WME_WINENTRY("ghostsheet", "",
+		WME_ENTRY3s("german_2.dcp", "1b034ed144db60e46fcd5333b6da1948", 741394,
+					"german.dcp", "7fe6c0b28ebdfa55f432805ebc524cc3", 209496295,
+					"data.dcp", "4e4e5fdff0f7a5f4aa5db51c5c7e94d3", 3759113), Common::DE_DEU, ADGF_UNSTABLE, WME_1_9_2),
 
 	// Ghost in the Sheet (Italian)
 	WME_WINENTRY("ghostsheet", "",
@@ -1716,6 +1731,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("kulivocko", "Demo 2",
 		WME_ENTRY1s("data.dcp", "501c59ddb787646d87dead183199c8ed", 73601289), Common::CS_CZE, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
 
+	// La Leyenda de la Biblioteca
+	WME_WINENTRY("leyendabiblio", "",
+		WME_ENTRY1s("data.dcp", "95493a5293b0a3320159fab276fe128d", 63490845), Common::ES_ESP, ADGF_UNSTABLE, WME_1_8_10),
+
 	// Life In 3 Minutes
 	WME_WINENTRY("lifein3minutes", "",
 		WME_ENTRY1s("data.dcp", "c6368950e37a95bf098b02b4eaa5b929", 141787214), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
@@ -1751,6 +1770,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Tale of The Lost Bride and A Hidden Treasure (Russian)
 	WME_WINENTRY("lostbride", "",
 		WME_ENTRY1s("data.dcp", "cb45b579c6d5767341a9b07bc807df5f", 106683613), Common::RU_RUS, ADGF_UNSTABLE, WME_1_9_1),
+
+	// Tale of The Lost Bride and A Hidden Treasure (Englist)
+	WME_WINENTRY("lostbride", "",
+		WME_ENTRY1s("data.dcp", "c3c7a646d473914e495c4852f312eb76", 101119036), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
 
 	// Machu Mayu (Demo)
 	WME_WINENTRY("machumayu", "Demo",
@@ -1878,6 +1901,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("openquest", "",
 		WME_ENTRY1s("data.dcp", "16893e3fc15a211a49654ae66f684f28", 82281736), Common::EN_ANY, ADGF_UNSTABLE | GF_LOWSPEC_ASSETS, WME_1_9_1),
 
+	// Operacion: Bomba
+	WME_WINENTRY("operacionbomba", "",
+		WME_ENTRY1s("data.dcp", "4f5168a95b5ca46889221c5e9dabe691", 4176238), Common::ES_ESP, ADGF_UNSTABLE, WME_1_8_11),
+
 	// Paintaria
 	WME_WINENTRY("paintaria", "",
 		WME_ENTRY1s("data.dcp", "354c08440c98150ff0d4008dd2865880", 48326040), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
@@ -1885,6 +1912,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Palladion (Alpha6h)
 	WME_WINENTRY("palladion", "Alpha6h",
 		WME_ENTRY1s("Palladion_Alpha6h.exe", "55aec582159410ec6221d4c3fd53db24", 95240860), Common::DE_DEU, ADGF_UNSTABLE | ADGF_DEMO | GF_3D, WME_1_8_6),
+
+	// Pangea 1/2
+	WME_WINENTRY("pangea", "",
+		WME_ENTRY1s("Pangea.exe", "02aa4b7c3c81aeec418e3069c9a76a6b", 121986692), Common::ES_ESP, ADGF_UNSTABLE, WME_1_8_10),
 
 	// Papa's Daughters
 	WME_WINENTRY("papasdaughters1", "",
@@ -4168,6 +4199,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("rhiannon", "",
 		WME_ENTRY1s("data.dcp", "870f348900b735f1cc79c0608ce32b0e", 1046169851), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_6),
 
+	// Rhiannon: Curse of the four Branches
+	WME_WINENTRY("rhiannon", "",
+		WME_ENTRY1s("data.dcp", "38e104ce1ebaf73e81446ab4344e1ad7", 1025512723), Common::DE_DEU, ADGF_UNSTABLE, WME_1_8_10),
+
 	// Rhiannon: Curse of the four Branches (English PC DVD)
 	WME_WINENTRY("rhiannon", "DVD",
 		WME_ENTRY1s("data.dcp", "6736bbc921bb6ce5161b3ad095a97bd4", 1053441028), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_6),
@@ -4192,6 +4227,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("rhiannon", "Demo 2",
 		WME_ENTRY1s("data.dcp", "52f111205bf294e8630652981eb31c3d", 79687595), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_8_6),
 
+	// Rhiannon: Ghosts of the Past (Premium Edition)
+	WME_WINENTRY("rhiannonghosts", "Premium Edition",
+		WME_ENTRY1s("data.dcp", "785d2fcea73508ea40a5b00869b12b03", 946473152), Common::DE_DEU, ADGF_UNSTABLE, WME_1_9_1),
+
 	// 1 1/2 Ritter: Auf der Suche nach der hinreissenden Herzelinde (German)
 	WME_WINENTRY("ritter", "",
 		WME_ENTRY1s("data.dcp", "5ac416cee605d3a30f4d59687b1cdab2", 364260278), Common::DE_DEU, ADGF_UNSTABLE, WME_1_8_6),
@@ -4205,9 +4244,15 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("ritter", "Demo",
 		WME_ENTRY1s("data.dcp", "7fadb30dbe987528489f50bd85cc0c12", 99975952), Common::DE_DEU, ADGF_UNSTABLE | ADGF_DEMO, WME_1_8_6),
 
-	// Satan and Sons (Demo)
-	WME_WINENTRY("satanandsons", "Demo",
-		WME_ENTRY1s("data.dcp", "16a6ba8174b697bbba9299619d1e20c4", 67539054), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_3_2),
+	// The Road to Santiago (English)
+	WME_WINENTRY("roadsantiago", "",
+		WME_ENTRY2s("data.dcp", "7501579c6a455c25cd0bbedef7c4d9eb", 64363410,
+					"language.dcp", "b1ad8de1256cb37f46c4d92b22557de4", 10653707), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_6),
+
+	// The Road to Santiago (Spanish)
+	WME_WINENTRY("roadsantiago", "",
+		WME_ENTRY2s("data.dcp", "7501579c6a455c25cd0bbedef7c4d9eb", 64363410,
+					"language_1.dcp", "508ead0ed375c4b88f092d40adec91de", 10840449), Common::ES_ESP, ADGF_UNSTABLE, WME_1_8_6),
 
 	// Rosemary
 	WME_WINENTRY("rosemary", "",
@@ -4231,6 +4276,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Royal Mahjong: King's Journey (English)
 	WME_WINENTRY("royalmahjong", "",
 		WME_ENTRY1s("data.dcp", "f8f8b0308693d07261373766e001bb61", 28856313), Common::EN_ANY, ADGF_UNSTABLE, WME_MAHJONG),
+
+	// Satan and Sons (Demo)
+	WME_WINENTRY("satanandsons", "Demo",
+		WME_ENTRY1s("data.dcp", "16a6ba8174b697bbba9299619d1e20c4", 67539054), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_3_2),
 
 	// Securanote
 	WME_PLATENTRY("securanote", "",

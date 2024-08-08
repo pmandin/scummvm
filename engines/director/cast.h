@@ -30,6 +30,11 @@ namespace Common {
 	class SeekableReadStreamEndian;
 }
 
+namespace LingoDec {
+	class ChunkResolver;
+	struct ScriptContext;
+}
+
 namespace Director {
 
 class Archive;
@@ -99,17 +104,21 @@ public:
 
 	int getCastSize();
 	int getCastMaxID();
+	int getNextUnusedID();
 	Common::Rect getCastMemberInitialRect(int castId);
 	void setCastMemberModified(int castId);
-	CastMember *setCastMember(CastMemberID castId, CastMember *cast);
-	bool eraseCastMember(CastMemberID castId);
+	CastMember *setCastMember(int castId, CastMember *cast);
+	bool duplicateCastMember(CastMember *source, CastMemberInfo *info, int targetId);
+	bool eraseCastMember(int castId);
 	CastMember *getCastMember(int castId, bool load = true);
 	CastMember *getCastMemberByNameAndType(const Common::String &name, CastType type);
 	CastMember *getCastMemberByScriptId(int scriptId);
 	CastMemberInfo *getCastMemberInfo(int castId);
 	const Stxt *getStxt(int castId);
+	Common::String getLinkedPath(int castId);
 	Common::String getVideoPath(int castId);
 	Common::SeekableReadStreamEndian *getResource(uint32 tag, uint16 id);
+	void rebuildCastNameCache();
 
 	// release all castmember's widget, should be called when we are changing movie.
 	// because widget is handled by channel, thus we should clear all of those run-time info when we are switching the movie. (because we will create new widgets for cast)
@@ -161,6 +170,9 @@ public:
 	TilePatternEntry _tiles[kNumBuiltinTiles];
 
 	LingoArchive *_lingoArchive;
+
+	LingoDec::ScriptContext *_lingodec = nullptr;
+	LingoDec::ChunkResolver *_chunkResolver = nullptr;
 
 private:
 	DirectorEngine *_vm;

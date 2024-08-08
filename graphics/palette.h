@@ -27,6 +27,12 @@
 namespace Graphics {
 
 /**
+ * Constants available for use in paletted code
+ */
+#define PALETTE_COUNT 256
+#define PALETTE_SIZE (256 * 3)
+
+/**
  * @brief Simple class for handling a palette data.
  *
  * The palette data is specified in interleaved RGB format. That is, the
@@ -62,6 +68,12 @@ public:
 
 	~Palette();
 
+	/**
+	 * Constructs a new palette containing the standarad EGA palette
+	 */
+	static Palette createEGAPalette();
+
+	Palette &operator=(const Palette &rhs);
 	bool operator==(const Palette &rhs) const { return equals(rhs); }
 	bool operator!=(const Palette &rhs) const { return !equals(rhs); }
 

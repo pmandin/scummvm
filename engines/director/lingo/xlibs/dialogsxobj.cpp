@@ -57,10 +57,10 @@ const char *DialogsXObj::xlibNames[] = {
 	nullptr
 };
 
-const char *DialogsXObj::fileNames[] = {
-	"DialogS",
-	"shaREQUE", // TD loads this up using openXLib("@:shaREQUE.DLL")
-	nullptr
+const XlibFileDesc DialogsXObj::fileNames[] = {
+	{ "DialogS",	nullptr },
+	{ "shaREQUE",	nullptr }, // TD loads this up using openXLib("@:shaREQUE.DLL")
+	{ nullptr,		nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -102,7 +102,7 @@ void DialogsXObj::m_putFile(int nargs) {
 	Common::String name = g_lingo->pop().asString();
 	Common::String title = g_lingo->pop().asString();
 
-	Common::String prefix = g_director->getTargetName() + '-';
+	Common::String prefix = savePrefix();
 	Common::String mask = prefix + "*." + extn + ".txt";
 	Common::String filename = name;
 
@@ -126,7 +126,7 @@ void DialogsXObj::m_getFile(int nargs) {
 	Common::String name = g_lingo->pop().asString();
 	Common::String title = g_lingo->pop().asString();
 
-	Common::String prefix = g_director->getTargetName() + '-';
+	Common::String prefix = savePrefix();
 	Common::String mask = prefix + "*." + extn + ".txt";
 	Common::String fileName = name;
 

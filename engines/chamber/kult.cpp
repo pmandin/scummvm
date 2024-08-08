@@ -202,7 +202,30 @@ Common::Error ChamberEngine::init() {
 	byte c;
 
 	// Initialize graphics using following:
-	initGraphics(320, 200);
+	if (_videoMode == Common::RenderMode::kRenderCGA) {
+		// 320x200x2
+		_screenW = 320;
+		_screenH = 200;
+		_screenBits = 2;
+		_screenPPB = 8 / _screenBits;
+		_screenBPL = _screenW / _screenPPB;
+		_line_offset = 0x2000;
+		_fontHeight = 6;
+		_fontWidth = 4;
+		initGraphics(_screenW, _screenH);
+	} else if (_videoMode == Common::RenderMode::kRenderHercG) {
+		// 720x348x1
+		_screenW = 720;
+		_screenH = 348;
+		_screenBits = 1;
+		_screenPPB = 8 / _screenBits;
+		_screenBPL = _screenW / _screenPPB;
+		_line_offset = 0x2000;
+		_line_offset2 = 0x2000;
+		_fontHeight = 6;
+		_fontWidth = 4;
+		initGraphics(_screenW, _screenH);
+	}
 	initSound();
 
 	/*TODO: DetectCPU*/
@@ -228,11 +251,20 @@ Common::Error ChamberEngine::init() {
 			exitGame();
 	}
 
-	/* Select intense cyan-mageta palette */
-	cga_ColorSelect(0x30);
+	if (_videoMode == Common::RenderMode::kRenderCGA) {
+		/* Select intense cyan-mageta palette */
+		cga_ColorSelect(0x30);
+		cga_BackBufferToRealFull();
+	} else if (_videoMode == Common::RenderMode::kRenderHercG) {
+		/* Select intense cyan-mageta palette */
+		cga_ColorSelect(0x30);
+		cga_BackBufferToRealFull();
+	}
 
-	/* Show the title screen */
-	cga_BackBufferToRealFull();
+	/* Wait for a keypress */
+	clearKeyboard();
+	readKeyboardChar();
+
 
 	if (g_vm->getLanguage() == Common::EN_USA) {
 		if (ifgm_loaded) {
@@ -267,7 +299,7 @@ Common::Error ChamberEngine::init() {
 	if (_shouldQuit)
 		return Common::kNoError;
 
-	/* Patch resource names for choosen language */
+	/* Patch resource names for chosen language */
 	res_texts[0].name[4] = c;
 	res_texts[1].name[4] = c;
 	res_desci[0].name[4] = c;
@@ -292,7 +324,7 @@ Common::Error ChamberEngine::init() {
 	while (!loadFond() || !loadSpritesData() || !loadPersData())
 		askDisk2();
 
-	/*TODO: is this neccessary?*/
+	/*TODO: is this necessary?*/
 	cga_BackBufferToRealFull();
 
 	/* Create clean game state snapshot */

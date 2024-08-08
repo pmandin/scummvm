@@ -26,16 +26,34 @@
  */
 
 /* Detection tables for Adiboud'chou / Addy Buschu series. */
+/* This Game uses the DEV7 Engine, more Information can be found here: https://wiki.scummvm.org/index.php?title=DEV7_Information */
+/* These games are part of the Adibou series. For more information, refer to our wiki: https://wiki.scummvm.org/index.php?title=Adibou_Games */
 
 #ifndef GOB_DETECTION_TABLES_ADIBOUDCHOU_H
 #define GOB_DETECTION_TABLES_ADIBOUDCHOU_H
 
+//#include "common/translation.h"  // Make release checker happy
+
 // -- French: Adiboud'chou series --
+
+{
+	{
+		"adiboudchoumer",
+		_s("Missing game code"), // Adiboud'chou a la mer 1.01 (Engine: DEV7 version unknown)
+		AD_ENTRY1s("adbc_envir_obc.stk", "57f0eda5d4029abdb2f6b6201e02905e", 3204281),
+		FR_FRA,
+		kPlatformWindows,
+		ADGF_UNSUPPORTED,
+		GUIO0()
+	},
+	kFeatures800x600,
+	"adbc_envir_obc.stk", "adbc_init.obc", 0
+},
 
 // -- German: Addy Buschu series --
 
 {
-	{
+	{ // Supplied by BJNFNE
 		"adiboudchoumer",
 		_s("Missing game code"), // Addy Buschu am Meer 1.01 (Engine: DEV7 version unknown)
 		AD_ENTRY1s("adbc_envir_obc.stk", "46b7db9f7e77a077d9ac8506130ba9a2", 2830950),
@@ -44,12 +62,11 @@
 		ADGF_UNSUPPORTED,
 		GUIO0()
 	},
-	kFeatures640x480,
-	0, 0, 0
+	kFeatures800x600,
+	"adbc_envir_obc.stk", "adbc_init.obc", 0
 },
-
 {
-	{
+	{ // Supplied by BJNFNE
 
 		"adiboudchoubanquise",
 		_s("Missing game code"), // Addy Buschu Schnee & Eis 1.00 (Engine: DEV7 version 1.0.0.0)
@@ -59,11 +76,11 @@
 		ADGF_UNSUPPORTED,
 		GUIO0()
 	},
-	kFeatures640x480,
-	0,0,0
+	kFeatures800x600,
+	"adbc_envir_obc.stk", "adbc_init.obc", 0
 },
 {
-	{
+	{ // Supplied by BJNFNE
 		"adiboudchoucampagne",
 		_s("Missing game code"), // Addy Buschu auf dem Land 1.00 (Engine: DEV7 version unknown)
 		AD_ENTRY1s("adbc_envir_obc.stk", "4b43d3d1a8bc908d80e729069c5bb59f", 2831471),
@@ -72,11 +89,11 @@
 		ADGF_UNSUPPORTED,
 		GUIO0()
 	},
-	kFeatures640x480,
-	0,0,0
+	kFeatures800x600,
+	"adbc_envir_obc.stk", "adbc_init.obc", 0
 },
 {
-	{
+	{ // Supplied by BJNFNE
 		"adiboudchoujunglesavane",
 		_s("Missing game code"), // Addy Buschu Die bunte Tierwelt 1.00 (Engine: DEV7 version 1.0.0.0)
 		AD_ENTRY1s("adbc_envir_obc.stk", "7f33561f295030cbe64a21f941ef1efc", 3188852),
@@ -85,8 +102,8 @@
 		ADGF_UNSUPPORTED,
 		GUIO0()
 	},
-	kFeatures640x480,
-	0,0,0
+	kFeatures800x600,
+	"adbc_envir_obc.stk", "adbc_init.obc", 0
 },
 
 #endif // GOB_DETECTION_TABLES_ADIBOUDCHOU_H

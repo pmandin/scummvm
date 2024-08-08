@@ -26,6 +26,7 @@
 #include "engines/advancedDetector.h"
 #include "engines/obsolete.h"
 
+#include "sword1/detection.h"
 #include "sword1/obsolete.h" // Obsolete ID table.
 
 static const PlainGameDescriptor swordGames[] = {
@@ -41,9 +42,9 @@ static const char *const directoryGlobs[] = {
 	nullptr
 };
 
-class SwordMetaEngineDetection : public AdvancedMetaEngineDetection {
+class SwordMetaEngineDetection : public AdvancedMetaEngineDetection<ADGameDescription> {
 public:
-	SwordMetaEngineDetection() : AdvancedMetaEngineDetection(Sword1::gameDescriptions, sizeof(ADGameDescription), swordGames) {
+	SwordMetaEngineDetection() : AdvancedMetaEngineDetection(Sword1::gameDescriptions, swordGames) {
 		_guiOptions = GUIO2(GUIO_NOMIDI, GUIO_NOASPECT);
 		_flags = kADFlagMatchFullPaths;
 		_directoryGlobs = directoryGlobs;
@@ -51,6 +52,11 @@ public:
 
 	PlainGameDescriptor findGame(const char *gameId) const override {
 		return Engines::findGameID(gameId, _gameIds, obsoleteGameIDsTable);
+	}
+
+	Common::Error identifyGame(DetectedGame &game, const void **descriptor) override {
+		Engines::upgradeTargetIfNecessary(obsoleteGameIDsTable);
+		return AdvancedMetaEngineDetection::identifyGame(game, descriptor);
 	}
 
 	const char *getName() const override {

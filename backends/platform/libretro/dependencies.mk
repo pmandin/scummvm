@@ -11,7 +11,7 @@ DEPS_COMMIT_libretro-deps   := abf5246b016569759e7d1b0ea91bb98c2e34d160
 
 DEPS_FOLDER_libretro-common := libretro-common
 DEPS_URL_libretro-common    := https://github.com/libretro/libretro-common
-DEPS_COMMIT_libretro-common := 86d5e4128c072255c123d535cae97789023ee54b
+DEPS_COMMIT_libretro-common := 70ed90c42ddea828f53dd1b984c6443ddb39dbd6
 
 submodule_test  = $(if $(shell result=$$($(SCRIPTS_PATH)/configure_submodules.sh $(DEPS_URL_$(1)) $(DEPS_COMMIT_$(1)) $(DEPS_PATH) $(DEBUG_ALLOW_DIRTY_SUBMODULES) $(DEPS_FOLDER_$(1))) ; { [ -z $$result ] || [ ! $$result = 0 ] ; } && printf error),$(1))
 $(info Configuring submodules...)
@@ -133,7 +133,7 @@ endif
 ######################################################################
 
 ifeq ($(USE_VORBIS), 1)
-DEFINES += -DUSE_VORBIS
+DEFINES += -DUSE_VORBIS -DUSE_OGG
 this_lib_subpath :=
 this_lib_header := vorbis/codec.h
 this_lib_flags := -lvorbis
@@ -174,7 +174,7 @@ endif
 ######################################################################
 
 ifeq ($(USE_TREMOR), 1)
-DEFINES += -DUSE_TREMOR -DUSE_VORBIS
+DEFINES += -DUSE_TREMOR -DUSE_VORBIS -DUSE_OGG
 this_lib_subpath :=
 this_lib_header := tremor/ivorbiscodec.h
 this_lib_flags := -ltremor
@@ -204,7 +204,7 @@ endif
 ######################################################################
 
 ifeq ($(USE_ZLIB), 1)
-DEFINES += -DUSE_ZLIB  -DWANT_ZLIB
+DEFINES += -DUSE_ZLIB -DWANT_ZLIB
 this_lib_subpath :=
 this_lib_header := zlib.h
 this_lib_flags := -lz

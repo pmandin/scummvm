@@ -247,14 +247,14 @@ void Frame::readMainChannelsD2(Common::MemoryReadStreamEndian &stream, uint16 of
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readMainChannelsD2(): Miscomputed field position: %ld", stream.pos() - initPos + offset);
+			error("Frame::readMainChannelsD2(): Miscomputed field position: %lld", stream.pos() - initPos + offset);
 			break;
 		}
 	}
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD2(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readMainChannelsD2(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 
 	_mainChannels.transChunkSize = CLIP<byte>(_mainChannels.transChunkSize, 0, 128);
@@ -267,12 +267,10 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	uint16 fieldPosition = offset - spriteStart;
 
+	debugC(5, kDebugLoading, "Frame::readSpriteD2(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 	if (debugChannelSet(8, kDebugLoading)) {
-		debugC(8, kDebugLoading, "Frame::readSpriteD2(): channel %d, 16 bytes", spritePosition);
-		stream.hexdump(kSprChannelSizeD2);
+		stream.hexdump(size);
 	}
-
-	debugC(3, kDebugLoading, "Frame::readSpriteD2(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
@@ -283,7 +281,7 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readSpriteD2(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readSpriteD2(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 }
 
@@ -331,10 +329,8 @@ void readSpriteDataD2(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 				sprite._inkData = stream.readByte();
 
 				sprite._ink = static_cast<InkType>(sprite._inkData & 0x3f);
-				if (sprite._inkData & 0x40)
-					sprite._trails = 1;
-				else
-					sprite._trails = 0;
+				sprite._trails = sprite._inkData & 0x40 ? true : false;
+				sprite._stretch = sprite._inkData & 0x80 ? true : false;
 			}
 			break;
 		case 6:
@@ -380,7 +376,7 @@ void readSpriteDataD2(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("readSpriteDataD2(): Miscomputed field position: %ld", stream.pos() - startPosition);
+			error("readSpriteDataD2(): Miscomputed field position: %lld", stream.pos() - startPosition);
 		}
 	}
 
@@ -559,14 +555,14 @@ void Frame::readMainChannelsD4(Common::MemoryReadStreamEndian &stream, uint16 of
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readMainChannelsD4(): Miscomputed field position: %ld", stream.pos() - initPos + offset);
+			error("Frame::readMainChannelsD4(): Miscomputed field position: %lld", stream.pos() - initPos + offset);
 			break;
 		}
 	}
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD4(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readMainChannelsD4(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 
 	_mainChannels.transChunkSize = CLIP<byte>(_mainChannels.transChunkSize, 0, 128);
@@ -579,12 +575,10 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	uint16 fieldPosition = offset - spriteStart;
 
+	debugC(5, kDebugLoading, "Frame::readSpriteD4(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 	if (debugChannelSet(8, kDebugLoading)) {
-		debugC(8, kDebugLoading, "Frame::readSpriteD4(): channel %d, 20 bytes", spritePosition);
-		stream.hexdump(kSprChannelSizeD4);
+		stream.hexdump(size);
 	}
-
-	debugC(3, kDebugLoading, "Frame::readSpriteD4(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
@@ -595,7 +589,7 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readSpriteD4(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readSpriteD4(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 }
 
@@ -641,10 +635,8 @@ void readSpriteDataD4(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 				sprite._inkData = stream.readByte();
 
 				sprite._ink = static_cast<InkType>(sprite._inkData & 0x3f);
-				if (sprite._inkData & 0x40)
-					sprite._trails = 1;
-				else
-					sprite._trails = 0;
+				sprite._trails = sprite._inkData & 0x40 ? true : false;
+				sprite._stretch = sprite._inkData & 0x80 ? true : false;
 			}
 			break;
 		case 6:
@@ -714,7 +706,7 @@ void readSpriteDataD4(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("readSpriteDataD4(): Miscomputed field position: %ld", stream.pos() - startPosition);
+			error("readSpriteDataD4(): Miscomputed field position: %lld", stream.pos() - startPosition);
 		}
 	}
 
@@ -865,14 +857,14 @@ void Frame::readMainChannelsD5(Common::MemoryReadStreamEndian &stream, uint16 of
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readMainChannelsD5(): Miscomputed field position: %ld", stream.pos() - initPos + offset);
+			error("Frame::readMainChannelsD5(): Miscomputed field position: %lld", stream.pos() - initPos + offset);
 			break;
 		}
 	}
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD5(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readMainChannelsD5(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 
 	_mainChannels.transChunkSize = CLIP<byte>(_mainChannels.transChunkSize, 0, 128);
@@ -885,12 +877,10 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	uint16 fieldPosition = offset - spriteStart;
 
+	debugC(5, kDebugLoading, "Frame::readSpriteD5(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 	if (debugChannelSet(8, kDebugLoading)) {
-		debugC(8, kDebugLoading, "Frame::readSpriteD5(): channel %d, 20 bytes", spritePosition);
-		stream.hexdump(kSprChannelSizeD4);
+		stream.hexdump(size);
 	}
-
-	debugC(3, kDebugLoading, "Frame::readSpriteD5(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
@@ -901,7 +891,7 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	if (fieldPosition > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readSpriteD5(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readSpriteD5(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 
 	// Sometimes removed sprites leave garbage in the channel
@@ -927,10 +917,8 @@ void readSpriteDataD5(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 				sprite._inkData = stream.readByte();
 
 				sprite._ink = static_cast<InkType>(sprite._inkData & 0x3f);
-				if (sprite._inkData & 0x40)
-					sprite._trails = 1;
-				else
-					sprite._trails = 0;
+				sprite._trails = sprite._inkData & 0x40 ? true : false;
+				sprite._stretch = sprite._inkData & 0x80 ? true : false;
 			}
 			break;
 		case 2:
@@ -1038,7 +1026,7 @@ void readSpriteDataD5(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("readSpriteDataD5(): Miscomputed field position: %ld", stream.pos() - startPosition);
+			error("readSpriteDataD5(): Miscomputed field position: %lld", stream.pos() - startPosition);
 		}
 	}
 
@@ -1087,12 +1075,10 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	uint16 fieldPosition = offset - spriteStart;
 
+	debugC(5, kDebugLoading, "Frame::readSpriteD6(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 	if (debugChannelSet(8, kDebugLoading)) {
-		debugC(8, kDebugLoading, "Frame::readSpriteD6(): channel %d, 20 bytes", spritePosition);
-		stream.hexdump(kSprChannelSizeD6);
+		stream.hexdump(size);
 	}
-
-	debugC(3, kDebugLoading, "Frame::readSpriteD6(): sprite: %d offset: %d size: %d, field: %d", spritePosition, offset, size, fieldPosition);
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
@@ -1103,7 +1089,7 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readSpriteD6(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readSpriteD6(): Read %lld extra bytes", stream.pos() - finishPosition);
 	}
 
 	// Sometimes removed sprites leave garbage in the channel
@@ -1131,10 +1117,8 @@ void readSpriteDataD6(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 			sprite._inkData = inkData;
 
 			sprite._ink = static_cast<InkType>(sprite._inkData & 0x3f);
-			if (sprite._inkData & 0x40)
-				sprite._trails = 1;
-			else
-				sprite._trails = 0;
+			sprite._trails = sprite._inkData & 0x40 ? true : false;
+			sprite._stretch = sprite._inkData & 0x80 ? true : false;
 			}
 			break;
 		case 2: {
@@ -1242,7 +1226,7 @@ void readSpriteDataD6(Common::SeekableReadStreamEndian &stream, Sprite &sprite, 
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("readSpriteDataD6(): Miscomputed field position: %ld", stream.pos() - startPosition);
+			error("readSpriteDataD6(): Miscomputed field position: %lld", stream.pos() - startPosition);
 		}
 	}
 }
@@ -1268,9 +1252,9 @@ Common::String Frame::formatChannelInfo() {
 	for (int i = 0; i < _numChannels; i++) {
 		Sprite &sprite = *_sprites[i + 1];
 		if (sprite._castId.member) {
-			result += Common::String::format("CH: %-3d castId: %s, [inkData: 0x%02x [ink: %d, trails: %d, line: %d], %dx%d@%d,%d type: %d (%s) fg: %d bg: %d], script: %s, colorcode: 0x%x, blendAmount: 0x%x, blend: 0x%x, unk3: 0x%x\n",
+			result += Common::String::format("CH: %-3d castId: %s, [inkData: 0x%02x [ink: %d, trails: %d, stretch: %d, line: %d], %dx%d@%d,%d type: %d (%s) fg: %d bg: %d], script: %s, colorcode: 0x%x, blendAmount: 0x%x, blend: 0x%x, unk3: 0x%x\n",
 				i + 1, sprite._castId.asString().c_str(), sprite._inkData,
-				sprite._ink, sprite._trails, sprite._thickness, sprite._width, sprite._height,
+				sprite._ink, sprite._trails, sprite._stretch, sprite._thickness, sprite._width, sprite._height,
 				sprite._startPoint.x, sprite._startPoint.y,
 				sprite._spriteType, spriteType2str(sprite._spriteType), sprite._foreColor,
 				sprite._backColor, sprite._scriptId.asString().c_str(), sprite._colorcode,

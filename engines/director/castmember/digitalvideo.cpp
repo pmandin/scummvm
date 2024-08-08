@@ -66,6 +66,7 @@ DigitalVideoCastMember::DigitalVideoCastMember(Cast *cast, uint16 castId, Common
 	_enableSound = _vflags & 0x08;
 	_crop = !(_vflags & 0x02);
 	_center = _vflags & 0x01;
+	_dirty = false;
 
 	if (debugChannelSet(2, kDebugLoading))
 		_initialRect.debugPrint(2, "DigitalVideoCastMember(): rect:");
@@ -78,6 +79,42 @@ DigitalVideoCastMember::DigitalVideoCastMember(Cast *cast, uint16 castId, Common
 	debugC(2, kDebugLoading, "_showControls: %d, _looping: %d, _enableSound: %d, _crop %d, _center: %d, _directToStage: %d",
 			_showControls, _looping, _enableSound, _crop, _center, _directToStage);
 	debugC(2, kDebugLoading, "_avimovie: %d, _qtmovie: %d", _avimovie, _qtmovie);
+}
+
+DigitalVideoCastMember::DigitalVideoCastMember(Cast *cast, uint16 castId, DigitalVideoCastMember &source)
+	: CastMember(cast, castId) {
+	_type = kCastDigitalVideo;
+	_loaded = source._loaded;
+
+	_initialRect = source._initialRect;
+	_boundingRect = source._boundingRect;
+	_children = source._children;
+
+	_filename = source._filename;
+
+	_vflags = source._vflags;
+	_looping = source._looping;
+	_pausedAtStart = source._pausedAtStart;
+	_enableVideo = source._enableVideo;
+	_enableSound = source._enableSound;
+	_crop = source._crop;
+	_center = source._center;
+	_preload = source._preload;
+	_showControls = source._showControls;
+	_directToStage = source._directToStage;
+	_avimovie = source._avimovie;
+	_qtmovie = source._qtmovie;
+	_dirty = source._dirty;
+	_frameRateType = source._frameRateType;
+
+	_frameRate = source._frameRate;
+	_getFirstFrame = source._getFirstFrame;
+	_duration = source._duration;
+
+	_video = nullptr;
+	_lastFrame = nullptr;
+
+	_channel = nullptr;
 }
 
 DigitalVideoCastMember::~DigitalVideoCastMember() {
@@ -134,6 +171,8 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 		_video->setDitheringPalette(palette);
 	}
 
+	_duration = getMovieTotalTime();
+
 	return result;
 }
 
@@ -141,13 +180,18 @@ bool DigitalVideoCastMember::isModified() {
 	if (!_video || !_video->isVideoLoaded())
 		return true;
 
+	if (_dirty) {
+		_dirty = false;
+		return true;
+	}
+
 	// Inelegant, but necessary. isModified will get called on
 	// every screen update, so use it to keep the playback
 	// status up to date.
 	if (_video->endOfVideo()) {
 		if (_looping) {
 			_video->rewind();
-		} else {
+		} else if (_channel) {
 			_channel->_movieRate = 0.0;
 		}
 	}
@@ -155,15 +199,13 @@ bool DigitalVideoCastMember::isModified() {
 	if (_getFirstFrame)
 		return true;
 
-	if (_channel->_movieRate == 0.0)
+	if (_channel && _channel->_movieRate == 0.0)
 		return false;
 
 	return _video->needsUpdate();
 }
 
-void DigitalVideoCastMember::startVideo(Channel *channel) {
-	_channel = channel;
-
+void DigitalVideoCastMember::startVideo() {
 	if (!_video || !_video->isVideoLoaded()) {
 		warning("DigitalVideoCastMember::startVideo: No video %s", !_video ? "decoder" : "loaded");
 		return;
@@ -172,7 +214,7 @@ void DigitalVideoCastMember::startVideo(Channel *channel) {
 	if (_pausedAtStart) {
 		_getFirstFrame = true;
 	} else {
-		if (_channel->_movieRate == 0.0)
+		if (_channel && _channel->_movieRate == 0.0)
 			_channel->_movieRate = 1.0;
 	}
 
@@ -183,10 +225,8 @@ void DigitalVideoCastMember::startVideo(Channel *channel) {
 
 	debugC(2, kDebugImages, "STARTING VIDEO %s", _filename.c_str());
 
-	if (_channel->_stopTime == 0)
+	if (_channel && _channel->_stopTime == 0)
 		_channel->_stopTime = getMovieTotalTime();
-
-	_duration = getMovieTotalTime();
 }
 
 void DigitalVideoCastMember::stopVideo() {
@@ -247,7 +287,13 @@ Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Ch
 		}
 
 		if (frame->getPixels()) {
-			_lastFrame = frame->convertTo(g_director->_pixelformat, g_director->getPalette());
+			if (g_director->_pixelformat.bytesPerPixel == 1) {
+				// Video should have the dithering palette set, decode using whatever palette we have now
+				_lastFrame = frame->convertTo(g_director->_pixelformat, g_director->getPalette());
+			} else {
+				// 32-bit mode, use the palette bundled with the movie
+				_lastFrame = frame->convertTo(g_director->_pixelformat, _video->getPalette());
+			}
 		} else {
 			warning("DigitalVideoCastMember::createWidget(): frame has no pixel data");
 		}
@@ -271,7 +317,6 @@ Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Ch
 uint DigitalVideoCastMember::getDuration() {
 	if (!_video || !_video->isVideoLoaded()) {
 		loadVideoFromCast();
-		_duration = getMovieTotalTime();
 	}
 	return _duration;
 }
@@ -302,6 +347,12 @@ void DigitalVideoCastMember::seekMovie(int stamp) {
 	Audio::Timestamp dur = _video->getDuration();
 
 	_video->seek(Audio::Timestamp(_channel->_startTime * 1000 / 60, dur.framerate()));
+
+	if (_channel->_movieRate == 0.0) {
+		_getFirstFrame = true;
+	}
+
+	_dirty = true;
 }
 
 void DigitalVideoCastMember::setStopTime(int stamp) {
@@ -323,8 +374,14 @@ void DigitalVideoCastMember::setMovieRate(double rate) {
 
 	if (rate < 0.0)
 		warning("STUB: DigitalVideoCastMember::setMovieRate(%g)", rate);
-	else
+	else {
+		if (_getFirstFrame && rate != 0.0) {
+			// playback got started before we rendered the first
+			// frame in pause mode, keep going
+			_getFirstFrame = false;
+		}
 		_video->setRate(Common::Rational((int)(rate * 100.0), 100));
+	}
 
 	if (_video->endOfVideo())
 		_video->rewind();

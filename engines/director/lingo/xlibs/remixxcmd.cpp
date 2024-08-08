@@ -42,9 +42,9 @@
 namespace Director {
 
 const char *RemixXCMD::xlibName = "Remix";
-const char *RemixXCMD::fileNames[] = {
-	"Remix",
-	nullptr
+const XlibFileDesc RemixXCMD::fileNames[] = {
+	{ "Remix",	nullptr },
+	{ nullptr,	nullptr },
 };
 
 static BuiltinProto builtins[] = {
@@ -292,7 +292,7 @@ void RemixXCMDState::interruptCheck() {
 }
 
 void RemixXCMD::m_Remix(int nargs) {
-	g_lingo->printSTUBWithArglist("RemixXCMD::m_Remix", nargs);
+	g_lingo->printArgs("RemixXCMD::m_Remix", nargs);
 	Datum result;
 	if (nargs != 1) {
 		result = Datum("Wrong number of params");

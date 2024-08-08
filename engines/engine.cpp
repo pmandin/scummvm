@@ -198,6 +198,10 @@ Engine::Engine(OSystem *syst)
 Engine::~Engine() {
 	_mixer->stopAll();
 
+	// Flush any pending remaining events
+	Common::Event evt;
+	while (g_system->getEventManager()->pollEvent(evt)) {}
+
 	delete _debugger;
 	delete _mainMenuDialog;
 	g_engine = NULL;
@@ -1001,19 +1005,6 @@ GUI::Debugger *Engine::getOrCreateDebugger() {
 		_debugger = new GUI::Debugger();
 
 	return _debugger;
-}
-
-/*
-EnginePlugin *Engine::getMetaEnginePlugin() const {
-	return EngineMan.findPlugin(ConfMan.get("engineid"));
-}
-
-*/
-
-MetaEngineDetection &Engine::getMetaEngineDetection() {
-	const Plugin *plugin = EngineMan.findPlugin(ConfMan.get("engineid"));
-	assert(plugin);
-	return plugin->get<MetaEngineDetection>();
 }
 
 PauseToken::PauseToken() : _engine(nullptr) {}

@@ -46,6 +46,23 @@ MovieCastMember::MovieCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 
 }
 
+MovieCastMember::MovieCastMember(Cast *cast, uint16 castId, MovieCastMember &source)
+	: CastMember(cast, castId) {
+	_type = kCastMovie;
+	_loaded = source._loaded;
+
+	_initialRect = source._initialRect;
+	_boundingRect = source._boundingRect;
+	_children = source._children;
+
+	_flags = source._flags;
+	_looping = source._looping;
+	_enableScripts = source._enableScripts;
+	_enableSound = source._enableSound;
+	_crop = source._crop;
+	_center = source._center;
+}
+
 Common::String MovieCastMember::formatInfo() {
 	return Common::String::format(
 		"initialRect: %dx%d@%d,%d, boundingRect: %dx%d@%d,%d, enableScripts: %d, enableSound: %d, looping: %d, crop: %d, center: %d",

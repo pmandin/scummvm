@@ -630,7 +630,7 @@ Resource *ResourceManager::testResource(const ResourceId &id) const {
 	return _resMap.getValOrDefault(id, NULL);
 }
 
-int ResourceManager::addAppropriateSources() {
+void ResourceManager::addAppropriateSources() {
 #ifdef ENABLE_SCI32
 	_multiDiscAudio = false;
 #endif
@@ -676,7 +676,7 @@ int ResourceManager::addAppropriateSources() {
 		SearchMan.listMatchingMembers(files, "ressci.0##");
 
 		if (mapFiles.empty() || files.empty())
-			return 0;
+			return;
 
 		if (Common::File::exists("ressci.001") && !Common::File::exists("resource.aud")) {
 			_multiDiscAudio = true;
@@ -718,7 +718,7 @@ int ResourceManager::addAppropriateSources() {
 	}
 #else
 	} else
-		return 0;
+		return;
 #endif
 
 	addPatchDir(".");
@@ -740,17 +740,15 @@ int ResourceManager::addAppropriateSources() {
 		}
 	}
 #endif
-
-	return 1;
 }
 
-int ResourceManager::addAppropriateSourcesForDetection(const Common::FSList &fslist) {
+void ResourceManager::addAppropriateSourcesForDetection(const Common::FSList &fslist) {
 	ResourceSource *map = nullptr;
 	Common::Array<ResourceSource *> sci21Maps;
 
 #ifdef ENABLE_SCI32
-	ResourceSource *sci21PatchMap = 0;
-	const Common::FSNode *sci21PatchRes = 0;
+	ResourceSource *sci21PatchMap = nullptr;
+	const Common::FSNode *sci21PatchRes = nullptr;
 	_multiDiscAudio = false;
 #endif
 
@@ -787,7 +785,7 @@ int ResourceManager::addAppropriateSourcesForDetection(const Common::FSList &fsl
 	}
 
 	if (!map && sci21Maps.empty())
-		return 0;
+		return;
 
 #ifdef ENABLE_SCI32
 	if (sci21PatchMap && sci21PatchRes)
@@ -818,8 +816,6 @@ int ResourceManager::addAppropriateSourcesForDetection(const Common::FSList &fsl
 
 	// This function is only called by the advanced detector, and we don't really need
 	// to add a patch directory or message.map here
-
-	return 1;
 }
 
 void ResourceManager::addScriptChunkSources() {
@@ -2983,19 +2979,15 @@ static SciSpan<const byte>::const_iterator findSci0ExportsBlock(const SciSpan<co
 
 // This code duplicates Script::relocateOffsetSci3, but we can't use
 // that here since we can't instantiate scripts at this point.
-static int relocateOffsetSci3(const SciSpan<const byte> &buf, uint32 offset, const bool isBE) {
+static int relocateOffsetSci3(const SciSpan<const byte> &buf, uint32 offset) {
 	int relocStart = buf.getUint32LEAt(8);
 	int relocCount = buf.getUint16LEAt(18);
 	SciSpan<const byte>::const_iterator seeker = buf.cbegin() + relocStart;
 
 	for (int i = 0; i < relocCount; ++i) {
-		const uint32 candidateOffset = isBE ? seeker.getUint32BE() : seeker.getUint32LE();
+		const uint32 candidateOffset = seeker.getUint32LE();
 		if (candidateOffset == offset) {
-			if (isBE) {
-				return buf.getUint16BEAt(offset) + (seeker + 4).getUint32BE();
-			} else {
-				return buf.getUint16LEAt(offset) + (seeker + 4).getUint32LE();
-			}
+			return buf.getUint16LEAt(offset) + (seeker + 4).getUint32LE();
 		}
 		seeker += 10;
 	}
@@ -3003,7 +2995,7 @@ static int relocateOffsetSci3(const SciSpan<const byte> &buf, uint32 offset, con
 	return -1;
 }
 
-reg_t ResourceManager::findGameObject(const bool addSci11ScriptOffset, const bool isBE) {
+reg_t ResourceManager::findGameObject(const bool addSci11ScriptOffset) {
 	Resource *script = findResource(ResourceId(kResourceTypeScript, 0), false);
 
 	if (!script)
@@ -3035,11 +3027,11 @@ reg_t ResourceManager::findGameObject(const bool addSci11ScriptOffset, const boo
 
 		return make_reg(1, offset);
 	} else {
-		return make_reg(1, relocateOffsetSci3(*script, 22, isBE));
+		return make_reg(1, relocateOffsetSci3(*script, 22));
 	}
 }
 
-Common::String ResourceManager::findSierraGameId(const bool isBE) {
+Common::String ResourceManager::findSierraGameId() {
 	// In SCI0-SCI1, the heap is embedded in the script. In SCI1.1 - SCI2.1,
 	// it's in a separate heap resource
 	Resource *heap = nullptr;
@@ -3058,17 +3050,10 @@ Common::String ResourceManager::findSierraGameId(const bool isBE) {
 		if (!vocab)
 			return "";
 
-		const uint16 numSelectors = isBE ? vocab->getUint16BEAt(0) : vocab->getUint16LEAt(0);
+		const uint16 numSelectors = vocab->getUint16LEAt(0);
 		for (uint16 i = 0; i < numSelectors; ++i) {
-			uint16 selectorOffset;
-			uint16 selectorSize;
-			if (isBE) {
-				selectorOffset = vocab->getUint16BEAt((i + 1) * sizeof(uint16));
-				selectorSize = vocab->getUint16BEAt(selectorOffset);
-			} else {
-				selectorOffset = vocab->getUint16LEAt((i + 1) * sizeof(uint16));
-				selectorSize = vocab->getUint16LEAt(selectorOffset);
-			}
+			uint16 selectorOffset = vocab->getUint16LEAt((i + 1) * sizeof(uint16));
+			uint16 selectorSize = vocab->getUint16LEAt(selectorOffset);
 
 			Common::String selectorName = Common::String((const char *)vocab->getUnsafeDataAt(selectorOffset + 2, selectorSize), selectorSize);
 			if (selectorName == "name") {
@@ -3081,14 +3066,14 @@ Common::String ResourceManager::findSierraGameId(const bool isBE) {
 	if (!heap || nameSelector == -1)
 		return "";
 
-	int16 gameObjectOffset = findGameObject(false, isBE).getOffset();
+	int16 gameObjectOffset = findGameObject(false).getOffset();
 
 	if (!gameObjectOffset)
 		return "";
 
 	int32 offset;
 	if (getSciVersion() == SCI_VERSION_3) {
-		offset = relocateOffsetSci3(*heap, gameObjectOffset + /* base selector offset */ 0x110 + nameSelector * sizeof(uint16), isBE);
+		offset = relocateOffsetSci3(*heap, gameObjectOffset + /* base selector offset */ 0x110 + nameSelector * sizeof(uint16));
 	} else {
 		// Seek to the name selector of the first export
 		SciSpan<const byte>::const_iterator offsetPtr = heap->cbegin() + gameObjectOffset + nameSelector * sizeof(uint16);

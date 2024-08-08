@@ -960,7 +960,7 @@ void IntoTheState(machine *m) {
 	}
 
 	stateTable = (uint32 *)((intptr)(*(m->machHandle)) + (intptr)m->stateTableOffset);
-	pcOffset = stateTable[m->curState];
+	pcOffset = FROM_LE_32(stateTable[m->curState]);
 
 	// Increment and remember the recurseLevel and the machine ID
 	m->recurseLevel++;
@@ -1047,6 +1047,11 @@ machine *TriggerMachineByHash(int32 myHash, Anim8 *parentAnim8, int32 dataHash, 
 
 	IntoTheState(m);
 	return m;
+}
+
+machine *TriggerMachineByHash(MessageCB intrMsg, const char *machName) {
+	return TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x400, 0,
+		intrMsg, machName);
 }
 
 machine *TriggerMachineByHash(int32 val1, int32 val2, int32 val3, int32 val4, int32 val5, int32 val6,

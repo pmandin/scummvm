@@ -52,7 +52,7 @@ static inline T scalef(T in, float numerator, float denominator) {
 
 // analog joystick axis id (for internal use) - Should match the logic in ScummVMEventsModern.java
 enum {
-	// auxilliary movement axis bitflags
+	// auxiliary movement axis bitflags
 	JE_JOY_AXIS_X_bf        = 0x01, // (0x01 << 0)
 	JE_JOY_AXIS_Y_bf        = 0x02, // (0x01 << 1)
 	JE_JOY_AXIS_HAT_X_bf    = 0x04, // (0x01 << 2)
@@ -1541,7 +1541,12 @@ void OSystem_Android::setupTouchMode(int oldValue, int newValue) {
 
 	if (newValue == TOUCH_MODE_TOUCHPAD) {
 		// Make sure we have a proper touch point if we switch to touchpad mode with finger down
-		_touch_pt_down = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
+		if (_graphicsManager) {
+			_touch_pt_down = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
+		} else {
+			_touch_pt_down.x = 0;
+			_touch_pt_down.y = 0;
+		}
 		_touch_pt_scroll.x = -1;
 		_touch_pt_scroll.y = -1;
 	}

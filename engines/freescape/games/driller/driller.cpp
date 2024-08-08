@@ -59,10 +59,7 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 		initC64();
 
 	_playerHeightNumber = 1;
-	_playerHeights.push_back(16);
-	_playerHeights.push_back(48);
-	_playerHeights.push_back(80);
-	_playerHeights.push_back(112);
+	_playerHeightMaxNumber = 3;
 
 	_angleRotations.push_back(5);
 	_angleRotations.push_back(10);
@@ -71,7 +68,6 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_angleRotations.push_back(45);
 	_angleRotations.push_back(90);
 
-	_playerHeight = _playerHeights[_playerHeightNumber];
 	_playerWidth = 12;
 	_playerDepth = 32;
 	_stepUpDistance = 64;
@@ -86,7 +82,7 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 
 	Math::Vector3d drillBaseOrigin = Math::Vector3d(0, 0, 0);
 	Math::Vector3d drillBaseSize = Math::Vector3d(3, 2, 3);
-	_drillBase = new GeometricObject(kCubeType, 0, 0, drillBaseOrigin, drillBaseSize, nullptr, nullptr, FCLInstructionVector(), "");
+	_drillBase = new GeometricObject(kCubeType, 0, 0, drillBaseOrigin, drillBaseSize, nullptr, nullptr, nullptr, FCLInstructionVector(), "");
 	assert(!_drillBase->isDestroyed() && !_drillBase->isInvisible());
 
 	if (isDemo()) {
@@ -395,7 +391,19 @@ Math::Vector3d getProjectionToPlane(const Math::Vector3d &vect, const Math::Vect
 }
 
 void DrillerEngine::pressedKey(const int keycode) {
-	if (keycode == Common::KEYCODE_d) {
+	if (keycode == Common::KEYCODE_q) {
+		rotate(-_angleRotations[_angleRotationIndex], 0);
+	} else if (keycode == Common::KEYCODE_w) {
+		rotate(_angleRotations[_angleRotationIndex], 0);
+	} else if (keycode == Common::KEYCODE_s) {
+		increaseStepSize();
+	} else if (keycode ==  Common::KEYCODE_x) {
+		decreaseStepSize();
+	} else if (keycode == Common::KEYCODE_r) {
+		rise();
+	} else if (keycode == Common::KEYCODE_f) {
+		lower();
+	} else if (keycode == Common::KEYCODE_d) {
 		if (isDOS() && isDemo()) // No support for drilling here yet
 			return;
 		clearTemporalMessages();
@@ -756,7 +764,6 @@ void DrillerEngine::initGameState() {
 	_gameStateVars[k8bitVariableShieldDrillerJet] = _initialJetShield;
 
 	_playerHeightNumber = 1;
-	_playerHeight = _playerHeights[_playerHeightNumber];
 	_demoIndex = 0;
 	_demoEvents.clear();
 
@@ -864,6 +871,31 @@ void DrillerEngine::updateTimeVariables() {
 		executeLocalGlobalConditions(false, true, false); // Only execute "on collision" room/global conditions
 	}
 }
+
+void DrillerEngine::drawCompass(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color) {
+	double fov = 60;
+	degrees = degrees + fov;
+	if (degrees >= 360)
+		degrees = degrees - 360;
+
+	const double degtorad = (M_PI * 2) / 360;
+	double w = magnitude * cos(-degrees * degtorad);
+	double h = magnitude * sin(-degrees * degtorad);
+
+	surface->drawLine(x, y, x+(int)w, y+(int)h, color);
+
+
+	degrees = degrees - fov;
+	if (degrees < 0)
+		degrees = degrees + 360;
+
+	w = magnitude * cos(-degrees * degtorad);
+	h = magnitude * sin(-degrees * degtorad);
+
+	surface->drawLine(x, y, x+(int)w, y+(int)h, color);
+	//surface->drawLine(x, y, x+(int)-w, y+(int)h, color);
+}
+
 
 Common::Error DrillerEngine::saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave) {
 	for (auto &it : _areaMap) { // All but skip area 255

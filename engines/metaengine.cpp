@@ -20,6 +20,7 @@
  */
 
 #include "engines/metaengine.h"
+#include "engines/engine.h"
 
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymap.h"
@@ -138,6 +139,17 @@ Common::KeymapArray MetaEngine::initKeymaps(const char *target) const {
 	return Keymap::arrayOf(engineKeyMap);
 }
 
+Common::AchievementsPlatform MetaEngine::getAchievementsPlatform(const Common::String &target) const {
+	Common::String extra = ConfMan.get("extra", target);
+	if (extra.contains("GOG")) {
+		return Common::GALAXY_ACHIEVEMENTS;
+	}
+	if (extra.contains("Steam")) {
+		return Common::STEAM_ACHIEVEMENTS;
+	}
+	return Common::UNK_ACHIEVEMENTS;
+}
+
 const Common::AchievementsInfo MetaEngine::getAchievementsInfo(const Common::String &target) const {
 	const Common::AchievementDescriptionList* achievementDescriptionList = getAchievementDescriptionList();
 	if (achievementDescriptionList == nullptr) {
@@ -146,13 +158,7 @@ const Common::AchievementsInfo MetaEngine::getAchievementsInfo(const Common::Str
 
 	Common::String gameId = ConfMan.get("gameid", target);
 
-	Common::AchievementsPlatform platform = Common::UNK_ACHIEVEMENTS;
-	Common::String extra = ConfMan.get("extra", target);
-	if (extra.contains("GOG")) {
-		platform = Common::GALAXY_ACHIEVEMENTS;
-	} else if (extra.contains("Steam")) {
-		platform = Common::STEAM_ACHIEVEMENTS;
-	}
+	const Common::AchievementsPlatform platform = getAchievementsPlatform(target);
 
 	// "(gameId, platform) -> result" search
 	Common::AchievementsInfo result;
@@ -336,6 +342,10 @@ WARN_UNUSED_RESULT bool MetaEngine::readSavegameHeader(Common::InSaveFile *in, E
 // MetaEngine default implementations
 //////////////////////////////////////////////
 
+void MetaEngine::deleteInstance(Engine *engine, const DetectedGame &gameDescriptor, const void *meDescriptor) {
+	delete engine;
+}
+
 int MetaEngine::findEmptySaveSlot(const char *target) {
 	Common::SaveFileManager *saveFileMan = g_system->getSavefileManager();
 	const int maxSaveSlot = getMaximumSaveSlot();
@@ -403,7 +413,7 @@ SaveStateList MetaEngine::listSaves(const char *target, bool saveMode) const {
 	SaveStateDescriptor desc(this, autosaveSlot, dummyAutosave);
 	desc.setWriteProtectedFlag(true);
 	desc.setDeletableFlag(false);
-	
+
 	saveList.push_back(desc);
 	Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
 

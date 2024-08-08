@@ -24,12 +24,13 @@
 
 #include "ultima/ultima8/gumps/credits_gump.h"
 
+#include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/kernel/mouse.h"
-#include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/texture.h"
-#include "ultima/ultima8/graphics/fonts/rendered_text.h"
-#include "ultima/ultima8/graphics/fonts/font.h"
-#include "ultima/ultima8/graphics/fonts/font_manager.h"
+#include "ultima/ultima8/gfx/render_surface.h"
+#include "ultima/ultima8/gfx/texture.h"
+#include "ultima/ultima8/gfx/fonts/rendered_text.h"
+#include "ultima/ultima8/gfx/fonts/font.h"
+#include "ultima/ultima8/gfx/fonts/font_manager.h"
 #include "ultima/ultima8/audio/music_process.h"
 
 namespace Ultima {
@@ -71,12 +72,14 @@ CreditsGump::~CreditsGump() {
 void CreditsGump::InitGump(Gump *newparent, bool take_focus) {
 	ModalGump::InitGump(newparent, take_focus);
 
+	Graphics::Screen *screen = Ultima8Engine::get_instance()->getScreen();
 	uint32 width = 256;
 	uint32 height = 280;
-	_scroll[0] = RenderSurface::CreateSecondaryRenderSurface(width, height);
-	_scroll[1] = RenderSurface::CreateSecondaryRenderSurface(width, height);
-	_scroll[2] = RenderSurface::CreateSecondaryRenderSurface(width, height);
-	_scroll[3] = RenderSurface::CreateSecondaryRenderSurface(width, height);
+
+	_scroll[0] = new RenderSurface(width, height, screen->format);
+	_scroll[1] = new RenderSurface(width, height, screen->format);
+	_scroll[2] = new RenderSurface(width, height, screen->format);
+	_scroll[3] = new RenderSurface(width, height, screen->format);
 
 	uint32 color = TEX32_PACK_RGB(0, 0, 0);
 	_scroll[0]->fill32(color, 0, 0, width, height); // black background
@@ -144,7 +147,6 @@ void CreditsGump::run() {
 	}
 
 	if (_state == CS_CLOSING) {
-		//debug(MM_INFO, "CreditsGump: closing");
 		Close();
 		return;
 	}
@@ -161,7 +163,7 @@ void CreditsGump::run() {
 	if (available == 0) nextblock = 0;
 
 	if (_state == CS_FINISHING && available <= 156) {
-		//debug(MM_INFO, "CreditsGump: waiting before closing");
+		debug(6, "CreditsGump: waiting before closing");
 		_timer = 120;
 		_state = CS_CLOSING;
 
@@ -204,7 +206,7 @@ void CreditsGump::run() {
 				continue;
 			}
 
-			//debug(MM_INFO, "Rendering paragraph: %s", line.c_str());
+			debug(6, "Rendering paragraph: %s", line.c_str());
 
 			if (line[0] == '+') {
 				// set _title
@@ -246,7 +248,7 @@ void CreditsGump::run() {
 					unsigned int remaining;
 					extractLine(line, modifier, outline);
 
-					//debug(MM_INFO, "Rendering line: %s", outline.c.str());
+					debug(6, "Rendering line: %s", outline.c_str());
 
 					switch (modifier) {
 					case '&':
@@ -263,7 +265,7 @@ void CreditsGump::run() {
 						indent = 32;
 						break;
 					case '@':
-						//debug(MM_INFO, "CreditsGump: done, finishing");
+						debug(6, "CreditsGump: done, finishing");
 						_state = CS_FINISHING;
 						break;
 					default:

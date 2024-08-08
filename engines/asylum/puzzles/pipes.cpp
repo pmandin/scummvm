@@ -19,7 +19,7 @@
  *
  */
 
-#include "common/math.h"
+#include "common/intrinsics.h"
 
 #include "asylum/puzzles/pipes.h"
 
@@ -462,7 +462,7 @@ bool PuzzlePipes::mouseLeftDown(const AsylumEvent &) {
 	return true;
 }
 
-bool PuzzlePipes::mouseRightDown(const AsylumEvent &) {
+bool PuzzlePipes::exitPuzzle() {
 	getScreen()->clear();
 	getSound()->stop(getWorld()->graphicResourceIds[41]);
 	getSound()->setMusicVolume(_previousMusicVolume);

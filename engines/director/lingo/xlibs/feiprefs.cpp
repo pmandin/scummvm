@@ -48,9 +48,9 @@
 namespace Director {
 
 const char *FEIPrefsXObj::xlibName = "FEIPrefs";
-const char *FEIPrefsXObj::fileNames[] = {
-	"feiprefs",
-	nullptr
+const XlibFileDesc FEIPrefsXObj::fileNames[] = {
+	{ "feiprefs",	nullptr },
+	{ nullptr,		nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -76,7 +76,7 @@ void FEIPrefsXObj::close(ObjectType type) {
 }
 
 
-FEIPrefsXObject::FEIPrefsXObject(ObjectType ObjectType) : Object<FEIPrefsXObject>("FEIPrefsXObj") {
+FEIPrefsXObject::FEIPrefsXObject(ObjectType ObjectType) : Object<FEIPrefsXObject>("FEIPrefs") {
 	_objType = ObjectType;
 }
 

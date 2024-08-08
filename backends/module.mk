@@ -367,9 +367,11 @@ endif
 ifeq ($(BACKEND),atari)
 MODULE_OBJS += \
 	events/atari/atari-events.o \
-	graphics/atari/atari_c2p-asm.o \
+	graphics/atari/atari-c2p-asm.o \
+	graphics/atari/atari-cursor.o \
 	graphics/atari/atari-graphics.o \
 	graphics/atari/atari-graphics-asm.o \
+	graphics/atari/atari-screen.o \
 	mixer/atari/atari-mixer.o
 endif
 
@@ -484,23 +486,31 @@ endif
 
 ifdef ENABLE_EVENTRECORDER
 MODULE_OBJS += \
-	mixer/null/null-mixer.o \
 	saves/recorder/recorder-saves.o
+# SDL and null backend already add null-mixer
+ifndef SDL_BACKEND
+ifneq ($(BACKEND),null)
+MODULE_OBJS += \
+	mixer/null/null-mixer.o
+endif
+endif
 endif
 
 ifdef USE_IMGUI
 MODULE_OBJS += \
 	imgui/imgui.o \
 	imgui/imgui_draw.o \
+	imgui/imgui_fonts.o \
+	imgui/imgui_tables.o \
 	imgui/imgui_widgets.o \
-	imgui/imgui_tables.o
+	imgui/misc/freetype/imgui_freetype.o
 endif
 
 ifdef USE_SDL2
 ifdef USE_IMGUI
 MODULE_OBJS += \
-	imgui/backends/imgui_impl_opengl3_scummvm.o \
-	imgui/backends/imgui_impl_sdl2_scummvm.o
+	imgui/backends/imgui_impl_opengl3.o \
+	imgui/backends/imgui_impl_sdl2.o
 endif
 endif
 

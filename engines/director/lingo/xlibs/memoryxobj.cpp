@@ -66,10 +66,10 @@
 namespace Director {
 
 const char *MemoryXObj::xlibName = "Memory";
-const char *MemoryXObj::fileNames[] = {
-	"Memory XObj",
-	"Memory",
-	nullptr
+const XlibFileDesc MemoryXObj::fileNames[] = {
+	{ "Memory XObj",	nullptr },
+	{ "Memory",			nullptr },
+	{ nullptr,			nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -96,7 +96,7 @@ void MemoryXObj::close(ObjectType type) {
 }
 
 
-MemoryXObject::MemoryXObject(ObjectType ObjectType) :Object<MemoryXObject>("MemoryXObj") {
+MemoryXObject::MemoryXObject(ObjectType ObjectType) :Object<MemoryXObject>("Memory") {
 	_objType = ObjectType;
 }
 

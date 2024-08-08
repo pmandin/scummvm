@@ -205,6 +205,21 @@ protected:
 
 private:
 	void toggleFullScreen();
+
+#if defined(USE_IMGUI) && SDL_VERSION_ATLEAST(2, 0, 0)
+public:
+	void setImGuiCallbacks(const ImGuiCallbacks &callbacks) override { _imGuiCallbacks = callbacks; }
+
+protected:
+	ImGuiCallbacks _imGuiCallbacks;
+	bool _imGuiReady = false;
+	bool _imGuiInited = false;
+
+	void initImGui(void *glContext);
+	void renderImGui();
+	void destroyImGui();
+#endif
+
 };
 
 #endif

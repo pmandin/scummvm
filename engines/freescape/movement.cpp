@@ -47,13 +47,13 @@ void FreescapeEngine::initKeymaps(Common::Keymap *engineKeyMap, const char *targ
 	act = new Common::Action(Common::kStandardActionMoveLeft, _("Strafe Left"));
 	act->setKeyEvent(Common::KEYCODE_LEFT);
 	act->addDefaultInputMapping("JOY_LEFT");
-	act->addDefaultInputMapping("q");
+	//act->addDefaultInputMapping("q");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveRight, _("Strafe Right"));
 	act->setKeyEvent(Common::KEYCODE_RIGHT);
 	act->addDefaultInputMapping("JOY_RIGHT");
-	act->addDefaultInputMapping("w");
+	//act->addDefaultInputMapping("w");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("SHOOT", _("Shoot"));
@@ -131,9 +131,6 @@ void FreescapeEngine::traverseEntrance(uint16 entranceID) {
 	}
 
 	_pitch = rotation.x();
-	// This is a workaround to avoid the camera looking at direct angles,
-	// polygons tends to disappear where the colinear
-	_pitch++;
 	if (rotation.y() > 0 && rotation.y() <= 45)
 		_yaw = rotation.y();
 	else if (rotation.y() <= 0 || (rotation.y() >= 180 && rotation.y() < 270))
@@ -143,18 +140,10 @@ void FreescapeEngine::traverseEntrance(uint16 entranceID) {
 
 	debugC(1, kFreescapeDebugMove, "entrace position: %f %f %f", _position.x(), _position.y(), _position.z());
 
-	int delta = 0;
-	if (scale == 2)
-		delta = 8;
-	else if (scale == 4)
-		delta = 12;
-
-	if (_playerHeightNumber >= 0)
-		_playerHeight = _playerHeights[_playerHeightNumber] + delta;
-	else
-		_playerHeight = 2;
+	// Set the player height
+	_playerHeight = 0;
+	changePlayerHeight(_playerHeightNumber);
 	debugC(1, kFreescapeDebugMove, "player height: %d", _playerHeight);
-	_position.setValue(1, _position.y() + _playerHeight);
 
 	_sensors = _currentArea->getSensors();
 	_gfx->_scale = _currentArea->_scale;
@@ -167,7 +156,7 @@ void FreescapeEngine::activate() {
 	xoffset = xoffset * 0.33;
 	yoffset = yoffset * 0.50;
 
-	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset);
+	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset, false);
 	Math::Ray ray(_position, direction);
 	Object *interacted = _currentArea->checkCollisionRay(ray, 8192);
 	if (interacted) {
@@ -208,7 +197,7 @@ void FreescapeEngine::shoot() {
 	xoffset = xoffset * 0.33;
 	yoffset = yoffset * 0.50;
 
-	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset);
+	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset, false);
 	Math::Ray ray(_position, direction);
 	Object *shot = _currentArea->checkCollisionRay(ray, 8192);
 	if (shot) {
@@ -220,20 +209,27 @@ void FreescapeEngine::shoot() {
 
 		_delayedShootObject = gobj;
 	}
+
 	executeLocalGlobalConditions(true, false, false); // Only execute "on shot" room/global conditions
+}
+
+void FreescapeEngine::changeAngle() {
+	_angleRotationIndex++;
+	_angleRotationIndex = _angleRotationIndex % int(_angleRotations.size());
 }
 
 void FreescapeEngine::changePlayerHeight(int index) {
 	int scale = _currentArea->getScale();
-	int delta = 0;
-	if (scale == 2)
-		delta = 8;
-	else if (scale == 4)
-		delta = 12;
 
 	_position.setValue(1, _position.y() - _playerHeight);
-	_playerHeight = _playerHeights[index] + delta;
+	_playerHeight = 32 * (index + 1) - 16 / scale;
+	assert(_playerHeight > 0);
 	_position.setValue(1, _position.y() + _playerHeight);
+}
+
+void FreescapeEngine::changeStepSize() {
+	_playerStepIndex++;
+	_playerStepIndex = _playerStepIndex % int(_playerSteps.size());
 }
 
 void FreescapeEngine::increaseStepSize() {
@@ -258,7 +254,7 @@ void FreescapeEngine::rise() {
 		destination.y() = destination.y() + _playerSteps[_playerStepIndex];
 		resolveCollisions(destination);
 	} else {
-		if (_playerHeightNumber == int(_playerHeights.size()) - 1)
+		if (_playerHeightNumber >= _playerHeightMaxNumber)
 			return;
 
 		_playerHeightNumber++;
@@ -448,7 +444,11 @@ bool FreescapeEngine::runCollisionConditions(Math::Vector3d const lastPosition, 
 	Math::Vector3d direction = newPosition - lastPosition;
 	direction.normalize();
 	ray = Math::Ray(lastPosition, direction);
-	collided = _currentArea->checkCollisionRay(ray, 45);
+	int rayLenght = 45;
+	if (_currentArea->getScale() >= 5)
+		rayLenght = MAX(5, 45 / (2 * _currentArea->getScale()));
+
+	collided = _currentArea->checkCollisionRay(ray, rayLenght);
 	if (collided) {
 		gobj = (GeometricObject *)collided;
 		debugC(1, kFreescapeDebugMove, "Collided with object id %d of size %f %f %f", gobj->getObjectID(), gobj->getSize().x(), gobj->getSize().y(), gobj->getSize().z());

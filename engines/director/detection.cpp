@@ -38,6 +38,9 @@ static const struct CustomTarget {
 	const char *platform;
 	const char *version;
 } customTargetList[] = {
+	{"vw-mac", "mac", "000" },
+	{"vw2-mac", "mac", "050" },
+	{"d1-mac", "mac", "100" },
 	{"d2-mac", "mac", "200" },
 	{"d3-mac", "mac", "300" },
 	{"d4-mac", "mac", "400" },
@@ -73,15 +76,18 @@ static const DebugChannelDef debugFlagList[] = {
 	{Director::kDebugText, "text", "Text rendering"},
 	{Director::kDebugXObj, "xobj", "XObjects"},
 	{Director::kDebugLingoThe, "lingothe", "Lingo \"the\" entities"},
+	{Director::kDebugImGui, "imgui", "Show ImGui debug window (if available)"},
+	{Director::kDebugPaused, "paused", "Pause first movie right after start"},
+	{Director::kDebugPauseOnLoad, "pauseonload", "Pause every movie right after loading"},
 	DEBUG_CHANNEL_END
 };
 
-class DirectorMetaEngineDetection : public AdvancedMetaEngineDetection {
+class DirectorMetaEngineDetection : public AdvancedMetaEngineDetection<Director::DirectorGameDescription> {
 private:
 	Common::HashMap<Common::String, bool, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> _customTarget;
 
 public:
-	DirectorMetaEngineDetection() : AdvancedMetaEngineDetection(Director::gameDescriptions, sizeof(Director::DirectorGameDescription), directorGames) {
+	DirectorMetaEngineDetection() : AdvancedMetaEngineDetection(Director::gameDescriptions, directorGames) {
 		_maxScanDepth = 5;
 		_directoryGlobs = Director::directoryGlobs;
 		_flags = kADFlagMatchFullPaths | kADFlagCanPlayUnknownVariants;

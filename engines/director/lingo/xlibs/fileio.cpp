@@ -23,6 +23,7 @@
  *
  * USED IN:
  * Standard Director Xtra
+ * Karma: Curse of the 12 Caves
  *
  *************************************/
 
@@ -120,26 +121,25 @@ delete object me -- deletes the open file
 
  */
 
-#include "gui/filebrowser-dialog.h"
-
 #include "common/file.h"
 #include "common/memstream.h"
 #include "common/savefile.h"
 
 #include "director/director.h"
+#include "director/util.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-utils.h"
 #include "director/lingo/xlibs/fileio.h"
-#include "savestate.h"
 
 namespace Director {
 
 const char *FileIO::xlibName = "FileIO";
-const char *FileIO::fileNames[] = {
-	"FileIO",
-	"shFILEIO", // TD loads this up using openXLib("@:shFILEIO.DLL")
-	nullptr
+const XlibFileDesc FileIO::fileNames[] = {
+	{ "FileIO",		nullptr },
+	{ "shFILEIO",	nullptr }, // TD loads this up using openXLib("@:shFILEIO.DLL")
+	{ "FILE",		nullptr },
+	{ nullptr,		nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -183,6 +183,8 @@ static BuiltinProto xlibBuiltins[] = {
 void FileIO::open(ObjectType type, const Common::Path &path) {
 	FileObject::initMethods(xlibMethods);
 	FileObject *xobj = new FileObject(type);
+	if (g_director->getVersion() >= 500)
+		g_lingo->_openXtras.push_back(xlibName);
 	g_lingo->exposeXObject(xlibName, xobj);
 	g_lingo->initBuiltIns(xlibBuiltins);
 }
@@ -216,24 +218,32 @@ FileObject::~FileObject() {
 	clear();
 }
 
+bool FileObject::hasProp(const Common::String &propName) {
+	return (propName == "name");
+}
+
+Datum FileObject::getProp(const Common::String &propName) {
+	if (propName == "name")
+		return Datum(FileIO::xlibName);
+	warning("FileIO::getProp: unknown property '%s'", propName.c_str());
+	return Datum();
+}
+
 FileIOError FileObject::open(const Common::String &origpath, const Common::String &mode) {
 	Common::SaveFileManager *saves = g_system->getSavefileManager();
 	Common::String path = origpath;
 	Common::String option = mode;
 	char dirSeparator = g_director->_dirSeparator;
 
-	Common::String prefix = g_director->getTargetName() + '-';
+	Common::String prefix = savePrefix();
 
 	if (option.hasPrefix("?")) {
 		option = option.substr(1);
-		Common::String mask = prefix + "*.txt";
-		dirSeparator = '/';
-
-		GUI::FileBrowserDialog browser(nullptr, "txt", option.equalsIgnoreCase("write") ? GUI::kFBModeSave : GUI::kFBModeLoad, mask.c_str(), origpath.c_str());
-		if (browser.runModal() <= 0) {
+		path = getFileNameFromModal(option.equalsIgnoreCase("write"), origpath, Common::String(), "txt");
+		if (path.empty()) {
 			return kErrorFileNotFound;
 		}
-		path = browser.getResult();
+		dirSeparator = '/';
 	} else if (!path.hasSuffixIgnoreCase(".txt")) {
 		path += ".txt";
 	}
@@ -331,18 +341,33 @@ FileIOError FileObject::saveFileError() {
 
 void FileIO::m_new(int nargs) {
 	FileObject *me = static_cast<FileObject *>(g_lingo->_state->me.u.obj);
+	Datum result = g_lingo->_state->me;
 	if (nargs == 2) {
+		if (me->getObjType() != kXObj) {
+			warning("FileIO::m_new: called with XObject API however was expecting object type %d", me->getObjType());
+		}
 		Datum d2 = g_lingo->pop();
 		Datum d1 = g_lingo->pop();
 
 		Common::String option = d1.asString();
 		Common::String path = d2.asString();
-		FileIOError result = me->open(path, option);
-		if (result != kErrorNone) {
-			me->_lastError = result;
+		FileIOError err = me->open(path, option);
+		// if there's an error, return an errorcode int instead of an object
+		if (err != kErrorNone) {
+			me->_lastError = err;
+			warning("FileIO::m_new: couldn't open file at path %s, error %d", path.c_str(), err);
+			g_lingo->push(Datum(err));
+			return;
 		}
+	} else if (nargs == 0) {
+		if (me->getObjType() != kXtraObj) {
+			warning("FileIO::m_new: called with Xtra API however was expecting object type %d", me->getObjType());
+		}
+	} else {
+		warning("FileIO::m_new: expected 0 or 2 args, assuming 0");
+		g_lingo->dropStack(nargs);
 	}
-	g_lingo->push(g_lingo->_state->me);
+	g_lingo->push(result);
 }
 
 void FileIO::m_openFile(int nargs) {
@@ -376,30 +401,16 @@ void FileIO::m_closeFile(int nargs) {
 }
 
 // FIXME: split out filename-to-savegame logic from open() so we can implement createFile
-XOBJSTUB(FileIO::m_createFile, 0);
+XOBJSTUB(FileIO::m_createFile, 0)
 
 void FileIO::m_displayOpen(int nargs) {
-	Common::String prefix = g_director->getTargetName() + '-';
-	Common::String mask = prefix + "*.txt";
-
-	GUI::FileBrowserDialog browser(nullptr, "txt", GUI::kFBModeLoad, mask.c_str());
-	Datum result("");
-	if (browser.runModal() > 0) {
-		result = browser.getResult();
-	}
-	g_lingo->push(result);
+	g_lingo->push(getFileNameFromModal(false, Common::String(), Common::String(), "txt"));
 }
 
 void FileIO::m_displaySave(int nargs) {
-	Common::String prefix = g_director->getTargetName() + '-';
-	Common::String mask = prefix + "*.txt";
-
-	GUI::FileBrowserDialog browser(nullptr, "txt", GUI::kFBModeSave, mask.c_str());
-	Datum result("");
-	if (browser.runModal() > 0) {
-		result = browser.getResult();
-	}
-	g_lingo->push(result);
+	Datum defaultFileName = g_lingo->pop();
+	Datum title = g_lingo->pop();
+	g_lingo->push(getFileNameFromModal(true, Common::String(), title.asString(), "txt"));
 }
 
 XOBJSTUB(FileIO::m_setFilterMask, 0)
@@ -597,7 +608,7 @@ void FileIO::m_fileName(int nargs) {
 	FileObject *me = static_cast<FileObject *>(g_lingo->_state->me.u.obj);
 
 	if (me->_filename) {
-		Common::String prefix = g_director->getTargetName() + '-';
+		Common::String prefix = savePrefix();
 		Common::String res = *me->_filename;
 		if (res.hasPrefix(prefix)) {
 			res = Common::String(&me->_filename->c_str()[prefix.size()]);

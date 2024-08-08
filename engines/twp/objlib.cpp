@@ -346,7 +346,7 @@ static SQInteger objectCenter(HSQUIRRELVM v) {
 	if (!obj)
 		return sq_throwerror(v, "failed to get object");
 	Math::Vector2d pos = obj->_node->getPos() + obj->_usePos;
-	sqpush(v, pos);
+	sqpush(v, Common::move(pos));
 	return 1;
 }
 
@@ -471,7 +471,7 @@ static SQInteger objectIcon(HSQUIRRELVM v) {
 			return sq_throwerror(v, "failed to get fps");
 		sq_pop(v, 2);
 		while (SQ_SUCCEEDED(sq_next(v, -2))) {
-			if(SQ_FAILED(sqget(v, -1, icon)))
+			if (SQ_FAILED(sqget(v, -1, icon)))
 				return sq_throwerror(v, "failed to get icon");
 			icons.push_back(icon);
 			sq_pop(v, 2);
@@ -898,7 +898,7 @@ static SQInteger objectValidVerb(HSQUIRRELVM v) {
 	if (g_twp->_actor) {
 		ActorSlot *slot = g_twp->_hud->actorSlot(g_twp->_actor);
 		for (int i = 0; i < MAX_VERBS; i++) {
-			Verb *vb = &slot->verbs[i];
+			const Verb *vb = &slot->verbSlots[i]._verb;
 			if (vb->id.id == verb) {
 				if (sqrawexists(obj->_table, vb->fun)) {
 					sqpush(v, true);

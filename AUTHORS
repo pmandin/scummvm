@@ -104,6 +104,12 @@ ScummVM Team
        Peter Bozso
        Arnaud Boutonne
 
+    Bagel:
+       Arnaud Boutonne
+       Daniel Albano
+       Eugene Sandulenko
+       Paul Gilbert
+
     BBVS:
        Benjamin Haisch
 
@@ -308,6 +314,9 @@ ScummVM Team
     Lure:
        Paul Gilbert
 
+    M4:
+       Paul Gilbert
+
     MacVenture:
        Borja Lorente                  - GSoC student
 
@@ -431,7 +440,7 @@ ScummVM Team
        Ludvig Strigeus                - (retired)
 
     SCUMM HE:
-       Andrea Boscarino               - Digital audio
+       Andrea Boscarino               - Digital audio, WIZ graphics system
        Jonathan Gray                  - (retired)
        Travis Howell
        Gregory Montoir                - (retired)
@@ -543,6 +552,9 @@ ScummVM Team
        Toel Hartmann                  - (retired)
        Sebastien Viannay              - (retired)
        Martin Gerhardy
+
+    Thimbleweed Park:
+       Valéry Sablonnière
 
     Ultima:
        Paul Gilbert
@@ -852,6 +864,7 @@ Other contributions
        Ben Castricum
 
     Finnish:
+       Linus Virtanen
        Toni Saarela
        Timo Mikkolainen
 

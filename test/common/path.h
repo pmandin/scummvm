@@ -89,6 +89,9 @@ class PathTestSuite : public CxxTest::TestSuite
 
 		Common::Path p4("parent/dir/file.txt/");
 		TS_ASSERT_EQUALS(p4.baseName(), "file.txt");
+
+		Common::Path p5("File I/O", ':');
+		TS_ASSERT_EQUALS(p5.baseName(), "File I/O");
 	}
 
 	void test_getParent() {
@@ -401,6 +404,12 @@ class PathTestSuite : public CxxTest::TestSuite
 		TS_ASSERT_EQUALS(p4.toString(':'), "parent:dir:Sound Manager 3.1 / SoundLib:Sound");
 		Common::Path p5 = p4.punycodeEncode();
 		TS_ASSERT_EQUALS(p5.toString('/'), "parent/dir/xn--Sound Manager 3.1  SoundLib-lba84k/Sound");
+
+		Common::Path p6 = p3.punycodeEncode();
+		TS_ASSERT_EQUALS(p6.toString('/'), "parent/dir/xn--xn--Sound Manager 3.1  SoundLib-lba84k-/Sound");
+
+		Common::Path p7 = p6.punycodeDecode();
+		TS_ASSERT_EQUALS(p7.toString('/'), "parent/dir/xn--Sound Manager 3.1  SoundLib-lba84k/Sound");
 
 		typedef Common::HashMap<Common::Path, bool,
 				Common::Path::IgnoreCaseAndMac_Hash, Common::Path::IgnoreCaseAndMac_EqualTo> TestPathMap;

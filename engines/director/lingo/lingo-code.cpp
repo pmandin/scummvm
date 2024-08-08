@@ -226,7 +226,7 @@ void Lingo::switchStateFromWindow() {
 	_state = window->getLingoState();
 }
 
-void Lingo::pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRetVal, int paramCount) {
+void Lingo::pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRetVal, int paramCount, int nargs) {
 	Common::Array<CFrame *> &callstack = _state->callstack;
 
 	debugC(5, kDebugLingoExec, "Pushing frame %d", callstack.size() + 1);
@@ -240,7 +240,10 @@ void Lingo::pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRet
 	fp->sp = funcSym;
 	fp->allowRetVal = allowRetVal;
 	fp->defaultRetVal = defaultRetVal;
-	fp->paramCount = paramCount;
+	fp->paramCount = paramCount;  // number of args, excluding nulls for missing named args
+	for (int i = 0; i < nargs; i++) { // number of args on the stack
+		fp->paramList.insert_at(0, pop());
+	}
 
 	_state->script = funcSym.u.defn;
 
@@ -264,25 +267,20 @@ void Lingo::pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRet
 	}
 
 	if (funcSym.argNames) {
-		int symNArgs = funcSym.nargs;
-		if ((int)funcSym.argNames->size() < symNArgs) {
-			int dropSize = symNArgs - funcSym.argNames->size();
-			warning("%d arg names defined for %d args! Dropping the last %d values", funcSym.argNames->size(), symNArgs, dropSize);
-			for (int i = 0; i < dropSize; i++) {
-				pop();
-				symNArgs -= 1;
-			}
-		} else if ((int)funcSym.argNames->size() > symNArgs) {
-			warning("%d arg names defined for %d args! Ignoring the last %d names", funcSym.argNames->size(), symNArgs, funcSym.argNames->size() - symNArgs);
+		if (funcSym.argNames->size() > fp->paramList.size()) {
+			debugC(1, kDebugLingoExec, "%d arg names defined for %d args! Ignoring the last %d names", funcSym.argNames->size(), fp->paramList.size(), funcSym.argNames->size() - fp->paramList.size());
 		}
-		for (int i = symNArgs - 1; i >= 0; i--) {
+		for (int i = (int)funcSym.argNames->size() - 1; i >= 0; i--) {
 			Common::String name = (*funcSym.argNames)[i];
 			if (!localvars->contains(name)) {
-				Datum value = pop();
-				(*localvars)[name] = value;
+				if (i < (int)fp->paramList.size()) {
+					Datum value = fp->paramList[i];
+					(*localvars)[name] = value;
+				} else {
+					(*localvars)[name] = Datum();
+				}
 			} else {
 				warning("Argument %s already defined", name.c_str());
-				pop();
 			}
 		}
 	}
@@ -372,6 +370,12 @@ void Lingo::popContext(bool aborting) {
 void Lingo::freezeState() {
 	Window *window = _vm->getCurrentWindow();
 	window->freezeLingoState();
+	switchStateFromWindow();
+}
+
+void Lingo::freezePlayState() {
+	Window *window = _vm->getCurrentWindow();
+	window->freezeLingoPlayState();
 	switchStateFromWindow();
 }
 
@@ -660,13 +664,13 @@ void LC::c_swap() {
 }
 
 static DatumType getArrayAlignedType(Datum &d1, Datum &d2) {
-	if (d1.type == POINT && d2.type == ARRAY && d2.u.farr->arr.size() < 2)
+	if (d1.type == POINT && (d2.type == RECT || (d2.type == ARRAY && d2.u.farr->arr.size() != 2)))
 		return ARRAY;
 
 	if (d1.type == POINT)
 		return POINT;
 
-	if (d1.type == RECT && (d2.type == POINT || (d2.type == ARRAY && d2.u.farr->arr.size() < 4)))
+	if (d1.type == RECT && (d2.type == POINT || (d2.type == ARRAY && d2.u.farr->arr.size() != 4)))
 		return ARRAY;
 
 	if (d1.type == RECT)
@@ -681,32 +685,58 @@ static DatumType getArrayAlignedType(Datum &d1, Datum &d2) {
 Datum LC::mapBinaryOp(Datum (*mapFunc)(Datum &, Datum &), Datum &d1, Datum &d2) {
 	// At least one of d1 and d2 must be an array
 	uint arraySize;
+
 	if (d1.isArray() && d2.isArray()) {
 		arraySize = MIN(d1.u.farr->arr.size(), d2.u.farr->arr.size());
-	} else if (d1.isArray()) {
+	} else if (d1.type == PARRAY && d2.type == PARRAY) {
+		arraySize = MIN(d1.u.parr->arr.size(), d2.u.parr->arr.size());
+	// if d1 and d2 are different arrays, result is [x+d2 for x in d1], with type of d1
+	} else if (d1.isArray() && d2.type == PARRAY) {
 		arraySize = d1.u.farr->arr.size();
+	} else if (d1.type == PARRAY && d2.isArray()) {
+		arraySize = d1.u.parr->arr.size();
+	} else if (d1.isArray() || d1.type == PARRAY) {
+		arraySize = d1.type == PARRAY ? d1.u.parr->arr.size() : d1.u.farr->arr.size();
 	} else {
-		arraySize = d2.u.farr->arr.size();
+		arraySize = d2.type == PARRAY ? d2.u.parr->arr.size() : d2.u.farr->arr.size();
 	}
 	Datum res;
-	res.type = getArrayAlignedType(d1, d2);
-	res.u.farr = new FArray(arraySize);
+	if (d1.type == PARRAY) {
+		res.type = PARRAY;
+		res.u.parr = new PArray(arraySize);
+	} else {
+		res.type = getArrayAlignedType(d1, d2);
+		res.u.farr = new FArray(arraySize);
+	}
 	Datum a = d1;
 	Datum b = d2;
 	for (uint i = 0; i < arraySize; i++) {
 		if (d1.isArray()) {
 			a = d1.u.farr->arr[i];
+		} else if (d1.type == PARRAY) {
+			a = d1.u.parr->arr[i].v;
 		}
 		if (d2.isArray()) {
 			b = d2.u.farr->arr[i];
+		} else if (d2.type == PARRAY) {
+			a = d2.u.parr->arr[i].v;
 		}
-		res.u.farr->arr[i] = mapFunc(a, b);
+		if (res.type == PARRAY) {
+			res.u.parr->arr[i] = PCell(d1.u.parr->arr[i].p, mapFunc(a, b));
+		} else {
+			res.u.farr->arr[i] = mapFunc(a, b);
+		}
 	}
 	return res;
 }
 
 Datum LC::addData(Datum &d1, Datum &d2) {
-	if (d1.isArray() || d2.isArray()) {
+	if (d1.type == CASTREF || d2.type == CASTREF) {
+		warning("LC::addData(): attempting to add a cast reference! This always produces 0, but might be a sign that an earlier part of the script has returned incorrect data.");
+		return Datum(0);
+	}
+
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::mapBinaryOp(LC::addData, d1, d2);
 	}
 
@@ -730,7 +760,12 @@ void LC::c_add() {
 }
 
 Datum LC::subData(Datum &d1, Datum &d2) {
-	if (d1.isArray() || d2.isArray()) {
+	if (d1.type == CASTREF || d2.type == CASTREF) {
+		warning("LC::subData(): attempting to subtract a cast reference! This always produces 0, but might be a sign that an earlier part of the script has returned incorrect data.");
+		return Datum(0);
+	}
+
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::mapBinaryOp(LC::subData, d1, d2);
 	}
 
@@ -754,7 +789,12 @@ void LC::c_sub() {
 }
 
 Datum LC::mulData(Datum &d1, Datum &d2) {
-	if (d1.isArray() || d2.isArray()) {
+	if (d1.type == CASTREF || d2.type == CASTREF) {
+		warning("LC::mulData(): attempting to multiply a cast reference! This always produces 0, but might be a sign that an earlier part of the script has returned incorrect data.");
+		return Datum(0);
+	}
+
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::mapBinaryOp(LC::mulData, d1, d2);
 	}
 
@@ -778,7 +818,12 @@ void LC::c_mul() {
 }
 
 Datum LC::divData(Datum &d1, Datum &d2) {
-	if (d1.isArray() || d2.isArray()) {
+	if (d1.type == CASTREF || d2.type == CASTREF) {
+		warning("LC::divData(): attempting to divide a cast reference! This always produces 0, but might be a sign that an earlier part of the script has returned incorrect data.");
+		return Datum(0);
+	}
+
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::mapBinaryOp(LC::divData, d1, d2);
 	}
 
@@ -850,6 +895,8 @@ Datum LC::negateData(Datum &d) {
 		res = Datum(-d.asInt());
 	} else if (d.type == FLOAT) {
 		res = Datum(-d.asFloat());
+	} else if (d.type == VOID) {
+		res = Datum(0);
 	} else {
 		g_lingo->lingoError("LC::negateData(): not supported for type %s", d.type2str());
 	}
@@ -1241,23 +1288,17 @@ void LC::c_not() {
 
 Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, bool location, bool value) {
 	// At least one of d1 and d2 must be an array
-	uint arraySize;
-	if (d1.isArray() && d2.isArray()) {
-		arraySize = MIN(d1.u.farr->arr.size(), d2.u.farr->arr.size());
-	} else if (d1.type == PARRAY && d2.type == PARRAY) {
-		arraySize = MIN(d1.u.parr->arr.size(), d2.u.parr->arr.size());
-	} else if (d1.isArray()) {
-		arraySize = d1.u.farr->arr.size();
-	} else if (d1.type == PARRAY) {
-		arraySize = d1.u.parr->arr.size();
-	} else if (d2.isArray()) {
-		arraySize = d2.u.farr->arr.size();
-	} else if (d2.type == PARRAY) {
-		arraySize = d2.u.parr->arr.size();
-	} else {
-		warning("LC::compareArrays(): Called with wrong data types: %s and %s", d1.type2str(), d2.type2str());
-		return Datum(0);
-	}
+	bool d1isArr = d1.isArray() || d1.type == PARRAY;
+	bool d2isArr = d2.isArray() || d2.type == PARRAY;
+	uint32 d1size = d1.isArray() ? d1.u.farr->arr.size() : d1.type == PARRAY ? d1.u.parr->arr.size() : 0;
+	uint32 d2size = d2.isArray() ? d2.u.farr->arr.size() : d2.type == PARRAY ? d2.u.parr->arr.size() : 0;
+	// The calling convention of this checking function is a bit weird:
+	// - If the location flag is set, you're searching for element d2 in list d1
+	// - If the location flag is not set and there are two array-like arguments passed, you are comparing
+	//   elements and therefore need to truncate output to the smaller size.
+	// - Otherwise, you are comparing an array to a single element, and all elements
+	//   of the array need to be checked.
+	uint arraySize = location ? d1size : ((d1isArr && d2isArr) ? MIN(d1size, d2size) : MAX(d1size, d2size));
 
 	Datum res;
 	res = location ? -1 : 1;
@@ -1271,9 +1312,9 @@ Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, 
 			a = value ? t.v : t.p;
 		}
 
-		if (d2.isArray()) {
+		if (!location && d2.isArray()) {
 			b = d2.u.farr->arr[i];
-		} else if (d2.type == PARRAY) {
+		} else if (!location && d2.type == PARRAY) {
 			PCell t = d2.u.parr->arr[i];
 			b = value ? t.v : t.p;
 		}
@@ -1286,7 +1327,6 @@ Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, 
 		} else if (a.type == STRING && b.type == SYMBOL) {
             b = Datum(b.asString());
         }
-
 
 		res = compareFunc(a, b);
 		if (!location) {
@@ -1305,22 +1345,49 @@ Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, 
 }
 
 Datum LC::eqData(Datum d1, Datum d2) {
-	// Lingo doesn't bother checking list equality if the left is longer
-	if (d1.isArray() && d2.isArray() &&
-			d1.u.farr->arr.size() > d2.u.farr->arr.size()) {
-		return Datum(0);
-	}
-	if (d1.type == PARRAY && d2.type == PARRAY &&
-			d1.u.parr->arr.size() > d2.u.parr->arr.size()) {
-		return Datum(0);
-	}
-	if (d1.isArray() || d2.isArray() ||
-			d1.type == PARRAY || d2.type == PARRAY) {
+	// D4 has a bug, and only checks the elements on the left array.
+	// Therefore if the left array is bigger, don't bother checking.
+	// LC::compareArrays will trim the inputs to the shortest length.
+	// (Mac 4.0.4 is fixed, Win 4.0.4 is not)
+	bool hasArrayBug = (g_director->getVersion() < 500 && g_director->getPlatform() == Common::kPlatformWindows) ||
+		(g_director->getVersion() < 404 && g_director->getPlatform() == Common::kPlatformMacintosh);
+
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
+		bool d1isArr = d1.isArray() || d1.type == PARRAY;
+		bool d2isArr = d2.isArray() || d2.type == PARRAY;
+		uint32 d1size = d1.isArray() ? d1.u.farr->arr.size() : d1.type == PARRAY ? d1.u.parr->arr.size() : 0;
+		uint32 d2size = d2.isArray() ? d2.u.farr->arr.size() : d2.type == PARRAY ? d2.u.parr->arr.size() : 0;
+		if (hasArrayBug && d1isArr && d2isArr && d1size > d2size) {
+			// D4; only check arrays if the left size is less than or equal to the right side
+			return Datum(0);
+		} else if (!hasArrayBug && d1isArr && d2isArr && d1size != d2size) {
+			// D5 and up is fixed; only check arrays if the sizes are the same.
+			return Datum(0);
+		}
 		return LC::compareArrays(LC::eqData, d1, d2, false, true);
 	}
 	Datum check;
 	check = d1.equalTo(d2, true);
 	return check;
+}
+
+Datum LC::eqDataStrict(Datum d1, Datum d2) {
+	// b_getPos and b_getOne will do case-sensitive
+	// string comparison when determining a match.
+	// As opposed to, y'know, the whole rest of
+	// Director which is case insensitive.
+	if (d1.type == STRING && d2.type == STRING) {
+		return Datum(*d1.u.s == *d2.u.s ? 1 : 0);
+	}
+	// ARRAYs and PARRAYs will do a pointer check,
+	// not a contents check
+	if (d1.isArray() && d2.isArray()) {
+		return Datum(d1.u.farr == d2.u.farr ? 1 : 0);
+	}
+	if (d1.type == PARRAY && d2.type == PARRAY) {
+		return Datum(d1.u.parr == d2.u.parr ? 1 : 0);
+	}
+	return LC::eqData(d1, d2);
 }
 
 void LC::c_eq() {
@@ -1330,13 +1397,8 @@ void LC::c_eq() {
 }
 
 Datum LC::neqData(Datum d1, Datum d2) {
-	if (d1.isArray() || d2.isArray() ||
-			d1.type == PARRAY || d2.type == PARRAY) {
-		return LC::compareArrays(LC::neqData, d1, d2, false, true);
-	}
-	Datum check;
-	check = !d1.equalTo(d2, true);
-	return check;
+	// invert the output of eqData
+	return LC::eqData(d1, d2).asInt() ? 0 : 1;
 }
 
 void LC::c_neq() {
@@ -1346,8 +1408,7 @@ void LC::c_neq() {
 }
 
 Datum LC::gtData(Datum d1, Datum d2) {
-	if (d1.isArray() || d2.isArray() ||
-			d1.type == PARRAY || d2.type == PARRAY) {
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::gtData, d1, d2, false, true);
 	}
 	Datum check;
@@ -1362,8 +1423,7 @@ void LC::c_gt() {
 }
 
 Datum LC::ltData(Datum d1, Datum d2) {
-	if (d1.isArray() || d2.isArray() ||
-			d1.type == PARRAY || d2.type == PARRAY) {
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::ltData, d1, d2, false, true);
 	}
 	Datum check;
@@ -1378,8 +1438,7 @@ void LC::c_lt() {
 }
 
 Datum LC::geData(Datum d1, Datum d2) {
-	if (d1.isArray() || d2.isArray() ||
-			d1.type == PARRAY || d2.type == PARRAY) {
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::geData, d1, d2, false, true);
 	}
 	Datum check;
@@ -1394,8 +1453,7 @@ void LC::c_ge() {
 }
 
 Datum LC::leData(Datum d1, Datum d2) {
-	if (d1.isArray() || d2.isArray() ||
-			d1.type == PARRAY || d2.type == PARRAY) {
+	if (d1.isArray() || d2.isArray() || d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::leData, d1, d2, false, true);
 	}
 	Datum check;
@@ -1493,7 +1551,7 @@ void LC::c_callfunc() {
 
 void LC::call(const Common::String &name, int nargs, bool allowRetVal) {
 	if (debugChannelSet(3, kDebugLingoExec))
-		printWithArgList(name.c_str(), nargs, "call:");
+		g_lingo->printArgs(name.c_str(), nargs, "call:");
 
 	Symbol funcSym;
 
@@ -1532,27 +1590,25 @@ void LC::call(const Common::String &name, int nargs, bool allowRetVal) {
 			}
 			funcSym = target->getMethod(name);
 			if (funcSym.type != VOIDSYM) {
-				g_lingo->_stack[g_lingo->_stack.size() - nargs] = funcSym.target; // Set first arg to target
+				g_lingo->_stack[g_lingo->_stack.size() - nargs] = target; // Set first arg to target
 				call(funcSym, nargs, allowRetVal);
 				return;
 			}
 		}
 	}
 
-	// Fallback for the edge case where a local factory method is called,
-	// but with an invalid first argument.
-	// If there is a current me object, and it has a function handler
-	// with a matching name, then the first argument will be replaced with the me object.
-	// If there are no arguments at all, one will be added.
+	// If we're calling from within a me object, and it has a function handler with a
+	// matching name, include the me object in the CFrame (so we still get property lookups).
+	// Doesn't matter that the first arg isn't the me object (which would have been caught
+	// by the Factory/XObject code above).
+	//
+	// If the method is called from outside and without the object as the first arg,
+	// it will still work using the normal getHandler lookup.
+	// However properties will return garbage (the number 3??).
 	if (g_lingo->_state->me.type == OBJECT) {
 		AbstractObject *target = g_lingo->_state->me.u.obj;
 		funcSym = target->getMethod(name);
 		if (funcSym.type != VOIDSYM) {
-			if (nargs == 0) {
-				g_lingo->_stack.push_back(Datum());
-				nargs = 1;
-			}
-			g_lingo->_stack[g_lingo->_stack.size() - nargs] = funcSym.target; // Set first arg to target
 			call(funcSym, nargs, allowRetVal);
 			return;
 		}
@@ -1566,7 +1622,8 @@ void LC::call(const Common::String &name, int nargs, bool allowRetVal) {
 		// If the first argument is an ARRAY or PARRAY, it will use the builtin.
 		// Otherwise, it will fall back to whatever handler is defined globally.
 		Datum firstArg = g_lingo->peek(nargs - 1);
-		if (firstArg.type == ARRAY || firstArg.type == PARRAY) {
+		if (firstArg.type == ARRAY || firstArg.type == PARRAY ||
+				firstArg.type == POINT || firstArg.type == RECT) {
 			funcSym = g_lingo->_builtinListHandlers[name];
 		}
 	}
@@ -1640,16 +1697,8 @@ void LC::call(const Symbol &funcSym, int nargs, bool allowRetVal) {
 		if (funcSym.type == HANDLER || funcSym.type == HBLTIN) {
 			// Lingo supports providing a different number of arguments than expected,
 			// and several games rely on this behaviour.
-			if (funcSym.maxArgs < nargs) {
-				debugC(kDebugLingoExec, 1, "Incorrect number of arguments for handler '%s' (%d, expected %d to %d). Dropping extra %d",
-							funcSym.name->c_str(), nargs, funcSym.nargs, funcSym.maxArgs, nargs - funcSym.maxArgs);
-				while (nargs > funcSym.maxArgs) {
-					g_lingo->pop();
-					nargs--;
-				}
-			}
 			if (funcSym.nargs > nargs) {
-				debugC(kDebugLingoExec, 1, "Incorrect number of arguments for handler '%s' (%d, expected %d to %d). Adding extra %d voids",
+				debugC(1, kDebugLingoExec, "Incorrect number of arguments for handler '%s' (%d, expected %d to %d). Adding extra %d voids",
 							funcSym.name->c_str(), nargs, funcSym.nargs, funcSym.maxArgs, funcSym.nargs - nargs);
 				while (nargs < funcSym.nargs) {
 					Datum d;
@@ -1728,10 +1777,29 @@ void LC::call(const Symbol &funcSym, int nargs, bool allowRetVal) {
 		defaultRetVal = funcSym.target; // return me
 	}
 
-	g_lingo->pushContext(funcSym, allowRetVal, defaultRetVal, paramCount);
+	g_lingo->pushContext(funcSym, allowRetVal, defaultRetVal, paramCount, nargs);
 }
 
 void LC::c_procret() {
+	// Equivalent of Lingo's "exit" command.
+	// If we hit this instruction, wipe whatever new is on the Lingo stack,
+	// as we could e.g. be in a loop.
+	// Returning a value must be done by calling LB::b_return().
+	Common::Array<CFrame *> &callstack = g_lingo->_state->callstack;
+	CFrame *fp = callstack.back();
+	int extra = g_lingo->_stack.size() - fp->stackSizeBefore;
+	if (extra > 0) {
+		debugC(5, kDebugLingoExec, "c_procret: dropping %d items", extra);
+		g_lingo->dropStack(extra);
+	} else if (extra < 0) {
+		error("c_procret: handler %s has a stack delta size of %d", fp->sp.name->c_str(), extra);
+	}
+
+	procret();
+}
+
+void LC::procret() {
+	// Lingo stack must be empty or have one value
 	Common::Array<CFrame *> &callstack = g_lingo->_state->callstack;
 
 	if (callstack.size() == 0) {
@@ -1748,6 +1816,7 @@ void LC::c_procret() {
 		return;
 	}
 }
+
 
 void LC::c_delete() {
 	Datum d = g_lingo->pop();
@@ -1856,8 +1925,11 @@ void LC::c_hilite() {
 }
 
 void LC::c_fieldref() {
-	Datum d = g_lingo->pop();
-	Datum res = d.asMemberID();
+	Datum castLib;
+	if (g_director->getVersion() >= 500)
+		castLib = g_lingo->pop();
+	Datum member = g_lingo->pop();
+	Datum res = member.asMemberID(kCastTypeAny, castLib.asInt());
 	res.type = FIELDREF;
 	g_lingo->push(res);
 }
@@ -1876,7 +1948,7 @@ void LC::c_asserterror() {
 
 void LC::c_asserterrordone() {
 	if (!g_lingo->_caughtError) {
-		warning("c_asserterrordone: did not catch error");
+		warning("BUILDBOT: c_asserterrordone: did not catch error");
 	}
 	g_lingo->_expectError = false;
 }

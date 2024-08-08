@@ -48,9 +48,9 @@
 namespace Director {
 
 const char *ValkyrieXObj::xlibName = "Valkyrie";
-const char *ValkyrieXObj::fileNames[] = {
-	"VALKYRIE",
-	0
+const XlibFileDesc ValkyrieXObj::fileNames[] = {
+	{ "VALKYRIE",	nullptr },
+	{ nullptr,		nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -81,7 +81,7 @@ void ValkyrieXObj::close(ObjectType type) {
 }
 
 
-ValkyrieXObject::ValkyrieXObject(ObjectType ObjectType) :Object<ValkyrieXObject>("ValkyrieXObj") {
+ValkyrieXObject::ValkyrieXObject(ObjectType ObjectType) :Object<ValkyrieXObject>("Valkyrie") {
 	_objType = ObjectType;
 }
 
@@ -108,7 +108,7 @@ XOBJSTUB(ValkyrieXObj::m_lastError, "")
 void ValkyrieXObj::m_save(int nargs) {
 	// should write to namco.ini > Valkyrie > Data
 	// TODO: Should report errors if we fail to save
-	Common::String saveName = g_director->getTargetName() + "-namco.ini.txt";
+	Common::String saveName = savePrefix() + "namco.ini.txt";
 	Common::String saveString = g_lingo->pop().asString();
 	Common::INIFile *saveFile = new Common::INIFile();
 	saveFile->loadFromSaveFile(saveName);
@@ -123,7 +123,7 @@ void ValkyrieXObj::m_load(int nargs) {
 	// TODO: Report errors if we fail to load?
 	Common::String saveString;
 	Common::INIFile *saveFile = new Common::INIFile();
-	saveFile->loadFromSaveFile(g_director->getTargetName() + "-namco.ini.txt");
+	saveFile->loadFromSaveFile(savePrefix() + "namco.ini.txt");
 	if (!(saveFile->hasKey("Data", "Valkyrie"))) {
 		saveString = "0NAX";
 	} else {

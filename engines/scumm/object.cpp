@@ -569,7 +569,7 @@ int ScummEngine::findObject(int x, int y) {
 			if (b == 0) {
 #ifdef ENABLE_HE
 				if (_game.heversion >= 71) {
-					if (((ScummEngine_v71he *)this)->_wiz->polygonHit(_objs[i].obj_nr, x, y))
+					if (((ScummEngine_v71he *)this)->_wiz->testForObjectPolygon(_objs[i].obj_nr, x, y))
 						return _objs[i].obj_nr;
 				}
 #endif
@@ -637,7 +637,7 @@ void ScummEngine::drawRoomObjects(int arg) {
 	}
 }
 
-void ScummEngine::drawObject(int obj, int arg) {
+void ScummEngine::drawObject(int obj, int scrollType) {
 	if (_skipDrawObject)
 		return;
 
@@ -648,7 +648,7 @@ void ScummEngine::drawObject(int obj, int arg) {
 	int tmp;
 
 	if (_bgNeedsRedraw)
-		arg = 0;
+		scrollType = 0;
 
 	if (od.obj_nr == 0)
 		return;
@@ -687,11 +687,11 @@ void ScummEngine::drawObject(int obj, int arg) {
 		tmp = xpos + a;
 		if (tmp < _screenStartStrip || _screenEndStrip < tmp)
 			continue;
-		if (arg > 0 && _screenStartStrip + arg <= tmp)
+		if (scrollType > 0 && _screenStartStrip + scrollType <= tmp)
 			continue;
-		if (arg < 0 && tmp <= _screenEndStrip + arg)
+		if (scrollType < 0 && tmp <= _screenEndStrip + scrollType)
 			continue;
-		setGfxUsageBit(tmp, USAGE_BIT_DIRTY);
+		setGfxUsageBit(tmp, USAGE_BIT_DIRTY); // FIXME: HE70 onwards seems to use USAGE_BIT_RESTORED instead?
 		if (tmp < x)
 			x = tmp;
 		numstrip++;
@@ -739,7 +739,7 @@ void ScummEngine::drawObject(int obj, int arg) {
 			flags |= Gdi::dbDrawMaskOnAll;
 
 #ifdef ENABLE_HE
-		if (_game.heversion >= 70 && findResource(MKTAG('S','M','A','P'), ptr) == NULL)
+		if (_game.heversion >= 70 && !findResource(MKTAG('S','M','A','P'), ptr))
 			_gdi->drawBMAPObject(ptr, &_virtscr[kMainVirtScreen], obj, od.x_pos, od.y_pos, od.width, od.height);
 		else
 #endif
@@ -1213,7 +1213,7 @@ void ScummEngine_v6::clearDrawQueues() {
 void ScummEngine_v71he::clearDrawQueues() {
 	ScummEngine_v6::clearDrawQueues();
 
-	_wiz->polygonClear();
+	_wiz->deleteLocalPolygons();
 }
 
 void ScummEngine_v80he::clearDrawQueues() {

@@ -24,6 +24,9 @@
 namespace Freescape {
 
 void FreescapeEngine::generateDemoInput() {
+	if (_shootingFrames > 0)
+		return;
+
 	Common::Event event;
 	if (isDOS()) {
 
@@ -190,6 +193,8 @@ int FreescapeEngine::decodeDOSKey(int index) {
 		return Common::KEYCODE_p;
 	case 8:
 		return Common::KEYCODE_l;
+	case 11:
+		return Common::KEYCODE_a;
 	case 30:
 		return Common::KEYCODE_SPACE;
 	case 40:

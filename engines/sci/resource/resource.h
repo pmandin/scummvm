@@ -218,7 +218,7 @@ public:
 		output += intToBase36(getNumber(), 3);                     // Map
 		output += intToBase36(getTuple() >> 24, 2);                // Noun
 		output += intToBase36((getTuple() >> 16) & 0xff, 2);       // Verb
-		output += '.';                                                   // Separator
+		output += '.';                                             // Separator
 		output += intToBase36((getTuple() >> 8) & 0xff, 2);        // Cond
 		output += intToBase36(getTuple() & 0xff, 1);               // Seq
 
@@ -357,12 +357,12 @@ public:
 	/**
 	 * Adds all of the resource files for a game
 	 */
-	int addAppropriateSources();
+	void addAppropriateSources();
 
 	/**
 	 * Similar to the function above, only called from the fallback detector
 	 */
-	int addAppropriateSourcesForDetection(const Common::FSList &fslist);	// TODO: Switch from FSList to Common::Archive?
+	void addAppropriateSourcesForDetection(const Common::FSList &fslist);	// TODO: Switch from FSList to Common::Archive?
 
 	/**
 	 * Looks up a resource's data.
@@ -469,7 +469,7 @@ public:
 	/**
 	 * Finds the internal Sierra ID of the current game from script 0.
 	 */
-	Common::String findSierraGameId(const bool isBE);
+	Common::String findSierraGameId();
 
 	/**
 	 * Finds the location of the game object from script 0.
@@ -477,7 +477,7 @@ public:
 	 *        games. Needs to be false when the heap is accessed directly inside
 	 *        findSierraGameId().
 	 */
-	reg_t findGameObject(const bool addSci11ScriptOffset, const bool isBE);
+	reg_t findGameObject(const bool addSci11ScriptOffset);
 
 	/**
 	 * Converts a map resource type to our type

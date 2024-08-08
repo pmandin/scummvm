@@ -235,16 +235,16 @@ void ScummEngine::parseEvent(Common::Event event) {
 			_mouse.x >>= 1;
 			if (_game.version < 3) {
 				// MM/ZAK v1/v2
-				if (_mouse.y >= _virtscr[kMainVirtScreen].topline)
-					_mouse.y = _mouse.y / 2 + _virtscr[kMainVirtScreen].topline / 2;
-				if (_mouse.y > _virtscr[kVerbVirtScreen].topline)
-					_mouse.y += (_mouse.y - _virtscr[kVerbVirtScreen].topline);
+				if (_mouse.y >= (_virtscr[kVerbVirtScreen].topline - _virtscr[kMainVirtScreen].topline) * 2 + _virtscr[kMainVirtScreen].topline)
+					_mouse.y -= (_virtscr[kVerbVirtScreen].topline - _virtscr[kMainVirtScreen].topline);
+				else if (_mouse.y >= _virtscr[kMainVirtScreen].topline)
+					_mouse.y = (_mouse.y - _virtscr[kMainVirtScreen].topline) / 2 + _virtscr[kMainVirtScreen].topline;
 			} else {
 				// MI1
 				_mouse.y = _mouse.y * 4 / 7;
 			}
 
-		} else if (_macScreen || (_useCJKMode && _textSurfaceMultiplier == 2) || _renderMode == Common::kRenderCGA_BW || _enableEGADithering) {
+		} else if (_textSurfaceMultiplier == 2 || _renderMode == Common::kRenderCGA_BW || _enableEGADithering) {
 			_mouse.x >>= 1;
 			_mouse.y >>= 1;
 		}
@@ -547,7 +547,7 @@ void ScummEngine_v8::processKeyboard(Common::KeyState lastKeyHit) {
 void ScummEngine_v7::processKeyboard(Common::KeyState lastKeyHit) {
 	if (isUsingOriginalGUI()) {
 		if (lastKeyHit.keycode == Common::KEYCODE_b &&
-			(lastKeyHit.hasFlags(Common::KBD_CTRL) || lastKeyHit.hasFlags(Common::KBD_SHIFT))) {
+			((lastKeyHit.hasFlags(Common::KBD_CTRL) && _game.id != GID_DIG) || lastKeyHit.hasFlags(Common::KBD_SHIFT))) {
 			int curBufferCount = _imuseDigital->roundRobinSetBufferCount();
 			// "iMuse buffer count changed to %d"
 			showBannerAndPause(0, 90, getGUIString(gsIMuseBuffer), curBufferCount);

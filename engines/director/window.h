@@ -116,7 +116,7 @@ public:
 	void reset();
 
 	// transitions.cpp
-	void exitTransition(TransParams &t, int step, Graphics::ManagedSurface *nextFrame, Common::Rect clipRect);
+	void exitTransition(TransParams &t, Graphics::ManagedSurface *nextFrame, Common::Rect clipRect);
 	void stepTransition(TransParams &t, int step);
 	void playTransition(uint frame, RenderMode mode, uint16 transDuration, uint8 transArea, uint8 transChunkSize, TransitionType transType, CastMemberID paletteId);
 	void initTransParams(TransParams &t, Common::Rect &clipRect);
@@ -158,10 +158,14 @@ public:
 	Common::Path getSharedCastPath();
 
 	LingoState *getLingoState() { return _lingoState; };
+	LingoState *getLingoPlayState() { return _lingoPlayState; };
 	uint32 frozenLingoStateCount() { return _frozenLingoStates.size(); };
+	uint32 frozenLingoRecursionCount();
 	void freezeLingoState();
 	void thawLingoState();
-	int recursiveEnterFrameCount();
+	void freezeLingoPlayState();
+	bool thawLingoPlayState();
+	LingoState *getLastFrozenLingoState() { return _frozenLingoStates.empty() ? nullptr : _frozenLingoStates[_frozenLingoStates.size() - 1]; }
 
 	// events.cpp
 	bool processEvent(Common::Event &event) override;
@@ -184,7 +188,7 @@ public:
 	Common::String asString() override;
 	bool hasProp(const Common::String &propName) override;
 	Datum getProp(const Common::String &propName) override;
-	bool setProp(const Common::String &propName, const Datum &value) override;
+	bool setProp(const Common::String &propName, const Datum &value, bool force = false) override;
 	bool hasField(int field) override;
 	Datum getField(int field) override;
 	bool setField(int field, const Datum &value) override;
@@ -206,6 +210,7 @@ private:
 	DirectorSound *_soundManager;
 	LingoState *_lingoState;
 	Common::Array<LingoState *> _frozenLingoStates;
+	LingoState *_lingoPlayState;
 	bool _isStage;
 	Archive *_mainArchive;
 	Movie *_currentMovie;

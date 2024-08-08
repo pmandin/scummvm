@@ -22,6 +22,16 @@
 
 namespace Graphics {
 
+static const byte EGA_PALETTE[16][3] = {
+	{ 0x00, 0x00, 0x00 }, { 0x00, 0x00, 0xaa }, { 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0xaa }, { 0xaa, 0x00, 0x00 }, { 0xaa, 0x00, 0xaa },
+	{ 0xaa, 0x55, 0x00 }, { 0xaa, 0xaa, 0xaa }, { 0x55, 0x55, 0x55 },
+	{ 0x55, 0x55, 0xff }, { 0x55, 0xff, 0x55 }, { 0x55, 0xff, 0xff },
+	{ 0xff, 0x55, 0x55 }, { 0xff, 0x55, 0xff }, { 0xff, 0xff, 0x55 },
+	{ 0xff, 0xff, 0xff }
+};
+
+
 Palette::Palette(uint size) : _data(nullptr), _size(size) {
 	if (_size > 0) {
 		_data = new byte[_size * 3]();
@@ -45,6 +55,24 @@ Palette::Palette(const Palette &p) : _data(nullptr), _size(p._size) {
 
 Palette::~Palette() {
 	delete[] _data;
+}
+
+Palette Palette::createEGAPalette() {
+	return Palette(&EGA_PALETTE[0][0], 16);
+}
+
+
+Palette &Palette::operator=(const Palette &rhs) {
+	delete[] _data;
+	_data = nullptr;
+	_size = rhs._size;
+
+	if (_size > 0) {
+		_data = new byte[_size * 3]();
+		memcpy(_data, rhs._data, _size * 3);
+	}
+
+	return *this;
 }
 
 bool Palette::equals(const Palette &p) const {

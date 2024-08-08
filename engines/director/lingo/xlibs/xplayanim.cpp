@@ -37,9 +37,9 @@
 namespace Director {
 
 const char *XPlayAnim::xlibName = "XPlayAnim";
-const char *XPlayAnim::fileNames[] = {
-	"XPlayAnim",
-	nullptr
+const XlibFileDesc XPlayAnim::fileNames[] = {
+	{ "XPlayAnim",	nullptr },
+	{ nullptr,		nullptr },
 };
 
 static BuiltinProto builtins[] = {
@@ -84,7 +84,7 @@ void XPlayAnim::b_xplayanim(int nargs) {
 	bool keepPlaying = true;
 	video->start();
 	while (!video->endOfVideo()) {
-		if (g_system->getEventManager()->pollEvent(event)) {
+		if (g_director->pollEvent(event)) {
 			switch(event.type) {
 				case Common::EVENT_QUIT:
 					g_director->processEventQUIT();

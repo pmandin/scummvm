@@ -53,7 +53,7 @@ OpenGLSdlGraphicsManager::OpenGLSdlGraphicsManager(SdlEventSource *eventSource, 
 
 	// Set up proper SDL OpenGL context creation.
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-	// Context version 1.4 is choosen arbitrarily based on what most shader
+	// Context version 1.4 is chosen arbitrarily based on what most shader
 	// extensions were written against.
 	enum {
 		DEFAULT_GL_MAJOR = 1,
@@ -191,6 +191,11 @@ OpenGLSdlGraphicsManager::OpenGLSdlGraphicsManager(SdlEventSource *eventSource, 
 
 OpenGLSdlGraphicsManager::~OpenGLSdlGraphicsManager() {
 #if SDL_VERSION_ATLEAST(2, 0, 0)
+
+#ifdef USE_IMGUI
+	destroyImGui();
+#endif
+
 	notifyContextDestroy();
 	SDL_GL_DeleteContext(_glContext);
 #else
@@ -291,6 +296,12 @@ void OpenGLSdlGraphicsManager::updateScreen() {
 		--_ignoreResizeEvents;
 	}
 
+#if defined(USE_IMGUI) && SDL_VERSION_ATLEAST(2, 0, 0)
+	if (_imGuiCallbacks.render) {
+		_forceRedraw = true;
+	}
+#endif
+
 	OpenGLGraphicsManager::updateScreen();
 }
 
@@ -315,7 +326,7 @@ void OpenGLSdlGraphicsManager::notifyResize(const int width, const int height) {
 		currentWidth = width;
 		currentHeight = height;
 	}
-	
+
 	debug(3, "req: %d x %d  cur: %d x %d, scale: %f", width, height, currentWidth, currentHeight, dpiScale);
 
 	if (ConfMan.getBool("force_resize", Common::ConfigManager::kApplicationDomain)) {
@@ -442,7 +453,12 @@ void OpenGLSdlGraphicsManager::refreshScreen() {
 		SdlGraphicsManager::saveScreenshot();
 		_queuedScreenshot = false;
 	}
-#endif 
+#endif
+
+#if defined(USE_IMGUI) && SDL_VERSION_ATLEAST(2, 0, 0)
+	renderImGui();
+#endif
+
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_GL_SwapWindow(_window->getSDLWindow());
 #else
@@ -521,6 +537,10 @@ bool OpenGLSdlGraphicsManager::setupMode(uint width, uint height) {
 	if (_glContext) {
 		notifyContextDestroy();
 
+#ifdef USE_IMGUI
+		destroyImGui();
+#endif
+
 		SDL_GL_DeleteContext(_glContext);
 		_glContext = nullptr;
 	}
@@ -568,6 +588,11 @@ bool OpenGLSdlGraphicsManager::setupMode(uint width, uint height) {
 	if (!_glContext) {
 		return false;
 	}
+
+#ifdef USE_IMGUI
+	// Setup Dear ImGui
+	initImGui(_glContext);
+#endif
 
 	if (SDL_GL_SetSwapInterval(_vsync ? 1 : 0)) {
 		warning("Unable to %s VSync: %s", _vsync ? "enable" : "disable", SDL_GetError());

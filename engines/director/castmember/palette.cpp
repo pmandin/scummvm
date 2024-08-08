@@ -31,6 +31,34 @@ PaletteCastMember::PaletteCastMember(Cast *cast, uint16 castId, Common::Seekable
 	_palette = nullptr;
 }
 
+PaletteCastMember::PaletteCastMember(Cast *cast, uint16 castId, PaletteCastMember &source)
+	: CastMember(cast, castId) {
+	_type = kCastPalette;
+	// force a load so we can copy the cast resource information
+	source.load();
+	_loaded = true;
+
+	_palette = source._palette ? new PaletteV4(*source._palette) : nullptr;
+}
+
+PaletteCastMember::~PaletteCastMember() {
+	if (_palette) {
+		delete[] _palette->palette;
+		delete _palette;
+	}
+}
+
+CastMemberID PaletteCastMember::getPaletteId() {
+	load();
+	return _palette ? _palette->id : CastMemberID();
+}
+
+void PaletteCastMember::activatePalette() {
+	load();
+	if (_palette)
+		g_director->setPalette(_palette->id);
+}
+
 Common::String PaletteCastMember::formatInfo() {
 	Common::String result;
 	if (_palette) {
@@ -72,9 +100,9 @@ void PaletteCastMember::load() {
 			Common::SeekableReadStreamEndian *pal = arch->getResource(MKTAG('C', 'L', 'U', 'T'), paletteId);
 			debugC(2, kDebugImages, "PaletteCastMember::load(): linking palette id %d to cast index %d", paletteId, _castId);
 			PaletteV4 palData = _cast->loadPalette(*pal, paletteId);
-			CastMemberID cid(_castId, _cast->_castLibID);
-			g_director->addPalette(cid, palData.palette, palData.length);
-			_palette = g_director->getPalette(cid);
+			palData.id = CastMemberID(_castId, _cast->_castLibID);
+			g_director->addPalette(palData.id, palData.palette, palData.length);
+			_palette = new PaletteV4(palData);
 			delete pal;
 		} else {
 			warning("PaletteCastMember::load(): no CLUT palette %d for cast index %d found", paletteId, _castId);

@@ -90,7 +90,7 @@ jmethodID JNI::_MID_setTextInClipboard = 0;
 jmethodID JNI::_MID_isConnectionLimited = 0;
 jmethodID JNI::_MID_setWindowCaption = 0;
 jmethodID JNI::_MID_showVirtualKeyboard = 0;
-jmethodID JNI::_MID_showKeyboardControl = 0;
+jmethodID JNI::_MID_showOnScreenControls = 0;
 jmethodID JNI::_MID_getBitmapResource = 0;
 jmethodID JNI::_MID_setTouchMode = 0;
 jmethodID JNI::_MID_getTouchMode = 0;
@@ -98,6 +98,7 @@ jmethodID JNI::_MID_setOrientation = 0;
 jmethodID JNI::_MID_getScummVMBasePath;
 jmethodID JNI::_MID_getScummVMConfigPath;
 jmethodID JNI::_MID_getScummVMLogPath;
+jmethodID JNI::_MID_setCurrentGame = 0;
 jmethodID JNI::_MID_getSysArchives = 0;
 jmethodID JNI::_MID_getAllStorageLocations = 0;
 jmethodID JNI::_MID_initSurface = 0;
@@ -420,13 +421,13 @@ void JNI::showVirtualKeyboard(bool enable) {
 	}
 }
 
-void JNI::showKeyboardControl(bool enable) {
+void JNI::showOnScreenControls(int enableMask) {
 	JNIEnv *env = JNI::getEnv();
 
-	env->CallVoidMethod(_jobj, _MID_showKeyboardControl, enable);
+	env->CallVoidMethod(_jobj, _MID_showOnScreenControls, enableMask);
 
 	if (env->ExceptionCheck()) {
-		LOGE("Error trying to show virtual keyboard control");
+		LOGE("Error trying to show on screen controls");
 
 		env->ExceptionDescribe();
 		env->ExceptionClear();
@@ -614,6 +615,27 @@ Common::String JNI::getScummVMLogPath() {
 	return path;
 }
 
+void JNI::setCurrentGame(const Common::String &target) {
+	JNIEnv *env = JNI::getEnv();
+	jstring java_target = nullptr;
+	if (!target.empty()) {
+		java_target = convertToJString(env, Common::U32String(target));
+	}
+
+	env->CallVoidMethod(_jobj, _MID_setCurrentGame, java_target);
+
+	if (env->ExceptionCheck()) {
+		LOGE("Failed to set current game");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+	}
+
+	if (java_target) {
+		env->DeleteLocalRef(java_target);
+	}
+}
+
 // The following adds assets folder to search set.
 // However searching and retrieving from "assets" on Android this is slow
 // so we also make sure to add the base directory, with a higher priority
@@ -796,7 +818,7 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 	FIND_METHOD(, setTextInClipboard, "(Ljava/lang/String;)Z");
 	FIND_METHOD(, isConnectionLimited, "()Z");
 	FIND_METHOD(, showVirtualKeyboard, "(Z)V");
-	FIND_METHOD(, showKeyboardControl, "(Z)V");
+	FIND_METHOD(, showOnScreenControls, "(I)V");
 	FIND_METHOD(, getBitmapResource, "(I)Landroid/graphics/Bitmap;");
 	FIND_METHOD(, setTouchMode, "(I)V");
 	FIND_METHOD(, getTouchMode, "()I");
@@ -804,6 +826,7 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 	FIND_METHOD(, getScummVMBasePath, "()Ljava/lang/String;");
 	FIND_METHOD(, getScummVMConfigPath, "()Ljava/lang/String;");
 	FIND_METHOD(, getScummVMLogPath, "()Ljava/lang/String;");
+	FIND_METHOD(, setCurrentGame, "(Ljava/lang/String;)V");
 	FIND_METHOD(, getSysArchives, "()[Ljava/lang/String;");
 	FIND_METHOD(, getAllStorageLocations, "()[Ljava/lang/String;");
 	FIND_METHOD(, initSurface, "()Ljavax/microedition/khronos/egl/EGLSurface;");

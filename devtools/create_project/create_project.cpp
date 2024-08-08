@@ -335,6 +335,10 @@ int main(int argc, char *argv[]) {
 		setup.useStaticDetection = false;
 	}
 
+	if (!getFeatureBuildState("detection-static", setup.features)) {
+		setup.useStaticDetection = false;
+	}
+
 	// HACK: Vorbis and Tremor can not be enabled simultaneously
 	if (getFeatureBuildState("tremor", setup.features)) {
 		setFeatureBuildState("vorbis", setup.features, false);
@@ -350,6 +354,20 @@ int main(int argc, char *argv[]) {
 		setFeatureBuildState("opengl_game_classic", setup.features, false);
 		setFeatureBuildState("opengl_game_shaders", setup.features, false);
 	}
+
+	// HACK: Check IMGUI dependencies
+	if (!getFeatureBuildState("opengl", setup.features) ||
+		!getFeatureBuildState("freetype2", setup.features) ||
+		!setup.useSDL2) {
+		std::cerr << "WARNING: imgui requires opengl, freetype2 and sdl2\n";
+		setFeatureBuildState("imgui", setup.features, false);
+	}
+	// HACK: IMGUI is not available on Xcode
+#ifdef ENABLE_XCODE
+	if (projectType == kProjectXcode) {
+		setFeatureBuildState("imgui", setup.features, false);
+	}
+#endif
 
 	// Disable engines for which we are missing dependencies
 	for (EngineDescList::const_iterator i = setup.engines.begin(); i != setup.engines.end(); ++i) {
@@ -1108,6 +1126,7 @@ const Feature s_features[] = {
 	{             "aspect",                    "USE_ASPECT", false, true,  "Aspect ratio correction" },
 	{              "16bit",                 "USE_RGB_COLOR", false, true,  "16bit color support" },
 	{            "highres",                   "USE_HIGHRES", false, true,  "high resolution" },
+	{              "imgui",                     "USE_IMGUI", false, true,  "Dear ImGui based debugger" },
 	{            "mt32emu",                   "USE_MT32EMU", false, true,  "integrated MT-32 emulator" },
 	{                "lua",                       "USE_LUA", false, true,  "lua" },
 	{               "nasm",                      "USE_NASM", false, true,  "IA-32 assembly support" }, // This feature is special in the regard, that it needs additional handling.
@@ -1728,16 +1747,19 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 			// Various text files
 			in.push_back(setup.srcDir + "/AUTHORS");
 			in.push_back(setup.srcDir + "/COPYING");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.Apache");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.BSD");
-			in.push_back(setup.srcDir + "/LICENSES/COPYING.LGPL");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.BSL");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.FREEFONT");
-			in.push_back(setup.srcDir + "/LICENSES/COPYING.OFL");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.GLAD");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.ISC");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.LGPL");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.LUA");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.MIT");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.MKV");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.MPL");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.OFL");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.TINYGL");
-			in.push_back(setup.srcDir + "/LICENSES/COPYING.GLAD");
 			in.push_back(setup.srcDir + "/LICENSES/CatharonLicense.txt");
 			in.push_back(setup.srcDir + "/COPYRIGHT");
 			in.push_back(setup.srcDir + "/NEWS.md");

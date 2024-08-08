@@ -132,9 +132,9 @@ struct {
 	TRANS(kTransDissolveBits,			kTransAlgoDissolve,	kTransDirDissolve)
 };
 
-void Window::exitTransition(TransParams &t, int step, Graphics::ManagedSurface *nextFrame, Common::Rect clipRect) {
+void Window::exitTransition(TransParams &t, Graphics::ManagedSurface *nextFrame, Common::Rect clipRect) {
 	_composeSurface->blitFrom(*nextFrame, clipRect, Common::Point(clipRect.left, clipRect.top));
-	stepTransition(t, step);
+	stepTransition(t, t.steps);
 }
 
 void Window::stepTransition(TransParams &t, int step) {
@@ -167,6 +167,8 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 	t.chunkSize = MAX<uint>(1, transChunkSize);
 	t.area = MAX<uint>(0, transArea);
 
+	debugC(2, kDebugImages, "Window::playTransition(): Playing transition %d", t.type);
+
 	// If we requested fast transitions, speed everything up
 	if (debugChannelSet(-1, kDebugFast))
 		t.duration = 250;
@@ -196,7 +198,7 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 	Score *score = g_director->getCurrentMovie()->getScore();
 	if (t.area) {
 		// Changed area transition
-		score->renderSprites(mode);
+		score->updateSprites(mode);
 
 		if (_dirtyRects.size() == 0)
 			return;
@@ -222,7 +224,7 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 		render(false, &nextFrame);
 	} else {
 		// Full stage transition
-		score->renderSprites(mode);
+		score->updateSprites(mode);
 		render(true, &nextFrame);
 
 		clipRect = _innerDims;
@@ -231,13 +233,14 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 
 	Common::Rect rfrom, rto;
 
-	uint32 transStartTime = g_system->getMillis();
-	debugC(2, kDebugImages, "Window::playTransition(): Playing transition %d", t.type);
-
 	initTransParams(t, clipRect);
 
 	Graphics::ManagedSurface *blitFrom;
 	bool fullredraw = false;
+
+	uint32 transStartTime = g_system->getMillis();
+
+	debugC(2, kDebugImages, "Window::playTransition(): type: %d, duration: %d, area: %d, chunkSize: %d, steps: %d, stepDuration: %d, xpos: %d, ypos: %d, xStepSize: %d, yStepSize: %d, stripSize: %d, clipRect: %d %d %d %d", t.type, t.duration, t.area, t.chunkSize, t.steps, t.stepDuration, t.xpos, t.ypos, t.xStepSize, t.yStepSize, t.stripSize, clipRect.left, clipRect.top, clipRect.right, clipRect.bottom);
 
 	switch (transProps[t.type].algo) {
 	case kTransAlgoDissolve:
@@ -245,7 +248,6 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 			dissolvePatternsTrans(t, clipRect, &nextFrame);
 		else
 			dissolveTrans(t, clipRect, &nextFrame);
-		debugC(2, kDebugImages, "Window::playTransition(): type: %d, duration: %d, area: %d, chunkSize: %d, steps: %d, stepDuration: %d, xpos: %d, ypos: %d, xStepSize: %d, yStepSize: %d, stripSize: %d", t.type, t.duration, t.area, t.chunkSize, t.steps, t.stepDuration, t.xpos, t.ypos, t.xStepSize, t.yStepSize, t.stripSize);
 		debugC(2, kDebugImages, "Window::playTransition(): Transition %d finished in %d ms", t.type, g_system->getMillis() - transStartTime);
 		return;
 
@@ -253,13 +255,11 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 	case kTransAlgoStrips:
 	case kTransAlgoBlinds:
 		transMultiPass(t, clipRect, &nextFrame);
-		debugC(2, kDebugImages, "Window::playTransition(): type: %d, duration: %d, area: %d, chunkSize: %d, steps: %d, stepDuration: %d, xpos: %d, ypos: %d, xStepSize: %d, yStepSize: %d, stripSize: %d", t.type, t.duration, t.area, t.chunkSize, t.steps, t.stepDuration, t.xpos, t.ypos, t.xStepSize, t.yStepSize, t.stripSize);
 		debugC(2, kDebugImages, "Window::playTransition(): Transition %d finished in %d ms", t.type, g_system->getMillis() - transStartTime);
 		return;
 
 	case kTransAlgoZoom:
 		transZoom(t, clipRect, &currentFrame, &nextFrame);
-		debugC(2, kDebugImages, "Window::playTransition(): type: %d, duration: %d, area: %d, chunkSize: %d, steps: %d, stepDuration: %d, xpos: %d, ypos: %d, xStepSize: %d, yStepSize: %d, stripSize: %d", t.type, t.duration, t.area, t.chunkSize, t.steps, t.stepDuration, t.xpos, t.ypos, t.xStepSize, t.yStepSize, t.stripSize);
 		debugC(2, kDebugImages, "Window::playTransition(): Transition %d finished in %d ms", t.type, g_system->getMillis() - transStartTime);
 		return;
 
@@ -297,24 +297,24 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 
 		switch (t.type) {
 		case kTransWipeRight:								// 1
-			rto.setWidth(MAX((int16)0, (int16)(t.xStepSize * i)));
+			rto.setWidth(MAX((int16)0, (int16)(t.xpos + t.xStepSize * i)));
 			rfrom = rto;
 			break;
 
 		case kTransWipeLeft:								// 2
-			rto.setWidth(MAX((int16)0, (int16)(t.xStepSize * i)));
-			rto.translate(w - t.xStepSize * i, 0);
+			rto.setWidth(MAX((int16)0, (int16)(t.xpos + t.xStepSize * i)));
+			rto.translate(w - t.xpos - t.xStepSize * i, 0);
 			rfrom = rto;
 			break;
 
 		case kTransWipeDown:								// 3
-			rto.setHeight(MAX((int16)0, (int16)(t.yStepSize * i)));
+			rto.setHeight(MAX((int16)0, (int16)(t.ypos + t.yStepSize * i)));
 			rfrom = rto;
 			break;
 
 		case kTransWipeUp:									// 4
-			rto.setHeight(MAX((int16)0, (int16)(t.yStepSize * i)));
-			rto.translate(0, h - t.yStepSize * i);
+			rto.setHeight(MAX((int16)0, (int16)(t.ypos + t.yStepSize * i)));
+			rto.translate(0, h - t.ypos - t.yStepSize * i);
 			rfrom = rto;
 			break;
 
@@ -561,7 +561,7 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 		_composeSurface->blitFrom(*blitFrom, rfrom, Common::Point(rto.left, rto.top));
 
 		if (_vm->processEvents(true)) {
-			exitTransition(t, i, &nextFrame, clipRect);
+			exitTransition(t, &nextFrame, clipRect);
 			break;
 		}
 
@@ -575,13 +575,13 @@ void Window::playTransition(uint frame, RenderMode mode, uint16 transDuration, u
 		}
 
 		uint32 endTime = g_system->getMillis();
-		int diff = (int)t.stepDuration - (int)(endTime - startTime);
-		g_director->delayMillis(MAX(0, diff));
+		int diff = MAX(0, (int)t.stepDuration - (int)(endTime - startTime));
+		debugC(6, kDebugImages, "Window::playTransition(): delaying for %d", diff);
+		g_director->delayMillis(diff);
 
 		g_lingo->executePerFrameHook(t.frame, i);
 	}
 
-	debugC(2, kDebugImages, "Window::playTransition(): type: %d, duration: %d, area: %d, chunkSize: %d, steps: %d, stepDuration: %d, xpos: %d, ypos: %d, xStepSize: %d, yStepSize: %d, stripSize: %d", t.type, t.duration, t.area, t.chunkSize, t.steps, t.stepDuration, t.xpos, t.ypos, t.xStepSize, t.yStepSize, t.stripSize);
 	debugC(2, kDebugImages, "Window::playTransition(): Transition %d finished in %d ms", t.type, g_system->getMillis() - transStartTime);
 }
 
@@ -746,10 +746,18 @@ void Window::dissolveTrans(TransParams &t, Common::Rect &clipRect, Graphics::Man
 						x += clipRect.left;
 						y += clipRect.top;
 
-						byte *dst = (byte *)_composeSurface->getBasePtr(x, y);
-						byte *src = (byte *)nextFrame->getBasePtr(x, y);
+						if (g_director->_pixelformat.bytesPerPixel == 1) {
+							byte *dst = (byte *)_composeSurface->getBasePtr(x, y);
+							byte *src = (byte *)nextFrame->getBasePtr(x, y);
 
-						*dst = ((*dst & ~mask) | (*src & mask)) & 0xff;
+							*dst = ((*dst & ~mask) | (*src & mask)) & 0xff;
+						} else {
+							uint32 *dst = (uint32 *)_composeSurface->getBasePtr(x, y);
+							uint32 *src = (uint32 *)nextFrame->getBasePtr(x, y);
+
+							*dst = ((*dst & ~mask) | (*src & mask)) & 0xff;
+
+						}
 					}
 				}
 
@@ -767,13 +775,14 @@ void Window::dissolveTrans(TransParams &t, Common::Rect &clipRect, Graphics::Man
 		g_lingo->executePerFrameHook(t.frame, i + 1);
 
 		if (_vm->processEvents(true)) {
-			exitTransition(t, i, nextFrame, clipRect);
+			exitTransition(t, nextFrame, clipRect);
 			break;
 		}
 
 		uint32 endTime = g_system->getMillis();
-		int diff = (int)t.stepDuration - (int)(endTime - startTime);
-		g_director->delayMillis(MAX(0, diff));
+		int diff = MAX(0, (int)t.stepDuration - (int)(endTime - startTime));
+		debugC(6, kDebugImages, "Window::dissolveTrans(): delaying for %d", diff);
+		g_director->delayMillis(diff);
 	}
 }
 
@@ -852,18 +861,36 @@ void Window::dissolvePatternsTrans(TransParams &t, Common::Rect &clipRect, Graph
 		uint32 startTime = g_system->getMillis();
 		for (int y = clipRect.top; y < clipRect.bottom; y++) {
 			byte pat = dissolvePatterns[patternIndex][y % 8];
-			byte *dst = (byte *)_composeSurface->getBasePtr(clipRect.left, y);
-			byte *src = (byte *)nextFrame->getBasePtr(clipRect.left, y);
+			if (g_director->_pixelformat.bytesPerPixel == 1) {
 
-			for (int x = clipRect.left; x < clipRect.right;) {
-				byte mask = 0x80;
-				for (int b = 0; b < 8 && x < clipRect.right; b++, x++) {
-					if (pat & mask)
-						*dst = *src;
+				byte *dst = (byte *)_composeSurface->getBasePtr(clipRect.left, y);
+				byte *src = (byte *)nextFrame->getBasePtr(clipRect.left, y);
 
-					dst++;
-					src++;
-					mask >>= 1;
+				for (int x = clipRect.left; x < clipRect.right;) {
+					byte mask = 0x80;
+					for (int b = 0; b < 8 && x < clipRect.right; b++, x++) {
+						if (pat & mask)
+							*dst = *src;
+
+						dst++;
+						src++;
+						mask >>= 1;
+					}
+				}
+			} else {
+				uint32 *dst = (uint32 *)_composeSurface->getBasePtr(clipRect.left, y);
+				uint32 *src = (uint32 *)nextFrame->getBasePtr(clipRect.left, y);
+
+				for (int x = clipRect.left; x < clipRect.right;) {
+					byte mask = 0x80;
+					for (int b = 0; b < 8 && x < clipRect.right; b++, x++) {
+						if (pat & mask)
+							*dst = *src;
+
+						dst++;
+						src++;
+						mask >>= 1;
+					}
 				}
 			}
 		}
@@ -873,13 +900,14 @@ void Window::dissolvePatternsTrans(TransParams &t, Common::Rect &clipRect, Graph
 		g_lingo->executePerFrameHook(t.frame, i + 1);
 
 		if (_vm->processEvents(true)) {
-			exitTransition(t, i, nextFrame, clipRect);
+			exitTransition(t, nextFrame, clipRect);
 			break;
 		}
 
 		uint32 endTime = g_system->getMillis();
-		int diff = (int)t.stepDuration - (int)(endTime - startTime);
-		g_director->delayMillis(MAX(0, diff));
+		int diff = MAX(0, (int)t.stepDuration - (int)(endTime - startTime));
+		debugC(6, kDebugImages, "Window::dissolvePatternsTrans(): delaying for %d", diff);
+		g_director->delayMillis(diff);
 	}
 }
 
@@ -1051,11 +1079,12 @@ void Window::transMultiPass(TransParams &t, Common::Rect &clipRect, Graphics::Ma
 		g_lingo->executePerFrameHook(t.frame, i);
 
 		uint32 endTime = g_system->getMillis();
-		int diff = (int)t.stepDuration - (int)(endTime - startTime);
-		g_director->delayMillis(MAX(0, diff));
+		int diff = MAX(0, (int)t.stepDuration - (int)(endTime - startTime));
+		debugC(6, kDebugImages, "Window::transMultiPass(): delaying for %d", diff);
+		g_director->delayMillis(diff);
 
 		if (_vm->processEvents(true)) {
-			exitTransition(t, i, nextFrame, clipRect);
+			exitTransition(t, nextFrame, clipRect);
 			break;
 		}
 
@@ -1106,15 +1135,16 @@ void Window::transZoom(TransParams &t, Common::Rect &clipRect, Graphics::Managed
 		r.moveTo(w / 2 - t.xStepSize * i, h / 2 - t.yStepSize * i);
 
 		if (_vm->processEvents(true)) {
-			exitTransition(t, i, nextFrame, clipRect);
+			exitTransition(t, nextFrame, clipRect);
 			break;
 		}
 
 		stepTransition(t, i);
 
 		uint32 endTime = g_system->getMillis();
-		int diff = (int)t.stepDuration - (int)(endTime - startTime);
-		g_director->delayMillis(MAX(0, diff));
+		int diff = MAX(0, (int)t.stepDuration - (int)(endTime - startTime));
+		debugC(6, kDebugImages, "Window::transZoom(): delaying for %d", diff);
+		g_director->delayMillis(diff);
 
 		g_lingo->executePerFrameHook(t.frame, i);
 	}

@@ -26,6 +26,7 @@
  */
 
 /* Detection tables for Urban Runner. */
+/* This Game uses the DEV6 Engine, more Information can be found here: https://wiki.scummvm.org/index.php?title=DEV6_Information */
 
 #ifndef GOB_DETECTION_TABLES_URBAN_H
 #define GOB_DETECTION_TABLES_URBAN_H
@@ -35,7 +36,7 @@
 {
 	{
 		"urban",
-		"",
+		"v1.00",
 		AD_ENTRY1s("intro.stk", "3ab2c542bd9216ae5d02cc6f45701ae1", 1252436),
 		EN_USA,
 		kPlatformWindows,
@@ -113,7 +114,7 @@
 { // Supplied by goodoldgeorg in bug report #4308
 	{
 		"urban",
-		"",
+		"v1.00",
 		AD_ENTRY1s("intro.stk", "4bd31979ea3d77a58a358c09000a85ed", 1253018),
 		DE_DEU,
 		kPlatformWindows,
@@ -131,8 +132,8 @@
 		"urban",
 		"Non-Interactive Demo",
 		AD_ENTRY3s("wdemo.s24", "14ac9bd51db7a075d69ddb144904b271", 87,
-                    "demo.vmd", "65d04715d871c292518b56dd160b0161", 9091237,
-                    "urband.vmd", "60343891868c91854dd5c82766c70ecc", 922461),
+            	   "demo.vmd", "65d04715d871c292518b56dd160b0161", 9091237,
+				   "urband.vmd", "60343891868c91854dd5c82766c70ecc", 922461),
 		EN_ANY,
 		kPlatformWindows,
 		ADGF_DEMO,

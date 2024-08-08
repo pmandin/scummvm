@@ -64,9 +64,9 @@ XII	mMouseDown, loch, locv	--Sends a mousedown at given location in panel.
 namespace Director {
 
 const char *PanelXObj::xlibName = "Panel";
-const char *PanelXObj::fileNames[] = {
-	"Panel",
-	nullptr
+const XlibFileDesc PanelXObj::fileNames[] = {
+	{ "Panel",	nullptr },
+	{ nullptr,	nullptr },
 };
 
 static MethodProto xlibMethods[] = {
@@ -90,7 +90,7 @@ static MethodProto xlibMethods[] = {
 	{ nullptr, nullptr, 0, 0, 0 }
 };
 
-PanelXObject::PanelXObject(ObjectType ObjectType) :Object<PanelXObject>("PanelXObj") {
+PanelXObject::PanelXObject(ObjectType ObjectType) :Object<PanelXObject>("Panel") {
 	_objType = ObjectType;
 }
 

@@ -149,14 +149,18 @@ public:
 	void clearBackground();
 	virtual void drawUI();
 	virtual void drawInfoMenu();
-	void drawBorderScreenAndWait(Graphics::Surface *surface);
+	void drawBorderScreenAndWait(Graphics::Surface *surface, int maxWait = INT_MAX);
 
 	virtual void drawCrossair(Graphics::Surface *surface);
 	Graphics::ManagedSurface *_border;
 	Graphics::ManagedSurface *_title;
+	Graphics::Surface *_background;
+
 	Texture *_borderTexture;
 	Texture *_titleTexture;
 	Texture *_uiTexture;
+	Texture *_skyTexture;
+
 	Common::Array<Graphics::Surface *>_indicators;
 	Common::HashMap<uint16, Texture *> _borderCGAByArea;
 	Common::HashMap<uint16, byte *> _paletteCGAByArea;
@@ -241,6 +245,9 @@ public:
 	int execute8bitBinImageSingleCommand(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row, int pixels, int bit, int count);
 	int execute8bitBinImageMultiCommand(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row, int pixels, int bit, int count);
 
+	void parseAmigaAtariHeader(Common::SeekableReadStream *file);
+	Common::SeekableReadStream *decryptFileAmigaAtari(const Common::Path &packed, const Common::Path &unpacker, uint32 unpackArrayOffset);
+
 	// Areas
 	uint16 _startArea;
 	uint16 _endArea;
@@ -276,6 +283,9 @@ public:
 	void changePlayerHeight(int index);
 	void increaseStepSize();
 	void decreaseStepSize();
+	void changeStepSize();
+
+	void changeAngle();
 	void rise();
 	void lower();
 	bool checkFloor(Math::Vector3d currentPosition);
@@ -301,7 +311,7 @@ public:
 	int _angleRotationIndex;
 	Common::Array<float> _angleRotations;
 
-	Math::Vector3d directionToVector(float pitch, float heading);
+	Math::Vector3d directionToVector(float pitch, float heading, bool useTable);
 	void updateCamera();
 
 	// Camera options
@@ -313,7 +323,7 @@ public:
 	Math::Vector3d _position, _rotation, _velocity;
 	Math::Vector3d _lastPosition;
 	int _playerHeightNumber;
-	Common::Array<int> _playerHeights;
+	int _playerHeightMaxNumber;
 	uint16 _playerHeight;
 	uint16 _playerWidth;
 	uint16 _playerDepth;
@@ -328,8 +338,10 @@ public:
 
 	bool runCollisionConditions(Math::Vector3d const lastPosition, Math::Vector3d const newPosition);
 	Math::Vector3d _objExecutingCodeSize;
+	bool _executingGlobalCode;
 	virtual void executeMovementConditions();
 	bool executeObjectConditions(GeometricObject *obj, bool shot, bool collided, bool activated);
+	void executeEntranceConditions(Entrance *entrance);
 	void executeLocalGlobalConditions(bool shot, bool collided, bool timer);
 	void executeCode(FCLInstructionVector &code, bool shot, bool collided, bool timer, bool activated);
 
@@ -342,7 +354,7 @@ public:
 	void executeSetVariable(FCLInstruction &instruction);
 	void executeGoto(FCLInstruction &instruction);
 	void executeIfThenElse(FCLInstruction &instruction);
-	void executeMakeInvisible(FCLInstruction &instruction);
+	virtual void executeMakeInvisible(FCLInstruction &instruction);
 	void executeMakeVisible(FCLInstruction &instruction);
 	void executeToggleVisibility(FCLInstruction &instruction);
 	void executeDestroy(FCLInstruction &instruction);
@@ -409,6 +421,8 @@ public:
 	Math::Vector3d _scaleVector;
 	float _nearClipPlane;
 	float _farClipPlane;
+	float _yminValue;
+	float _ymaxValue;
 
 	// Text messages and Fonts
 	void insertTemporaryMessage(const Common::String message, int deadline);
@@ -429,13 +443,15 @@ public:
 	void drawFullscreenMessageAndWait(Common::String message);
 	void drawFullscreenMessage(Common::String message, uint32 front, Graphics::Surface *surface);
 
-	void loadFonts(Common::SeekableReadStream *file, int offset);
+	// Font loading and rendering
+	void loadFonts(Common::SeekableReadStream *file, int offset, Common::BitArray &font);
 	void loadFonts(byte *font, int charNumber);
 	Common::StringArray _currentAreaMessages;
 	Common::StringArray _currentEphymeralMessages;
 	Common::BitArray _font;
 	bool _fontLoaded;
-	void drawStringInSurface(const Common::String &str, int x, int y, uint32 fontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0);
+	virtual void drawStringInSurface(const Common::String &str, int x, int y, uint32 fontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0);
+	virtual void drawStringInSurface(const Common::String &str, int x, int y, uint32 primaryFontColor, uint32 secondaryFontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0);
 	Graphics::Surface *drawStringsInSurface(const Common::Array<Common::String> &lines);
 
 	// Game state
@@ -454,7 +470,7 @@ public:
 	bool _forceEndGame;
 	bool _playerWasCrushed;
 	ObjectArray _sensors;
-	void checkSensors();
+	virtual void checkSensors();
 	virtual void drawSensorShoot(Sensor *sensor);
 	void takeDamageFromSensor();
 

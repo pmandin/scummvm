@@ -1,16 +1,15 @@
 package org.scummvm.scummvm;
 
-import androidx.annotation.NonNull;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
-import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
+
+import androidx.annotation.NonNull;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -24,6 +23,9 @@ import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
+	public static final int SHOW_ON_SCREEN_MENU = 1;
+	public static final int SHOW_ON_SCREEN_INPUT_MODE = 2;
+
 	final protected static String LOG_TAG = "ScummVM";
 	final private AssetManager _asset_manager;
 	final private Object _sem_surface;
@@ -76,7 +78,7 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	abstract protected boolean isConnectionLimited();
 	abstract protected void setWindowCaption(String caption);
 	abstract protected void showVirtualKeyboard(boolean enable);
-	abstract protected void showKeyboardControl(boolean enable);
+	abstract protected void showOnScreenControls(int enableMask);
 	abstract protected Bitmap getBitmapResource(int resource);
 	abstract protected void setTouchMode(int touchMode);
 	abstract protected int getTouchMode();
@@ -84,6 +86,7 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	abstract protected String getScummVMBasePath();
 	abstract protected String getScummVMConfigPath();
 	abstract protected String getScummVMLogPath();
+	abstract protected void setCurrentGame(String target);
 	abstract protected String[] getSysArchives();
 	abstract protected String[] getAllStorageLocations();
 	abstract protected String[] getAllStorageLocationsNoPermissionRequest();
@@ -288,11 +291,10 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	}
 
 	private void initAudio() throws Exception {
-		_sample_rate = AudioTrack.getNativeOutputSampleRate(
-									AudioManager.STREAM_MUSIC);
+		_sample_rate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC);
 		_buffer_size = AudioTrack.getMinBufferSize(_sample_rate,
-									AudioFormat.CHANNEL_OUT_STEREO,
-									AudioFormat.ENCODING_PCM_16BIT);
+		                                           AudioFormat.CHANNEL_OUT_STEREO,
+		                                           AudioFormat.ENCODING_PCM_16BIT);
 
 		// ~50ms
 		int buffer_size_want = (_sample_rate * 2 * 2 / 20) & ~1023;
@@ -307,33 +309,10 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 		Log.i(LOG_TAG, String.format(Locale.ROOT, "Using %d bytes buffer for %dHz audio",
 										_buffer_size, _sample_rate));
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			_audio_track = new AudioTrack(
-				new AudioAttributes.Builder()
-					.setUsage(AudioAttributes.USAGE_MEDIA)
-					.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-					.build(),
-				new AudioFormat.Builder()
-					.setSampleRate(_sample_rate)
-					.setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-					.setChannelMask(AudioFormat.CHANNEL_OUT_STEREO).build(),
-				_buffer_size,
-				AudioTrack.MODE_STREAM,
-				AudioManager.AUDIO_SESSION_ID_GENERATE);
-
-			// Keep track of the actual obtained audio buffer size, if supported.
-			// We just requested 16 bit PCM stereo pcm so there are 4 bytes per frame.
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-				_buffer_size = _audio_track.getBufferSizeInFrames() * 4;
-		} else {
-			//support for Android KitKat or lower
-			_audio_track = new AudioTrack(AudioManager.STREAM_MUSIC,
-				_sample_rate,
-				AudioFormat.CHANNEL_OUT_STEREO,
-				AudioFormat.ENCODING_PCM_16BIT,
-				_buffer_size,
-				AudioTrack.MODE_STREAM);
-		}
+		CompatHelpers.AudioTrackCompat.AudioTrackCompatReturn audioTrackRet =
+			CompatHelpers.AudioTrackCompat.make(_sample_rate, _buffer_size);
+		_audio_track = audioTrackRet.audioTrack;
+		_buffer_size = audioTrackRet.bufferSize;
 
 		if (_audio_track.getState() != AudioTrack.STATE_INITIALIZED)
 			throw new Exception(
