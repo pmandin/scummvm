@@ -23,6 +23,7 @@
 #include "common/memstream.h"
 #include "common/stream.h"
 
+#include "engines/reevengi/detection.h"
 #include "engines/reevengi/formats/pak.h"
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/movie/movie.h"
@@ -118,8 +119,8 @@ static const char *RE1_MODEL1 = "%s%s/enemy/char1%d.emd";
 static const char *RE1_MODEL2 = "%s%s/enemy/em10%02x.emd";
 static const char *RE1_MODEL3 = "%s%s/enemy/em11%02x.emd";
 
-RE1Engine::RE1Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
-		ReevengiEngine(syst, gameType, desc) {
+RE1Engine::RE1Engine(OSystem *syst, const ReevengiGameDescription *desc) :
+		ReevengiEngine(syst, desc) {
 	_room = 6;
 	_camera = 6;
 

@@ -29,30 +29,28 @@
 
 namespace Reevengi {
 
-class ReevengiMetaEngine : public AdvancedMetaEngine {
+class ReevengiMetaEngine : public AdvancedMetaEngine<ReevengiGameDescription> {
 public:
 	const char *getName() const override {
 		return "reevengi";
 	}
 
-	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ReevengiGameDescription *desc) const override;
 };
 
-Common::Error ReevengiMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const ReevengiGameDescription *gd = (const ReevengiGameDescription *)desc;
-
-	switch(gd->gameType) {
+Common::Error ReevengiMetaEngine::createInstance(OSystem *syst, Engine **engine, const ReevengiGameDescription *desc) const {
+	switch(desc->gameType) {
 		case RType_None:
 			break;
 		case RType_RE1:
-			*engine = new RE1Engine(syst, gd->gameType, &(gd->desc));
+			*engine = new RE1Engine(syst, desc);
 			break;
 		case RType_RE2_LEON:
 		case RType_RE2_CLAIRE:
-			*engine = new RE2Engine(syst, gd->gameType, &(gd->desc));
+			*engine = new RE2Engine(syst, desc);
 			break;
 		case RType_RE3:
-			*engine = new RE3Engine(syst, gd->gameType, &(gd->desc));
+			*engine = new RE3Engine(syst, desc);
 			break;
 	}
 

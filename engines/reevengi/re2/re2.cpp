@@ -24,6 +24,7 @@
 #include "common/memstream.h"
 #include "common/stream.h"
 
+#include "engines/reevengi/detection.h"
 #include "engines/reevengi/formats/adt.h"
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/formats/bss_sld.h"
@@ -86,11 +87,11 @@ static const char *RE2PC_MODEL2 = "pl%d/emd%d/em%d%02x.%s";
 static const char *RE2PSX_MODEL1 = "pl%d/pld/pl%02x.pld";
 static const char *RE2PSX_MODEL2 = "pl%d/pld/cdemd%d.ems";
 
-RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
-		ReevengiEngine(syst, gameType, desc), _country('u'),
+RE2Engine::RE2Engine(OSystem *syst, const ReevengiGameDescription *desc) :
+		ReevengiEngine(syst, desc), _country('u'),
 		_emsArchive0(nullptr), _emsStream0(nullptr),
 		_emsArchive1(nullptr), _emsStream1(nullptr) {
-	if (gameType == RType_RE2_CLAIRE) {
+	if (desc->gameType == RType_RE2_CLAIRE) {
 		_character = 1;
 	}
 

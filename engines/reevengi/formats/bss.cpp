@@ -23,7 +23,7 @@
 // MDEC video emulation based on http://kenai.com/downloads/jpsxdec/Old/PlayStation1_STR_format1-00.txt
 
 #include "common/bitstream.h"
-#include "common/huffman.h"
+#include "common/compression/huffman.h"
 #include "common/stream.h"
 #include "common/system.h"
 #include "common/textconsole.h"
