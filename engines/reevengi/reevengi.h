@@ -26,6 +26,8 @@
 #include "engines/engine.h"
 #include "image/image_decoder.h"
 
+#include "engines/reevengi/detection.h"
+
 namespace Common {
 class Event;
 }
@@ -39,17 +41,9 @@ class Clock;
 class Room;
 class Entity;
 
-enum ReevengiGameType {
-	RType_None,
-	RType_RE1,
-	RType_RE2_LEON,
-	RType_RE2_CLAIRE,
-	RType_RE3
-};
-
 class ReevengiEngine : public Engine {
 public:
-	ReevengiEngine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *gameDesc);
+	ReevengiEngine(OSystem *syst, const ReevengiGameDescription *gameDesc);
 	~ReevengiEngine() override;
 
 	virtual Common::Error run(void);

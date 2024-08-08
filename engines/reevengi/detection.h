@@ -22,9 +22,21 @@
 #ifndef REEVENGI_DETECTION_H
 #define REEVENGI_DETECTION_H
 
+#include "engines/advancedDetector.h"
+
 namespace Reevengi {
 
+enum ReevengiGameType {
+	RType_None,
+	RType_RE1,
+	RType_RE2_LEON,
+	RType_RE2_CLAIRE,
+	RType_RE3
+};
+
 struct ReevengiGameDescription {
+	AD_GAME_DESCRIPTION_HELPERS(desc);
+
 	ADGameDescription desc;
 	ReevengiGameType gameType;
 };

@@ -25,6 +25,7 @@
 #include "common/stream.h"
 #include "image/jpeg.h"
 
+#include "engines/reevengi/detection.h"
 #include "engines/reevengi/formats/ard.h"
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/formats/bss_sld.h"
@@ -88,8 +89,8 @@ static const char *RE3PC_MODEL2 = "room/emd/em%02x.%s";
 
 static const char *RE3PSX_MODEL1 = "cd_data/pld/pl%02x.pld";
 
-RE3Engine::RE3Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
-		ReevengiEngine(syst, gameType, desc), _country('u') {
+RE3Engine::RE3Engine(OSystem *syst, const ReevengiGameDescription *desc) :
+		ReevengiEngine(syst, desc), _country('u') {
 
 	/* Default entity */
 	_defEntity = 0;

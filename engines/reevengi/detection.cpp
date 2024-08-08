@@ -53,8 +53,8 @@ static const char *directoryGlobs[] = {
 			gameid,                                                        \
 			extra,                                                         \
 			{                                                              \
-				{ filename, 0, nullptr, -1 },                              \
-				{ nullptr, 0, nullptr, -1 },                               \
+				{ filename, 0, nullptr, AD_NO_SIZE },                              \
+				{ nullptr, 0, nullptr, AD_NO_SIZE },                               \
 			},                                                             \
 			lang,                                                          \
 			platform,                                                      \
@@ -142,9 +142,9 @@ static const ReevengiGameDescription gameDescriptions[] = {
 	{AD_TABLE_END_MARKER, RType_None}
 };
 
-class ReevengiMetaEngineDetection : public AdvancedMetaEngineDetection {
+class ReevengiMetaEngineDetection : public AdvancedMetaEngineDetection<ReevengiGameDescription> {
 public:
-	ReevengiMetaEngineDetection() : AdvancedMetaEngineDetection(Reevengi::gameDescriptions, sizeof(Reevengi::ReevengiGameDescription), reevengiGames) {
+	ReevengiMetaEngineDetection() : AdvancedMetaEngineDetection(gameDescriptions, reevengiGames) {
 		_maxScanDepth = 4;
 		_directoryGlobs = directoryGlobs;
 		_flags = kADFlagMatchFullPaths;

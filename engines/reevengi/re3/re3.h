@@ -30,7 +30,7 @@ namespace Reevengi {
 
 class RE3Engine : public ReevengiEngine {
 public:
-	RE3Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc);
+	RE3Engine(OSystem *syst, const ReevengiGameDescription *desc);
 	virtual ~RE3Engine();
 
 protected:

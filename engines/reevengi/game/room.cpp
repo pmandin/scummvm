@@ -21,6 +21,7 @@
 
 #include "common/debug.h"
 //#include "common/file.h"
+#include "common/list.h"
 
 #include "engines/reevengi/game/room.h"
 #include "engines/reevengi/gfx/gfx_base.h"
