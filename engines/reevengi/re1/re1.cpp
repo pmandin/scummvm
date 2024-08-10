@@ -160,7 +160,7 @@ void RE1Engine::loadBgImage(void) {
 	/* Stages 6,7 use images from stages 1,2 */
 	int stage = ((_stage % 8)>5 ? _stage-5 : _stage);
 
-	if ((_gameDesc.flags & ADGF_DEMO)==ADGF_DEMO) {
+	if (_flags.isDemo) {
 		if (_stage>2) { _stage=1; }
 	}
 
@@ -196,7 +196,7 @@ void RE1Engine::loadBgImage(void) {
 		}
 	}
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
 				loadBgImagePc(stage, width, height);
@@ -296,7 +296,7 @@ void RE1Engine::loadBgMaskImage(void) {
 
 void RE1Engine::loadRoom(void) {
 	char filePath[64];
-	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	snprintf(filePath, sizeof(filePath), RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
 
@@ -313,7 +313,7 @@ void RE1Engine::loadRoom(void) {
 Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 	char filePath[64];
 	const char *filename = RE1_MODEL1;
-	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 	Entity *newEntity = nullptr;
 
 	debug(3, "re1: loadEntity(%d, %d)", numEntity, isPlayer);
@@ -340,7 +340,7 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 
 void RE1Engine::loadMovie(unsigned int numMovie) {
 	char filePath[64];
-	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	ReevengiEngine::loadMovie(numMovie);
 

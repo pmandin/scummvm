@@ -34,6 +34,12 @@ enum ReevengiGameType {
 	RType_RE3
 };
 
+struct GameFlags {
+	Common::Platform platform;
+
+	bool isDemo: 1;
+};
+
 struct ReevengiGameDescription {
 	AD_GAME_DESCRIPTION_HELPERS(desc);
 
