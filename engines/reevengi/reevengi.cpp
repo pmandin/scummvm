@@ -60,7 +60,9 @@ ReevengiEngine::ReevengiEngine(OSystem *syst, const ReevengiGameDescription *gam
 	_stage(1), _room(0), _camera(0), _bgImage(nullptr),_bgMaskImage(nullptr), _roomScene(nullptr),
 	_playerX(0), _playerY(0), _playerZ(0), _playerA(0), _playerMove(0), _playerTic(0),
 	_defEntity(0), _defIsPlayer(0) {
-	memcpy(&_gameDesc, gameDesc, sizeof(_gameDesc));
+
+	_flags.platform = gameDesc->desc.platform;
+	_flags.isDemo = ((gameDesc->desc.flags & ADGF_DEMO)==ADGF_DEMO);
 	g_movie = nullptr;
 	_clock = new Clock();
 

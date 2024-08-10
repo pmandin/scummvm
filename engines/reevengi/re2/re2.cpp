@@ -141,14 +141,14 @@ void RE2Engine::initPreRun(void) {
 void RE2Engine::loadBgImage(void) {
 	//debug(3, "re2: loadBgImage");
 
-	if ((_gameDesc.flags & ADGF_DEMO)==ADGF_DEMO) {
+	if (_flags.isDemo) {
 		if (_stage>2) { _stage=1; }
 	}
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
-				if ((_gameDesc.flags & ADGF_DEMO)==ADGF_DEMO) {
+				if (_flags.isDemo) {
 					loadBgImagePcDemo();
 				} else {
 					loadBgImagePcGame();
@@ -270,14 +270,14 @@ void RE2Engine::loadBgImagePsx(void) {
 void RE2Engine::loadBgMaskImage(void) {
 	//debug(3, "re2: loadBgMaskImage");
 
-	if ((_gameDesc.flags & ADGF_DEMO)==ADGF_DEMO) {
+	if (_flags.isDemo) {
 		if (_stage>2) { _stage=1; }
 	}
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
-				if ((_gameDesc.flags & ADGF_DEMO)==ADGF_DEMO) {
+				if (_flags.isDemo) {
 					loadBgMaskImagePcDemo();
 				} else {
 					loadBgMaskImagePcGame();
@@ -426,7 +426,7 @@ Entity *RE2Engine::loadEntity(int numEntity, int isPlayer) {
 
 	debug(3, "re2: loadEntity(%d,%d)", numEntity, isPlayer);
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
 				newEntity = loadEntityPc(numEntity, isPlayer);
@@ -577,7 +577,7 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 void RE2Engine::loadMovie(unsigned int numMovie) {
 	char filePath[64];
-	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	ReevengiEngine::loadMovie(numMovie);
 

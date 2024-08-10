@@ -105,10 +105,10 @@ RE3Engine::~RE3Engine() {
 void RE3Engine::initPreRun(void) {
 	char filePath[32];
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
-				_gameDesc.flags &= ~ADGF_DEMO;
+				_flags.isDemo = false;
 
 				/* Use all ROFS<n>.DAT files as archives */
 				for (int i=1;i<16;i++) {
@@ -120,7 +120,7 @@ void RE3Engine::initPreRun(void) {
 					else {
 						if (i==2) {
 							/* no rofs2.dat for demo */
-							_gameDesc.flags |= ADGF_DEMO;
+							_flags.isDemo = true;
 						}
 						delete archive;
 					}
@@ -146,7 +146,7 @@ void RE3Engine::initPreRun(void) {
 void RE3Engine::loadBgImage(void) {
 	//debug(3, "re3: loadBgImage");
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
 				loadBgImagePc();
@@ -230,7 +230,7 @@ void RE3Engine::loadBgImagePsx(void) {
 void RE3Engine::loadBgMaskImage(void) {
 //	debug(3, "re3: loadBgMaskImage");
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
 				loadBgMaskImagePc();
@@ -332,7 +332,7 @@ void RE3Engine::loadBgMaskImagePsx(void) {
 void RE3Engine::loadRoom(void) {
 	//debug(3, "re3: loadRoom");
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
 				loadRoomPc();
@@ -389,7 +389,7 @@ Entity *RE3Engine::loadEntity(int numEntity, int isPlayer) {
 
 	debug(3, "re3: loadEntity(%d,%d)", numEntity, isPlayer);
 
-	switch(_gameDesc.platform) {
+	switch(_flags.platform) {
 		case Common::kPlatformWindows:
 			{
 				newEntity = loadEntityPc(numEntity, isPlayer);
@@ -488,7 +488,7 @@ Entity *RE3Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 void RE3Engine::loadMovie(unsigned int numMovie) {
 	char filePath[64];
-	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	ReevengiEngine::loadMovie(numMovie);
 

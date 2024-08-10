@@ -54,7 +54,7 @@ public:
 	float _playerX, _playerY, _playerZ, _playerA;
 
 protected:
-	ADGameDescription _gameDesc;
+	GameFlags _flags;
 	ReevengiGameType _gameType;
 	Clock *_clock;
 
