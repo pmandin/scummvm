@@ -522,11 +522,19 @@ MacSndChannel::~MacSndChannel() {
 }
 
 MacLowLevelPCMDriver::ChanHandle MacSndChannel::getHandle() const {
-	const void *ptr = this;
-	return *reinterpret_cast<const int*>(&ptr);
+	union {
+		const void *ptr;
+		int hdl;
+	} cnv;
+	cnv.ptr = this;
+	return cnv.hdl;
 }
 
 void MacSndChannel::playSamples(const MacLowLevelPCMDriver::PCMSound *snd) {
+	if (!snd) {
+		warning("%s(): nullptr sound argument", __FUNCTION__);
+		return;
+	}
 	setupRateConv(_drv->getStatus().deviceRate, calcNoteRateAdj(60 - snd->baseFreq), snd->rate, true);
 	setupSound(snd);
 	startSound(0);

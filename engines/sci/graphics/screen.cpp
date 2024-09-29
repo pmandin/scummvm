@@ -190,9 +190,9 @@ GfxScreen::GfxScreen(ResourceManager *resMan, Common::RenderMode renderMode) : _
 		if (g_sci->getGameId() == GID_PQ2)
 			// PQ2 is a bit special, probably the oldest of the PC-98 ports. Unlike all the others, it uses text mode print
 			// and it doesn't even have a 16 colors drivers. See comment below...
-			_gfxDrv = new SCI0_PC98Gfx8ColorsDriver(true, SCI0_PC98Gfx8ColorsDriver::kFontStyleFat, 1, requestRGB);
+			_gfxDrv = new SCI0_PC98Gfx8ColorsDriver(true, true, requestRGB);
 		else if (getSciVersion() <= SCI_VERSION_01)
-			_gfxDrv = new SCI0_PC98Gfx8ColorsDriver(false, SCI0_PC98Gfx8ColorsDriver::kFontStyleNone, -1, requestRGB);
+			_gfxDrv = new SCI0_PC98Gfx8ColorsDriver(false, false, requestRGB);
 		else
 			_gfxDrv = new SCI1_PC98Gfx8ColorsDriver(requestRGB);
 		_hiresGlyphBuffer = new byte[16 * 16]();
@@ -211,11 +211,11 @@ GfxScreen::GfxScreen(ResourceManager *resMan, Common::RenderMode renderMode) : _
 				// But we do want to provide the 16 colors mode, since it is not a big deal (i.e., it does not require data
 				// from a driver file and the fat print is also already there for the 8 colors mode). So we just make the
 				// necessary adjustments.
-				_gfxDrv = new PC98Gfx16ColorsDriver(8, false, true, PC98Gfx16ColorsDriver::kFontStyleFat, 1, requestRGB, ConfMan.getBool("disable_dithering"));
+				_gfxDrv = new PC98Gfx16ColorsDriver(8, false, true, PC98Gfx16ColorsDriver::kFontStyleTextMode, requestRGB, ConfMan.getBool("disable_dithering"));
 			else if (getSciVersion() <= SCI_VERSION_01)
-				_gfxDrv = new PC98Gfx16ColorsDriver(8, false, false, PC98Gfx16ColorsDriver::kFontStyleNone, -1, requestRGB, true);
+				_gfxDrv = new PC98Gfx16ColorsDriver(8, false, false, PC98Gfx16ColorsDriver::kFontStyleNone, requestRGB, true);
 			else
-				_gfxDrv = new PC98Gfx16ColorsDriver(1, true, true, PC98Gfx16ColorsDriver::kFontStyleSpecialSCI1, -1, requestRGB, true);
+				_gfxDrv = new PC98Gfx16ColorsDriver(1, true, true, PC98Gfx16ColorsDriver::kFontStyleSpecialSCI1, requestRGB, true);
 			break;
 		default:
 			if (g_sci->getLanguage() == Common::KO_KOR)
@@ -576,9 +576,9 @@ void GfxScreen::putKanjiChar(Graphics::FontSJIS *commonFont, int16 x, int16 y, u
 	// be aligned on byte boundaries in vmem which equals 4 pixel boundaries in lowres. We make that bounds adjustment
 	// in the driver, since the layout relies on it. PQ2 on the other hand uses the PC-98 text mode for text print
 	// instead of rendering it in graphics mode (many PC-98 games do that). In an emulator you can easily recognize
-	// it, since the mouse cursor will move underneath the text. The use of the text mode has a similiar effect to
+	// it, since the mouse cursor will move underneath the text. The use of the text mode has a similar effect to
 	// x-coordinates as what happens with QFG: In text mode, the coordinates can only be set as text columns and lines,
-	// so the coordinates have to be divided and loose some precision ('& ~3' for x, and '& ~7' for y).
+	// so the coordinates have to be divided and lose some precision ('& ~3' for x, and '& ~7' for y).
 
 	// SCI1 PC-98 (KQ5/SQ4) has a gfx driver opcode to render the glyphs via the PC-98 GRCG. In the 16 colors drivers it
 	// uses a unique way to do that: The first 5 lines and the last 5 lines of the glyph get scaled 2x horizontally
@@ -588,6 +588,9 @@ void GfxScreen::putKanjiChar(Graphics::FontSJIS *commonFont, int16 x, int16 y, u
 	// Sierra just fixed the x-bounds in the game scripts here.
 
 	memset(_hiresGlyphBuffer, 0xff, 256);
+	// This is for the PC-98 text mode colors which are outside of the normal palette. Also, these colors get modified
+	// for PQ2, see PC98Gfx16ColorsDriver::remapTextColor().
+	color = _gfxDrv->remapTextColor(color);
 	// we don't use outline, so color 0 is actually not used
 	commonFont->drawChar(_hiresGlyphBuffer, chr, 16, 1, color, 0, -1, -1);
 	_gfxDrv->drawTextFontGlyph(_hiresGlyphBuffer, 16, x << 1, y << 1, 16, 16, 0xff, _paletteModsEnabled ? _paletteMods : nullptr, _paletteMapScreen);
@@ -755,7 +758,7 @@ void GfxScreen::bitsRestoreDisplayScreen(Common::Rect rect, const byte *&memoryP
 
 void GfxScreen::setShakePos(uint16 shakeXOffset, uint16 shakeYOffset) {
 	if (!_upscaledHires)
-		g_system->setShakePos(shakeXOffset, shakeYOffset);
+		_gfxDrv->setShakePos(shakeXOffset, shakeYOffset);
 	else
 		g_system->setShakePos(_upscaledWidthMapping[shakeXOffset], _upscaledHeightMapping[shakeYOffset]);
 }

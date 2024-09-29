@@ -460,14 +460,7 @@ bool LibretroGraphics::getFeatureState(OSystem::Feature f) const {
 
 #ifdef USE_OPENGL
 LibretroOpenGLGraphics::LibretroOpenGLGraphics(OpenGL::ContextType contextType) {
-	const Graphics::PixelFormat rgba8888 =
-#ifdef SCUMM_LITTLE_ENDIAN
-									   Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
-#else
-									   Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
-#endif
-	notifyContextCreate(contextType, new LibretroHWFramebuffer(), rgba8888, rgba8888);
-	handleResize(RES_W_OVERLAY, RES_H_OVERLAY);
+	resetContext(contextType);
 }
 
 void LibretroOpenGLGraphics::refreshScreen(){
@@ -478,6 +471,16 @@ void LibretroOpenGLGraphics::setMousePosition(int x, int y){
 	OpenGL::OpenGLGraphicsManager::setMousePosition(x,y);
 }
 
+void LibretroOpenGLGraphics::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
+	/* Workaround to fix a cursor glich (e.g. GUI with Classic theme) occurring when any overlay is activated from retroarch (e.g. keyboard overlay).
+	   Currently no feedback is available from frontend to detect if overlays are toggled to delete _cursor only if needed.
+	   @TODO: root cause to be investigated. */
+	delete _cursor;
+	_cursor = nullptr;
+	OpenGL::OpenGLGraphicsManager::setMouseCursor(buf, w, h, hotspotX, hotspotY, keycolor, dontScale, format, mask);
+}
+
+
 Common::Point LibretroOpenGLGraphics::convertWindowToVirtual(int x, int y) const {
 	return OpenGL::OpenGLGraphicsManager::convertWindowToVirtual(x, y);
 }
@@ -485,4 +488,17 @@ Common::Point LibretroOpenGLGraphics::convertWindowToVirtual(int x, int y) const
 void LibretroHWFramebuffer::activateInternal(){
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, retro_get_hw_fb()));
 }
+
+void LibretroOpenGLGraphics::resetContext(OpenGL::ContextType contextType) {
+	const Graphics::PixelFormat rgba8888 =
+#ifdef SCUMM_LITTLE_ENDIAN
+									   Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
+#else
+									   Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
+#endif
+	notifyContextDestroy();
+	notifyContextCreate(contextType, new LibretroHWFramebuffer(), rgba8888, rgba8888);
+	handleResize(RES_W_OVERLAY, RES_H_OVERLAY);
+}
+
 #endif

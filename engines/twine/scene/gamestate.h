@@ -69,7 +69,7 @@ private:
 	 * 107: Set to 1 after Twinsen kills yellow groboclone in the Citadel Island Tavern (after the Tavern has
 	 * been closed down). Makes the Tavern open again and groboclone not appear any more.
 	 */
-	int16 _listFlagGame[NUM_GAME_FLAGS];
+	int16 _listFlagGame[NUM_GAME_FLAGS]; // ListVarGame
 	// only lba1 - lba2 uses 253 gameflag
 	int16 _gameChapter = 0;
 
@@ -131,7 +131,7 @@ public:
 	 */
 	uint8 _inventoryFlags[NUM_INVENTORY_ITEMS];
 
-	uint8 _holomapFlags[NUM_LOCATIONS];
+	uint8 _holomapFlags[MAX_HOLO_POS_2];
 
 	char _sceneName[30] {};
 
@@ -176,7 +176,7 @@ public:
 
 	void clearGameFlags();
 
-	uint8 hasGameFlag(uint8 index) const;
+	int16 hasGameFlag(uint8 index) const;
 
 	void setGameFlag(uint8 index, int16 value);
 
@@ -184,6 +184,7 @@ public:
 	int16 setGas(int16 value);
 	int16 setLeafs(int16 value);
 	int16 setKashes(int16 value);
+	int16 setZlitos(int16 value);
 	int16 setMagicPoints(int16 val);
 	int16 setMaxMagicPoints();
 	int16 setLeafBoxes(int16 val);

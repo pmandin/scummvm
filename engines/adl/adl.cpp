@@ -188,6 +188,7 @@ void AdlEngine::delay(uint32 ms) const {
 		pollEvent(event);
 		g_system->delayMillis(end - now < 16 ? end - now : 16);
 		now = g_system->getMillis();
+		g_system->updateScreen();
 	}
 }
 
@@ -294,6 +295,7 @@ byte AdlEngine::inputKey(bool showCursor) const {
 
 		_display->renderText();
 		g_system->delayMillis(16);
+		g_system->updateScreen();
 	}
 
 	_display->showCursor(false);
@@ -316,6 +318,7 @@ void AdlEngine::waitKey(uint32 ms, Common::KeyCode keycode) const {
 			return;
 
 		g_system->delayMillis(16);
+		g_system->updateScreen();
 	}
 }
 
@@ -537,10 +540,10 @@ void AdlEngine::loadDroppedItemOffsets(Common::ReadStream &stream, byte count) {
 
 void AdlEngine::drawPic(byte pic, Common::Point pos) const {
 	if (_roomData.pictures.contains(pic)) {
-		StreamPtr stream(_roomData.pictures[pic]->createReadStream());
+		Common::StreamPtr stream(_roomData.pictures[pic]->createReadStream());
 		_graphics->drawPic(*stream, pos);
 	} else if (_pictures.contains(pic)) {
-		StreamPtr stream(_pictures[pic]->createReadStream());
+		Common::StreamPtr stream(_pictures[pic]->createReadStream());
 		_graphics->drawPic(*stream, pos);
 	} else
 		error("Picture %d not found", pic);
@@ -579,6 +582,7 @@ bool AdlEngine::playTones(const Tones &tones, bool isMusic, bool allowSkip) cons
 		}
 
 		g_system->delayMillis(16);
+		g_system->updateScreen();
 	}
 
 	return false;

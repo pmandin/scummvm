@@ -403,11 +403,19 @@ Common::Error GrimEngine::run() {
 	}
 
 	if (getGameType() == GType_MONKEY4 && getGameLanguage() == Common::Language::ZH_TWN) {
-		Common::File img, imgmap;
-		if (img.open("font.tga") && imgmap.open("map.bin")) {
-			BitmapFont *f = new BitmapFont();
-			f->loadTGA("font.tga", &imgmap, &img);
+		_transcodeChineseToSimplified = ConfMan.hasKey("language") && (Common::parseLanguage(ConfMan.get("language")) == Common::Language::ZH_CHN);
+
+		if (_transcodeChineseToSimplified) {
+			FontTTF *f = new FontTTF();
+			f->loadTTFFromArchive("NotoSansSC-Regular.otf", 1200);
 			_overrideFont = f;
+		} else {
+			Common::File img, imgmap;
+			if (img.open("font.tga") && imgmap.open("map.bin")) {
+				BitmapFont *f = new BitmapFont();
+				f->loadTGA("font.tga", &imgmap, &img);
+				_overrideFont = f;
+			}
 		}
 	}
 
@@ -653,9 +661,7 @@ void GrimEngine::playAspyrLogo() {
 		uint32 startTime = g_system->getMillis();
 
 		updateDisplayScene();
-		if (_doFlip) {
-			doFlip();
-		}
+		doFlip();
 		// Process events to allow the user to skip the logo.
 		Common::Event event;
 		while (g_system->getEventManager()->pollEvent(event)) {
@@ -957,7 +963,11 @@ void GrimEngine::drawNormalMode() {
 
 void GrimEngine::doFlip() {
 	_frameCounter++;
-	if (!_doFlip) {
+	// When possible, flip the buffer
+	// This makes sure the screen is refreshed on a regular basis
+	// The image is properly resized if needed and backend overlays are displayed
+	if (!_doFlip || (_mode == PauseMode)) {
+		g_driver->flipBuffer(true);
 		return;
 	}
 
@@ -1131,9 +1141,7 @@ void GrimEngine::mainLoop() {
 			updateDisplayScene();
 		}
 
-		if (_mode != PauseMode) {
-			doFlip();
-		}
+		doFlip();
 
 		// We do not want the scripts to update while a movie is playing in the PS2-version.
 		if (!(getGamePlatform() == Common::kPlatformPS2 && _mode == SmushMode)) {

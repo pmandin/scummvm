@@ -80,6 +80,10 @@ void OpenGLRenderer::init() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_SCISSOR_TEST);
 	setViewport(_viewport);
+	glEnable(GL_DEPTH_CLAMP);
+
+	scaleStipplePattern(_defaultStippleArray, _stipples[15]);
+	memcpy(_defaultStippleArray, _stipples[15], 128);
 }
 
 void OpenGLRenderer::setViewport(const Common::Rect &rect) {
@@ -165,7 +169,12 @@ void OpenGLRenderer::drawSkybox(Texture *texture, Math::Vector3d camera) {
 	glBindTexture(GL_TEXTURE_2D, glTexture->_id);
 	glVertexPointer(3, GL_FLOAT, 0, _skyVertices);
 	glNormalPointer(GL_FLOAT, 0, _skyNormals);
-	glTexCoordPointer(2, GL_FLOAT, 0, _skyUvs);
+	if (texture->_width == 1008)
+		glTexCoordPointer(2, GL_FLOAT, 0, _skyUvs1008);
+	else if (texture->_width == 128)
+		glTexCoordPointer(2, GL_FLOAT, 0, _skyUvs128);
+	else
+		error("Unsupported skybox texture width %d", texture->_width);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -212,6 +221,7 @@ void OpenGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vecto
 	Math::Matrix4 lookMatrix = Math::makeLookAtMatrix(pos, interest, up_vec);
 	glMultMatrixf(lookMatrix.getData());
 	glTranslatef(-pos.x(), -pos.y(), -pos.z());
+	glTranslatef(_shakeOffset.x, _shakeOffset.y, 0);
 }
 
 void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d target, const Common::Rect viewArea) {
@@ -471,6 +481,8 @@ void OpenGLRenderer::renderFace(const Common::Array<Math::Vector3d> &vertices) {
 
 void OpenGLRenderer::depthTesting(bool enabled) {
 	if (enabled) {
+		// If we re-enable depth testing, we need to clear the depth buffer
+		glClear(GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 	} else {
 		glDisable(GL_DEPTH_TEST);

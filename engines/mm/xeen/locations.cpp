@@ -952,12 +952,12 @@ Character *TempleLocation::doOptions(Character *c) {
 		}
 	} else if (Res.KeyConstants.Locations.KEY_HEAL == _buttonValue) {
 		if (_healCost && party.subtract(CONS_GOLD, _healCost, WHERE_PARTY, WT_LOC_WAIT)) {
-			c->_magicResistence._temporary = 0;
-			c->_energyResistence._temporary = 0;
-			c->_poisonResistence._temporary = 0;
-			c->_electricityResistence._temporary = 0;
-			c->_coldResistence._temporary = 0;
-			c->_fireResistence._temporary = 0;
+			c->_magicResistance._temporary = 0;
+			c->_energyResistance._temporary = 0;
+			c->_poisonResistance._temporary = 0;
+			c->_electricityResistance._temporary = 0;
+			c->_coldResistance._temporary = 0;
+			c->_fireResistance._temporary = 0;
 			c->_ACTemp = 0;
 			c->_level._temporary = 0;
 			c->_luck._temporary = 0;
@@ -2382,7 +2382,7 @@ bool LocationMessage::execute(int portrait, const Common::String &name, const Co
 	int result = -1;
 	Common::String msgText = text;
 	do {
-		Common::String msg = Common::String::format("\r\v014\x03""c\t125%s\t000\v054%s",
+		Common::String msg = Common::String::format(g_vm->getLanguage() == Common::ZH_TWN ? "\r\v014\x0c""07\x03""c\t125%s\x0c""04\x03""l\t000\v044%s" : "\r\v014\x03""c\t125%s\t000\v054%s",
 			name.c_str(), msgText.c_str());
 
 		// Count the number of words

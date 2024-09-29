@@ -553,6 +553,8 @@ static const GrimGameDescription gameDescriptions[] = {
 		},
 		GType_MONKEY4
 	},
+
+#if defined(USE_MPEG2)
 	{
 		// Escape from Monkey Island English PS2
 		{
@@ -618,6 +620,8 @@ static const GrimGameDescription gameDescriptions[] = {
 		},
 		GType_MONKEY4
 	},
+#endif
+
 	{
 		// Escape from Monkey Island CD demo (English)
 		{
@@ -698,6 +702,7 @@ class GrimMetaEngineDetection : public AdvancedMetaEngineDetection<Grim::GrimGam
 public:
 	GrimMetaEngineDetection() : AdvancedMetaEngineDetection(Grim::gameDescriptions, grimGames) {
 		_guiOptions = GUIO_NOMIDI;
+		_flags |= kADFlagCanTranscodeTraditionalChineseToSimplified;
 	}
 
 	PlainGameDescriptor findGame(const char *gameid) const override {
@@ -725,6 +730,17 @@ public:
 		return debugFlagList;
 	}
 
+	DetectedGame toDetectedGame(const ADDetectedGame &adGame, ADDetectedGameExtraInfo *extraInfo) const override {
+		DetectedGame game = AdvancedMetaEngineDetection::toDetectedGame(adGame, extraInfo);
+		GrimGameType gameID = reinterpret_cast<const GrimGameDescription *>(adGame.desc)->gameType;
+
+		if (gameID == GType_MONKEY4 && adGame.desc->language == Common::Language::ZH_TWN) {
+			game.appendGUIOptions(Common::getGameGUIOptionsDescriptionLanguage(Common::ZH_TWN));
+			game.appendGUIOptions(Common::getGameGUIOptionsDescriptionLanguage(Common::ZH_CHN));
+		}
+
+		return game;
+	}
 };
 
 } // End of namespace Grim

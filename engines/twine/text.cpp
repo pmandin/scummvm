@@ -70,7 +70,7 @@ void Text::initVoxBank(TextBankId bankIdx) {
 	    "002", // White Leaf Desert voices
 	    "003", // Proxima Island voices
 	    "004", // Rebellion Island voices
-	    "005", // Hamalayi Mountains - sourthern range voices
+	    "005", // Hamalayi Mountains - southern range voices
 	    "006", // Hamalayi Mountains - northern range voices
 	    "007", // Tippett Island voices
 	    "008", // Brundle Island voices
@@ -173,7 +173,8 @@ void Text::initDial(TextBankId bankIdx) {
 }
 
 void Text::initSceneTextBank() {
-	initDial((TextBankId)((int)_engine->_scene->_sceneTextBank + (int)TextBankId::Citadel_Island));
+	const int textBankId = (int)_engine->_scene->_sceneTextBank;
+	initDial((TextBankId)(textBankId + (int)TextBankId::Citadel_Island));
 }
 
 void Text::drawCharacter(int32 x, int32 y, uint16 character) {
@@ -350,12 +351,12 @@ void Text::initDialogueBox() {
 }
 
 // TODO: this blits a few pixels too much when switching an item in the inventory menu.
-void Text::initInventoryDialogueBox() {
+void Text::initInventoryDialogueBox() { // SecondInitDialWindow
 	_engine->blitWorkToFront(_dialTextBox);
 	_fadeInCharactersPos = 0;
 }
 
-void Text::initInventoryText(InventoryItems index) {
+void Text::initInventoryText(InventoryItems index) { // OpenDialNoWindow
 	// 100 if the offset for the inventory item descriptions
 	initText((TextId)(100 + (int)index));
 }

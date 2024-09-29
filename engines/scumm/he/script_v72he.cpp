@@ -166,7 +166,7 @@ int ScummEngine_v72he::readArray(int array, int idx2, int idx1) {
 	}
 
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-	if (ConfMan.getBool("enable_competitive_mods")) {
+	if (_enableHECompetitiveOnlineMods) {
 		// Mod for Backyard Baseball 2001 online competitive play: allow baserunners to be
 		// turned around while they're jogging to the next base on a pop-up.
 		// The game checks if the runner is forced to the next base (i.e. there's a runner on the base behind them),
@@ -2182,7 +2182,7 @@ void ScummEngine_v72he::o72_readINI() {
 		} else if (!strcmp((char *)option, "GameResourcePath") || !strcmp((char *)option, "SaveGamePath")) {
 			// We set SaveGamePath in order to detect where it used
 			// in convertFilePath and to avoid warning about invalid
-			// path in Macintosh verisons.
+			// path in Macintosh versions.
 			data = defineArray(0, kStringArray, 0, 0, 0, 2);
 			if (_game.platform == Common::kPlatformMacintosh)
 				memcpy(data, (const char *)"*:", 2);

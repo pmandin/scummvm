@@ -177,6 +177,18 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		}
 	},
 
+	{
+		GAMEOPTION_COPY_PROTECTION,
+		{
+			_s("Enable copy protection"),
+			_s("Enable any copy protection that would otherwise be bypassed by default."),
+			"copy_protection",
+			false,
+			0,
+			0
+		}
+	},
+
 	AD_EXTRA_GUI_OPTIONS_TERMINATOR
 };
 
@@ -234,6 +246,7 @@ Common::Error AgiMetaEngine::createInstance(OSystem *syst, Engine **engine, cons
 	case Agi::GType_V1:
 	case Agi::GType_V2:
 	case Agi::GType_V3:
+	case Agi::GType_A2:
 		*engine = new Agi::AgiEngine(syst, gd);
 		break;
 	default:
@@ -390,45 +403,47 @@ SaveStateDescriptor AgiMetaEngine::querySaveMetaInfos(const char *target, int sl
 namespace Agi {
 
 bool AgiBase::canLoadGameStateCurrently(Common::U32String *msg) {
-	if (!(getGameType() == GType_PreAGI)) {
-		if (getFlag(VM_FLAG_MENUS_ACCESSIBLE)) {
-			if (!_noSaveLoadAllowed) {
-				if (!cycleInnerLoopIsActive()) {
-					// We can't allow to restore a game, while inner loop is active
-					// For example Mixed Up Mother Goose has an endless loop for user name input
-					// Which means even if we abort the inner loop, the game would keep on calling
-					// GetString() until something is entered. And this would of course also happen
-					// right after restoring a saved game.
-					return true;
-				}
+	if (getGameType() == GType_PreAGI) {
+		if (msg)
+			*msg = _("This game does not support loading");
+		return false;
+	}
+
+	if (getFlag(VM_FLAG_MENUS_ACCESSIBLE)) {
+		if (!_noSaveLoadAllowed) {
+			if (!cycleInnerLoopIsActive()) {
+				// We can't allow to restore a game, while inner loop is active
+				// For example Mixed Up Mother Goose has an endless loop for user name input
+				// Which means even if we abort the inner loop, the game would keep on calling
+				// GetString() until something is entered. And this would of course also happen
+				// right after restoring a saved game.
+				return true;
 			}
 		}
 	}
-
-	if (msg)
-		*msg = _("This game does not support loading");
 
 	return false;
 }
 
 bool AgiBase::canSaveGameStateCurrently(Common::U32String *msg) {
+	if (getGameType() == GType_PreAGI) {
+		if (msg)
+			*msg = _("This game does not support saving");
+		return false;
+	}
+
 	if (getGameID() == GID_BC) // Technically in Black Cauldron we may save anytime
 		return true;
 
-	if (!(getGameType() == GType_PreAGI)) {
-		if (getFlag(VM_FLAG_MENUS_ACCESSIBLE)) {
-			if (!_noSaveLoadAllowed) {
-				if (!cycleInnerLoopIsActive()) {
-					if (promptIsEnabled()) {
-						return true;
-					}
+	if (getFlag(VM_FLAG_MENUS_ACCESSIBLE)) {
+		if (!_noSaveLoadAllowed) {
+			if (!cycleInnerLoopIsActive()) {
+				if (promptIsEnabled()) {
+					return true;
 				}
 			}
 		}
 	}
-
-	if (msg)
-		*msg = _("This game does not support saving");
 
 	return false;
 }

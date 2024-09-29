@@ -1410,7 +1410,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resmap.000", 0, "daf64a91344a7934fe4374765267c2af", 5767},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformWindows, ADGF_DROPPLATFORM, GUIO_HOYLE5_SAVELOAD },
-		
+
 	// Hoyle 5 (Hoyle Classic Games for Laptops) - Windows
 	// File date: 1995.11.04
 	// This version is unsupported because it is missing the main menu resources and will crash.
@@ -2094,7 +2094,24 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::ES_ESP, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16	},
 
-	// King's Quest 5 - German DOS Floppy (supplied by markcoolio in bug report #4290, also includes english language)
+	// King's Quest 5 - German DOS Floppy EGA (5.25" disks)
+	// Game version 0.000.121 from about box, 1.000 from VERSION file
+	// SCI interpreter version 1.000.575
+	{"kq5", "EGA", {
+		{"resource.map", 0, "4ca7ba8ec59f6190a841e1d4efa46ad5", 8040},
+		{"resource.000", 0, "1a82e9253c727fef5c8ed655d1a42486", 451799},
+		{"resource.001", 0, "326c1b81779fddd84a990e74f8fb4e27", 571810},
+		{"resource.002", 0, "98961f673ef9476c6e4166aa9319b2c7", 619028},
+		{"resource.003", 0, "564a92dbe7cb76ee9861e763136ae16f", 495857},
+		{"resource.004", 0, "c734b48f9cf3d18370cf09778904ed10", 632541},
+		{"resource.005", 0, "646f6f84c0ed677e0c77fd145f04ce3e", 679955},
+		{"resource.006", 0, "16974fb4b68f8f2bf1dba483e7611590", 677478},
+		{"resource.007", 0, "7cc8e8d946833f57428928fbc6c57dd6", 552483},
+		{"resource.008", 0, "c9fd8d08ecc9d1e94d792416d48e71ac", 609913},
+		AD_LISTEND},
+		Common::DE_DEU, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16	},
+
+	// King's Quest 5 - German DOS Floppy VGA (supplied by markcoolio in bug report #4290, also includes english language)
 	// SCI interpreter version 1.000.060
 	{"kq5", "", {
 		{"resource.map", 0, "bff44f0c326a71b1757c793a02b502d6", 8283},
@@ -2109,7 +2126,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::DE_DEU, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16	},
 
-	// King's Quest 5 - German DOS Floppy, 9 x 5.25" disks, v0.000.149
+	// King's Quest 5 - German DOS Floppy VGA, 9 x 5.25" disks, v0.000.149
 	// VERSION file reports "1.000", SCI interpreter version 1.000.784
 	{"kq5", "", {
 		{"resource.map", 0, "dacbaf066987387b4ec2e8985dad70d5", 8169},
@@ -2644,7 +2661,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"PATCHES/font.008", 0, "8abefd3b44827ff26e2ad298f9e76a2b", 3029},
 		AD_LISTEND},
 		Common::HE_ISR, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_STD16_UNDITHER },
-		
+
 	// Laura Bow - Russian fan translation by https://github.com/deadman2000/RuSCI
 	// SCI interpreter version 0.000.631
 	{"laurabow", "", {
@@ -5075,6 +5092,14 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::IT_ITA, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_STD16_SPEECH	},
 
+	// Quest for Glory 3 - Russian DOS fan-tanslation by old-games.ru
+	{"qfg3", "", {
+		{"resource.map", 0, "bee7ca7b4c3455452f5eb17ce5da6231", 5962},
+		{"resource.000", 0, "5186e4ac205132b06d9aaec8dff9d77e", 5990202},
+		{"resource.msg", 0, "f89eb3bc2b0e192e8708c1053e39b5df", 243214},
+		AD_LISTEND},
+		Common::RU_RUS, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_STD16_SPEECH	},
+
 	// Quest for Glory 4 - English DOS Non-Interactive Demo (from FRG)
 	// SCI interpreter version 1.001.069 (just a guess)
 	// Note: we are not using ADGF_DEMO here, to avoid a game ID like qfg4demo-demo
@@ -5355,7 +5380,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 	// scratch, which classifies Shivers 2 as "not SCI"
 	// Shivers2 - English Windows Demo
 	// Executable scanning reports "3.000.000"
-	{"shivers2", _s("Missing game code"), {
+	{"shivers2", MetaEngineDetection::GAME_NOT_IMPLEMENTED, {
 		{"resmap.000", 0, "d8659188b84beaef076bd869837cd530", 634},
 		{"ressci.000", 0, "7fbac0807a044c9543e8ac376d200e59", 4925003},
 		AD_LISTEND},
@@ -5363,7 +5388,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 	// Shivers 2 - English Windows (from abevi)
 	// VERSION.TXT Version 1.0 (3/25/97)
-	{"shivers2", _s("Missing game code"), {
+	{"shivers2", MetaEngineDetection::GAME_NOT_IMPLEMENTED, {
 		{"ressci.001", 0, "a79d03d6eb75be0a79324f14e3d2ace4", 95346793},
 		{"resmap.001", 0, "a4804d436d90c4ec2e46b537f5e954db", 6268},
 		AD_LISTEND},

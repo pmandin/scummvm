@@ -45,6 +45,7 @@
 #include "backends/audiocd/audiocd.h"
 
 #include "graphics/thumbnail.h"
+#include "gui/message.h"
 
 namespace Scumm {
 
@@ -69,7 +70,7 @@ struct SaveInfoSection {
 
 #define SaveInfoSectionSize (4+4+4 + 4+4 + 4+2)
 
-#define CURRENT_VER 119
+#define CURRENT_VER 120
 #define INFOSECTION_VERSION 2
 
 #pragma mark -
@@ -138,10 +139,6 @@ bool ScummEngine::canLoadGameStateCurrently(Common::U32String *msg) {
 }
 
 Common::Error ScummEngine::saveGameState(int slot, const Common::String &desc, bool isAutosave) {
-	// Disable autosaving if the original GUI is in place
-	if (isAutosave && isUsingOriginalGUI())
-		return Common::kNoError;
-
 	requestSave(slot, desc);
 	return Common::kNoError;
 }
@@ -741,7 +738,7 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 	memset(_newNames, 0, sizeof(_newNames[0]) * _numNewNames);
 
 	// Because old savegames won't fill the entire gfxUsageBits[] array,
-	// clear it here just to be sure it won't hold any unforseen garbage.
+	// clear it here just to be sure it won't hold any unforeseen garbage.
 	memset(gfxUsageBits, 0, sizeof(gfxUsageBits));
 
 	// Nuke all resources
@@ -1749,7 +1746,8 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	// Save/load misc stuff
 	//
 	s.syncArray(_verbs, _numVerbs, (_game.version < 7 && _language != Common::HE_ISR) ? syncWithSerializerDef : syncWithSerializerV7orISR);
-	s.syncArray(vm.nest, 16, syncWithSerializer);
+	s.syncArray(vm.nest, 16, syncWithSerializer, VER(0), VER(119));
+	s.syncArray(vm.nest, kMaxScriptNestingHE, syncWithSerializer, VER(120));
 	s.syncArray(_sentence, 6, syncWithSerializer);
 	s.syncArray(_string, 6, syncWithSerializer);
 	s.syncArray(_colorCycle, 16, syncWithSerializer);
@@ -1949,11 +1947,35 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 
 	s.syncArray(_roomVars, _numRoomVariables, Common::Serializer::Sint32LE, VER(38));
 
+	int currentSoundCard = VAR_SOUNDCARD != 0xFF ? VAR(VAR_SOUNDCARD) : -1;
+	bool isMonkey1MacDefaultSoundCardValue =
+		(_game.id == GID_MONKEY &&
+		(_sound->_musicType & MidiDriverFlags::MDT_MACINTOSH) &&
+		currentSoundCard == 0xFFFF);
+
 	// The variables grew from 16 to 32 bit.
 	if (s.getVersion() < VER(15))
 		s.syncArray(_scummVars, _numVariables, Common::Serializer::Sint16LE);
 	else
 		s.syncArray(_scummVars, _numVariables, Common::Serializer::Sint32LE);
+
+	if (s.isLoading() && VAR_SOUNDCARD != 0xFF && (_game.heversion < 70 && _game.version <= 6)) {
+		if (currentSoundCard != VAR(VAR_SOUNDCARD) && !isMonkey1MacDefaultSoundCardValue) {
+			Common::String soundCards[] = {
+				"PC Speaker", "IBM PCjr/Tandy", "Creative Music System", "AdLib", "Roland MT-32/CM-32L"
+				"", "", "", "", "", "", "Macintosh Low Quality Sound", "Macintosh High Quality Sound"
+			};
+			
+			GUI::MessageDialog dialog(
+				Common::U32String::format(_("Warning: incompatible sound settings detected between the current configuration and this saved game.\n\n"
+					"Current music device: %s (id %d)\nSave file music device: %s (id %d)\n\n"
+					"Loading will be attempted, but the game may behave incorrectly or crash.\n"
+					"Please change the audio configuration accordingly in order to properly load this save file."),
+					soundCards[currentSoundCard].c_str(), currentSoundCard, soundCards[VAR(VAR_SOUNDCARD)].c_str(), VAR(VAR_SOUNDCARD))
+			);
+			runDialog(dialog);
+		}
+	}
 
 	if (_game.id == GID_TENTACLE)	// Maybe misplaced, but that's the main idea
 		_scummVars[120] = var120Backup;

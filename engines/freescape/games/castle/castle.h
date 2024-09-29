@@ -21,17 +21,40 @@
 
 namespace Freescape {
 
+struct RiddleText {
+	int8 _dx;
+	int8 _dy;
+	Common::String _text;
+
+	RiddleText(int8 dx, int8 dy, const Common::String &text) : _dx(dx), _dy(dy), _text(text) {}
+};
+
+struct Riddle {
+	Common::Point _origin;
+	Common::Array<RiddleText> _lines;
+};
+
 class CastleEngine : public FreescapeEngine {
 public:
 	CastleEngine(OSystem *syst, const ADGameDescription *gd);
 	~CastleEngine();
 
+	// Only in DOS
 	Graphics::ManagedSurface *_option;
-	Graphics::Surface *_menu;
+	Graphics::ManagedSurface *_menuButtons;
+	Graphics::ManagedSurface *_menuCrawlIndicator;
+	Graphics::ManagedSurface *_menuWalkIndicator;
+	Graphics::ManagedSurface *_menuRunIndicator;
+	Graphics::ManagedSurface *_menuFxOnIndicator;
+	Graphics::ManagedSurface *_menuFxOffIndicator;
+	Graphics::ManagedSurface *_menu;
+
+	void initKeymaps(Common::Keymap *engineKeyMap, Common::Keymap *infoScreenKeyMap, const char *target) override;
 	void initGameState() override;
 	void endGame() override;
 
 	void drawInfoMenu() override;
+	void loadAssets() override;
 	void loadAssetsDOSFullGame() override;
 	void loadAssetsDOSDemo() override;
 	void loadAssetsAmigaDemo() override;
@@ -44,32 +67,59 @@ public:
 
 	void drawDOSUI(Graphics::Surface *surface) override;
 	void drawZXUI(Graphics::Surface *surface) override;
-	void drawEnergyMeter(Graphics::Surface *surface);
+	void drawAmigaAtariSTUI(Graphics::Surface *surface) override;
+	void drawEnergyMeter(Graphics::Surface *surface, Common::Point origin);
 	void pressedKey(const int keycode) override;
 	void checkSensors() override;
 	void updateTimeVariables() override;
 
 	bool checkIfGameEnded() override;
+	void drawSensorShoot(Sensor *sensor) override;
 
 	void executePrint(FCLInstruction &instruction) override;
 	void executeMakeInvisible(FCLInstruction &instruction) override;
+	void executeDestroy(FCLInstruction &instruction) override;
+	void executeRedraw(FCLInstruction &instruction) override;
 	void gotoArea(uint16 areaID, int entranceID) override;
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 
-	Common::StringArray _riddleList;
+	Common::Array<Riddle> _riddleList;
 	Common::BitArray _fontPlane1;
 	Common::BitArray _fontPlane2;
 	Common::BitArray _fontPlane3;
 
 	void drawStringInSurface(const Common::String &str, int x, int y, uint32 fontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0) override;
 	//void drawStringInSurface(const Common::String &str, int x, int y, uint32 primaryFontColor, uint32 secondaryFontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0) override;
-	Graphics::Surface *loadFramesWithHeader(Common::SeekableReadStream *file, int pos, int numFrames, uint32 back);
-	Graphics::Surface *loadFrames(Common::SeekableReadStream *file, Graphics::Surface *surface, int width, int height, uint32 back);
+	Graphics::ManagedSurface *loadFrameWithHeaderDOS(Common::SeekableReadStream *file);
+	Common::Array <Graphics::ManagedSurface *>loadFramesWithHeaderDOS(Common::SeekableReadStream *file, int numFrames);
 
-	Graphics::Surface *_keysFrame;
-	Graphics::Surface *_spiritsMeterIndicatorFrame;
-	int _numberKeys;
+	Common::Array<Graphics::ManagedSurface *> loadFramesWithHeader(Common::SeekableReadStream *file, int pos, int numFrames, uint32 front, uint32 back);
+	Graphics::ManagedSurface *loadFrameWithHeader(Common::SeekableReadStream *file, int pos, uint32 front, uint32 back);
+	Graphics::ManagedSurface *loadFrame(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int width, int height, uint32 back);
+	Graphics::ManagedSurface *loadFrameFromPlanes(Common::SeekableReadStream *file, int widthInBytes, int height);
+	Graphics::ManagedSurface *loadFrameFromPlanesInternal(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int width, int height);
+
+	Graphics::ManagedSurface *loadFrameFromPlanesVertical(Common::SeekableReadStream *file, int widthInBytes, int height);
+	Graphics::ManagedSurface *loadFrameFromPlanesInternalVertical(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int width, int height, int plane);
+
+	Common::Array<Graphics::ManagedSurface *>_keysBorderFrames;
+	Common::Array<Graphics::ManagedSurface *>_keysMenuFrames;
+	Graphics::ManagedSurface *_spiritsMeterIndicatorBackgroundFrame;
+	Graphics::ManagedSurface *_spiritsMeterIndicatorFrame;
+	Graphics::ManagedSurface *_strenghtBackgroundFrame;
+	Graphics::ManagedSurface *_strenghtBarFrame;
+	Common::Array<Graphics::ManagedSurface *> _strenghtWeightsFrames;
+	Common::Array<Graphics::ManagedSurface *> _flagFrames;
+	Graphics::ManagedSurface *_thunderFrame;
+	Graphics::ManagedSurface *_riddleTopFrame;
+	Graphics::ManagedSurface *_riddleBackgroundFrame;
+	Graphics::ManagedSurface *_riddleBottomFrame;
+
+	Graphics::ManagedSurface *_endGameThroneFrame;
+	Graphics::ManagedSurface *_endGameBackgroundFrame;
+
+	Common::Array<int> _keysCollected;
 	bool _useRockTravel;
 	int _spiritsDestroyed;
 	int _spiritsMeter;
@@ -83,10 +133,9 @@ private:
 	void loadDOSFonts(Common::SeekableReadStream *file, int pos);
 	void drawFullscreenRiddleAndWait(uint16 riddle);
 	void drawRiddle(uint16 riddle, uint32 front, uint32 back, Graphics::Surface *surface);
+	void tryToCollectKey();
 	void addGhosts();
 	Texture *_optionTexture;
 };
-
-extern byte kFreescapeCastleFont[];
 
 }

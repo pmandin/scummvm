@@ -47,7 +47,6 @@ namespace M4 {
 #define NUM_FREE     FREE_END-(FREE_START)+1
 
 static HotkeyCB remember_esc_key;
-static bool examining_inventory_object;
 static HotSpotRec *exam_saved_hotspots;
 
 void krn_pal_game_task() {
@@ -340,6 +339,12 @@ void kernel_examine_inventory_object(const char *picName, RGB8 *pal, int steps, 
 	_G(game_bgBuff)->release();
 
 	pauseEngines();
+}
+
+void kernel_examine_inventory_object(const char *picName, int steps, int delay,
+		int32 x, int32 y, int32 triggerNum, const char *digiName, int32 digiTrigger) {
+	kernel_examine_inventory_object(picName, _G(master_palette), steps, delay,
+		x, y, triggerNum, digiName, digiTrigger);
 }
 
 void kernel_unexamine_inventory_object(RGB8 *pal, int steps, int delay) {

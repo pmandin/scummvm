@@ -19,8 +19,6 @@
  *
  */
 
-#if defined(__ANDROID__)
-
 // Allow use of stuff in <time.h>
 #define FORBIDDEN_SYMBOL_EXCEPTION_time_h
 
@@ -1436,7 +1434,7 @@ bool OSystem_Android::pollEvent(Common::Event &event) {
 	if (pthread_self() == _main_thread) {
 		if (_screen_changeid != JNI::surface_changeid) {
 			_screen_changeid = JNI::surface_changeid;
-			// If we loose the surface, don't deinit as we loose the EGL context and this may lead to crashes
+			// If we lose the surface, don't deinit as we lose the EGL context and this may lead to crashes
 			// Keep a dangling surface until we get a resize
 			if (JNI::egl_surface_width > 0 && JNI::egl_surface_height > 0) {
 				// surface changed
@@ -1551,5 +1549,3 @@ void OSystem_Android::setupTouchMode(int oldValue, int newValue) {
 		_touch_pt_scroll.y = -1;
 	}
 }
-
-#endif

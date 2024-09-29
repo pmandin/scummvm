@@ -307,7 +307,7 @@ struct ADDetectedGameExtraInfo {
 struct ADDetectedGame {
 	bool hasUnknownFiles;           /*!< Whether the game has unknown files. */
 	FilePropertiesMap matchedFiles; /*!< List of the files that were used to match the game. */
-	const ADGameDescription *desc;  /*!< Human-readable game title. */
+	const ADGameDescription *desc;  /*!< Matching game description from detection table.  */
 
 	ADDetectedGame() : desc(nullptr), hasUnknownFiles(false) {}
 	/**
@@ -383,6 +383,11 @@ enum ADFlags {
 	  * of detected games.
 	  */
 	kADFlagCanPlayUnknownVariants = (1 << 3),
+
+	/**
+	  * Indicates engine's ability to play a variant of a Traditional Chinese game while transcoding it on-the-fly to Simplified.
+	  */
+	kADFlagCanTranscodeTraditionalChineseToSimplified = (1 << 4),
 };
 
 
@@ -521,7 +526,7 @@ public:
 
 protected:
 	/**
-	 * A hashmap of files and their MD5 checksums.
+	 * A hashmap of file paths and their file system nodes.
 	 */
 	typedef Common::HashMap<Common::Path, Common::FSNode, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> FileMap;
 
@@ -645,7 +650,7 @@ public:
 
 public:
 	/**
-	 * A hashmap of files and their MD5 checksums.
+	 * A hashmap of file paths and their file system nodes.
 	 */
 	typedef Common::HashMap<Common::Path, Common::FSNode, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> FileMap;
 

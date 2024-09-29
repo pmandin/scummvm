@@ -127,6 +127,24 @@ void FreescapeEngine::loadColorPalette() {
 	_gfx->setColorMap(&_colorMap);
 }
 
+byte *FreescapeEngine::loadPalette(Common::SeekableReadStream *file) {
+	int r, g, b;
+	auto palette = new byte[16][3];
+	for (int c = 0; c < 16; c++) {
+		int v = file->readUint16BE();
+		r = (v & 0xf00) >> 8;
+		r = r << 4 | r;
+		palette[c][0] = r & 0xff;
+		g = (v & 0xf0) >> 4;
+		g = g << 4 | g;
+		palette[c][1] = g & 0xff;
+		b = v & 0xf;
+		b = b << 4 | b;
+		palette[c][2] = b & 0xff;
+	}
+	return (byte *)palette;
+}
+
 void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset) {
 	file->seek(offset);
 	int r, g, b;
@@ -145,7 +163,7 @@ void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset)
 		if (label == 255)
 			break;
 		auto palette = new byte[16][3];
-		debugC(1, kFreescapeDebugParser, "Loading palette for area: %d at %llx", label, file->pos());
+		debugC(1, kFreescapeDebugParser, "Loading palette for area: %d at %" PRIx64, label, file->pos());
 		for (int c = 0; c < 16; c++) {
 			int v = file->readUint16BE();
 			r = (v & 0xf00) >> 8;

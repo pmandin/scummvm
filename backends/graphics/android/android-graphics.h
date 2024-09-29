@@ -39,6 +39,7 @@ public:
 	virtual bool notifyMousePosition(Common::Point &mouse) = 0;
 
 	virtual void syncVirtkeyboardState(bool virtkeybd_on) = 0;
+	virtual void applyTouchSettings() const = 0;
 
 	/**
 	 * A (subset) of the graphic manager's state. This is used when switching
@@ -88,8 +89,9 @@ public:
 
 	float getHiDPIScreenFactor() const override;
 
+	void touchControlInitSurface(const Graphics::ManagedSurface &surf) override;
 	void touchControlNotifyChanged() override;
-	void touchControlDraw(int16 x, int16 y, int16 w, int16 h, const Common::Rect &clip) override;
+	void touchControlDraw(uint8 alpha, int16 x, int16 y, int16 w, int16 h, const Common::Rect &clip) override;
 
 protected:
 	void setSystemMousePosition(const int x, const int y) override {}
@@ -103,6 +105,7 @@ protected:
 	void refreshScreen() override;
 
 	void syncVirtkeyboardState(bool virtkeybd_on) override;
+	void applyTouchSettings() const override;
 
 private:
 	OpenGL::Surface *_touchcontrols;

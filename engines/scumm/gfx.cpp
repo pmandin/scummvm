@@ -765,7 +765,10 @@ void ScummEngine::drawStripToScreen(VirtScreen *vs, int x, int width, int top, i
 			// NES can address negative number strips and that poses problem for
 			// our code. So instead of adding zillions of fixes and potentially
 			// breaking other games, we shift it right at the rendering stage.
-			if (((_NESStartStrip > 0) && (vs->number == kMainVirtScreen)) || (vs->number == kTextVirtScreen)) {
+			//
+			// This hack originally checked for (vs->number == kTextVirtScreen) as well.
+			// This causes bug #3594/#13107 to happen though...
+			if (((_NESStartStrip > 0) && (vs->number == kMainVirtScreen))) {
 				x += 16;
 				while (x + width >= _screenWidth)
 					width -= 16;
@@ -866,7 +869,7 @@ const byte *ScummEngine::postProcessDOSGraphics(VirtScreen *vs, int &pitch, int 
 		}
 
 	} else if (renderHerc || _renderMode == Common::kRenderCGA_BW) {
-		// The monochrome rendering is very similiar for Hercules and CGA b/w. For Hercules we have to do some corrections to fit into the 350 pixels height.
+		// The monochrome rendering is very similar for Hercules and CGA b/w. For Hercules we have to do some corrections to fit into the 350 pixels height.
 		// For Hercules V1/2, the text and verb vs are rendered in normal height, only the main vs gets scaled by leaving out every other line. Hercules V4
 		// instead scales everything in a 4-to-7 lines ratio. And for all versions, we center the image horizontally within the 720 pixels width.
 		// For CGA b/w the origial resolution is 640x200, so we just scale that to our 640x400 by repeating each line.
@@ -1292,11 +1295,13 @@ void ScummEngine::restoreCharsetBg() {
 				blit(screenBuf, vs->pitch, backBuf, vs->pitch, vs->w, vs->h, vs->format.bytesPerPixel);
 			}
 		} else {
-			// Clear area
-			if (_game.platform == Common::kPlatformNES)
-				memset(screenBuf, 0x1d, vs->h * vs->pitch);
-			else
-				memset(screenBuf, 0, vs->h * vs->pitch);
+			if (!(_game.version < 4 && _messageBannerActive && (getCurrentLights() & LIGHTMODE_flashlight_on))) {
+				// Clear area
+				if (_game.platform == Common::kPlatformNES)
+					memset(screenBuf, 0x1d, vs->h * vs->pitch);
+				else
+					memset(screenBuf, 0, vs->h * vs->pitch);
+			}
 		}
 
 		if (vs->hasTwoBuffers || _macScreen) {
@@ -1822,12 +1827,12 @@ void ScummEngine_v5::drawFlashlight() {
 
 	// Remove the flash light first if it was previously drawn
 	if (_flashlight.eraseFlag) {
-		markRectAsDirty(kMainVirtScreen, _flashlight.x, _flashlight.x + _flashlight.w,
-										_flashlight.y, _flashlight.y + _flashlight.h, USAGE_BIT_DIRTY);
-
 		if (_flashlight.buffer) {
 			fill(_flashlight.buffer, vs->pitch, blackColor, _flashlight.w, _flashlight.h, vs->format.bytesPerPixel);
 		}
+
+		markRectAsDirty(kMainVirtScreen, _flashlight.x, _flashlight.x + _flashlight.w,
+				_flashlight.y, _flashlight.y + _flashlight.h, USAGE_BIT_DIRTY);
 
 		_flashlight.eraseFlag = false;
 	}
@@ -1849,10 +1854,7 @@ void ScummEngine_v5::drawFlashlight() {
 	// - X position is a multiple of 8;
 	// - Y position is a multiple of 2.
 	//
-	// Failing to do so will create temporary glitches on the corners
-	// of the flashlight when attempting moving the mouse too fast...
-	// I'm not sure FM-Towns does this, so I'm leaving it off,
-	// which mean it will glitch just like with the old code...
+	// FM-Towns doesn't seem to do so...
 	if (_game.platform != Common::kPlatformFMTowns) {
 		x &= ~7;
 		y &= ~1;
@@ -1863,8 +1865,10 @@ void ScummEngine_v5::drawFlashlight() {
 	_flashlight.x = x - _flashlight.w / 2 - _screenStartStrip * 8;
 	_flashlight.y = y - _flashlight.h / 2;
 
-	if (_game.id == GID_LOOM && _game.version == 3 && _game.platform == Common::kPlatformFMTowns)
+	if (_game.id == GID_LOOM && _game.version == 3 && _game.platform != Common::kPlatformFMTowns) {
+		_flashlight.x += 4;
 		_flashlight.y -= 12;
+	}
 
 	// Clip the flashlight at the borders
 	if (_flashlight.x < 0)
@@ -1890,8 +1894,8 @@ void ScummEngine_v5::drawFlashlight() {
 
 	blit(_flashlight.buffer, vs->pitch, bgbak, vs->pitch, _flashlight.w, _flashlight.h, vs->format.bytesPerPixel);
 
-	// C64 & NES does not round the flashlight
-	if (_game.platform != Common::kPlatformC64 && _game.platform != Common::kPlatformNES) {
+	// Apple IIGS, C64 & NES does not round the flashlight
+	if (_game.platform != Common::kPlatformApple2GS && _game.platform != Common::kPlatformC64 && _game.platform != Common::kPlatformNES) {
 		// Round the corners. Different versions have different rounding parameters.
 		if (vs->format.bytesPerPixel == 1) {
 			int width, height, heightLoc;
@@ -2025,6 +2029,11 @@ void ScummEngine_v5::drawFlashlight() {
 			}
 		}
 	}
+
+	// Not in the original, but this avoids glitches on the borders of the flashlight, since
+	// otherwise the next rects refresh would have been on the next drawFlashlight() call...
+	markRectAsDirty(kMainVirtScreen, _flashlight.x, _flashlight.x + _flashlight.w,
+					_flashlight.y, _flashlight.y + _flashlight.h, USAGE_BIT_DIRTY);
 
 	_flashlight.eraseFlag = true;
 }
@@ -2467,31 +2476,6 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 			_roomPalette[11] = 86;
 		if (_roomPalette[13] == 13 && _roomPalette[80] == 80)
 			_roomPalette[13] = 80;
-	}
-
-	// WORKAROUND: In the CD version of MI1, the sign about how the dogs
-	// are only sleeping has a dark blue background instead of white. This
-	// makes the sign harder to read, so temporarily remap the color while
-	// drawing it. The text is also slightly different, but that is taken
-	// care of elsewhere.
-	//
-	// The SEGA CD version uses the old colors already, and the FM Towns
-	// version makes the text more readable by giving it a black outline.
-
-	else if (_vm->_game.id == GID_MONKEY &&
-			!(_vm->_game.features & GF_ULTIMATE_TALKIE) &&
-			_vm->_game.platform != Common::kPlatformSegaCD &&
-			_vm->_game.platform != Common::kPlatformFMTowns &&
-			_vm->_currentRoom == 36 &&
-			vs->number == kMainVirtScreen &&
-			y == 8 && x >= 7 && x <= 30 && height == 88 &&
-			_vm->enhancementEnabled(kEnhVisualChanges)) {
-		_roomPalette[47] = 15;
-
-		byte result = decompressBitmap(dstPtr, vs->pitch, smap_ptr + offset, height);
-
-		_roomPalette[47] = 47;
-		return result;
 	}
 
 	// WORKAROUND: In the French VGA floppy version of MI1, the easter egg
@@ -4695,7 +4679,7 @@ void ScummEngine::dissolveEffect(int width, int height) {
 	//   The original construct the image piece by piece but blits it
 	//   every time it finds an offset smaller than the height of the virtual
 	//   screen. This is trivial to do in our code, so we just sleep for a
-	//   quarter frame everytime the condition above is met.
+	//   quarter frame every time the condition above is met.
 	//
 	// If we ever get a blitsToFreeze == 0, we will use 18 in its place
 	// since it's the most typical value got out of the calculations.

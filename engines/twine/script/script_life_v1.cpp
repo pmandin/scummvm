@@ -24,6 +24,7 @@
 #include "twine/twine.h"
 #include "twine/text.h"
 #include "twine/audio/music.h"
+#include "twine/scene/gamestate.h"
 
 namespace TwinE {
 
@@ -53,7 +54,7 @@ int32 ScriptLifeV1::lBUBBLE_OFF(TwinEEngine *engine, LifeScriptContext &ctx) {
  */
 int32 ScriptLifeV1::lPLAY_MIDI(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 midiIdx = ctx.stream.readByte();
-	engine->_music->playMidiMusic(midiIdx); // TODO: improve this
+	engine->_music->playMusic(midiIdx);
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::PLAY_MIDI(%i)", (int)midiIdx);
 	return 0;
 }
@@ -64,7 +65,19 @@ int32 ScriptLifeV1::lPLAY_MIDI(TwinEEngine *engine, LifeScriptContext &ctx) {
  */
 int32 ScriptLifeV1::lMIDI_OFF(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::MIDI_OFF()");
-	engine->_music->stopMidiMusic();
+	engine->_music->stopMusicMidi();
+	return 0;
+}
+
+/**
+ * Set a new value for the game flag (Paramter = Game Flag Index, Parameter = Value)
+ * @note Opcode @c 0x24
+ */
+int32 ScriptLifeV1::lSET_FLAG_GAME(TwinEEngine *engine, LifeScriptContext &ctx) {
+	const uint8 flagIdx = ctx.stream.readByte();
+	const uint8 flagValue = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_FLAG_GAME(%i, %i)", (int)flagIdx, (int)flagValue);
+	engine->_gameState->setGameFlag(flagIdx, flagValue);
 	return 0;
 }
 

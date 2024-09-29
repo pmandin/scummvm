@@ -62,26 +62,26 @@ struct StaticFlagsStruct {
 	uint32 bComputeCollisionWithObj : 1;    // 0x000001 CHECK_OBJ_COL
 	uint32 bComputeCollisionWithBricks : 1; // 0x000002 CHECK_BRICK_COL
 	uint32 bIsZonable : 1;                  // 0x000004 CHECK_ZONE - testing of scenaric areas
-	uint32 bUsesClipping : 1;               // 0x000008 SPRITE_CLIP - (doors) fixed clip area
+	uint32 bSpriteClip : 1;                 // 0x000008 SPRITE_CLIP - (doors) fixed clip area
 	uint32 bCanBePushed : 1;                // 0x000010 PUSHABLE
 	uint32 bComputeLowCollision : 1;        // 0x000020 COL_BASSE
 	uint32 bCanDrown : 1;                   // 0x000040 CHECK_CODE_JEU
 	uint32 bComputeCollisionWithFloor : 1;  // 0x000080 CHECK_WATER_COL
 	uint32 bUnk0100 : 1;                    // 0x000100
-	uint32 bIsHidden : 1;                   // 0x000200 INVISIBLE - not drawn but all computed
-	uint32 bIsSpriteActor : 1;              // 0x000400 SPRITE_3D - a sprite not a 3D object
+	uint32 bIsInvisible : 1;                // 0x000200 INVISIBLE - not drawn but all computed
+	uint32 bSprite3D : 1;                   // 0x000400 SPRITE_3D - a sprite not a 3D object
 	uint32 bCanFall : 1;                    // 0x000800 OBJ_FALLABLE
-	uint32 bDoesntCastShadow : 1;           // 0x001000 NO_SHADOW - no auto shadow
+	uint32 bNoShadow : 1;                   // 0x001000 NO_SHADOW - no auto shadow
 	uint32 bIsBackgrounded : 1;             // 0x002000 OBJ_BACKGROUND - is embedded in the decor the 1st time
 	uint32 bIsCarrierActor : 1;             // 0x004000 OBJ_CARRIER - can carry and move an obj
 	// take smaller value for bound, or if not set take average for bound
 	uint32 bUseMiniZv : 1;                  // 0x008000 MINI_ZV - square on smaller dimension (if 3D object)
-	uint32 bHasInvalidPosition : 1;         // 0x010000
-	uint32 bNoElectricShock : 1;            // 0x020000 NO_CHOC
-	uint32 bHasSpriteAnim3D : 1;            // 0x040000
-	uint32 bNoPreClipping : 1;              // 0x080000
-	uint32 bHasZBuffer : 1;                 // 0x100000
-	uint32 bHasZBufferInWater : 1;          // 0x200000
+	uint32 bHasInvalidPosition : 1;         // 0x010000 POS_INVALIDE - carrier considered as an invalid position
+	uint32 bNoElectricShock : 1;            // 0x020000 NO_CHOC - does not trigger electric shock animation
+	uint32 bHasSpriteAnim3D : 1;            // 0x040000 ANIM_3DS - 3DS animation (extension of 3D sprite)
+	uint32 bNoPreClipping : 1;              // 0x080000 NO_PRE_CLIP - does not pre-clip the object (for large objects)
+	uint32 bHasZBuffer : 1;                 // 0x100000 OBJ_ZBUFFER - displays object in ZBuffer (exterior only!)
+	uint32 bHasZBufferInWater : 1;          // 0x200000 OBJ_IN_WATER - displays object in ZBuffer in water (exterior only!)
 };
 
 /** Actors dynamic flags structure */
@@ -90,13 +90,13 @@ struct DynamicFlagsStruct {
 	uint32 bIsHitting : 1;               // 0x0002 OK_HIT - hit frame anim
 	uint32 bAnimEnded : 1;               // 0x0004 ANIM_END - anim ended in the current loop (will be looped in the next engine loop)
 	uint32 bAnimNewFrame : 1;            // 0x0008 NEW_FRAME - new frame anim reached
-	uint32 bIsDrawn : 1;                 // 0x0010 WAS_DRAWN - actor has been drawn in this loop
+	uint32 bWasDrawn : 1;                // 0x0010 WAS_DRAWN - actor has been drawn in this loop
 	uint32 bIsDead : 1;                  // 0x0020 OBJ_DEAD - is dead
 	uint32 bIsSpriteMoving : 1;          // 0x0040 AUTO_STOP_DOOR - door is opening or closing (wait to reach the destination position)
 	uint32 bIsRotationByAnim : 1;        // 0x0080 ANIM_MASTER_ROT - actor rotation is managed by its animation not by the engine
 	uint32 bIsFalling : 1;               // 0x0100 FALLING - is falling on scene
-	uint32 bIsTargetable : 1;            // 0x0200 OK_SUPER_HIT (lba2)
-	uint32 bIsBlinking : 1;              // 0x0400 FRAME_SHIELD (lba2)
+	uint32 bIsTargetable : 1;            // 0x0200 IS_TARGETABLE (lba1) OK_SUPER_HIT (lba2)
+	uint32 bIsBlinking : 1;              // 0x0400 IS_BLINKING (lba1) FRAME_SHIELD (lba2)
 	uint32 bWasWalkingBeforeFalling : 1; // 0x0800 DRAW_SHADOW (lba2) - bWasWalkingBeforeFalling in lba1
 	uint32 bUnk1000 : 1;                 // 0x1000 ANIM_MASTER_GRAVITY (lba2)
 	uint32 bUnk2000 : 1;                 // 0x2000 SKATING (lba2) Ouch! I slip in a forbidden collision
@@ -135,8 +135,6 @@ struct BonusParameter {
 	uint16 unused : 7;
 };
 
-#define kActorMaxLife 50
-
 /**
  * Actors structure
  *
@@ -146,13 +144,14 @@ class ActorStruct { // T_OBJET
 private:
 	ShapeType _col = ShapeType::kNone; // collision
 	bool _brickCausesDamage = false;
-
-	EntityData _entityData;
+	int32 _maxLife;
 
 public:
+	ActorStruct(int maxLife = 0) : _lifePoint(maxLife), _maxLife(maxLife) {}
 	StaticFlagsStruct _staticFlags; // Flags
 	DynamicFlagsStruct _workFlags;  // WorkFlags
 
+	EntityData _entityData;
 	inline ShapeType brickShape() const { return _col; }
 	inline void setCollision(ShapeType shapeType) {
 		_col = shapeType;
@@ -160,7 +159,6 @@ public:
 	}
 	inline void setBrickCausesDamage() { _brickCausesDamage = true; }
 	inline bool brickCausesDamage() { return _brickCausesDamage; }
-	void loadModel(int32 modelIndex, bool lba1);
 
 	void addLife(int32 val);
 
@@ -182,7 +180,15 @@ public:
 	EntityData *_entityDataPtr = nullptr;
 
 	int16 _actorIdx = 0; // own actor index
-	IVec3 _pos; // PosObjX, PosObjY, PosObjZ
+	IVec3 _posObj; // PosObjX, PosObjY, PosObjZ
+
+	// T_ANIM_3DS - Coord.A3DS
+	struct A3DSAnim {
+		int32 Num;
+		int32 Deb;
+		int32 Fin;
+	} A3DS;
+
 	int32 _strengthOfHit = 0;
 	int32 _hitBy = -1;
 	BonusParameter _bonusParameter;
@@ -198,7 +204,7 @@ public:
 	int32 _bonusAmount = 0;
 	int32 _talkColor = COLOR_BLACK;
 	int32 _armor = 1;
-	int32 _lifePoint = kActorMaxLife;
+	int32 _lifePoint = 0;
 
 	/** Process actor coordinate Nxw, Nyw, Nzw */
 	IVec3 _processActor;
@@ -237,6 +243,8 @@ public:
 	uint8 _brickSound = 0U; // CodeJeu
 	int32 SampleAlways = 0; // lba2
 	uint8 SampleVolume = 0; // lba2
+	// SizeSHit contains the number of the brick under the wagon - hack
+	int16 SizeSHit; // lba2 - always square
 
 	BoundingBox _boundingBox; // Xmin, YMin, Zmin, Xmax, Ymax, Zmax
 	ActorMoveStruct realAngle;
@@ -244,7 +252,7 @@ public:
 };
 
 inline const IVec3 &ActorStruct::posObj() const {
-	return _pos;
+	return _posObj;
 }
 
 inline void ActorStruct::addLife(int32 val) {
@@ -253,8 +261,8 @@ inline void ActorStruct::addLife(int32 val) {
 
 inline void ActorStruct::setLife(int32 val) {
 	_lifePoint = val;
-	if (_lifePoint > kActorMaxLife) {
-		_lifePoint = kActorMaxLife;
+	if (_lifePoint > _maxLife) {
+		_lifePoint = _maxLife;
 	}
 }
 
@@ -314,7 +322,8 @@ public:
 	/** Hero anim for behaviour menu */
 	int16 _heroAnimIdx[4];
 
-	void initSpriteActor(int32 actorIdx);
+	void initSprite(int32 spriteNum, int32 actorIdx);
+	void setFrame(int32 actorIdx, uint32 frame);
 
 	/** Restart hero variables while opening new scenes */
 	void restartHeroScene();

@@ -53,7 +53,7 @@ namespace TwinE {
 GameState::GameState(TwinEEngine *engine) : _engine(engine) {
 	clearGameFlags();
 	Common::fill(&_inventoryFlags[0], &_inventoryFlags[NUM_INVENTORY_ITEMS], 0);
-	Common::fill(&_holomapFlags[0], &_holomapFlags[NUM_LOCATIONS], 0);
+	Common::fill(&_holomapFlags[0], &_holomapFlags[MAX_HOLO_POS_2], 0);
 	Common::fill(&_gameChoices[0], &_gameChoices[10], TextId::kNone);
 }
 
@@ -69,7 +69,7 @@ void GameState::initGameStateVars() {
 	_engine->_extra->resetExtras();
 
 	for (int32 i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
-		_engine->_redraw->overlayList[i].info0 = -1;
+		_engine->_redraw->overlayList[i].num = -1;
 	}
 
 	for (int32 i = 0; i < ARRAYSIZE(_engine->_scene->_listFlagCube); i++) {
@@ -81,7 +81,7 @@ void GameState::initGameStateVars() {
 
 	_engine->_scene->initSceneVars();
 
-	Common::fill(&_holomapFlags[0], &_holomapFlags[NUM_LOCATIONS], 0);
+	Common::fill(&_holomapFlags[0], &_holomapFlags[MAX_HOLO_POS_2], 0);
 }
 
 void GameState::initHeroVars() {
@@ -98,7 +98,7 @@ void GameState::initHeroVars() {
 	_usingSabre = false;
 
 	_engine->_scene->_sceneHero->_genBody = BodyType::btNormal;
-	_engine->_scene->_sceneHero->setLife(kActorMaxLife);
+	_engine->_scene->_sceneHero->setLife(_engine->getMaxLife());
 	_engine->_scene->_sceneHero->_talkColor = COLOR_BRIGHT_BLUE;
 }
 
@@ -120,7 +120,7 @@ void GameState::initEngineVars() {
 	_engine->_scene->_needChangeScene = LBA1SceneId::Citadel_Island_Prison;
 	_engine->_sceneLoopState = SceneLoopState::Continue;
 	_engine->_scene->_mecaPenguinIdx = -1;
-	_engine->_menuOptions->canShowCredits = false;
+	_engine->_menuOptions->flagCredits = false;
 
 	_inventoryNumLeafs = 0;
 	_inventoryNumLeafsBox = 2;
@@ -149,6 +149,11 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 		return false;
 	}
 
+	if (!_engine->isLBA1()) {
+		warning("Loading not implemented for lba2");
+		return false;
+	}
+
 	debug(2, "Load game");
 	const byte saveFileVersion = file->readByte();
 	// 4 is dotemu enhanced version of lba1
@@ -173,8 +178,8 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 	} while (true);
 
 	byte numGameFlags = file->readByte();
-	if (numGameFlags != NUM_GAME_FLAGS) {
-		warning("Failed to load gameflags. Expected %u, but got %u", NUM_GAME_FLAGS, numGameFlags);
+	if (numGameFlags != NUM_GAME_FLAGS_LBA1) {
+		warning("Failed to load gameflags. Expected %u, but got %u", NUM_GAME_FLAGS_LBA1, numGameFlags);
 		return false;
 	}
 	for (uint8 i = 0; i < numGameFlags; ++i) {
@@ -198,11 +203,11 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 	_engine->_scene->_sceneHero->_genBody = (BodyType)file->readByte();
 
 	const byte numHolomapFlags = file->readByte(); // number of holomap locations
-	if (numHolomapFlags != _engine->numLocations()) {
-		warning("Failed to load holomapflags. Got %u, expected %i", numHolomapFlags, _engine->numLocations());
+	if (numHolomapFlags != _engine->numHoloPos()) {
+		warning("Failed to load holomapflags. Got %u, expected %i", numHolomapFlags, _engine->numHoloPos());
 		return false;
 	}
-	file->read(_holomapFlags, _engine->numLocations());
+	file->read(_holomapFlags, _engine->numHoloPos());
 
 	setGas(file->readByte());
 
@@ -248,9 +253,9 @@ bool GameState::saveGame(Common::WriteStream *file) {
 	file->writeByte(0x03);
 	file->writeString(_engine->_menuOptions->_saveGameName);
 	file->writeByte('\0');
-	file->writeByte(NUM_GAME_FLAGS);
-	for (uint8 i = 0; i < NUM_GAME_FLAGS; ++i) {
-		file->writeByte(hasGameFlag(i));
+	file->writeByte(NUM_GAME_FLAGS_LBA1);
+	for (uint8 i = 0; i < NUM_GAME_FLAGS_LBA1; ++i) {
+		file->writeByte((uint8)hasGameFlag(i));
 	}
 	file->writeByte(sceneIdx);
 	file->writeByte(getChapter());
@@ -269,8 +274,8 @@ bool GameState::saveGame(Common::WriteStream *file) {
 	file->writeByte((uint8)_engine->_scene->_sceneHero->_genBody);
 
 	// number of holomap locations
-	file->writeByte(_engine->numLocations());
-	file->write(_holomapFlags, _engine->numLocations());
+	file->writeByte(_engine->numHoloPos());
+	file->write(_holomapFlags, _engine->numHoloPos());
 
 	file->writeByte(_inventoryNumGas);
 
@@ -330,9 +335,9 @@ void GameState::doFoundObj(InventoryItems item) {
 
 	_engine->extInitSvga();
 	// Hide hero in scene
-	_engine->_scene->_sceneHero->_staticFlags.bIsHidden = 1;
+	_engine->_scene->_sceneHero->_staticFlags.bIsInvisible = 1;
 	_engine->_redraw->redrawEngineActions(true);
-	_engine->_scene->_sceneHero->_staticFlags.bIsHidden = 0;
+	_engine->_scene->_sceneHero->_staticFlags.bIsInvisible = 0;
 
 	_engine->saveFrontBuffer();
 
@@ -342,17 +347,17 @@ void GameState::doFoundObj(InventoryItems item) {
 	itemCamera.z = _engine->_grid->_newCamera.z * SIZE_BRICK_XZ;
 
 	BodyData &bodyData = _engine->_resources->_bodyData[_engine->_scene->_sceneHero->_body];
-	const IVec3 bodyPos = _engine->_scene->_sceneHero->_pos - itemCamera;
+	const IVec3 bodyPos = _engine->_scene->_sceneHero->_posObj - itemCamera;
 	Common::Rect modelRect;
 	_engine->_renderer->renderIsoModel(bodyPos, LBAAngles::ANGLE_0, LBAAngles::ANGLE_45, LBAAngles::ANGLE_0, bodyData, modelRect);
 	_engine->_interface->setClip(modelRect);
 
-	const int32 itemX = (_engine->_scene->_sceneHero->_pos.x + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
-	int32 itemY = _engine->_scene->_sceneHero->_pos.y / SIZE_BRICK_Y;
+	const int32 itemX = (_engine->_scene->_sceneHero->_posObj.x + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
+	int32 itemY = _engine->_scene->_sceneHero->_posObj.y / SIZE_BRICK_Y;
 	if (_engine->_scene->_sceneHero->brickShape() != ShapeType::kNone) {
 		itemY++;
 	}
-	const int32 itemZ = (_engine->_scene->_sceneHero->_pos.z + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
+	const int32 itemZ = (_engine->_scene->_sceneHero->_posObj.z + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
 
 	_engine->_grid->drawOverBrick(itemX, itemY, itemZ);
 
@@ -482,7 +487,7 @@ void GameState::processGameChoices(TextId choiceIdx) {
 
 	_engine->_text->drawAskQuestion(choiceIdx);
 
-	_engine->_menu->processMenu(&_gameChoicesSettings);
+	_engine->_menu->doGameMenu(&_gameChoicesSettings);
 	const int16 activeButton = _gameChoicesSettings.getActiveButton();
 	_choiceAnswer = _gameChoices[activeButton];
 
@@ -506,9 +511,9 @@ void GameState::processGameoverAnimation() {
 
 	_engine->testRestoreModeSVGA(false);
 	// workaround to fix hero redraw after drowning
-	_engine->_scene->_sceneHero->_staticFlags.bIsHidden = 1;
+	_engine->_scene->_sceneHero->_staticFlags.bIsInvisible = 1;
 	_engine->_redraw->redrawEngineActions(true);
-	_engine->_scene->_sceneHero->_staticFlags.bIsHidden = 0;
+	_engine->_scene->_sceneHero->_staticFlags.bIsInvisible = 0;
 
 	// TODO: inSceneryView
 	_engine->setPalette(_engine->_screens->_paletteRGBA);
@@ -519,7 +524,7 @@ void GameState::processGameoverAnimation() {
 	}
 
 	_engine->_sound->stopSamples();
-	_engine->_music->stopMidiMusic(); // stop fade music
+	_engine->_music->stopMusicMidi(); // stop fade music
 	_engine->_renderer->setProjection(_engine->width() / 2, _engine->height() / 2, 128, 200, 200);
 	int32 startLbaTime = _engine->timerRef;
 	const Common::Rect &rect = _engine->centerOnScreen(_engine->width() / 2, _engine->height() / 2);
@@ -605,6 +610,11 @@ int16 GameState::setKashes(int16 value) {
 	return _goldPieces;
 }
 
+int16 GameState::setZlitos(int16 value) {
+	_zlitosPieces = CLIP<int16>(value, 0, 999);
+	return _zlitosPieces;
+}
+
 int16 GameState::setKeys(int16 value) {
 	_inventoryNumKeys = MAX<int16>(0, value);
 	return _inventoryNumKeys;
@@ -669,7 +679,7 @@ void GameState::clearGameFlags() {
 	Common::fill(&_listFlagGame[0], &_listFlagGame[NUM_GAME_FLAGS], 0);
 }
 
-uint8 GameState::hasGameFlag(uint8 index) const {
+int16 GameState::hasGameFlag(uint8 index) const {
 	debug(6, "Query gameStateFlags[%u]=%u", index, _listFlagGame[index]);
 	return _listFlagGame[index];
 }

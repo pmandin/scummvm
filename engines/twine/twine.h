@@ -98,8 +98,6 @@ struct ConfigFile {
 	MidiFileType MidiType = MIDIFILE_NONE;
 	/** Game version */
 	int32 Version = EUROPE_VERSION;
-	/** If you want to use the LBA CD or not */
-	int32 UseCD = 0;
 	/** Allow various sound types */
 	int32 Sound = 0;
 	/** Allow various movie types */
@@ -112,7 +110,7 @@ struct ConfigFile {
 	bool WallCollision = false;
 	/** Use original autosaving system or save when you want */
 	bool UseAutoSaving = false;
-	bool Mouse = false;
+	bool Mouse = true;
 
 	// these settings can be changed in-game - and must be persisted
 	/** Shadow mode type, value: all, character only, none */
@@ -270,9 +268,13 @@ public:
 	const char *getGameId() const;
 	Common::Language getGameLang() const;
 
-	inline int numLocations() const {
-		const int maxLocations = isLBA1() ? 150 : NUM_LOCATIONS;
+	inline int numHoloPos() const {
+		const int maxLocations = isLBA1() ? MAX_HOLO_POS : MAX_HOLO_POS_2;
 		return maxLocations;
+	}
+
+	inline int getMaxLife() const {
+		return isLBA1() ? 50 : 255;
 	}
 
 	bool unlockAchievement(const Common::String &id);
@@ -307,7 +309,7 @@ public:
 	DebugScene *_debugScene;
 
 	/** Configuration file structure
-	 * Contains all the data used in the engine to configurated the game in particulary ways. */
+	 * Contains all the data used in the engine to configurate the game in particularly ways. */
 	ConfigFile _cfgfile;
 
 	int32 _frameCounter = 0;
@@ -316,9 +318,9 @@ public:
 
 	int32 _loopInventoryItem = 0;
 	int32 _stepFalling = 0;
-	uint32 _gameFlags;
+	uint32 _gameFlags = 0u;
 	Common::Platform _platform;
-	bool _flagRain;
+	bool _flagRain = false;
 
 	/** Disable screen recenter */
 	bool _disableScreenRecenter = false;

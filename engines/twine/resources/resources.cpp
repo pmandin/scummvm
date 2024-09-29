@@ -24,8 +24,10 @@
 #include "common/tokenizer.h"
 #include "common/util.h"
 #include "twine/audio/sound.h"
+#include "twine/parser/anim3ds.h"
 #include "twine/renderer/renderer.h"
 #include "twine/renderer/screens.h"
+#include "twine/resources/hqr.h"
 #include "twine/scene/animations.h"
 #include "twine/scene/scene.h"
 #include "twine/text.h"
@@ -57,6 +59,37 @@ void Resources::initPalettes() {
 	_engine->_screens->convertPalToRGBA(_engine->_screens->_palette, _engine->_screens->_paletteRGBA);
 	_engine->setPalette(_engine->_screens->_paletteRGBA);
 	free(mainPalette);
+}
+
+void Resources::preloadAnim3DS() {
+	const int index = HQR::numEntries(Resources::HQR_ANIM3DS_FILE) - 1;
+	_anim3DSData.loadFromHQR(Resources::HQR_ANIM3DS_FILE, index, _engine->isLBA1());
+}
+
+void Resources::loadEntityData(EntityData &entityData, int32 &index) {
+	if (_engine->isLBA1()) {
+		TwineResource modelRes(Resources::HQR_FILE3D_FILE, index);
+		if (!entityData.loadFromHQR(modelRes, _engine->isLBA1())) {
+			error("Failed to load actor 3d data for index: %i", index);
+		}
+	} else {
+		// TODO: don't allocate each time
+		TwineResource modelRes(Resources::HQR_RESS_FILE, 44);
+		uint8 *file3dBuf = nullptr;
+		const int32 holomapImageSize = HQR::getAllocEntry(&file3dBuf, modelRes);
+		if (!entityData.loadFromBuffer((uint8 *)(file3dBuf + *(((uint32 *)file3dBuf) + (index))), holomapImageSize, _engine->isLBA1())) {
+			delete file3dBuf;
+			error("Failed to load actor 3d data for index: %i", index);
+		}
+		delete file3dBuf;
+	}
+}
+
+const T_ANIM_3DS *Resources::getAnim(int index) const {
+	if (index < 0 || index >= (int)_anim3DSData.getAnims().size()) {
+		return nullptr;
+	}
+	return &_anim3DSData.getAnims()[index];
 }
 
 void Resources::preloadSprites() {
@@ -188,6 +221,8 @@ void Resources::initResources() {
 			error("Failed to parse trajectory data");
 		}
 		debug("preload %i trajectories", (int)_trajectories.getTrajectories().size());
+	} else if (_engine->isLBA2()) {
+		preloadAnim3DS();
 	}
 
 	preloadSprites();

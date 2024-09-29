@@ -29,6 +29,7 @@
 #include "common/rational.h"
 #include "common/str.h"
 #include "graphics/pixelformat.h"
+#include "image/codec-options.h"
 
 namespace Audio {
 class AudioStream;
@@ -330,6 +331,12 @@ public:
 	bool hasDirtyPalette() const { return _dirtyPalette; }
 
 	/**
+	 * Delay/sleep for the specified amount of milliseconds, or until the next
+	 * frame should be displayed.
+	 */
+	void delayMillis(uint msecs);
+
+	/**
 	 * Return the time (in ms) until the next frame should be displayed.
 	 */
 	uint32 getTimeToNextFrame() const;
@@ -399,6 +406,11 @@ public:
 	 * @return true on success, false otherwise
 	 */
 	bool setOutputPixelFormat(const Graphics::PixelFormat &format);
+
+	/**
+	 * Set the accuracy of the video decoder
+	 */
+	virtual void setVideoCodecAccuracy(Image::CodecAccuracy accuracy);
 
 	/////////////////////////////////////////
 	// Audio Control
@@ -589,6 +601,11 @@ protected:
 		 * Set the default high color format for videos that convert from YUV.
 		 */
 		virtual bool setOutputPixelFormat(const Graphics::PixelFormat &format) { return false; }
+
+		/**
+		 * Set the image codec accuracy
+		 */
+		virtual void setCodecAccuracy(Image::CodecAccuracy accuracy) {}
 
 		/**
 		 * Get the current frame of this track
@@ -996,6 +1013,8 @@ protected:
 	int32 _startTime;
 
 	VideoTrack *_nextVideoTrack;
+
+	Image::CodecAccuracy _videoCodecAccuracy;
 
 private:
 	uint32 _pauseLevel;

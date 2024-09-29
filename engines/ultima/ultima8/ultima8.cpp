@@ -771,7 +771,7 @@ void Ultima8Engine::changeVideoMode(int width, int height) {
 
 void Ultima8Engine::handleEvent(const Common::Event &event) {
 	// Handle the fact that we can get 2 modals stacking.
-	// We want the focussed one preferrably.
+	// We want the focussed one preferably.
 	Gump *modal = dynamic_cast<ModalGump *>(_desktopGump->GetFocusChild());
 	if (!modal)
 		modal = _desktopGump->FindGump<ModalGump>();
@@ -872,12 +872,24 @@ void Ultima8Engine::handleDelayedEvents() {
 }
 
 void Ultima8Engine::handleActionDown(KeybindingAction action) {
+	if (!isAvatarInStasis()) {
+		if (_avatarMoverProcess && _avatarMoverProcess->onActionDown(action)) {
+			moveKeyEvent();
+			return;
+		}
+	}
+
 	Common::String methodName = MetaEngine::getMethod(action, true);
 	if (!methodName.empty())
 		g_debugger->executeCommand(methodName);
 }
 
 void Ultima8Engine::handleActionUp(KeybindingAction action) {
+	if (_avatarMoverProcess && _avatarMoverProcess->onActionUp(action)) {
+		moveKeyEvent();
+		return;
+	}
+
 	Common::String methodName = MetaEngine::getMethod(action, false);
 	if (!methodName.empty())
 		g_debugger->executeCommand(methodName);

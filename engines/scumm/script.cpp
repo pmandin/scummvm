@@ -50,6 +50,15 @@ void ScummEngine::runScript(int script, bool freezeResistant, bool recursive, in
 		_game.version == 0 && (_game.features & GF_DEMO) && script == 43)
 		return;
 
+	// WORKAROUND for bug in v0/v1 Zak McKracken:
+	// Picking up the yellow shard in the Mexican Temple while playing as Annie was not possible.
+	// This was fixed in v2.
+	if (enhancementEnabled(kEnhGameBreakingBugFixes) && _game.id == GID_ZAK &&
+		_game.version < 2 && script == 119 && VAR(VAR_EGO) == 2) {
+		addObjectToInventory(56, 14);
+		putOwner(56, VAR(VAR_EGO));
+	}
+
  	if (!script)
 		return;
 
@@ -161,7 +170,20 @@ int ScummEngine::getVerbEntrypoint(int obj, int entry) {
 
 	// WORKAROUND for bug #2826: Disallow pulling the rope if it's
 	// already in the player's inventory.
-	if (_game.id == GID_MONKEY2 && obj == 1047 && entry == 6 && whereIsObject(obj) == WIO_INVENTORY) {
+	//
+	// Doing so would cause fatal errors, such as "Object 1047 not
+	// found in room 98" in (at least) the original DOS/English
+	// release, if one loads the savegame in the bug ticket above,
+	// and pulls the rope after moving to the first room on the
+	// right. The same error happened with the original interpreter.
+	//
+	// Script 97-1047 was fixed in later releases, in different ways.
+	// On Amiga, a getObjectOwner() check was added; the Macintosh
+	// release completely disables pulling the rope, instead. We
+	// choose to follow the latter, as it's simpler, and the former
+	// made Guybrush silent when trying to trigger this action.
+	if (_game.id == GID_MONKEY2 && obj == 1047 && entry == 6 && whereIsObject(obj) == WIO_INVENTORY &&
+		enhancementEnabled(kEnhGameBreakingBugFixes)) {
 		return 0;
 	}
 
@@ -321,7 +343,8 @@ void ScummEngine::runScriptNested(int script) {
 
 	updateScriptPtr();
 
-	if (vm.numNestedScripts >= kMaxScriptNesting)
+	// Backyard Basketball is one of the games which requires more than 15 nested scripts
+	if (vm.numNestedScripts >= (_game.heversion >= 99 ? kMaxScriptNestingHE : kMaxScriptNesting))
 		error("Too many nested scripts");
 
 	nest = &vm.nest[vm.numNestedScripts];
@@ -567,7 +590,7 @@ int ScummEngine::readVar(uint var) {
 		}
 
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-		if (ConfMan.getBool("enable_competitive_mods")) {
+		if (_enableHECompetitiveOnlineMods) {
 			// HACK: If we're reading var586, competitive mods enabled, playing online,
 			// successfully fetched custom teams, and we're not in one of the three scripts
 			// that cause bugs if 263 is returned here, return 263.
@@ -593,7 +616,7 @@ int ScummEngine::readVar(uint var) {
 			assertRange(0, var, _numRoomVariables - 1, "room variable (reading)");
 
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-			if (ConfMan.getBool("enable_competitive_mods")) {
+			if (_enableHECompetitiveOnlineMods) {
 				// Mod for Backyard Baseball 2001 online competitive play: don't give powerups for double plays
 				// Return true for this variable, which dictates whether powerups are disabled, but only in this script
 				// that detects double plays (among other things)
@@ -646,7 +669,7 @@ int ScummEngine::readVar(uint var) {
 #if defined(USE_ENET) && defined(USE_LIBCURL)
 		// Mod for Backyard Baseball 2001 online competitive play: change impact of
 		// batter's power stat on hit power
-		if (ConfMan.getBool("enable_competitive_mods")) {
+		if (_enableHECompetitiveOnlineMods) {
 			if (_game.id == GID_BASEBALL2001 &&
 				_currentRoom == 4 && vm.slot[_currentScript].number == 2090  // The script that calculates hit power
 				&& readVar(399) == 1  // Check that we're playing online
@@ -1067,6 +1090,10 @@ void ScummEngine::killScriptsAndResources() {
 					// In FOA in the sentry room, in the chest plate of the statue,
 					// the pegs may be renamed to mouth: this custom name is lost
 					// when leaving the room; this hack prevents this).
+					//
+					// TODO: investigate this bug report from 2004, and see if the
+					// issue appears with an original interpreter, and with our current
+					// (much more accurate) SCUMMv5 implementation.
 					if (owner == OF_OWNER_ROOM && _game.id == GID_INDY4 && 336 <= obj && obj <= 340)
 						continue;
 
@@ -1514,9 +1541,20 @@ int ScummEngine::resStrLen(const byte *src) {
 			chr = *src++;
 			num++;
 
-			// WORKAROUND for bug #1675, a script bug in Indy3. See also
-			// the corresponding code in ScummEngine::convertMessageToString().
-			if (_game.id == GID_INDY3 && chr == 0x2E) {
+			// WORKAROUND for bugs #1675 and #2715, script bugs in German Indy3.
+			// For more information, See the the corresponding workaround in
+			// ScummEngine::convertMessageToString().
+			//
+			// While the twin workaround in convertMessageToString() can be optional,
+			// our code diverges from the original just enough that we can't ignore the
+			// invalid control code at least in INDY3 VGA DE, so the following has to
+			// run regardless of the enhancement settings. Therefore, kEnhGameBreakingBugFixes
+			// is the appropriate class here.
+			if (enhancementEnabled(kEnhGameBreakingBugFixes) && _game.id == GID_INDY3 && _language == Common::DE_DEU &&
+			    ((_roomResource == 23 && chr == 0x2E) ||
+			     (_roomResource == 21 && chr == 0x20))) {
+				num--;
+				src--;
 				continue;
 			}
 
@@ -1569,6 +1607,10 @@ void ScummEngine::endCutscene() {
 		// WORKAROUND bug #5624: Due to poor translation of the v2 script to
 		// v5 an if statement jumps in the middle of a cutscene causing a
 		// endCutscene() without a begin cutscene()
+		//
+		// TODO: see what the original interpreter did when encountering this
+		// script bug (with UNZ, DREAMM or TOWNSEMU), and decide which
+		// Enhancement setting should be used in this case.
 		if (_game.id == GID_ZAK && _game.platform == Common::kPlatformFMTowns &&
 			vm.slot[_currentScript].number == 205 && _currentRoom == 185) {
 			return;

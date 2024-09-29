@@ -3,16 +3,13 @@
 # This file is distributed under the same license as the ScummVM package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#: engines/twp/dialogs.cpp:48 engines/twp/dialogs.cpp:50
-#: engines/twp/dialogs.cpp:52 engines/twp/dialogs.cpp:54
-#: engines/twp/dialogs.cpp:57
 msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2024-08-06 05:47+0000\n"
-"PO-Revision-Date: 2023-12-14 14:28+0000\n"
-"Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
+"POT-Creation-Date: 2024-09-19 19:33+0000\n"
+"PO-Revision-Date: 2024-09-29 14:22+0000\n"
+"Last-Translator: Hoseok Seo <ddinghoya@gmail.com>\n"
 "Language-Team: Korean <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ko/>\n"
 "Language: ko\n"
@@ -20,41 +17,35 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 4.4\n"
+"X-Generator: Weblate 5.7.2\n"
 "X-Language-name: Korean\n"
 
 #. I18N: built on <build date> with <compiler>
 #: gui/about.cpp:103
 #, c-format
 msgid "(built on %s with %s)"
-msgstr "(빌드 일자: %s, 컴파일러: %s)"
+msgstr "(%s에서 %s로 빌드됨)"
 
 #: gui/about.cpp:110
 msgid "Features compiled in:"
-msgstr "포함된 기능:"
+msgstr "다음과 같은 기능이 있습니다:"
 
 #: gui/about.cpp:118
-#, fuzzy
-#| msgid "Game id not supported"
 msgid "not supported"
-msgstr "게임 ID가 지원되지 않습니다"
+msgstr "지원되지 않음"
 
 #: gui/about.cpp:118
-#, fuzzy
-#| msgid "Disabled"
 msgid "disabled"
-msgstr "비활성화"
+msgstr "비활성화됨"
 
 #: gui/about.cpp:118
-#, fuzzy
-#| msgid "Disabled"
 msgid "enabled"
-msgstr "비활성화"
+msgstr "활성화됨"
 
 #. I18N: CPU extensions are sets of extra processor instructions used to speed up operations. See Intel AVX2, ARM NEON, etc.
 #: gui/about.cpp:142
 msgid "CPU extensions support:"
-msgstr ""
+msgstr "CPU 확장 지원:"
 
 #: gui/about.cpp:155
 msgid "Available engines:"
@@ -74,11 +65,11 @@ msgstr "닫기"
 
 #: gui/browser.cpp:74 backends/dialogs/macosx/macosx-dialogs.mm:90
 msgid "Show hidden files"
-msgstr "숨김 파일 표시"
+msgstr "숨긴 파일 표시"
 
 #: gui/browser.cpp:74
 msgid "Show files marked with the hidden attribute"
-msgstr "숨김 속성이 있는 파일을 표시합니다"
+msgstr "숨김 속성이 있는 파일 표시"
 
 #: gui/browser.cpp:78 gui/remotebrowser.cpp:56
 msgid "Go up"
@@ -87,7 +78,7 @@ msgstr "위로"
 #: gui/browser.cpp:78 gui/browser.cpp:80 gui/remotebrowser.cpp:56
 #: gui/remotebrowser.cpp:58
 msgid "Go to previous directory level"
-msgstr "상위 디렉토리로 이동합니다"
+msgstr "상위 디렉토리로 이동"
 
 #: gui/browser.cpp:80 gui/remotebrowser.cpp:58
 msgctxt "lowres"
@@ -124,7 +115,7 @@ msgstr "위로"
 #: engines/scumm/dialog-createsession.cpp:47
 #: engines/scumm/dialog-sessionselector.cpp:67
 #: engines/scumm/he/moonbase/dialog-mapgenerator.cpp:138
-#: engines/sword1/control.cpp:2798 engines/wintermute/wintermute.cpp:182
+#: engines/sword1/control.cpp:2813 engines/wintermute/wintermute.cpp:182
 msgid "Cancel"
 msgstr "취소"
 
@@ -141,64 +132,60 @@ msgid "Cloud Connection Wizard"
 msgstr "클라우드 연결 마법사"
 
 #: gui/cloudconnectionwizard.cpp:183
-#, fuzzy
-#| msgid "Quick load"
 msgid "Quick mode"
-msgstr "빠른 불러오기"
+msgstr "빠른 모드"
 
 #: gui/cloudconnectionwizard.cpp:184
-#, fuzzy
-#| msgid "Fast mode"
 msgid "Manual mode"
-msgstr "고속 모드"
+msgstr "수동 모드"
 
 #: gui/cloudconnectionwizard.cpp:187
 msgid "Will ask you to run the Local Webserver"
-msgstr "로컬 웹서버를 실행할지 물어봅니다"
+msgstr "로컬 웹서버를 실행하도록 요청"
 
 #: gui/cloudconnectionwizard.cpp:189
-#, fuzzy
-#| msgid "Run local webserver"
 msgid "Requires the Local Webserver feature"
-msgstr "로컬 웹 서버를 실행"
+msgstr "로컬 웹서버 기능이 필요"
 
 #: gui/cloudconnectionwizard.cpp:205
 msgid "Quick Mode: Step 1"
-msgstr ""
+msgstr "빠른 모드: 1 단계"
 
 #: gui/cloudconnectionwizard.cpp:210
 msgid ""
 "In this mode, the Local Webserver must be running,\n"
 "so your browser can forward data to ScummVM"
 msgstr ""
+"이 모드에서는 로컬 웹서버가 실행 중이어야,\n"
+"브라우저가 ScummVM으로 데이터를 전달할 수 있음"
 
-#: gui/cloudconnectionwizard.cpp:239 gui/options.cpp:3757
+#: gui/cloudconnectionwizard.cpp:239 gui/options.cpp:3761
 msgid "Stop server"
-msgstr "서버 정지"
+msgstr "서버 중지"
 
-#: gui/cloudconnectionwizard.cpp:239 gui/options.cpp:2787
+#: gui/cloudconnectionwizard.cpp:239 gui/options.cpp:2789
 msgid "Run server"
 msgstr "서버 실행"
 
-#: gui/cloudconnectionwizard.cpp:240 gui/options.cpp:3758
+#: gui/cloudconnectionwizard.cpp:240 gui/options.cpp:3762
 msgid "Stop local webserver"
-msgstr "내부 웹서버를 정지합니다"
+msgstr "로컬 웹서버 중지"
 
-#: gui/cloudconnectionwizard.cpp:240 gui/options.cpp:2787
+#: gui/cloudconnectionwizard.cpp:240 gui/options.cpp:2789
 msgid "Run local webserver"
-msgstr "로컬 웹 서버를 실행"
+msgstr "로컬 웹서버 실행"
 
-#: gui/cloudconnectionwizard.cpp:248 gui/options.cpp:2788 gui/options.cpp:3765
+#: gui/cloudconnectionwizard.cpp:248 gui/options.cpp:2790 gui/options.cpp:3769
 msgid "Not running"
-msgstr "실행되지 않음"
+msgstr "실행 중 아님"
 
 #: gui/cloudconnectionwizard.cpp:263
 msgid "Quick Mode: Step 2"
-msgstr ""
+msgstr "빠른 모드 : 2 단계"
 
 #: gui/cloudconnectionwizard.cpp:267
 msgid "Now, open this link in your browser:"
-msgstr ""
+msgstr "이제, 브라우저에서 이 링크를 열어보세요:"
 
 #: gui/cloudconnectionwizard.cpp:268 gui/cloudconnectionwizard.cpp:323
 #: gui/message.cpp:246 gui/message.cpp:250
@@ -210,34 +197,32 @@ msgid ""
 "It will automatically pass the data to ScummVM,\n"
 "and warn you should there be any errors."
 msgstr ""
+"ScummVM에 자동으로 데이터가 전달되고,\n"
+"오류가 있으면 경고합니다."
 
 #: gui/cloudconnectionwizard.cpp:283
 msgid "Local Webserver address: "
-msgstr ""
+msgstr "로컬 웹서버 주소: "
 
 #: gui/cloudconnectionwizard.cpp:299
 msgid "Quick Mode: Success"
-msgstr ""
+msgstr "빠른 모드: 성공"
 
 #: gui/cloudconnectionwizard.cpp:303 gui/cloudconnectionwizard.cpp:404
-#, fuzzy
-#| msgid "Connect your cloud storage account"
 msgid "Your cloud storage has been connected!"
-msgstr "클라우드 스토리지 계정을 연결"
+msgstr "클라우드 저장소가 연결되었습니다!"
 
 #: gui/cloudconnectionwizard.cpp:304 gui/cloudconnectionwizard.cpp:405
 msgid "Finish"
-msgstr ""
+msgstr "완료"
 
 #: gui/cloudconnectionwizard.cpp:317
 msgid "Manual Mode: Step 1"
-msgstr ""
+msgstr "수동 모드: 1 단계"
 
 #: gui/cloudconnectionwizard.cpp:322
-#, fuzzy
-#| msgid "1. Open this link:"
 msgid "Open this link in your browser:"
-msgstr "1. 다음 링크를 엽니다:"
+msgstr "브라우저에서 이 링크 열기:"
 
 #: gui/cloudconnectionwizard.cpp:325
 msgid ""
@@ -245,14 +230,17 @@ msgid ""
 "find it on the Troubleshooting section of the page,\n"
 "and go to the next step here."
 msgstr ""
+"ScummVM에 JSON 코드를 전달하지 못하는 경우,\n"
+"해당 페이지의 문제 해결 섹션에서 해당 코드를 찾은 후,\n"
+"다음 단계로 이동합니다."
 
 #: gui/cloudconnectionwizard.cpp:354
 msgid "Manual Mode: Step 2"
-msgstr ""
+msgstr "수동 모드: 2 단계"
 
 #: gui/cloudconnectionwizard.cpp:359
 msgid "Copy the JSON code from the browser here and press Next:"
-msgstr ""
+msgstr "브라우저에서 JSON 코드를 여기 복사하고 다음을 누름:"
 
 #: gui/cloudconnectionwizard.cpp:361 gui/gui-manager.cpp:258
 #: gui/gui-manager.cpp:273
@@ -261,55 +249,49 @@ msgstr "붙여넣기"
 
 #: gui/cloudconnectionwizard.cpp:361
 msgid "Paste code from clipboard"
-msgstr "클립보드에서 코드를 붙여넣기"
+msgstr "클립보드에서 코드 붙여넣기"
 
 #: gui/cloudconnectionwizard.cpp:362 gui/launcher.cpp:317
 #: engines/dialogs.cpp:94 engines/engine.cpp:932 engines/mm/xeen/saves.cpp:259
 #: engines/parallaction/metaengine.cpp:125
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:388
-#: engines/trecision/saveload.cpp:253 engines/tsage/scenes.cpp:638
-#: engines/wage/saveload.cpp:736
+#: engines/tinsel/metaengine.cpp:328 engines/trecision/saveload.cpp:253
+#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:736
 msgid "Load"
-msgstr "불러오기"
+msgstr "로드"
 
 #: gui/cloudconnectionwizard.cpp:362
-#, fuzzy
-#| msgid "Load file"
 msgid "Load code from file"
-msgstr "파일 불러오기"
+msgstr "파일에서 코드 로드"
 
 #: gui/cloudconnectionwizard.cpp:379
 msgid "Manual Mode: Something went wrong"
-msgstr ""
+msgstr "수동 모드: 오류 발생"
 
 #: gui/cloudconnectionwizard.cpp:383
-#, fuzzy
-#| msgid "Storage connected."
 msgid "Cloud storage was not connected."
-msgstr "스토리지가 연결되었습니다."
+msgstr "클라우드 저장소가 연결되지 않았습니다."
 
 #: gui/cloudconnectionwizard.cpp:384
 msgid "Make sure the JSON code was copied correctly and retry."
-msgstr ""
+msgstr "JSON 코드가 올바르게 복사되었는지 확인하고 다시 시도하세요."
 
 #: gui/cloudconnectionwizard.cpp:385
 msgid "If that doesn't work, try again from the beginning."
-msgstr ""
+msgstr "문제가 해결되지 않으면, 처음부터 다시 시도해 보세요."
 
 #: gui/cloudconnectionwizard.cpp:386
 msgid "Error message: "
-msgstr ""
+msgstr "오류 메세지: "
 
 #: gui/cloudconnectionwizard.cpp:400
 msgid "Manual Mode: Success"
-msgstr ""
+msgstr "수동 모드: 성공"
 
 #: gui/cloudconnectionwizard.cpp:428 gui/dlcsdialog.cpp:59
 #: gui/downloaddlcsdialog.cpp:60 engines/crab/input/input.cpp:175
-#, fuzzy
-#| msgid "Backend"
 msgid "Back"
-msgstr "백엔드"
+msgstr "뒤로"
 
 #: gui/cloudconnectionwizard.cpp:436 gui/imagealbum-dialog.cpp:104
 #: gui/saveload-dialog.cpp:825 engines/crab/input/input.cpp:181
@@ -317,48 +299,44 @@ msgid "Next"
 msgstr "다음"
 
 #: gui/cloudconnectionwizard.cpp:499
-#, fuzzy
-#| msgid "Another Storage is working now. Do you want to interrupt it?"
 msgid "Another Storage is working right now. Do you want to interrupt it?"
-msgstr "다른 스토리지가 현재 동작 중입니다. 중단할까요?"
+msgstr "다른 저장소가 지금 작동 중입니다. 중단할까요?"
 
 #: gui/cloudconnectionwizard.cpp:499 gui/downloaddialog.cpp:118
 #: gui/downloaddialog.cpp:152 gui/filebrowser-dialog.cpp:135
 #: gui/fluidsynth-dialog.cpp:209 gui/launcher.cpp:421 gui/launcher.cpp:450
-#: gui/launcher.cpp:502 gui/options.cpp:3459 gui/options.cpp:3842
+#: gui/launcher.cpp:502 gui/options.cpp:3463 gui/options.cpp:3846
 #: base/main.cpp:585 backends/events/default/default-events.cpp:193
 #: engines/buried/buried.cpp:590 engines/director/events.cpp:100
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:601 engines/kyra/gui/saveload_eob.cpp:634
 #: engines/parallaction/metaengine.cpp:143
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3937
-#: engines/toon/toon.cpp:1538
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4058
+#: engines/toon/toon.cpp:1543
 msgid "Yes"
 msgstr "예"
 
 #: gui/cloudconnectionwizard.cpp:499 gui/downloaddialog.cpp:118
 #: gui/downloaddialog.cpp:153 gui/filebrowser-dialog.cpp:135
 #: gui/fluidsynth-dialog.cpp:209 gui/launcher.cpp:421 gui/launcher.cpp:450
-#: gui/launcher.cpp:502 gui/options.cpp:3459 gui/options.cpp:3842
+#: gui/launcher.cpp:502 gui/options.cpp:3463 gui/options.cpp:3846
 #: engines/buried/buried.cpp:590 engines/director/events.cpp:100
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:601 engines/kyra/gui/saveload_eob.cpp:634
 #: engines/parallaction/metaengine.cpp:149
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3937
-#: engines/toon/toon.cpp:1538
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4058
+#: engines/toon/toon.cpp:1543
 msgid "No"
 msgstr "아니오"
 
 #: gui/cloudconnectionwizard.cpp:508
-#, fuzzy
-#| msgid "Wait until current Storage finishes up and try again."
 msgid "Wait until current Storage finishes and try again."
-msgstr "현재 스토리지 작업이 완료될 때까지 기다린 후 다시 시도해 주세요."
+msgstr "현재 저장소 작업이 완료될 때까지 기다린 후 다시 시도하세요."
 
 #. I18N: JSON is name of the format, this message is displayed if user entered something incorrect to the text field
 #: gui/cloudconnectionwizard.cpp:536
 msgid "JSON code contents are malformed."
-msgstr ""
+msgstr "JSON 코드 내용이 잘못되었습니다."
 
 #: gui/cloudconnectionwizard.cpp:557 gui/downloaddialog.cpp:146
 #: gui/editgamedialog.cpp:341 gui/editrecorddialog.cpp:67
@@ -375,11 +353,11 @@ msgstr ""
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:76
-#: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1245
-#: engines/scumm/scumm.cpp:1618 engines/scumm/scumm.cpp:2102
-#: engines/scumm/scumm.cpp:2118 engines/sky/compact.cpp:140
+#: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1270
+#: engines/scumm/scumm.cpp:1643 engines/scumm/scumm.cpp:2131
+#: engines/scumm/scumm.cpp:2147 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:532 engines/sword1/animation.cpp:563
-#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2798
+#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2813
 #: engines/sword1/logic.cpp:1732 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:101 engines/vcruise/vcruise.cpp:111
@@ -388,51 +366,43 @@ msgid "OK"
 msgstr "확인"
 
 #: gui/cloudconnectionwizard.cpp:558
-#, fuzzy
-#| msgid "Incorrect rs file."
 msgid "Incorrect JSON."
-msgstr "잘못된 rs 파일."
+msgstr "잘못된 JSON입니다."
 
 #. I18N: error message displayed on 'Manual Mode: Failure' step of 'Cloud Connection Wizard', describing that storage connection process was interrupted
 #: gui/cloudconnectionwizard.cpp:565
-#, fuzzy
-#| msgid "Interact"
 msgid "Interrupted."
-msgstr "상호작용"
+msgstr "중단되었습니다."
 
-#: gui/cloudconnectionwizard.cpp:615 gui/options.cpp:3450
+#: gui/cloudconnectionwizard.cpp:615 gui/options.cpp:3454
 msgid ""
 "Failed to open URL!\n"
 "Please navigate to this page manually."
 msgstr ""
 "URL을 여는데 실패했습니다!\n"
-"해당 페이지로 직접 이동해 주세요."
+"해당 페이지로 직접 이동하세요."
 
 #. I18N: JSON is a file format name
 #: gui/cloudconnectionwizard.cpp:631
 msgid "Select JSON file copied from scummvm.org site"
-msgstr ""
+msgstr "scummvm.org 사이트에서 복사한 JSON 파일을 선택"
 
 #. I18N: JSON is a file format name
 #: gui/cloudconnectionwizard.cpp:637
-#, fuzzy
-#| msgid "Failed to upload the file!"
 msgid "Failed to load JSON file"
-msgstr "파일 업로드에 실패했습니다!"
+msgstr "JSON 파일을 로드하는 데 실패함"
 
 #: gui/dlcsdialog.cpp:41
 msgid "Download Freeware Games and Demos"
-msgstr ""
+msgstr "무료 게임 및 데모 다운로드"
 
 #: gui/dlcsdialog.cpp:52
 msgid "Fetching DLCs..."
-msgstr ""
+msgstr "DLC를 가져오는 중..."
 
 #: gui/dlcsdialog.cpp:60
-#, fuzzy
-#| msgid "Download"
 msgid "All Downloads"
-msgstr "다운로드"
+msgstr "모두 다운로드"
 
 #: gui/dlcsdialog.cpp:61 gui/downloadpacksdialog.cpp:267
 msgid "Download"
@@ -449,11 +419,11 @@ msgstr "게임 데이터가 있는 디렉토리를 선택"
 
 #: gui/downloaddialog.cpp:51 gui/downloaddialog.cpp:209
 msgid "From: "
-msgstr "리모트: "
+msgstr "다음에서: "
 
 #: gui/downloaddialog.cpp:52 gui/downloaddialog.cpp:210
 msgid "To: "
-msgstr "로컬: "
+msgstr "다음으로: "
 
 #: gui/downloaddialog.cpp:63 gui/downloadpacksdialog.cpp:201
 #: gui/downloadpacksdialog.cpp:246 gui/downloadpacksdialog.cpp:256
@@ -475,7 +445,7 @@ msgstr "숨김"
 msgid ""
 "It looks like your connection is limited. Do you really want to download "
 "files with it?"
-msgstr "인터넷 연결에 제한이 있는 것 같습니다. 다운로드를 계속하시겠습니까?"
+msgstr "연결이 제한된 것 같습니다. 정말 파일을 다운로드하겠습니까?"
 
 #: gui/downloaddialog.cpp:136 gui/launcher.cpp:662
 msgid "ScummVM couldn't open the specified directory!"
@@ -485,9 +455,8 @@ msgstr "ScummVM이 지정된 디렉토리를 열 수 없습니다!"
 msgid ""
 "Cannot create a directory to download - the specified directory has a file "
 "with the same name."
-msgstr ""
-"다운로드를 위한 디렉토리를 생성할 수 없습니다 - 지정된 디렉토리와 같은 이름"
-"의 파일이 이미 존재합니다."
+msgstr "다운로드할 디렉토리를 만들 수 없습니다. 지정된 디렉토리에 동일한 이름의 "
+"파일이 있습니다."
 
 #: gui/downloaddialog.cpp:151
 #, c-format
@@ -496,7 +465,7 @@ msgid ""
 "Do you really want to download files into that directory?"
 msgstr ""
 "지정된 디렉토리에 \"%s\" 파일이 이미 존재합니다.\n"
-"정말로 해당 디렉토리에 파일을 다운로드하시겠습니까?"
+"정말 해당 디렉토리에 파일을 다운로드하겠습니까?"
 
 #: gui/downloaddialog.cpp:198 gui/downloaddlcsdialog.cpp:70
 #: gui/downloadpacksdialog.cpp:368
@@ -505,83 +474,77 @@ msgid "Downloaded %s %S / %s %S"
 msgstr "%s %S / %s %S 다운로드 됨"
 
 #: gui/downloaddialog.cpp:204 gui/downloadpacksdialog.cpp:374
-#, fuzzy, c-format
+#, c-format
 msgid "Download speed: %s %S/s"
-msgstr "다운로드 속도: %s %S"
+msgstr "다운로드 속도: %s %S/s"
 
 #: gui/downloaddlcsdialog.cpp:41
-#, fuzzy
-#| msgid "Download game files"
 msgid "Currently Downloading Games"
-msgstr "게임 파일 다운로드"
+msgstr "현재 게임 다운로드하는 중"
 
 #: gui/downloaddlcsdialog.cpp:55
-#, fuzzy
-#| msgid "Download"
 msgid "Pending Downloads"
-msgstr "다운로드"
+msgstr "보류 중인 다운로드"
 
 #: gui/downloadpacksdialog.cpp:160
 #, c-format
 msgid "ERROR %d: %s"
-msgstr "에러 %d: %s"
+msgstr "오류 %d: %s"
 
 #. I18N: String like "Downloading icon packs list..."
 #: gui/downloadpacksdialog.cpp:189 gui/downloadpacksdialog.cpp:245
-#, fuzzy, c-format
+#, c-format
 msgid "Downloading %S list..."
-msgstr "아이콘 목록을 다운로드하는 중..."
+msgstr "%S 목록을 다운로드하는 중..."
 
 #: gui/downloadpacksdialog.cpp:203
-#, fuzzy
 msgid "Clear Cache"
-msgstr "값 제거"
+msgstr "캐시 지우기"
 
 #: gui/downloadpacksdialog.cpp:255
-#, fuzzy, c-format
+#, c-format
 msgid "Downloading %S list... %d entries"
-msgstr "아이콘 목록을 다운로드하는 중... %d개 항목"
+msgstr "%S 목록을 다운로드하는 중... %d 개 항목"
 
 #: gui/downloadpacksdialog.cpp:265
 #, c-format
 msgid "Detected %d new packs, %s %S"
-msgstr "%d개의 새 팩을 발견했습니다, %s %S"
+msgstr "%d 개의 새 팩이 감지되었음, %s %S"
 
 #: gui/downloadpacksdialog.cpp:291
 #, c-format
 msgid "Download complete, downloaded %d packs, %s %S"
-msgstr ""
-"다운로드 완료.\n"
-"%d팩을 다운로드했습니다, %s %S."
+msgstr "다운로드 완료, %d 개의 팩 다운로드, %s %S"
 
 #: gui/downloadpacksdialog.cpp:395 gui/downloadpacksdialog.cpp:440
 msgid "ERROR: No icons path set"
-msgstr "에러: 아이콘 경로가 설정되지 않음"
+msgstr "오류: 아이콘 경로가 설정 안 됨"
 
 #. I18N: String like "No new icon packs available"
 #: gui/downloadpacksdialog.cpp:428
-#, fuzzy, c-format
+#, c-format
 msgid "No new %S available"
-msgstr "사용 가능한 새 아이콘 팩 없음"
+msgstr "새 %S을(를) 사용할 수 없음"
 
 #: gui/downloadpacksdialog.cpp:464
 #, c-format
 msgid ""
 "You are about to remove %s %S of data, deleting all previously downloaded "
 "%S. Do you want to proceed?"
-msgstr ""
+msgstr "%s %S의 데이터를 제거하고, 이전에 다운로드한 %S을(를) 모두 삭제합니다. "
+"계속하겠습니까?"
 
 #: gui/downloadpacksdialog.cpp:464 gui/updates-dialog.cpp:115
 msgid "Proceed"
 msgstr "진행"
 
-#: gui/dump-all-dialogs.cpp:103 gui/options.cpp:3294
+#: gui/dump-all-dialogs.cpp:103 gui/options.cpp:3298
 msgid "icon packs"
-msgstr ""
+msgstr "아이콘 팩"
 
-#: gui/dump-all-dialogs.cpp:107 gui/options.cpp:3305
+#: gui/dump-all-dialogs.cpp:107 gui/options.cpp:3309
 msgid "shader packs"
-msgstr ""
+msgstr "셰이더 팩"
 
 #: gui/dump-all-dialogs.cpp:126 gui/launcher.cpp:713
 msgid "Pick the game:"
@@ -603,12 +566,12 @@ msgstr "그래픽"
 
 #: gui/editgamedialog.cpp:170
 msgid "Override global graphic settings"
-msgstr "전역 그래픽 설정 무시"
+msgstr "글로벌 그래픽 설정 재정의"
 
 #: gui/editgamedialog.cpp:172
 msgctxt "lowres"
 msgid "Override global graphic settings"
-msgstr "전역 그래픽 설정 무시"
+msgstr "글로벌 그래픽 설정 재정의"
 
 #: gui/editgamedialog.cpp:185 gui/options.cpp:2233 engines/dialogs.cpp:346
 msgid "Keymaps"
@@ -620,12 +583,12 @@ msgstr "백엔드"
 
 #: gui/editgamedialog.cpp:204
 msgid "Override global backend settings"
-msgstr "전역 백엔드 설정 무시"
+msgstr "글로벌 백엔드 설정 재정의"
 
 #: gui/editgamedialog.cpp:206
 msgctxt "lowres"
 msgid "Override global backend settings"
-msgstr "전역 백엔드 설정 무시"
+msgstr "글로벌 백엔드 설정 재정의"
 
 #: gui/editgamedialog.cpp:220 gui/options.cpp:2263 engines/dialogs.cpp:321
 msgid "Audio"
@@ -633,12 +596,12 @@ msgstr "오디오"
 
 #: gui/editgamedialog.cpp:223
 msgid "Override global audio settings"
-msgstr "전역 오디오 설정 무시"
+msgstr "글로벌 오디오 설정 재정의"
 
 #: gui/editgamedialog.cpp:225
 msgctxt "lowres"
 msgid "Override global audio settings"
-msgstr "전역 오디오 설정 무시"
+msgstr "글로벌 오디오 설정 재정의"
 
 #: gui/editgamedialog.cpp:234 gui/options.cpp:2268
 msgid "Volume"
@@ -651,25 +614,25 @@ msgstr "볼륨"
 
 #: gui/editgamedialog.cpp:239
 msgid "Override global volume settings"
-msgstr "전역 볼륨 설정 무시"
+msgstr "글로벌 볼륨 설정 재정의"
 
 #: gui/editgamedialog.cpp:241
 msgctxt "lowres"
 msgid "Override global volume settings"
-msgstr "전역 볼륨 설정 무시"
+msgstr "글로벌 볼륨 설정 재정의"
 
 #: gui/editgamedialog.cpp:252 gui/options.cpp:2278
 msgid "MIDI"
-msgstr "MIDI"
+msgstr "미디"
 
 #: gui/editgamedialog.cpp:255
 msgid "Override global MIDI settings"
-msgstr "전역 MIDI 설정 무시"
+msgstr "글로벌 미디 설정 재정의"
 
 #: gui/editgamedialog.cpp:257
 msgctxt "lowres"
 msgid "Override global MIDI settings"
-msgstr "전역 MIDI 설정 무시"
+msgstr "글로벌 미디 설정 재정의"
 
 #: gui/editgamedialog.cpp:267 gui/options.cpp:2284
 msgid "MT-32"
@@ -677,12 +640,12 @@ msgstr "MT-32"
 
 #: gui/editgamedialog.cpp:270
 msgid "Override global MT-32 settings"
-msgstr "전역 MT-32 설정 무시"
+msgstr "글로벌 MT-32 설정 재정의"
 
 #: gui/editgamedialog.cpp:272
 msgctxt "lowres"
 msgid "Override global MT-32 settings"
-msgstr "전역 MT-32 설정 무시"
+msgstr "글로벌 MT-32 설정 재정의"
 
 #: gui/editgamedialog.cpp:281 gui/options.cpp:2291
 msgid "Paths"
@@ -695,11 +658,11 @@ msgstr "경로"
 
 #: gui/editgamedialog.cpp:291
 msgid "Check Integrity"
-msgstr ""
+msgstr "무결성 확인"
 
 #: gui/editgamedialog.cpp:291
 msgid "Perform integrity check for all game files"
-msgstr ""
+msgstr "모든 게임 파일에 대한 무결성 검사를 수행"
 
 #: gui/editgamedialog.cpp:296
 msgid "Game Path:"
@@ -710,7 +673,7 @@ msgctxt "lowres"
 msgid "Game Path:"
 msgstr "게임 경로:"
 
-#: gui/editgamedialog.cpp:303 gui/options.cpp:2500
+#: gui/editgamedialog.cpp:303 gui/options.cpp:2502
 msgid "Extra Path:"
 msgstr "추가 경로:"
 
@@ -719,40 +682,40 @@ msgstr "추가 경로:"
 msgid "Specifies path to additional data used by the game"
 msgstr "게임에서 사용하는 추가 데이터 경로를 지정"
 
-#: gui/editgamedialog.cpp:305 gui/options.cpp:2502
+#: gui/editgamedialog.cpp:305 gui/options.cpp:2504
 msgctxt "lowres"
 msgid "Extra Path:"
 msgstr "추가 경로:"
 
-#: gui/editgamedialog.cpp:306 gui/options.cpp:2475 gui/options.cpp:2503
-#: gui/options.cpp:2512 gui/options.cpp:2795
+#: gui/editgamedialog.cpp:306 gui/options.cpp:2477 gui/options.cpp:2505
+#: gui/options.cpp:2514 gui/options.cpp:2797
 #: backends/platform/libretro/src/libretro-options-widget.cpp:244
 msgctxt "path"
 msgid "None"
 msgstr "없음"
 
-#: gui/editgamedialog.cpp:312 gui/options.cpp:2464
+#: gui/editgamedialog.cpp:312 gui/options.cpp:2466
 msgid "Save Path:"
 msgstr "저장 경로:"
 
 #: gui/editgamedialog.cpp:312 gui/editgamedialog.cpp:314
-#: gui/editgamedialog.cpp:315 gui/options.cpp:2464 gui/options.cpp:2466
+#: gui/editgamedialog.cpp:315 gui/options.cpp:2466 gui/options.cpp:2468
 msgid "Specifies where your saved games are put"
-msgstr "게임 저장 파일이 있을 경로를 지정"
+msgstr "저장된 게임이 저장되는 위치를 지정"
 
-#: gui/editgamedialog.cpp:314 gui/options.cpp:2466
+#: gui/editgamedialog.cpp:314 gui/options.cpp:2468
 msgctxt "lowres"
 msgid "Save Path:"
 msgstr "저장 경로:"
 
-#: gui/editgamedialog.cpp:315 gui/options.cpp:1791 gui/options.cpp:2467
+#: gui/editgamedialog.cpp:315 gui/options.cpp:1791 gui/options.cpp:2469
 #: backends/platform/wii/options.cpp:55
 msgid "Default"
 msgstr "기본값"
 
 #: gui/editgamedialog.cpp:326 engines/dialogs.cpp:377
 msgid "Achievements"
-msgstr "업적"
+msgstr "도전과제"
 
 #: gui/editgamedialog.cpp:330 engines/dialogs.cpp:381
 msgid "Statistics"
@@ -767,7 +730,8 @@ msgstr "ID:"
 msgid ""
 "Short game identifier used for referring to saved games and running the game "
 "from the command line"
-msgstr "게임 저장에 참조하거나 명령줄에서 실행하는데 사용하는 짧은 게임 식별자"
+msgstr "저장된 게임을 참조하고 명령줄에서 게임을 실행하는 데 사용되는 짧은 게임 "
+"식별자"
 
 #: gui/editgamedialog.cpp:349
 msgctxt "lowres"
@@ -776,7 +740,7 @@ msgstr "ID:"
 
 #: gui/editgamedialog.cpp:354 gui/editrecorddialog.cpp:58
 msgid "Name:"
-msgstr "제목:"
+msgstr "이름:"
 
 #: gui/editgamedialog.cpp:354 gui/editgamedialog.cpp:356
 #: gui/editgamedialog.cpp:357
@@ -786,7 +750,7 @@ msgstr "게임의 전체 제목"
 #: gui/editgamedialog.cpp:356
 msgctxt "lowres"
 msgid "Name:"
-msgstr "제목:"
+msgstr "이름:"
 
 #: gui/editgamedialog.cpp:363 engines/mohawk/dialogs.cpp:158
 #: engines/mohawk/dialogs.cpp:377
@@ -797,13 +761,13 @@ msgstr "언어:"
 msgid ""
 "Language of the game. This will not turn your Spanish game version into "
 "English"
-msgstr "게임의 언어. 선택한 언어로 게임이 번역되지는 않음"
+msgstr "게임 언어입니다. 이렇게 하면 스페인어 게임 버전이 영어로 바뀌지 않음"
 
 #: gui/editgamedialog.cpp:365 gui/editgamedialog.cpp:380 gui/options.cpp:1575
 #: gui/options.cpp:1590 gui/options.cpp:1607 gui/options.cpp:1621
 #: gui/options.cpp:1659 gui/options.cpp:1675 gui/options.cpp:2087
-#: gui/options.cpp:2545 gui/options.cpp:2619 gui/options.cpp:2835
-#: gui/options.cpp:3337 audio/null.cpp:45
+#: gui/options.cpp:2547 gui/options.cpp:2621 gui/options.cpp:2837
+#: gui/options.cpp:3341 audio/null.cpp:45
 #: backends/platform/android/options.cpp:150
 #: backends/platform/android/options.cpp:151
 #: backends/platform/android/options.cpp:179
@@ -827,66 +791,62 @@ msgctxt "lowres"
 msgid "Platform:"
 msgstr "플랫폼:"
 
-#: gui/editgamedialog.cpp:558 gui/options.cpp:3361
+#: gui/editgamedialog.cpp:558 gui/options.cpp:3365
 msgid "Select SoundFont"
-msgstr "SoundFont 선택"
+msgstr "사운드폰트 선택"
 
 #: gui/editgamedialog.cpp:597
 msgid "Select additional game directory"
 msgstr "추가 게임 디렉토리를 선택"
 
-#: gui/editgamedialog.cpp:610 gui/options.cpp:3208
+#: gui/editgamedialog.cpp:610 gui/options.cpp:3212
 msgid "Select directory for saved games"
-msgstr "세이브 파일 저장 경로를 선택"
+msgstr "저장된 게임을 위한 디렉토리를 선택"
 
-#: gui/editgamedialog.cpp:617 gui/options.cpp:3215
+#: gui/editgamedialog.cpp:617 gui/options.cpp:3219
 msgid "The chosen directory cannot be written to. Please select another one."
-msgstr "선택한 디렉토리에는 기록할 수 없습니다. 다른 디렉토리를 선택해 주세요."
+msgstr "선택한 디렉토리에 기록할 수 없습니다. 다른 디렉토리를 선택하세요."
 
 #: gui/editgamedialog.cpp:622
 msgid ""
 "Saved games sync feature doesn't work with non-default directories. If you "
 "want your saved games to sync, use default directory."
-msgstr ""
-"세이브 파일 동기화 기능은 기본값 이외의 디렉토리에서는 동작하지 않습니다. 게"
-"임 세이브 파일이 동기화되기를 원하면 기본 디렉토리를 사용하세요."
+msgstr "저장된 게임 동기화 기능은 기본이 아닌 디렉토리에서는 작동하지 않습니다. "
+"저장된 게임을 동기화하려면 기본 디렉토리를 사용하세요."
 
 #: gui/editgamedialog.cpp:656
 msgid "This game ID is already taken. Please choose another one."
-msgstr "이 게임 ID는 이미 사용 중입니다. 다른 ID를 선택해 주세요."
+msgstr "이 게임 ID는 이미 사용 중입니다. 다른 ID를 선택하세요."
 
 #: gui/editrecorddialog.cpp:57
 msgid "Author:"
-msgstr "작성자:"
+msgstr "원작자:"
 
 #: gui/editrecorddialog.cpp:59
 msgid "Notes:"
-msgstr "메모:"
+msgstr "참고:"
 
 #: gui/integrity-dialog.cpp:100
 msgid ""
 "Verifying file integrity may take a long time to complete. Please wait...\n"
-msgstr ""
+msgstr "파일 무결성을 확인하는 데 시간이 오래 걸릴 수 있습니다. 기다려 주세요...\n"
 
 #: gui/integrity-dialog.cpp:107 gui/integrity-dialog.cpp:168
 msgid "Calculating file checksums..."
-msgstr ""
+msgstr "파일 체크섬 계산 중..."
 
 #: gui/integrity-dialog.cpp:120
 msgid "Launch Email Client"
-msgstr ""
+msgstr "이메일 클라이언트 실행"
 
 #: gui/integrity-dialog.cpp:174
-#, fuzzy
-#| msgid "Scan complete!"
 msgid "Calculation complete"
-msgstr "검색 완료!"
+msgstr "계산 완료"
 
 #: gui/integrity-dialog.cpp:263
-#, fuzzy, c-format
-#| msgid "Downloaded %s %S / %s %S"
+#, c-format
 msgid "Calculated %s %S / %s %S"
-msgstr "%s %S / %s %S 다운로드 됨"
+msgstr "%s %S / %s %S 계산됨"
 
 #: gui/integrity-dialog.cpp:513
 msgid ""
@@ -896,25 +856,31 @@ msgid ""
 "If you are sure that this is a valid unknown variant, please send the "
 "following e-mail to integrity@scummvm.org"
 msgstr ""
+"### 결과\n"
+"보유한 게임 파일 세트는 우리에게 알려지지 않은 것 같습니다.\n"
+"\n"
+"이것이 유효한 알려지지 않은 변형이라고 확신하는 경우 다음 이메일을 integrity@"
+"scummvm.org로 보내주세요"
 
 #: gui/integrity-dialog.cpp:537
 msgid ""
 "The game doesn't seem to have any files. Are you sure the path is correct?"
-msgstr ""
+msgstr "게임에 파일이 없는 것 같습니다. 경로가 올바른지 확인하였습니까?"
 
 #: gui/integrity-dialog.cpp:542
 msgid ""
 "The game doesn't seem to have any metadata associated with it, so it is "
 "unable to be matched. Please fill in the correct metadata for the game."
-msgstr ""
+msgstr "이 게임에는 연관된 메타데이터가 없는 듯하므로, 매치할 수 없습니다. 게임에 "
+"대한 올바른 메타데이터를 입력해 주세요."
 
 #: gui/integrity-dialog.cpp:569
 msgid "Files all OK"
-msgstr ""
+msgstr "모든 파일 정상"
 
 #: gui/filebrowser-dialog.cpp:53
 msgid "Choose file for loading"
-msgstr "불러올 파일을 선택"
+msgstr "로딩할 파일을 선택"
 
 #: gui/filebrowser-dialog.cpp:53
 msgid "Enter filename for saving"
@@ -922,7 +888,7 @@ msgstr "저장할 파일명을 입력"
 
 #: gui/filebrowser-dialog.cpp:135
 msgid "Do you really want to overwrite the file?"
-msgstr "파일을 덮어쓰겠습니까?"
+msgstr "정말 파일을 덮어쓰겠습니까?"
 
 #: gui/fluidsynth-dialog.cpp:68
 msgid "Reverb"
@@ -942,11 +908,11 @@ msgstr "감쇠:"
 
 #: gui/fluidsynth-dialog.cpp:86
 msgid "Width:"
-msgstr "좌우 분리도:"
+msgstr "너비:"
 
 #: gui/fluidsynth-dialog.cpp:93 gui/fluidsynth-dialog.cpp:111
 msgid "Level:"
-msgstr "레벨:"
+msgstr "수준:"
 
 #: gui/fluidsynth-dialog.cpp:100
 msgid "Chorus"
@@ -966,11 +932,11 @@ msgstr "깊이:"
 
 #: gui/fluidsynth-dialog.cpp:132
 msgid "Type:"
-msgstr "종류:"
+msgstr "유형:"
 
 #: gui/fluidsynth-dialog.cpp:135
 msgid "Sine"
-msgstr "Sine"
+msgstr "사인"
 
 #: gui/fluidsynth-dialog.cpp:136 backends/platform/sdl/ps3/ps3.cpp:43
 #: backends/platform/sdl/psp2/psp2.cpp:46 engines/dragons/metaengine.cpp:189
@@ -1026,13 +992,13 @@ msgstr "GUI"
 msgid "Interact"
 msgstr "상호작용"
 
-#: gui/gui-manager.cpp:176 engines/metaengine.cpp:115
+#: gui/gui-manager.cpp:176 engines/metaengine.cpp:117
 #: engines/crab/input/input.cpp:95 engines/crab/input/input.cpp:145
 #: engines/dragons/metaengine.cpp:159 engines/freescape/movement.cpp:35
-#: engines/griffon/metaengine.cpp:121 engines/grim/grim.cpp:473
-#: engines/grim/grim.cpp:554 engines/icb/icb.cpp:68 engines/icb/icb.cpp:152
-#: engines/scumm/metaengine.cpp:875 engines/twine/metaengine.cpp:465
-#: engines/twine/metaengine.cpp:532 engines/twp/metaengine.cpp:154
+#: engines/griffon/metaengine.cpp:121 engines/grim/grim.cpp:481
+#: engines/grim/grim.cpp:562 engines/icb/icb.cpp:68 engines/icb/icb.cpp:152
+#: engines/scumm/metaengine.cpp:903 engines/twine/metaengine.cpp:467
+#: engines/twine/metaengine.cpp:534 engines/twp/metaengine.cpp:154
 #: engines/wintermute/keymapper_tables.h:1290
 #: engines/wintermute/keymapper_tables.h:1373
 #: engines/wintermute/keymapper_tables.h:1449
@@ -1041,13 +1007,13 @@ msgstr "상호작용"
 msgid "Up"
 msgstr "위"
 
-#: gui/gui-manager.cpp:182 engines/metaengine.cpp:121
+#: gui/gui-manager.cpp:182 engines/metaengine.cpp:123
 #: engines/crab/input/input.cpp:101 engines/crab/input/input.cpp:151
-#: engines/dragons/metaengine.cpp:165 engines/freescape/movement.cpp:41
-#: engines/griffon/metaengine.cpp:127 engines/grim/grim.cpp:478
-#: engines/grim/grim.cpp:559 engines/icb/icb.cpp:73 engines/icb/icb.cpp:157
-#: engines/scumm/metaengine.cpp:842 engines/twine/metaengine.cpp:472
-#: engines/twine/metaengine.cpp:540 engines/twp/metaengine.cpp:155
+#: engines/dragons/metaengine.cpp:165 engines/freescape/movement.cpp:42
+#: engines/griffon/metaengine.cpp:127 engines/grim/grim.cpp:486
+#: engines/grim/grim.cpp:567 engines/icb/icb.cpp:73 engines/icb/icb.cpp:157
+#: engines/scumm/metaengine.cpp:870 engines/twine/metaengine.cpp:474
+#: engines/twine/metaengine.cpp:542 engines/twp/metaengine.cpp:155
 #: engines/wintermute/keymapper_tables.h:1296
 #: engines/wintermute/keymapper_tables.h:1379
 #: engines/wintermute/keymapper_tables.h:1456
@@ -1056,12 +1022,12 @@ msgstr "위"
 msgid "Down"
 msgstr "아래"
 
-#: gui/gui-manager.cpp:188 engines/metaengine.cpp:127
+#: gui/gui-manager.cpp:188 engines/metaengine.cpp:129
 #: engines/crab/input/input.cpp:107 engines/crab/input/input.cpp:157
 #: engines/dragons/metaengine.cpp:171 engines/griffon/metaengine.cpp:133
-#: engines/grim/grim.cpp:483 engines/grim/grim.cpp:564 engines/icb/icb.cpp:78
-#: engines/icb/icb.cpp:162 engines/scumm/metaengine.cpp:855
-#: engines/twine/metaengine.cpp:487 engines/twine/metaengine.cpp:555
+#: engines/grim/grim.cpp:491 engines/grim/grim.cpp:572 engines/icb/icb.cpp:78
+#: engines/icb/icb.cpp:162 engines/scumm/metaengine.cpp:883
+#: engines/twine/metaengine.cpp:489 engines/twine/metaengine.cpp:557
 #: engines/twp/metaengine.cpp:152 engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1302
 #: engines/wintermute/keymapper_tables.h:1385
@@ -1071,12 +1037,12 @@ msgstr "아래"
 msgid "Left"
 msgstr "왼쪽"
 
-#: gui/gui-manager.cpp:194 engines/metaengine.cpp:133
+#: gui/gui-manager.cpp:194 engines/metaengine.cpp:135
 #: engines/crab/input/input.cpp:113 engines/crab/input/input.cpp:163
 #: engines/dragons/metaengine.cpp:177 engines/griffon/metaengine.cpp:139
-#: engines/grim/grim.cpp:488 engines/grim/grim.cpp:569 engines/icb/icb.cpp:83
-#: engines/icb/icb.cpp:167 engines/scumm/metaengine.cpp:862
-#: engines/twine/metaengine.cpp:479 engines/twine/metaengine.cpp:548
+#: engines/grim/grim.cpp:496 engines/grim/grim.cpp:577 engines/icb/icb.cpp:83
+#: engines/icb/icb.cpp:167 engines/scumm/metaengine.cpp:890
+#: engines/twine/metaengine.cpp:481 engines/twine/metaengine.cpp:550
 #: engines/twp/metaengine.cpp:153 engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1308
 #: engines/wintermute/keymapper_tables.h:1391
@@ -1786,9 +1752,8 @@ msgid "Scaler:"
 msgstr "크기조절:"
 
 #: gui/options.cpp:1632
-#, fuzzy
 msgid "Shader:"
-msgstr "셰이더"
+msgstr "셰이더:"
 
 #: gui/options.cpp:1632 gui/options.cpp:1634 gui/options.cpp:1635
 #, fuzzy
@@ -1814,9 +1779,8 @@ msgid "Download Shaders"
 msgstr "게임 파일 다운로드"
 
 #: gui/options.cpp:1640
-#, fuzzy
 msgid "Check on the scummvm.org website for updates of shader packs"
-msgstr "업데이트 확인 중..."
+msgstr "셰이더 팩 업데이트는 scummvm.org 웹사이트에서 확인"
 
 #: gui/options.cpp:1646 backends/graphics/sdl/sdl-graphics.cpp:433
 msgid "Fullscreen mode"
@@ -2110,146 +2074,147 @@ msgstr "창을 닫지 않고 변경 사항을 적용"
 msgid "Apply changes and close the dialog"
 msgstr "변경 사항을 적용하고 창을 닫음"
 
-#: gui/options.cpp:2453
+#: gui/options.cpp:2455
 msgid "FluidSynth Settings"
 msgstr "FluidSynth 설정"
 
-#: gui/options.cpp:2467
+#: gui/options.cpp:2469
 msgid ""
 "Specifies where your saved games are put. A red coloring indicates the value "
 "is temporary and will not get saved"
 msgstr ""
 
-#: gui/options.cpp:2472
+#: gui/options.cpp:2474
 msgid "Theme Path:"
 msgstr "테마 경로:"
 
-#: gui/options.cpp:2474
+#: gui/options.cpp:2476
 msgctxt "lowres"
 msgid "Theme Path:"
 msgstr "테마 경로:"
-
-#: gui/options.cpp:2480
-msgid "Icon Path:"
-msgstr "/icon/ 경로:"
 
 #: gui/options.cpp:2482
+msgid "Icon Path:"
+msgstr "/icon/ 경로:"
+
+#: gui/options.cpp:2484
 msgctxt "lowres"
 msgid "Icon Path:"
 msgstr "/icon/ 경로:"
 
-#: gui/options.cpp:2483 gui/options.cpp:2493
+#: gui/options.cpp:2485 gui/options.cpp:2495
 #, fuzzy
 msgctxt "path"
 msgid "Default"
 msgstr "기본값"
 
-#: gui/options.cpp:2490
-#, fuzzy
-#| msgid "Game Path:"
-msgid "DLC Path:"
-msgstr "게임 경로:"
-
 #: gui/options.cpp:2492
 #, fuzzy
 #| msgid "Game Path:"
+msgid "DLC Path:"
+msgstr "게임 경로:"
+
+#: gui/options.cpp:2494
+#, fuzzy
+#| msgid "Game Path:"
 msgctxt "lowres"
 msgid "DLC Path:"
 msgstr "게임 경로:"
 
-#: gui/options.cpp:2500 gui/options.cpp:2502 gui/options.cpp:2503
+#: gui/options.cpp:2502 gui/options.cpp:2504 gui/options.cpp:2505
 msgid "Specifies path to additional data used by all games or ScummVM"
 msgstr "ScummVM과 게임에서 사용하는 추가 데이터 경로"
 
-#: gui/options.cpp:2509
+#: gui/options.cpp:2511
 msgid "Plugins Path:"
 msgstr "플러그인 경로:"
 
-#: gui/options.cpp:2511
+#: gui/options.cpp:2513
 msgctxt "lowres"
 msgid "Plugins Path:"
 msgstr "플러그인 경로:"
 
-#: gui/options.cpp:2521
+#: gui/options.cpp:2523
 msgid "ScummVM config path: "
 msgstr "ScummVM 설정 경로: "
 
-#: gui/options.cpp:2535
+#: gui/options.cpp:2537
 #, fuzzy
 #| msgid "ScummVM config path: "
 msgid "ScummVM log path: "
 msgstr "ScummVM 설정 경로: "
 
-#: gui/options.cpp:2540
+#: gui/options.cpp:2542
 msgid "View"
 msgstr ""
 
 #. I18N: Referring to the last path memorized when adding a game
-#: gui/options.cpp:2550 gui/options.cpp:3337
+#: gui/options.cpp:2552 gui/options.cpp:3341
 msgid "Last browser path: "
 msgstr "마지막 접근 경로: "
 
-#: gui/options.cpp:2555
+#: gui/options.cpp:2557
 msgid "Theme:"
 msgstr "테마:"
 
-#: gui/options.cpp:2560
+#: gui/options.cpp:2562
 msgid "GUI scale:"
 msgstr "GUI 크기:"
 
-#: gui/options.cpp:2577
+#: gui/options.cpp:2579
 #, c-format
 msgid "%d%% - Custom"
 msgstr ""
 
-#: gui/options.cpp:2581
+#: gui/options.cpp:2583
 msgid "GUI renderer:"
 msgstr "GUI 렌더러:"
 
-#: gui/options.cpp:2594
+#: gui/options.cpp:2596
 #, fuzzy
 msgid "Return to the launcher when leaving a game"
 msgstr "게임 종료 시 항상 런처로 복귀"
 
-#: gui/options.cpp:2595
-#, fuzzy
+#: gui/options.cpp:2597
 msgid ""
 "Return to the launcher when leaving a game instead of closing ScummVM\n"
 "(this feature is not supported by all games)."
-msgstr "게임 종료 시 ScummVM을 종료하지 않고 항상 런처로 돌아옵니다."
+msgstr ""
+"게임 종료 시 ScummVM을 닫는 대신 런처로 돌아갑니다\n"
+"(이 기능은 모든 게임에서 지원되지 않음)."
 
-#: gui/options.cpp:2602
+#: gui/options.cpp:2604
 msgid "Ask for confirmation on exit"
 msgstr "종료 시 확인"
 
-#: gui/options.cpp:2603
+#: gui/options.cpp:2605
 msgid "Ask for permission when closing ScummVM or leaving a game."
 msgstr "ScummVM 또는 게임 종료 시 다시 확인합니다."
 
-#: gui/options.cpp:2609
+#: gui/options.cpp:2611
 #, fuzzy
 msgid "Disable fixed font scaling"
 msgstr "저장 메뉴 비활성화"
 
-#: gui/options.cpp:2610
+#: gui/options.cpp:2612
 msgid ""
 "Do not upscale fixed size fonts in the GUI. This reduces artefacts on low "
 "resolution screens"
 msgstr ""
 
-#: gui/options.cpp:2616
+#: gui/options.cpp:2618
 msgid "GUI language:"
 msgstr "GUI 언어:"
 
-#: gui/options.cpp:2616
+#: gui/options.cpp:2618
 msgid "Language of ScummVM GUI"
 msgstr "ScummVM GUI의 언어"
 
-#: gui/options.cpp:2642
+#: gui/options.cpp:2644
 msgid "Switch the ScummVM GUI language to the game language"
 msgstr "ScummVM GUI 언어를 게임 언어로 전환"
 
-#: gui/options.cpp:2643
+#: gui/options.cpp:2645
 msgid ""
 "When starting a game, change the ScummVM GUI language to the game language. "
 "That way, if a game uses the ScummVM save and load dialogs, they are in the "
@@ -2258,11 +2223,11 @@ msgstr ""
 "게임을 시작할 때 ScummVM GUI 언어를 게임 언어로 전환합니다. 이렇게 하면 "
 "ScummVM 저장/불러오기 창이 게임과 동일한 언어로 표시됩니다."
 
-#: gui/options.cpp:2655
+#: gui/options.cpp:2657
 msgid "Use native system file browser"
 msgstr "시스템 파일 브라우저 사용"
 
-#: gui/options.cpp:2656
+#: gui/options.cpp:2658
 msgid ""
 "Use the native system file browser instead of the ScummVM one to select a "
 "file or directory."
@@ -2270,55 +2235,52 @@ msgstr ""
 "파일과 디렉토리를 선택할 때 ScummVM에 내장된 브라우저 대신 시스템 파일 브라우"
 "저를 사용합니다."
 
-#: gui/options.cpp:2663
+#: gui/options.cpp:2665
 #, fuzzy
 #| msgid "Download"
 msgid "Download Icons"
 msgstr "다운로드"
 
-#: gui/options.cpp:2663
-#, fuzzy
+#: gui/options.cpp:2665
 msgid "Check on the scummvm.org website for updates of icon packs"
-msgstr "업데이트 확인 중..."
+msgstr "아이콘 팩 업데이트는 scummvm.org 웹사이트에서 확인"
 
-#: gui/options.cpp:2669
+#: gui/options.cpp:2671
 msgid "Autosave:"
 msgstr "자동 저장:"
 
-#: gui/options.cpp:2671
+#: gui/options.cpp:2673
 msgctxt "lowres"
 msgid "Autosave:"
 msgstr "자동 저장:"
 
-#: gui/options.cpp:2682
+#: gui/options.cpp:2684
 msgid "Random seed:"
 msgstr ""
 
-#: gui/options.cpp:2682
+#: gui/options.cpp:2684
 msgid "Seed for initializing all random number generators"
 msgstr ""
 
-#: gui/options.cpp:2690
-#, fuzzy
-#| msgid "Debug Menu"
+#: gui/options.cpp:2692
 msgid "Debug level:"
-msgstr "디버그 메뉴"
+msgstr "디버그 수준:"
 
 #. I18N: Debug level -1, no messages
-#: gui/options.cpp:2694 gui/options.cpp:2833
+#: gui/options.cpp:2696 gui/options.cpp:2835
 msgid "None"
 msgstr "없음"
 
 #. I18N: Debug level 11, all messages
-#: gui/options.cpp:2700
+#: gui/options.cpp:2702
 msgid "11 (all)"
 msgstr ""
 
-#: gui/options.cpp:2704
+#: gui/options.cpp:2706
 msgid "Enable Discord integration"
 msgstr "Discord 통합 사용"
 
-#: gui/options.cpp:2705
+#: gui/options.cpp:2707
 msgid ""
 "Show information about the games you are playing on Discord if the Discord "
 "client is running."
@@ -2326,27 +2288,27 @@ msgstr ""
 "Discord 클라이언트가 실행 중인 경우 Discord에서 실행 중인 게임에 대한 정보 표"
 "시."
 
-#: gui/options.cpp:2715 gui/updates-dialog.cpp:85
+#: gui/options.cpp:2717 gui/updates-dialog.cpp:85
 msgid "Update check:"
 msgstr "업데이트 확인:"
 
-#: gui/options.cpp:2715
+#: gui/options.cpp:2717
 msgid "How often to check ScummVM updates"
 msgstr "ScummVM 업데이트를 확인하는 빈도"
 
-#: gui/options.cpp:2726
+#: gui/options.cpp:2728
 msgid "Check now"
 msgstr "지금 확인"
 
-#: gui/options.cpp:2734
+#: gui/options.cpp:2736
 msgid "Active storage:"
 msgstr "사용할 스토리지:"
 
-#: gui/options.cpp:2734
+#: gui/options.cpp:2736
 msgid "Active cloud storage"
 msgstr "사용할 클라우드 스토리지"
 
-#: gui/options.cpp:2743
+#: gui/options.cpp:2745
 #, fuzzy
 #| msgctxt "lowres"
 #| msgid ""
@@ -2359,7 +2321,7 @@ msgstr ""
 "4. 스토리지가 활성화되지 않았습니다. 유저 이름이 정확한지 확인한 뒤 활성화해 "
 "주세요:"
 
-#: gui/options.cpp:2745
+#: gui/options.cpp:2747
 #, fuzzy
 #| msgid ""
 #| "4. Storage is not yet enabled. Verify that username is correct and enable "
@@ -2370,179 +2332,174 @@ msgstr ""
 "4. 스토리지가 아직 활성화되지 않았습니다. 유저 이름이 정확한지 확인한 뒤 활성"
 "화해 주세요:"
 
-#: gui/options.cpp:2746
+#: gui/options.cpp:2748
 msgid "Enable storage"
 msgstr "스토리지 활성화"
 
-#: gui/options.cpp:2746
+#: gui/options.cpp:2748
 msgid "Confirm you want to use this account for this storage"
 msgstr "스토리지에 이 계정을 사용할 것인지 확인"
 
-#: gui/options.cpp:2748 backends/platform/wii/options.cpp:113
+#: gui/options.cpp:2750 backends/platform/wii/options.cpp:113
 msgid "Username:"
 msgstr "유저명:"
 
-#: gui/options.cpp:2748
+#: gui/options.cpp:2750
 msgid "Username used by this storage"
 msgstr "이 스토리지에서 사용할 유저명"
 
-#: gui/options.cpp:2749
+#: gui/options.cpp:2751
 msgid "<none>"
 msgstr "<없음>"
 
-#: gui/options.cpp:2751
+#: gui/options.cpp:2753
 msgid "Used space:"
 msgstr "사용된 용량:"
 
-#: gui/options.cpp:2751
+#: gui/options.cpp:2753
 msgid "Space used by ScummVM's saved games on this storage"
 msgstr "ScummVM의 세이브 파일이 스토리지에서 차지하는 용량"
 
-#: gui/options.cpp:2754
+#: gui/options.cpp:2756
 msgid "Last sync:"
 msgstr "최근 동기화:"
 
-#: gui/options.cpp:2754
+#: gui/options.cpp:2756
 msgid "When was the last time saved games were synced with this storage"
 msgstr "세이브 파일이 이 스토리지와 마지막으로 동기화된 시점"
 
-#: gui/options.cpp:2755 gui/options.cpp:3673
+#: gui/options.cpp:2757 gui/options.cpp:3677
 msgid "<never>"
 msgstr "<없음>"
 
-#: gui/options.cpp:2757
+#: gui/options.cpp:2759
 msgctxt "lowres"
 msgid "Saved games sync automatically on launch, after saving and on loading."
 msgstr "세이브 파일은 실행시와 저장/불러오기시 자동으로 동기화됩니다."
 
-#: gui/options.cpp:2759
+#: gui/options.cpp:2761
 msgid "Saved games sync automatically on launch, after saving and on loading."
 msgstr "세이브 파일은 실행시와 저장/불러오기시 자동으로 동기화됩니다."
 
-#: gui/options.cpp:2760
+#: gui/options.cpp:2762
 msgid "Sync now"
 msgstr "지금 동기화"
 
-#: gui/options.cpp:2760
+#: gui/options.cpp:2762
 msgid "Start saved games sync"
 msgstr "세이브 파일 동기화를 시작"
 
-#: gui/options.cpp:2763
+#: gui/options.cpp:2765
 msgctxt "lowres"
 msgid "You can download game files from your cloud ScummVM folder:"
 msgstr "클라우드상의 ScummVM 폴더에서 게임 파일을 다운로드할 수 있습니다:"
 
-#: gui/options.cpp:2765
+#: gui/options.cpp:2767
 msgid "You can download game files from your cloud ScummVM folder:"
 msgstr "클라우드상의 ScummVM 폴더에서 게임 파일을 다운로드할 수 있습니다:"
 
-#: gui/options.cpp:2766
+#: gui/options.cpp:2768
 msgid "Download game files"
 msgstr "게임 파일 다운로드"
 
-#: gui/options.cpp:2766
+#: gui/options.cpp:2768
 msgid "Open downloads manager dialog"
 msgstr "다운로드 매니저 창을 열기"
 
-#: gui/options.cpp:2769
+#: gui/options.cpp:2771
 msgctxt "lowres"
 msgid "To change account for this storage, disconnect and connect again:"
 msgstr "이 스토리지의 계정을 변경하려면 연결을 끊고 다시 연결하세요:"
 
-#: gui/options.cpp:2771
+#: gui/options.cpp:2773
 msgid "To change account for this storage, disconnect and connect again:"
 msgstr "이 스토리지의 계정을 변경하려면 연결을 끊고 다시 연결하세요:"
 
-#: gui/options.cpp:2772
+#: gui/options.cpp:2774
 msgid "Disconnect"
 msgstr "연결 해제"
 
-#: gui/options.cpp:2772
+#: gui/options.cpp:2774
 msgid "Stop using this storage on this device"
 msgstr "이 장치에서 스토리지 사용을 중단"
 
-#: gui/options.cpp:2775
-#, fuzzy
-#| msgctxt "lowres"
-#| msgid "This storage is not connected yet! To connect,"
+#: gui/options.cpp:2777
 msgctxt "lowres"
 msgid "This storage is not connected yet!"
-msgstr "이 스토리지에 아직 연결되지 않았습니다! 연결하려면,"
+msgstr "이 저장소는 아직 연결되지 않았습니다!"
 
-#: gui/options.cpp:2777
-#, fuzzy
-#| msgid "This storage is not connected yet! To connect,"
+#: gui/options.cpp:2779
 msgid "This storage is not connected yet!"
-msgstr "이 스토리지에 아직 연결되지 않았습니다! 연결하려면,"
+msgstr "이 저장소는 아직 연결되지 않았습니다!"
 
-#: gui/options.cpp:2778
+#: gui/options.cpp:2780
 #, fuzzy
 #| msgid "3. Connect"
 msgid "Connect"
 msgstr "3. 연결"
 
-#: gui/options.cpp:2778
+#: gui/options.cpp:2780
 msgid "Connect your cloud storage account"
 msgstr "클라우드 스토리지 계정을 연결"
 
-#: gui/options.cpp:2792
+#: gui/options.cpp:2794
 msgctxt "lowres"
 msgid "/root/ Path:"
 msgstr "/root/ 경로:"
 
-#: gui/options.cpp:2792 gui/options.cpp:2794 gui/options.cpp:2795
+#: gui/options.cpp:2794 gui/options.cpp:2796 gui/options.cpp:2797
 msgid "Select which directory will be shown as /root/ in the Files Manager"
 msgstr "파일 매니저에서 어떤 디렉토리를 /root/ 으로 표시할지 선택합니다"
 
-#: gui/options.cpp:2794
+#: gui/options.cpp:2796
 msgid "/root/ Path:"
 msgstr "/root/ 경로:"
 
-#: gui/options.cpp:2800
+#: gui/options.cpp:2802
 msgid "Server's port:"
 msgstr "서버 포트:"
 
-#: gui/options.cpp:2800
+#: gui/options.cpp:2802
 msgid "Port for server to use"
 msgstr "서버가 사용할 포트"
 
-#: gui/options.cpp:2805
+#: gui/options.cpp:2807
 msgctxt "lowres"
 msgid "Run server to manage files with browser (in the same network)."
 msgstr ""
 "동일 네트워크상에서 브라우저를 사용해 파일을 관리하려면 서버를 실행하세요."
-
-#: gui/options.cpp:2806
-msgctxt "lowres"
-msgid "Closing options dialog will stop the server."
-msgstr "옵션 창을 닫으면 서버도 중지됩니다."
 
 #: gui/options.cpp:2808
+msgctxt "lowres"
+msgid "Closing options dialog will stop the server."
+msgstr "옵션 창을 닫으면 서버도 중지됩니다."
+
+#: gui/options.cpp:2810
 msgid "Run server to manage files with browser (in the same network)."
 msgstr ""
 "동일 네트워크상에서 브라우저를 사용해 파일을 관리하려면 서버를 실행하세요."
 
-#: gui/options.cpp:2809
+#: gui/options.cpp:2811
 msgid "Closing options dialog will stop the server."
 msgstr "옵션 창을 닫으면 서버도 중지됩니다."
 
-#: gui/options.cpp:2820
+#: gui/options.cpp:2822
 msgid "Use Text to speech"
 msgstr "TTS 사용"
 
-#: gui/options.cpp:2820
+#: gui/options.cpp:2822
 msgid "Will read text in gui on mouse over."
 msgstr "마우스 커서로 가리킨 GUI의 문장을 읽습니다."
 
-#: gui/options.cpp:2901
+#: gui/options.cpp:2903
 msgid "Ignore"
 msgstr "무시"
 
-#: gui/options.cpp:2902
+#: gui/options.cpp:2904
 msgid "Disable autosave"
 msgstr "자동 저장 비활성화"
 
-#: gui/options.cpp:2903
+#: gui/options.cpp:2905
 msgid ""
 "WARNING: Autosave was enabled. Some of your games have existing saved games "
 "on the autosave slot. You can either move the existing saves to new slots, "
@@ -2556,7 +2513,7 @@ msgstr ""
 "다).\n"
 "대상 게임:\n"
 
-#: gui/options.cpp:2912
+#: gui/options.cpp:2914
 msgid ""
 "\n"
 "And more..."
@@ -2564,31 +2521,31 @@ msgstr ""
 "\n"
 "등등..."
 
-#: gui/options.cpp:2913 engines/engine.cpp:619
+#: gui/options.cpp:2915 engines/engine.cpp:619
 msgid "Move"
 msgstr "이동"
 
-#: gui/options.cpp:2932
+#: gui/options.cpp:2934
 msgid "ERROR: Failed to move the following saved games:\n"
 msgstr "오류: 다음 저장 데이터를 옮기는데 실패했습니다:\n"
 
-#: gui/options.cpp:3027
+#: gui/options.cpp:3031
 msgid "Failed to change cloud storage!"
 msgstr "클라우드 스토리지 변경에 실패했습니다!"
 
-#: gui/options.cpp:3030
+#: gui/options.cpp:3034
 msgid "Another cloud storage is already active."
 msgstr "다른 클라우드 스토리지가 이미 활성화되어 있습니다."
 
-#: gui/options.cpp:3146
+#: gui/options.cpp:3150
 msgid "Theme does not support selected language!"
 msgstr "이 테마는 선택한 언어를 지원하지 않습니다!"
 
-#: gui/options.cpp:3149
+#: gui/options.cpp:3153
 msgid "Theme cannot be loaded!"
 msgstr "테마를 로드할 수 없습니다!"
 
-#: gui/options.cpp:3152
+#: gui/options.cpp:3156
 msgid ""
 "\n"
 "Misc settings will be restored."
@@ -2596,45 +2553,45 @@ msgstr ""
 "\n"
 "기타 설정을 복원합니다."
 
-#: gui/options.cpp:3224
+#: gui/options.cpp:3228
 msgid "Select directory for GUI themes"
 msgstr "GUI 테마 디렉토리를 선택"
 
-#: gui/options.cpp:3234
+#: gui/options.cpp:3238
 msgid "Select directory for GUI launcher thumbnails"
 msgstr "GUI 런처 썸네일을 위한 디렉토리 선택"
 
-#: gui/options.cpp:3245
+#: gui/options.cpp:3249
 #, fuzzy
 #| msgid "Select directory for plugins"
 msgid "Select directory for DLC downloads"
 msgstr "플러그인 디렉토리를 선택"
 
-#: gui/options.cpp:3256
+#: gui/options.cpp:3260
 msgid "Select directory for extra files"
 msgstr "추가 파일 디렉토리를 선택"
 
-#: gui/options.cpp:3267
+#: gui/options.cpp:3271
 msgid "Select directory for plugins"
 msgstr "플러그인 디렉토리를 선택"
 
-#: gui/options.cpp:3280
+#: gui/options.cpp:3284
 msgid "Select directory for Files Manager /root/"
 msgstr "파일 매니저 /root/ 디렉토리를 선택"
 
-#: gui/options.cpp:3459
+#: gui/options.cpp:3463
 msgid "This Storage is working now. Do you want to interrupt it?"
 msgstr "이 스토리지가 현재 동작 중입니다. 중단할까요?"
 
-#: gui/options.cpp:3468
+#: gui/options.cpp:3472
 msgid "Wait until current Storage finishes up and try again."
 msgstr "현재 스토리지 작업이 완료될 때까지 기다린 후 다시 시도해 주세요."
 
-#: gui/options.cpp:3671 backends/cloud/cloudmanager.cpp:157
+#: gui/options.cpp:3675 backends/cloud/cloudmanager.cpp:157
 msgid "<right now>"
 msgstr "<지금>"
 
-#: gui/options.cpp:3816
+#: gui/options.cpp:3820
 msgid ""
 "Request failed.\n"
 "Check your Internet connection."
@@ -2642,13 +2599,13 @@ msgstr ""
 "요청이 실패했습니다.\n"
 "인터넷 연결을 확인해 주세요."
 
-#: gui/options.cpp:3840
+#: gui/options.cpp:3844
 msgid ""
 "A test pattern should be displayed.\n"
 "Do you want to keep these shader scaler settings?"
 msgstr ""
 
-#: gui/options.cpp:3843
+#: gui/options.cpp:3847
 #, c-format
 msgid "Reverting automatically in %d seconds"
 msgstr ""
@@ -3177,15 +3134,15 @@ msgstr "ScummVM 종료"
 msgid "Graphic adventure game engine"
 msgstr ""
 
-#. I18N: This directly quits the game.
 #: dists/android.strings.xml.cpp:34
 #: backends/events/default/default-events.cpp:217
 #: backends/events/default/default-events.cpp:358
-#: engines/adl/metaengine.cpp:326 engines/cge2/metaengine.cpp:239
-#: engines/hdb/metaengine.cpp:275 engines/mohawk/myst_stacks/menu.cpp:317
+#: engines/adl/metaengine.cpp:338 engines/hdb/metaengine.cpp:275
+#: engines/mohawk/myst_stacks/menu.cpp:317
 #: engines/mohawk/riven_stacks/aspit.cpp:454 engines/saga/metaengine.cpp:448
 #: engines/scumm/help.cpp:84 engines/scumm/help.cpp:86
-#: engines/zvision/metaengine.cpp:272 engines/zvision/metaengine.cpp:290
+#: engines/tinsel/metaengine.cpp:334 engines/zvision/metaengine.cpp:272
+#: engines/zvision/metaengine.cpp:290
 msgid "Quit"
 msgstr "종료"
 
@@ -3208,20 +3165,16 @@ msgid "Unable to read ScummVM config file or create a new one!"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:39
-#, fuzzy
-#| msgid "Save Path:"
 msgid "Save Path Error"
-msgstr "저장 경로:"
+msgstr "저장 경로 오류"
 
 #: dists/android.strings.xml.cpp:40
 msgid "Unable to create or access default save path!"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:41
-#, fuzzy
-#| msgid "Icon Path:"
 msgid "Icons Path Error"
-msgstr "/icon/ 경로:"
+msgstr "아이콘 경로 오류"
 
 #: dists/android.strings.xml.cpp:42
 msgid "Unable to create or access default icons and shaders path!"
@@ -3419,7 +3372,7 @@ msgstr "런처로 돌아가기(~R~)"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:746
 #: engines/sci/engine/kfile.cpp:1104 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3811
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3813
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:636
 #: engines/wage/saveload.cpp:746 engines/zvision/file/save_manager.cpp:48
 msgid "Save game:"
@@ -3442,10 +3395,10 @@ msgstr "게임 저장:"
 #: engines/sci/engine/guest_additions.cpp:747 engines/sci/engine/kfile.cpp:1104
 #: engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3811
-#: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:636
-#: engines/wage/saveload.cpp:746 engines/zvision/file/save_manager.cpp:48
-#: engines/zvision/metaengine.cpp:262
+#: engines/tinsel/metaengine.cpp:322 engines/toltecs/menu.cpp:302
+#: engines/toon/toon.cpp:3813 engines/trecision/saveload.cpp:67
+#: engines/tsage/scenes.cpp:636 engines/wage/saveload.cpp:746
+#: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:262
 msgid "Save"
 msgstr "저장"
 
@@ -3459,11 +3412,9 @@ msgstr ""
 "을 얻기 위한 방법은 README 파일에서 참조해 주세요."
 
 #: engines/dialogs.cpp:193 engines/ags/ags.cpp:349
-#: engines/glk/magnetic/magnetic.cpp:197 engines/scumm/saveload.cpp:170
-#, fuzzy
-#| msgid "This game does not support loading games from the launcher."
+#: engines/glk/magnetic/magnetic.cpp:197 engines/scumm/saveload.cpp:167
 msgid "This game does not support saving from the menu. Use in-game interface"
-msgstr "이 게임은 런처에서 불러오기를 지원하지 않습니다."
+msgstr "이 게임은 메뉴에서 저장을 지원하지 않습니다. 게임 내 인터페이스 사용"
 
 #: engines/dialogs.cpp:202
 msgid "This game cannot be saved at this time. Please try again later"
@@ -3479,11 +3430,9 @@ msgstr ""
 "법은 README 파일에서 참조해 주세요."
 
 #: engines/dialogs.cpp:234 engines/ags/ags.cpp:334
-#: engines/glk/magnetic/magnetic.cpp:187 engines/scumm/saveload.cpp:98
-#, fuzzy
-#| msgid "This game does not support loading games from the launcher."
+#: engines/glk/magnetic/magnetic.cpp:187 engines/scumm/saveload.cpp:99
 msgid "This game does not support loading from the menu. Use in-game interface"
-msgstr "이 게임은 런처에서 불러오기를 지원하지 않습니다."
+msgstr "이 게임은 메뉴에서 로딩을 지원하지 않습니다. 게임 내 인터페이스 사용"
 
 #: engines/dialogs.cpp:243
 msgid "This game cannot be loaded at this time. Please try again later"
@@ -3566,7 +3515,7 @@ msgid "Skip autosave"
 msgstr "비어있는 자동 저장"
 
 #: engines/engine.cpp:616
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "WARNING: The autosave slot contains a saved game named %S, and an autosave "
 "is pending.\n"
@@ -3574,9 +3523,10 @@ msgid ""
 "needed.\n"
 "Alternatively, you can skip the autosave (will prompt again in 5 minutes)."
 msgstr ""
-"경고: 이 자동 저장 슬롯에는 '%S' 자동 저장 데이터가 존재합니다. 기존 저장 데"
-"이터를 새로운 슬롯으로 이동하거나 덮어씌우거나 자동 저장을 취소할 수 있습니"
-"다. (재시작 전까지 다시 알리지 않음)"
+"경고: 자동 저장 슬롯에는 %S라는 이름의 저장된 게임이 포함되어 있으며 자동 "
+"저장이 보류 중입니다.\n"
+"이 저장된 게임을 새 슬롯으로 옮기거나 더 이상 필요하지 않으면 삭제하세요.\n"
+"또는 자동 저장을 건너뛸 수 있습니다 (5분 후에 다시 묻습니다)."
 
 #: engines/engine.cpp:626
 msgid "ERROR: Could not copy the savegame to a new slot"
@@ -3661,48 +3611,54 @@ msgstr ""
 msgid "Matched game IDs for the %s engine:"
 msgstr "%s 엔진에서 매칭된 게임 ID:"
 
-#: engines/metaengine.cpp:56 engines/saga/metaengine.cpp:267
+#: engines/metaengine.cpp:39
+#, fuzzy
+#| msgid "Game id not supported"
+msgid "Game not implemented"
+msgstr "게임 ID가 지원되지 않습니다"
+
+#: engines/metaengine.cpp:58 engines/saga/metaengine.cpp:267
 msgid "Default game keymap"
 msgstr "기본 게임 키설정"
 
-#: engines/metaengine.cpp:60 backends/platform/maemo/maemo.cpp:161
+#: engines/metaengine.cpp:62 backends/platform/maemo/maemo.cpp:161
 #: engines/asylum/metaengine.cpp:159 engines/hdb/metaengine.cpp:207
 #: engines/parallaction/metaengine.cpp:112
 #: engines/wintermute/keymapper_tables.h:42 engines/zvision/metaengine.cpp:183
 msgid "Left Click"
 msgstr "왼쪽 클릭"
 
-#: engines/metaengine.cpp:66 backends/platform/maemo/maemo.cpp:165
+#: engines/metaengine.cpp:68 backends/platform/maemo/maemo.cpp:165
 #: engines/wintermute/keymapper_tables.h:256
 #: engines/wintermute/keymapper_tables.h:300
 #: engines/wintermute/keymapper_tables.h:2166
 msgid "Middle Click"
 msgstr "중간 클릭"
 
-#: engines/metaengine.cpp:71 backends/platform/maemo/maemo.cpp:169
+#: engines/metaengine.cpp:73 backends/platform/maemo/maemo.cpp:169
 #: engines/asylum/metaengine.cpp:165 engines/parallaction/metaengine.cpp:118
 #: engines/wintermute/keymapper_tables.h:48 engines/zvision/metaengine.cpp:189
 msgid "Right Click"
 msgstr "오른쪽 클릭"
 
 #. I18N: Action in In Cold Blood
-#: engines/metaengine.cpp:77 engines/agos/metaengine.cpp:252
-#: engines/crab/input/input.cpp:261 engines/grim/grim.cpp:541
+#: engines/metaengine.cpp:79 engines/agos/metaengine.cpp:252
+#: engines/crab/input/input.cpp:261 engines/grim/grim.cpp:549
 #: engines/hdb/metaengine.cpp:258 engines/icb/icb.cpp:137
 #: engines/icb/icb.cpp:203 engines/mohawk/myst.cpp:595
 #: engines/mohawk/riven.cpp:876 engines/sky/metaengine.cpp:126
-#: engines/twine/metaengine.cpp:231 engines/wintermute/keymapper_tables.h:1608
+#: engines/twine/metaengine.cpp:220 engines/wintermute/keymapper_tables.h:1608
 msgid "Pause"
 msgstr "일시정지"
 
-#: engines/metaengine.cpp:83 engines/parallaction/metaengine.cpp:137
+#: engines/metaengine.cpp:85 engines/parallaction/metaengine.cpp:137
 msgid "Game menu"
 msgstr "게임 메뉴"
 
-#: engines/metaengine.cpp:90 engines/grim/grim.cpp:524
-#: engines/grim/grim.cpp:620 engines/made/metaengine.cpp:121
-#: engines/mohawk/myst.cpp:566 engines/mohawk/riven.cpp:847
-#: engines/wintermute/keymapper_tables.h:220
+#: engines/metaengine.cpp:92 engines/freescape/movement.cpp:82
+#: engines/grim/grim.cpp:532 engines/grim/grim.cpp:628
+#: engines/made/metaengine.cpp:121 engines/mohawk/myst.cpp:566
+#: engines/mohawk/riven.cpp:847 engines/wintermute/keymapper_tables.h:220
 #: engines/wintermute/keymapper_tables.h:1092
 #: engines/wintermute/keymapper_tables.h:1276
 #: engines/wintermute/keymapper_tables.h:1601
@@ -3711,30 +3667,30 @@ msgstr "게임 메뉴"
 msgid "Skip"
 msgstr "건너뛰기"
 
-#: engines/metaengine.cpp:97 engines/sky/metaengine.cpp:121
+#: engines/metaengine.cpp:99 engines/sky/metaengine.cpp:121
 msgid "Skip line"
 msgstr "대사 건너뛰기"
 
-#: engines/metaengine.cpp:104
+#: engines/metaengine.cpp:106
 msgid "Predictive input dialog"
 msgstr "예측 입력 창"
 
 #. I18N: This keymap works within the KIA Save Game screen
 #. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
 #. and also submitting a new save game name, or choosing an existing save game for overwriting.
-#: engines/metaengine.cpp:109 engines/bladerunner/metaengine.cpp:273
-#: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:530
-#: engines/grim/grim.cpp:626 engines/sky/metaengine.cpp:101
+#: engines/metaengine.cpp:111 engines/bladerunner/metaengine.cpp:273
+#: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:538
+#: engines/grim/grim.cpp:634 engines/sky/metaengine.cpp:101
 #: engines/wintermute/keymapper_tables.h:54
 msgid "Confirm"
 msgstr "확인"
 
-#: engines/metaengine.cpp:412
+#: engines/metaengine.cpp:414
 #, fuzzy
 msgid "Autosave on"
 msgstr "자동 저장"
 
-#: engines/metaengine.cpp:412
+#: engines/metaengine.cpp:414
 #, fuzzy
 msgid "Autosave off"
 msgstr "자동 저장"
@@ -3944,7 +3900,7 @@ msgid "Global"
 msgstr "전역"
 
 #: backends/events/default/default-events.cpp:335
-#: engines/twine/metaengine.cpp:350
+#: engines/twine/metaengine.cpp:339
 msgid "Global Main Menu"
 msgstr "전역 메인 메뉴"
 
@@ -3985,13 +3941,13 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "터치스크린 '탭 모드' - 호버 (D패드 클릭)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:696
-#: backends/fs/android/android-saf-fs.cpp:700
+#: backends/fs/android/android-saf-fs.cpp:694
+#: backends/fs/android/android-saf-fs.cpp:698
 msgid "Add a new folder"
 msgstr ""
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:812
+#: backends/fs/android/android-saf-fs.cpp:810
 #, fuzzy
 msgid "Choose a new folder"
 msgstr "불러올 파일을 선택"
@@ -4005,7 +3961,7 @@ msgstr "화면 종횡비 보정 전환"
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
 #: backends/graphics3d/ios/ios-graphics3d.cpp:356
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:241
-#: engines/twine/metaengine.cpp:360
+#: engines/twine/metaengine.cpp:349
 msgid "Center"
 msgstr "중앙"
 
@@ -4043,37 +3999,37 @@ msgstr "창에 맞게 늘림"
 msgid "Fit to window (4:3)"
 msgstr "창 크기에 맞춤 (4:3)"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:767
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:792
 #, c-format
 msgid "Resolution: %dx%d"
 msgstr "해상도: %dx%d"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:811
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:836
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2662
 msgid "Active graphics filter:"
 msgstr "활성 그래픽 필터:"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:832
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:857
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2696
 msgid "Enabled aspect ratio correction"
 msgstr "화면 종횡비 보정 활성화"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:834
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:859
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2702
 msgid "Disabled aspect ratio correction"
 msgstr "화면 종횡비 보정 비활성화"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:847
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:872
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2718
 msgid "Filtering enabled"
 msgstr "필터링 활성화"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:849
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:874
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2720
 msgid "Filtering disabled"
 msgstr "필터링 비활성화"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:875
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:900
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2747
 msgid "Stretch mode"
 msgstr "확대 모드"
@@ -4109,7 +4065,7 @@ msgstr "전체화면 전환"
 msgid "Toggle mouse capture"
 msgstr "마우스 캡처 전환"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:458
+#: backends/graphics/sdl/sdl-graphics.cpp:458 engines/stark/metaengine.cpp:240
 #: engines/wintermute/keymapper_tables.h:646
 #: engines/wintermute/keymapper_tables.h:695
 #: engines/wintermute/keymapper_tables.h:1098
@@ -4707,14 +4663,14 @@ msgstr "돋보기 모드 끔. 드래그 모드를 재활성화합니다..."
 msgid "Magnify Mode Off"
 msgstr "돋보기 모드 끔"
 
-#: backends/platform/android/android.cpp:1052
+#: backends/platform/android/android.cpp:1055
 #: backends/platform/ios7/ios7_osys_misc.mm:249
 #, fuzzy
 #| msgid "Settings"
 msgid "Getting help"
 msgstr "설정"
 
-#: backends/platform/android/android.cpp:1055
+#: backends/platform/android/android.cpp:1058
 msgid ""
 "## Help, I'm lost!\n"
 "\n"
@@ -4736,7 +4692,7 @@ msgid ""
 "checking out a game walkthrough. Good luck!\n"
 msgstr ""
 
-#: backends/platform/android/android.cpp:1064
+#: backends/platform/android/android.cpp:1067
 #: backends/platform/ios7/ios7_osys_misc.mm:261
 #: backends/platform/ios7/ios7_osys_misc.mm:357
 #, fuzzy
@@ -4744,7 +4700,7 @@ msgstr ""
 msgid "Touch Controls"
 msgstr "조작"
 
-#: backends/platform/android/android.cpp:1067
+#: backends/platform/android/android.cpp:1070
 msgid ""
 "## Touch control modes\n"
 "The touch control mode can be changed by tapping or clicking on the "
@@ -4813,15 +4769,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: backends/platform/android/android.cpp:1123
+#: backends/platform/android/android.cpp:1126
 #: backends/platform/ios7/ios7_osys_misc.mm:336
 #: backends/platform/ios7/ios7_osys_misc.mm:380
-#, fuzzy
-#| msgid "~A~dd Game..."
 msgid "Adding Games"
-msgstr "게임 추가(~A~)..."
+msgstr "게임 추가"
 
-#: backends/platform/android/android.cpp:1126
+#: backends/platform/android/android.cpp:1129
 msgid ""
 "## Adding Games \n"
 "\n"
@@ -5207,16 +5161,12 @@ msgid "(check '? > Libretro playlist' for detailed info)"
 msgstr ""
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:48
-#, fuzzy
-#| msgid "Plugins Path:"
 msgid "Playlists Path"
-msgstr "플러그인 경로:"
+msgstr "재생목록 경로"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:49
-#, fuzzy
-#| msgid "Specifies where your saved games are put"
 msgid "Specifies where your playlist will be saved."
-msgstr "게임 저장 파일이 있을 경로를 지정"
+msgstr "재생목록이 저장될 위치를 지정합니다."
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:52
 #, fuzzy
@@ -5225,10 +5175,8 @@ msgid "Playlist format:"
 msgstr "플랫폼:"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:57
-#, fuzzy
-#| msgid "Next location"
 msgid "Hooks location:"
-msgstr "다음 위치"
+msgstr "후크 위치:"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:59
 msgid "All in save folder"
@@ -5247,16 +5195,12 @@ msgid "Generate playlist"
 msgstr ""
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:66
-#, fuzzy
-#| msgid "Status:"
 msgid "Status: "
-msgstr "상태:"
+msgstr "상태: "
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:148
-#, fuzzy
-#| msgid "Failed to save game to file."
 msgid "Failed, can't access playlist file"
-msgstr "게임을 파일에 저장하는데 실패했습니다."
+msgstr "실패함, 재생목록 파일에 접근할 수 없음"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:224
 #, fuzzy
@@ -5265,10 +5209,8 @@ msgid "cleaning failed"
 msgstr "데이터 읽기 실패"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:226
-#, fuzzy
-#| msgid "Failed to read the file!"
 msgid "Failed, can't create hook files"
-msgstr "파일 읽기에 실패했습니다!"
+msgstr "실패함, 후크 파일을 생성할 수 없음"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:236
 #, fuzzy
@@ -5497,8 +5439,8 @@ msgstr "R2"
 
 #. I18N: Hardware key
 #: backends/platform/sdl/miyoo/miyoo.cpp:83
-#: backends/platform/sdl/miyoo/miyoo.cpp:114 engines/grim/grim.cpp:536
-#: engines/grim/grim.cpp:632 engines/hdb/metaengine.cpp:264
+#: backends/platform/sdl/miyoo/miyoo.cpp:114 engines/grim/grim.cpp:544
+#: engines/grim/grim.cpp:640 engines/hdb/metaengine.cpp:264
 #: engines/made/metaengine.cpp:156
 msgid "Menu"
 msgstr "메뉴"
@@ -5691,7 +5633,7 @@ msgstr "업데이트 확인 중..."
 #: engines/hugo/hugo.cpp:427 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:300 engines/sky/compact.cpp:129
 #: engines/supernova/supernova.cpp:463 engines/teenagent/resources.cpp:97
-#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5416
+#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5418
 #: engines/ultima/ultima8/ultima8.cpp:187
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
@@ -5700,7 +5642,7 @@ msgstr "'%s' 엔진의 데이터 파일을 찾을 수 없습니다."
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:956
 #: engines/hugo/hugo.cpp:439 engines/lure/lure.cpp:66
 #: engines/mortevielle/mortevielle.cpp:308 engines/supernova/supernova.cpp:468
-#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5429
+#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5431
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "'%s' 엔진의 데이터 파일이 손상되었습니다."
@@ -5708,7 +5650,7 @@ msgstr "'%s' 엔진의 데이터 파일이 손상되었습니다."
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:967
 #: engines/hugo/hugo.cpp:449 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:318 engines/tony/tony.cpp:211
-#: engines/toon/toon.cpp:5440
+#: engines/toon/toon.cpp:5442
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d.%d but got "
@@ -5749,7 +5691,17 @@ msgstr "항상 또렷한 흑백 텍스트를 사용"
 msgid "Do not emulate NTSC artifacts for text"
 msgstr "텍스트에 대해서 NTSC 효과를 에뮬레이트하지 않습니다"
 
-#: engines/agi/detection_tables.h:313
+#: engines/adl/metaengine.cpp:104
+#, fuzzy
+#| msgid "Use silver cursors"
+msgid "Use checkered cursor"
+msgstr "실버 커서 사용"
+
+#: engines/adl/metaengine.cpp:105
+msgid "Use the checkered cursor from later Apple II models"
+msgstr ""
+
+#: engines/agi/detection_tables.h:261
 msgid "Early AGI games for Tandy Color Computer are not yet supported."
 msgstr ""
 
@@ -5835,21 +5787,35 @@ msgstr "속도 메뉴 추가"
 msgid "Add game speed menu (similar to PC version)"
 msgstr "속도 메뉴를 추가합니다. (PC 버전과 유사)"
 
-#: engines/agi/metaengine.cpp:409 engines/asylum/asylum.cpp:655
+#: engines/agi/metaengine.cpp:183 engines/agos/metaengine.cpp:44
+#: engines/dreamweb/metaengine.cpp:36 engines/lure/metaengine.cpp:41
+#: engines/mads/metaengine.cpp:51 engines/mm/metaengine.cpp:46
+#: engines/saga/metaengine.cpp:52 engines/scumm/dialogs.cpp:1188
+#: engines/scumm/metaengine.cpp:755
+#, fuzzy
+#| msgid "Enable Discord integration"
+msgid "Enable copy protection"
+msgstr "Discord 통합 사용"
+
+#: engines/agi/metaengine.cpp:184 engines/agos/metaengine.cpp:45
+#: engines/dreamweb/metaengine.cpp:37 engines/lure/metaengine.cpp:42
+#: engines/mads/metaengine.cpp:52 engines/mm/metaengine.cpp:47
+#: engines/saga/metaengine.cpp:53 engines/scumm/dialogs.cpp:1189
+#: engines/scumm/metaengine.cpp:756
+msgid "Enable any copy protection that would otherwise be bypassed by default."
+msgstr ""
+
+#: engines/agi/metaengine.cpp:408 engines/asylum/asylum.cpp:655
 #: engines/buried/saveload.cpp:53 engines/mohawk/riven.cpp:759
 #: engines/petka/saveload.cpp:121
-#, fuzzy
-#| msgid "This game is not supported."
 msgid "This game does not support loading"
-msgstr "이 게임은 지원되지 않습니다."
+msgstr "이 게임은 로딩을 지원하지 않음"
 
 #: engines/agi/metaengine.cpp:431 engines/asylum/asylum.cpp:666
 #: engines/buried/saveload.cpp:64 engines/mohawk/riven.cpp:774
 #: engines/petka/saveload.cpp:101
-#, fuzzy
-#| msgid "This game is not supported."
 msgid "This game does not support saving"
-msgstr "이 게임은 지원되지 않습니다."
+msgstr "이 게임은 저장을 지원하지 않음"
 
 #: engines/agi/saveload.cpp:779 engines/avalanche/parser.cpp:1906
 #: engines/cine/various.cpp:360 engines/dm/dm.cpp:271
@@ -5865,7 +5831,7 @@ msgstr "이 게임은 지원되지 않습니다."
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:749
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3905
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3907
 #: engines/zvision/file/save_manager.cpp:61
 msgid "Restore game:"
 msgstr "게임 불러오기:"
@@ -5885,7 +5851,7 @@ msgstr "게임 불러오기:"
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:750
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3905
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3907
 #: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:267
 msgid "Restore"
 msgstr "불러오기"
@@ -5894,7 +5860,7 @@ msgstr "불러오기"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "빠른 저장과 불러오기는 여기서는 지원되지 않습니다"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2918
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3027
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -5905,7 +5871,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2905
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3014
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -5916,7 +5882,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2938
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3047
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -5931,22 +5897,6 @@ msgstr ""
 #, c-format
 msgid "Cutscene file '%s' not found!"
 msgstr "컷씬 파일 '%s' 을 찾을 수 없습니다!"
-
-#: engines/agos/metaengine.cpp:44 engines/dreamweb/metaengine.cpp:36
-#: engines/lure/metaengine.cpp:41 engines/mads/metaengine.cpp:51
-#: engines/mm/metaengine.cpp:46 engines/saga/metaengine.cpp:52
-#: engines/scumm/dialogs.cpp:1188 engines/scumm/metaengine.cpp:746
-#, fuzzy
-#| msgid "Enable Discord integration"
-msgid "Enable copy protection"
-msgstr "Discord 통합 사용"
-
-#: engines/agos/metaengine.cpp:45 engines/dreamweb/metaengine.cpp:37
-#: engines/lure/metaengine.cpp:42 engines/mads/metaengine.cpp:52
-#: engines/mm/metaengine.cpp:47 engines/saga/metaengine.cpp:53
-#: engines/scumm/dialogs.cpp:1189 engines/scumm/metaengine.cpp:747
-msgid "Enable any copy protection that would otherwise be bypassed by default."
-msgstr ""
 
 #: engines/agos/metaengine.cpp:55
 msgid "AdLib OPL3 mode"
@@ -5998,8 +5948,10 @@ msgid "AGOS main"
 msgstr ""
 
 #: engines/agos/metaengine.cpp:228 engines/cine/metaengine.cpp:259
-#: engines/lure/metaengine.cpp:169 engines/made/metaengine.cpp:103
-#: engines/mads/metaengine.cpp:275 engines/trecision/metaengine.cpp:121
+#: engines/hopkins/metaengine.cpp:209 engines/lure/metaengine.cpp:169
+#: engines/made/metaengine.cpp:103 engines/mads/metaengine.cpp:275
+#: engines/stark/metaengine.cpp:185 engines/tinsel/metaengine.cpp:240
+#: engines/trecision/metaengine.cpp:121
 #, fuzzy
 #| msgid "Game Options"
 msgid "Game keymappings"
@@ -6011,19 +5963,25 @@ msgstr "게임 옵션"
 msgid "Yes/No keymapping"
 msgstr "게임 옵션"
 
-#: engines/agos/metaengine.cpp:232 engines/cine/metaengine.cpp:265
-#: engines/groovie/metaengine.cpp:205 engines/lure/metaengine.cpp:177
-#: engines/made/metaengine.cpp:107 engines/mads/metaengine.cpp:280
-#: engines/saga/metaengine.cpp:278 engines/trecision/metaengine.cpp:125
+#: engines/agos/metaengine.cpp:232 engines/cge/metaengine.cpp:203
+#: engines/cge2/metaengine.cpp:216 engines/cine/metaengine.cpp:265
+#: engines/groovie/metaengine.cpp:205 engines/hopkins/metaengine.cpp:213
+#: engines/lure/metaengine.cpp:177 engines/made/metaengine.cpp:107
+#: engines/mads/metaengine.cpp:280 engines/saga/metaengine.cpp:278
+#: engines/stark/metaengine.cpp:189 engines/tinsel/metaengine.cpp:245
+#: engines/trecision/metaengine.cpp:125
 #, fuzzy
 #| msgid "Left Click"
 msgid "Left click"
 msgstr "왼쪽 클릭"
 
-#: engines/agos/metaengine.cpp:238 engines/cine/metaengine.cpp:271
-#: engines/groovie/metaengine.cpp:211 engines/lure/metaengine.cpp:183
-#: engines/made/metaengine.cpp:114 engines/mads/metaengine.cpp:286
-#: engines/saga/metaengine.cpp:289 engines/trecision/metaengine.cpp:131
+#: engines/agos/metaengine.cpp:238 engines/cge/metaengine.cpp:209
+#: engines/cge2/metaengine.cpp:222 engines/cine/metaengine.cpp:271
+#: engines/groovie/metaengine.cpp:211 engines/hopkins/metaengine.cpp:219
+#: engines/lure/metaengine.cpp:183 engines/made/metaengine.cpp:114
+#: engines/mads/metaengine.cpp:286 engines/saga/metaengine.cpp:289
+#: engines/stark/metaengine.cpp:195 engines/tinsel/metaengine.cpp:251
+#: engines/trecision/metaengine.cpp:131
 #, fuzzy
 #| msgid "Right Click"
 msgid "Right click"
@@ -6035,19 +5993,17 @@ msgstr "오른쪽 클릭"
 msgid "Exit cutscene"
 msgstr "컷씬을 건너뜀"
 
-#: engines/agos/metaengine.cpp:257 engines/vcruise/metaengine.cpp:187
+#: engines/agos/metaengine.cpp:257 engines/vcruise/metaengine.cpp:198
 #, fuzzy
 #| msgid "Music volume up / down"
 msgid "Music volume down"
 msgstr "음악 볼륨을 높임 / 줄임"
 
-#: engines/agos/metaengine.cpp:262 engines/vcruise/metaengine.cpp:192
-#, fuzzy
-#| msgid "Music volume: "
+#: engines/agos/metaengine.cpp:262 engines/vcruise/metaengine.cpp:203
 msgid "Music volume up"
-msgstr "음악 볼륨: "
+msgstr "음악 볼륨 높이기"
 
-#: engines/agos/metaengine.cpp:268 engines/vcruise/metaengine.cpp:177
+#: engines/agos/metaengine.cpp:268 engines/vcruise/metaengine.cpp:188
 #, fuzzy
 #| msgid "Toggle fullscreen"
 msgid "Toggle music on/off"
@@ -6126,10 +6082,8 @@ msgstr "효과음 볼륨"
 
 #. I18N: Characters are game actors
 #: engines/agos/metaengine.cpp:347
-#, fuzzy
-#| msgid "Switching characters:"
 msgid "Switch characters"
-msgstr "캐릭터 전환:"
+msgstr "캐릭터 전환"
 
 #: engines/agos/metaengine.cpp:353
 #, fuzzy
@@ -6166,40 +6120,33 @@ msgid ""
 "General MIDI ones. It is still possible that\n"
 "some tracks sound incorrect."
 msgstr ""
-"General MIDI 장치를 사용하시는 것으로 보입니다.\n"
-"하지만 이 게임은 Roland MT32 MIDI만 지원합니다.\n"
-"Roland MT32 악기를 General MIDI로 변환하는 경우\n"
-"일부 음악이 올바르지 않게 들릴 수 있습니다."
+"일반 미디 장치를 사용하는 것 같지만,\n"
+"게임은 롤랜드 MT32 미디만 지원합니다.\n"
+"롤랜드 MT32 악기를 일반 미디 악기에\n"
+"매핑하려고 합니다. 일부 트랙이 잘못\n"
+"들릴 가능성도 있습니다."
 
 #: engines/agos/midi.cpp:316
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s. Without this file,\n"
 "the music will not sound the same as the original game."
 msgstr ""
-"%s 및 %s AdLib 기기 정의 파일을 찾을 수 없습니다.\n"
+"AdLib 악기 정의 파일 %s을(를) 찾을 수 없습니다.\n"
 "이 파일들이 없다면,\n"
-"음악은 원래의 게임과 똑같이 들리지 않을 것이다."
+"음악이 원래 게임과 같은 소리가 나지 않습니다."
 
 #: engines/agos/midi.cpp:374
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s. Without this file,\n"
 "the sound effects will not sound the same as the original game."
 msgstr ""
-"%s 및 %s AdLib 기기 정의 파일을 찾을 수 없습니다.\n"
+"AdLib 악기 정의 파일 %s을(를) 찾을 수 없습니다.\n"
 "이 파일들이 없다면,\n"
-"음악은 원래의 게임과 똑같이 들리지 않을 것이다."
+"사운드 효과가 원래 게임과 동일하게 들리지 않습니다."
 
 #: engines/agos/midi.cpp:453
 #, fuzzy, c-format
@@ -6326,14 +6273,14 @@ msgstr "인벤토리 열기/닫기"
 #. I18N: Move Actor to upwards direction
 #: engines/asylum/metaengine.cpp:171 engines/asylum/metaengine.cpp:198
 #: engines/cine/metaengine.cpp:365 engines/hdb/metaengine.cpp:213
-#: engines/nancy/input.cpp:195
+#: engines/nancy/input.cpp:195 engines/tinsel/metaengine.cpp:262
 msgid "Move up"
 msgstr "위로 이동"
 
 #. I18N: Move Actor to downwards direction
 #: engines/asylum/metaengine.cpp:177 engines/asylum/metaengine.cpp:205
 #: engines/cine/metaengine.cpp:372 engines/hdb/metaengine.cpp:219
-#: engines/nancy/input.cpp:201
+#: engines/nancy/input.cpp:201 engines/tinsel/metaengine.cpp:268
 msgid "Move down"
 msgstr "아래로 이동"
 
@@ -6342,6 +6289,7 @@ msgstr "아래로 이동"
 #: engines/asylum/metaengine.cpp:183 engines/asylum/metaengine.cpp:212
 #: engines/cine/metaengine.cpp:379 engines/hdb/metaengine.cpp:225
 #: engines/lure/metaengine.cpp:218 engines/nancy/input.cpp:207
+#: engines/tinsel/metaengine.cpp:274
 msgid "Move left"
 msgstr "왼쪽으로 이동"
 
@@ -6350,6 +6298,7 @@ msgstr "왼쪽으로 이동"
 #: engines/asylum/metaengine.cpp:189 engines/asylum/metaengine.cpp:219
 #: engines/cine/metaengine.cpp:386 engines/hdb/metaengine.cpp:231
 #: engines/lure/metaengine.cpp:226 engines/nancy/input.cpp:213
+#: engines/tinsel/metaengine.cpp:280
 msgid "Move right"
 msgstr "오른쪽으로 이동"
 
@@ -6412,15 +6361,15 @@ msgstr ""
 msgid "General Keys"
 msgstr "일반"
 
-#: engines/bladerunner/bladerunner.cpp:404
+#: engines/bladerunner/bladerunner.cpp:405
 msgid "Failed to initialize resources"
 msgstr "리소스 초기화 실패"
 
-#: engines/bladerunner/bladerunner.cpp:1168
+#: engines/bladerunner/bladerunner.cpp:1177
 msgid "A required game resource was not found"
 msgstr "필요한 게임 리소스를 찾을 수 없습니다"
 
-#: engines/bladerunner/bladerunner.cpp:2755
+#: engines/bladerunner/bladerunner.cpp:2764
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -6430,7 +6379,7 @@ msgstr ""
 "Original Content 모드로 플레이 중입니다. 게임을 완전히 종료하기 전까지 "
 "Restored Cut Content 모드가 활성화됩니다."
 
-#: engines/bladerunner/bladerunner.cpp:2757
+#: engines/bladerunner/bladerunner.cpp:2766
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -6440,7 +6389,7 @@ msgstr ""
 "Cut Content 모드로 플레이 중입니다. 게임을 완전히 종료하기 전까지 Original "
 "Content 모드가 활성화됩니다."
 
-#: engines/bladerunner/bladerunner.cpp:2759
+#: engines/bladerunner/bladerunner.cpp:2768
 msgid "Continue"
 msgstr "계속"
 
@@ -6453,71 +6402,6 @@ msgid ""
 "The fan translator does not wish his translation to be incorporated into "
 "ScummVM."
 msgstr "패치 제작자가 번역물이 ScummVM에서 구동되길 원하지 않습니다."
-
-#: engines/bladerunner/detection_tables.h:123 engines/cge/detection.cpp:54
-#: engines/cge/detection.cpp:60 engines/cge/detection.cpp:66
-#: engines/gob/detection/tables_adi5.h:43
-#: engines/gob/detection/tables_adi5.h:57
-#: engines/gob/detection/tables_adi5.h:74
-#: engines/gob/detection/tables_adi5.h:88
-#: engines/gob/detection/tables_adi5.h:102
-#: engines/gob/detection/tables_adi5.h:119
-#: engines/gob/detection/tables_adibou3.h:42
-#: engines/gob/detection/tables_adibou3.h:55
-#: engines/gob/detection/tables_adibou3.h:68
-#: engines/gob/detection/tables_adibou3.h:85
-#: engines/gob/detection/tables_adibou3.h:100
-#: engines/gob/detection/tables_adibou3.h:115
-#: engines/gob/detection/tables_adibou3.h:129
-#: engines/gob/detection/tables_adibou3.h:143
-#: engines/gob/detection/tables_adibou3.h:160
-#: engines/gob/detection/tables_adibou3.h:174
-#: engines/gob/detection/tables_adibou3.h:191
-#: engines/gob/detection/tables_adibou3.h:208
-#: engines/gob/detection/tables_adibou3.h:222
-#: engines/gob/detection/tables_adibou3.h:236
-#: engines/gob/detection/tables_adiboupresente.h:41
-#: engines/gob/detection/tables_adiboupresente.h:57
-#: engines/gob/detection/tables_adiboupresente.h:73
-#: engines/gob/detection/tables_adiboudchou.h:42
-#: engines/gob/detection/tables_adiboudchou.h:58
-#: engines/gob/detection/tables_adiboudchou.h:72
-#: engines/gob/detection/tables_adiboudchou.h:85
-#: engines/gob/detection/tables_adiboudchou.h:98
-#: engines/gob/detection/tables_pierresmagiques.h:42
-#: engines/groovie/detection.cpp:100 engines/lure/detection.cpp:229
-#: engines/mohawk/detection_tables.h:768 engines/mohawk/detection_tables.h:783
-#: engines/mohawk/detection_tables.h:798 engines/mohawk/detection_tables.h:812
-#: engines/mohawk/detection_tables.h:826 engines/mohawk/detection_tables.h:840
-#: engines/mohawk/detection_tables.h:854 engines/mohawk/detection_tables.h:868
-#: engines/mohawk/detection_tables.h:882 engines/mohawk/detection_tables.h:897
-#: engines/mohawk/detection_tables.h:912 engines/mohawk/detection_tables.h:927
-#: engines/mohawk/detection_tables.h:941 engines/mohawk/detection_tables.h:956
-#: engines/mohawk/detection_tables.h:973 engines/mohawk/detection_tables.h:991
-#: engines/mohawk/detection_tables.h:1005
-#: engines/mohawk/detection_tables.h:1019
-#: engines/mohawk/detection_tables.h:1036
-#: engines/mohawk/detection_tables.h:1054
-#: engines/mohawk/detection_tables.h:1071
-#: engines/mohawk/detection_tables.h:1351
-#: engines/mohawk/detection_tables.h:1367
-#: engines/mohawk/detection_tables.h:1382
-#: engines/mohawk/detection_tables.h:1428
-#: engines/mohawk/detection_tables.h:1550
-#: engines/mohawk/detection_tables.h:1565
-#: engines/mohawk/detection_tables.h:1580
-#: engines/mohawk/detection_tables.h:1598
-#: engines/mohawk/detection_tables.h:1613
-#: engines/mohawk/detection_tables.h:2662
-#: engines/mohawk/detection_tables.h:2677
-#: engines/mohawk/detection_tables.h:3797
-#: engines/mohawk/detection_tables.h:3812 engines/myst3/detection.cpp:142
-#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5358
-#: engines/sci/detection_tables.h:5366 engines/stark/detection.cpp:319
-#: engines/teenagent/detection.cpp:117 engines/toltecs/detection.cpp:210
-#: engines/trecision/detection.cpp:201 engines/zvision/detection_tables.h:129
-msgid "Missing game code"
-msgstr "게임 코드 없음"
 
 #. I18N: Blade Runner Enhanced Edition is a trademark, so please keep the capitalization
 #. for Enhanced Edition as is.
@@ -6627,7 +6511,7 @@ msgstr "전투 전환"
 
 #. I18N: This keymap allows skipping video cutscenes
 #: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
-#: engines/scumm/metaengine.cpp:901 engines/twp/metaengine.cpp:162
+#: engines/scumm/metaengine.cpp:929 engines/twp/metaengine.cpp:162
 #: engines/zvision/metaengine.cpp:284
 msgid "Skip cutscene"
 msgstr "컷씬을 건너뜀"
@@ -6684,7 +6568,9 @@ msgstr "음소거 전환"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SAVE GAME
-#: engines/bladerunner/metaengine.cpp:330 engines/cge2/metaengine.cpp:221
+#: engines/bladerunner/metaengine.cpp:330
+#: engines/freescape/games/dark/dark.cpp:183
+#: engines/freescape/games/driller/driller.cpp:121
 #: engines/pegasus/pegasus.cpp:2825
 msgid "Save Game"
 msgstr "게임 저장"
@@ -6693,7 +6579,9 @@ msgstr "게임 저장"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. LOAD GAME
-#: engines/bladerunner/metaengine.cpp:339 engines/cge2/metaengine.cpp:226
+#: engines/bladerunner/metaengine.cpp:339
+#: engines/freescape/games/dark/dark.cpp:188
+#: engines/freescape/games/driller/driller.cpp:126
 #: engines/pegasus/pegasus.cpp:2831
 msgid "Load Game"
 msgstr "게임 불러오기"
@@ -6727,6 +6615,8 @@ msgstr "단서 데이터베이스"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. QUIT GAME
 #: engines/bladerunner/metaengine.cpp:375 engines/dragons/metaengine.cpp:224
+#: engines/freescape/games/dark/dark.cpp:193
+#: engines/freescape/games/driller/driller.cpp:131
 msgid "Quit Game"
 msgstr "게임 종료"
 
@@ -6796,8 +6686,33 @@ msgstr "TTS를 사용하여 게임 텍스트 읽기 (TTS를 사용할 수 있는
 msgid "Game Keymappings"
 msgstr "게임 옵션"
 
+#: engines/cge/metaengine.cpp:215 engines/hopkins/metaengine.cpp:225
+#, fuzzy
+#| msgid "Skip"
+msgid "Exit/Skip"
+msgstr "건너뛰기"
+
+#: engines/cge/metaengine.cpp:221 engines/cge2/metaengine.cpp:235
+#: engines/hopkins/metaengine.cpp:238 engines/lure/metaengine.cpp:191
+#: engines/made/metaengine.cpp:162 engines/mads/metaengine.cpp:305
+#: engines/saga/metaengine.cpp:441 engines/stark/metaengine.cpp:208
+#: engines/trecision/metaengine.cpp:169 engines/vcruise/metaengine.cpp:162
+#: engines/wintermute/keymapper_tables.h:920
+msgid "Save game"
+msgstr "게임 저장"
+
+#: engines/cge/metaengine.cpp:227 engines/cge2/metaengine.cpp:241
+#: engines/hopkins/metaengine.cpp:244 engines/made/metaengine.cpp:168
+#: engines/mohawk/myst_stacks/menu.cpp:283
+#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/saga/metaengine.cpp:431
+#: engines/stark/metaengine.cpp:213 engines/trecision/metaengine.cpp:175
+#: engines/vcruise/metaengine.cpp:167 engines/wintermute/keymapper_tables.h:925
+#: engines/wintermute/keymapper_tables.h:1265
+msgid "Load game"
+msgstr "게임 불러오기"
+
 #. I18N: 3-4 dialogs of game version info, (translation) credits, etc.
-#: engines/cge/metaengine.cpp:204 engines/cge2/metaengine.cpp:216
+#: engines/cge/metaengine.cpp:234 engines/cge2/metaengine.cpp:248
 #, fuzzy
 #| msgid "Game menu"
 msgid "Game Info"
@@ -6805,7 +6720,7 @@ msgstr "게임 메뉴"
 
 #. I18N: This opens a Quit Prompt where you have to choose
 #. [Confirm] or [Continue Playing] lines with Left Click.
-#: engines/cge/metaengine.cpp:211 engines/cge2/metaengine.cpp:233
+#: engines/cge/metaengine.cpp:242 engines/cge2/metaengine.cpp:256
 #, fuzzy
 #| msgid "Quit Game"
 msgid "Quit Prompt"
@@ -6813,66 +6728,66 @@ msgstr "게임 종료"
 
 #. I18N: Here ALTered Item refers to the dice that has been altered/changed.
 #. In order to escape the dice game loop press Right/Left Alt
-#: engines/cge/metaengine.cpp:218
+#: engines/cge/metaengine.cpp:250
 msgid "ALTered Item"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:224
+#: engines/cge/metaengine.cpp:257
 msgid "Inventory Item 1 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:229
+#: engines/cge/metaengine.cpp:262
 msgid "Inventory Item 2 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:234
+#: engines/cge/metaengine.cpp:267
 msgid "Inventory Item 3 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:239
+#: engines/cge/metaengine.cpp:272
 msgid "Inventory Item 4 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:244
+#: engines/cge/metaengine.cpp:277
 msgid "Inventory Item 5 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:249
+#: engines/cge/metaengine.cpp:282
 msgid "Inventory Item 6 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:254
+#: engines/cge/metaengine.cpp:287
 msgid "Inventory Item 7 (Select/Deselect)"
 msgstr ""
 
-#: engines/cge/metaengine.cpp:259
+#: engines/cge/metaengine.cpp:292
 msgid "Inventory Item 8 (Select/Deselect)"
 msgstr ""
 
 #. I18N: There are 24 single-room/screen locations in the game.
 #. You switch between them from numbered buttons on interface.
 #. Sets the current access to only the first Location
-#: engines/cge/metaengine.cpp:267
+#: engines/cge/metaengine.cpp:300
 msgid "DEBUG: Access to Location 1"
 msgstr ""
 
 #. I18N: Sets the current access to Locations 1 to 8.
-#: engines/cge/metaengine.cpp:273
+#: engines/cge/metaengine.cpp:306
 msgid "DEBUG: Access to Locations 1-8"
 msgstr ""
 
 #. I18N: Sets the current access to Locations 1 to 16.
-#: engines/cge/metaengine.cpp:279
+#: engines/cge/metaengine.cpp:312
 msgid "DEBUG: Access to Locations 1-16"
 msgstr ""
 
 #. I18N: Sets the current access to Locations 1 to 23.
-#: engines/cge/metaengine.cpp:285
+#: engines/cge/metaengine.cpp:318
 msgid "DEBUG: Access to Locations 1-23"
 msgstr ""
 
 #. I18N: Sets the current access to Locations 1 to 24.
-#: engines/cge/metaengine.cpp:291
+#: engines/cge/metaengine.cpp:324
 msgid "DEBUG: Access to Locations 1-24"
 msgstr ""
 
@@ -6885,7 +6800,7 @@ msgstr "물체, 옵션 및 성경 인용문에 대해 TTS를 활성화"
 #: engines/griffon/metaengine.cpp:41 engines/lure/metaengine.cpp:54
 #: engines/mads/metaengine.cpp:125 engines/sci/detection_options.h:224
 #: engines/sherlock/metaengine.cpp:113 engines/supernova/metaengine.cpp:50
-#: engines/twine/metaengine.cpp:157
+#: engines/twine/metaengine.cpp:146
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr "TTS를 사용하여 설명 읽기 (TTS를 사용할 수있는 경우)"
 
@@ -6898,7 +6813,7 @@ msgid "Use TTS to read the subtitles (if TTS is available)"
 msgstr "TTS를 사용하여 자막 읽기 (TTS를 사용할 수있는 경우)"
 
 #. I18N: This closes the Dialogue/text box.
-#: engines/cge2/metaengine.cpp:245
+#: engines/cge2/metaengine.cpp:229
 #, fuzzy
 #| msgid "Close"
 msgid "Close the Dialogue box"
@@ -6928,8 +6843,9 @@ msgstr "제목 없음"
 msgid "Empty autosave"
 msgstr "비어있는 자동 저장"
 
-#: engines/cine/metaengine.cpp:258 engines/lure/metaengine.cpp:168
-#: engines/made/metaengine.cpp:102 engines/mads/metaengine.cpp:274
+#: engines/cine/metaengine.cpp:258 engines/hopkins/metaengine.cpp:208
+#: engines/lure/metaengine.cpp:168 engines/made/metaengine.cpp:102
+#: engines/mads/metaengine.cpp:274 engines/tinsel/metaengine.cpp:239
 #: engines/trecision/metaengine.cpp:120
 #, fuzzy
 #| msgid "Default game keymap"
@@ -6982,7 +6898,7 @@ msgstr "게임 크레딧 표시"
 msgid "Faster game speed"
 msgstr "동영상 빠르게 재생"
 
-#: engines/cine/metaengine.cpp:315 engines/grim/grim.cpp:498
+#: engines/cine/metaengine.cpp:315 engines/grim/grim.cpp:506
 #: engines/hpl1/metaengine.cpp:90 engines/scumm/help.cpp:243
 #: engines/scumm/help.cpp:251
 msgid "Examine"
@@ -6997,11 +6913,12 @@ msgstr "벗기"
 #. I18N: Action in In Cold Blood
 #: engines/cine/metaengine.cpp:325 engines/crab/input/input.cpp:251
 #: engines/dragons/metaengine.cpp:148 engines/griffon/metaengine.cpp:152
-#: engines/grim/grim.cpp:513 engines/grim/grim.cpp:609
+#: engines/grim/grim.cpp:521 engines/grim/grim.cpp:617
 #: engines/hdb/metaengine.cpp:251 engines/hpl1/metaengine.cpp:94
 #: engines/icb/icb.cpp:101 engines/icb/icb.cpp:179 engines/scumm/help.cpp:229
 #: engines/scumm/help.cpp:238 engines/scumm/help.cpp:245
-#: engines/scumm/help.cpp:253 engines/twine/metaengine.cpp:418
+#: engines/scumm/help.cpp:253 engines/stark/metaengine.cpp:267
+#: engines/tinsel/metaengine.cpp:312 engines/twine/metaengine.cpp:407
 #: engines/zvision/metaengine.cpp:232
 msgid "Inventory"
 msgstr "인벤토리"
@@ -7100,7 +7017,7 @@ msgstr "상호작용"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/crab/input/input.cpp:125 engines/griffon/metaengine.cpp:145
-#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:888
+#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:916
 msgid "Attack"
 msgstr "공격"
 
@@ -7111,7 +7028,7 @@ msgstr "공격"
 msgid "Block"
 msgstr "잠금 해제"
 
-#: engines/crab/input/input.cpp:169 engines/twine/metaengine.cpp:449
+#: engines/crab/input/input.cpp:169 engines/twine/metaengine.cpp:451
 msgid "Accept"
 msgstr "확인"
 
@@ -7145,7 +7062,7 @@ msgstr ""
 msgid "Reply 6"
 msgstr ""
 
-#: engines/crab/input/input.cpp:221 engines/twine/metaengine.cpp:495
+#: engines/crab/input/input.cpp:221 engines/twine/metaengine.cpp:497
 msgid "Next Page"
 msgstr "다음 페이지"
 
@@ -7192,20 +7109,20 @@ msgid ""
 msgstr "이대로 진행하면 게임이 종료됩니다. 계속하시겠습니까?"
 
 #: engines/dragons/dragons.cpp:1884
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error: The file '%s' hasn't been extracted properly.\n"
 "Please refer to the wiki page\n"
 "%s for details on how to properly extract the DTSPEECH.XA and *.STR files "
 "from your game disc."
 msgstr ""
-"오류: '%s' 파일이 올바르게 추출되지 않았습니다.\n"
-"다음의 위키 페이지\n"
-"https://wiki.scummvm.org/index.php?title=HOWTO-PlayStation_Videos 를 참조하"
-"여 DTSPEECH.XA와 *.STR 파일을 게임 디스크에서 추출하는 방법을 확인하십시오."
+"오류: 파일 '%s' 파일이 제대로 추출되지 않았습니다.\n"
+"게임 디스크에서 DTSPEECH.XA 및 *.STR 파일을 올바르게 추출하는 방법에 대한 "
+"자세한 내용은\n"
+"위키 페이지 %s을(를) 참조하세요."
 
 #: engines/dragons/metaengine.cpp:121
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error: It appears that the game data files were extracted incorrectly.\n"
 "\n"
@@ -7216,12 +7133,14 @@ msgid ""
 msgstr ""
 "오류: 게임 데이터 파일이 잘못 추출된 것 같습니다.\n"
 "\n"
-"특별한 방법을 사용하여 STR 및 XA 파일만 추출해야합니다. 나머지는 게임 CD에서 "
-"정상적으로 복사해야합니다.\n"
+"STR 및 XA 파일만 특수 방법을 사용하여 추출해야 합니다. 나머지는 게임 CD에서 "
+"정상적으로 복사해야 합니다.\n"
 "\n"
-" https://wiki.scummvm.org/index.php?title=Datafiles#Blazing_Dragons 참조"
+" %s 참조"
 
-#: engines/dragons/metaengine.cpp:136 engines/twp/metaengine.cpp:150
+#. I18N: Perform action on object where cursor points
+#: engines/dragons/metaengine.cpp:136 engines/tinsel/metaengine.cpp:293
+#: engines/twp/metaengine.cpp:150
 msgid "Action"
 msgstr "액션"
 
@@ -7262,95 +7181,95 @@ msgstr "게임 그래픽을 밝은 팔레트로 표시"
 msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgstr "물체, 옵션 및 성경 인용문에 대해 TTS를 활성화"
 
-#: engines/freescape/metaengine.cpp:40
+#: engines/freescape/metaengine.cpp:42
 msgid "Prerecorded sounds"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:41
+#: engines/freescape/metaengine.cpp:43
 msgid "Use high-quality pre-recorded sounds instead of pc speaker emulation"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:51
+#: engines/freescape/metaengine.cpp:53
 msgid "Extended timer"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:52
+#: engines/freescape/metaengine.cpp:54
 msgid "Start the game timer at 99:59:59"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:62
+#: engines/freescape/metaengine.cpp:64
 msgid "Automatic drilling"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:63
+#: engines/freescape/metaengine.cpp:65
 msgid "Allow to succefully drill in any part of the area in Driller"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:73
+#: engines/freescape/metaengine.cpp:75
 #, fuzzy
 msgid "Disable demo mode"
 msgstr "디버그 모드 사용"
 
-#: engines/freescape/metaengine.cpp:74
+#: engines/freescape/metaengine.cpp:76
 msgid "Never activate demo mode"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:84
+#: engines/freescape/metaengine.cpp:86
 #, fuzzy
 msgid "Disable sensors"
 msgstr "저장 메뉴 비활성화"
 
-#: engines/freescape/metaengine.cpp:85
+#: engines/freescape/metaengine.cpp:87
 msgid "Sensors will not shoot the player"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:95
+#: engines/freescape/metaengine.cpp:97
 #, fuzzy
 msgid "Disable falling"
 msgstr "저장 메뉴 비활성화"
 
-#: engines/freescape/metaengine.cpp:96
+#: engines/freescape/metaengine.cpp:98
 msgid "Player cannot fall over edges"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:106
+#: engines/freescape/metaengine.cpp:108
 msgid "Invert Y-axis on mouse"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:107
+#: engines/freescape/metaengine.cpp:109
 #, fuzzy
 #| msgid "Use an alternative palette"
 msgid "Use alternative camera controls"
 msgstr "대체 팔레트 사용"
 
-#: engines/freescape/metaengine.cpp:117
+#: engines/freescape/metaengine.cpp:119
 #, fuzzy
 #| msgid "Filter graphics"
 msgid "Authentic graphics"
 msgstr "그래픽 필터"
 
-#: engines/freescape/metaengine.cpp:118
+#: engines/freescape/metaengine.cpp:120
 msgid "Keep graphics as close as possible to the original"
 msgstr ""
 
-#: engines/freescape/metaengine.cpp:128
+#: engines/freescape/metaengine.cpp:130
 #, fuzzy
 #| msgid "Enable storage"
 msgid "Enable rock travel"
 msgstr "스토리지 활성화"
 
-#: engines/freescape/metaengine.cpp:129
+#: engines/freescape/metaengine.cpp:131
 msgid "Enable traveling using a rock shoot at start"
 msgstr ""
 
-#: engines/freescape/movement.cpp:47 engines/hpl1/metaengine.cpp:78
+#: engines/freescape/movement.cpp:49 engines/hpl1/metaengine.cpp:78
 #: engines/mm/mm1/metaengine.cpp:99
 #, fuzzy
 #| msgid "Slide Left"
 msgid "Strafe Left"
 msgstr "왼쪽으로"
 
-#: engines/freescape/movement.cpp:53 engines/hpl1/metaengine.cpp:79
+#: engines/freescape/movement.cpp:56 engines/hpl1/metaengine.cpp:79
 #: engines/mm/mm1/metaengine.cpp:100
 #, fuzzy
 #| msgid "Slide Right"
@@ -7358,55 +7277,106 @@ msgid "Strafe Right"
 msgstr "오른쪽으로"
 
 #. I18N: Combat command in Might & Magic 1
-#: engines/freescape/movement.cpp:59 engines/mm/mm1/metaengine.cpp:79
+#: engines/freescape/movement.cpp:63 engines/mm/mm1/metaengine.cpp:79
 msgid "Shoot"
 msgstr ""
 
-#: engines/freescape/movement.cpp:65
-msgid "Rise/Fly up"
-msgstr ""
-
-#: engines/freescape/movement.cpp:71
+#: engines/freescape/movement.cpp:72
 #, fuzzy
-#| msgid "Fly down"
-msgid "Lower/Fly down"
-msgstr "아래로 비행"
+#| msgid "Rotate"
+msgid "Rotate up"
+msgstr "회전"
 
 #: engines/freescape/movement.cpp:77
+#, fuzzy
+#| msgid "Rotate"
+msgid "Rotate down"
+msgstr "회전"
+
+#. I18N: Toggles between cursor lock modes, switching between free cursor movement and camera/head movement.
+#: engines/freescape/movement.cpp:90
 #, fuzzy
 #| msgid "Change Command"
 msgid "Change mode"
 msgstr "변경 명령"
 
-#: engines/freescape/movement.cpp:83
-#, fuzzy
-#| msgid "Slide Left"
-msgid "Rotate Left"
-msgstr "왼쪽으로"
+#. I18N: ESC key
+#: engines/freescape/movement.cpp:96 engines/lure/metaengine.cpp:209
+#: engines/mads/metaengine.cpp:292 engines/mm/mm1/metaengine.cpp:41
+#: engines/mm/mm1/metaengine.cpp:47 engines/saga/metaengine.cpp:328
+#: engines/tinsel/metaengine.cpp:257 engines/twine/metaengine.cpp:425
+#: engines/wintermute/keymapper_tables.h:60
+msgid "Escape"
+msgstr "탈출"
 
-#: engines/freescape/movement.cpp:88
-#, fuzzy
-#| msgid "Slide Right"
-msgid "Rotate Right"
-msgstr "오른쪽으로"
-
-#: engines/freescape/movement.cpp:93
+#: engines/freescape/movement.cpp:101
 #, fuzzy
 #| msgid "Menu"
 msgid "Info Menu"
 msgstr "메뉴"
 
-#: engines/freescape/games/dark/dark.cpp:164
+#: engines/freescape/games/dark/dark.cpp:203
+#: engines/freescape/games/driller/driller.cpp:139
+#, fuzzy
+#| msgid "Toggle mute"
+msgid "Toggle Sound"
+msgstr "음소거 전환"
+
+#: engines/freescape/games/dark/dark.cpp:209
+#: engines/freescape/games/driller/driller.cpp:145
+#, fuzzy
+#| msgid "Slide Left"
+msgid "Rotate Left"
+msgstr "왼쪽으로"
+
+#: engines/freescape/games/dark/dark.cpp:214
+#: engines/freescape/games/driller/driller.cpp:150
+#, fuzzy
+#| msgid "Slide Right"
+msgid "Rotate Right"
+msgstr "오른쪽으로"
+
+#. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
+#: engines/freescape/games/dark/dark.cpp:220
+#: engines/freescape/games/driller/driller.cpp:156
+#, fuzzy
+#| msgid "Increase the scale factor"
+msgid "Increase Step Size"
+msgstr "확대 비율 증가"
+
+#. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
+#: engines/freescape/games/dark/dark.cpp:226
+#: engines/freescape/games/driller/driller.cpp:162
+#, fuzzy
+#| msgid "Decrease the scale factor"
+msgid "Decrease Step Size"
+msgstr "확대 비율 감소"
+
+#: engines/freescape/games/dark/dark.cpp:231
+#: engines/freescape/games/driller/driller.cpp:167
+msgid "Rise/Fly up"
+msgstr ""
+
+#: engines/freescape/games/dark/dark.cpp:237
+#: engines/freescape/games/driller/driller.cpp:173
+#, fuzzy
+#| msgid "Fly down"
+msgid "Lower/Fly down"
+msgstr "아래로 비행"
+
+#: engines/freescape/games/dark/dark.cpp:243
 msgid "Enable/Disable Jetpack"
 msgstr ""
 
-#: engines/freescape/games/driller/driller.cpp:105
+#. I18N: drilling rig is an in game item
+#: engines/freescape/games/driller/driller.cpp:180
 #, fuzzy
 #| msgid "Debug Apply Celling Grid"
 msgid "Deploy drilling rig"
 msgstr "셀 그리드를 적용"
 
-#: engines/freescape/games/driller/driller.cpp:111
+#. I18N: drilling rig is an in game item
+#: engines/freescape/games/driller/driller.cpp:187
 msgid "Collect drilling rig"
 msgstr ""
 
@@ -7545,41 +7515,41 @@ msgstr ""
 "그래도 '%s' 게임을 실행하시겠습니까?"
 
 #. I18N: Action in In Cold Blood
-#: engines/grim/grim.cpp:493 engines/grim/grim.cpp:584
+#: engines/grim/grim.cpp:501 engines/grim/grim.cpp:592
 #: engines/hpl1/metaengine.cpp:82 engines/icb/icb.cpp:131
 #: engines/icb/icb.cpp:197
 msgid "Run"
 msgstr "달리기"
 
-#: engines/grim/grim.cpp:503 engines/grim/grim.cpp:599
+#: engines/grim/grim.cpp:511 engines/grim/grim.cpp:607
 msgid "Use/Talk"
 msgstr "사용/대화"
 
-#: engines/grim/grim.cpp:508 engines/grim/grim.cpp:604
+#: engines/grim/grim.cpp:516 engines/grim/grim.cpp:612
 msgid "Pick up/Put away"
 msgstr "줍기/내려놓기"
 
-#: engines/grim/grim.cpp:518 engines/grim/grim.cpp:614
+#: engines/grim/grim.cpp:526 engines/grim/grim.cpp:622
 msgid "Skip dialog lines"
 msgstr "대사 건너뛰기"
 
-#: engines/grim/grim.cpp:574
+#: engines/grim/grim.cpp:582
 msgid "Cycle Objects Up"
 msgstr "개체 위로 전환"
 
-#: engines/grim/grim.cpp:579
+#: engines/grim/grim.cpp:587
 msgid "Cycle Objects Down"
 msgstr "개체 아래로 전환"
 
-#: engines/grim/grim.cpp:589
+#: engines/grim/grim.cpp:597
 msgid "Quick Room Exit"
 msgstr "빠른 방 나가기"
 
-#: engines/grim/grim.cpp:594
+#: engines/grim/grim.cpp:602
 msgid "Examine/Look"
 msgstr "조사하기/보기"
 
-#: engines/grim/grim.cpp:1370
+#: engines/grim/grim.cpp:1378
 msgid "Error: the game could not be saved."
 msgstr "오류: 게임을 저장하지 못함."
 
@@ -7602,16 +7572,15 @@ msgstr ""
 "%s"
 
 #: engines/grim/md5check.cpp:613
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Could not open the file %s for checking.\n"
 "It may be missing or you may not have the rights to open it.\n"
 "Go to %s to see a list of the needed files."
 msgstr ""
-"'%s' 파일을 검사하기 위해 열 수 없습니다.\n"
-"파일이 없거나, 파일에 접근한 권한이 없을 수 있습니다.\n"
-"https://wiki.scummvm.org/index.php/Datafiles 에서 필요한 파일을 확인할 수 있"
-"습니다."
+"%s 파일을 열 수 없습니다.\n"
+"파일이 없거나 열 권한이 없을 수 있습니다.\n"
+"%s로 이동하여 필요한 파일 목록을 확인하세요."
 
 #: engines/grim/md5checkdialog.cpp:41
 msgid ""
@@ -7642,20 +7611,20 @@ msgid "Escape from Monkey Island support is not compiled in"
 msgstr "원숭이섬 탈출 지원이 컴파일 되지 않음"
 
 #: engines/grim/resource.cpp:102
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The original patch of Grim Fandango\n"
 "is missing. Please download it from\n"
 "%s\n"
 "and put it in the game data files directory"
 msgstr ""
-"원본 Grim Fandango 패치를 찾을 수 없습니다.\n"
-"아래의 URL에서 패치를 다운로드하여\n"
-"게임 데이터 디렉토리에 넣어 주세요.\n"
-"https://downloads.scummvm.org/frs/extras/patches/gfupd101.exe"
+"그림 판당고의 원본 패치가 없습니다.\n"
+"다음에서 다운로드하고\n"
+"%s\n"
+"게임 데이터 파일 디렉토리에 넣기"
 
 #: engines/grim/resource.cpp:107
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The original patch of Escape from Monkey Island is missing. \n"
 "Please download it from %s\n"
@@ -7663,10 +7632,10 @@ msgid ""
 "Pay attention to download the correct version according to the game's "
 "language!"
 msgstr ""
-"원본 Grim Fandango 패치를 찾을 수 없습니다.\n"
-"https://downloads.scummvm.org/frs/extras/patches/ 에서\n"
-"패치를 다운로드하여, 게임 데이터 디렉토리에 넣어 주세요.\n"
-"게임의 언어와 맞는 정확한 버전을 다운로드해야 합니다"
+"원숭이 섬의 탈출의 원본 패치가 없습니다.\n"
+"%s에서 다운로드하고\n"
+"게임 데이터 파일 디렉토리에 넣으세요.\n"
+"게임 언어에 맞는 올바른 버전을 다운로드하는 데 주의하세요!"
 
 #: engines/grim/emi/sound/emisound.cpp:655
 msgid ""
@@ -7736,10 +7705,8 @@ msgid "GroovieV2 support is not compiled in"
 msgstr "GroovieV2 지원이 컴파일 되지 않음"
 
 #: engines/groovie/metaengine.cpp:201
-#, fuzzy
-#| msgid "Available engines:"
 msgid "Groovie engine"
-msgstr "사용 가능한 엔진:"
+msgstr "그루비 엔진"
 
 #: engines/groovie/metaengine.cpp:217
 #, fuzzy
@@ -7789,13 +7756,25 @@ msgstr "웨이포인트 지우기"
 msgid "Debug"
 msgstr "디버그"
 
-#: engines/hopkins/metaengine.cpp:43 engines/hopkins/metaengine.cpp:55
+#: engines/hopkins/metaengine.cpp:47 engines/hopkins/metaengine.cpp:59
 msgid "Gore Mode"
 msgstr "고어 모드"
 
-#: engines/hopkins/metaengine.cpp:44 engines/hopkins/metaengine.cpp:56
+#: engines/hopkins/metaengine.cpp:48 engines/hopkins/metaengine.cpp:60
 msgid "Enable Gore Mode when available"
 msgstr "가능한 경우 고어 모드를 활성화합니다"
+
+#: engines/hopkins/metaengine.cpp:231
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Open inventory"
+msgstr "인벤토리 열기/닫기"
+
+#: engines/hopkins/metaengine.cpp:250
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Option dialog"
+msgstr "대사 건너뛰기"
 
 #: engines/hpl1/metaengine.cpp:76
 #, fuzzy
@@ -7847,7 +7826,7 @@ msgstr "고어 모드"
 msgid "Holster"
 msgstr ""
 
-#: engines/hpl1/metaengine.cpp:95
+#: engines/hpl1/metaengine.cpp:95 engines/tinsel/metaengine.cpp:317
 msgid "Notebook"
 msgstr ""
 
@@ -8071,7 +8050,7 @@ msgid "Interact via Right Click"
 msgstr "오른쪽 클릭으로 상호 작용"
 
 #: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:510
-#: engines/twine/metaengine.cpp:380
+#: engines/twine/metaengine.cpp:369
 msgid "Move Forward"
 msgstr "앞으로 이동"
 
@@ -8089,13 +8068,13 @@ msgstr "오른쪽으로 이동"
 
 #: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:514
 #: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2740
-#: engines/twine/metaengine.cpp:401 engines/zvision/metaengine.cpp:209
+#: engines/twine/metaengine.cpp:390 engines/zvision/metaengine.cpp:209
 msgid "Turn Left"
 msgstr "왼쪽으로 회전"
 
 #: engines/kyra/engine/eobcommon.cpp:376 engines/kyra/engine/lol.cpp:515
 #: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2747
-#: engines/twine/metaengine.cpp:394 engines/zvision/metaengine.cpp:215
+#: engines/twine/metaengine.cpp:383 engines/zvision/metaengine.cpp:215
 msgid "Turn Right"
 msgstr "오른쪽으로 회전"
 
@@ -8177,14 +8156,7 @@ msgid "Choose Spell"
 msgstr "주문 선택"
 
 #: engines/kyra/gui/saveload_eob.cpp:601
-#, fuzzy, c-format
-#| msgid ""
-#| "The following original saved game file has been found in your game path:\n"
-#| "\n"
-#| "%s %s\n"
-#| "\n"
-#| "Do you wish to use this saved game file with ScummVM?\n"
-#| "\n"
+#, c-format
 msgid ""
 "The following original saved game file has been found in your game path:\n"
 "\n"
@@ -8193,11 +8165,11 @@ msgid ""
 "Do you wish to use this saved game file with ScummVM?\n"
 "\n"
 msgstr ""
-"다음의 원본 게임 저장 파일이 게임 폴더에서 발견되었습니다:\n"
+"다음의 원본 저장된 게임 파일이 게임 경로에서 발견되었습니다:\n"
 "\n"
-"%s %s\n"
+"%s %S\n"
 "\n"
-"ScummVM에서 게임 저장 파일로 사용하시겠습니까?\n"
+"ScummVM에서 게임 저장 파일로 사용하겠습니까?\n"
 "\n"
 
 #: engines/kyra/gui/saveload_eob.cpp:634
@@ -8304,7 +8276,7 @@ msgid "This puzzle is not available in the trial version of the game"
 msgstr "게임 평가판에서는 현재 퍼즐을 이용할 수 없습니다"
 
 #: engines/lure/metaengine.cpp:53 engines/mads/metaengine.cpp:124
-#: engines/sherlock/metaengine.cpp:112 engines/twine/metaengine.cpp:156
+#: engines/sherlock/metaengine.cpp:112 engines/twine/metaengine.cpp:145
 msgid "TTS Narrator"
 msgstr "TTS 나레이터"
 
@@ -8326,32 +8298,13 @@ msgstr "게임 옵션"
 msgid "Yes/No keymappings"
 msgstr "게임 옵션"
 
-#: engines/lure/metaengine.cpp:191 engines/made/metaengine.cpp:162
-#: engines/mads/metaengine.cpp:305 engines/saga/metaengine.cpp:441
-#: engines/trecision/metaengine.cpp:169 engines/vcruise/metaengine.cpp:151
-#: engines/wintermute/keymapper_tables.h:920
-msgid "Save game"
-msgstr "게임 저장"
-
 #: engines/lure/metaengine.cpp:197 engines/mads/metaengine.cpp:311
-#, fuzzy
-#| msgid "Restore game:"
 msgid "Restore game"
-msgstr "게임 불러오기:"
+msgstr "게임 복원"
 
 #: engines/lure/metaengine.cpp:203
-#, fuzzy
-#| msgid "Restore game:"
 msgid "Restart game"
-msgstr "게임 불러오기:"
-
-#. I18N: ESC key
-#: engines/lure/metaengine.cpp:209 engines/mads/metaengine.cpp:292
-#: engines/mm/mm1/metaengine.cpp:41 engines/mm/mm1/metaengine.cpp:47
-#: engines/saga/metaengine.cpp:328 engines/twine/metaengine.cpp:436
-#: engines/wintermute/keymapper_tables.h:60
-msgid "Escape"
-msgstr "탈출"
+msgstr "게임 재시작"
 
 #. I18N: Shift Cursor during fight to top left
 #: engines/lure/metaengine.cpp:233
@@ -8448,14 +8401,6 @@ msgstr "왼쪽으로 회전"
 msgid "Cursor right"
 msgstr "오른쪽으로 회전"
 
-#: engines/made/metaengine.cpp:168 engines/mohawk/myst_stacks/menu.cpp:283
-#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/saga/metaengine.cpp:431
-#: engines/trecision/metaengine.cpp:175 engines/vcruise/metaengine.cpp:156
-#: engines/wintermute/keymapper_tables.h:925
-#: engines/wintermute/keymapper_tables.h:1265
-msgid "Load game"
-msgstr "게임 불러오기"
-
 #: engines/made/metaengine.cpp:174
 #, fuzzy
 #| msgid "Reload last save"
@@ -8507,16 +8452,12 @@ msgid "Scroll bar down"
 msgstr "아래로 스크롤"
 
 #: engines/mads/metaengine.cpp:331
-#, fuzzy
-#| msgid "Restore game:"
 msgid "Start game"
-msgstr "게임 불러오기:"
+msgstr "게임 시작"
 
 #: engines/mads/metaengine.cpp:337
-#, fuzzy
-#| msgid "Restore game:"
 msgid "Resume game"
-msgstr "게임 불러오기:"
+msgstr "게임 재개"
 
 #: engines/mads/metaengine.cpp:343
 #, fuzzy
@@ -8534,17 +8475,15 @@ msgstr "크레딧 표시"
 msgid "Show quotes"
 msgstr "음성 옵션"
 
-#: engines/mads/metaengine.cpp:361
+#: engines/mads/metaengine.cpp:361 engines/stark/metaengine.cpp:280
 #, fuzzy
 #| msgid "Quit Game"
 msgid "Exit game"
 msgstr "게임 종료"
 
 #: engines/mads/metaengine.cpp:368
-#, fuzzy
-#| msgid "Transitions:"
 msgid "Restart animation"
-msgstr "전환효과:"
+msgstr "애니메이션 재시작"
 
 #: engines/mm/metaengine.cpp:57
 msgid "Show item costs in standard inventory mode"
@@ -8665,10 +8604,8 @@ msgstr ""
 
 #. I18N: Action of hero party in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:111
-#, fuzzy
-#| msgid "Search:"
 msgid "Search"
-msgstr "검색:"
+msgstr "검색"
 
 #. I18N: Action of hero party in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:113
@@ -9055,9 +8992,8 @@ msgid "Start with debugger"
 msgstr "디버거를 시작"
 
 #: engines/mtropolis/metaengine.cpp:108 engines/vcruise/metaengine.cpp:65
-#, fuzzy
 msgid "Starts with the debugger dashboard active."
-msgstr "디버거를 시작"
+msgstr "디버거 대시보드가 활성화 상태에서 시작."
 
 #: engines/mtropolis/metaengine.cpp:160
 #, fuzzy
@@ -9069,9 +9005,8 @@ msgid "Force any playing movies to end"
 msgstr ""
 
 #: engines/mtropolis/saveload.cpp:142
-#, fuzzy
 msgid "Failed to read version information from save file"
-msgstr "파일에서 저장된 게임을 불러오는데 실패했습니다."
+msgstr "저장 파일에서 버전 정보를 읽기 실패함"
 
 #: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:362
 msgid ""
@@ -9113,10 +9048,6 @@ msgid ""
 "The game will still play, but some audio will not work."
 msgstr ""
 
-#: engines/mtropolis/plugin/mti.cpp:550
-msgid "Image Viewer"
-msgstr ""
-
 #: engines/mutationofjb/util.cpp:32
 #, c-format
 msgid "Unable to locate the '%s' engine data file"
@@ -9135,7 +9066,7 @@ msgid "Enable widescreen rendering in fullscreen mode."
 msgstr "전체 화면 모드에서 와이드 스크린 렌더링을 사용합니다."
 
 #: engines/myst3/myst3.cpp:363
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "This version of Myst III has not been updated with the latest official "
 "patch.\n"
@@ -9143,12 +9074,12 @@ msgid ""
 "The updates can be downloaded from:\n"
 "%s"
 msgstr ""
-"현재 구동 중인 Myst III는 최신 공식 패치로 업데이트되지 않았습니다.\n"
-"게임 언어에 해당하는 공식 업데이트를 설치하십시오.\n"
-"업데이트는 다음에서 다운로드 할 수 있습니다:\n"
-"https://www.scummvm.org/frs/extras/patches/"
+"이 버전의 미스트 III는 최신 공식 패치로 업데이트되지 않았습니다.\n"
+"게임 언어에 해당하는 공식 업데이트를 설치하세요.\n"
+"업데이트는 다음에서 다운로드할 수 있습니다:\n"
+"%s"
 
-#: engines/myst3/myst3.cpp:1577 engines/pegasus/pegasus.cpp:749
+#: engines/myst3/myst3.cpp:1591 engines/pegasus/pegasus.cpp:749
 msgid "Invalid file name for saving"
 msgstr "잘못된 저장 파일 이름"
 
@@ -9263,9 +9194,8 @@ msgstr ""
 
 #. I18N: NHC is a file extension
 #: engines/neverhood/dialogs.cpp:89
-#, fuzzy
 msgid "NHC replacement:"
-msgstr "대체 폰트 사용"
+msgstr "NHC 교체:"
 
 #: engines/neverhood/dialogs.cpp:95
 #, fuzzy
@@ -9478,7 +9408,8 @@ msgid "Conversation position - Down"
 msgstr ""
 
 #: engines/saga/metaengine.cpp:333 engines/scumm/help.cpp:80
-#: engines/trecision/metaengine.cpp:150 engines/vcruise/metaengine.cpp:171
+#: engines/stark/metaengine.cpp:286 engines/trecision/metaengine.cpp:150
+#: engines/vcruise/metaengine.cpp:182
 msgid "Pause game"
 msgstr "게임 일시 정지"
 
@@ -9494,9 +9425,10 @@ msgstr "음성"
 msgid "Show dialogue"
 msgstr "대사 건너뛰기"
 
+#. I18N: Walk to where cursor points
 #: engines/saga/metaengine.cpp:349 engines/scumm/help.cpp:144
 #: engines/scumm/help.cpp:169 engines/scumm/help.cpp:198
-#: engines/wintermute/keymapper_tables.h:1540
+#: engines/tinsel/metaengine.cpp:287 engines/wintermute/keymapper_tables.h:1540
 msgid "Walk to"
 msgstr "걷기"
 
@@ -9575,7 +9507,7 @@ msgid "Continue game"
 msgstr "계속"
 
 #: engines/saga/metaengine.cpp:436 engines/trecision/metaengine.cpp:156
-#: engines/vcruise/metaengine.cpp:166
+#: engines/vcruise/metaengine.cpp:177
 #, fuzzy
 #| msgid "Quit Game"
 msgid "Quit game"
@@ -9814,7 +9746,7 @@ msgstr "최대 색상이 8비트인 시스템에서 %d비트 색상 영상을 �
 msgid "SCI32 support not compiled in"
 msgstr "SCI32 지원이 컴파일 되지 않음"
 
-#: engines/sci/resource/resource.cpp:856
+#: engines/sci/resource/resource.cpp:858
 msgid ""
 "Missing or corrupt game resources have been detected. Some game features may "
 "not work properly. Please check the console for more information, and verify "
@@ -9934,14 +9866,6 @@ msgstr ""
 "\n"
 
 #: engines/scumm/detection_internal.h:384
-#, fuzzy
-#| msgid ""
-#| "This version of Monkey Island can't be played, because Limited Run Games "
-#| "provided corrupted DISK04.LEC and 903.LFL files.\n"
-#| "\n"
-#| "Please contact their technical support for replacement files, or look "
-#| "online for some guides which can help you recover valid files from the "
-#| "KryoFlux dumps that Limited Run Games also provided."
 msgid ""
 "This version of Monkey Island can't be played, because Limited Run Games "
 "provided corrupted DISK03.LEC, DISK04.LEC and 903.LFL files.\n"
@@ -9950,11 +9874,12 @@ msgid ""
 "for some guides which can help you recover valid files from the KryoFlux "
 "dumps that Limited Run Games also provided."
 msgstr ""
-"Limited Run Games에서 제공한 DISK04.LEC 및 903.LFL 파일이 손상되었기 때문에 "
-"이 버전의 Monkey Island는 플레이할 수 없습니다.\n"
-"기술 지원에 문의하여 교체 파일을 받거나, Limited Run Games에서 제공한 "
-"KryoFlux 덤프에서 유효한 파일을 복구하는 데 도움이 되는 가이드를 온라인으로 "
-"찾아보십시오."
+"Limited Run Games에서 손상된 DISK03.LEC, DISK04.LEC, 903.LFL 파일을 제공했기 "
+"때문에, 이 버전의 원숭이 섬의 비밀은 플레이할 수 없습니다.\n"
+"\n"
+"교체 파일에 대해서는 기술 지원팀에 문의하거나, Limited Run Games에서 제공한 "
+"KryoFlux 덤프에서 유효한 파일을 복구하는 데 도움이 되는 가이드를 온라인에서 "
+"찾아보세요."
 
 #. I18N: Creates new online session for multiplayer
 #: engines/scumm/dialog-createsession.cpp:37
@@ -9965,10 +9890,8 @@ msgstr "새로운 게임 저장 파일을 생성합니다"
 
 #. I18N: Name of the online game session
 #: engines/scumm/dialog-createsession.cpp:40
-#, fuzzy
-#| msgid "Game menu"
 msgid "Game Name:"
-msgstr "게임 메뉴"
+msgstr "게임 이름:"
 
 #. I18N: The user's name for online
 #: engines/scumm/dialog-createsession.cpp:44
@@ -9979,7 +9902,7 @@ msgid "Your Name:"
 msgstr "제목:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3943
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4064
 msgid "Host"
 msgstr ""
 
@@ -9991,15 +9914,15 @@ msgid "Querying games..."
 msgstr "게임 저장 중..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3943
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4064
 msgid "Join"
 msgstr ""
 
 #. I18N: Online multiplayer games were found
 #: engines/scumm/dialog-sessionselector.cpp:118
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d available games."
-msgstr "사용 가능한 새 아이콘 팩 없음"
+msgstr "사용 가능한 게임 %d 개를 찾았습니다."
 
 #. I18N: Previous page button
 #: engines/scumm/dialogs.cpp:285
@@ -10096,7 +10019,7 @@ msgid ""
 "in Sam&Max, and makes early save menus snappier."
 msgstr ""
 
-#: engines/scumm/dialogs.cpp:1181 engines/scumm/metaengine.cpp:716
+#: engines/scumm/dialogs.cpp:1181 engines/scumm/metaengine.cpp:725
 #, fuzzy
 msgid "Enable the original GUI and Menu"
 msgstr "원본 오디오 CD 트랙을 활성화합니다"
@@ -10174,9 +10097,8 @@ msgid "Quality Selection: %s"
 msgstr ""
 
 #: engines/scumm/dialogs.cpp:1499
-#, fuzzy
 msgid "Playback Adjust:"
-msgstr "재생"
+msgstr "재생 조정:"
 
 #: engines/scumm/dialogs.cpp:1503
 msgid ""
@@ -10206,12 +10128,12 @@ msgid ""
 "you hear part of the previous music."
 msgstr ""
 
-#: engines/scumm/dialogs.cpp:1702 engines/scumm/metaengine.cpp:707
+#: engines/scumm/dialogs.cpp:1702 engines/scumm/metaengine.cpp:716
 #, fuzzy
 msgid "Load modded audio"
 msgstr "모드 애셋을 불러오기"
 
-#: engines/scumm/dialogs.cpp:1702 engines/scumm/metaengine.cpp:708
+#: engines/scumm/dialogs.cpp:1702 engines/scumm/metaengine.cpp:717
 msgid ""
 "Replace music, sound effects, and speech clips with modded audio files, if "
 "available."
@@ -10237,7 +10159,7 @@ msgid "Enable online competitive mods"
 msgstr ""
 
 #: engines/scumm/dialogs.cpp:1713
-msgid "Enables custom-made modifications intented for online competitive play."
+msgid "Enables custom-made modifications intended for online competitive play."
 msgstr ""
 
 #: engines/scumm/dialogs.cpp:1717
@@ -10455,6 +10377,7 @@ msgid "Switch"
 msgstr "전환하기"
 
 #: engines/scumm/help.cpp:168 engines/scumm/help.cpp:232
+#: engines/tinsel/metaengine.cpp:299
 msgid "Look"
 msgstr "보기"
 
@@ -10763,7 +10686,7 @@ msgstr "음악 볼륨: "
 msgid "Subtitle speed: "
 msgstr "자막 속도: "
 
-#: engines/scumm/metaengine.cpp:367
+#: engines/scumm/metaengine.cpp:376
 msgid ""
 "The Lite version of Putt-Putt Saves the Zoo iOS is not supported to avoid "
 "piracy.\n"
@@ -10773,35 +10696,35 @@ msgstr ""
 "니다.\n"
 "풀 버전은 iTunes Store에서 구매 가능합니다."
 
-#: engines/scumm/metaengine.cpp:466
+#: engines/scumm/metaengine.cpp:475
 msgid "HE v71+ support is not compiled in"
 msgstr "HE v71+ 지원이 컴파일 되지 않음"
 
-#: engines/scumm/metaengine.cpp:490
+#: engines/scumm/metaengine.cpp:499
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "SCUMM v7-8 지원이 컴파일 되지 않음"
 
-#: engines/scumm/metaengine.cpp:636
+#: engines/scumm/metaengine.cpp:645
 msgid "Show Object Line"
 msgstr "오브젝트 이름 표시"
 
-#: engines/scumm/metaengine.cpp:637
+#: engines/scumm/metaengine.cpp:646
 msgid "Show the names of objects at the bottom of the screen"
 msgstr "오브젝트의 이름을 화면 하단에 표시합니다"
 
-#: engines/scumm/metaengine.cpp:645
+#: engines/scumm/metaengine.cpp:654
 msgid "Use NES Classic Palette"
 msgstr "NES 클래식 팔레트"
 
-#: engines/scumm/metaengine.cpp:646
+#: engines/scumm/metaengine.cpp:655
 msgid "Use a more neutral color palette that closely emulates the NES Classic"
 msgstr "NES 클래식 버전을 재현하는 더 자연스러운 컬러 팔레트를 사용합니다"
 
-#: engines/scumm/metaengine.cpp:654
+#: engines/scumm/metaengine.cpp:663
 msgid "Trim FM-TOWNS games to 200 pixels height"
 msgstr "FM-TOWNS 게임을 200픽셀 높이로 잘라냄"
 
-#: engines/scumm/metaengine.cpp:655
+#: engines/scumm/metaengine.cpp:664
 msgid ""
 "Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
 "pixels height, allowing using 'aspect ratio correction'"
@@ -10809,21 +10732,21 @@ msgstr ""
 "화면 아래쪽의 40픽셀을 잘라내 표준 200픽셀에 맞춤으로써 '종횡비 보정' 기능을 "
 "사용할 수 있게 함"
 
-#: engines/scumm/metaengine.cpp:663
+#: engines/scumm/metaengine.cpp:672
 msgid "Run in original 640 x 480 resolution"
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:664
+#: engines/scumm/metaengine.cpp:673
 msgid ""
 "This allows more accurate pause/restart banners, but might impact "
 "performance or shader/scaler usage."
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:671
+#: engines/scumm/metaengine.cpp:680
 msgid "Play simplified music"
 msgstr "단순화된 음악을 재생"
 
-#: engines/scumm/metaengine.cpp:672
+#: engines/scumm/metaengine.cpp:681
 #, fuzzy
 #| msgid ""
 #| "This music was presumably intended for low-end Macs, and uses only one "
@@ -10832,86 +10755,108 @@ msgid "This music was intended for low-end Macs, and uses only one channel."
 msgstr ""
 "이 음악은 저사양 Mac에서 사용될 것을 가정했으므로, 한 채널만 사용합니다."
 
-#: engines/scumm/metaengine.cpp:680
+#: engines/scumm/metaengine.cpp:689
 msgid "Enable smooth scrolling"
 msgstr "부드러운 스크롤 활성화"
 
-#: engines/scumm/metaengine.cpp:681
+#: engines/scumm/metaengine.cpp:690
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(일반적인 8 픽셀 단위 스크롤을 대신해 사용)"
 
-#: engines/scumm/metaengine.cpp:689
+#: engines/scumm/metaengine.cpp:698
 #, fuzzy
 msgid "Allow semi-smooth scrolling"
 msgstr "부드러운 스크롤 활성화"
 
-#: engines/scumm/metaengine.cpp:690
+#: engines/scumm/metaengine.cpp:699
 msgid ""
 "Allow scrolling to be less smooth during the fast camera movement in the "
 "intro."
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:717
+#: engines/scumm/metaengine.cpp:726
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
 "save/load menu. \t\tUse it together with the \"Ask for confirmation on exit"
 "\" for a more complete experience."
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:726
+#: engines/scumm/metaengine.cpp:735
 #, fuzzy
 msgid "Enable low latency audio mode"
 msgstr "디버그 모드를 활성화합니다"
 
-#: engines/scumm/metaengine.cpp:727
+#: engines/scumm/metaengine.cpp:736
 msgid ""
 "Allows the game to use low latency audio, at the cost of sound accuracy. \t"
 "\tIt is recommended to enable this feature only if you incur in audio "
 "latency issues during normal gameplay."
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:736
+#: engines/scumm/metaengine.cpp:745
 msgid "Enable the \"A Pirate I Was Meant To Be\" song"
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:737
+#: engines/scumm/metaengine.cpp:746
 msgid ""
 "Enable the song at the beginning of Part 3 of the game, \"A Pirate I Was "
 "Meant To Be\", \t\twhich was cut in international releases. Beware though: "
 "subtitles may not be fully translated."
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:836
+#: engines/scumm/metaengine.cpp:764
+#, fuzzy
+msgid "Enable demo/kiosk mode"
+msgstr "디버그 모드 사용"
+
+#: engines/scumm/metaengine.cpp:765
+msgid "Enable demo/kiosk mode in the full retail version of Maniac Mansion."
+msgstr ""
+
+#: engines/scumm/metaengine.cpp:864
 #, fuzzy
 msgid "Down Left"
 msgstr "왼쪽으로 회전"
 
-#: engines/scumm/metaengine.cpp:849
+#: engines/scumm/metaengine.cpp:877
 #, fuzzy
 msgid "Down Right"
 msgstr "오른쪽으로 회전"
 
-#: engines/scumm/metaengine.cpp:869
+#: engines/scumm/metaengine.cpp:897
 #, fuzzy
 msgid "Up Left"
 msgstr "왼쪽"
 
-#: engines/scumm/metaengine.cpp:882
+#: engines/scumm/metaengine.cpp:910
 #, fuzzy
 msgid "Up Right"
 msgstr "오른쪽"
 
-#: engines/scumm/metaengine.cpp:894
-#, fuzzy
+#: engines/scumm/metaengine.cpp:922
 msgid "Switch weapon"
-msgstr "캐릭터 전환:"
+msgstr "무기 전환"
 
 #. I18N: Lets one skip the bike/car fight sequences in Full Throttle
-#: engines/scumm/metaengine.cpp:908
+#: engines/scumm/metaengine.cpp:936
 msgid "Win the bike fight cheat"
 msgstr ""
 
-#: engines/scumm/scumm.cpp:292
+#: engines/scumm/saveload.cpp:1970
+#, c-format
+msgid ""
+"Warning: incompatible sound settings detected between the current "
+"configuration and this saved game.\n"
+"\n"
+"Current music device: %s (id %d)\n"
+"Save file music device: %s (id %d)\n"
+"\n"
+"Loading will be attempted, but the game may behave incorrectly or crash.\n"
+"Please change the audio configuration accordingly in order to properly load "
+"this save file."
+msgstr ""
+
+#: engines/scumm/scumm.cpp:293
 msgid ""
 "You have enabled 'aspect ratio correction'. However, FM-TOWNS' natural "
 "resolution is 320x240, which doesn't allow aspect ratio correction.\n"
@@ -10922,16 +10867,16 @@ msgstr ""
 "에 종횡비 보정을 지원하지 않습니다.\n"
 "'엔진' 탭에서 해상도를 320x200으로 잘라내면 종횡비 보정이 가능합니다."
 
-#: engines/scumm/scumm.cpp:1199
+#: engines/scumm/scumm.cpp:1224
 msgid "This game requires the 'Indy' Macintosh executable for its fonts."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1224
+#: engines/scumm/scumm.cpp:1249
 msgid ""
 "This game requires the 'Loom' Macintosh executable for its music and fonts."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1244
+#: engines/scumm/scumm.cpp:1269
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -10939,17 +10884,17 @@ msgstr ""
 "악기가 포함된 'Monkey Island' 매킨토시 실행 파일을 찾을 수 없습니다.\n"
 "음악이 비활성화됩니다."
 
-#: engines/scumm/scumm.cpp:1252
+#: engines/scumm/scumm.cpp:1277
 #, c-format
 msgid "Could not open Macintosh resource file %s"
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1255
+#: engines/scumm/scumm.cpp:1280
 #, c-format
 msgid "Could not find resource fork in Macintosh resource file %s"
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1615
+#: engines/scumm/scumm.cpp:1640
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -10960,7 +10905,7 @@ msgstr ""
 "압축이 더 이상 지원되지 않습니다. 오디오가 비활성화됩니다..\n"
 "게임을 압축하지 않고 원본 미디어에서 복사하십시오."
 
-#: engines/scumm/scumm.cpp:2100
+#: engines/scumm/scumm.cpp:2129
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -10969,13 +10914,13 @@ msgstr ""
 "MIDI 지원은 LucasArts에서 제공하는 Roland Upgrade가 필요합니다.\n"
 "하지만 %s 파일이 없습니다. AdLib을 대신 사용합니다."
 
-#: engines/scumm/scumm.cpp:2116
+#: engines/scumm/scumm.cpp:2145
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:3832
+#: engines/scumm/scumm.cpp:3953
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -10985,7 +10930,7 @@ msgstr ""
 "Mansion의 게임 파일이 Tentacle 게임 디렉토리 하위의 Maniac 디렉토리에 있어야 "
 "하며, ScummVM에도 추가되어야 합니다."
 
-#: engines/scumm/scumm.cpp:3943
+#: engines/scumm/scumm.cpp:4064
 #, fuzzy
 msgid "Would you like to host or join a network play session?"
 msgstr "게임을 저장하거나 불러오시겠습니까?"
@@ -11230,19 +11175,19 @@ msgstr "플로피 버전의 인트로를 사용합니다 (CD 버전에서만)"
 msgid "WARNING: Deleting the autosave slot is not supported by this engine"
 msgstr "경고: 자동 저장 슬롯 삭제는 이 엔진에서 지원되지 않음"
 
-#: engines/stark/metaengine.cpp:37
+#: engines/stark/metaengine.cpp:41
 msgid "Load modded assets"
 msgstr "모드 애셋을 불러오기"
 
-#: engines/stark/metaengine.cpp:38
+#: engines/stark/metaengine.cpp:42
 msgid "Enable loading of external replacement assets."
 msgstr "대체용 외부 애셋을 불러오는 것을 활성화합니다."
 
-#: engines/stark/metaengine.cpp:48
+#: engines/stark/metaengine.cpp:52
 msgid "Enable linear filtering of the backgrounds images"
 msgstr "백그라운드 이미지의 선형 필터링 활성화"
 
-#: engines/stark/metaengine.cpp:49
+#: engines/stark/metaengine.cpp:53
 msgid ""
 "When linear filtering is enabled the background graphics are smoother in "
 "full screen mode, at the cost of some details."
@@ -11250,23 +11195,125 @@ msgstr ""
 "선형 필터링이 활성화되면 전체 화면에서 백그라운드 그래픽이 더 부드럽게 표시됩"
 "니다. 다만 디테일이 조금 낮아집니다."
 
-#: engines/stark/metaengine.cpp:59 engines/ultima/metaengine.cpp:140
+#: engines/stark/metaengine.cpp:63 engines/ultima/metaengine.cpp:140
 msgid "Enable font anti-aliasing"
 msgstr "폰트 안티 앨리어싱 활성화"
 
-#: engines/stark/metaengine.cpp:60 engines/ultima/metaengine.cpp:141
+#: engines/stark/metaengine.cpp:64 engines/ultima/metaengine.cpp:141
 msgid "When font anti-aliasing is enabled, the text is smoother."
 msgstr "폰트 안티 앨리어싱을 활성화하면 텍스트가 부드럽게 표시됩니다."
 
+#: engines/stark/metaengine.cpp:184
+#, fuzzy
+#| msgid "Default game keymap"
+msgid "Default keymapppings"
+msgstr "기본 게임 키설정"
+
+#. I18N: Opens in-game Diary
+#: engines/stark/metaengine.cpp:202
+#, fuzzy
+#| msgid "Game menu"
+msgid "Diary menu"
+msgstr "게임 메뉴"
+
+#. I18N: Opens in-game conversation log
+#: engines/stark/metaengine.cpp:219
+#, fuzzy
+#| msgid "Next location"
+msgid "Conversation log"
+msgstr "다음 위치"
+
+#. I18N: Opens in-game Diary
+#: engines/stark/metaengine.cpp:225
+msgid "April's diary (initially disabled)"
+msgstr ""
+
+#: engines/stark/metaengine.cpp:230
+#, fuzzy
+#| msgid "Fast replay"
+msgid "Video replay"
+msgstr "빠른 리플레이"
+
+#: engines/stark/metaengine.cpp:235
+#, fuzzy
+#| msgid "Game Options"
+msgid "Game settings"
+msgstr "게임 옵션"
+
+#: engines/stark/metaengine.cpp:245 engines/wintermute/keymapper_tables.h:1345
+msgid "Toggle subtitles"
+msgstr "자막 표시 전환"
+
+#: engines/stark/metaengine.cpp:250
+#, fuzzy
+#| msgid "Quit Game"
+msgid "Quit to menu"
+msgstr "게임 종료"
+
+#: engines/stark/metaengine.cpp:255
+msgid "Cycle back through inventory cursor items"
+msgstr ""
+
+#: engines/stark/metaengine.cpp:261
+msgid "Cycle forward through inventory cursor items"
+msgstr ""
+
+#. I18N: A popup on screen shows shows the exits
+#: engines/stark/metaengine.cpp:274
+msgid "Display all exits on current location"
+msgstr ""
+
+#: engines/stark/metaengine.cpp:292
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Scroll up in inventory"
+msgstr "인벤토리 열기/닫기"
+
+#: engines/stark/metaengine.cpp:299
+#, fuzzy
+#| msgid "Show inventory"
+msgid "Scroll down in inventory"
+msgstr "인벤토리 보이기"
+
+#: engines/stark/metaengine.cpp:306
+msgid "Scroll up in your dialogues"
+msgstr ""
+
+#: engines/stark/metaengine.cpp:312
+msgid "Scroll down in your dialogues"
+msgstr ""
+
+#: engines/stark/metaengine.cpp:318
+#, fuzzy
+#| msgid "Highlight next dialogue"
+msgid "go to next dialogue"
+msgstr "다음 대사를 강조"
+
+#: engines/stark/metaengine.cpp:323
+#, fuzzy
+#| msgid "Go to previous directory level"
+msgid "go to previous dialogues"
+msgstr "상위 디렉토리로 이동합니다"
+
+#: engines/stark/metaengine.cpp:328
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Select dialogue"
+msgstr "대사 건너뛰기"
+
+#: engines/stark/metaengine.cpp:335
+msgid "Skip video sequence or dialogue"
+msgstr ""
+
 #: engines/stark/stark.cpp:106
 msgid "Software renderer does not support modded assets"
-msgstr "소프트웨어 렌더러는 모드 애셋을 지원하지 않습니다."
+msgstr "소프트웨어 렌더러는 수정된 자산을 지원하지 않음"
 
-#: engines/stark/stark.cpp:291
+#: engines/stark/stark.cpp:292
 msgid "You are missing recommended data files:"
 msgstr "권장 데이터 파일이 빠져 있습니다:"
 
-#: engines/stark/stark.cpp:305
+#: engines/stark/stark.cpp:306
 msgid ""
 "The 'fonts' folder is required to experience the text style as it was "
 "designed. The Steam release is known to be missing it. You can get the fonts "
@@ -11275,18 +11322,18 @@ msgstr ""
 "텍스트를 의도된 스타일대로 표시하기 위해서는 'fonts' 폴더가 필요합니다. "
 "Steam 판에는 이 폴더가 존재하지 않지만, 데모 버전에서 가져올 수 있습니다."
 
-#: engines/stark/stark.cpp:312
+#: engines/stark/stark.cpp:313
 msgid ""
 "'gui.ini' is recommended to get proper font settings for the game "
 "localization."
 msgstr ""
 "게임 현지화에 필요한 글꼴 설정을 얻어오기 위해서 'gui.ini'가 필요합니다."
 
-#: engines/stark/stark.cpp:318
+#: engines/stark/stark.cpp:319
 msgid "'language.ini' is recommended to get localized confirmation dialogs."
 msgstr "현지화된 확인 창을 사용하기 위해서 'language.ini'가 필요합니다."
 
-#: engines/stark/stark.cpp:324
+#: engines/stark/stark.cpp:325
 msgid "'game.exe' is recommended to get styled confirmation dialogs."
 msgstr "스타일이 적용된 확인창을 사용하기 위해서 'game.exe'가 필요합니다."
 
@@ -11350,7 +11397,7 @@ msgstr ""
 msgid "Cutscene '%s' not found"
 msgstr "'%s' 컷씬을 찾지 못함"
 
-#: engines/sword1/control.cpp:2796
+#: engines/sword1/control.cpp:2811
 msgid ""
 "ScummVM found that you have old saved games for Broken Sword 1 that should "
 "be converted.\n"
@@ -11367,7 +11414,7 @@ msgstr ""
 "확인 버튼을 눌러 변환을 진행하십시오. 그렇지 않으면 다음 실행시 현재 창이 다"
 "시 표시됩니다.\n"
 
-#: engines/sword1/control.cpp:2982
+#: engines/sword1/control.cpp:2997
 #, c-format
 msgid ""
 "Target new saved game already exists!\n"
@@ -11376,11 +11423,11 @@ msgstr ""
 "이미 게임 저장 파일이 존재합니다!\n"
 "이전 저장 파일 (%s)과 신규 저장 파일 (%s) 중 어느 것을 남기겠습니까?\n"
 
-#: engines/sword1/control.cpp:2985
+#: engines/sword1/control.cpp:3000
 msgid "Keep the old one"
 msgstr "이전 파일을 남김"
 
-#: engines/sword1/control.cpp:2985
+#: engines/sword1/control.cpp:3000
 msgid "Keep the new one"
 msgstr "신규 파일을 남김"
 
@@ -11434,50 +11481,86 @@ msgstr ""
 msgid "Saturn CD version is not yet supported"
 msgstr "새턴 CD 버전은 아직 지원되지 않습니다"
 
-#: engines/tinsel/metaengine.cpp:39
+#: engines/tinsel/metaengine.cpp:43
 #, fuzzy
 #| msgid "Move Backward"
 msgid "Remove Black Bars"
 msgstr "뒤로 이동"
 
-#: engines/tinsel/metaengine.cpp:40
+#: engines/tinsel/metaengine.cpp:44
 msgid ""
 "The game originally renders at 640x432 which is then presented letterboxed "
 "at 640x480. Enabling this option removes the forced letterbox effect, so "
 "that the game fits better on screens with an aspect ratio wider than 4:3."
 msgstr ""
 
+#: engines/tinsel/metaengine.cpp:241
+#, fuzzy
+#| msgid "Game Options"
+msgid "Save/Load keymappings"
+msgstr "게임 옵션"
+
+#: engines/tinsel/metaengine.cpp:306
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Options Dialog"
+msgstr "대사 건너뛰기"
+
+#: engines/tinsel/metaengine.cpp:340
+#, fuzzy
+#| msgid "Go to save/load menu"
+msgid "Page Up in save/load menu"
+msgstr "저장/불러오기 메뉴로 이동"
+
+#: engines/tinsel/metaengine.cpp:346
+#, fuzzy
+#| msgid "Go to save/load menu"
+msgid "Page down in save/load menu"
+msgstr "저장/불러오기 메뉴로 이동"
+
+#: engines/tinsel/metaengine.cpp:352
+#, fuzzy
+#| msgid "Go to save/load menu"
+msgid "Go to start of save/load menu"
+msgstr "저장/불러오기 메뉴로 이동"
+
+#: engines/tinsel/metaengine.cpp:358
+#, fuzzy
+#| msgid "Go to save/load menu"
+msgid "Go to end of save/load menu"
+msgstr "저장/불러오기 메뉴로 이동"
+
 #: engines/tony/tony.cpp:248
 #, c-format
 msgid "Font variant not present in '%s' engine data file."
 msgstr "'%s' 엔진 데이터 파일에 폰트 종류가 존재하지 않습니다."
 
-#: engines/toon/toon.cpp:268
+#: engines/toon/toon.cpp:273
 #, c-format
 msgid "Saved game in slot #%d "
 msgstr "#%d 슬롯에 게임 저장됨 "
 
-#: engines/toon/toon.cpp:272
+#: engines/toon/toon.cpp:277
 #, c-format
 msgid "Could not quick save into slot #%d"
 msgstr "#%d 슬롯에 빠른 저장하지 못함"
 
-#: engines/toon/toon.cpp:285
+#: engines/toon/toon.cpp:290
 #, c-format
 msgid "Saved game #%d quick loaded"
 msgstr "#%d 게임을 불러옴"
 
-#: engines/toon/toon.cpp:289
+#: engines/toon/toon.cpp:294
 #, c-format
 msgid "Could not quick load the saved game #%d"
 msgstr "#%d 게임을 빠른 불러오기 하지 못함"
 
-#: engines/toon/toon.cpp:1538
+#: engines/toon/toon.cpp:1543
 #, fuzzy
 msgid "Are you sure you want to exit?"
 msgstr "정말로 종료하겠습니까?"
 
-#: engines/toon/toon.cpp:1951
+#: engines/toon/toon.cpp:1953
 #, c-format
 msgid "Unable to locate the '%s' data file."
 msgstr "'%s' 데이터 파일을 찾을 수 없습니다."
@@ -11532,175 +11615,167 @@ msgid "Enable the debug mode"
 msgstr "디버그 모드를 활성화합니다"
 
 #: engines/twine/metaengine.cpp:78
-msgid "Enable audio CD"
-msgstr "오디오 CD 사용"
-
-#: engines/twine/metaengine.cpp:79
-msgid "Enable the original audio cd track"
-msgstr "원본 오디오 CD 트랙을 활성화합니다"
-
-#: engines/twine/metaengine.cpp:89
 msgid "Enable sound"
 msgstr "사운드 활성화"
 
-#: engines/twine/metaengine.cpp:90
+#: engines/twine/metaengine.cpp:79
 msgid "Enable the sound for the game"
 msgstr "게임의 사운드를 활성화합니다"
 
-#: engines/twine/metaengine.cpp:100
+#: engines/twine/metaengine.cpp:89
 msgid "Enable text"
 msgstr "텍스트 활성화"
 
-#: engines/twine/metaengine.cpp:101
+#: engines/twine/metaengine.cpp:90
 msgid "Enable the text for the game"
 msgstr "게임의 텍스트를 활성화합니다"
 
-#: engines/twine/metaengine.cpp:111
+#: engines/twine/metaengine.cpp:100
 msgid "Enable movies"
 msgstr "영상 활성화"
 
-#: engines/twine/metaengine.cpp:112
+#: engines/twine/metaengine.cpp:101
 msgid "Enable the cutscenes for the game"
 msgstr "게임의 컷씬을 활성화합니다"
 
-#: engines/twine/metaengine.cpp:122
+#: engines/twine/metaengine.cpp:111
 msgid "Enable mouse"
 msgstr "마우스 활성화"
 
-#: engines/twine/metaengine.cpp:123
+#: engines/twine/metaengine.cpp:112
 msgid "Enable the mouse for the UI"
 msgstr "UI에 마우스를 활성화합니다"
 
-#: engines/twine/metaengine.cpp:133
+#: engines/twine/metaengine.cpp:122
 msgid "Use the USA version"
 msgstr "USA 버전 사용"
 
-#: engines/twine/metaengine.cpp:134
+#: engines/twine/metaengine.cpp:123
 msgid "Enable the USA specific version flags"
 msgstr "USA 버전 플래그를 활성화합니다"
 
-#: engines/twine/metaengine.cpp:144 engines/ultima/metaengine.cpp:96
+#: engines/twine/metaengine.cpp:133 engines/ultima/metaengine.cpp:96
 msgid "Enable high resolution"
 msgstr "고해상도 사용"
 
-#: engines/twine/metaengine.cpp:145 engines/ultima/metaengine.cpp:97
+#: engines/twine/metaengine.cpp:134 engines/ultima/metaengine.cpp:97
 msgid "Enable a higher resolution for the game"
 msgstr "게임의 고해상도 지원을 활성화합니다"
 
-#: engines/twine/metaengine.cpp:236
+#: engines/twine/metaengine.cpp:225
 msgid "Debug Next Room"
 msgstr "다음 룸을 디버그"
 
-#: engines/twine/metaengine.cpp:241
+#: engines/twine/metaengine.cpp:230
 msgid "Debug Previous Room"
 msgstr "이전 룸을 디버그"
 
-#: engines/twine/metaengine.cpp:246
+#: engines/twine/metaengine.cpp:235
 msgid "Debug Apply Celling Grid"
 msgstr "셀 그리드를 적용"
 
-#: engines/twine/metaengine.cpp:251
+#: engines/twine/metaengine.cpp:240
 msgid "Debug Increase Celling Grid Index"
 msgstr "디버그 셀 그리드 인덱스를 증가"
 
-#: engines/twine/metaengine.cpp:256
+#: engines/twine/metaengine.cpp:245
 msgid "Debug Decrease Celling Grid Index"
 msgstr "디버그 셀 그리드 인덱스를 감소"
 
-#: engines/twine/metaengine.cpp:261
+#: engines/twine/metaengine.cpp:250
 msgid "Debug Grid Camera Up"
 msgstr "디버그 그리드 카메라를 올림"
 
-#: engines/twine/metaengine.cpp:266
+#: engines/twine/metaengine.cpp:255
 msgid "Debug Grid Camera Down"
 msgstr "디버그 그리드 카메라를 내림"
 
-#: engines/twine/metaengine.cpp:271
+#: engines/twine/metaengine.cpp:260
 msgid "Debug Grid Camera Left"
 msgstr "디버그 그리드 카메라를 왼쪽으로 이동"
 
-#: engines/twine/metaengine.cpp:277
+#: engines/twine/metaengine.cpp:266
 msgid "Debug Grid Camera Right"
 msgstr "디버그 그리드 카메라를 오른쪽으로 이동"
 
-#: engines/twine/metaengine.cpp:282
+#: engines/twine/metaengine.cpp:271
 msgid "Place actor at center of screen"
 msgstr "액터를 화면 중앙에 배치"
 
-#: engines/twine/metaengine.cpp:287
+#: engines/twine/metaengine.cpp:276
 msgid "Debug Menu"
 msgstr "디버그 메뉴"
 
-#: engines/twine/metaengine.cpp:292
+#: engines/twine/metaengine.cpp:281
 msgid "Debug Menu Execute"
 msgstr "디버그 메뉴 실행"
 
-#: engines/twine/metaengine.cpp:297 engines/twine/metaengine.cpp:317
+#: engines/twine/metaengine.cpp:286 engines/twine/metaengine.cpp:306
 msgid "Normal Behaviour"
 msgstr "보통 행동방식"
 
-#: engines/twine/metaengine.cpp:302 engines/twine/metaengine.cpp:322
+#: engines/twine/metaengine.cpp:291 engines/twine/metaengine.cpp:311
 msgid "Athletic Behaviour"
 msgstr "스포츠 행동방식"
 
-#: engines/twine/metaengine.cpp:307 engines/twine/metaengine.cpp:327
+#: engines/twine/metaengine.cpp:296 engines/twine/metaengine.cpp:316
 msgid "Aggressive Behaviour"
 msgstr "공격적 행동방식"
 
-#: engines/twine/metaengine.cpp:312 engines/twine/metaengine.cpp:332
+#: engines/twine/metaengine.cpp:301 engines/twine/metaengine.cpp:321
 msgid "Discreet Behaviour"
 msgstr "신중한 행동방식"
 
-#: engines/twine/metaengine.cpp:337
+#: engines/twine/metaengine.cpp:326
 msgid "Behaviour Action"
 msgstr "행동 실행"
 
-#: engines/twine/metaengine.cpp:343
+#: engines/twine/metaengine.cpp:332
 msgid "Change Behaviour"
 msgstr "행동방식 변경"
 
-#: engines/twine/metaengine.cpp:355
+#: engines/twine/metaengine.cpp:344
 msgid "Options Menu"
 msgstr "설정"
 
-#: engines/twine/metaengine.cpp:367
+#: engines/twine/metaengine.cpp:356
 msgid "Use Selected Object"
 msgstr "선택한 오브젝트를 사용"
 
-#: engines/twine/metaengine.cpp:373
+#: engines/twine/metaengine.cpp:362
 msgid "Throw Magic Ball"
 msgstr "매직 볼을 던지기"
 
-#: engines/twine/metaengine.cpp:387
+#: engines/twine/metaengine.cpp:376
 msgid "Move Backward"
 msgstr "뒤로 이동"
 
-#: engines/twine/metaengine.cpp:408
+#: engines/twine/metaengine.cpp:397
 msgid "Use Protopack"
 msgstr "프로토팩을 사용"
 
-#: engines/twine/metaengine.cpp:413
+#: engines/twine/metaengine.cpp:402
 msgid "Open Holomap"
 msgstr "홀로맵을 열기"
 
-#: engines/twine/metaengine.cpp:426
+#: engines/twine/metaengine.cpp:415
 msgid "Special Action"
 msgstr "스페셜 액션"
 
-#: engines/twine/metaengine.cpp:432
+#: engines/twine/metaengine.cpp:421
 msgid "Scenery Zoom"
 msgstr ""
 
-#: engines/twine/metaengine.cpp:457 engines/twine/metaengine.cpp:509
-#: engines/twine/metaengine.cpp:525
+#: engines/twine/metaengine.cpp:459 engines/twine/metaengine.cpp:511
+#: engines/twine/metaengine.cpp:527
 msgid "Abort"
 msgstr "취소"
 
-#: engines/twine/metaengine.cpp:562
+#: engines/twine/metaengine.cpp:564
 msgid "Previous location"
 msgstr "이전 위치"
 
-#: engines/twine/metaengine.cpp:567
+#: engines/twine/metaengine.cpp:569
 msgid "Next location"
 msgstr "다음 위치"
 
@@ -11752,10 +11827,8 @@ msgid "Voices: German"
 msgstr ""
 
 #: engines/twp/dialogs.cpp:32
-#, fuzzy
-#| msgid "Video"
 msgid "Video:"
-msgstr "비디오"
+msgstr "비디오:"
 
 #. I18N: Setting to switch toiled paper to be shown as "over".
 #: engines/twp/dialogs.cpp:37
@@ -11782,10 +11855,8 @@ msgid ""
 msgstr ""
 
 #: engines/twp/dialogs.cpp:44
-#, fuzzy
-#| msgid "Control"
 msgid "Controls:"
-msgstr "조작"
+msgstr "제어:"
 
 #. I18N: Setting to invert verb colors or keep the original verb colors.
 #: engines/twp/dialogs.cpp:48
@@ -12075,16 +12146,12 @@ msgid ""
 msgstr ""
 
 #: engines/vcruise/metaengine.cpp:53
-#, fuzzy
-#| msgid "Transitions:"
 msgid "Faster animations"
-msgstr "전환효과:"
+msgstr "더 빠른 애니메이션"
 
 #: engines/vcruise/metaengine.cpp:54
-#, fuzzy
-#| msgid "Speech Options"
 msgid "Speeds up animations."
-msgstr "음성 옵션"
+msgstr "애니메이션 속도가 빨라집니다."
 
 #: engines/vcruise/metaengine.cpp:75
 #, fuzzy
@@ -12103,10 +12170,8 @@ msgid "Use 16-color graphics"
 msgstr "컬러 그래픽"
 
 #: engines/vcruise/metaengine.cpp:87
-#, fuzzy
-#| msgid "Color graphics"
 msgid "Uses 16-color graphics."
-msgstr "컬러 그래픽"
+msgstr "16 색 그래픽을 사용합니다."
 
 #: engines/vcruise/metaengine.cpp:97
 msgid "Preload sounds"
@@ -12116,43 +12181,51 @@ msgstr ""
 msgid "Preload sounds. May improve performance on slow hard drives."
 msgstr ""
 
-#: engines/vcruise/metaengine.cpp:146
+#: engines/vcruise/metaengine.cpp:108
+msgid "Faster video decoder (lower quality)"
+msgstr ""
+
+#: engines/vcruise/metaengine.cpp:109
+msgid "Reduce video decoding CPU usage at the cost of quality."
+msgstr ""
+
+#: engines/vcruise/metaengine.cpp:157
 #, fuzzy
 #| msgid "Display/Hide Info Screen"
 msgid "Display help screen"
 msgstr "정보 화면 표시/숨김"
 
-#: engines/vcruise/metaengine.cpp:161
+#: engines/vcruise/metaengine.cpp:172
 #, fuzzy
 #| msgid "Open 3DS Settings"
 msgid "Open sound settings"
 msgstr "3DS 설정 열기"
 
-#: engines/vcruise/metaengine.cpp:182
+#: engines/vcruise/metaengine.cpp:193
 #, fuzzy
 #| msgid "Special sound effects volume"
 msgid "Toggle sound effects on/off"
 msgstr "효과음 볼륨"
 
-#: engines/vcruise/metaengine.cpp:197
+#: engines/vcruise/metaengine.cpp:208
 #, fuzzy
 #| msgid "Special sound effects volume"
 msgid "Sound effect volume down"
 msgstr "효과음 볼륨"
 
-#: engines/vcruise/metaengine.cpp:202
+#: engines/vcruise/metaengine.cpp:213
 #, fuzzy
 #| msgid "Special sound effects volume"
 msgid "Sound effect volume up"
 msgstr "효과음 볼륨"
 
-#: engines/vcruise/metaengine.cpp:207
+#: engines/vcruise/metaengine.cpp:218
 #, fuzzy
 #| msgid "Speech Options"
 msgid "Skip current animation"
 msgstr "음성 옵션"
 
-#: engines/vcruise/metaengine.cpp:211
+#: engines/vcruise/metaengine.cpp:222
 msgid "Cycle item in scene (debug cheat)"
 msgstr ""
 
@@ -12185,9 +12258,8 @@ msgid "Failed to read version information from save file."
 msgstr "파일에서 저장된 게임을 불러오는데 실패했습니다."
 
 #: engines/vcruise/vcruise.cpp:377
-#, fuzzy
 msgid "An unknown error occurred while attempting to load the saved game."
-msgstr ", 공유 폴더 활성화 중 오류 발생"
+msgstr "저장된 게임을 불러오는 동안 알 수 없는 오류가 발생했습니다."
 
 #: engines/wintermute/metaengine.cpp:42
 msgid "Show FPS-counter"
@@ -12683,10 +12755,6 @@ msgstr "댄스 오른쪽으로 이동"
 msgid "Cancel input"
 msgstr "입력 취소"
 
-#: engines/wintermute/keymapper_tables.h:1345
-msgid "Toggle subtitles"
-msgstr "자막 표시 전환"
-
 #: engines/wintermute/keymapper_tables.h:1409
 #, fuzzy
 msgid "Hide hints"
@@ -12900,6 +12968,15 @@ msgstr ""
 "다. 선택한 글꼴 패키지의 모든 글꼴이 필요할 수 있습니다. 예: LiberationMono, "
 "LiberationSans 및 LiberationSerif 또는 FreeMono, FreeSans 및 FreeSerif가 각"
 "각 필요함."
+
+#~ msgid "Enable audio CD"
+#~ msgstr "오디오 CD 사용"
+
+#~ msgid "Enable the original audio cd track"
+#~ msgstr "원본 오디오 CD 트랙을 활성화합니다"
+
+#~ msgid "Missing game code"
+#~ msgstr "게임 코드 없음"
 
 #, fuzzy
 #~| msgid "Toggle fullscreen"
@@ -13115,9 +13192,6 @@ msgstr ""
 
 #~ msgid "Go to main menu"
 #~ msgstr "메인 메뉴로 이동"
-
-#~ msgid "Go to save/load menu"
-#~ msgstr "저장/불러오기 메뉴로 이동"
 
 #~ msgid "Go to map screen"
 #~ msgstr "지도 화면으로 이동"

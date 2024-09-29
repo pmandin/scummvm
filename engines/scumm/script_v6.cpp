@@ -406,7 +406,10 @@ int ScummEngine_v6::readArray(int array, int idx, int base) {
 	// ...
 	// So it checks for invalid array indices only *after* using them to access
 	// the array. Ouch.
-	if (_game.id == GID_FT && array == 447 && _currentRoom == 95 && vm.slot[_currentScript].number == 2010 && idx == -1 && base == -1) {
+	//
+	// TODO: what did the original interpreter precisely do in this case?
+	if (_game.id == GID_FT && array == 447 && _currentRoom == 95 && vm.slot[_currentScript].number == 2010 && idx == -1 && base == -1 &&
+		enhancementEnabled(kEnhGameBreakingBugFixes)) {
 		return 0;
 	}
 
@@ -498,7 +501,7 @@ void ScummEngine_v6::o6_pushByteVar() {
 void ScummEngine_v6::o6_pushWordVar() {
 // BACKYARD BASEBALL 2001 ONLINE CHANGES
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-	if (ConfMan.getBool("enable_competitive_mods")) {
+	if (_enableHECompetitiveOnlineMods) {
 		// Sprinting in competitive Backyard Baseball is considered too weak in its current state. This will increase how effective
 		// it is, limiting the highest speed characters enough to where they cannot go TOO fast.
 		if (_game.id == GID_BASEBALL2001 && _currentRoom == 3 && vm.slot[_currentScript].number == 2095 && readVar(399) == 1) {
@@ -583,7 +586,7 @@ void ScummEngine_v6::o6_wordArrayRead() {
 	int base = pop();
 	int array = fetchScriptWord();
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-	if (ConfMan.getBool("enable_competitive_mods")) {
+	if (_enableHECompetitiveOnlineMods) {
 		// If we're pulling from the randomly selected teams for online play
 		// at Prince Rupert, read from variables 748 and 749 instead
 		if (_game.id == GID_BASEBALL2001 && _currentRoom == 6 && vm.slot[_currentScript].number == 2071 &&
@@ -633,7 +636,20 @@ void ScummEngine_v6::o6_eq() {
 
 // BACKYARD BASEBALL 2001 ONLINE CHANGES
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-	if (ConfMan.getBool("enable_competitive_mods")) {
+	// The player stat adjustments that should get applied in certain conditions (i.e. when two siblings are on the same team)
+	// don't get applied properly for the away (peer) team in online play. This results in each team's game using a different
+	// version of players' stats, leading to unfair play and potential desyncs. This hack ensures the away team's game doesn't
+	// exit the script before applying these stat adjustments. The script checks whether the game is being played online before
+	// this, such that this code doesn't execute for offline play.
+	if (_game.id == GID_BASEBALL2001 && _currentRoom == 27 && vm.slot[_currentScript].number == 2346) {
+		int offset = _scriptPointer - _scriptOrgPointer;
+		if (offset == 196137) {
+			push(0);
+			return;
+		}
+	}
+
+	if (_enableHECompetitiveOnlineMods) {
 		int pitchXValue = readVar(0x8000 + 11);
 		int pitchYValue = readVar(0x8000 + 12);
 		int strikeZoneTop = readVar(0x8000 + 29);
@@ -762,13 +778,13 @@ void ScummEngine_v6::o6_eq() {
 	// HACK: This script doesn't allow Super Colossal Dome to be chosen for online play, by checking if the selected
 	// field's value is 5 (SCD's number) and incrementing/decrementing if it is. To allow SCD to be used, we return 0
 	// for those checks.
-	} else if (ConfMan.getBool("enable_competitive_mods") && _game.id == GID_BASEBALL2001 && _currentRoom == 40 &&
+	} else if (_enableHECompetitiveOnlineMods && _game.id == GID_BASEBALL2001 && _currentRoom == 40 &&
 		vm.slot[_currentScript].number == 2106 && a == 5 && (offset == 16754 || offset == 16791)) {
 		push(0);
 
 	// WORKAROUND: Online play is disabled in the Macintosh versions of Backyard Football and Backyard Baseball 2001
 	// because the original U32 makes use of DirectPlay, a Windows exclusive API; we now have our own implementation
-	// which is cross-platform compatable.  We get around that by tricking those checks that we are playing on
+	// which is cross-platform compatible.  We get around that by tricking those checks that we are playing on
 	// the Windows version. These scripts check VAR_PLATFORM (b) against the value (2) of the Macintosh platform (a).
 	} else if (_game.id == GID_FOOTBALL && _currentRoom == 2 && (vm.slot[_currentScript].number == 2049 || vm.slot[_currentScript].number == 2050 ||
 #else
@@ -843,7 +859,7 @@ void ScummEngine_v6::o6_ge() {
 #if defined(USE_ENET) && defined(USE_LIBCURL)
 	// Mod for Backyard Baseball 2001 online competitive play: Reduce sprints
 	// required to reach top speed
-	if (ConfMan.getBool("enable_competitive_mods") && _game.id == GID_BASEBALL2001 &&
+	if (_enableHECompetitiveOnlineMods && _game.id == GID_BASEBALL2001 &&
 		_currentRoom == 3 && vm.slot[_currentScript].number == 2095 && readVar(399) == 1) {
 		a -= 1;  // If sprint counter (b) is higher than a, runner gets 1 extra speed
 	}
@@ -874,7 +890,7 @@ void ScummEngine_v6::o6_div() {
 #if defined(USE_ENET) && defined(USE_LIBCURL)
 	// Mod for Backyard Baseball 2001 online competitive play: Allow full sprinting while
 	// running half-speed on a popup
-	if (ConfMan.getBool("enable_competitive_mods") && _game.id == GID_BASEBALL2001 && _currentRoom == 3 &&
+	if (_enableHECompetitiveOnlineMods && _game.id == GID_BASEBALL2001 && _currentRoom == 3 &&
 		vm.slot[_currentScript].number == 2095 && readVar(399) == 1 && a == 2) {
 		// Normally divides speed by two here
 		int runnerIdx = readVar(0x4000);
@@ -1029,9 +1045,10 @@ void ScummEngine_v6::o6_jump() {
 	// This is a script bug, due to a missing jump in one segment of the script,
 	// and it also happens with the original interpreters.
 	//
-	// Intentionally not using enhancementEnabled, since having the game hang
+	// Intentionally using `kEnhGameBreakingBugFixes`, since having the game hang
 	// is not useful to anyone.
-	if (_game.id == GID_SAMNMAX && vm.slot[_currentScript].number == 101 && readVar(0x8000 + 97) == 1 && offset == 1) {
+	if (_game.id == GID_SAMNMAX && vm.slot[_currentScript].number == 101 && readVar(0x8000 + 97) == 1 && offset == 1 &&
+		enhancementEnabled(kEnhGameBreakingBugFixes)) {
 		offset = -18;
 	}
 
@@ -1130,7 +1147,7 @@ void ScummEngine_v6::o6_startScriptQuick2() {
 #if defined(USE_ENET) && defined(USE_LIBCURL)
 	// Mod for Backyard Baseball 2001 online competitive play: change effect of
 	// pitch location on hit quality
-	if (ConfMan.getBool("enable_competitive_mods") && _game.id == GID_BASEBALL2001 && _currentRoom == 4 && script == 2085 && readVar(399) == 1) {
+	if (_enableHECompetitiveOnlineMods && _game.id == GID_BASEBALL2001 && _currentRoom == 4 && script == 2085 && readVar(399) == 1) {
 		int zone = _roomVars[2];
 		int stance = readVar(447);
 		int handedness = _roomVars[0];
@@ -1720,7 +1737,7 @@ void ScummEngine_v6::o6_getRandomNumberRange() {
 	int rnd = _rnd.getRandomNumber(0x7fff);
 	rnd = min + (rnd % (max - min + 1));
 #if defined(USE_ENET) && defined(USE_LIBCURL)
-	if (ConfMan.getBool("enable_competitive_mods")) {
+	if (_enableHECompetitiveOnlineMods) {
 		// For using predefined teams in Prince Rupert, instead of choosing player IDs randomly
 		// let's pull from the variables that contain the teams
 		if (_game.id == GID_BASEBALL2001 && vm.slot[_currentScript].number == 298 &&
@@ -2176,16 +2193,17 @@ void ScummEngine_v6::o6_roomOps() {
 	case SO_ROOM_NEW_PALETTE:
 		a = pop();
 
-		// This opcode is used when turning off noir mode in Sam & Max,
-		// but since our implementation of this feature doesn't change
-		// the original palette there's no need to reload it. Doing it
-		// this way, we avoid some graphics glitches that the original
-		// interpreter had.
-
-		if (_game.id == GID_SAMNMAX && _currentScript != 0xFF && vm.slot[_currentScript].number == 64)
+		// This opcode is used when turning off noir mode in Sam & Max;
+		// the original exhibited some minor glitches during this mode,
+		// so we have two ways to perform it: the accurate one, and our
+		// improved one...
+		if (_game.id == GID_SAMNMAX && enhancementEnabled(kEnhMinorBugFixes) &&
+			_currentScript != 0xFF && vm.slot[_currentScript].number == 64) {
 			setDirtyColors(0, 255);
-		else
+		} else {
 			setCurrentPalette(a);
+		}
+
 		break;
 	default:
 		error("o6_roomOps: default case %d", subOp);
@@ -2669,6 +2687,8 @@ void ScummEngine_v6::o6_wait() {
 		//
 		// For now, if the value passed in is divisible by 45, assume it is an
 		// angle, and use _curActor as the actor to wait for.
+		//
+		// TODO: what did the original interpreter do in this case?
 		offs = fetchScriptWordSigned();
 		actnum = pop();
 		if (actnum % 45 == 0) {
@@ -2696,10 +2716,12 @@ void ScummEngine_v6::o6_soundKludge() {
 	// slight bug causing it to busy-wait for a sound to finish. Even under
 	// the best of circumstances, this will cause the game to hang briefly.
 	// On platforms where threading is cooperative, it will cause the game
-	// to hang indefinitely. We identify the buggy part of the script by
-	// looking for a soundKludge() opcode immediately followed by a jump.
+	// to hang indefinitely (hence the use of `kEnhGameBreakingBugFixes`).
+	// We identify the buggy part of the script by looking for a
+	// soundKludge() opcode immediately followed by a jump.
 
-	if (_game.id == GID_CMI && _roomResource == 11 && vm.slot[_currentScript].number == 2016 && *_scriptPointer == 0x66) {
+	if (_game.id == GID_CMI && _roomResource == 11 && vm.slot[_currentScript].number == 2016 && *_scriptPointer == 0x66 &&
+		enhancementEnabled(kEnhGameBreakingBugFixes)) {
 		debug(3, "Working around script bug in room-11-2016");
 		o6_breakHere();
 	}
@@ -2751,7 +2773,7 @@ void ScummEngine_v6::o6_delay() {
 
 void ScummEngine_v6::o6_delaySeconds() {
 	uint32 delay = (uint32)pop();
-	// WORKAROUND: On Baseball 2001, this script downloads the news, poll and banner infomation.
+	// WORKAROUND: On Baseball 2001, this script downloads the news, poll and banner information.
 	// It gives a one second break before validating that the download has completed, which is
 	// a tad bit too long.  So let's turn that into a one frame break.  This is safe because
 	// the script also checks if either var135 == 1, or the check has been done
@@ -3214,17 +3236,21 @@ void ScummEngine_v6::o6_kernelSetFunctions() {
 	case 114:
 		// Sam & Max film noir mode
 		if (_game.id == GID_SAMNMAX) {
-			// At this point ScummVM will already have set
-			// variable 0x8000 to indicate that the game is
-			// in film noir mode. All we have to do here is
-			// to mark the palette as "dirty", because
-			// updatePalette() will desaturate the colors
-			// as they are uploaded to the backend.
-			//
-			// This actually works better than the original
-			// interpreter, where actors would sometimes
-			// still be drawn in color.
-			setDirtyColors(0, 255);
+			if (enhancementEnabled(kEnhMinorBugFixes)) {
+				// At this point ScummVM will already have set
+				// variable 0x8000 to indicate that the game is
+				// in film noir mode. All we have to do here is
+				// to mark the palette as "dirty", because
+				// updatePalette() will desaturate the colors
+				// as they are uploaded to the backend.
+				//
+				// This actually works better than the original
+				// interpreter, where actors would sometimes
+				// still be drawn in color.
+				setDirtyColors(0, 255);
+			} else {
+				applyGrayscaleToPaletteRange(0, 254);
+			}
 		} else
 			error("stub o6_kernelSetFunctions_114()");
 		break;
@@ -3393,7 +3419,7 @@ int ScummEngine::getActionState(ScummAction action) {
 void ScummEngine_v6::o6_delayFrames() {
 	// WORKAROUND:  At startup, Moonbase Commander will pause for 20 frames before
 	// showing the Infogrames logo.  The purpose of this break is to give time for the
-	// GameSpy Arcade application to fill with the online game infomation.
+	// GameSpy Arcade application to fill with the online game information.
 	//
 	// [0000] (84) localvar2 = max(readConfigFile.number(":var263:","user","wait-for-gamespy"),10)
 	// [0029] (08) delayFrames((localvar2 * 2))
@@ -3401,7 +3427,7 @@ void ScummEngine_v6::o6_delayFrames() {
 	// But since we don't support GameSpy and have our own online support, this break
 	// has become redundant and only wastes time.
 	//
-	// WORKAROUND:  On Baseball 2001, there is a 10 frame pause before sending the login infomation
+	// WORKAROUND:  On Baseball 2001, there is a 10 frame pause before sending the login information
 	// to the server.  This is rather a pointless break, so let's skip that.
 	if ((_game.id == GID_MOONBASE && vm.slot[_currentScript].number == 69) ||
 		(_game.id == GID_BASEBALL2001 && _currentRoom == 37 && vm.slot[_currentScript].number == 2068)) {

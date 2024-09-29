@@ -145,7 +145,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 		conditionValueSize = ReturnType::RET_S16;
 		ActorStruct *otherActor = engine->_scene->getActor(actorIdx);
 		if (!otherActor->_workFlags.bIsDead) {
-			if (ABS(ctx.actor->_pos.y - otherActor->_pos.y) >= 1500) {
+			if (ABS(ctx.actor->_posObj.y - otherActor->_posObj.y) >= 1500) {
 				engine->_scene->_currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			} else {
 				// Returns int32, so we check for integer overflow
@@ -222,7 +222,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 			break;
 		}
 
-		if (ABS(targetActor->_pos.y - ctx.actor->_pos.y) < 1500) {
+		if (ABS(targetActor->_posObj.y - ctx.actor->_posObj.y) < 1500) {
 			newAngle = engine->_movements->getAngle(ctx.actor->posObj(), targetActor->posObj());
 			if (ABS(engine->_movements->_targetActorDistance) > MAX_TARGET_ACTOR_DISTANCE) {
 				engine->_movements->_targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
@@ -420,7 +420,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 		break;
 	case kcOBJECT_DISPLAYED: {
 		int32 actorIdx = ctx.stream.readByte();
-		engine->_scene->_currentScriptValue = engine->_scene->getActor(actorIdx)->_workFlags.bIsDrawn ? 1 : 0;
+		engine->_scene->_currentScriptValue = engine->_scene->getActor(actorIdx)->_workFlags.bWasDrawn ? 1 : 0;
 		break;
 	}
 	case kcPROCESSOR:
@@ -924,8 +924,10 @@ int32 ScriptLife::lMESSAGE(TwinEEngine *engine, LifeScriptContext &ctx) {
 	}
 
 	engine->_text->drawTextProgressive(textIdx);
-	if (engine->_scene->_currentSceneIdx == LBA1SceneId::Principal_Island_Library && engine->_scene->_talkingActor == 8 && textIdx == TextId::kStarWarsFanBoy) {
-		engine->unlockAchievement("LBA_ACH_008");
+	if (engine->isLBA1()) {
+		if (engine->_scene->_currentSceneIdx == LBA1SceneId::Principal_Island_Library && engine->_scene->_talkingActor == 8 && textIdx == TextId::kStarWarsFanBoy) {
+			engine->unlockAchievement("LBA_ACH_008");
+		}
 	}
 	engine->_redraw->redrawEngineActions(true);
 
@@ -1069,18 +1071,6 @@ int32 ScriptLife::lEND_COMPORTEMENT(TwinEEngine *engine, LifeScriptContext &ctx)
 }
 
 /**
- * Set a new value for the game flag (Paramter = Game Flag Index, Parameter = Value)
- * @note Opcode @c 0x24
- */
-int32 ScriptLife::lSET_FLAG_GAME(TwinEEngine *engine, LifeScriptContext &ctx) {
-	const uint8 flagIdx = ctx.stream.readByte();
-	const uint8 flagValue = ctx.stream.readByte();
-	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_FLAG_GAME(%i, %i)", (int)flagIdx, (int)flagValue);
-	engine->_gameState->setGameFlag(flagIdx, flagValue);
-	return 0;
-}
-
-/**
  * Kill the actor passed as paramenter (Parameter = Actor Index)
  * @note Opcode @c 0x25
  */
@@ -1141,10 +1131,10 @@ int32 ScriptLife::lGIVE_GOLD_PIECES(TwinEEngine *engine, LifeScriptContext &ctx)
 
 	for (int16 i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
 		OverlayListStruct *overlay = &engine->_redraw->overlayList[i];
-		if (overlay->info0 != -1 && overlay->type == OverlayType::koNumberRange) {
-			overlay->info0 = engine->_collision->boundRuleThree(overlay->info1, overlay->info0, engine->toSeconds(2), overlay->lifeTime - engine->timerRef - engine->toSeconds(1));
-			overlay->info1 = engine->_gameState->_goldPieces;
-			overlay->lifeTime = engine->timerRef + engine->toSeconds(3);
+		if (overlay->num != -1 && overlay->type == OverlayType::koNumberRange) {
+			overlay->num = engine->_collision->boundRuleThree(overlay->info, overlay->num, engine->toSeconds(2), overlay->timerEnd - engine->timerRef - engine->toSeconds(1));
+			overlay->info = engine->_gameState->_goldPieces;
+			overlay->timerEnd = engine->timerRef + engine->toSeconds(3);
 			hideRange = true;
 			break;
 		}
@@ -1246,7 +1236,7 @@ int32 ScriptLife::lSET_DOOR_LEFT(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_DOOR_LEFT(%i)", (int)distance);
 
 	ctx.actor->_beta = LBAAngles::ANGLE_270;
-	ctx.actor->_pos.x = ctx.actor->_animStep.x - distance;
+	ctx.actor->_posObj.x = ctx.actor->_animStep.x - distance;
 	ctx.actor->_workFlags.bIsSpriteMoving = 0;
 	ctx.actor->_speed = 0;
 
@@ -1262,7 +1252,7 @@ int32 ScriptLife::lSET_DOOR_RIGHT(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_DOOR_RIGHT(%i)", (int)distance);
 
 	ctx.actor->_beta = LBAAngles::ANGLE_90;
-	ctx.actor->_pos.x = ctx.actor->_animStep.x + distance;
+	ctx.actor->_posObj.x = ctx.actor->_animStep.x + distance;
 	ctx.actor->_workFlags.bIsSpriteMoving = 0;
 	ctx.actor->_speed = 0;
 
@@ -1278,7 +1268,7 @@ int32 ScriptLife::lSET_DOOR_UP(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_DOOR_UP(%i)", (int)distance);
 
 	ctx.actor->_beta = LBAAngles::ANGLE_180;
-	ctx.actor->_pos.z = ctx.actor->_animStep.z - distance;
+	ctx.actor->_posObj.z = ctx.actor->_animStep.z - distance;
 	ctx.actor->_workFlags.bIsSpriteMoving = 0;
 	ctx.actor->_speed = 0;
 
@@ -1294,7 +1284,7 @@ int32 ScriptLife::lSET_DOOR_DOWN(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_DOOR_DOWN(%i)", (int)distance);
 
 	ctx.actor->_beta = LBAAngles::ANGLE_0;
-	ctx.actor->_pos.z = ctx.actor->_animStep.z + distance;
+	ctx.actor->_posObj.z = ctx.actor->_animStep.z + distance;
 	ctx.actor->_workFlags.bIsSpriteMoving = 0;
 	ctx.actor->_speed = 0;
 
@@ -1391,8 +1381,8 @@ int32 ScriptLife::lOR_IF(TwinEEngine *engine, LifeScriptContext &ctx) {
  * @note Opcode @c 0x38
  */
 int32 ScriptLife::lINVISIBLE(TwinEEngine *engine, LifeScriptContext &ctx) {
-	ctx.actor->_staticFlags.bIsHidden = ctx.stream.readByte();
-	debugC(3, kDebugLevels::kDebugScripts, "LIFE::INVISIBLE(%i)", (int)ctx.actor->_staticFlags.bIsHidden);
+	ctx.actor->_staticFlags.bIsInvisible = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScripts, "LIFE::INVISIBLE(%i)", (int)ctx.actor->_staticFlags.bIsInvisible);
 	return 0;
 }
 
@@ -1421,7 +1411,7 @@ int32 ScriptLife::lZOOM(TwinEEngine *engine, LifeScriptContext &ctx) {
 }
 
 /**
- * Set new postion for the current actor (Parameter = Track Index)
+ * Set new position for the current actor (Parameter = Track Index)
  * @note Opcode @c 0x3A
  */
 int32 ScriptLife::lPOS_POINT(TwinEEngine *engine, LifeScriptContext &ctx) {
@@ -1436,7 +1426,7 @@ int32 ScriptLife::lPOS_POINT(TwinEEngine *engine, LifeScriptContext &ctx) {
 			return 0;
 		}
 	}
-	ctx.actor->_pos = engine->_scene->_sceneTracks[trackIdx];
+	ctx.actor->_posObj = engine->_scene->_sceneTracks[trackIdx];
 	return 0;
 }
 
@@ -1634,7 +1624,11 @@ int32 ScriptLife::lINIT_PINGOUIN(TwinEEngine *engine, LifeScriptContext &ctx) {
 int32 ScriptLife::lSET_HOLO_POS(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 location = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_HOLO_POS(%i)", (int)location);
-	engine->_holomap->setHolomapPosition(location);
+	if (engine->_holomap->setHoloPos(location)) {
+		if (engine->_gameState->hasItem(InventoryItems::kiHolomap)) {
+			engine->_redraw->addOverlay(OverlayType::koInventoryItem, InventoryItems::kiHolomap, 0, 0, 0, OverlayPosType::koNormal, 3);
+		}
+	}
 	return 0;
 }
 
@@ -1645,7 +1639,7 @@ int32 ScriptLife::lSET_HOLO_POS(TwinEEngine *engine, LifeScriptContext &ctx) {
 int32 ScriptLife::lCLR_HOLO_POS(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 location = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::CLR_HOLO_POS(%i)", (int)location);
-	engine->_holomap->clearHolomapPosition(location);
+	engine->_holomap->clrHoloPos(location);
 	return 0;
 }
 
@@ -1656,6 +1650,9 @@ int32 ScriptLife::lCLR_HOLO_POS(TwinEEngine *engine, LifeScriptContext &ctx) {
 int32 ScriptLife::lADD_FUEL(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int16 value = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::ADD_FUEL(%i)", (int)value);
+	if (engine->isLBA2()) {
+		return 0;
+	}
 	engine->_gameState->addGas(value);
 	return 0;
 }
@@ -1667,6 +1664,9 @@ int32 ScriptLife::lADD_FUEL(TwinEEngine *engine, LifeScriptContext &ctx) {
 int32 ScriptLife::lSUB_FUEL(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int16 value = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SUB_FUEL(%i)", (int)value);
+	if (engine->isLBA2()) {
+		return 0;
+	}
 	engine->_gameState->addGas(-value);
 	return 0;
 }
@@ -1721,7 +1721,7 @@ int32 ScriptLife::lSAY_MESSAGE_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) 
  */
 int32 ScriptLife::lFULL_POINT(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::FULL_POINT()");
-	engine->_scene->_sceneHero->setLife(kActorMaxLife);
+	engine->_scene->_sceneHero->setLife(engine->getMaxLife());
 	engine->_gameState->setMaxMagicPoints();
 	return 0;
 }
@@ -1963,8 +1963,9 @@ int32 ScriptLife::lTHE_END(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::THE_END()");
 	engine->_sceneLoopState = SceneLoopState::Finished;
 	engine->_gameState->setLeafs(0);
-	engine->_scene->_sceneHero->setLife(kActorMaxLife);
+	engine->_scene->_sceneHero->setLife(engine->getMaxLife());
 	engine->_gameState->setMagicPoints(80);
+	// TODO: lba2 has a different ending
 	engine->_scene->_currentSceneIdx = LBA1SceneId::Polar_Island_Final_Battle;
 	engine->_actor->_heroBehaviour = engine->_actor->_previousHeroBehaviour;
 	engine->_scene->_newHeroPos.x = -1;
@@ -1980,7 +1981,7 @@ int32 ScriptLife::lTHE_END(TwinEEngine *engine, LifeScriptContext &ctx) {
 int32 ScriptLife::lPLAY_CD_TRACK(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 track = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::PLAY_CD_TRACK(%i)", (int)track);
-	engine->_music->playTrackMusic(track);
+	engine->_music->playCdTrack(track);
 	return 0;
 }
 

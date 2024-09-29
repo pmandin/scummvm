@@ -45,10 +45,12 @@ public:
 	virtual void replaceMacCursor(const Graphics::Cursor *cursor) = 0;
 	virtual Common::Point getMousePos() const;
 	virtual void setMousePos(const Common::Point &pos) const;
+	virtual void setShakePos(int shakeXOffset, int shakeYOffset) const;
 	virtual void clearRect(const Common::Rect &r) const;
 	virtual void copyCurrentBitmap(byte *dest, uint32 size) const = 0;
 	virtual void copyCurrentPalette(byte *dest, int start, int num) const;
 	virtual void drawTextFontGlyph(const byte *src, int pitch, int hiresDestX, int hiresDestY, int hiresW, int hiresH, int transpColor, const PaletteMod *palMods, const byte *palModMapping) = 0; 
+	virtual byte remapTextColor(byte color) const { return color; }
 	virtual bool supportsPalIntensity() const = 0;
 	virtual bool driverBasedTextRendering() const = 0;
 	uint16 numColors() const { return _numColors; }
@@ -144,6 +146,7 @@ public:
 	void replaceCursor(const void *cursor, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor) override;
 	Common::Point getMousePos() const override;
 	void setMousePos(const Common::Point &pos) const override;
+	void setShakePos(int shakeXOffset, int shakeYOffset) const override;
 	void clearRect(const Common::Rect &r) const override;
 	static bool validateMode(Common::Platform p) { return (p == Common::kPlatformDOS) && checkDriver(_driverFiles, 2); }
 private:
@@ -164,6 +167,7 @@ public:
 	void replaceCursor(const void *cursor, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor) override;
 	Common::Point getMousePos() const override;
 	void setMousePos(const Common::Point &pos) const override;
+	void setShakePos(int shakeXOffset, int shakeYOffset) const override;
 	void clearRect(const Common::Rect &r) const override;
 	static bool validateMode(Common::Platform p) { return (p == Common::kPlatformDOS) && checkDriver(&_driverFile, 1); }
 private:
@@ -202,6 +206,7 @@ public:
 	void drawTextFontGlyph(const byte*, int, int, int, int, int, int, const PaletteMod*, const byte*) override; // Only for HiRes fonts. Not implemented here.
 	Common::Point getMousePos() const override;
 	void setMousePos(const Common::Point &pos) const override;
+	void setShakePos(int shakeXOffset, int shakeYOffset) const override;
 	void clearRect(const Common::Rect &r) const override;
 	bool supportsPalIntensity() const override { return false; }
 	bool driverBasedTextRendering() const override { return false; }
@@ -230,18 +235,18 @@ public:
 	void replaceCursor(const void *cursor, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor) override;
 	Common::Point getMousePos() const override;
 	void setMousePos(const Common::Point &pos) const override;
+	void setShakePos(int shakeXOffset, int shakeYOffset) const override;
 	void clearRect(const Common::Rect &r) const override;
 	void drawTextFontGlyph(const byte *src, int pitch, int hiresDestX, int hiresDestY, int hiresW, int hiresH, int transpColor, const PaletteMod *palMods, const byte *palModMapping) override; // For HiRes fonts. PC-98 versions bypass the video driver for this and render directly on top of the vram.
 	bool driverBasedTextRendering() const override { return true; }
 protected:
 	void updateScreen(int destX, int destY, int w, int h, const PaletteMod *palMods, const byte *palModMapping);
 	void adjustCursorBuffer(uint16 newWidth, uint16 newHeight);
-	typedef void (*GlyphRenderProc)(byte*, int, const byte*, int, int, int, int, int);
+	typedef void (*GlyphRenderProc)(byte*, int, const byte*, int, int, int, int);
 	GlyphRenderProc _renderGlyph;
 	typedef void (*ScaledRenderProc)(byte*, const byte*, int, int, int);
 	ScaledRenderProc _renderScaled;
 	uint16 _textAlignX;
-	int16 _fixedTextColor;
 	byte *_scaledBitmap;
 private:
 	const bool _scaleCursor;
@@ -254,37 +259,36 @@ class PC98Gfx16ColorsDriver final : public UpscaledGfxDriver {
 public:
 	enum SjisFontStyle {
 		kFontStyleNone,
-		kFontStyleFat,
+		kFontStyleTextMode,
 		kFontStyleSpecialSCI1
 	};
 
-	PC98Gfx16ColorsDriver(int textAlignX, bool cursorScaleWidth, bool cursorScaleHeight, SjisFontStyle sjisFontStyle, int sjisTextModeColor, bool rgbRendering, bool needsUnditheringPalette);
+	PC98Gfx16ColorsDriver(int textAlignX, bool cursorScaleWidth, bool cursorScaleHeight, SjisFontStyle sjisFontStyle, bool rgbRendering, bool needsUnditheringPalette);
 	~PC98Gfx16ColorsDriver() override;
 	void initScreen(const Graphics::PixelFormat *format) override;
 	void setPalette(const byte*, uint, uint, bool, const PaletteMod*, const byte*) override {}
 	void replaceCursor(const void *cursor, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor) override;
+	byte remapTextColor(byte color) const override;
 private:
 	const byte *_convPalette;
+	const byte *_textModePalette;
 	const bool _cursorScaleHeightOnly;
 	SjisFontStyle _fontStyle;
 };
 
 class SCI0_PC98Gfx8ColorsDriver final : public UpscaledGfxDriver {
 public:
-	enum SjisFontStyle {
-		kFontStyleNone,
-		kFontStyleFat
-	};
-	SCI0_PC98Gfx8ColorsDriver(bool cursorScaleHeight, SjisFontStyle sjisFontStyle, int sjisTextModeColor, bool rgbRendering);
+	SCI0_PC98Gfx8ColorsDriver(bool cursorScaleHeight, bool useTextModeForSJISChars, bool rgbRendering);
 	~SCI0_PC98Gfx8ColorsDriver() override;
 	void initScreen(const Graphics::PixelFormat *format) override;
 	void setPalette(const byte*, uint, uint, bool, const PaletteMod*, const byte*) override {}
 	void replaceCursor(const void *cursor, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor) override;
+	byte remapTextColor(byte color) const override;
 	static bool validateMode(Common::Platform p) { return (p == Common::kPlatformPC98) && checkDriver(_driverFiles, 2); }
 private:
 	const byte *_convPalette;
 	const bool _cursorScaleHeightOnly;
-	SjisFontStyle _fontStyle;
+	const bool _useTextMode;
 	static const char *_driverFiles[2];
 };
 

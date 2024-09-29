@@ -109,7 +109,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_USA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -122,7 +122,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_GRB,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{ // 25th Anniversary rerelease / Steam DLC for Director's Cut
@@ -135,7 +135,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_GRB,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -148,7 +148,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_GRB,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -161,7 +161,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_ANY,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{ // Bundled with ScummVM 0.8
@@ -175,7 +175,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_ANY,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -188,7 +188,21 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
+	},
+
+	{ // This is apparently one of the frankensten versions floating around
+	  // See reports #14865, #15089 and #15376
+		"sword1",
+		"",
+		AD_ENTRY4s("scripts.clu",  "72b10193714e8c6e4daca51791c0db0c", 1087984,
+				   "swordres.rif", "c7df52094d590b568a4ed35b70390d9e", 58916,
+				   "text.clu",     "76f93f5feecc8915435105478f3c6615", 2705446,
+				   "smackshi/intro.smk",    "d602a28f5f5c583bf9870a23a94a9bc5", 13525168),
+		Common::FR_FRA,
+		Common::kPlatformWindows,
+		ADGF_PIRATED,
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -201,7 +215,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -214,7 +228,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -227,7 +241,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -240,7 +254,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::DE_DEU,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -253,7 +267,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::DE_DEU,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{ // German DVD Trilogy collection
@@ -266,7 +280,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::DE_DEU,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{ // GOG.com version + german translation
@@ -292,7 +306,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::DE_DEU,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -305,7 +319,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::ES_ESP,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{ // Alternate version
@@ -318,7 +332,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::ES_ESP,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -331,7 +345,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::ES_ESP,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -344,7 +358,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::IT_ITA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -357,7 +371,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::IT_ITA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -370,7 +384,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::IT_ITA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -383,7 +397,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::PT_PRT,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE_EXTENDED)
 	},
 
 	{
@@ -396,7 +410,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::PT_BRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE_EXTENDED)
 	},
 
 	{
@@ -500,7 +514,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::CS_CZE,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE_EXTENDED)
 	},
 
 	{
@@ -513,7 +527,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::CS_CZE,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
-		GUIO1(GAMEOPTION_WINDOWS_AUDIO_MODE)
+		GUIO2(GAMEOPTION_WINDOWS_AUDIO_MODE, GAMEOPTION_MULTILANGUAGE_EXTENDED)
 	},
 
 	{
@@ -593,7 +607,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_USA,
 		Common::kPlatformMacintosh,
 		ADGF_NO_FLAGS,
-		GUIO0()
+		GUIO1(GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -606,7 +620,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_GRB,
 		Common::kPlatformMacintosh,
 		ADGF_NO_FLAGS,
-		GUIO0()
+		GUIO1(GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{
@@ -619,7 +633,7 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::FR_FRA,
 		Common::kPlatformMacintosh,
 		ADGF_NO_FLAGS,
-		GUIO0()
+		GUIO1(GAMEOPTION_MULTILANGUAGE)
 	},
 
 	{

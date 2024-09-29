@@ -73,17 +73,6 @@ static const ADExtraGuiOptionsMap twineOptionsList[] = {
 		}
 	},
 	{
-		GAMEOPTION_AUDIO_CD,
-		{
-			_s("Enable audio CD"),
-			_s("Enable the original audio cd track"),
-			"usecd",
-			false,
-			0,
-			0
-		}
-	},
-	{
 		GAMEOPTION_SOUND,
 		{
 			_s("Enable sound"),
@@ -439,6 +428,19 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("JOY_B");
 		act->addDefaultInputMapping("JOY_BACK");
 		gameKeyMap->addAction(act);
+
+		// TODO: lba2 has shortcuts for the inventory items
+		// J: Protopack/Jetpack
+		// P: Mecha-Penguin
+		// H: Holomap
+		// X: Dodges
+		// 1: Magic Ball
+		// 2: Darts
+		// 3: Blowpipe/Blowtron
+		// 4: Conch Shell
+		// 5: Glove
+		// 6: Laser Gun
+		// 7: Saber
 
 		array[0] = gameKeyMap;
 	}

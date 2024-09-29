@@ -113,7 +113,8 @@ enum {
 	/**
 	 * The maximal 'nesting' level for scripts.
 	 */
-	kMaxScriptNesting = 15
+	kMaxScriptNesting = 15,
+	kMaxScriptNestingHE = 40
 };
 
 struct VirtualMachineState {
@@ -126,7 +127,7 @@ struct VirtualMachineState {
 	// Why does localvar have space for one extra local variable?
 	int32 localvar[NUM_SCRIPT_SLOT][NUM_SCRIPT_LOCAL + 1];
 
-	NestedScript nest[kMaxScriptNesting];
+	NestedScript nest[kMaxScriptNestingHE]; // Changed from 15 to 40 because of later HE games
 	byte numNestedScripts;
 };
 

@@ -14,6 +14,7 @@ MODULE_OBJS := \
 	menu/menuoptions.o \
 	\
 	parser/anim.o \
+	parser/anim3ds.o \
 	parser/blocklibrary.o \
 	parser/body.o \
 	parser/entity.o \
@@ -51,7 +52,8 @@ MODULE_OBJS := \
 	resources/resources.o \
 	\
 	movies.o \
-	holomap.o \
+	holomap_v1.o \
+	holomap_v2.o \
 	input.o \
 	metaengine.o \
 	shared.o \

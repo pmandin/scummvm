@@ -37,6 +37,10 @@ private:
 	int _val5 = 0;
 	int _val6 = 0;
 	int _val7 = 0;
+	const char *_digiName1 = nullptr;
+	const char *_digiName2 = nullptr;
+	const char *_digiName3 = nullptr;
+	const char *_digiName4 = nullptr;
 	int _401a01 = 0;
 	int _401a02 = 0;
 	int _401a03 = 0;
@@ -60,7 +64,6 @@ public:
 	Room401() : Room() {}
 	~Room401() override {}
 
-	void preload() override;
 	void init() override;
 	void daemon() override;
 	void parser() override;

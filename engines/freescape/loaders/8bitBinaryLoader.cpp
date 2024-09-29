@@ -95,7 +95,23 @@ Group *FreescapeEngine::load8bitGroup(Common::SeekableReadStream *file, byte raw
 Group *FreescapeEngine::load8bitGroupV1(Common::SeekableReadStream *file, byte rawFlagsAndType) {
 	debugC(1, kFreescapeDebugParser, "Object of type 'group'");
 	Common::Array<AnimationOpcode *> animation;
-	Common::Array<uint16> groupObjects = readArray(file, 6);
+	Common::Array<uint16> groupObjects = readArray(file, 3);
+	Math::Vector3d offset1;
+	Math::Vector3d offset2;
+
+	for (int i = 0; i < 3; i++) {
+		uint16 value = 0;
+		if (isAmiga() || isAtariST())
+			value = readField(file, 16);
+		else
+			value = readField(file, 8);
+
+		if (value > 127)
+			value = value - 255;
+
+		debugC(1, kFreescapeDebugParser, "Group offset[1][%d] = %d", i, value);
+		offset1.setValue(i, value);
+	}
 
 	// object ID
 	uint16 objectID = readField(file, 8);
@@ -117,11 +133,15 @@ Group *FreescapeEngine::load8bitGroupV1(Common::SeekableReadStream *file, byte r
 		else
 			value = readField(file, 8);
 
-		groupObjects.push_back(value);
+		if (value > 127)
+			value = value - 255;
+
+		debugC(1, kFreescapeDebugParser, "Group offset[2][%d] = %d", i, value);
+		offset2.setValue(i, value);
 	}
 
 	byteSizeOfObject = byteSizeOfObject - 3;
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < 3; i++)
 		debugC(1, kFreescapeDebugParser, "Group object[%d] = %d", i, groupObjects[i]);
 
 	Common::Array<uint16> groupOperations;
@@ -172,6 +192,8 @@ Group *FreescapeEngine::load8bitGroupV1(Common::SeekableReadStream *file, byte r
 		objectID,
 		rawFlagsAndType,
 		groupObjects,
+		offset1,
+		offset2,
 		animation);
 }
 
@@ -179,7 +201,23 @@ Group *FreescapeEngine::load8bitGroupV1(Common::SeekableReadStream *file, byte r
 Group *FreescapeEngine::load8bitGroupV2(Common::SeekableReadStream *file, byte rawFlagsAndType) {
 	debugC(1, kFreescapeDebugParser, "Object of type 'group'");
 	Common::Array<AnimationOpcode *> animation;
-	Common::Array<uint16> groupObjects = readArray(file, 6);
+	Common::Array<uint16> groupObjects = readArray(file, 3);
+	Math::Vector3d offset1;
+	Math::Vector3d offset2;
+
+	for (int i = 0; i < 3; i++) {
+		int16 value = 0;
+		if (isAmiga() || isAtariST())
+			value = readField(file, 16);
+		else
+			value = readField(file, 8);
+
+		if (value > 127)
+			value = value - 255;
+
+		debugC(1, kFreescapeDebugParser, "Group offset[1][%d] = %d", i, value);
+		offset1.setValue(i, value);
+	}
 
 	// object ID
 	uint16 objectID = readField(file, 8);
@@ -196,16 +234,21 @@ Group *FreescapeEngine::load8bitGroupV2(Common::SeekableReadStream *file, byte r
 	byteSizeOfObject = byteSizeOfObject - 9;
 
 	for (int i = 0; i < 3; i++) {
-		uint16 value = 0;
+		int16 value = 0;
 		if (isAmiga() || isAtariST())
 			value = readField(file, 16);
 		else
 			value = readField(file, 8);
-		groupObjects.push_back(value);
+
+		if (value > 127)
+			value = value - 255;
+
+		debugC(1, kFreescapeDebugParser, "Group offset[2][%d] = %d", i, value);
+		offset2.setValue(i, value);
 	}
 
 	byteSizeOfObject = byteSizeOfObject - 3;
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < 3; i++)
 		debugC(1, kFreescapeDebugParser, "Group object[%d] = %d", i, groupObjects[i]);
 
 	Common::Array<uint16> groupOperations;
@@ -254,6 +297,8 @@ Group *FreescapeEngine::load8bitGroupV2(Common::SeekableReadStream *file, byte r
 		objectID,
 		rawFlagsAndType,
 		groupObjects,
+		offset1,
+		offset2,
 		animation);
 }
 
@@ -466,7 +511,7 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 				0,
 				0,
 				0,
-				0,
+				rawFlagsAndType,
 				instructions,
 				conditionSource);
 		}
@@ -623,6 +668,10 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 		}
 
 		if (isAmiga()) {
+			readField(file, 8);
+			readField(file, 8);
+			readField(file, 8);
+			readField(file, 8);
 			// TODO
 			groundColor = skyColor;
 			skyColor = 0;
@@ -664,7 +713,7 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	}
 
 	int64 endLastObject = file->pos();
-	debugC(1, kFreescapeDebugParser, "Last position %llx", endLastObject);
+	debugC(1, kFreescapeDebugParser, "Last position %" PRIx64, endLastObject);
 	debugC(1, kFreescapeDebugParser, "endLastObject is supposed to be %x", base + cPtr);
 	if ((isDark() || isEclipse()) && (isAmiga() || isAtariST()))
 		assert(endLastObject <= static_cast<int64>(base + cPtr) + 4);
@@ -717,14 +766,6 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 	file->seek(offset);
 	uint8 numberOfAreas = readField(file, 8);
 	debugC(1, kFreescapeDebugParser, "Number of areas: %d", numberOfAreas);
-
-	// Castle Master seems to have invalid number of areas?
-	if (isCastle()) {
-		if (isDOS())
-			numberOfAreas = isDemo() ? 31 : 104;
-		else if (isAmiga())
-			numberOfAreas = isDemo() ? 87 : 104;
-	}
 
 	uint32 dbSize = readPtr(file);
 	debugC(1, kFreescapeDebugParser, "Database ends at %x", dbSize);
@@ -989,7 +1030,7 @@ void FreescapeEngine::loadMessagesVariableSize(Common::SeekableReadStream *file,
 		_messagesList.push_back(message);
 		debugC(1, kFreescapeDebugParser, "'%s'", _messagesList[i].c_str());
 	}
-	debugC(1, kFreescapeDebugParser, "End of messages at %lx", file->pos());
+	debugC(1, kFreescapeDebugParser, "End of messages at %" PRIx64, file->pos());
 }
 
 void FreescapeEngine::loadGlobalObjects(Common::SeekableReadStream *file, int offset, int size) {

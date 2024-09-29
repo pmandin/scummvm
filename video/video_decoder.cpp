@@ -47,6 +47,7 @@ VideoDecoder::VideoDecoder() {
 	_mainAudioTrack = 0;
 	_canSetDither = true;
 	_canSetDefaultFormat = true;
+	_videoCodecAccuracy = Image::CodecAccuracy::Default;
 }
 
 void VideoDecoder::close() {
@@ -110,6 +111,13 @@ bool VideoDecoder::needsUpdate() const {
 		return !endOfVideo();
 	}
 	return false;
+}
+
+void VideoDecoder::delayMillis(uint msecs) {
+	if (!needsUpdate())
+		g_system->delayMillis(MIN<uint>(msecs, getTimeToNextFrame()));
+	else
+		g_system->delayMillis(1); /* This is needed to keep the mixer and timers active */
 }
 
 void VideoDecoder::pauseVideo(bool pause) {
@@ -558,6 +566,15 @@ bool VideoDecoder::setOutputPixelFormat(const Graphics::PixelFormat &format) {
 	}
 
 	return result;
+}
+
+void VideoDecoder::setVideoCodecAccuracy(Image::CodecAccuracy accuracy) {
+	_videoCodecAccuracy = accuracy;
+
+	for (Track *track : _tracks) {
+		if (track->getTrackType() == Track::kTrackTypeVideo)
+			static_cast<VideoTrack *>(track)->setCodecAccuracy(accuracy);
+	}
 }
 
 VideoDecoder::Track::Track() {

@@ -51,19 +51,18 @@ GfxMenu::GfxMenu(EventManager *event, SegManager *segMan, GfxPorts *ports, GfxPa
 }
 
 GfxMenu::~GfxMenu() {
-	for (GuiMenuItemList::iterator itemIter = _itemList.begin(); itemIter != _itemList.end(); ++itemIter)
-		delete *itemIter;
-
-	_itemList.clear();
-
-	for (GuiMenuList::iterator menuIter = _list.begin(); menuIter != _list.end(); ++menuIter)
-		delete *menuIter;
-
-	_list.clear();
+	reset();
 }
 
 void GfxMenu::reset() {
+	for (GuiMenuList::iterator i = _list.begin(); i != _list.end(); ++i) {
+		delete *i;
+	}
 	_list.clear();
+
+	for (GuiMenuItemList::iterator i = _itemList.begin(); i != _itemList.end(); ++i) {
+		delete *i;
+	}
 	_itemList.clear();
 
 	// We actually set active item in here and remember last selection of the
@@ -213,7 +212,7 @@ void GfxMenu::kernelAddEntry(const Common::String &title, Common::String content
 			itemEntry->separatorLine = true;
 		} else {
 			// We don't strSplit here, because multilingual SCI01 support
-			// language switching on the fly, so we have to do this everytime
+			// language switching on the fly, so we have to do this every time
 			// the menu is called.
 			itemEntry->text = Common::String(content.c_str() + beginPos, tempPos - beginPos);
 

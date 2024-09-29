@@ -524,6 +524,7 @@ class ScummEngine : public Engine, public Common::Serializable {
 	friend class MacGuiImpl;
 	friend class MacIndy3Gui;
 	friend class MacLoomGui;
+	friend class LogicHEBasketball;
 
 public:
 	/* Put often used variables at the top.
@@ -559,6 +560,7 @@ public:
 	bool _isAmigaPALSystem = false;
 	bool _quitFromScriptCmd = false;
 	bool _isHE995 = false;
+	bool _enableHECompetitiveOnlineMods = false;
 
 	Common::Keymap *_insaneKeymap;
 
@@ -586,6 +588,7 @@ public:
 	void errorString(const char *buf_input, char *buf_output, int buf_output_size) override;
 	bool hasFeature(EngineFeature f) const override;
 	bool enhancementEnabled(int32 cls);
+	bool gameSupportsQuitDialogOverride() const;
 	void syncSoundSettings() override;
 
 	Common::Error loadGameState(int slot) override;
@@ -664,7 +667,7 @@ protected:
 public:
 	void pauseGame();
 	void restart();
-	bool isUsingOriginalGUI();
+	bool isUsingOriginalGUI() const;
 	bool isMessageBannerActive(); // For Indy4 Jap character shadows
 
 	bool _isIndy4Jap = false;
@@ -1385,6 +1388,8 @@ protected:
 	virtual void palManipulateInit(int resID, int start, int end, int time);
 	void palManipulate();
 	uint32 findClosestPaletteColor(byte *palette, int paletteLength, byte r, byte g, byte b);
+	void applyGrayscaleToPaletteRange(int min, int max); // For Sam&Max original noir mode
+	bool haveToApplyMonkey1PaletteFix();
 
 public:
 	uint8 *getHEPaletteSlot(uint16 palSlot);

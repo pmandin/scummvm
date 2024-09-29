@@ -146,6 +146,10 @@ OpenGLSdlGraphicsManager::OpenGLSdlGraphicsManager(SdlEventSource *eventSource, 
 	// Thus SDL always use the desktop resolution and it is useless to try to use something else.
 	// Do nothing here as adding the desktop resolution to _fullscreenVideoModes is done as a fallback.
 	_fullscreenVideoModes.push_back(VideoMode(desktopRes.width(), desktopRes.height()));
+
+	if (ConfMan.hasKey("force_frame_update")) {
+		_forceFrameUpdate = ConfMan.getInt("force_frame_update", Common::ConfigManager::kApplicationDomain);
+	}
 #else
 	const SDL_Rect *const *availableModes = SDL_ListModes(NULL, SDL_OPENGL | SDL_FULLSCREEN);
 	// TODO: NULL means that there are no fullscreen modes supported. We
@@ -212,6 +216,7 @@ bool OpenGLSdlGraphicsManager::hasFeature(OSystem::Feature f) const {
 	case OSystem::kFeatureVSync:
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	case OSystem::kFeatureFullscreenToggleKeepsContext:
+	case OSystem::kFeatureRotationMode:
 #endif
 		return true;
 
@@ -236,6 +241,10 @@ void OpenGLSdlGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) 
 		if (enable) {
 			_window->iconifyWindow();
 		}
+		break;
+
+	case OSystem::kFeatureRotationMode:
+		notifyResize(getWindowWidth(), getWindowHeight());
 		break;
 
 	default:
@@ -292,6 +301,27 @@ void OpenGLSdlGraphicsManager::initSize(uint w, uint h, const Graphics::PixelFor
 }
 
 void OpenGLSdlGraphicsManager::updateScreen() {
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	static uint32 lastUpdateTime = 0;
+
+	if (_forceFrameUpdate) {
+		if (_forceRedraw) {
+			lastUpdateTime = SDL_GetTicks();
+		} else {
+			// This works for the most part. Anything between 20 and 40 yields
+			// around 24fps. It's not till we set it to 20 that it changes and
+			// jumps to around 40fps.
+			// 50 ~ 16fps
+			// 40 ~ 24fps
+			// 20 ~ 45fps
+			if (SDL_GetTicks() - lastUpdateTime > _forceFrameUpdate) {
+				_forceRedraw = true;
+				lastUpdateTime = SDL_GetTicks();
+			}
+		}
+	}
+#endif
+
 	if (_ignoreResizeEvents) {
 		--_ignoreResizeEvents;
 	}
