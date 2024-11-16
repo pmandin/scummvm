@@ -22,11 +22,7 @@
 #ifndef TWINE_HOLOMAP_H
 #define TWINE_HOLOMAP_H
 
-#include "twine/shared.h"
 #include "common/scummsys.h"
-
-#define NUM_HOLOMAPCOLORS 32
-#define HOLOMAP_PALETTE_INDEX 192
 
 namespace Common {
 class SeekableReadStream;
@@ -37,7 +33,7 @@ namespace TwinE {
 class TwinEEngine;
 class BodyData;
 class AnimData;
-struct ActorMoveStruct;
+struct RealValue;
 struct Vertex;
 struct AnimTimerDataStruct;
 
@@ -69,7 +65,7 @@ public:
 	 */
 	virtual void clrHoloPos(int32 locationIdx) = 0;
 
-	virtual void drawHolomapTrajectory(int32 trajectoryIndex) = 0;
+	virtual void holoTraj(int32 trajectoryIndex) = 0;
 
 	/** Load Holomap content */
 	virtual void initHoloDatas() = 0;

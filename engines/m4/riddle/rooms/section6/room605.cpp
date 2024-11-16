@@ -24,6 +24,7 @@
 #include "m4/graphics/gr_series.h"
 #include "m4/riddle/vars.h"
 #include "m4/adv_r/adv_file.h"
+#include "m4/riddle/riddle.h"
 
 namespace M4 {
 namespace Riddle {
@@ -64,7 +65,7 @@ void Room605::init() {
 			ws_walk_load_walker_series(SECTION6_NORMAL_DIRS, SECTION6_NORMAL_NAMES);
 			ws_walk_load_shadow_series(SECTION6_SHADOW_DIRS, SECTION6_SHADOW_NAMES);
 			_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
-				triggerMachineByHashCallbackNegative, "tt");
+				triggerMachineByHashCallback, "tt");
 			sendWSMessage_10000(1, _tt, _605tt, 1, 1, 200, _605tt, 1, 1, 0);
 			_ttShadow = series_show("tt walker shadow 5", 0x701, 16, -1, -1, 0, 68, 476, 290);
 		}
@@ -86,7 +87,7 @@ void Room605::init() {
 
 			ws_walk_load_walker_series(SECTION6_NORMAL_DIRS, SECTION6_NORMAL_NAMES);
 			ws_walk_load_shadow_series(SECTION6_SHADOW_DIRS, SECTION6_SHADOW_NAMES);
-			_tt = triggerMachineByHash_3000(8, 9, SECTION6_NORMAL_DIRS, SECTION6_SHADOW_DIRS,
+			_tt = triggerMachineByHash_3000(8, 9, *SECTION6_NORMAL_DIRS, *SECTION6_SHADOW_DIRS,
 				450, 339, 1, triggerMachineByHashCallback3000, "tt walker");
 			sendWSMessage_10000(_tt, 476, 290, 5, 10, 1);
 
@@ -125,7 +126,7 @@ void Room605::daemon() {
 
 	case 10:
 		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
-			triggerMachineByHashCallbackNegative, "tt");
+			triggerMachineByHashCallback, "tt");
 		sendWSMessage_10000(1, _tt, _605tt, 222, 234, 11, _605tt, 1, 1, 0);
 		_ttShadow = series_show("tt walker shadow 5", 0x701, 16, -1,
 			-1, 0, 68, 476, 290);
@@ -280,7 +281,7 @@ void Room605::daemon() {
 	case 203:
 		terminateMachineAndNull(_tt);
 		terminateMachineAndNull(_ttShadow);
-		_tt = triggerMachineByHash_3000(8, 9, SECTION6_NORMAL_DIRS, SECTION6_SHADOW_DIRS,
+		_tt = triggerMachineByHash_3000(8, 9, *SECTION6_NORMAL_DIRS, *SECTION6_SHADOW_DIRS,
 			476, 290, 5, triggerMachineByHashCallback3000, "tt walker");
 		sendWSMessage_10000(_tt, 485, 199, 2, 208, 0);
 		digi_play("19_07n04", 1, 255, 206);
@@ -443,7 +444,7 @@ void Room605::parser() {
 		ws_hide_walker();
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale + 1,
-			0x100, 1, triggerMachineByHashCallbackNegative, "rip");
+			0x100, 1, triggerMachineByHashCallback, "rip");
 
 		_G(kernel).trigger_mode = KT_DAEMON;
 		sendWSMessage_10000(1, _ripley, 1, 1, 1, 300, 1, 1, 1, 0);
@@ -473,7 +474,7 @@ void Room605::parser() {
 		} else {
 			if (_G(kernel).trigger == 6)
 				_G(flags)[V196] = 1;
-			sendWSMessage_multi(0);
+			sketchInJournal(0);
 		}
 	} else if (lookFlag && player_said("head")) {
 		digi_play("605r03", 1);
@@ -577,7 +578,7 @@ void Room605::conv605a() {
 		ws_hide_walker();
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale + 1,
-			0x100, 1, triggerMachineByHashCallbackNegative, "rip");
+			0x100, 1, triggerMachineByHashCallback, "rip");
 
 		_G(kernel).trigger_mode = KT_DAEMON;
 		sendWSMessage_10000(1, _ripley, 1, 1, 1, 300, 1, 1, 1, 0);
@@ -646,7 +647,7 @@ bool Room605::takePupilDisk() {
 			_ripHandOnIris = series_load("RIP BURNS HAND ON IRIS");
 			ws_hide_walker();
 			_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-				triggerMachineByHashCallbackNegative, "take pupil");
+				triggerMachineByHashCallback, "take pupil");
 			sendWSMessage_10000(1, _ripley, _ripHandOnIris, 1, 26, 2,
 				_ripHandOnIris, 26, 26, 1);
 			return true;
@@ -699,7 +700,7 @@ bool Room605::sleeveDisk1() {
 			digi_preload("605_s01");
 			digi_preload("605_s02");
 			_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-				triggerMachineByHashCallbackNegative, "take pupil");
+				triggerMachineByHashCallback, "take pupil");
 			sendWSMessage_10000(1, _ripley, _ripGetsIrisWithCloth, 1, 41, 1,
 				_ripGetsIrisWithCloth, 41, 41, 1);
 			return true;
@@ -737,7 +738,7 @@ bool Room605::sleeveDisk1() {
 		_val6 = 7;
 		kernel_timing_trigger(1, 200, KT_DAEMON, KT_PARSE);
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "take pupil");
+			triggerMachineByHashCallback, "take pupil");
 		sendWSMessage_10000(1, _ripley, _ripGetsIrisWithCloth, 1, 41, 10,
 			_ripGetsIrisWithCloth, 41, 41, 1);
 		return true;
@@ -764,7 +765,7 @@ bool Room605::sleeveDisk2() {
 			_ripGetsIrisWithCloth = series_load("RIP GETS IRIS WITH CLOTH");
 			digi_preload("605_s01");
 			_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-				triggerMachineByHashCallbackNegative, "take pupil");
+				triggerMachineByHashCallback, "take pupil");
 			sendWSMessage_10000(1, _ripley, _ripGetsIrisWithCloth, 1, 41, 1,
 				_ripGetsIrisWithCloth, 41, 41, 1);
 			return true;

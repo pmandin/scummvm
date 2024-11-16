@@ -165,6 +165,23 @@ void AndroidGraphicsManager::displayMessageOnOSD(const Common::U32String &msg) {
 	JNI::displayMessageOnOSD(msg);
 }
 
+void AndroidGraphicsManager::recalculateDisplayAreas() {
+	Common::Rect oldDrawRect = _activeArea.drawRect;
+
+	OpenGLGraphicsManager::recalculateDisplayAreas();
+
+	int offsetX = _activeArea.drawRect.left - oldDrawRect.left;
+	int offsetY = _activeArea.drawRect.top - oldDrawRect.top;
+
+	int newX = _cursorX + offsetX;
+	int newY = _cursorY + offsetY;
+
+	newX = CLIP<int16>(newX, _activeArea.drawRect.left, _activeArea.drawRect.right);
+	newY = CLIP<int16>(newY, _activeArea.drawRect.top, _activeArea.drawRect.bottom);
+
+	setMousePosition(newX, newY);
+}
+
 void AndroidGraphicsManager::showOverlay(bool inGUI) {
 	if (_overlayVisible && inGUI == _overlayInGUI)
 		return;

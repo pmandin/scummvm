@@ -72,8 +72,8 @@ struct ExtraGuiOption {
 	const char *tooltip;       /*!< Option tooltip shown when the mouse cursor hovers over it. */
 	const char *configOption;  /*!< confMan key, e.g. "fullscreen". */
 	bool defaultState;         /*!< Default state of the checkbox (checked or not). */
-	byte groupId;        /*!< Id for the checkbox's group, or 0 for no group. */
-	byte groupLeaderId;  /*!< When this checkbox is unchecked, disable all checkboxes in this group. One leader per group. */
+	byte groupId;        /*!< Set to the leader Id (groupLeaderId) for the checkbox's group, or 0 for no group. */
+	byte groupLeaderId;  /*!< Set to a non-zero value only for the leader of the checkbox group. When this leader checkbox is unchecked, disable all checkboxes in this group. One leader per group. */
 };
 
 /**
@@ -345,7 +345,7 @@ public:
 	 * @param target  Name of a config manager target.
 	 * @param slot    Slot number of the save state to be removed.
 	 */
-	virtual void removeSaveState(const char *target, int slot) const;
+	virtual bool removeSaveState(const char *target, int slot) const;
 
 	/**
 	 * Return meta information from the specified save state.

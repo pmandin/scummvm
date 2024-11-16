@@ -269,6 +269,8 @@ void Renderer::rotMatIndex2(IMatrix3x3 *pDest, const IMatrix3x3 *pSrc, const IVe
 		tmp.row2.y = (pSrc->row2.y * nCos - pSrc->row2.x * nSin) / SCENE_SIZE_HALF;
 		tmp.row3.x = (pSrc->row3.y * nSin + pSrc->row3.x * nCos) / SCENE_SIZE_HALF;
 		tmp.row3.y = (pSrc->row3.y * nCos - pSrc->row3.x * nSin) / SCENE_SIZE_HALF;
+
+		pSrc = &tmp;
 	}
 
 	if (lBeta) {
@@ -1730,7 +1732,7 @@ bool Renderer::affObjetIso(int32 x, int32 y, int32 z, int32 alpha, int32 beta, i
 		RenderCommand* renderCmds = _renderCmds;
 		return renderModelElements(numOfPrimitives, bodyData, &renderCmds, &_modelData, modelRect);
 #else
-		error("Unsupported unanimated model render!");
+		error("Unsupported unanimated model render for model index %i!", bodyData.hqrIndex());
 #endif
 	}
 	// restart at the beginning of the renderTable
@@ -1748,7 +1750,7 @@ bool Renderer::affObjetIso(int32 x, int32 y, int32 z, int32 alpha, int32 beta, i
 	return true;
 }
 
-void Renderer::drawObj3D(const Common::Rect &rect, int32 y, int32 angle, const BodyData &bodyData, ActorMoveStruct &move) {
+void Renderer::drawObj3D(const Common::Rect &rect, int32 y, int32 angle, const BodyData &bodyData, RealValue &move) {
 	int32 boxLeft = rect.left;
 	int32 boxTop = rect.top;
 	int32 boxRight = rect.right;
@@ -1854,8 +1856,8 @@ void Renderer::fillHolomapTriangles(const ComputedVertex &vertex0, const Compute
 }
 
 void Renderer::asmTexturedTriangleNoClip(const ComputedVertex vertexCoordinates[3], const ComputedVertex textureCoordinates[3], const uint8 *holomapImage, uint32 holomapImageSize) {
-	int32 lymin = SCENE_SIZE_MAX;
-	int32 lymax = SCENE_SIZE_MIN;
+	int32 lymin = 32000;
+	int32 lymax = -32000;
 	fillHolomapTriangles(vertexCoordinates[0], vertexCoordinates[1], textureCoordinates[0], textureCoordinates[1], lymin, lymax);
 	fillHolomapTriangles(vertexCoordinates[1], vertexCoordinates[2], textureCoordinates[1], textureCoordinates[2], lymin, lymax);
 	fillHolomapTriangles(vertexCoordinates[2], vertexCoordinates[0], textureCoordinates[2], textureCoordinates[0], lymin, lymax);
@@ -1875,32 +1877,29 @@ void Renderer::fillTextPolyNoClip(int32 yMin, int32 yMax, const uint8 *holomapIm
 	const uint16 *pV0 = (const uint16 *)&_taby0[yMin];
 	const uint16 *pU1 = (const uint16 *)&_tabx1[yMin];
 	const uint16 *pV1 = (const uint16 *)&_taby1[yMin];
-	byte *pDest;
-	int32 ustep, vstep;
-	int16 xMin, xMax;
-	uint32 u0, v0, u1, v1, idx;
-	int32 u, v;
 
 	yMax -= yMin;
 
 	for (; yMax >= 0; yMax--) {
-		xMin = *pVerticG++;
-		xMax = *pVerticD++;
+		int16 xMin = *pVerticG++;
+		int16 xMax = *pVerticD++;
 		xMax -= xMin;
 
+		uint32 u0, v0;
+		int32 u, v;
 		u = u0 = *pU0++;
 		v = v0 = *pV0++;
-		u1 = *pU1++;
-		v1 = *pV1++;
+		uint32 u1 = *pU1++;
+		uint32 v1 = *pV1++;
 
 		if (xMax > 0) {
-			pDest = pDestLine + xMin;
+			byte *pDest = pDestLine + xMin;
 
-			ustep = ((int32)u1 - (int32)u0 + 1) / xMax;
-			vstep = ((int32)v1 - (int32)v0 + 1) / xMax;
+			int32 ustep = ((int32)u1 - (int32)u0 + 1) / xMax;
+			int32 vstep = ((int32)v1 - (int32)v0 + 1) / xMax;
 
 			for (; xMax > 0; xMax--) {
-				idx = ((u >> 8) & 0xFF) | (v & 0xFF00); // u0&0xFF00=column*256, v0&0xFF00 = line*256
+				uint32 idx = ((u >> 8) & 0xFF) | (v & 0xFF00); // u0&0xFF00=column*256, v0&0xFF00 = line*256
 				*pDest++ = holomapImage[idx];
 
 				u += ustep;

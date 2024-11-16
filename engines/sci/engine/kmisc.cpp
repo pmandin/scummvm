@@ -35,7 +35,9 @@
 #endif
 #include "sci/engine/savegame.h"
 #include "sci/graphics/cursor.h"
+#include "sci/graphics/gfxdrivers.h"
 #include "sci/graphics/palette.h"
+#include "sci/graphics/screen.h"
 #ifdef ENABLE_SCI32
 #include "sci/graphics/cursor32.h"
 #include "sci/graphics/frameout.h"
@@ -771,7 +773,7 @@ reg_t kPlatform(EngineState *s, int argc, reg_t *argv) {
 	enum Operation {
 		kPlatformUnknown        = 0,
 		kPlatformGetPlatform    = 4,
-		kPlatformUnknown5       = 5,
+		kPlatformIsSmallWindow  = 5,
 		kPlatformIsHiRes        = 6,
 		kPlatformWin311OrHigher = 7
 	};
@@ -785,9 +787,9 @@ reg_t kPlatform(EngineState *s, int argc, reg_t *argv) {
 		return NULL_REG;
 	}
 
-	// treat DOS with hires graphics as Windows so that hires graphics are enabled
+	// treat KQ6 DOS with hires graphics as Windows so that hires graphics are enabled
 	bool isWindows = (g_sci->getPlatform() == Common::kPlatformWindows) ||
-		             (g_sci->getPlatform() == Common::kPlatformDOS && g_sci->forceHiresGraphics());
+	                 (g_sci->getGameId() == GID_KQ6 && g_sci->getPlatform() == Common::kPlatformDOS && g_sci->useHiresGraphics());
 
 	uint16 operation = argv[0].toUint16();
 	switch (operation) {
@@ -803,9 +805,8 @@ reg_t kPlatform(EngineState *s, int argc, reg_t *argv) {
 			return make_reg(0, kSciPlatformMacintosh);
 		else
 			return make_reg(0, kSciPlatformDOS);
-	case kPlatformUnknown5:
-		// This case needs to return the opposite of case 6 to get hires graphics
-		return make_reg(0, !isWindows);
+	case kPlatformIsSmallWindow:
+		return make_reg(0, !g_sci->_gfxScreen->gfxDriver()->supportsHiResGraphics());
 	case kPlatformIsHiRes:
 	case kPlatformWin311OrHigher:
 		return make_reg(0, isWindows);

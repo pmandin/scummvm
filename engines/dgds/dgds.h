@@ -60,6 +60,9 @@ class ADSInterpreter;
 class Globals;
 class ShellGame;
 class DragonArcade;
+class HocIntro;
+class ChinaTank;
+class ChinaTrain;
 
 const float MS_PER_FRAME = 16.6667f;
 
@@ -69,7 +72,9 @@ enum DgdsGameId {
 	GID_WILLY,
 	GID_SQ5DEMO,
 	GID_COMINGATTRACTIONS,
-	GID_QUARKY
+	GID_QUARKY,
+	GID_CASTAWAY,
+	GID_INVALID,
 };
 
 enum DgdsDetailLevel {
@@ -111,6 +116,7 @@ enum DragonArcadeKeyEvent {
 class DgdsEngine : public Engine {
 public:
 	Common::Platform _platform;
+	Common::Language _gameLang;
 	Sound *_soundPlayer;
 	Graphics::ManagedSurface _compositionBuffer;
 
@@ -140,6 +146,9 @@ private:
 
 	// HoC only
 	ShellGame *_shellGame;
+	HocIntro *_hocIntro;
+	ChinaTank *_chinaTank;
+	ChinaTrain *_chinaTrain;
 
 	FontManager *_fontManager;
 	Common::SharedPtr<Image> _corners;
@@ -166,7 +175,12 @@ private:
 	const char *_rstFileName;
 
 	bool _isDemo;
+	bool _isEGA;
 	bool _flipMode;
+	bool _skipNextFrame;
+	uint32 _thisFrameMs;
+	int16 _lastGlobalFade; // Only used in Willy Beamish
+	uint _lastGlobalFadedPal;
 
 public:
 	DgdsEngine(OSystem *syst, const ADGameDescription *gameDesc);
@@ -176,7 +190,9 @@ public:
 
 	void restartGame();
 
-	DgdsGameId getGameId() { return _gameId; }
+	DgdsGameId getGameId() const { return _gameId; }
+	Common::Language getGameLang() const { return _gameLang; }
+	Common::Platform getPlatform() const { return _platform; }
 
 	Graphics::ManagedSurface &getBackgroundBuffer() { return _backgroundBuffer; }
 	Graphics::ManagedSurface &getStoredAreaBuffer() { return _storedAreaBuffer; }
@@ -230,6 +246,7 @@ public:
 
 	bool hasFeature(EngineFeature f) const override {
 		return
+			(f == kSupportsReturnToLauncher) ||
 			(f == kSupportsLoadingDuringRuntime) ||
 			(f == kSupportsSavingDuringRuntime);
 	};
@@ -239,10 +256,17 @@ public:
 	void setMenuToTrigger(MenuId menu) { _menuToTrigger = menu; }
 	bool isInvButtonVisible() const;
 	ShellGame *getShellGame() { return _shellGame; }
+	HocIntro *getHocIntro() { return _hocIntro; }
+	ChinaTrain *getChinaTrain() { return _chinaTrain; }
+	ChinaTank *getChinaTank() { return _chinaTank; }
 	DragonArcade *getDragonArcade() { return _dragonArcade; }
+	void setSkipNextFrame() { _skipNextFrame = true; }
+	uint32 getThisFrameMs() const { return _thisFrameMs; }
 
 	static DgdsEngine *getInstance() { return static_cast<DgdsEngine *>(g_engine); }
 	void setFlipMode(bool mode) { _flipMode = mode; }
+
+	bool isEGA() const { return _isEGA; }
 
 	void enableKeymapper();
 	void disableKeymapper();

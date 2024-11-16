@@ -25,10 +25,9 @@
 #include "m4/wscript/ws_machine.h"
 #include "m4/wscript/wst_regs.h"
 #include "m4/vars.h"
+#include "m4/m4.h"
 
 namespace M4 {
-
-#define CHECK_SERIES if (!_G(globals)) error_show(FL, 'SERI');
 
 void Series::play(const char *seriesName, frac16 layer, uint32 flags,
 		int16 triggerNum, int32 frameRate, int32 loopCount, int32 s,
@@ -183,8 +182,6 @@ machine *series_stream(const char *seriesName, int32 frameRate, int32 layer, int
 }
 
 bool series_stream_break_on_frame(machine *m, int32 frameNum, int32 trigger) {
-	CHECK_SERIES
-
 	// Parameter verification
 	if (!m)
 		return false;
@@ -199,18 +196,17 @@ bool series_stream_break_on_frame(machine *m, int32 frameNum, int32 trigger) {
 }
 
 void series_set_frame_rate(machine *m, int32 newFrameRate) {
-	CHECK_SERIES
-
-	if ((!m) || (!m->myAnim8) || !verifyMachineExists(m))
-		error_show(FL, 'SSFR');
+	if ((!m) || (!m->myAnim8) || !verifyMachineExists(m)) {
+		if (g_engine->getGameType() == GType_Burger)
+			error_show(FL, 'SSFR');
+		return;
+	}
 
 	m->myAnim8->myRegs[IDX_CELS_FRAME_RATE] = newFrameRate << 16;
 }
 
 machine *series_show(const char *seriesName, frac16 layer, uint32 flags, int16 triggerNum,
-	int32 duration, int32 index, int32 s, int32 x, int32 y) {
-	CHECK_SERIES
-
+		int32 duration, int32 index, int32 s, int32 x, int32 y) {
 	int32 myAssetIndex;
 	RGB8 *tempPalettePtr = nullptr;
 
@@ -256,8 +252,6 @@ machine *series_show_sprite(const char *seriesName, int32 index, int32 layer) {
 machine *series_play(const char *seriesName, frac16 layer, uint32 flags, int16 triggerNum,
 		int32 frameRate, int32 loopCount, int32 s, int32 x, int32 y,
 		int32 firstFrame, int32 lastFrame) {
-	CHECK_SERIES
-
 	int32 myAssetIndex;
 	RGB8 *tempPalettePtr = nullptr;
 
@@ -302,7 +296,7 @@ machine *series_play(const char *seriesName, frac16 layer, uint32 flags, int16 t
 machine *series_ranged_play(const char *seriesName, int32 loopCount, uint32 flags,
 		int32 firstFrame, int32 lastFrame, int32 s, uint32 layer,
 		int32 frameRate, int32 trigger, bool stickWhenDone) {
-	if (loopCount != 1)
+	if (loopCount == 1)
 		loopCount = 0;
 	if (stickWhenDone)
 		flags |= 0x10;
@@ -327,18 +321,19 @@ machine *series_plain_play(const char *seriesName, int32 loopCount, uint32 flags
 		int32 s, int32 layer, int32 frameRate, int32 trigger, bool stickWhenDone) {
 	if (stickWhenDone)
 		flags |= 0x10;
-	if (loopCount != 1)
+	if (loopCount == 1)
 		loopCount = 0;
 
 	return series_play(seriesName, layer, flags, trigger, frameRate, loopCount, s);
 }
 
 machine *series_play_xy(const char *seriesName, int loopCount, int flags,
-		int x, int y, int scale, int depth, int layer, int frameRate) {
-	// TODO: proper implementation
-	warning("TODO: series_play_xy");
-	return series_play(seriesName, layer, flags, -1, frameRate, loopCount,
-		scale, x, y);
+		int x, int y, int scale, int layer, int frameRate, int trigger) {
+	if (loopCount == 1)
+		loopCount = 0;
+
+	return series_play(seriesName, layer, flags, trigger, frameRate,
+		loopCount, scale, x, y);
 }
 
 machine *series_simple_play(const char *seriesName, frac16 layer, bool stickWhenDone) {
@@ -347,11 +342,6 @@ machine *series_simple_play(const char *seriesName, frac16 layer, bool stickWhen
 		flags |= 0x10;
 
 	return series_play(seriesName, layer, flags);
-}
-
-void series_stream_check_series(machine *m, int val) {
-	// TODO: series_stream_check_series
-	error("TODO: series_stream_check_series");
 }
 
 } // namespace M4

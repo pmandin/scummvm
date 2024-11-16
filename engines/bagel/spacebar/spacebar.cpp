@@ -113,7 +113,7 @@ ErrorCode SpaceBarEngine::initialize() {
 		if (saveSlot != -1) {
 			bRestart = loadGameState(saveSlot).getCode() != Common::kNoError;
 
-		} else if (savesExist()) {
+		} else if (savesExist() && !isDemo()) {
 			bRestart = false;
 
 			CBagStartDialog cDlg(buildSysDir("START.BMP"), _masterWin);
@@ -220,8 +220,7 @@ ErrorCode SpaceBarEngine::ShutDownSoundSystem() {
 
 Common::Error SpaceBarEngine::run() {
 	// Initialize graphics mode
-	Graphics::PixelFormat format(2, 5, 6, 5, 0, 11, 5, 0, 0);
-	initGraphics(640, 480, &format);
+	initGraphics(640, 480, nullptr);
 
 	// Initialize systems
 	_screen = new Graphics::Screen();

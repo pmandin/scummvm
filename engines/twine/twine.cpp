@@ -41,9 +41,7 @@
 #include "twine/audio/music.h"
 #include "twine/audio/sound.h"
 #include "twine/debugger/console.h"
-#include "twine/debugger/debug.h"
-#include "twine/debugger/debug_grid.h"
-#include "twine/debugger/debug_scene.h"
+#include "twine/debugger/debug_state.h"
 #include "twine/detection.h"
 #include "twine/holomap_v1.h"
 #include "twine/holomap_v2.h"
@@ -76,16 +74,10 @@
 #include "twine/shared.h"
 #include "twine/slideshow.h"
 #include "twine/text.h"
-
+#ifdef USE_IMGUI
+#include "twine/debugger/debugtools.h"
+#endif
 namespace TwinE {
-
-ScopedEngineFreeze::ScopedEngineFreeze(TwinEEngine *engine, bool pause) : _engine(engine) {
-	_engine->freezeTime(pause);
-}
-
-ScopedEngineFreeze::~ScopedEngineFreeze() {
-	_engine->unfreezeTime();
-}
 
 ScopedCursor::ScopedCursor(TwinEEngine *engine) : _engine(engine) {
 	_engine->pushMouseCursorVisible();
@@ -109,12 +101,13 @@ FrameMarker::~FrameMarker() {
 	const uint32 end = g_system->getMillis();
 	const uint32 frameTime = end - _start;
 	const uint32 maxDelay = 1000 / _fps;
-	if (frameTime > maxDelay) {
+	const int32 waitMillis = (int32)maxDelay - (int32)frameTime;
+	_engine->_debugState->addFrameData(frameTime, waitMillis, maxDelay);
+	if (waitMillis < 0) {
 		debug(5, "Frame took longer than the max allowed time: %u (max is %u)", frameTime, maxDelay);
 		return;
 	}
-	const uint32 waitMillis = maxDelay - frameTime;
-	g_system->delayMillis(waitMillis);
+	g_system->delayMillis((uint)waitMillis);
 }
 
 TwineScreen::TwineScreen(TwinEEngine *engine) : _engine(engine) {
@@ -142,6 +135,25 @@ void TwineScreen::update() {
 		_engine->_redraw->_firstTime = true;
 	}
 	Super::update();
+}
+
+int32 boundRuleThree(int32 val1, int32 val2, int32 nbstep, int32 step) { // BoundRegleTrois
+	if (step <= 0) {
+		return val1;
+	}
+
+	if (step >= nbstep) {
+		return val2;
+	}
+
+	return val1 + (((val2 - val1) * step) / nbstep);
+}
+
+int32 ruleThree32(int32 val1, int32 val2, int32 nbstep, int32 step) {  // RegleTrois32
+	if (nbstep < 0) {
+		return val2;
+	}
+	return (((val2 - val1) * step) / nbstep) + val1;
 }
 
 TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags, Common::Platform platform, TwineGameType gameType)
@@ -223,10 +235,8 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	}
 	_sound = new Sound(this);
 	_text = new Text(this);
-	_debugGrid = new DebugGrid(this);
 	_input = new Input(this);
-	_debug = new Debug(this);
-	_debugScene = new DebugScene(this);
+	_debugState = new DebugState(this);
 	setDebugger(new TwinEConsole(this));
 }
 
@@ -254,10 +264,8 @@ TwinEEngine::~TwinEEngine() {
 	delete _holomap;
 	delete _sound;
 	delete _text;
-	delete _debugGrid;
 	delete _input;
-	delete _debug;
-	delete _debugScene;
+	delete _debugState;
 }
 
 void TwinEEngine::pushMouseCursorVisible() {
@@ -278,6 +286,15 @@ void TwinEEngine::popMouseCursorVisible() {
 }
 
 Common::Error TwinEEngine::run() {
+#ifdef USE_IMGUI
+	ImGuiCallbacks callbacks;
+	bool drawImGui = debugChannelSet(-1, kDebugImGui);
+	callbacks.init = TwinE::onImGuiInit;
+	callbacks.render = drawImGui ? TwinE::onImGuiRender : nullptr;
+	callbacks.cleanup = TwinE::onImGuiCleanup;
+	_system->setImGuiCallbacks(callbacks);
+#endif
+
 	debug("Based on TwinEngine v0.2.2");
 	debug("(c) 2002 The TwinEngine team.");
 	debug("(c) 2020-2022 The ScummVM team.");
@@ -308,7 +325,7 @@ Common::Error TwinEEngine::run() {
 	_renderer->init(w, h);
 	_grid->init(w, h);
 	initAll();
-	playIntro();
+	introduction();
 	_sound->stopSamples();
 	saveFrontBuffer();
 
@@ -332,10 +349,10 @@ Common::Error TwinEEngine::run() {
 			debug("Boot parameter: %i", sceneIndex);
 			_gameState->initEngineVars();
 			_text->normalWinDial();
-			_text->_drawTextBoxBackground = true;
+			_text->_flagMessageShade = true;
 			_text->_renderTextTriangle = false;
-			_scene->_needChangeScene = sceneIndex;
-			_scene->_heroPositionType = ScenePositionType::kScene;
+			_scene->_newCube = sceneIndex;
+			_scene->_flagChgCube = ScenePositionType::kScene;
 			_state = EngineState::GameLoop;
 		}
 	}
@@ -350,16 +367,16 @@ Common::Error TwinEEngine::run() {
 		}
 		case EngineState::LoadedGame:
 			debug("Loaded game");
-			if (_scene->_newHeroPos.x == -1) {
-				_scene->_heroPositionType = ScenePositionType::kNoPosition;
+			if (_scene->_sceneStart.x == -1) {
+				_scene->_flagChgCube = ScenePositionType::kNoPosition;
 			}
 			_text->_renderTextTriangle = false;
 			_text->normalWinDial();
-			_text->_drawTextBoxBackground = true;
+			_text->_flagMessageShade = true;
 			_state = EngineState::GameLoop;
 			break;
 		case EngineState::GameLoop:
-			if (gameEngineLoop()) {
+			if (mainLoop()) {
 				_menuOptions->showCredits();
 				_menuOptions->showEndSequence();
 			}
@@ -381,6 +398,14 @@ Common::Error TwinEEngine::run() {
 #endif
 			break;
 		}
+#ifdef USE_IMGUI
+		// For performance reasons, disable the renderer callback if the ImGui debug flag isn't set
+		if (debugChannelSet(-1, kDebugImGui) != drawImGui) {
+			drawImGui = !drawImGui;
+			callbacks.render = drawImGui ? TwinE::onImGuiRender : nullptr;
+			_system->setImGuiCallbacks(callbacks);
+		}
+#endif
 	}
 
 	ConfMan.setBool("combatauto", _actor->_combatAuto);
@@ -458,9 +483,9 @@ static int getLanguageTypeIndex(const char *languageName) {
 		*ptr = '\0';
 	}
 
-	const int32 length = ARRAYSIZE(LanguageTypes);
+	const int32 length = ARRAYSIZE(ListLanguage);
 	for (int32 i = 0; i < length; i++) {
-		if (!strcmp(LanguageTypes[i].name, buffer)) {
+		if (!strcmp(ListLanguage[i].name, buffer)) {
 			return i;
 		}
 	}
@@ -480,7 +505,7 @@ void TwinEEngine::initConfigurations() {
 
 	const char *lng = Common::getLanguageDescription(_gameLang);
 	_cfgfile._languageId = getLanguageTypeIndex(lng);
-	ConfMan.registerDefault("audio_language", LanguageTypes[_cfgfile._languageId].voice);
+	ConfMan.registerDefault("audio_language", ListLanguage[_cfgfile._languageId].voice);
 
 	_cfgfile.FlagDisplayText = ConfGetBoolOrDefault("displaytext", true); // TODO: use subtitles
 	const Common::String midiType = ConfGetOrDefault("miditype", "auto");
@@ -514,7 +539,6 @@ void TwinEEngine::initConfigurations() {
 
 	_cfgfile.Sound = ConfGetBoolOrDefault("sound", true);
 	_cfgfile.Fps = ConfGetIntOrDefault("fps", DEFAULT_FRAMES_PER_SECOND);
-	_cfgfile.Debug = ConfGetBoolOrDefault("debug", false);
 	_cfgfile.Mouse = ConfGetBoolOrDefault("mouse", true);
 
 	_cfgfile.UseAutoSaving = ConfGetBoolOrDefault("useautosaving", false);
@@ -532,7 +556,6 @@ void TwinEEngine::initConfigurations() {
 	debug(1, "Sound:          %s", (_cfgfile.Sound ? "true" : "false"));
 	debug(1, "Movie:          %i", _cfgfile.Movie);
 	debug(1, "Fps:            %i", _cfgfile.Fps);
-	debug(1, "Debug:          %s", (_cfgfile.Debug ? "true" : "false"));
 	debug(1, "UseAutoSaving:  %s", (_cfgfile.UseAutoSaving ? "true" : "false"));
 	debug(1, "WallCollision:  %s", (_cfgfile.WallCollision ? "true" : "false"));
 	debug(1, "AutoAggressive: %s", (_actor->_combatAuto ? "true" : "false"));
@@ -570,7 +593,7 @@ void TwinEEngine::clearScreenMinMax(Common::Rect &rect) {
 	rect.bottom = -0x7D00;
 }
 
-void TwinEEngine::playIntro() {
+void TwinEEngine::introduction() {
 	_input->enableKeyMap(cutsceneKeyMapId);
 	// Display company logo
 	bool abort = false;
@@ -628,17 +651,25 @@ void TwinEEngine::playIntro() {
 
 void TwinEEngine::extInitMcga() {
 	_redraw->_flagMCGA = true;
+	if (_screens->_flagPalettePcx)
+		setPalette(_screens->_palettePcx);
+	else
+		setPalette(_screens->_ptrPal);
 }
 
 void TwinEEngine::extInitSvga() {
 	_redraw->_flagMCGA = false;
+	if (_screens->_flagPalettePcx)
+		setPalette(_screens->_palettePcx);
+	else
+		setPalette(_screens->_ptrPal);
 }
 
 void TwinEEngine::testRestoreModeSVGA(bool redraw) {
 	if (_redraw->_flagMCGA) {
 		extInitSvga();
 		if (redraw) {
-			_redraw->redrawEngineActions(redraw);
+			_redraw->drawScene(redraw);
 		}
 	}
 }
@@ -669,23 +700,23 @@ int TwinEEngine::getRandomNumber(uint max) {
 	return _rnd.getRandomNumber(max - 1);
 }
 
-void TwinEEngine::freezeTime(bool pause) {
+void TwinEEngine::saveTimer(bool pause) {
 	if (_isTimeFreezed == 0) {
 		_saveFreezedTime = timerRef;
-		debugC(3, kDebugLevels::kDebugTime, "freezeTime: timer %i", timerRef);
+		debugC(3, kDebugLevels::kDebugTimers, "freezeTime: timer %i", timerRef);
 		if (pause)
 			_pauseToken = pauseEngine();
 	}
 	_isTimeFreezed++;
-	debugC(3, kDebugLevels::kDebugTime, "freezeTime: %i", _isTimeFreezed);
+	debugC(3, kDebugLevels::kDebugTimers, "freezeTime: %i", _isTimeFreezed);
 }
 
-void TwinEEngine::unfreezeTime() {
+void TwinEEngine::restoreTimer() {
 	--_isTimeFreezed;
-	debugC(3, kDebugLevels::kDebugTime, "unfreezeTime: %i", _isTimeFreezed);
+	debugC(3, kDebugLevels::kDebugTimers, "unfreezeTime: %i", _isTimeFreezed);
 	if (_isTimeFreezed == 0) {
 		timerRef = _saveFreezedTime;
-		debugC(3, kDebugLevels::kDebugTime, "unfreezeTime: time %i", timerRef);
+		debugC(3, kDebugLevels::kDebugTimers, "unfreezeTime: time %i", timerRef);
 		if (_pauseToken.isActive()) {
 			_pauseToken.clear();
 		}
@@ -699,10 +730,11 @@ void TwinEEngine::processActorSamplePosition(int32 actorIdx) {
 }
 
 void TwinEEngine::processBookOfBu() {
-	_screens->fadeToBlack(_screens->_paletteRGBA);
+	_screens->fadeToBlack(_screens->_ptrPal);
 	_screens->loadImage(TwineImage(Resources::HQR_RESS_FILE, 15, 16));
+	_screens->fadeToPal(_screens->_palettePcx);
 	_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
-	_text->_drawTextBoxBackground = false;
+	_text->_flagMessageShade = false;
 	_text->bigWinDial();
 	_text->setFontCrossColor(COLOR_WHITE);
 	const bool tmpFlagDisplayText = _cfgfile.FlagDisplayText;
@@ -710,13 +742,11 @@ void TwinEEngine::processBookOfBu() {
 	_text->drawTextProgressive(TextId::kBookOfBu);
 	_cfgfile.FlagDisplayText = tmpFlagDisplayText;
 	_text->normalWinDial();
-	_text->_drawTextBoxBackground = true;
+	_text->_flagMessageShade = true;
 	_text->initSceneTextBank();
-	_screens->fadeToBlack(_screens->_paletteRGBACustom);
+	_screens->fadeToBlack(_screens->_palettePcx);
 	_screens->clearScreen();
-	// TODO: the palette handling here looks wrong
-	setPalette(_screens->_paletteRGBA);
-	_screens->_fadePalette = true;
+	_screens->_flagFade = true;
 }
 
 void TwinEEngine::processBonusList() {
@@ -732,14 +762,14 @@ void TwinEEngine::processBonusList() {
 }
 
 void TwinEEngine::processInventoryAction() {
-	ScopedEngineFreeze scoped(this);
-	extInitSvga();
-	_menu->processInventoryMenu();
+	saveTimer(false);
+	testRestoreModeSVGA(true) ;
+	_menu->inventory();
 
 	switch (_loopInventoryItem) {
 	case kiHolomap:
 		_holomap->holoMap();
-		_screens->_fadePalette = true;
+		_screens->_flagFade = true;
 		break;
 	case kiMagicBall:
 		if (_gameState->_usingSabre) {
@@ -799,14 +829,16 @@ void TwinEEngine::processInventoryAction() {
 			_actor->initBody(BodyType::btNormal, _scene->_mecaPenguinIdx);
 			penguin->_workFlags.bIsDead = 0;
 			penguin->setCollision(ShapeType::kNone);
-			_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_speed, &penguin->realAngle);
+			_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_srot, &penguin->realAngle);
 			_gameState->removeItem(InventoryItems::kiPenguin);
 			penguin->_delayInMillis = timerRef + toSeconds(30);
 		}
 		break;
 	}
 	case kiBonusList: {
-		_redraw->redrawEngineActions(true);
+		restoreTimer();
+		_redraw->drawScene(true);
+		saveTimer(false);
 		processBonusList();
 		break;
 	}
@@ -822,7 +854,8 @@ void TwinEEngine::processInventoryAction() {
 		break;
 	}
 
-	_redraw->redrawEngineActions(true);
+	restoreTimer();
+	_redraw->drawScene(true);
 }
 
 int32 TwinEEngine::toSeconds(int x) const {
@@ -833,13 +866,14 @@ int32 TwinEEngine::toSeconds(int x) const {
 }
 
 void TwinEEngine::processOptionsMenu() {
-	ScopedEngineFreeze scoped(this);
-	extInitSvga();
+	saveTimer(false);
+	testRestoreModeSVGA(true) ;
 	_sound->pauseSamples();
 	_menu->inGameOptionsMenu();
 	_scene->playSceneMusic();
 	_sound->resumeSamples();
-	_redraw->redrawEngineActions(true);
+	restoreTimer();
+	_redraw->drawScene(true);
 }
 
 bool TwinEEngine::runGameEngine() { // mainLoopInteration
@@ -855,10 +889,10 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		_queuedFlaMovie.clear();
 	}
 
-	if (_scene->_needChangeScene > -1) {
+	if (_scene->_newCube > -1) {
 		if (!isMod() && isDemo() && isLBA1()) {
 			// the demo only has these scenes
-			if (_scene->_needChangeScene != LBA1SceneId::Citadel_Island_Prison && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_outside_the_citadel && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_near_the_tavern) {
+			if (_scene->_newCube != LBA1SceneId::Citadel_Island_Prison && _scene->_newCube != LBA1SceneId::Citadel_Island_outside_the_citadel && _scene->_newCube != LBA1SceneId::Citadel_Island_near_the_tavern) {
 				_music->playMidiFile(6);
 				return true;
 			}
@@ -868,7 +902,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 
 	_movements->update();
 
-	_debug->processDebug();
+	_debugState->update();
 
 	if (_menuOptions->flagCredits) {
 		if (isLBA1()) {
@@ -883,21 +917,23 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		if (_input->toggleAbortAction()) {
 			return true;
 		}
-	} else {
+	} else if (!_screens->_flagFade) {
 		// Process give up menu - Press ESC
-		if (_input->toggleAbortAction() && _scene->_sceneHero->_lifePoint > 0 && _scene->_sceneHero->_body != -1 && !_scene->_sceneHero->_staticFlags.bIsInvisible) {
-			ScopedEngineFreeze scopedFreeze(this);
-			extInitSvga();
-			const int giveUp = _menu->giveupMenu();
+		if (_input->toggleAbortAction() && _scene->_sceneHero->_lifePoint > 0 && _scene->_sceneHero->_body != -1 && !_scene->_sceneHero->_flags.bIsInvisible) {
+			saveTimer(false);
+			testRestoreModeSVGA(true) ;
+			const int giveUp = _menu->quitMenu();
 			if (giveUp == kQuitEngine) {
 				return false;
 			}
 			if (giveUp == 1) {
-				_redraw->redrawEngineActions(true);
+				restoreTimer();
+				_redraw->drawScene(true);
 				_sceneLoopState = SceneLoopState::ReturnToMenu;
 				return false;
 			}
-			_redraw->redrawEngineActions(true);
+			restoreTimer();
+			_redraw->drawScene(true);
 		}
 
 		if (_input->toggleActionIfActive(TwinEActionType::OptionsMenu)) {
@@ -906,7 +942,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		// inventory menu
 		_loopInventoryItem = -1;
-		if (_input->isActionActive(TwinEActionType::InventoryMenu) && _scene->_sceneHero->_body != -1 && _scene->_sceneHero->_controlMode == ControlMode::kManual) {
+		if (_input->isActionActive(TwinEActionType::InventoryMenu) && _scene->_sceneHero->_body != -1 && _scene->_sceneHero->_move == ControlMode::kManual) {
 			processInventoryAction();
 		}
 
@@ -927,7 +963,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			 _input->isActionActive(TwinEActionType::QuickBehaviourAthletic, false) ||
 			 _input->isActionActive(TwinEActionType::QuickBehaviourAggressive, false) ||
 			 _input->isActionActive(TwinEActionType::QuickBehaviourDiscreet, false)) &&
-			_scene->_sceneHero->_body != -1 && _scene->_sceneHero->_controlMode == ControlMode::kManual) {
+			_scene->_sceneHero->_body != -1 && _scene->_sceneHero->_move == ControlMode::kManual) {
 			if (_input->isActionActive(TwinEActionType::QuickBehaviourNormal, false)) {
 				_actor->_heroBehaviour = HeroBehaviourType::kNormal;
 			} else if (_input->isActionActive(TwinEActionType::QuickBehaviourAthletic, false)) {
@@ -937,10 +973,11 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			} else if (_input->isActionActive(TwinEActionType::QuickBehaviourDiscreet, false)) {
 				_actor->_heroBehaviour = HeroBehaviourType::kDiscrete;
 			}
-			ScopedEngineFreeze scopedFreeze(this);
+			saveTimer(false);
 			testRestoreModeSVGA(true);
 			_menu->processBehaviourMenu(behaviourMenu);
-			_redraw->redrawEngineActions(true);
+			restoreTimer();
+			_redraw->drawScene(true);
 		}
 
 		// use Proto-Pack
@@ -959,32 +996,32 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 
 		// Recenter Screen
-		if (_input->toggleActionIfActive(TwinEActionType::RecenterScreenOnTwinsen) && !_disableScreenRecenter) {
-			const ActorStruct *currentlyFollowedActor = _scene->getActor(_scene->_currentlyFollowedActor);
+		if (_input->toggleActionIfActive(TwinEActionType::RecenterScreenOnTwinsen) && !_cameraZone) {
+			const ActorStruct *currentlyFollowedActor = _scene->getActor(_scene->_numObjFollow);
 			_grid->centerOnActor(currentlyFollowedActor);
 		}
 
 		// Draw holomap
 		if (_input->toggleActionIfActive(TwinEActionType::OpenHolomap) && _gameState->hasItem(InventoryItems::kiHolomap) && !_gameState->inventoryDisabled()) {
 			testRestoreModeSVGA(true);
-			freezeTime(false);
+			saveTimer(false);
 			_holomap->holoMap();
 			// unfreeze here - the redrawEngineActions is also doing a freeze
 			// see https://bugs.scummvm.org/ticket/14808
-			unfreezeTime();
-			_screens->_fadePalette = true;
-			_redraw->redrawEngineActions(true);
+			restoreTimer();
+			_screens->_flagFade = true;
+			_redraw->drawScene(true);
 		}
 
 		// Process Pause
 		if (_input->toggleActionIfActive(TwinEActionType::Pause)) {
-			ScopedEngineFreeze scopedFreeze(this, true);
+			saveTimer(true);
 			const char *PauseString = "Pause";
 			_text->setFontColor(COLOR_WHITE);
 			if (_redraw->_flagMCGA) {
 				_text->drawText(_redraw->_sceneryViewX + 5, _redraw->_sceneryViewY, PauseString);
 			} else {
-				const int width = _text->getTextSize(PauseString);
+				const int width = _text->sizeFont(PauseString);
 				const int bottom = height() - _text->lineHeight;
 				_text->drawText(5, bottom, PauseString);
 				copyBlockPhys(5, bottom, 5 + width, bottom + _text->lineHeight);
@@ -996,7 +1033,8 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 					break;
 				}
 			} while (!_input->toggleActionIfActive(TwinEActionType::Pause));
-			_redraw->redrawEngineActions(true);
+			restoreTimer();
+			_redraw->drawScene(true);
 		}
 
 		if (_input->toggleActionIfActive(TwinEActionType::SceneryZoom)) {
@@ -1010,13 +1048,13 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 	}
 
-	_stepFalling = _loopMovePtr.getRealValueFromTime(timerRef);
+	_stepFalling = _realFalling.getRealValueFromTime(timerRef);
 	if (!_stepFalling) {
 		_stepFalling = 1;
 	}
 
-	_movements->setActorAngle(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_loopMovePtr);
-	_disableScreenRecenter = false;
+	_movements->initRealValue(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_realFalling);
+	_cameraZone = false;
 
 	_scene->processEnvironmentSound();
 
@@ -1037,7 +1075,17 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		if (actor->_lifePoint == 0) {
 			if (IS_HERO(a)) {
 				_animations->initAnim(AnimationTypes::kLandDeath, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
-				actor->_controlMode = ControlMode::kNoMove;
+				actor->_move = ControlMode::kNoMove;
+#if 0 // TODO: enable me - found in the lba1 community release source code
+				// Disable collisions on Twinsen to allow other objects to continue their tracks
+				// while the death animation is playing
+				actor->_flags.bObjFallable = 1;
+				actor->_flags.bCheckZone = 0;
+				actor->_flags.bComputeCollisionWithObj = 0;
+				actor->_flags.bComputeCollisionWithBricks = 0;
+				actor->_flags.bCanDrown = 1;
+				actor->_workFlags.bIsHitting = 0;
+#endif
 			} else {
 				_sound->playSample(Samples::Explode, 1, actor->posObj(), a);
 
@@ -1061,12 +1109,22 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		_animations->doAnim(a);
 
-		if (actor->_staticFlags.bIsZonable) {
+		if (actor->_flags.bCheckZone) {
 			_scene->checkZoneSce(a);
 		}
 
 		if (actor->_offsetLife != -1) {
 			_scriptLife->doLife(a);
+		}
+
+		if (_debugState->_playFoundItemAnimation) {
+			_debugState->_playFoundItemAnimation = false;
+			auto tmp = _scene->_sceneHero->_offsetLife;
+			LifeScriptContext fakeCtx(0, _scene->_sceneHero);
+			fakeCtx.stream.writeByte(InventoryItems::kiHolomap);
+			fakeCtx.stream.seek(0);
+			_scriptLife->lFOUND_OBJECT(this, fakeCtx);
+			_scene->_sceneHero->_offsetLife = tmp;
 		}
 
 		processActorSamplePosition(a);
@@ -1075,7 +1133,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			return _sceneLoopState == SceneLoopState::Finished;
 		}
 
-		if (actor->_staticFlags.bCanDrown) {
+		if (actor->_flags.bCanDrown) {
 			const uint8 brickSound = _grid->worldCodeBrick(actor->_posObj.x, actor->_posObj.y - 1, actor->_posObj.z);
 			actor->_brickSound = brickSound;
 
@@ -1087,10 +1145,10 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 							_animations->initAnim(AnimationTypes::kDrawn, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 						}
 						const IVec3 &projPos = _renderer->projectPoint(actor->posObj() - _grid->_worldCube);
-						actor->_controlMode = ControlMode::kNoMove;
+						actor->_move = ControlMode::kNoMove;
 						actor->setLife(-1);
 						_actor->_cropBottomScreen = projPos.y;
-						actor->_staticFlags.bNoShadow = 1;
+						actor->_flags.bNoShadow = 1;
 					}
 				} else {
 					_sound->playSample(Samples::Explode, 1, actor->posObj(), a);
@@ -1108,18 +1166,18 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			if (IS_HERO(a)) {
 				if (actor->_workFlags.bAnimEnded) {
 					if (_gameState->_inventoryNumLeafs > 0) { // use clover leaf automaticaly
-						_scene->_sceneHero->_posObj = _scene->_newHeroPos;
+						_scene->_sceneHero->_posObj = _scene->_sceneStart;
 
-						_scene->_needChangeScene = _scene->_currentSceneIdx;
+						_scene->_newCube = _scene->_numCube;
 						_gameState->setMaxMagicPoints();
 
 						_grid->centerOnActor(_scene->_sceneHero);
 
-						_scene->_heroPositionType = ScenePositionType::kReborn;
+						_scene->_flagChgCube = ScenePositionType::kReborn;
 
 						_scene->_sceneHero->setLife(getMaxLife());
 						_redraw->_firstTime = true;
-						_screens->_fadePalette = true;
+						_screens->_flagFade = true;
 						_gameState->addLeafs(-1);
 						_actor->_cropBottomScreen = 0;
 					} else { // game over
@@ -1130,11 +1188,11 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 						actor->_beta = _actor->_previousHeroAngle;
 						actor->setLife(getMaxLife());
 
-						if (_scene->_previousSceneIdx != _scene->_currentSceneIdx) {
-							_scene->_newHeroPos.x = -1;
-							_scene->_newHeroPos.y = -1;
-							_scene->_newHeroPos.z = -1;
-							_scene->_currentSceneIdx = _scene->_previousSceneIdx;
+						if (_scene->_oldcube != _scene->_numCube) {
+							_scene->_sceneStart.x = -1;
+							_scene->_sceneStart.y = -1;
+							_scene->_sceneStart.z = -1;
+							_scene->_numCube = _scene->_oldcube;
 							_scene->stopRunningGame();
 						}
 
@@ -1145,39 +1203,39 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 					}
 				}
 			} else {
-				_actor->processActorCarrier(a);
+				_actor->checkCarrier(a);
 				actor->_workFlags.bIsDead = 1;
 				actor->_body = -1;
 				actor->_zoneSce = -1;
 			}
 		}
 
-		if (_scene->_needChangeScene != -1) {
+		if (_scene->_newCube != -1) {
 			return false;
 		}
 	}
 
 	_grid->centerScreenOnActor();
 
-	_redraw->redrawEngineActions(_redraw->_firstTime);
+	_redraw->drawScene(_redraw->_firstTime);
 
 	// workaround to fix hero redraw after drowning
 	if (_actor->_cropBottomScreen && _redraw->_firstTime) {
-		_scene->_sceneHero->_staticFlags.bIsInvisible = 1;
-		_redraw->redrawEngineActions(true);
-		_scene->_sceneHero->_staticFlags.bIsInvisible = 0;
+		_scene->_sceneHero->_flags.bIsInvisible = 1;
+		_redraw->drawScene(true);
+		_scene->_sceneHero->_flags.bIsInvisible = 0;
 	}
 
-	_scene->_needChangeScene = SCENE_CEILING_GRID_FADE_1;
+	_scene->_newCube = SCENE_CEILING_GRID_FADE_1;
 	_redraw->_firstTime = false;
 
 	return false;
 }
 
-bool TwinEEngine::gameEngineLoop() {
+bool TwinEEngine::mainLoop() {
 	_redraw->_firstTime = true;
-	_screens->_fadePalette = true;
-	_movements->setActorAngle(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_loopMovePtr);
+	_screens->_flagFade = true;
+	_movements->initRealValue(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_realFalling);
 
 	while (_sceneLoopState == SceneLoopState::Continue) {
 		if (runGameEngine()) {
@@ -1209,11 +1267,11 @@ bool TwinEEngine::delaySkip(uint32 time) {
 	return false;
 }
 
-void TwinEEngine::saveFrontBuffer() {
+void TwinEEngine::saveFrontBuffer() { // CopyScreen(Log, Screen)
 	_screens->copyScreen(_frontVideoBuffer, _workVideoBuffer);
 }
 
-void TwinEEngine::restoreFrontBuffer() {
+void TwinEEngine::restoreFrontBuffer() { // CopyScreen
 	_screens->copyScreen(_workVideoBuffer, _frontVideoBuffer);
 }
 
@@ -1222,22 +1280,13 @@ void TwinEEngine::blitWorkToFront(const Common::Rect &rect) {
 	copyBlockPhys(rect);
 }
 
-void TwinEEngine::blitFrontToWork(const Common::Rect &rect) {
+void TwinEEngine::copyBlock(const Common::Rect &rect) {
 	_interface->blitBox(rect, _frontVideoBuffer, _workVideoBuffer);
 }
 
-void TwinEEngine::setPalette(const uint32 *palette) {
-	uint8 pal[NUMOFCOLORS * 3];
-	uint8 *out = pal;
-	const uint8 *in = (const uint8 *)palette;
-	for (int i = 0; i < NUMOFCOLORS; i++) {
-		out[0] = in[0];
-		out[1] = in[1];
-		out[2] = in[2];
-		out += 3;
-		in += 4;
-	}
-	setPalette(0, NUMOFCOLORS, pal);
+void TwinEEngine::setPalette(const Graphics::Palette &palette, uint startColor) {
+	debugC(1, TwinE::kDebugPalette, "Change palette (%i colors, starting at %i)", (int)palette.size(), (int)startColor);
+	_frontVideoBuffer.setPalette(palette, startColor);
 }
 
 void TwinEEngine::setPalette(uint startColor, uint numColors, const byte *palette) {
@@ -1245,6 +1294,7 @@ void TwinEEngine::setPalette(uint startColor, uint numColors, const byte *palett
 		warning("Could not set palette");
 		return;
 	}
+	debugC(1, TwinE::kDebugPalette, "Change palette (%i colors, starting at %i)", (int)numColors, (int)startColor);
 	_frontVideoBuffer.setPalette(palette, startColor, numColors);
 }
 

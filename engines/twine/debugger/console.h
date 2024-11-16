@@ -46,9 +46,6 @@ private:
 	bool doSetLife(int argc, const char **argv);
 	bool doGiveAllItems(int argc, const char **argv);
 	bool doChangeScene(int argc, const char **argv);
-	bool doListMenuText(int argc, const char **argv);
-	bool doToggleDebug(int argc, const char **argv);
-	bool doToggleDarkPal(int argc, const char **argv);
 	bool doToggleAutoAggressive(int argc, const char **argv);
 	bool doGiveKey(int argc, const char **argv);
 	bool doGiveGas(int argc, const char **argv);
@@ -60,7 +57,6 @@ private:
 	bool doToggleGodMode(int argc, const char **argv);
 	bool doToggleEnhancements(int argc, const char **argv);
 	bool doToggleFreeCamera(int argc, const char **argv);
-	bool doToggleSceneChanges(int argc, const char **argv);
 	bool doToggleSceneRendering(int argc, const char **argv);
 	bool doSetTrackObject(int argc, const char **argv);
 	bool doChangeChapter(int argc, const char **argv);

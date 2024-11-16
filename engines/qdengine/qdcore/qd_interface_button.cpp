@@ -194,7 +194,8 @@ bool qdInterfaceButton::init(bool is_game_active) {
 
 bool qdInterfaceButton::save_script_body(Common::WriteStream &fh, int indent) const {
 	for (int i = 0; i < num_states(); i++) {
-		get_state(i)->save_script(fh, indent + 1);
+		if (!get_state(i)->save_script(fh, indent + 1))
+			return false;
 	}
 
 	return true;
@@ -219,7 +220,8 @@ bool qdInterfaceButton::load_script_body(const xml::tag *p) {
 		switch (it->ID()) {
 		case QDSCR_INTERFACE_ELEMENT_STATE: {
 			qdInterfaceElementState st;
-			st.load_script(&*it);
+			if (!st.load_script(&*it))
+				return false;
 			add_state(st);
 		}
 		break;

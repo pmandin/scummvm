@@ -190,7 +190,7 @@ public:
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 	// Disable autosave (see mirrored method in sci.h for detailed explanation)
 	int getAutosaveSlot() const override { return -1; }
@@ -215,7 +215,7 @@ Common::Error SciMetaEngine::createInstance(OSystem *syst, Engine **engine, cons
 			*engine = new SciEngine(syst, desc, g->gameidEnum);
 
 			// If the GUI options were updated, we catch this here and update them in the users config file transparently.
-			Common::updateGameGUIOptions(customizeGuiOptions(ConfMan.getPath("path"), desc->guiOptions, g->version), getGameGUIOptionsDescriptionLanguage(desc->language));
+			Common::updateGameGUIOptions(customizeGuiOptions(ConfMan.getPath("path"), desc->guiOptions, desc->platform, g->gameidStr, g->version), getGameGUIOptionsDescriptionLanguage(desc->language));
 
 			return Common::kNoError;
 		}
@@ -345,9 +345,9 @@ SaveStateDescriptor SciMetaEngine::querySaveMetaInfos(const char *target, int sl
 
 int SciMetaEngine::getMaximumSaveSlot() const { return 99; }
 
-void SciMetaEngine::removeSaveState(const char *target, int slot) const {
+bool SciMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String fileName = Common::String::format("%s.%03d", target, slot);
-	g_system->getSavefileManager()->removeSavefile(fileName);
+	return g_system->getSavefileManager()->removeSavefile(fileName);
 }
 
 Common::Error SciEngine::loadGameState(int slot) {
@@ -613,8 +613,8 @@ ADDetectedGame SciMetaEngine::fallbackDetectExtern(uint md5Bytes, const FileMap 
 	// resources, and it's not possible to detect that easily
 	// Also look for "%J" which is used in japanese games
 	Resource *text = resMan.findResource(ResourceId(kResourceTypeText, 0), false);
-	uint seeker = 0;
 	if (text) {
+		uint seeker = 0;
 		while (seeker < text->size()) {
 			if (text->getUint8At(seeker) == '#')  {
 				if (seeker + 1 < text->size())
@@ -671,6 +671,14 @@ void SciMetaEngine::registerDefaultSettings(const Common::String &target) const 
 
 	for (const PopUpOptionsMap *entry = popUpOptionsList; entry->guioFlag; ++entry)
 		ConfMan.registerDefault(entry->configOption, entry->defaultState);
+
+	// enable_high_resolution_graphics is normally enabled by default,
+	// except for KQ6 where it overrides the DOS platform with Windows.
+	// If it were enabled by default for KQ6, then the DOS platform
+	// would produce the Windows experience by default instead of DOS.
+	if (ConfMan.get("gameid", target) == "kq6" && ConfMan.get("platform", target) == "pc") {
+		ConfMan.registerDefault("enable_high_resolution_graphics", false);
+	}
 }
 
 GUI::OptionsContainerWidget *SciMetaEngine::buildEngineOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const {

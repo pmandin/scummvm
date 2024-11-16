@@ -49,6 +49,7 @@ MODULE_OBJS = \
 	graphics/krn_pal.o \
 	graphics/rend.o \
 	gui/gui_buffer.o \
+	gui/gui_cheapo.o \
 	gui/gui_dialog.o \
 	gui/gui_item.o \
 	gui/gui_mouse.o \
@@ -79,7 +80,7 @@ MODULE_OBJS = \
 	burger/core/release_trigger.o \
 	burger/core/stream_break.o \
 	burger/gui/game_menu.o \
-	burger/gui/gui_cheapo.o \
+	burger/gui/inventory.o \
 	burger/gui/gui_gizmo.o \
 	burger/gui/interface.o \
 	burger/rooms/room.o \
@@ -180,6 +181,9 @@ MODULE_OBJS = \
 	burger/series_player.o \
 	burger/vars.o \
 	burger/walker.o \
+	riddle/gui/gui_messages.o \
+	riddle/gui/game_menu.o \
+	riddle/gui/inventory.o \
 	riddle/gui/interface.o \
 	riddle/rooms/room.o \
 	riddle/rooms/section.o \
@@ -224,6 +228,7 @@ MODULE_OBJS = \
 	riddle/rooms/section5/room509.o \
 	riddle/rooms/section5/room510.o \
 	riddle/rooms/section6/section6.o \
+	riddle/rooms/section6/section6_maze.o \
 	riddle/rooms/section6/room603.o \
 	riddle/rooms/section6/room604.o \
 	riddle/rooms/section6/room605.o \
@@ -274,6 +279,7 @@ MODULE_OBJS = \
 	riddle/rooms/section7/room710.o \
 	riddle/rooms/section7/room711.o \
 	riddle/rooms/section8/section8.o \
+	riddle/rooms/section8/section8_room.o \
 	riddle/rooms/section8/room801.o \
 	riddle/rooms/section8/room802.o \
 	riddle/rooms/section8/room803.o \
@@ -299,6 +305,7 @@ MODULE_OBJS = \
 	riddle/rooms/section9/room902.o \
 	riddle/rooms/section9/room903.o \
 	riddle/rooms/section9/room905.o \
+	riddle/rooms/section9/room906.o \
 	riddle/rooms/section9/room907.o \
 	riddle/rooms/section9/room908.o \
 	riddle/rooms/section9/room917.o \
@@ -309,6 +316,7 @@ MODULE_OBJS = \
 	riddle/flags.o \
 	riddle/hotkeys.o \
 	riddle/inventory.o \
+	riddle/triggers.o \
 	riddle/vars.o \
 	riddle/walker.o
 

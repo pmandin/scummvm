@@ -34,7 +34,7 @@
 class DgdsMetaEngine : public AdvancedMetaEngine<ADGameDescription> {
 public:
 	const char *getName() const override {
-		return "DGDS";
+		return "dgds";
 	}
 
 	bool hasFeature(MetaEngineFeature f) const override;
@@ -61,11 +61,11 @@ Common::Error DgdsMetaEngine::createInstance(OSystem *syst, Engine **engine, con
 }
 
 struct KeybindingRecord {
-    Dgds::DgdsKeyEvent _action;
-    const char *_id;
-    const Common::U32String _desc;
-    const char *_key;
-    const char *_altKey;
+	Dgds::DgdsKeyEvent _action;
+	const char *_id;
+	const Common::U32String _desc;
+	const char *_key;
+	const char *_altKey;
 };
 
 Common::KeymapArray DgdsMetaEngine::initKeymaps(const char *target) const {

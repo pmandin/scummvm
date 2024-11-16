@@ -55,7 +55,7 @@ ResourceManager::ResourceManager() {
 		return;
 	}
 
-	indexFile.skip(4); // salt for file hash, TODO
+	indexFile.readUint32LE(); // salt for file hash, TODO
 	int nvolumes = indexFile.readUint16LE();
 
 	char fnbuf[FILENAME_LENGTH + 1];
@@ -70,7 +70,7 @@ ResourceManager::ResourceManager() {
 		if (!_volumes[i].isOpen())
 			error("Couldn't open volume data %s", volumeName.toString().c_str());
 
-		indexFile.skip(1); // unknown
+		indexFile.readSByte(); // unknown byte
 		int entries = indexFile.readUint16LE();
 
 		for (int j = 0; j < entries; j++) {
@@ -86,12 +86,16 @@ ResourceManager::ResourceManager() {
 			Common::String fileName(fnbuf);
 			fileName.toLowercase();
 
-			_volumes[i].skip(1); // unknown
+			_volumes[i].readSByte(); // unknown byte
 			res.size = _volumes[i].readUint32LE();
 
-			// Some sounds in Beamish FDD have size -1, which I think just means they don't exist.
-			if (res.size > (uint32)1 << 31 || fileName.empty() || res.size == 0)
+			if (fileName.empty() || res.size == 0)
 				continue;
+
+			// Some sounds in Beamish have size -1 but are needed for the game.. where are they?
+			if (res.size > (uint32)1 << 31) {
+				warning("Res %s : %s at pos %d has negative size??", volumeName.toString().c_str(), fileName.c_str(), res.pos);
+			}
 
 			_resources[fileName] = res;
 		}
@@ -120,6 +124,9 @@ Common::SeekableReadStream *ResourceManager::getResource(Common::String name, bo
 
 	Resource res = _resources[name];
 
+	if (res.size == 0xffffffff) // In willy beamish??
+		return nullptr;
+
 	return new Common::SeekableSubReadStream(&_volumes[res.volume], res.pos, res.pos + res.size);
 }
 
@@ -135,6 +142,12 @@ Resource ResourceManager::getResourceInfo(Common::String name) {
 bool ResourceManager::hasResource(Common::String name) const {
 	name.toLowercase();
 	return _resources.contains(name);
+}
+
+DgdsChunkReader::DgdsChunkReader(Common::SeekableReadStream *stream)
+: _sourceStream(stream), _contentStream(nullptr), _size(0), _container(false),
+ _startPos(0), _id(0), _ex(0) {
+	ARRAYCLEAR(_idStr);
 }
 
 DgdsChunkReader::~DgdsChunkReader() {
@@ -225,9 +238,19 @@ bool DgdsChunkReader::isPacked() const {
 			packed = true;
 		else if (strcmp(_idStr, "004:") == 0)
 			packed = true;
+		else if (strcmp(_idStr, "005:") == 0)
+			packed = true;
+		else if (strcmp(_idStr, "007:") == 0)
+			packed = true;
+		else if (strcmp(_idStr, "009:") == 0)
+			packed = true;
 		else if (strcmp(_idStr, "101:") == 0)
 			packed = true;
 		else if (strcmp(_idStr, "VGA:") == 0)
+			packed = true;
+		else if (strcmp(_idStr, "EGA:") == 0)
+			packed = true;
+		else if (strcmp(_idStr, "HCG:") == 0)
 			packed = true;
 		break;
 	case EX_TDS:
@@ -309,7 +332,7 @@ Common::SeekableReadStream *DgdsChunkReader::readStream() {
 		output = new Common::SeekableSubReadStream(_sourceStream, _startPos, _startPos + _size, DisposeAfterUse::NO);
 	}
 
-	//debug("    %s %u%c", _idStr, _size, (_container ? '+' : ' '));
+	//debug(1, "    %s %u%c", _idStr, _size, (_container ? '+' : ' '));
 	return output;
 }
 

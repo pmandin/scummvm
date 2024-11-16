@@ -24,14 +24,13 @@ extern retro_log_printf_t retro_log_cb;
 extern retro_input_state_t retro_input_cb;
 
 bool retro_get_input_bitmask_supported(void);
-void retro_osd_notification(const char* msg);
+void retro_osd_notification(const char *msg);
 int retro_get_input_device(void);
-const char * retro_get_core_dir(void);
-const char * retro_get_system_dir(void);
-const char * retro_get_save_dir(void);
-const char * retro_get_playlist_dir(void);
+const char *retro_get_core_dir(void);
+const char *retro_get_system_dir(void);
+const char *retro_get_save_dir(void);
+const char *retro_get_playlist_dir(void);
 
-bool retro_setting_get_timing_inaccuracies_enabled(void);
 float retro_setting_get_frame_rate(void);
 uint16 retro_setting_get_sample_rate(void);
 uint16 retro_setting_get_audio_samples_buffer_size(void);
@@ -42,10 +41,14 @@ int retro_setting_get_mouse_fine_control_speed_reduction(void);
 bool retro_setting_get_gamepad_cursor_only(void);
 float retro_setting_get_gamepad_cursor_speed(void);
 float retro_setting_get_gamepad_acceleration_time(void);
+int retro_setting_get_gui_res_w(void);
+int retro_setting_get_gui_res_h(void);
+
+void retro_set_size(unsigned width, unsigned height);
 
 uint8 retro_get_video_hw_mode(void);
 #ifdef USE_OPENGL
 uintptr_t retro_get_hw_fb(void);
-void * retro_get_proc_address(const char * name);
+void *retro_get_proc_address(const char *name);
 #endif
 #endif // LIBRETRO_CORE_H

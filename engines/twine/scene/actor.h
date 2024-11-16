@@ -37,7 +37,7 @@ namespace TwinE {
 #define NUM_BODIES 469 // 131 for lba1
 
 /** Actors move structure */
-struct ActorMoveStruct {
+struct RealValue {
 	int16 startValue = 0;
 	int16 endValue = 0;
 	int16 timeValue = 0;
@@ -61,7 +61,7 @@ struct AnimTimerDataStruct {
 struct StaticFlagsStruct {
 	uint32 bComputeCollisionWithObj : 1;    // 0x000001 CHECK_OBJ_COL
 	uint32 bComputeCollisionWithBricks : 1; // 0x000002 CHECK_BRICK_COL
-	uint32 bIsZonable : 1;                  // 0x000004 CHECK_ZONE - testing of scenaric areas
+	uint32 bCheckZone : 1;                  // 0x000004 CHECK_ZONE - testing of scenaric areas
 	uint32 bSpriteClip : 1;                 // 0x000008 SPRITE_CLIP - (doors) fixed clip area
 	uint32 bCanBePushed : 1;                // 0x000010 PUSHABLE
 	uint32 bComputeLowCollision : 1;        // 0x000020 COL_BASSE
@@ -70,7 +70,7 @@ struct StaticFlagsStruct {
 	uint32 bUnk0100 : 1;                    // 0x000100
 	uint32 bIsInvisible : 1;                // 0x000200 INVISIBLE - not drawn but all computed
 	uint32 bSprite3D : 1;                   // 0x000400 SPRITE_3D - a sprite not a 3D object
-	uint32 bCanFall : 1;                    // 0x000800 OBJ_FALLABLE
+	uint32 bObjFallable : 1;                // 0x000800 OBJ_FALLABLE
 	uint32 bNoShadow : 1;                   // 0x001000 NO_SHADOW - no auto shadow
 	uint32 bIsBackgrounded : 1;             // 0x002000 OBJ_BACKGROUND - is embedded in the decor the 1st time
 	uint32 bIsCarrierActor : 1;             // 0x004000 OBJ_CARRIER - can carry and move an obj
@@ -98,10 +98,10 @@ struct DynamicFlagsStruct {
 	uint32 bIsTargetable : 1;            // 0x0200 IS_TARGETABLE (lba1) OK_SUPER_HIT (lba2)
 	uint32 bIsBlinking : 1;              // 0x0400 IS_BLINKING (lba1) FRAME_SHIELD (lba2)
 	uint32 bWasWalkingBeforeFalling : 1; // 0x0800 DRAW_SHADOW (lba2) - bWasWalkingBeforeFalling in lba1
-	uint32 bUnk1000 : 1;                 // 0x1000 ANIM_MASTER_GRAVITY (lba2)
-	uint32 bUnk2000 : 1;                 // 0x2000 SKATING (lba2) Ouch! I slip in a forbidden collision
-	uint32 bUnk4000 : 1;                 // 0x4000 OK_RENVOIE (lba2) ready to send back a projectile
-	uint32 bUnk8000 : 1;                 // 0x8000 LEFT_JUMP (lba2) ready to jump from the left foot
+	uint32 bANIM_MASTER_GRAVITY : 1;     // 0x1000 ANIM_MASTER_GRAVITY (lba2)
+	uint32 bSKATING : 1;                 // 0x2000 SKATING (lba2) Ouch! I slip in a forbidden collision
+	uint32 bOK_RENVOIE : 1;              // 0x4000 OK_RENVOIE (lba2) ready to send back a projectile
+	uint32 bLEFT_JUMP : 1;               // 0x8000 LEFT_JUMP (lba2) ready to jump from the left foot
 	uint32 bRIGHT_JUMP : 1;              // RIGHT_JUMP          (1<<16) // (lba2) ready to jump from the right foot
 	uint32 bWAIT_SUPER_HIT : 1;          // WAIT_SUPER_HIT      (1<<17) // (lba2) waiting for the end of the animation before giving another super hit
 	uint32 bTRACK_MASTER_ROT : 1;        // TRACK_MASTER_ROT    (1<<18) // (lba2) it's the track that manages the direction
@@ -138,7 +138,7 @@ struct BonusParameter {
 /**
  * Actors structure
  *
- * Such as characters, doors, moving plataforms, invisible actors, ...
+ * Such as characters, doors, moving platforms, invisible actors, ...
  */
 class ActorStruct { // T_OBJET
 private:
@@ -148,8 +148,8 @@ private:
 
 public:
 	ActorStruct(int maxLife = 0) : _lifePoint(maxLife), _maxLife(maxLife) {}
-	StaticFlagsStruct _staticFlags; // Flags
-	DynamicFlagsStruct _workFlags;  // WorkFlags
+	StaticFlagsStruct _flags;
+	DynamicFlagsStruct _workFlags;
 
 	EntityData _entityData;
 	inline ShapeType brickShape() const { return _col; }
@@ -192,15 +192,15 @@ public:
 	int32 _strengthOfHit = 0;
 	int32 _hitBy = -1;
 	BonusParameter _bonusParameter;
-	int32 _beta = 0; // facing angle of actor. Minumum is 0 (SW). Going counter clock wise (BETA in original sources)
-	int32 _speed = 40; // SRot - speed of movement
-	ControlMode _controlMode = ControlMode::kNoMove; // Move
-	int32 _delayInMillis = 0;
+	int32 _beta = 0; // facing angle of actor. Minumum is 0 (SW). Going counter clock wise
+	int32 _srot = 40; // speed of rotation
+	ControlMode _move = ControlMode::kNoMove; // Move
+	int32 _delayInMillis = 0; // Info
 	int32 _cropLeft = 0;      // Info
 	int32 _cropTop = 0;       // Info1
 	int32 _cropRight = 0;     // Info2
 	int32 _cropBottom = 0;    // Info3
-	int32 _followedActor = 0; // same as info3
+	int32 _followedActor = 0; // same as Info3
 	int32 _bonusAmount = 0;
 	int32 _talkColor = COLOR_BLACK;
 	int32 _armor = 1;
@@ -226,7 +226,7 @@ public:
 	/**
 	 * colliding actor id
 	 */
-	int32 _objCol = -1; // ObjCol
+	int32 _objCol = -1;
 	/**
 	 * actor id we are standing on
 	 */
@@ -246,8 +246,11 @@ public:
 	// SizeSHit contains the number of the brick under the wagon - hack
 	int16 SizeSHit; // lba2 - always square
 
+	// T_OBJ_3D Obj; // lba2
+	// T_GROUP_INFO CurrentFrame[30]; // lba2
+
 	BoundingBox _boundingBox; // Xmin, YMin, Zmin, Xmax, Ymax, Zmax
-	ActorMoveStruct realAngle;
+	RealValue realAngle;
 	AnimTimerDataStruct _animTimerData;
 };
 
@@ -326,7 +329,7 @@ public:
 	void setFrame(int32 actorIdx, uint32 frame);
 
 	/** Restart hero variables while opening new scenes */
-	void restartHeroScene();
+	void restartPerso();
 
 	/** Load hero 3D body and animations */
 	void loadHeroEntities();
@@ -368,7 +371,7 @@ public:
 	void hitObj(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32 angle);
 
 	/** Process actor carrier */
-	void processActorCarrier(int32 actorIdx); // CheckCarrier
+	void checkCarrier(int32 actorIdx);
 
 	/** Process actor extra bonus */
 	void giveExtraBonus(int32 actorIdx);

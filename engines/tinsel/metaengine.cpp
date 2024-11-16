@@ -95,10 +95,10 @@ public:
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 
 	// TODO: Add getSavegameFile(). See comments in loadGameState and removeSaveState
-	
+
 	void registerDefaultSettings(const Common::String &target) const override;
 	const ADExtraGuiOptionsMap *getAdvancedExtraGuiOptions() const override;
 
@@ -203,7 +203,7 @@ Common::Error TinselMetaEngine::createInstance(OSystem *syst, Engine **engine, c
 
 int TinselMetaEngine::getMaximumSaveSlot() const { return 99; }
 
-void TinselMetaEngine::removeSaveState(const char *target, int slot) const {
+bool TinselMetaEngine::removeSaveState(const char *target, int slot) const {
 	Tinsel::setNeedLoad();
 	// Same issue here as with loadGameState(): we need the physical savegame
 	// slot. Refer to bug #5819.
@@ -219,9 +219,10 @@ void TinselMetaEngine::removeSaveState(const char *target, int slot) const {
 		}
 	}
 
-	g_system->getSavefileManager()->removeSavefile(Tinsel::ListEntry(listSlot, Tinsel::LE_NAME));
+	bool success = g_system->getSavefileManager()->removeSavefile(Tinsel::ListEntry(listSlot, Tinsel::LE_NAME));
 	Tinsel::setNeedLoad();
 	Tinsel::getList(g_system->getSavefileManager(), target);
+	return success;
 }
 
 void TinselMetaEngine::registerDefaultSettings(const Common::String &target) const {
@@ -242,13 +243,13 @@ Common::KeymapArray TinselMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");

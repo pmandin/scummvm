@@ -43,7 +43,7 @@ public:
 	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
 		if (!target)
 			target = getName();
@@ -106,9 +106,9 @@ int ToucheMetaEngine::getMaximumSaveSlot() const {
 	return Touche::kMaxSaveStates - 1;
 }
 
-void ToucheMetaEngine::removeSaveState(const char *target, int slot) const {
+bool ToucheMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String filename = Touche::generateGameStateFileName(target, slot);
-	g_system->getSavefileManager()->removeSavefile(filename);
+	return g_system->getSavefileManager()->removeSavefile(filename);
 }
 
 Common::KeymapArray ToucheMetaEngine::initKeymaps(const char *target) const {
@@ -119,13 +119,13 @@ Common::KeymapArray ToucheMetaEngine::initKeymaps(const char *target) const {
 	Keymap *gameKeyMap = new Keymap(Keymap::kKeymapTypeGame, "game-shortcuts", _("Game keymappings"));
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");

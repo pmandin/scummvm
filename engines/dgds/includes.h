@@ -27,7 +27,10 @@ namespace Dgds {
 #define MKTAG24(a0, a1, a2) ((uint32)((a2) | (a1) << 8 | ((a0) << 16)))
 
 #define ID_BIN MKTAG24('B', 'I', 'N')
+#define ID_CGA MKTAG24('C', 'G', 'A')
 #define ID_DAT MKTAG24('D', 'A', 'T')
+#define ID_DIM MKTAG24('D', 'I', 'M')
+#define ID_EGA MKTAG24('E', 'G', 'A')
 #define ID_FNM MKTAG24('F', 'N', 'M')
 #define ID_FNT MKTAG24('F', 'N', 'T')
 #define ID_GAD MKTAG24('G', 'A', 'D')
@@ -36,6 +39,7 @@ namespace Dgds {
 #define ID_MTX MKTAG24('M', 'T', 'X')
 #define ID_OFF MKTAG24('O', 'F', 'F')
 #define ID_PAG MKTAG24('P', 'A', 'G')
+#define ID_PAL MKTAG24('P', 'A', 'L')
 #define ID_RAW MKTAG24('R', 'A', 'W')
 #define ID_REQ MKTAG24('R', 'E', 'Q')
 #define ID_RES MKTAG24('R', 'E', 'S')
@@ -83,8 +87,9 @@ namespace Dgds {
 
 #define EX_OVL MKTAG24('O', 'V', 'L')
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 200
+#define SCREEN_WIDTH (DgdsEngine::getInstance()->getGameId() != GID_CASTAWAY ? 320 : 640)
+#define SCREEN_HEIGHT (DgdsEngine::getInstance()->getGameId() != GID_CASTAWAY ? 200 : 480)
+#define SCREEN_HEIGHT_FIXED 200
 
 } // End of namespace Dgds
 

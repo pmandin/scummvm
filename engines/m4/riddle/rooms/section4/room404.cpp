@@ -22,6 +22,7 @@
 #include "m4/riddle/rooms/section4/room404.h"
 #include "m4/graphics/gr_series.h"
 #include "m4/riddle/vars.h"
+#include "m4/riddle/riddle.h"
 
 namespace M4 {
 namespace Riddle {
@@ -36,7 +37,7 @@ static const char *NORMAL_NAMES[] = {
 static const int16 SHADOW_DIRS[] = { 200, 201, -1 };
 static const char *SHADOW_NAMES[] = {
 	"butler walker shadow pos1",
-	"wolf walker shadow pos3"
+	"butler walker shadow pos3"
 };
 
 static const char *const SAID[][2] = {
@@ -74,7 +75,7 @@ void Room404::init() {
 	switch (_G(game).previous_room) {
 	case KERNEL_RESTORING_GAME:
 		_butlerTalks = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x900, 0,
-			triggerMachineByHashCallbackNegative, "BUTLER talks rip");
+			triggerMachineByHashCallback, "BUTLER talks rip");
 		sendWSMessage_10000(1, _butlerTalks, _butlerTalkLoop, 1, 1, -1,
 			_butlerTalkLoop, 1, 1, 0);
 		player_set_commands_allowed(true);
@@ -82,7 +83,7 @@ void Room404::init() {
 
 	case 405:
 		_butlerTalks = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x900, 0,
-			triggerMachineByHashCallbackNegative, "BUTLER talks rip");
+			triggerMachineByHashCallback, "BUTLER talks rip");
 		sendWSMessage_10000(1, _butlerTalks, _butlerTalkLoop, 1, 1, -1,
 			_butlerTalkLoop, 1, 1, 0);
 		ws_demand_location(58, 347, 3);
@@ -91,7 +92,7 @@ void Room404::init() {
 
 	case 406:
 		_butlerTalks = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x900, 0,
-			triggerMachineByHashCallbackNegative, "BUTLER talks rip");
+			triggerMachineByHashCallback, "BUTLER talks rip");
 		sendWSMessage_10000(1, _butlerTalks, _butlerTalkLoop, 1, 1, -1,
 			_butlerTalkLoop, 1, 1, 0);
 		ws_demand_location(174, 268, 3);
@@ -105,7 +106,7 @@ void Room404::init() {
 		ws_walk_load_walker_series(NORMAL_DIRS, NORMAL_NAMES);
 		ws_demand_location(340, 480, 2);
 
-		_machine1 = triggerMachineByHash_3000(8, 10, NORMAL_DIRS, SHADOW_DIRS,
+		_machine1 = triggerMachineByHash_3000(8, 10, *NORMAL_DIRS, *SHADOW_DIRS,
 			380, 421, 1, triggerMachineByHashCallback3000, "BUTLER_walker");
 
 		if (!_G(kittyScreaming) || !player_been_here(404)) {
@@ -128,7 +129,7 @@ void Room404::daemon() {
 	case 21:
 		sendWSMessage_60000(_machine1);
 		_butlerTalks = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x900, 0,
-			triggerMachineByHashCallbackNegative, "BUTLER talks rip");
+			triggerMachineByHashCallback, "BUTLER talks rip");
 		sendWSMessage_10000(1, _butlerTalks, _butlerTurns7, 1, 10, 23,
 			_butlerTalkLoop, 1, 1, 0);
 		break;
@@ -183,7 +184,7 @@ void Room404::daemon() {
 
 	case 32:
 		terminateMachineAndNull(_butlerTalks);
-		_machine1 = triggerMachineByHash_3000(8, 10, NORMAL_DIRS, SHADOW_DIRS,
+		_machine1 = triggerMachineByHash_3000(8, 10, *NORMAL_DIRS, *SHADOW_DIRS,
 			390, 332, 9, triggerMachineByHashCallback3000, "BUTLER_walker");
 		kernel_timing_trigger(270, 33);
 		break;
@@ -210,7 +211,7 @@ void Room404::daemon() {
 	case 42:
 		sendWSMessage_60000(_machine1);
 		_butlerTalks = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x900, 0,
-			triggerMachineByHashCallbackNegative, "BUTLER talks rip");
+			triggerMachineByHashCallback, "BUTLER talks rip");
 		sendWSMessage_10000(1, _butlerTalks, _butlerTurns7, 1, 10, 43,
 			_butlerTalkLoop, 1, 1, 0);
 		break;
@@ -552,9 +553,9 @@ void Room404::parser() {
 			digi_play("com016", 1);
 		} else if (_G(kernel).trigger == 6) {
 			_G(flags)[kCastleCartoon] = 1;
-			sendWSMessage_multi("com015");
+			sketchInJournal("com015");
 		} else {
-			sendWSMessage_multi("");
+			sketchInJournal("");
 		}
 	} else {
 		return;

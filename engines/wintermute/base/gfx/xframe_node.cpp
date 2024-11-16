@@ -30,6 +30,7 @@
 #include "engines/wintermute/base/gfx/base_renderer3d.h"
 #include "engines/wintermute/base/gfx/xmaterial.h"
 #include "engines/wintermute/base/gfx/xframe_node.h"
+#include "engines/wintermute/base/gfx/xmath.h"
 #include "engines/wintermute/base/gfx/xmodel.h"
 #include "engines/wintermute/base/gfx/xfile_loader.h"
 #include "engines/wintermute/dcgf.h"
@@ -38,14 +39,14 @@ namespace Wintermute {
 
 //////////////////////////////////////////////////////////////////////////
 FrameNode::FrameNode(BaseGame *inGame) : BaseNamedObject(inGame) {
-	_transformationMatrix.setToIdentity();
-	_originalMatrix.setToIdentity();
-	_combinedMatrix.setToIdentity();
+	DXMatrixIdentity(&_transformationMatrix);
+   	DXMatrixIdentity(&_originalMatrix);
+	DXMatrixIdentity(&_combinedMatrix);
 
 	for (int i = 0; i < 2; i++) {
-		_transPos[i] = Math::Vector3d(0.0f, 0.0f, 0.0f);
-		_transScale[i] = Math::Vector3d(1.0f, 1.0f, 1.0f);
-		_transRot[i] = Math::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+		_transPos[i] = DXVector3(0.0f, 0.0f, 0.0f);
+		_transScale[i] = DXVector3(1.0f, 1.0f, 1.0f);
+		_transRot[i] = DXQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
 		_lerpValue[i] = 0.0f;
 
 		_transUsed[i] = false;
@@ -58,34 +59,32 @@ FrameNode::~FrameNode() {
 	for (uint32 i = 0; i < _frames.size(); i++) {
 		delete _frames[i];
 	}
-
 	_frames.clear();
 
 	// remove meshes
 	for (uint32 i = 0; i < _meshes.size(); i++) {
 		delete _meshes[i];
 	}
-
 	_meshes.clear();
 }
 
 //////////////////////////////////////////////////////////////////////////
-Math::Matrix4 *FrameNode::getCombinedMatrix() {
+DXMatrix *FrameNode::getCombinedMatrix() {
 	return &_combinedMatrix;
 }
 
 //////////////////////////////////////////////////////////////////////////
-Math::Matrix4 *FrameNode::getOriginalMatrix() {
+DXMatrix *FrameNode::getOriginalMatrix() {
 	return &_originalMatrix;
 }
 
 //////////////////////////////////////////////////////////////////////////
-void FrameNode::setTransformationMatrix(Math::Matrix4 *mat) {
+void FrameNode::setTransformationMatrix(DXMatrix *mat) {
 	_transformationMatrix = *mat;
 }
 
 //////////////////////////////////////////////////////////////////////////
-void FrameNode::setTransformation(int slot, Math::Vector3d pos, Math::Vector3d scale, Math::Quaternion rot, float lerpValue) {
+void FrameNode::setTransformation(int slot, DXVector3 pos, DXVector3 scale, DXQuaternion rot, float lerpValue) {
 	if (slot < 0 || slot > 1)
 		return;
 
@@ -98,7 +97,7 @@ void FrameNode::setTransformation(int slot, Math::Vector3d pos, Math::Vector3d s
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool FrameNode::loadFromXData(const Common::String &filename, XModel *model, XFileData *xobj, Common::Array<MaterialReference> &materialReferences) {
+bool FrameNode::loadFromXData(const Common::String &filename, XModel *model, XFileData *xobj) {
 	_gameRef->miniUpdate();
 
 	bool res = true;
@@ -106,10 +105,14 @@ bool FrameNode::loadFromXData(const Common::String &filename, XModel *model, XFi
 	// get the type of the object
 	XClassType objectType = kXClassUnknown;
 	res = xobj->getType(objectType);
+	if (!res) {
+		BaseEngine::LOG(0, "Error getting object type");
+		return res;
+	}
 
 	if (objectType == kXClassMesh) { // load a child mesh
 		XMesh *mesh = _gameRef->_renderer3D->createXMesh();
-		res = mesh->loadFromXData(filename, xobj, materialReferences);
+		res = mesh->loadFromXData(filename, xobj);
 		if (res) {
 			_meshes.add(mesh);
 			return true;
@@ -123,24 +126,9 @@ bool FrameNode::loadFromXData(const Common::String &filename, XModel *model, XFi
 			BaseEngine::LOG(0, "Error loading transformation matrix");
 			return false;
 		} else {
-			// TODO: check if this is the right format
-			for (int r = 0; r < 4; ++r) {
-				for (int c = 0; c < 4; ++c) {
-					_transformationMatrix(c, r) = frameTransformMatrix->_frameMatrix[r * 4 + c];
-				}
+			for (int i = 0; i < 16; ++i) {
+				_transformationMatrix._m4x4[i] = frameTransformMatrix->_frameMatrix[i];
 			}
-
-			// mirror at orign
-			_transformationMatrix(2, 3) *= -1.0f;
-
-			// mirror base vectors
-			_transformationMatrix(2, 0) *= -1.0f;
-			_transformationMatrix(2, 1) *= -1.0f;
-
-			// change handedness
-			_transformationMatrix(0, 2) *= -1.0f;
-			_transformationMatrix(1, 2) *= -1.0f;
-
 			_originalMatrix = _transformationMatrix;
 			return true;
 		}
@@ -161,13 +149,13 @@ bool FrameNode::loadFromXData(const Common::String &filename, XModel *model, XFi
 
 		// Enumerate child objects.
 		res = false;
-		uint numChildren = 0;
+		uint32 numChildren = 0;
 		xobj->getChildren(numChildren);
 		for (uint32 i = 0; i < numChildren; i++) {
 			XFileData xchildData;
 			res = xobj->getChild(i, xchildData);
 			if (res)
-				res = childFrame->loadFromXData(filename, model, &xchildData, materialReferences);
+				res = childFrame->loadFromXData(filename, model, &xchildData);
 		}
 		if (res)
 			_frames.add(childFrame);
@@ -182,13 +170,6 @@ bool FrameNode::loadFromXData(const Common::String &filename, XModel *model, XFi
 			model->_ticksPerSecond = xobj->getXAnimTicksPerSecondObject()->_animTicksPerSecond;
 			return true;
 		}
-	} else if (objectType == kXClassMaterial) {
-		MaterialReference materialReference;
-		xobj->getName(materialReference._name);
-		materialReference._material = new Material(_gameRef);
-		materialReference._material->loadFromX(xobj, filename);
-		materialReferences.push_back(materialReference);
-		return true;
 	}
 
 	return true;
@@ -211,7 +192,7 @@ bool FrameNode::mergeFromXData(const Common::String &filename, XModel *model, XF
 		// Enumerate child objects.
 		res = false;
 
-		uint numChildren = 0;
+		uint32 numChildren = 0;
 		xobj->getChildren(numChildren);
 		for (uint32 i = 0; i < numChildren; i++) {
 			XFileData xchildData;
@@ -241,7 +222,7 @@ bool FrameNode::findBones(FrameNode *rootFrame) {
 
 //////////////////////////////////////////////////////////////////////////
 FrameNode *FrameNode::findFrame(const char *frameName) {
-	if (getName() && scumm_stricmp(getName(), frameName) == 0) {
+	if (getName() && strcmp(getName(), frameName) == 0) {
 		return this;
 	} else {
 		for (uint32 i = 0; i < _frames.size(); i++) {
@@ -256,44 +237,42 @@ FrameNode *FrameNode::findFrame(const char *frameName) {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool FrameNode::updateMatrices(Math::Matrix4 &parentMat) {
+bool FrameNode::updateMatrices(DXMatrix *parentMat) {
 	if (_transUsed[0]) {
-		Math::Vector3d transPos = _transPos[0];
-		Math::Vector3d transScale = _transScale[0];
-		Math::Quaternion transRot = _transRot[0];
+		DXVector3 transPos = _transPos[0];
+		DXVector3 transScale = _transScale[0];
+		DXQuaternion transRot = _transRot[0];
 		float lerpValue = _lerpValue[0];
 
 		if (_transUsed[1]) {
-			transScale = (1 - lerpValue) * transScale + lerpValue * _transScale[1];
-			transRot = transRot.slerpQuat(_transRot[1], lerpValue);
-			transPos = (1 - lerpValue) * transPos + lerpValue * _transPos[1];
+			DXVec3Lerp(&transScale, &transScale, &_transScale[1], lerpValue);
+			DXQuaternionSlerp(&transRot, &transRot, &_transRot[1], lerpValue);
+			DXVec3Lerp(&transPos, &transPos, &_transPos[1], lerpValue);
 		}
 
 		// prepare local transformation matrix
-		_transformationMatrix.setToIdentity();
+		DXMatrixIdentity(&_transformationMatrix);
+	
+		DXMatrix scaleMat;
+		DXMatrixScaling(&scaleMat, transScale._x, transScale._y, transScale._z);
+		DXMatrixMultiply(&_transformationMatrix, &_transformationMatrix, &scaleMat);
 
-		Math::Matrix4 scaleMat;
-		scaleMat.setToIdentity();
-		scaleMat(0, 0) = transScale.x();
-		scaleMat(1, 1) = transScale.y();
-		scaleMat(2, 2) = transScale.z();
-		Math::Matrix4 rotMat;
-		transRot.toMatrix(rotMat);
-		Math::Matrix4 posMat;
-		posMat.setToIdentity();
-		posMat.translate(transPos);
+		DXMatrix rotMat;
+		DXMatrixRotationQuaternion(&rotMat, &transRot);
+		DXMatrixMultiply(&_transformationMatrix, &_transformationMatrix, &rotMat);
 
-		_transformationMatrix = posMat * rotMat * scaleMat;
+		DXMatrix posMat;
+		DXMatrixTranslation(&posMat, transPos._x, transPos._y, transPos._z);
+		DXMatrixMultiply(&_transformationMatrix, &_transformationMatrix, &posMat);
 	}
-
 	_transUsed[0] = _transUsed[1] = false;
 
 	// multiply by parent transformation
-	_combinedMatrix = parentMat * _transformationMatrix;
+	DXMatrixMultiply(&_combinedMatrix, &_transformationMatrix, parentMat);
 
 	// update child frames
 	for (uint32 i = 0; i < _frames.size(); i++) {
-		_frames[i]->updateMatrices(_combinedMatrix);
+		_frames[i]->updateMatrices(&_combinedMatrix);
 	}
 
 	return true;
@@ -334,7 +313,7 @@ bool FrameNode::resetMatrices() {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool FrameNode::updateShadowVol(ShadowVolume *shadow, Math::Matrix4 &modelMat, const Math::Vector3d &light, float extrusionDepth) {
+bool FrameNode::updateShadowVol(ShadowVolume *shadow, DXMatrix *modelMat, DXVector3 *light, float extrusionDepth) {
 	bool res = true;
 
 	// meshes
@@ -398,7 +377,7 @@ bool FrameNode::renderFlatShadowModel() {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool FrameNode::pickPoly(Math::Vector3d *pickRayOrig, Math::Vector3d *pickRayDir) {
+bool FrameNode::pickPoly(DXVector3 *pickRayOrig, DXVector3 *pickRayDir) {
 	bool found = false;
 	for (uint32 i = 0; i < _meshes.size(); i++) {
 		found = _meshes[i]->pickPoly(pickRayOrig, pickRayDir);
@@ -417,15 +396,15 @@ bool FrameNode::pickPoly(Math::Vector3d *pickRayOrig, Math::Vector3d *pickRayDir
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool FrameNode::getBoundingBox(Math::Vector3d *boxStart, Math::Vector3d *boxEnd) {
+bool FrameNode::getBoundingBox(DXVector3 *boxStart, DXVector3 *boxEnd) {
 	for (uint32 i = 0; i < _meshes.size(); i++) {
-		boxStart->x() = MIN(boxStart->x(), _meshes[i]->_BBoxStart.x());
-		boxStart->y() = MIN(boxStart->y(), _meshes[i]->_BBoxStart.y());
-		boxStart->z() = MIN(boxStart->z(), _meshes[i]->_BBoxStart.z());
+		boxStart->_x = MIN(boxStart->_x, _meshes[i]->_BBoxStart._x);
+		boxStart->_y = MIN(boxStart->_y, _meshes[i]->_BBoxStart._y);
+		boxStart->_z = MIN(boxStart->_z, _meshes[i]->_BBoxStart._z);
 
-		boxEnd->x() = MAX(boxEnd->x(), _meshes[i]->_BBoxEnd.x());
-		boxEnd->y() = MAX(boxEnd->y(), _meshes[i]->_BBoxEnd.y());
-		boxEnd->z() = MAX(boxEnd->z(), _meshes[i]->_BBoxEnd.z());
+		boxEnd->_x = MAX(boxEnd->_x, _meshes[i]->_BBoxEnd._x);
+		boxEnd->_y = MAX(boxEnd->_y, _meshes[i]->_BBoxEnd._y);
+		boxEnd->_z = MAX(boxEnd->_z, _meshes[i]->_BBoxEnd._z);
 	}
 
 	for (uint32 i = 0; i < _frames.size(); i++) {
@@ -460,6 +439,32 @@ bool FrameNode::setMaterialTheora(char *matName, VideoTheoraPlayer *theora) {
 
 	for (uint32 i = 0; i < _frames.size(); i++) {
 		_frames[i]->setMaterialTheora(matName, theora);
+	}
+
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool FrameNode::setMaterialEffect(char *matName, Effect3D *effect, Effect3DParams *params) {
+	for (uint32 i = 0; i < _meshes.size(); i++) {
+		_meshes[i]->setMaterialEffect(matName, effect, params);
+	}
+
+	for (uint32 i = 0; i < _frames.size(); i++) {
+		_frames[i]->setMaterialEffect(matName, effect, params);
+	}
+
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool FrameNode::removeMaterialEffect(const char *matName) {
+	for (uint32 i = 0; i < _meshes.size(); i++) {
+		_meshes[i]->removeMaterialEffect(matName);
+	}
+
+	for (uint32 i = 0; i < _frames.size(); i++) {
+		_frames[i]->removeMaterialEffect(matName);
 	}
 
 	return true;

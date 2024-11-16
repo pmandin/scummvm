@@ -80,21 +80,10 @@ public:
 
 			if (!_wasInited) {
 				if (_startObj->is_state_active("\xed\xe5\xf2")) { // "нет"
-					piecePos.x = 400;
-					piecePos.y = -300;
-					_bg1_l2Obj->set_R(_scene->screen2world_coords(piecePos, 600.0));
-
-					piecePos.x = 200;
-					piecePos.y = -300;
-					_bg2_l2Obj->set_R(_scene->screen2world_coords(piecePos, 400.0));
-
-					piecePos.x = 400;
-					piecePos.y = -300;
-					_bg3_l2Obj->set_R(_scene->screen2world_coords(piecePos, 200.0));
-
-					piecePos.x = 600;
-					piecePos.y = -300;
-					_bg4_l2Obj->set_R(_scene->screen2world_coords(piecePos, 0.0));
+					_bg1_l2Obj->set_R(_scene->screen2world_coords(mgVect2i(400, -300), 600.0));
+					_bg2_l2Obj->set_R(_scene->screen2world_coords(mgVect2i(200, -300), 400.0));
+					_bg3_l2Obj->set_R(_scene->screen2world_coords(mgVect2i(400, -300), 200.0));
+					_bg4_l2Obj->set_R(_scene->screen2world_coords(mgVect2i(600, -300), 0.0));
 
 					_stage = 4;
 					_artDepth = -50.0;
@@ -379,8 +368,9 @@ private:
 			maxCoords = 279;
 		else if (obj == _bg2_l2Obj)
 			maxCoords = 267;
-		else if (obj == _bg3_l2Obj)
-			maxCoords = 258;
+		// FIXME: Remove this as covered by the default case?
+		//else if (obj == _bg3_l2Obj)
+		//	maxCoords = 258;
 		else
 			maxCoords = 258;
 
@@ -490,8 +480,8 @@ private:
 	int _stage = 0;
 
 	struct {
-		float depth;
-		int num;
+		float depth = 0;
+		int num = 0;
 	} _artState[4];
 };
 

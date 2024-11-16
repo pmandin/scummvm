@@ -107,10 +107,21 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_soundIndexTimeout = 20;
 	_soundIndexForceEndGame = 20;
 	_soundIndexCrushed = 20;
+
+	_borderExtra = nullptr;
+	_borderExtraTexture = nullptr;
 }
 
 DrillerEngine::~DrillerEngine() {
 	delete _drillBase;
+
+	if (_borderExtra) {
+		delete _borderExtra;
+		_borderExtra = nullptr;
+	}
+
+	if (_borderExtraTexture)
+		_gfx->freeTexture(_borderExtraTexture);
 }
 
 void DrillerEngine::initKeymaps(Common::Keymap *engineKeyMap, Common::Keymap *infoScreenKeyMap, const char *target) {
@@ -242,12 +253,9 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 	_gameStateVars[0x1f] = 0;
 
 	if (areaID == _startArea && entranceID == _startEntrance) {
-		_yaw = 280;
-		_pitch = 0;
 		playSound(_soundIndexStart, true);
 	} else if (areaID == 127) {
 		assert(entranceID == 0);
-		_yaw = 90;
 		_pitch = 335;
 		_flyMode = true; // Avoid falling
 		// Show the number of completed areas
@@ -328,6 +336,7 @@ void DrillerEngine::drawInfoMenu() {
 
 	switch (_renderMode) {
 		case Common::kRenderCGA:
+		case Common::kRenderHercG:
 			color = 1;
 			break;
 		case Common::kRenderZX:
@@ -961,8 +970,7 @@ void DrillerEngine::updateTimeVariables() {
 	}
 }
 
-void DrillerEngine::drawCompass(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, uint32 color) {
-	double fov = 60;
+void DrillerEngine::drawCompass(Graphics::Surface *surface, int x, int y, double degrees, double magnitude, double fov, uint32 color) {
 	degrees = degrees + fov;
 	if (degrees >= 360)
 		degrees = degrees - 360;

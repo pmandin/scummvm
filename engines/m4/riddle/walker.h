@@ -1,4 +1,3 @@
-
 /* ScummVM - Graphic Adventure Engine
  *
  * ScummVM is the legal property of its developers, whose names
@@ -29,6 +28,9 @@
 namespace M4 {
 namespace Riddle {
 
+extern const int16 RIPLEY_SERIES_DIRS[];
+extern const int16 RIPLEY_SHADOWS_DIRS[6];
+
 // These are the walker types
 enum {
 	WALKER_PLAYER = 0,
@@ -42,7 +44,8 @@ enum {
 };
 
 class Walker : public M4::Walker {
-private:
+	// Strangerke : I turned the callback from private to public as it's called by room 803. TODO: Check if it's correct, then update the description accordingly
+public:
 	/**
 	 * This is called when PLAYER walker code sends system message back to C (used by MAIN PLAYER WALKER ONLY)
 	 */
@@ -54,7 +57,6 @@ public:
 	bool walk_load_walker_and_shadow_series() override;
 	machine *walk_initialize_walker() override;
 
-	void reset_walker_sprites();
 	static void unloadSprites();
 
 	bool ripley_said(const char *const list[][2]);
@@ -62,9 +64,6 @@ public:
 
 void enable_player();
 void disable_player();
-void wilbur_abduct(int trigger);
-void player_walk_to(int32 x, int32 y, int32 facing_x, int32 facing_y, int trigger = -1);
-void player_walk_to(int32 x, int32 y, int trigger = -1);
 
 } // namespace Riddle
 } // namespace M4

@@ -48,8 +48,10 @@ void Digi::loadFootstepSounds(const char **names) {
 void Digi::unload_sounds() {
 	_mixer->stopAll();
 
-	for (auto it = _sounds.begin(); it != _sounds.end(); ++it)
+	for (auto it = _sounds.begin(); it != _sounds.end(); ++it) {
+		rtoss(it->_value._filename);
 		free(it->_value._data);
+	}
 
 	_sounds.clear();
 }
@@ -127,7 +129,7 @@ int32 Digi::play(const Common::String &name, uint channel, int32 vol, int32 trig
 				DisposeAfterUse::NO),
 			loop ? 0 : 1);
 	_mixer->playStream(Audio::Mixer::kSFXSoundType, &c._soundHandle, stream,
-		-1);
+		-1, vol);
 
 	if (trigger < 0 || trigger > 32767)
 		trigger = -1;
@@ -170,7 +172,7 @@ void Digi::stop(uint channel, bool calledFromUnload) {
 }
 
 void Digi::flush_mem() {
-	// No implementation
+	unload_sounds();
 }
 
 void Digi::read_another_chunk() {

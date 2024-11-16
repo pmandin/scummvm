@@ -52,7 +52,7 @@ public:
 	int getMaximumSaveSlot() const override;
 	SaveStateList listSaves(const char *target) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 
 	Common::KeymapArray initKeymaps(const char *target) const override;
 };
@@ -69,9 +69,9 @@ bool ToonMetaEngine::hasFeature(MetaEngineFeature f) const {
 		(f == kSimpleSavesNames);
 }
 
-void ToonMetaEngine::removeSaveState(const char *target, int slot) const {
+bool ToonMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String fileName = Common::String::format("%s.%03d", target, slot);
-	g_system->getSavefileManager()->removeSavefile(fileName);
+	return g_system->getSavefileManager()->removeSavefile(fileName);
 }
 
 Common::KeymapArray ToonMetaEngine::initKeymaps(const char *target) const {
@@ -83,13 +83,13 @@ Common::KeymapArray ToonMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");

@@ -23,7 +23,9 @@
 #include "common/events.h"
 #include "m4/riddle/vars.h"
 #include "m4/riddle/inventory.h"
+#include "m4/gui/gui_sys.h"
 #include "m4/gui/gui_vmng.h"
+#include "m4/platform/keys.h"
 
 namespace M4 {
 namespace Riddle {
@@ -46,14 +48,12 @@ void Vars::main_cold_data_init() {
 	_player.walker_loads_first = false;
 	_player.walker_visible = true;
 	_global_sound_room = 997;
-	_kernel.letter_box_y = 30;
+	_kernel.letter_box_y = LETTERBOX_Y;
 	_kernel.first_fade = 0;
 	_kernel.first_non_walker_cel_hash = 32;
 	_i_just_hyperwalked = false;
-	// val1 = 15;
 
 	conv_set_default_hv(6, 4);
-	// val2 = 1
 	_game.previous_room = 0;
 	_game.room_id = 0;
 
@@ -62,61 +62,29 @@ void Vars::main_cold_data_init() {
 
 	initMouseSeries("cursor", nullptr);
 	conv_set_default_text_colour(7, 8);
-	//exit_button_code
 }
 
 void Vars::global_menu_system_init() {
-/*
-	AddSystemHotkey(KEY_ESCAPE, escape_key_pressed);
-	AddSystemHotkey(KEY_F2, cb_F2);
-	AddSystemHotkey(KEY_F3, cb_F3);
+	AddSystemHotkey(KEY_ESCAPE, Hotkeys::escape_key_pressed);
+	AddSystemHotkey(KEY_F2, Hotkeys::saveGame);
+	AddSystemHotkey(KEY_F3, Hotkeys::loadGame);
 
 	if (_interface.init(0, 5, 6, 8, 9))
 		static_cast<Inventory *>(_inventory)->init();
-		*/
 }
 
 void Vars::initialize_game() {
-/*
 	// Put all the inventory items back in their original scenes
 	for (const auto &item : _inventory->_objects)
 		inv_put_thing_in(item->name, item->scene);
-	inv_give_to_player("MONEY");
 
-	// Reset the global variables
-	_flags.reset();
-	_flags.reset1();
-	_flags.reset2();
-	_flags.reset3();
-	_flags.reset4();
-	_flags.reset5();
-	_flags.conv_reset_all();
-
-	Rooms::Room::setWilburHotspot();
-	*/
-}
-
-void Vars::custom_ascii_converter_proc(char *string) {
-	/*
-	char *str;
-
-	for (const auto *entry = ASCII_CONVERTERS; entry->_find; entry++) {
-		while ((str = strstr(string, entry->_find)) != nullptr)
-			*str = entry->_replace;
-	}
-	*/
-}
-
-void Vars::escape_key_pressed(void *, void *) {
-
-}
-
-void Vars::cb_F2(void *, void *) {
-
-}
-
-void Vars::cb_F3(void *, void *) {
-
+	_G(flags)[V071] = 2;
+	_G(flags)[V088] = 1;
+	_G(flags)[V086] = 2;
+	_G(flags)[GLB_TEMP_8] = 1;
+	_G(flags)[V270] = 824;
+	_G(flags)[V282] = 1;
+	_G(flags)[V292] = 1;
 }
 
 } // namespace Riddle

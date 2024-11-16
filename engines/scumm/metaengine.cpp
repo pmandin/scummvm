@@ -26,6 +26,9 @@
 #include "common/translation.h"
 #include "common/md5.h"
 
+#include "gui/dialog.h"
+#include "gui/message.h"
+
 #include "audio/mididrv.h"
 
 #include "backends/keymapper/action.h"
@@ -83,7 +86,7 @@ Common::Path ScummEngine::generateFilename(const int room) const {
 
 Common::Path ScummEngine_v60he::generateFilename(const int room) const {
 	Common::String result;
-	char id = 0;
+	char id;
 
 	switch (_filenamePattern.genMethod) {
 	case kGenHEMac:
@@ -249,10 +252,6 @@ bool ScummEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsQuitDialogOverride && (gameSupportsQuitDialogOverride() || !ChainedGamesMan.empty()));
 }
 
-bool Scumm::ScummEngine::enhancementEnabled(int32 cls) {
-	return _activeEnhancements & cls;
-}
-
 bool ScummEngine::gameSupportsQuitDialogOverride() const {
 	bool supportsOverride = isUsingOriginalGUI();
 
@@ -376,6 +375,18 @@ Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine,
 		GUIErrorMessage(_("The Lite version of Putt-Putt Saves the Zoo iOS is not supported to avoid piracy.\n"
 		                  "The full version is available for purchase from the iTunes Store."));
 		return Common::kUnsupportedGameidError;
+	}
+
+	if (res.game.heversion != 0 && !strcmp(res.extra, "Steam")) {
+		if (!strcmp(res.game.gameid, "baseball") ||
+			!strcmp(res.game.gameid, "soccer") ||
+			!strcmp(res.game.gameid, "baseball2001") ||
+			!strcmp(res.game.gameid, "basketball") ||
+			!strcmp(res.game.gameid, "football")) {
+			GUI::MessageDialog dialog(_("Warning: this re-release version contains patched game scripts,\n"
+										"and therefore it might crash or not work properly for the time being."));
+			dialog.runModal();
+		}
 	}
 
 	// If the GUI options were updated, we catch this here and update them in the users config
@@ -540,9 +551,9 @@ SaveStateList ScummMetaEngine::listSaves(const char *target) const {
 	return saveList;
 }
 
-void ScummMetaEngine::removeSaveState(const char *target, int slot) const {
+bool ScummMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String filename = ScummEngine::makeSavegameName(target, slot, false);
-	g_system->getSavefileManager()->removeSavefile(filename);
+	return g_system->getSavefileManager()->removeSavefile(filename);
 }
 
 SaveStateDescriptor ScummMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
@@ -723,8 +734,8 @@ static const ExtraGuiOption audioOverride {
 
 static const ExtraGuiOption enableOriginalGUI = {
 	_s("Enable the original GUI and Menu"),
-	_s("Allow the game to use the in-engine graphical interface and the original save/load menu. \
-		Use it together with the \"Ask for confirmation on exit\" for a more complete experience."),
+	_s("Allow the game to use the in-engine graphical interface and the original save/load menu. "
+	   "Use it together with the \"Ask for confirmation on exit\" for a more complete experience."),
 	"original_gui",
 	true,
 	0,
@@ -733,8 +744,8 @@ static const ExtraGuiOption enableOriginalGUI = {
 
 static const ExtraGuiOption enableLowLatencyAudio = {
 	_s("Enable low latency audio mode"),
-	_s("Allows the game to use low latency audio, at the cost of sound accuracy. \
-		It is recommended to enable this feature only if you incur in audio latency issues during normal gameplay."),
+	_s("Allows the game to use low latency audio, at the cost of sound accuracy. "
+	   "It is recommended to enable this feature only if you incur in audio latency issues during normal gameplay."),
 	"dimuse_low_latency_mode",
 	false,
 	0,
@@ -743,8 +754,8 @@ static const ExtraGuiOption enableLowLatencyAudio = {
 
 static const ExtraGuiOption enableCOMISong = {
 	_s("Enable the \"A Pirate I Was Meant To Be\" song"),
-	_s("Enable the song at the beginning of Part 3 of the game, \"A Pirate I Was Meant To Be\", \
-		which was cut in international releases. Beware though: subtitles may not be fully translated."),
+	_s("Enable the song at the beginning of Part 3 of the game, \"A Pirate I Was Meant To Be\", "
+	   "which was cut in international releases. Beware though: subtitles may not be fully translated."),
 	"enable_song",
 	false,
 	0,

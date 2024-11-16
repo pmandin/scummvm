@@ -28,7 +28,7 @@
 
 #include "dgds/dialog.h"
 #include "dgds/dgds_rect.h"
-#include "dgds/shell_game.h"
+#include "dgds/minigames/shell_game.h"
 
 namespace Dgds {
 
@@ -125,15 +125,24 @@ enum SceneOpCode {
 	kSceneOpOpenBetterSaveGameMenu = 108,			// args: none. DRAGON: Show menu 46, the "Before arcade maybe you better save your game" menu.
 
 	// China-specific opcodes
-	kSceneOpOpenChinaTankMenu = 102,
+	kSceneOpChinaTankInit = 100,
+	kSceneOpChinaTankEnd = 101,
+	kSceneOpChinaTankTick = 102,
+	kSceneOpChinaSetLanding = 103,
+	kSceneOpChinaScrollIntro = 104,
+	kSceneOpChinaScrollLeft = 105,
+	kSceneOpChinaScrollRight = 107,
+	kSceneOpShellGameInit = 108,
 	kSceneOpShellGameEnd = 109,
 	kSceneOpShellGameTick = 110,
-	kSceneOpOpenChinaTrainMenu = 113,
-	kSceneOpOpenChinaOpenGameOverMenu = 114,	// args: none.
-	kSceneOpOpenChinaOpenSkipCreditsMenu = 115,	// args: none.
-	kSceneOpOpenChinaStartIntro = 116,	// args: none.
-	kSceneOpChina117 = 117,	// args: none. ??
-	kSceneOpChina118 = 118,	// args: none. ??
+	kSceneOpChinaTrainInit = 111,
+	kSceneOpChinaTrainEnd = 112,
+	kSceneOpChinaTrainTick = 113,
+	kSceneOpChinaOpenGameOverMenu = 114,	// args: none.
+	kSceneOpChinaOpenSkipCreditsMenu = 115,	// args: none.
+	kSceneOpChinaOnIntroTick = 116,	// args: none.
+	kSceneOpChinaOnIntroInit = 117,	// args: none.
+	kSceneOpChinaOnIntroEnd = 118,	// args: none.
 
 	// Beamish-specific opcodes
 	kSceneOpOpenBeamishGameOverMenu = 100,
@@ -244,12 +253,13 @@ private:
 
 class TalkDataHeadFrame {
 public:
-	TalkDataHeadFrame() : _xoff(0), _yoff(0), _frameNo(0) {}
+	TalkDataHeadFrame() : _xoff(0), _yoff(0), _frameNo(0), _flipFlags(0) {}
 	Common::String dump(const Common::String &indent) const;
 
 	uint16 _frameNo;
 	uint16 _xoff;
 	uint16 _yoff;
+	uint16 _flipFlags;
 };
 
 enum HeadFlags {
@@ -266,7 +276,7 @@ enum HeadFlags {
 
 class TalkDataHead {
 public:
-	TalkDataHead() : _num(0), _drawType(0), _drawCol(0), _val3(0), _flags(kHeadFlagNone) {}
+	TalkDataHead() : _num(0), _drawType(0), _drawCol(0), _flags(kHeadFlagNone) {}
 	Common::String dump(const Common::String &indent) const;
 
 	uint16 _num;
@@ -274,8 +284,9 @@ public:
 	uint16 _drawCol;
 	DgdsRect _rect;
 	Common::Array<TalkDataHeadFrame> _headFrames;
-	uint16 _val3;
+	Common::String _bmpFile;
 	HeadFlags _flags;
+	Common::SharedPtr<Image> _shape;
 };
 
 class TalkData {
@@ -307,12 +318,13 @@ public:
 
 	uint32 getMagic() const { return _magic; }
 	const Common::String &getVersion() const { return _version; }
+
 	bool runPreTickOps() { return runOps(_preTickOps); }
 	bool runPostTickOps() { return runOps(_postTickOps); }
 
-	bool runOps(const Common::Array<SceneOp> &ops, int16 addMinutes = 0);
+	static bool runOps(const Common::Array<SceneOp> ops, int16 addMinutes = 0);
+
 	virtual Common::Error syncState(Common::Serializer &s) = 0;
-	virtual void enableTrigger(uint16 numm, bool enable = true) {}
 
 protected:
 	bool readConditionList(Common::SeekableReadStream *s, Common::Array<SceneConditions> &list) const;
@@ -327,19 +339,16 @@ protected:
 	bool readDialogActionList(Common::SeekableReadStream *s, Common::Array<DialogAction> &list) const;
 	bool readConditionalSceneOpList(Common::SeekableReadStream *s, Common::Array<ConditionalSceneOp> &list) const;
 
-	bool checkConditions(const Common::Array<SceneConditions> &cond) const;
+	static void segmentStateOps(const Common::Array<uint16> &args);
+	static void setItemAttrOp(const Common::Array<uint16> &args);
+	static void setDragItemOp(const Common::Array<uint16> &args);
 
-	virtual void showDialog(uint16 fileNum, uint16 dlgNum) {}
-	virtual void globalOps(const Common::Array<uint16> &args) {}
-	virtual void segmentStateOps(const Common::Array<uint16> &args);
-
-	void setItemAttrOp(const Common::Array<uint16> &args);
-	void setDragItemOp(const Common::Array<uint16> &args);
-
-	bool runSceneOp(const SceneOp &op);
-	bool runDragonOp(const SceneOp &op);
-	bool runChinaOp(const SceneOp &op);
-	bool runBeamishOp(const SceneOp &op);
+	// These are all static as they are potentially run over scene changes.
+	static bool checkConditions(const Common::Array<SceneConditions> &cond);
+	static bool runSceneOp(const SceneOp &op);
+	static bool runDragonOp(const SceneOp &op);
+	static bool runChinaOp(const SceneOp &op);
+	static bool runBeamishOp(const SceneOp &op);
 
 	uint32 _magic;
 	Common::String _version;
@@ -366,7 +375,7 @@ public:
 	void runStartGameOps() { runOps(_startGameOps); }
 	void runQuitGameOps() { runOps(_quitGameOps); }
 	void runChangeSceneOps() { runOps(_onChangeSceneOps); }
-	void globalOps(const Common::Array<uint16> &args) override;
+	void globalOps(const Common::Array<uint16> &args);
 	int16 getGlobal(uint16 num);
 	int16 setGlobal(uint16 num, int16 val);
 
@@ -426,8 +435,6 @@ public:
 	bool drawAndUpdateDialogs(Graphics::ManagedSurface *dst);
 	bool checkForClearedDialogs();
 
-	void globalOps(const Common::Array<uint16> &args) override;
-
 	void mouseMoved(const Common::Point &pt);
 	void mouseLDown(const Common::Point &pt);
 	void mouseLUp(const Common::Point &pt);
@@ -452,7 +459,7 @@ public:
 	Common::Error syncState(Common::Serializer &s) override;
 
 	void onDragFinish(const Common::Point &pt);
-	void enableTrigger(uint16 num, bool enable = true) override;
+	void enableTrigger(uint16 num, bool enable = true);
 
 	Dialog *loadDialogData(uint16 num);
 	void freeDialogData(uint16 num);
@@ -461,6 +468,7 @@ public:
 	void updateVisibleTalkers();
 	void loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum);
 	void drawVisibleHeads(Graphics::ManagedSurface *dst);
+	bool hasVisibleHead() const;
 
 	// dragon-specific scene ops
 	void addAndShowTiredDialog();
@@ -472,12 +480,13 @@ public:
 	bool isTriggerEnabled(uint16 num);
 	bool isLButtonDown() const { return _lbuttonDown; }
 	bool isRButtonDown() const { return _rbuttonDown; }
+	void showDialog(uint16 fileNum, uint16 dlgNum);
+	const Common::Array<ConditionalSceneOp> &getConditionalOps() { return _conditionalOps; }
 
 protected:
 	HotArea *findAreaUnderMouse(const Common::Point &pt);
 
 private:
-	void showDialog(uint16 fileNum, uint16 dlgNum) override;
 	Dialog *getVisibleDialog();
 	bool readTalkData(Common::SeekableReadStream *s, TalkData &dst);
 	void updateHead(TalkDataHead &head);
@@ -485,6 +494,7 @@ private:
 	void drawHeadType1(Graphics::ManagedSurface *dst, const TalkDataHead &head, const Image &img);
 	void drawHeadType2(Graphics::ManagedSurface *dst, const TalkDataHead &head, const Image &img);
 	void drawHeadType3(Graphics::ManagedSurface *dst, const TalkDataHead &head, const Image &img);
+	void drawHeadType3Beamish(Graphics::ManagedSurface *dst, const TalkData &data, const TalkDataHead &head);
 
 	int _num;
 	Common::Array<SceneOp> _enterSceneOps;

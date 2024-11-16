@@ -192,8 +192,20 @@ void Area::unremapColor(int index) {
 	_colorRemaps.clear(index);
 }
 
+void Area::resetAreaGroups() {
+	debugC(1, kFreescapeDebugMove, "Resetting groups from area: %s", _name.c_str());
+	if (_objectsByID) {
+		for (auto &it : *_objectsByID) {
+			Object *obj = it._value;
+
+			if (obj->getType() == ObjectType::kGroupType)
+				((Group *)obj)->reset();
+		}
+	}
+}
+
 void Area::resetArea() {
-	debugC(1, kFreescapeDebugMove, "Resetting area name: %s", _name.c_str());
+	debugC(1, kFreescapeDebugMove, "Resetting objects from area: %s", _name.c_str());
 	_colorRemaps.clear();
 	if (_objectsByID) {
 		for (auto &it : *_objectsByID) {
@@ -229,7 +241,7 @@ void Area::draw(Freescape::Renderer *gfx, uint32 animationTicks, Math::Vector3d 
 	ObjectArray nonPlanarObjects;
 	Object *floor = nullptr;
 	Common::HashMap<Object *, float> sizes;
-	float offset = gfx->_isAccelerated ? (1.0 / _scale) : 2.0;
+	float offset = (gfx->_isAccelerated ? 1.0 : 2.0) / _scale;
 
 	for (auto &obj : _drawableObjects) {
 		if (!obj->isDestroyed() && !obj->isInvisible()) {
@@ -347,13 +359,16 @@ void Area::draw(Freescape::Renderer *gfx, uint32 animationTicks, Math::Vector3d 
 		}
 	}
 
+	// In theory, the ordering of the rendering should not matter,
+	// however, it seems that rendering the planar objects first
+	// triggers a bug in TinyGL where certain objects such as lines,
+	// are not rendered correctly. This is a workaround for that issue.
+	for (auto &obj : nonPlanarObjects) {
+		obj->draw(gfx);
+	}
 
 	for (auto &pair : offsetMap) {
 		pair._key->draw(gfx, pair._value);
-	}
-
-	for (auto &obj : nonPlanarObjects) {
-		obj->draw(gfx);
 	}
 
 	_lastTick = animationTicks;
@@ -394,7 +409,7 @@ Object *Area::checkCollisionRay(const Math::Ray &ray, int raySize) {
 			GeometricObject *gobj = (GeometricObject *)obj;
 			Math::Vector3d collidedNormal;
 			float collidedDistance = sweepAABB(boundingBox, gobj->_boundingBox, raySize * ray.getDirection(), collidedNormal);
-			debugC(1, kFreescapeDebugMove, "shot obj id: %d with distance %f", obj->getObjectID(), collidedDistance);
+			debugC(1, kFreescapeDebugMove, "reached obj id: %d with distance %f", obj->getObjectID(), collidedDistance);
 			if (collidedDistance >= 1.0)
 				continue;
 
@@ -424,12 +439,69 @@ ObjectArray Area::checkCollisions(const Math::AABB &boundingBox) {
 	return collided;
 }
 
-extern Math::AABB createPlayerAABB(Math::Vector3d const position, int playerHeight);
+bool Area::checkIfPlayerWasCrushed(const Math::AABB &boundingBox) {
+	for (auto &obj : _drawableObjects) {
+		if (!obj->isDestroyed() && !obj->isInvisible() && obj->getType() == kGroupType) {
+			Group *group = (Group *)obj;
+			if (group->collides(boundingBox)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+Math::Vector3d Area::separateFromWall(const Math::Vector3d &_position) {
+	Math::Vector3d position = _position;
+	float sep = 8 / _scale;
+	for (auto &obj : _drawableObjects) {
+		if (!obj->isDestroyed() && !obj->isInvisible()) {
+			GeometricObject *gobj = (GeometricObject *)obj;
+			Math::Vector3d distance = gobj->_boundingBox.distance(position);
+			if (distance.length() > 0.0001)
+				continue;
+
+			position.z() = position.z() + sep;
+			distance = gobj->_boundingBox.distance(position);
+			if (distance.length() > 0.0001)
+				return position;
+
+			position = _position;
+			position.z() = position.z() - sep;
+			distance = gobj->_boundingBox.distance(position);
+			if (distance.length() > 0.0001)
+				return position;
+
+			position = _position;
+			position.x() = position.x() + sep;
+			distance = gobj->_boundingBox.distance(position);
+			if (distance.length() > 0.0001)
+				return position;
+
+			position = _position;
+			position.x() = position.x() - sep;
+			distance = gobj->_boundingBox.distance(position);
+			if (distance.length() > 0.0001)
+				return position;
+		}
+	}
+	return position;
+}
 
 Math::Vector3d Area::resolveCollisions(const Math::Vector3d &lastPosition_, const Math::Vector3d &newPosition_, int playerHeight) {
 	Math::Vector3d position = newPosition_;
 	Math::Vector3d lastPosition = lastPosition_;
-	Math::AABB boundingBox = createPlayerAABB(lastPosition, playerHeight);
+
+	float reductionHeight = 0.0;
+	// Ugly hack to fix the collisions in tight spaces in the stores and junk room
+	// for Castle Master
+	if (_name == "    STORES     " && _areaID == 62) {
+		reductionHeight = 0.3f;
+	} else if (_name == "   JUNK ROOM   " && _areaID == 61) {
+		reductionHeight = 0.3f;
+	}
+
+	Math::AABB boundingBox = createPlayerAABB(lastPosition, playerHeight, reductionHeight);
 
 	float epsilon = 1.5;
 	int i = 0;
@@ -544,7 +616,8 @@ void Area::addGroupFromArea(int16 id, Area *global) {
 		if (!global->objectWithID(it))
 			continue;
 
-		addObjectFromArea(it, global);
+		if (!objectWithID(it))
+			addObjectFromArea(it, global);
 		group->linkObject(objectWithID(it));
 	}
 }

@@ -30,6 +30,7 @@
 #include "m4/mem/mem.h"
 #include "m4/platform/timer.h"
 #include "m4/vars.h"
+#include "m4/detection.h"
 
 namespace M4 {
 
@@ -523,9 +524,14 @@ static bool op_TRIG_W(machine *m, int32 *pcOffset) {
 	machInstr = (uint32 *)((intptr)(*(m->machHandle)) + (uint32)m->machInstrOffset);
 	myPC = (uint32 *)((intptr)machInstr + *pcOffset);
 	oldPC = myPC;
+
+	dbg_SetCurrMachInstr(m, *pcOffset, false);
+
 	if ((myInstruction = ws_PreProcessPcode(&myPC, m->myAnim8)) < 0) {
 		ws_Error(m, ERR_MACH, 0x0266, "trig_w() failed.");
 	}
+
+	dbg_EndCurrMachInstr();
 
 	// Now find the new pcOffset
 	*pcOffset += (byte *)myPC - (byte *)oldPC;
@@ -874,17 +880,19 @@ static int32 StepAt(int32 *pcOffset, machine *m) {
 	machID = m->machID;
 	myAnim8 = m->myAnim8;
 
-	dbg_SetCurrMachInstr(m, *pcOffset);
-
 	// Find the current PC and process it to get the current instruction
 	machInstr = (uint32 *)((intptr)(*(m->machHandle)) + m->machInstrOffset);
 	myPC = (uint32 *)((intptr)(machInstr) + *pcOffset);
 	oldPC = myPC;
 	_GWS(pcOffsetOld) = *pcOffset;
 
+	dbg_SetCurrMachInstr(m, *pcOffset, false);
+
 	if ((myInstruction = ws_PreProcessPcode(&myPC, myAnim8)) < 0) {
 		ws_Error(m, ERR_MACH, 0x0266, nullptr);
 	}
+
+	dbg_EndCurrMachInstr();
 
 	// Now find the new pcOffset
 	*pcOffset += (byte *)myPC - (byte *)oldPC;
@@ -1055,7 +1063,7 @@ machine *TriggerMachineByHash(MessageCB intrMsg, const char *machName) {
 }
 
 machine *TriggerMachineByHash(int32 val1, int32 val2, int32 val3, int32 val4, int32 val5, int32 val6,
-	int32 val7, int32 val8, int32 val9, int32 val10, bool flag,
+	int32 x, int32 y, int32 scale, int32 layer, bool flag,
 	MessageCB intrMsg, const char *machName) {
 	_G(globals)[GLB_TEMP_1] = val1 << 24;
 	_G(globals)[GLB_TEMP_2] = val2 << 16;
@@ -1064,10 +1072,10 @@ machine *TriggerMachineByHash(int32 val1, int32 val2, int32 val3, int32 val4, in
 
 	_G(globals)[GLB_TEMP_5] = (val5 << 16) / 100;
 	_G(globals)[GLB_TEMP_6] = val6 << 16;
-	_G(globals)[GLB_TEMP_7] = val7 << 16;
-	_G(globals)[GLB_TEMP_8] = val8 << 16;
-	_G(globals)[GLB_TEMP_9] = (val9 << 16) / 100;
-	_G(globals)[GLB_TEMP_10] = val10 << 16;
+	_G(globals)[GLB_TEMP_7] = x << 16;
+	_G(globals)[GLB_TEMP_8] = y << 16;
+	_G(globals)[GLB_TEMP_9] = (scale << 16) / 100;
+	_G(globals)[GLB_TEMP_10] = layer << 16;
 	_G(globals)[GLB_TEMP_11] = flag ? 0xffff0000 : 0x10000;
 
 	return TriggerMachineByHash(40, nullptr, -1, -1, intrMsg, false, machName);
@@ -1175,6 +1183,10 @@ void sendWSMessage(uint32 msgHash, frac16 msgValue, machine *recvM,
 	int32 myCount;
 	bool sendToAll;
 	globalMsgReq *myGlobalMsgs, *tempGlobalMsg;
+
+	debugC(1, kDebugMessages, "Message %xh, %lxh, %s, %xh, %s, %d",
+		msgHash, msgValue, recvM ? recvM->machName : "NONE",
+		machHash, sendM ? sendM->machName : "NONE", msgCount);
 
 	// In this case we are sending to a specific machine: recvM
 	if (recvM) {
@@ -1284,20 +1296,20 @@ void sendWSMessage(uint32 msgHash, frac16 msgValue, machine *recvM,
 	}
 }
 
-void sendWSMessage(int32 val1, machine *recv, int32 val2, int32 val3, int32 val4,
-	int32 trigger, int32 val5, int32 val6, int32 val7, int32 val8) {
+void sendWSMessage(int32 val1, machine *recv, int32 series1, int32 val3, int32 val4,
+	int32 trigger, int32 series2, int32 val6, int32 val7, int32 val8) {
 	if (!trigger)
 		trigger = -1;
 
 	_G(globals)[GLB_TEMP_1] = val1 << 16;
-	_G(globals)[GLB_TEMP_2] = val3 << 24;
+	_G(globals)[GLB_TEMP_2] = series1 << 24;
 	_G(globals)[GLB_TEMP_3] = val3 << 16;
 	_G(globals)[GLB_TEMP_4] = val4 << 16;
 	_G(globals)[GLB_TEMP_5] = kernel_trigger_create(trigger);
 	_G(globals)[GLB_TEMP_6] = val6 << 16;
 	_G(globals)[GLB_TEMP_7] = val7 << 16;
 	_G(globals)[GLB_TEMP_8] = val8 << 16;
-	_G(globals)[GLB_TEMP_9] = val5 << 16;
+	_G(globals)[GLB_TEMP_9] = series2 << 24;
 
 	sendWSMessage(0x10000, 0, recv, 0, nullptr, 1);
 }

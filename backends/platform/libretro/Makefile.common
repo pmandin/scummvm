@@ -150,6 +150,11 @@ else
    $(info No support for OpenGL/OpenGLES2 requested)
 endif
 
+ifeq ($(HAVE_NEON), 1)
+   SCUMMVM_NEON := 1
+   DEFINES += -DSCUMMVM_NEON
+endif
+
 ######################################################################
 # Libretro settings
 ######################################################################
@@ -168,7 +173,11 @@ LIBRETRO_OBJS := $(CORE_PATH)/libretro-core.o \
 	$(CORE_PATH)/libretro-timer.o \
 	$(CORE_PATH)/libretro-mapper.o \
 	$(CORE_PATH)/libretro-options-widget.o \
-	$(CORE_PATH)/libretro-graphics.o
+	$(CORE_PATH)/libretro-graphics-surface.o
+
+ifeq ($(or $(HAVE_OPENGL), $(HAVE_OPENGLES2)), 1)
+	LIBRETRO_OBJS += $(CORE_PATH)/libretro-graphics-opengl.o
+endif
 
 OBJS += $(LIBRETRO_OBJS)
 

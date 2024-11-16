@@ -286,7 +286,7 @@ bool RequestParser::handleChunk(DgdsChunkReader &chunk, ParserData *data) {
 		parseREQChunk(rfdata._requests.back(), chunk, num);
 	} else if (chunk.getId() == ID_GAD) {
 		if (rfdata._requests.empty())
-			error("GAD chunk before any REQ chunks in Reqeust file %s", _filename.c_str());
+			error("GAD chunk before any REQ chunks in Request file %s", _filename.c_str());
 		parseGADChunk(rfdata._requests.back(), chunk, num);
 	}
 
@@ -416,8 +416,8 @@ byte ButtonGadget::drawChinaBg(Graphics::ManagedSurface *dst, bool enabled) cons
 			dst->drawLine(x + x2_, y + x2_, x + x2_, y2 - x2_, drawCol);
 			dst->drawLine(x + x2_, y2 - x2_, (x2 - x2_) + -1, y2 - x2_, drawCol);
 		}
-    }
-    return colors[7];
+	}
+	return colors[7];
 }
 
 byte ButtonGadget::drawWillyBg(Graphics::ManagedSurface *dst, bool enabled) const {
@@ -497,25 +497,44 @@ Common::String SliderGadget::dump() const {
 }
 
 // Slider labels and title are hard-coded in game, not part of data files.
-static const char *_sliderTitleForGadget(uint16 num) {
-	switch (num) {
-	case 0x7B:	return "DIFFICULTY";
-	case 0x7D:	return "TEXT SPEED";
-	case 0x83:	return "DETAIL LEVEL";
-	case 0x98:	return "MOUSE SPEED";
-	case 0x9C:	return "BUTTON THRESHOLD";
-	default:	return "SLIDER";
+static const char *_sliderTitleForGadget(uint16 num, Common::Language language) {
+	if (language == Common::EN_ANY) {
+		switch (num) {
+		case 0x7B:	return "DIFFICULTY";
+		case 0x7D:	return "TEXT SPEED";
+		case 0x83:	return "DETAIL LEVEL";
+		case 0x98:	return "MOUSE SPEED";
+		case 0x9C:	return "BUTTON THRESHOLD";
+		default:	return "SLIDER";
+		}
+	} else if (language == Common::DE_DEU) {
+		switch (num) {
+		case 0x7B:	return "SCHWIERIGKEITSGRAD";
+		case 0x7D:	return "TEXT-VERWEILDAUER";
+		case 0x83:	return "DETAILS";
+		case 0x98:	return "GESCHWINDIGKEIT";
+		case 0x9C:	return "TASTENEMPFINDLICHKEIT";
+		default:	return "REGLER";
+		}
+	} else {
+		error("Unsupported language %d", language);
 	}
 }
 
-static const char *_sliderLabelsForGadget(uint16 num) {
-	switch (num) {
-	case 0x7B:	return "EASY         HARD";
-	case 0x7D:	return "SLOW         FAST";
-	case 0x83:	return "LOW        HIGH";
-	case 0x98:	return "SLOW         FAST";
-	case 0x9C:	return "LONG         SHORT";
-	default:	return "MIN         MAX";
+static const char *_sliderLabelsForGadget(uint16 num, Common::Language language) {
+	if (language == Common::EN_ANY) {
+		switch (num) {
+		case 0x7B:	return "EASY         HARD";
+		case 0x7D:	return "SLOW         FAST";
+		case 0x83:	return "LOW        HIGH";
+		case 0x98:	return "SLOW         FAST";
+		case 0x9C:	return "LONG         SHORT";
+		default:	return "MIN         MAX";
+		}
+	} else if (language == Common::DE_DEU) {
+		return "-             +";
+	} else {
+		error("Unsupported language %d", language);
 	}
 }
 
@@ -523,6 +542,7 @@ static const int SLIDER_HANDLE_FRAME = 28;
 
 void SliderGadget::draw(Graphics::ManagedSurface *dst) const {
 	const DgdsFont *font = RequestData::getMenuFont();
+	Common::Language language = DgdsEngine::getInstance()->getGameLang();
 
 	int16 x = _x + _parentX;
 	int16 y = _y + _parentY;
@@ -530,8 +550,8 @@ void SliderGadget::draw(Graphics::ManagedSurface *dst) const {
 	int16 x2 = x + _width;
 	int16 y2 = (y + _height) - 1;
 	int16 titley = (y - font->getFontHeight()) + 1;
-	const char *title = _sliderTitleForGadget(_gadgetNo);
-	const char *labels = _sliderLabelsForGadget(_gadgetNo);
+	const char *title = _sliderTitleForGadget(_gadgetNo, language);
+	const char *labels = _sliderLabelsForGadget(_gadgetNo, language);
 	int16 titleWidth = font->getStringWidth(title);
 
 	font->drawString(dst, title, x + (_width - titleWidth) / 2, titley, titleWidth, 0);
@@ -554,7 +574,7 @@ void SliderGadget::draw(Graphics::ManagedSurface *dst) const {
 
 	// Draw the slider control in the right spot
 	const Image *uiCorners = RequestData::getCorners();
-	uiCorners->drawBitmap(SLIDER_HANDLE_FRAME, x + _handleX, y, Common::Rect(0, 0, 320, 200), *dst);
+	uiCorners->drawBitmap(SLIDER_HANDLE_FRAME, x + _handleX, y, Common::Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), *dst);
 }
 
 SliderGadget::SliderGadget() : _lock(false), _steps(0), _gadget2_i1(0),
@@ -618,7 +638,7 @@ int16 SliderGadget::onClick(const Common::Point &mousePt) {
 	else
 		newVal--;
 
-	debug("clicked on slider %d, move val from %d -> %d", _gadgetNo, val, newVal);
+	debug(1, "clicked on slider %d, move val from %d -> %d", _gadgetNo, val, newVal);
 
 	newVal = CLIP((int)newVal, 0, _steps - 1);
 	setValue(newVal);
@@ -863,7 +883,7 @@ void RequestData::drawBackgroundNoSliders(Graphics::ManagedSurface *dst, const C
 void RequestData::fillBackground(Graphics::ManagedSurface *dst, uint16 x, uint16 y, uint16 width, uint16 height, int16 startoffset) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 
-	if (engine->getGameId() == GID_DRAGON && engine->getDetailLevel() == kDgdsDetailHigh) {
+	if (engine->getGameId() == GID_DRAGON && engine->getDetailLevel() == kDgdsDetailHigh && !engine->isEGA()) {
 		Graphics::Surface area = dst->getSubArea(Common::Rect(Common::Point(x, y), width, height));
 		while (startoffset < 0)
 			startoffset += ARRAYSIZE(MenuBackgroundColors);

@@ -35,12 +35,13 @@ enum BoneType : uint16 {
 	TYPE_ZOOM = 2,
 };
 
-struct BoneFrame {
+struct BoneFrame { // T_GROUP_INFO
 	BoneType type = BoneType::TYPE_ROTATE;
-	int16 x = 0;
-	int16 y = 0;
-	int16 z = 0;
+	int16 x = 0; // alpha
+	int16 y = 0; // beta
+	int16 z = 0; // gamma
 };
+using T_GROUP_INFO = BoneFrame; // (lba2)
 
 struct KeyFrame {
 	uint16 length = 0;
@@ -73,12 +74,12 @@ public:
 
 	const KeyFrame *getKeyframe(uint index) const;
 	const Common::Array<KeyFrame> &getKeyframes() const;
-	uint getNumKeyframes() const;
+	uint getNbFramesAnim() const;
 	uint16 getLoopFrame() const;
 	uint16 getNumBoneframes() const;
 };
 
-inline uint AnimData::getNumKeyframes() const {
+inline uint AnimData::getNbFramesAnim() const {
 	return getKeyframes().size();
 }
 

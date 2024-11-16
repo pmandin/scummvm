@@ -229,13 +229,13 @@ Common::KeymapArray AgosMetaEngine::initKeymaps(const char *target) const {
 	Keymap *yesNoKeymap = new Keymap(Keymap::kKeymapTypeGame, "game-Yes/No", _("Yes/No keymapping"));
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");
@@ -270,7 +270,7 @@ Common::KeymapArray AgosMetaEngine::initKeymaps(const char *target) const {
 	act->addDefaultInputMapping("m");
 	gameKeyMap->addAction(act);
 
-	act = new Action("SNDEFFECT", _("Toggle sound effect on/off"));
+	act = new Action("SNDEFFECT", _("Toggle sound effects on/off"));
 	act->setCustomEngineActionEvent(kActionToggleSoundEffects);
 	act->addDefaultInputMapping("s");
 	gameKeyMap->addAction(act);
@@ -289,26 +289,26 @@ Common::KeymapArray AgosMetaEngine::initKeymaps(const char *target) const {
 			gameId == "dimp") {
 		act = new Action("WLKFORWARD", _("Walk forward")); // KEYCODE_UP
 		act->setCustomEngineActionEvent(kActionWalkForward);
-		act->addDefaultInputMapping("UP"); 
-		act->addDefaultInputMapping("JOY_UP"); 
+		act->addDefaultInputMapping("UP");
+		act->addDefaultInputMapping("JOY_UP");
 		gameKeyMap->addAction(act);
 
 		act = new Action("TRNBACK", _("Turn backward")); // KEYCODE_DOWN
 		act->setCustomEngineActionEvent(kActionTurnBack);
-		act->addDefaultInputMapping("DOWN"); 
-		act->addDefaultInputMapping("JOY_DOWN"); 
+		act->addDefaultInputMapping("DOWN");
+		act->addDefaultInputMapping("JOY_DOWN");
 		gameKeyMap->addAction(act);
 
 		act = new Action("TRNLEFT", _("Turn left")); // KEYCODE_LEFT
 		act->setCustomEngineActionEvent(kActionTurnLeft);
-		act->addDefaultInputMapping("LEFT"); 
-		act->addDefaultInputMapping("JOY_LEFT"); 
+		act->addDefaultInputMapping("LEFT");
+		act->addDefaultInputMapping("JOY_LEFT");
 		gameKeyMap->addAction(act);
 
 		act = new Action("TRNRIGHT", _("Turn right")); // KEYCODE_RIGHT
 		act->setCustomEngineActionEvent(kActionTurnRight);
-		act->addDefaultInputMapping("RIGHT"); 
-		act->addDefaultInputMapping("JOY_RIGHT"); 
+		act->addDefaultInputMapping("RIGHT");
+		act->addDefaultInputMapping("JOY_RIGHT");
 		gameKeyMap->addAction(act);
 	}
 
@@ -331,7 +331,7 @@ Common::KeymapArray AgosMetaEngine::initKeymaps(const char *target) const {
 		act = new Action("SHOWOBJINTERACT", _("Show objects to interact"));
 		act->setCustomEngineActionEvent(kActionShowObjects);
 		act->addDefaultInputMapping("F10");
-		act->addDefaultInputMapping("JOY_UP"); 
+		act->addDefaultInputMapping("JOY_UP");
 		gameKeyMap->addAction(act);
 
 		if (gameId == "simon2") {
@@ -360,13 +360,13 @@ Common::KeymapArray AgosMetaEngine::initKeymaps(const char *target) const {
 		act = new Action("TOGGLESUB", _("Switches between speech only and combined speech and subtitles"));
 		act->setCustomEngineActionEvent(kActionToggleSubtitle);
 		act->addDefaultInputMapping("t");
-		act->addDefaultInputMapping("JOY_LEFT"); 
+		act->addDefaultInputMapping("JOY_LEFT");
 		gameKeyMap->addAction(act);
 
 		act = new Action("TOGGLESPEECH", _("Switches between subtitles only and combined speech and subtitles"));
 		act->setCustomEngineActionEvent(kActionToggleSpeech);
 		act->addDefaultInputMapping("v");
-		act->addDefaultInputMapping("JOY_RIGHT"); 
+		act->addDefaultInputMapping("JOY_RIGHT");
 		gameKeyMap->addAction(act);
 	}
 

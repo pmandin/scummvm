@@ -32,7 +32,6 @@
 #include "common/stack.h"
 #include "common/system.h"
 
-#include "graphics/opengl/shader.h"
 #include "graphics/managed_surface.h"
 
 #include "qdengine/debugger/dt-internal.h"
@@ -41,6 +40,10 @@
 #include "qdengine/qdcore/qd_animation.h"
 #include "qdengine/qdcore/qd_animation_frame.h"
 #include "qdengine/qdcore/qd_file_manager.h"
+#include "qdengine/qdcore/qd_game_dispatcher.h"
+#include "qdengine/qdcore/qd_game_object.h"
+#include "qdengine/qdcore/qd_game_object_moving.h"
+#include "qdengine/qdcore/qd_game_scene.h"
 #include "qdengine/qdengine.h"
 #include "qdengine/system/graphics/gr_dispatcher.h"
 
@@ -49,28 +52,6 @@ namespace QDEngine {
 const int TILES_ID = -1337;
 
 ImGuiState *_state = nullptr;
-
-static GLuint loadTextureFromSurface(Graphics::Surface *surface) {
-	// Create a OpenGL texture identifier
-	GLuint image_texture;
-	glGenTextures(1, &image_texture);
-	glBindTexture(GL_TEXTURE_2D, image_texture);
-
-	// Setup filtering parameters for display
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-
-	// Upload pixels into texture
-	Graphics::Surface *s = surface->convertTo(Graphics::PixelFormat(3, 8, 8, 8, 0, 0, 8, 16, 0));
-	glPixelStorei(GL_UNPACK_ALIGNMENT, s->format.bytesPerPixel);
-
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, s->w, s->h, 0, GL_RGB, GL_UNSIGNED_BYTE, s->getPixels()));
-	s->free();
-	delete s;
-	return image_texture;
-}
 
 ImGuiImage getImageID(Common::Path filename, int frameNum) {
 	Common::String key = Common::String::format("%s:%d", filename.toString().c_str(), frameNum);
@@ -144,7 +125,7 @@ ImGuiImage getImageID(Common::Path filename, int frameNum) {
 	}
 
 	if (surface)
-		_state->_frames[key] = { (ImTextureID)(intptr_t)loadTextureFromSurface(surface->surfacePtr()), sx, sy };
+		_state->_frames[key] = { (ImTextureID)g_system->getImGuiTexture(*surface->surfacePtr()), sx, sy };
 
 	delete surface;
 
@@ -199,7 +180,7 @@ void populateFileList() {
 	treeStack.push(&_state->_files);
 
 	int id = 0;
-	for (int f = 0; f < files.size(); f++) {
+	for (unsigned int f = 0; f < files.size(); f++) {
 		// Skip duplicates between the archives
 		if (f && files[f] == files[f - 1])
 			continue;
@@ -216,13 +197,13 @@ void populateFileList() {
 			if (newArr.back().empty())
 				newArr.pop_back();
 
-			int pos = 0;
+			unsigned int pos = 0;
 			while (pos < curArr.size() && pos < newArr.size() && curArr[pos] == newArr[pos])
 				pos++;
 
 			// if we need to close directories
 			if (pos < curArr.size()) {
-				for (int i = pos; i < curArr.size(); i++)
+				for (unsigned int i = pos; i < curArr.size(); i++)
 					(void)treeStack.pop();
 			}
 
@@ -412,7 +393,7 @@ void showArchives() {
 		ImGui::SameLine();
 
 		{ // Right pane
-			ImGui::BeginChild("ChildR", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Border);
+			ImGui::BeginChild("ChildR", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Borders);
 
 			if (_state->_displayMode == kDisplayQDA) {
 				displayQDA();
@@ -423,6 +404,95 @@ void showArchives() {
 			ImGui::EndChild();
 		}
 
+	}
+	ImGui::End();
+}
+
+void showSceneObjects() {
+	if (!_state->_showSceneObjects)
+		return;
+
+	ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 250), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Scene Objects", &_state->_showSceneObjects)) {
+		qdGameScene *scene;
+		qdGameDispatcher *dp = qdGameDispatcher::get_dispatcher();
+		if (dp && ((scene = dp->get_active_scene()))) {
+			if (!scene->object_list().empty()) {
+				for (auto &it : g_engine->_visible_objects) {
+					if (ImGui::Selectable((char *)transCyrillic(it->name()), _state->_objectToDisplay == it->name())) {
+						_state->_objectToDisplay = it->name();
+					}
+				}
+			}
+		}
+	}
+	ImGui::End();
+}
+
+void showScenePersonages() {
+	if (!_state->_showScenePersonages)
+		return;
+
+	ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 250), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Scene Personages", &_state->_showScenePersonages)) {
+		qdGameScene *scene;
+		qdGameDispatcher *dp = qdGameDispatcher::get_dispatcher();
+		if (dp && ((scene = dp->get_active_scene()))) {
+			if (!scene->getPersonages()->empty()) {
+				if (ImGui::BeginTable("Personages", 8, ImGuiTableFlags_Borders)) {
+					ImGuiTableFlags flags = ImGuiTableColumnFlags_WidthFixed;
+					ImGui::TableSetupColumn("Name", flags);
+					ImGui::TableSetupColumn("Flags", flags);
+					ImGui::TableSetupColumn("Control", flags);
+					ImGui::TableSetupColumn("Movement", flags);
+
+					ImGui::TableSetupColumn("Frame", flags);
+					ImGui::TableSetupColumn("Time", flags);
+					ImGui::TableSetupColumn("Anim Flags", flags);
+					ImGui::TableSetupColumn("Anim Status", flags);
+
+					ImGui::TableHeadersRow();
+
+					for (auto &it : *scene->getPersonages()) {
+						ImGui::TableNextRow();
+
+						ImGui::TableNextColumn();
+						ImGui::Text((char *)transCyrillic(it->name()));
+
+						qdGameObjectState *st = it->get_state(it->cur_state());
+						ImGui::TableNextColumn();
+						ImGui::Text("%s", st ? qdGameObjectState::flag2str(st->flags(), true, true).c_str() : "<none>");
+						ImGui::SetItemTooltip("%s", st ? qdGameObjectState::flag2str(st->flags(), true).c_str() : "<none>");
+
+						ImGui::TableNextColumn();
+						ImGui::Text(qdGameObjectMoving::control2str(it->get_control_types(), true).c_str());
+
+						ImGui::TableNextColumn();
+						ImGui::Text(qdGameObjectMoving::movement2str(it->get_movement_mode(), true).c_str());
+
+						qdAnimation *anim = it->get_animation();
+						ImGui::TableNextColumn();
+						ImGui::Text("%d / %d", anim->get_cur_frame_number(), anim->num_frames());
+
+						ImGui::TableNextColumn();
+						ImGui::Text("%f / %f", anim->cur_time(), anim->length());
+
+						ImGui::TableNextColumn();
+						ImGui::Text(qdAnimation::flag2str(anim->flags(), true, true).c_str());
+						ImGui::SetItemTooltip(qdAnimation::flag2str(anim->flags(), true).c_str());
+
+						ImGui::TableNextColumn();
+						ImGui::Text(qdAnimation::status2str(anim->status(), true).c_str());
+					}
+
+					ImGui::EndTable();
+				}
+			}
+		}
 	}
 	ImGui::End();
 }
@@ -461,7 +531,7 @@ void onImGuiRender() {
 	if (!_state)
 		return;
 
-	if (_state->_qdaIsPlaying && g_system->getMillis() > _state->_qdaNextFrameTimestamp) {
+	if (_state->_qdaIsPlaying && (int)g_system->getMillis() > _state->_qdaNextFrameTimestamp) {
 		_state->_qdaToDisplayFrame++;
 		_state->_qdaToDisplayFrame %= _state->_qdaToDisplayFrameCount;
 
@@ -475,12 +545,16 @@ void onImGuiRender() {
 			ImGui::SeparatorText("Windows");
 
 			ImGui::MenuItem("Archives", NULL, &_state->_showArchives);
+			ImGui::MenuItem("Scene Objects", NULL, &_state->_showSceneObjects);
+			ImGui::MenuItem("Scene Personages", NULL, &_state->_showScenePersonages);
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 
 	showArchives();
+	showSceneObjects();
+	showScenePersonages();
 }
 
 void onImGuiCleanup() {

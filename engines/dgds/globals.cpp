@@ -22,6 +22,7 @@
 #include "dgds/globals.h"
 #include "dgds/dgds.h"
 #include "dgds/scene.h"
+#include "dgds/game_palettes.h"
 
 namespace Dgds {
 
@@ -98,8 +99,9 @@ int16 Globals::getGlobal(uint16 num) {
 		return 0;
 	}
 
+	// This happens in a couple of places in RotD
 	if (num)
-		error("getGlobal: requested non-existing global %d", num);
+		warning("getGlobal: requested non-existing global %d", num);
 
 	// Bug in HoC?
 	//warning("getGlobal: requested global 0");
@@ -107,13 +109,15 @@ int16 Globals::getGlobal(uint16 num) {
 }
 
 int16 Globals::setGlobal(uint16 num, int16 val) {
-	//debug("setGlobal %d -> %d", num, val);
+	//debug(1, "setGlobal %d -> %d", num, val);
 	for (auto &global : _globals) {
 		if (global->getNum() == num)
 			return global->set(val);
 	}
 
-	error("setGlobal: requested non-existing global %d", num);
+	// This happens eg looking at the Fisto box in RotD
+	warning("setGlobal: requested non-existing global %d", num);
+	return 0;
 }
 
 Common::Error Globals::syncState(Common::Serializer &s) {
@@ -232,73 +236,114 @@ public:
 };
 
 
-HocGlobals::HocGlobals(Clock &clock) : Globals(clock), _unk82(1), _unk55(0),
+HocGlobals::HocGlobals(Clock &clock) : Globals(clock), _difficultyLevel(1), _unk55(0),
 	_unkDlgFileNum(0), _unkDlgDlgNum(0),  _currentCharacter2(0), _currentCharacter(0),
-	_unk50(0), _nativeGameState(0), _unk48(0), _unk47(0), _unk46(0), _unk45(0x3f), _sheckels(0),
-	_shellBet(0), _shellPea(0), _unk41(0), _unk40(3), _unk39(0) {
+	_tankFinished(0), _nativeGameState(0), _tankState(0), _unk47(0), _unk46(0), _unk45(0x3f), _sheckels(0),
+	_shellBet(0), _shellPea(0), _trainState(0), _startScene(3), _introState(0) {
 	_globals.push_back(new DetailLevelROGlobal(0x53));
-	_globals.push_back(new RWI16Global(0x52, &_unk82));
-	_globals.push_back(new RWI16Global(0x37, &_unk55)); // TODO: Special update function FUN_1407_080d, sound init related
+	_globals.push_back(new RWI16Global(0x52, &_difficultyLevel)); // TODO: Sync with difficulty in menu
+	_globals.push_back(new RWI16Global(0x37, &_unk55)); // TODO: Special update function FUN_1407_080d, sound init related.. sound bank?
 	_globals.push_back(new RWI16Global(0x36, &_unkDlgFileNum));
 	_globals.push_back(new RWI16Global(0x35, &_unkDlgDlgNum));
 	_globals.push_back(new HocCharacterGlobal(0x34, &_currentCharacter));
 	_globals.push_back(new HocCharacterGlobal(0x33, &_currentCharacter2));
-	_globals.push_back(new RWI16Global(0x32, &_unk50));
+	_globals.push_back(new RWI16Global(0x32, &_tankFinished));
 	_globals.push_back(new RWI16Global(0x31, &_nativeGameState));
-	_globals.push_back(new RWI16Global(0x30, &_unk48));
-	_globals.push_back(new RWI16Global(0x2F, &_unk47));
-	_globals.push_back(new RWI16Global(0x2E, &_unk46));
+	_globals.push_back(new RWI16Global(0x30, &_tankState));
+	_globals.push_back(new RWI16Global(0x2F, &_unk47)); // tank related.. cows?
+	_globals.push_back(new RWI16Global(0x2E, &_unk46)); // tank related.. start point?
 	_globals.push_back(new RWI16Global(0x2D, &_unk45)); // TODO: Special update function FUN_1407_0784, palette related?
 	_globals.push_back(new RWI16Global(0x2C, &_sheckels));	// used as currency in Istanbul
 	_globals.push_back(new RWI16Global(0x2B, &_shellBet));
 	_globals.push_back(new RWI16Global(0x2A, &_shellPea));
-	_globals.push_back(new RWI16Global(0x29, &_unk41));
-	_globals.push_back(new RWI16Global(0x28, &_unk40));
-	_globals.push_back(new ROI16Global(0x27, &_unk39));
+	_globals.push_back(new RWI16Global(0x29, &_trainState));
+	_globals.push_back(new RWI16Global(0x28, &_startScene));
+	_globals.push_back(new ROI16Global(0x27, &_introState));
 }
 
 Common::Error HocGlobals::syncState(Common::Serializer &s) {
 	Globals::syncState(s);
 
-	s.syncAsSint16LE(_unk39);
-	s.syncAsSint16LE(_unk40);
-	s.syncAsSint16LE(_unk41);
+	s.syncAsSint16LE(_introState);
+	s.syncAsSint16LE(_startScene);
+	s.syncAsSint16LE(_trainState);
 	s.syncAsSint16LE(_shellPea);
 	s.syncAsSint16LE(_shellBet);
 	s.syncAsSint16LE(_sheckels);
 	s.syncAsSint16LE(_unk45);
 	s.syncAsSint16LE(_unk46);
 	s.syncAsSint16LE(_unk47);
-	s.syncAsSint16LE(_unk48);
+	s.syncAsSint16LE(_tankState);
 	s.syncAsSint16LE(_nativeGameState);
-	s.syncAsSint16LE(_unk50);
+	s.syncAsSint16LE(_tankFinished);
 	s.syncAsSint16LE(_currentCharacter);
 	s.syncAsSint16LE(_currentCharacter2);
 	s.syncAsSint16LE(_unkDlgDlgNum);
 	s.syncAsSint16LE(_unkDlgFileNum);
 	s.syncAsSint16LE(_unk55);
-	s.syncAsSint16LE(_unk82);
+	s.syncAsSint16LE(_difficultyLevel);
 
 	return Common::kNoError;
 }
 
+static const int FADE_STARTCOL = 0x40;
+static const int FADE_NUMCOLS = 0xC0;
+
+
+class PaletteFadeGlobal : public RWI16Global {
+public:
+	PaletteFadeGlobal(uint16 num, int16 *val) : RWI16Global(num, val) {}
+	int16 set(int16 val) override {
+		val = CLIP(val, (int16)0, (int16)255);
+		int16 lastVal = get();
+		const int FADESTEP = 4;
+		if (lastVal != val) {
+			int step = (val > lastVal) ? FADESTEP : -FADESTEP;
+			int currentLevel = lastVal / FADESTEP;
+			int targetLevel = val / FADESTEP;
+			while (currentLevel != targetLevel) {
+				lastVal += step;
+				currentLevel = lastVal / FADESTEP;
+				DgdsEngine::getInstance()->getGamePals()->setFade(FADE_STARTCOL, FADE_NUMCOLS, 0, currentLevel);
+			}
+			RWI16Global::set(val);
+		}
+		return get();
+	}
+};
+
+class WillyDrawGlobal : public RWI16Global {
+public:
+	WillyDrawGlobal(uint16 num, int16 *val) : RWI16Global(num, val) {}
+	int16 set(int16 val) override {
+		int16 oldVal = get();
+		if (val != oldVal) {
+			val = CLIP(val, (int16)0, (int16)10);
+			warning("TODO: Implement set function for willy global 0x02 val %d.", val);
+			return RWI16Global::set(val);
+		}
+		return oldVal;
+	}
+};
+
+
 WillyGlobals::WillyGlobals(Clock &clock) : Globals(clock),
 	_unk2(4), _unk3(0), _unk4(0), _unk5(0), _unk74(0), _unk75(300),
-	_unk77(255), _unk78(0), _unk79(0), _unk80(0), _unk81(3), _unk82(1) {
+	_palFade(255), _unk78(0), _unk79(0), _unk80(0), _unk81(3), _unk82(1) {
 	_globals.push_back(new DetailLevelROGlobal(0x53));
 	_globals.push_back(new RWI16Global(0x52, &_unk82));
 	_globals.push_back(new RWI16Global(0x51, &_unk81));
 	_globals.push_back(new RWI16Global(0x50, &_unk80));
 	_globals.push_back(new RWI16Global(0x4F, &_unk79));
 	_globals.push_back(new RWI16Global(0x4E, &_unk78));
-	_globals.push_back(new RWI16Global(0x4D, &_unk77));
-	_globals.push_back(new RWI16Global(0x4C, &_unk77)); // TODO: Special set function 1833:665e. Same variable as 0x4D.
+	_globals.push_back(new RWI16Global(0x4D, &_palFade));
+	_globals.push_back(new PaletteFadeGlobal(0x4C, &_palFade));
 	_globals.push_back(new RWI16Global(0x4B, &_unk75));
 	_globals.push_back(new RWI16Global(0x4A, &_unk74));
 	_globals.push_back(new RWI16Global(0x05, &_unk5));
 	_globals.push_back(new RWI16Global(0x04, &_unk4));
 	_globals.push_back(new RWI16Global(0x03, &_unk3));
-	_globals.push_back(new RWI16Global(0x02, &_unk2)); // TODO: Special set function 1574:06ca
+	_globals.push_back(new WillyDrawGlobal(0x02, &_unk2));
 }
 
 Common::Error WillyGlobals::syncState(Common::Serializer &s) {
@@ -309,7 +354,7 @@ Common::Error WillyGlobals::syncState(Common::Serializer &s) {
 	s.syncAsSint16LE(_unk5);
 	s.syncAsSint16LE(_unk74);
 	s.syncAsSint16LE(_unk75);
-	s.syncAsSint16LE(_unk77);
+	s.syncAsSint16LE(_palFade);
 	s.syncAsSint16LE(_unk78);
 	s.syncAsSint16LE(_unk79);
 	s.syncAsSint16LE(_unk80);

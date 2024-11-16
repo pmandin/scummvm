@@ -88,8 +88,10 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	UIButton *_toggleTouchModeButton;
 	UITapGestureRecognizer *oneFingerTapGesture;
 	UITapGestureRecognizer *twoFingerTapGesture;
+	UITapGestureRecognizer *pencilThreeTapGesture;
 	UILongPressGestureRecognizer *oneFingerLongPressGesture;
 	UILongPressGestureRecognizer *twoFingerLongPressGesture;
+	UILongPressGestureRecognizer *pencilTwoTapLongTouchGesture;
 	CGPoint touchesBegan;
 #endif
 }
@@ -201,7 +203,7 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	oneFingerTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(oneFingerTap:)];
 	[oneFingerTapGesture setNumberOfTapsRequired:1];
 	[oneFingerTapGesture setNumberOfTouchesRequired:1];
-	[oneFingerTapGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
+	[oneFingerTapGesture setAllowedTouchTypes:@[@(UITouchTypeDirect),@(UITouchTypePencil)]];
 	[oneFingerTapGesture setDelaysTouchesBegan:NO];
 	[oneFingerTapGesture setDelaysTouchesEnded:NO];
 
@@ -211,11 +213,18 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[twoFingerTapGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
 	[twoFingerTapGesture setDelaysTouchesBegan:NO];
 	[twoFingerTapGesture setDelaysTouchesEnded:NO];
+	
+	pencilThreeTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(pencilThreeTap:)];
+	[pencilThreeTapGesture setNumberOfTapsRequired:3];
+	[pencilThreeTapGesture setNumberOfTouchesRequired:1];
+	[pencilThreeTapGesture setAllowedTouchTypes:@[@(UITouchTypePencil)]];
+	[pencilThreeTapGesture setDelaysTouchesBegan:NO];
+	[pencilThreeTapGesture setDelaysTouchesEnded:NO];
 
 	// Default long press duration is 0.5 seconds which suits us well
 	oneFingerLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(oneFingerLongPress:)];
 	[oneFingerLongPressGesture setNumberOfTouchesRequired:1];
-	[oneFingerLongPressGesture setAllowedTouchTypes:@[@(UITouchTypeDirect)]];
+	[oneFingerLongPressGesture setAllowedTouchTypes:@[@(UITouchTypeDirect),@(UITouchTypePencil)]];
 	[oneFingerLongPressGesture setDelaysTouchesBegan:NO];
 	[oneFingerLongPressGesture setDelaysTouchesEnded:NO];
 	[oneFingerLongPressGesture setCancelsTouchesInView:NO];
@@ -228,6 +237,15 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[twoFingerLongPressGesture setDelaysTouchesEnded:NO];
 	[twoFingerLongPressGesture setCancelsTouchesInView:NO];
 	[twoFingerLongPressGesture canPreventGestureRecognizer:twoFingerTapGesture];
+	
+	pencilTwoTapLongTouchGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(pencilTwoTapLongTouch:)];
+	[pencilTwoTapLongTouchGesture setNumberOfTouchesRequired:1];
+	[pencilTwoTapLongTouchGesture setNumberOfTapsRequired:2];
+	[pencilTwoTapLongTouchGesture setAllowedTouchTypes:@[@(UITouchTypePencil)]];
+	[pencilTwoTapLongTouchGesture setMinimumPressDuration:0.5];
+	[pencilTwoTapLongTouchGesture setDelaysTouchesBegan:NO];
+	[pencilTwoTapLongTouchGesture setDelaysTouchesEnded:NO];
+	[pencilTwoTapLongTouchGesture setCancelsTouchesInView:NO];
 
 	UIPinchGestureRecognizer *pinchKeyboard = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(keyboardPinch:)];
 
@@ -299,6 +317,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[self addGestureRecognizer:twoFingerTapGesture];
 	[self addGestureRecognizer:oneFingerLongPressGesture];
 	[self addGestureRecognizer:twoFingerLongPressGesture];
+	[self addGestureRecognizer:pencilThreeTapGesture];
+	[self addGestureRecognizer:pencilTwoTapLongTouchGesture];
 
 	[pinchKeyboard release];
 	[swipeRight release];
@@ -314,6 +334,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[twoFingerTapGesture release];
 	[oneFingerLongPressGesture release];
 	[twoFingerLongPressGesture release];
+	[pencilThreeTapGesture release];
+	[pencilTwoTapLongTouchGesture release];
 #elif TARGET_OS_TV
 	UITapGestureRecognizer *tapUpGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeUp:)];
 	[tapUpGestureRecognizer setAllowedPressTypes:@[@(UIPressTypeUpArrow)]];
@@ -422,8 +444,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 
 	[_toggleTouchModeButton setEnabled:isEnabled];
 	[_toggleTouchModeButton setHidden:!isEnabled];
-	[_menuButton setEnabled:isEnabled];
-	[_menuButton setHidden:!isEnabled];
+	[_menuButton setEnabled:isEnabled && [self isInGame]];
+	[_menuButton setHidden:!isEnabled || ![self isInGame]];
 }
 
 - (BOOL)isiOSAppOnMac {
@@ -513,9 +535,19 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 			newFrame = CGRectMake(screenSize.origin.x + inset.left, screenSize.origin.y, screenSize.size.width - inset.left, height);
 		}
 
-		// The onscreen control buttons have to be moved accordingly
-		[_menuButton setFrame:CGRectMake(newFrame.size.width - _menuButton.imageView.image.size.width, 0, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
-		[_toggleTouchModeButton setFrame:CGRectMake(newFrame.size.width - _toggleTouchModeButton.imageView.image.size.width - _toggleTouchModeButton.imageView.image.size.width, 0, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
+		// Add margins to respect the iPhone and iPad safe areas. Use the right
+		// safe area inset if available since the position of the buttons are
+		// on the right hand side. The iPhone corners on the later models have
+		// the form of squircles rather than circles which cause button images
+		// to become cropped if placed too close to the corner.
+		// iPads has a more rectangular screen form. The inset margin on iPads
+		// is 0, however due to the rounding of the corners images gets cropped
+		// if placed too close to the corners. Use a constant margin for those.
+		const CGFloat margin = inset.right > 0 ? inset.right/4 : 10;
+		// Touch mode button on top
+		[_toggleTouchModeButton setFrame:CGRectMake(self.frame.size.width - _toggleTouchModeButton.imageView.image.size.width - margin, margin, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
+		// Burger menu button below
+		[_menuButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width - margin, _toggleTouchModeButton.imageView.image.size.height + margin, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
 #endif
 		self.frame = newFrame;
 	}
@@ -565,6 +597,8 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	[twoFingerTapGesture setEnabled:enabled];
 	[oneFingerLongPressGesture setEnabled:enabled];
 	[twoFingerLongPressGesture setEnabled:enabled];
+	[pencilThreeTapGesture setEnabled:enabled];
+	[pencilTwoTapLongTouchGesture setEnabled:enabled];
 }
 #endif
 
@@ -598,9 +632,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 		screenOrientation = kScreenOrientationFlippedLandscape;
 	}
 
-	// The onscreen control buttons have to be moved accordingly
-	[_menuButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width, 0, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
-	[_toggleTouchModeButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width - _toggleTouchModeButton.imageView.image.size.width, 0, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
+	// This function is executed also on older device models. The screens
+	// have sharp corners and no safe area insets. Use a constant margin.
+	const CGFloat margin = 10;
+	// Touch mode button on top
+	[_toggleTouchModeButton setFrame:CGRectMake(self.frame.size.width - _toggleTouchModeButton.imageView.image.size.width - margin, margin, _toggleTouchModeButton.imageView.image.size.width, _toggleTouchModeButton.imageView.image.size.height)];
+	// Burger menu button below
+	[_menuButton setFrame:CGRectMake(self.frame.size.width - _menuButton.imageView.image.size.width - margin, _toggleTouchModeButton.imageView.image.size.height + margin, _menuButton.imageView.image.size.width, _menuButton.imageView.image.size.height)];
 
 	[self addEvent:InternalEvent(kInputOrientationChanged, screenOrientation, 0)];
 	if (UIInterfaceOrientationIsLandscape(orientation)) {
@@ -647,10 +685,27 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 #if TARGET_OS_IOS
 	UITouch *touch = [touches anyObject];
 	CGPoint touchesMoved = [touch locationInView:self];
-	if (touchesBegan.x != touchesMoved.x ||
-		touchesBegan.y != touchesMoved.y) {
-		[oneFingerTapGesture setState:UIGestureRecognizerStateCancelled];
-		[twoFingerTapGesture setState:UIGestureRecognizerStateCancelled];
+	int allowedPencilMovement = 10;
+	switch (touch.type) {
+		// This prevents touches automatically clicking things after
+		// moving around the screen
+		case UITouchTypePencil:
+			// Apple Pencil touches are much more precise, so this
+			// allows some pixels of movement before invalidating the gesture.
+			if (abs(touchesBegan.x - touchesMoved.x) > allowedPencilMovement ||
+				abs(touchesBegan.y - touchesMoved.y) > allowedPencilMovement) {
+				[oneFingerTapGesture setState:UIGestureRecognizerStateCancelled];
+				[pencilThreeTapGesture setState:UIGestureRecognizerStateCancelled];
+			}
+			break;
+			
+		default:
+			if (touchesBegan.x != touchesMoved.x ||
+				touchesBegan.y != touchesMoved.y) {
+				[oneFingerTapGesture setState:UIGestureRecognizerStateCancelled];
+				[twoFingerTapGesture setState:UIGestureRecognizerStateCancelled];
+			}
+			break;
 	}
 #endif
 	for (GameController *c : _controllers) {
@@ -757,6 +812,13 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	}
 }
 
+- (void)pencilThreeTap:(UITapGestureRecognizer *)recognizer {
+	if (recognizer.state == UIGestureRecognizerStateEnded) {
+		// Click right mouse
+		[self addEvent:InternalEvent(kInputTap, kUIViewTapSingle, 2)];
+	}
+}
+
 - (void)oneFingerLongPress:(UILongPressGestureRecognizer *)recognizer {
 	if (recognizer.state == UIGestureRecognizerStateBegan) {
 		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressStarted, 1)];
@@ -769,6 +831,16 @@ bool iOS7_fetchEvent(InternalEvent *event) {
 	if (recognizer.state == UIGestureRecognizerStateBegan) {
 		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressStarted, 2)];
 	} else if (recognizer.state == UIGestureRecognizerStateEnded) {
+		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressEnded, 2)];
+	}
+}
+
+- (void)pencilTwoTapLongTouch:(UITapGestureRecognizer *)recognizer {
+	if (recognizer.state == UIGestureRecognizerStateBegan) {
+		// Hold right mouse
+		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressStarted, 2)];
+	} else if (recognizer.state == UIGestureRecognizerStateEnded) {
+		// Release right mouse
 		[self addEvent:InternalEvent(kInputLongPress, UIViewLongPressEnded, 2)];
 	}
 }

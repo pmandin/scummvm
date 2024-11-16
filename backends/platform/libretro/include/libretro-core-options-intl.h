@@ -81,11 +81,6 @@ struct retro_core_option_v2_category option_cats_it[] = {
 		"Impostazioni relative al movimento del cursore"
 	},
 	{
-		"frameskip",
-		"Salto dei fotogrammi",
-		"Impostazioni per il salto dei fotogrammi"
-	},
-	{
 		"timing",
 		NULL,
 		"Impostazioni relative al timing"
@@ -188,69 +183,10 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 		NULL
 	},
 	{
-		"scummvm_frameskip_type",
-		"Frameskip > Salto dei fotogrammi",
-		"Salto dei fotogrammi",
-		"Salto dei fotogrammi per evitare buffer under-run audio (crackling). Migliora le prestazioni a discapito della fluidità video. 'Auto' salta i fotogrammi su indicazione del frontend, 'Soglia' usa l'impostazione di 'Soglia minima buffer audio (%)', 'Fisso' usa l'impostazione 'Salto dei fotogrammi fisso'.",
-		NULL,
-		NULL,
-		{
-			{ "disabled", NULL },
-			{ "fixed", "Fisso" },
-			{ "auto", "Auto" },
-			{ "manual", "Soglia" },
-			{ NULL, NULL },
-		},
-		NULL
-	},
-	{
-		"scummvm_frameskip_threshold",
-		"Frameskip > Soglia minima buffer audio (%)",
-		"Soglia minima buffer audio (%)",
-		"Quando 'Salto dei fotogrammi' è impostato su 'Soglia', specifica la soglia minima del buffer audio al di sotto della quale il fotogramma viene saltato. Valori più alti riducono il rischio di crackling al costo di un salto di fotogrammi più frequente.",
-		NULL,
-		NULL,
-		{
-			{ NULL, NULL },
-		},
-		NULL
-	},
-	{
-		"scummvm_frameskip_no",
-		"Frameskip > Salto dei fotogrammi fisso",
-		"Salto dei fotogrammi fisso",
-		"Quando la modalità di 'Salto dei fotogrammi' è 'Fisso', o il frontend non supporta una delle altre modalità selezionate, salta costantemente X fotogrammi ogni X+1.",
-		NULL,
-		NULL,
-		{
-			{ "0", "Nessun fotogramma saltato" },
-			{ "1", "Salto di 1 fotogramma su 2" },
-			{ "2", "Salto di 2 fotogrammi su 3" },
-			{ "3", "Salto di 3 fotogrammi su 4" },
-			{ "4", "Salto di 4 fotogrammi su 5" },
-			{ "5", "Salto di 5 fotogrammi su 6" },
-			{ NULL, NULL },
-		},
-		NULL
-	},
-	{
-		"scummvm_allow_timing_inaccuracies",
-		"Timing > Consenti inaccuratezze di timing",
-		"Consenti inaccuratezze di timing",
-		"Consente inaccuratezze di timing che riducono significativamente le richeste di CPU. Anche se la maggior parte delle inaccuratezze sono impercettibili, in alcuni casi potrebbe introdurre problemi di sincronizzazione audio, quindi questa opzione andrebbe abilitata solo se il raggiungimento della piena velocità non è possibile in altro modo.",
-		NULL,
-		NULL,
-		{
-			{NULL, NULL},
-		},
-		NULL
-	},
-
-	{
 		"scummvm_framerate",
 		"Timing > Tetto frequenza dei fotogrammi",
 		"Tetto frequenza dei fotogrammi",
-		"Imposta il limite superiore della frequenza dei fotogrammi. Il cambio di questa impostazione causerà il reset del core.",
+		"Imposta il limite superiore della frequenza dei fotogrammi. La riduzione del limite migliora le prestazioni sui dispositivi di fascia bassa. Il cambio di questa impostazione causerà il reset del core.",
 		NULL,
 		NULL,
 		{
@@ -262,7 +198,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 		"scummvm_samplerate",
 		"Timing > Frequenza di campionamento",
 		"Frequenza di campionamento",
-		"Imposta la frequenza di campionamento. Il cambio di questa impostazione causerà il reset del core.",
+		"Imposta la frequenza di campionamento. La riduzione della frequenza migliora leggermente le prestazioni sui dispositivi di fascia bassa. Il cambio di questa impostazione causerà il reset del core.",
 		NULL,
 		NULL,
 		{
@@ -573,6 +509,32 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 		},
 		NULL,
 	},
+#ifdef USE_HIGHRES
+	{
+		"scummvm_gui_aspect_ratio",
+		"Video > Rapporto aspetto GUI",
+		"Rapporto aspetto ScummVM Launcher",
+		"Imposta il rapporto d'aspetto per ScummVM Launcher.",
+		NULL,
+		NULL,
+		{
+			{ NULL, NULL }
+		},
+		NULL,
+	},
+	{
+		"scummvm_gui_h_res",
+		"Video > Risoluzione GUI",
+		"Risoluzione ScummVM Launcher",
+		"Imposta la risoluzione per ScummVM Launcher.",
+		NULL,
+		NULL,
+		{
+			{ NULL, NULL }
+		},
+		NULL,
+	},
+#endif
 	{ NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
 };
 struct retro_core_options_v2 options_it = {

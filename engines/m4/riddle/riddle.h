@@ -31,6 +31,7 @@
 #include "m4/riddle/rooms/section7/section7.h"
 #include "m4/riddle/rooms/section8/section8.h"
 #include "m4/riddle/rooms/section9/section9.h"
+#include "m4/riddle/gui/gui_messages.h"
 
 namespace M4 {
 namespace Riddle {
@@ -46,6 +47,25 @@ private:
 	Rooms::Section7 _section7;
 	Rooms::Section8 _section8;
 	Rooms::Section9 _section9;
+	GUI::MessageLog _messageLog;
+	int _ripAction = 0;
+	int _savedFacing = 0;
+
+	/**
+	 * Combines the items in the player _verb and _noun,
+	 * removing them from the player's inventory and replacing
+	 * them with the new combined item.
+	 * @param newItem	New item to give to player
+	 */
+	void combineItems(const char *newItem);
+
+	/**
+	 * Splits apart a combined item
+	*/
+	void splitItems(const char *item1, const char *item2);
+
+	void showMessageLog(int trigger);
+	void lookAtInventoryItem();
 
 protected:
 	/**
@@ -70,9 +90,10 @@ public:
 	void syncFlags(Common::Serializer &s) override;
 
 	void global_daemon() override;
-	void global_pre_parser() override;
 	void global_parser() override;
 };
+
+extern void sketchInJournal(const char *digiName);
 
 } // namespace Riddle
 } // namespace M4

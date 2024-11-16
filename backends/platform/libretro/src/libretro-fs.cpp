@@ -45,6 +45,8 @@ void LibRetroFilesystemNode::setFlags() {
 
 	_isValid = path_is_valid(fspath);
 	_isDirectory = path_is_directory(fspath);
+	_isReadable = access(fspath, R_OK) == 0;
+	_isWritable = access(_path.c_str(), W_OK) == 0;
 }
 
 LibRetroFilesystemNode::LibRetroFilesystemNode(const Common::String &p) {
@@ -63,8 +65,8 @@ LibRetroFilesystemNode::LibRetroFilesystemNode(const Common::String &p) {
 	} else
 		_path = p;
 
-	char portable_path[_path.size()+1];
-	strcpy(portable_path,_path.c_str());
+	char portable_path[_path.size() + 1];
+	strcpy(portable_path, _path.c_str());
 	pathname_make_slashes_portable(portable_path);
 
 	// Normalize the path (that is, remove unneeded slashes etc.)
@@ -154,15 +156,20 @@ AbstractFSNode *LibRetroFilesystemNode::getParent() const {
 		return 0;
 	}
 
-	return makeNode(Common::String(start, end));
+	AbstractFSNode *parent = makeNode(Common::String(start, end));
+
+	if (parent->isDirectory() == false)
+		return 0;
+
+	return parent;
 }
 
 Common::SeekableReadStream *LibRetroFilesystemNode::createReadStream() {
-	return StdioStream::makeFromPath(getPath(), false);
+	return StdioStream::makeFromPath(getPath(), StdioStream::WriteMode_Read);
 }
 
-Common::SeekableWriteStream *LibRetroFilesystemNode::createWriteStream() {
-	return StdioStream::makeFromPath(getPath(), true);
+Common::SeekableWriteStream *LibRetroFilesystemNode::createWriteStream(bool atomic) {
+	return StdioStream::makeFromPath(getPath(), atomic ? StdioStream::WriteMode_WriteAtomic : StdioStream::WriteMode_Write);
 }
 
 bool LibRetroFilesystemNode::createDirectory() {

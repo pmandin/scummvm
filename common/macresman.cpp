@@ -174,13 +174,24 @@ SeekableReadStream *MacResManager::openAppleDoubleWithAppleOrOSXNaming(Archive& 
 		return stream;
 
 	const ArchiveMemberPtr archiveMember = archive.getMember(fileName);
-        const Common::FSNode *plainFsNode = dynamic_cast<const Common::FSNode *>(archiveMember.get());
+	const Common::FSNode *plainFsNode = dynamic_cast<const Common::FSNode *>(archiveMember.get());
 
 	// Try finding __MACOSX
 	Common::StringArray components = (plainFsNode ? plainFsNode->getPath() : fileName).splitComponents();
+
+	// We do not need to look beyond the root directory
+	//    Fixes bug #15016
+	int start = MAX((int)components.size() - fileName.numComponents(), 0);
+
 	if (components.empty() || components[components.size() - 1].empty())
 		return nullptr;
-	for (int i = components.size() - 1; i >= 0; i--) {
+	for (int i = components.size() - 1; i >= start; i--) {
+		// On Windows and Amiga we may have disk name followed
+		// by ':'. So, checking for that. Otherwise, we will generate
+		// paths like "__MACOSX:D/Games/._Data"
+		if (i == 0 && components[i].contains(':'))
+			break;
+
 		Common::StringArray newComponents;
 		int j;
 		for (j = 0; j < i; j++)
@@ -946,6 +957,34 @@ SeekableReadStream *MacResManager::getResource(uint32 typeID, const String &file
 	}
 
 	return nullptr;
+}
+
+uint32 MacResManager::getResLength(uint32 typeID, uint16 resID) {
+	int typeNum = -1;
+	int resNum = -1;
+
+	for (int i = 0; i < _resMap.numTypes; i++)
+		if (_resTypes[i].id == typeID) {
+			typeNum = i;
+			break;
+		}
+
+	if (typeNum == -1)
+		return 0;
+
+	for (int i = 0; i < _resTypes[typeNum].items; i++)
+		if (_resLists[typeNum][i].id == resID) {
+			resNum = i;
+			break;
+		}
+
+	if (resNum == -1)
+		return 0;
+
+	_stream->seek(_dataOffset + _resLists[typeNum][resNum].dataOffset);
+	uint32 len = _stream->readUint32BE();
+
+	return len;
 }
 
 void MacResManager::readMap() {

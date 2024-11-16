@@ -113,8 +113,6 @@ private:
 	int32 _bubbleActor = -1;
 	int32 _bubbleSpriteIndex;
 
-	IVec3 _projPosScreen; // XpOrgw, YpOrgw
-
 	// big font shadow text in the lower left corner
 	Common::String _text;
 	int32 _textDisappearTime = -1;
@@ -151,10 +149,12 @@ public:
 	/** Request background redraw */
 	bool _firstTime = false;
 
+	IVec3 _projPosScreen; // XpOrgw, YpOrgw
+
 	/** Current number of redraw regions in the screen */
-	int32 _currNumOfRedrawBox = 0; // fullRedrawVar8
+	int32 _nbPhysBox = 0; // fullRedrawVar8
 	/** Number of redraw regions in the screen */
-	int32 _numOfRedrawBox = 0;
+	int32 _nbOptPhysBox = 0;
 
 	int _sceneryViewX = 0; // xmin
 	int _sceneryViewY = 0; // ymin
@@ -175,22 +175,22 @@ public:
 	 * @param bottom end height to redraw the region
 	 */
 	void addRedrawArea(int32 left, int32 top, int32 right, int32 bottom); // AddPhysBox
-	void addRedrawArea(const Common::Rect &rect); // AddPhysBox
+	void addPhysBox(const Common::Rect &rect); // AddPhysBox
 
 	/**
 	 * Flip currentRedrawList regions in the screen
 	 * This only updates small areas in the screen so few CPU processor is used
 	 */
-	void flipRedrawAreas();
+	void flipBoxes();
 
 	/** Blit/Update all screen regions in the currentRedrawList */
-	void blitBackgroundAreas();
+	void clsBoxes();
 
 	/**
 	 * This is responsible for the entire game screen redraw
 	 * @param bgRedraw true if we want to redraw background grid, false if we want to update certain screen areas
 	 */
-	void redrawEngineActions(bool bgRedraw);
+	void drawScene(bool bgRedraw);
 
 	/** Draw dialogue sprite image */
 	void drawBubble(int32 actorIdx);

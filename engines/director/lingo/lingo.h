@@ -169,6 +169,7 @@ struct Datum {	/* interpreter stack type */
 	Common::String asString(bool printonly = false) const;
 	CastMemberID asMemberID(CastType castType = kCastTypeAny, int castLib = 0) const;
 	Common::Point asPoint() const;
+	Datum clone() const;
 
 	bool isRef() const;
 	bool isVarRef() const;
@@ -356,7 +357,7 @@ public:
 	int getMenuNum();
 	int getMenuItemsNum(Datum &d);
 	int getXtrasNum();
-	int getCastlibsNum();
+	int getCastLibsNum();
 	int getMembersNum();
 
 	void executeHandler(const Common::String &name);

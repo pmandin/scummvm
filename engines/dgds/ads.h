@@ -42,7 +42,7 @@ public:
 	}
 	Common::Array<Common::String> _scriptNames;
 	Common::Array<TTMEnviro> _scriptEnvs;
-	Common::Array<TTMSeq> _ttmSeqs;
+	Common::Array<Common::SharedPtr<TTMSeq>> _ttmSeqs;	// Pointers as we need to shuffle them but keep _usedSeqs below valid
 	int _maxSegments;
 	// TODO: replace these with dynamic arrays - fixed arrays inherited from original.
 	int _state[80];
@@ -50,7 +50,7 @@ public:
 	// note: originals uses char * but we use offsets into script for less pointers. -1 is nullptr
 	int32 _segments[80];
 	int32 _charWhile[80];
-	Common::Array<TTMSeq *> _usedSeqs[80];
+	Common::Array<Common::SharedPtr<TTMSeq>> _usedSeqs[80];
 	int32 _scriptDelay;
 	int32 _gotoTarget;
 	bool _hitTTMOp0110;
@@ -82,7 +82,7 @@ public:
 
 protected:
 	bool handleOperation(uint16 code, Common::SeekableReadStream *scr);
-	void handleRandomOp(uint16 code, Common::SeekableReadStream *scr);
+	void handleRandomOp(Common::SeekableReadStream *scr);
 	bool handleLogicOp(uint16 code,  Common::SeekableReadStream *scr);
 	bool logicOpResult(uint16 code, const TTMEnviro *env, const TTMSeq *seq, uint16 arg);
 	int16 randomOpGetProportion(uint16 code, Common::SeekableReadStream *scr);
@@ -91,12 +91,12 @@ protected:
 	bool skipToEndIf();
 	bool skipToEndWhile();
 	bool skipSceneLogicBranch();
-	TTMSeq *findTTMSeq(int16 enviro, int16 seq);
+	Common::SharedPtr<TTMSeq> findTTMSeq(int16 enviro, int16 seq);
 	TTMEnviro *findTTMEnviro(int16 enviro);
 	bool runUntilBranchOpOrEnd();
 	void findUsedSequencesForSegment(int segno);
 	void findEndOrInitOp();
-	bool updateSeqTimeAndFrame(const TTMEnviro *env, TTMSeq &seq);
+	bool updateSeqTimeAndFrame(const TTMEnviro *env, Common::SharedPtr<TTMSeq> seq);
 	int getArrIndexOfSegNum(uint16 segnum);
 
 	DgdsEngine *_vm;
@@ -105,7 +105,7 @@ protected:
 	Common::HashMap<Common::String, ADSData> _adsTexts;
 	ADSData *_adsData;
 
-	TTMSeq *_currentTTMSeq;
+	Common::SharedPtr<TTMSeq> _currentTTMSeq;
 };
 
 } // end namespace Dgds

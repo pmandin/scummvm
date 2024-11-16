@@ -23,6 +23,7 @@
 #ifndef M4_RIDDLE_INTERFACE_H
 #define M4_RIDDLE_INTERFACE_H
 
+#include "m4/riddle/gui/inventory.h"
 #include "m4/adv_r/adv_interface.h"
 #include "m4/adv_r/adv_hotspot.h"
 #include "m4/graphics/graphics.h"
@@ -32,11 +33,20 @@ namespace M4 {
 namespace Riddle {
 namespace GUI {
 
-enum ControlStatus {
-	NOTHING, IN_CONTROL, OVER_CONTROL, SELECTED, TRACKING
-};
+using M4::GUI::ControlStatus;
 
 struct Interface : public M4::Interface {
+	class BackpackClass : public ButtonClass {
+	private:
+		//int _field32 = 0;
+
+	public:
+		BackpackClass(const RectClass &r, const Common::String &btnName, int16 tag,
+			int16 relaxed, int16 over, int16 picked, int sprite) :
+			ButtonClass(r, btnName, tag, relaxed, over, picked, sprite) {}
+		~BackpackClass() override {}
+	};
+
 private:
 	void setup();
 
@@ -46,6 +56,15 @@ private:
 	void handleState(ControlStatus status);
 
 public:
+	GUI::InterfaceBox *_interfaceBox = nullptr;
+	GUI::Inventory *_inventory = nullptr;
+	GUI::TextField *_textField = nullptr;
+	GUI::ButtonClass *_btnTake = nullptr;
+	GUI::ButtonClass *_btnManipulate = nullptr;
+	GUI::ButtonClass *_btnHandle = nullptr;
+	BackpackClass *_btnBackpack = nullptr;
+	GUI::ButtonClass *_btnBinky = nullptr;
+
 	int _sprite = 22; // main_interface_sprite;
 	bool _shown = false;
 	const HotSpotRec *_hotspot = nullptr;
@@ -72,9 +91,6 @@ public:
 	bool eventHandler(void *bufferPtr, int32 eventType, int32 event, int32 x, int32 y, bool *z) override;
 
 	void show() override;
-
-	void refresh_right_arrow();
-	void refresh_left_arrow();
 
 	void l_cb();
 	void u_cb();

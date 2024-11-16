@@ -73,8 +73,8 @@ public:
 	void setMaxShadowType(TShadowType shadowType);
 
 #ifdef ENABLE_WME3D
-	float _nearPlane;
-	float _farPlane;
+	float _nearClipPlane;
+	float _farClipPlane;
 	float _fov;
 	int32 _editorResolutionWidth;
 	int32 _editorResolutionHeight;
@@ -105,7 +105,7 @@ public:
 	DECLARE_PERSISTENT(AdScene, BaseObject)
 	bool displayRegionContent(AdRegion *region = nullptr, bool display3DOnly = false);
 	bool displayRegionContentOld(AdRegion *region = nullptr);
-	static bool compareObjs(const AdObject *obj1, const AdObject *obj2);
+	static int compareObjs(const void *obj1, const void *obj2);
 
 	bool updateFreeObjects();
 	bool traverseNodes(bool update = false);
@@ -114,7 +114,7 @@ public:
 	bool sortRotLevels();
 	bool saveAsText(BaseDynamicBuffer *buffer, int indent) override;
 #ifdef ENABLE_WME3D
-	AdSceneGeometry *_sceneGeometry;
+	AdSceneGeometry *_geom;
 	bool _showGeometry;
 #endif
 	uint32 getAlphaAt(int x, int y, bool colorCheck = false);

@@ -106,7 +106,7 @@ public:
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 
 	Common::KeymapArray initKeymaps(const char *target) const override;
@@ -179,11 +179,11 @@ SaveStateList SagaMetaEngine::listSaves(const char *target) const {
 
 int SagaMetaEngine::getMaximumSaveSlot() const { return MAX_SAVES - 1; }
 
-void SagaMetaEngine::removeSaveState(const char *target, int slot) const {
+bool SagaMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String filename = target;
 	filename += Common::String::format(".s%02d", slot);
 
-	g_system->getSavefileManager()->removeSavefile(filename);
+	return g_system->getSavefileManager()->removeSavefile(filename);
 }
 
 SaveStateDescriptor SagaMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
@@ -275,18 +275,18 @@ Common::KeymapArray SagaMetaEngine::initKeymaps(const char *target) const {
 	Action *act;
 
 	{
-		act = new Action(kStandardActionLeftClick, _("Left click"));
+		act = new Action(kStandardActionLeftClick, _("Left Click"));
 		act->setLeftClickEvent();
 		act->addDefaultInputMapping("MOUSE_LEFT");
 		act->addDefaultInputMapping("JOY_A");
 		engineKeyMap->addAction(act);
 
-		act = new Action(kStandardActionMiddleClick, _("Middle click"));
+		act = new Action(kStandardActionMiddleClick, _("Middle Click"));
 		act->addDefaultInputMapping("MOUSE_MIDDLE");
 		act->setMiddleClickEvent();
 		engineKeyMap->addAction(act);
 
-		act = new Action(kStandardActionRightClick, _("Right click"));
+		act = new Action(kStandardActionRightClick, _("Right Click"));
 		act->setRightClickEvent();
 		act->addDefaultInputMapping("MOUSE_RIGHT");
 		act->addDefaultInputMapping("JOY_B");
@@ -356,7 +356,7 @@ Common::KeymapArray SagaMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("l");
 		gameKeyMap->addAction(act);
 
-		act = new Action("PICKUP", _("Pickup"));
+		act = new Action("PICKUP", _("Pick up"));
 		act->setCustomEngineActionEvent(kActionPickUp);
 		act->addDefaultInputMapping("p");
 		gameKeyMap->addAction(act);
@@ -396,6 +396,7 @@ Common::KeymapArray SagaMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("k");
 		gameKeyMap->addAction(act);
 
+		// I18N: It is a verb for gulping, not a bird
 		act = new Action("SWALLOW", _("Swallow"));
 		act->setCustomEngineActionEvent(kActionSwallow);
 		act->addDefaultInputMapping("s");

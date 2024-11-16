@@ -29,16 +29,13 @@ namespace Freescape {
 
 void CastleEngine::initZX() {
 	_viewArea = Common::Rect(64, 36, 256, 148);
-	_yminValue = -1;
-	_ymaxValue = 1;
-
 	_soundIndexShoot = 5;
 	_soundIndexCollide = -1;
 	_soundIndexFall = -1;
 	_soundIndexClimb = -1;
 	_soundIndexMenu = -1;
 	_soundIndexStart = 6;
-	_soundIndexAreaChange = 5;
+	_soundIndexAreaChange = 7;
 }
 
 Graphics::ManagedSurface *CastleEngine::loadFrameWithHeader(Common::SeekableReadStream *file, int pos, uint32 front, uint32 back) {
@@ -91,6 +88,7 @@ Graphics::ManagedSurface *CastleEngine::loadFrame(Common::SeekableReadStream *fi
 void CastleEngine::loadAssetsZXFullGame() {
 	Common::File file;
 	uint8 r, g, b;
+	Common::Array<Graphics::ManagedSurface *> chars;
 
 	file.open("castlemaster.zx.title");
 	if (file.isOpen()) {
@@ -117,13 +115,33 @@ void CastleEngine::loadAssetsZXFullGame() {
 			loadMessagesVariableSize(&file, 0xf3d, 71);
 			load8bitBinary(&file, 0x6aab - 2, 16);
 			loadSpeakerFxZX(&file, 0xca0, 0xcdc);
-			loadFonts(&file, 0x1218 + 16, _font);
+
+			file.seek(0x1218 + 16);
+			for (int i = 0; i < 90; i++) {
+				Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
+				surface->create(8, 8, Graphics::PixelFormat::createFormatCLUT8());
+				chars.push_back(loadFrame(&file, surface, 1, 8, 1));
+			}
+			_font = Font(chars);
+			_font.setCharWidth(9);
+			_fontLoaded = true;
+
 			break;
 		case Common::EN_ANY:
 			loadRiddles(&file, 0x145c - 2 - 9 * 2, 9);
 			load8bitBinary(&file, 0x6a3b, 16);
 			loadSpeakerFxZX(&file, 0xc91, 0xccd);
-			loadFonts(&file, 0x1219, _font);
+
+			file.seek(0x1219);
+			for (int i = 0; i < 90; i++) {
+				Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
+				surface->create(8, 8, Graphics::PixelFormat::createFormatCLUT8());
+				chars.push_back(loadFrame(&file, surface, 1, 8, 1));
+			}
+			_font = Font(chars);
+			_font.setCharWidth(9);
+			_fontLoaded = true;
+
 			break;
 		default:
 			error("Language not supported");
@@ -137,7 +155,7 @@ void CastleEngine::loadAssetsZXFullGame() {
 	_gfx->readFromPalette(7, r, g, b);
 	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
-	_keysBorderFrames.push_back(loadFrameWithHeader(&file, 0xdf7, white, red));
+	_keysBorderFrames.push_back(loadFrameWithHeader(&file, _language == Common::ES_ESP ? 0xe06 : 0xdf7, red, white));
 
 	uint32 green = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0, 0xff, 0);
 	_spiritsMeterIndicatorFrame = loadFrameWithHeader(&file, _language == Common::ES_ESP ? 0xe5e : 0xe4f, green, white);
@@ -169,7 +187,7 @@ void CastleEngine::loadAssetsZXFullGame() {
 
 	_strenghtWeightsFrames = loadFramesWithHeader(&file, _language == Common::ES_ESP ? 0xf92 : 0xf83, 4, yellow, black);
 
-	_flagFrames = loadFramesWithHeader(&file, 0x10e4, 4, green, black);
+	_flagFrames = loadFramesWithHeader(&file, (_language == Common::ES_ESP ? 0x10e4 + 15 : 0x10e4), 4, green, black);
 
 	int thunderWidth = 4;
 	int thunderHeight = 43;
@@ -178,13 +196,26 @@ void CastleEngine::loadAssetsZXFullGame() {
 	_thunderFrame->fillRect(Common::Rect(0, 0, thunderWidth * 8, thunderHeight), 0);
 	_thunderFrame = loadFrame(&file, _thunderFrame, thunderWidth, thunderHeight, front);
 
-	_riddleTopFrame = new Graphics::ManagedSurface(loadBundledImage("castle_riddle_top_frame"));
+	Graphics::Surface *tmp;
+	tmp = loadBundledImage("castle_riddle_top_frame");
+	_riddleTopFrame = new Graphics::ManagedSurface;
+	_riddleTopFrame->copyFrom(*tmp);
+	tmp->free();
+	delete tmp;
 	_riddleTopFrame->convertToInPlace(_gfx->_texturePixelFormat);
 
-	_riddleBackgroundFrame = new Graphics::ManagedSurface(loadBundledImage("castle_riddle_background_frame"));
+	tmp = loadBundledImage("castle_riddle_background_frame");
+	_riddleBackgroundFrame = new Graphics::ManagedSurface();
+	_riddleBackgroundFrame->copyFrom(*tmp);
+	tmp->free();
+	delete tmp;
 	_riddleBackgroundFrame->convertToInPlace(_gfx->_texturePixelFormat);
 
-	_riddleBottomFrame = new Graphics::ManagedSurface(loadBundledImage("castle_riddle_bottom_frame"));
+	tmp = loadBundledImage("castle_riddle_bottom_frame");
+	_riddleBottomFrame = new Graphics::ManagedSurface();
+	_riddleBottomFrame->copyFrom(*tmp);
+	tmp->free();
+	delete tmp;
 	_riddleBottomFrame->convertToInPlace(_gfx->_texturePixelFormat);
 
 	for (auto &it : _areaMap) {
@@ -192,33 +223,23 @@ void CastleEngine::loadAssetsZXFullGame() {
 
 		it._value->addObjectFromArea(164, _areaMap[255]);
 		it._value->addObjectFromArea(174, _areaMap[255]);
+		it._value->addObjectFromArea(175, _areaMap[255]);
 		for (int16 id = 136; id < 140; id++) {
 			it._value->addObjectFromArea(id, _areaMap[255]);
 		}
 
+		it._value->addObjectFromArea(195, _areaMap[255]);
 		for (int16 id = 214; id < 228; id++) {
 			it._value->addObjectFromArea(id, _areaMap[255]);
 		}
 	}
-	addGhosts();
-	_areaMap[1]->addFloor();
-	_areaMap[2]->addFloor();
-
-	// Discard the first three global conditions
+	// Discard some global conditions
 	// It is unclear why they hide/unhide objects that formed the spirits
 	for (int i = 0; i < 3; i++) {
 		debugC(kFreescapeDebugParser, "Discarding condition %s", _conditionSources[0].c_str());
 		_conditions.remove_at(0);
 		_conditionSources.remove_at(0);
 	}
-
-	_timeoutMessage = _messagesList[1];
-	// Shield is unused in Castle Master
-	_noEnergyMessage = _messagesList[1];
-	_fallenMessage = _messagesList[4];
-	_crushedMessage = _messagesList[3];
-	_outOfReachMessage = _messagesList[7];
-	_noEffectMessage = _messagesList[8];
 }
 
 void CastleEngine::drawZXUI(Graphics::Surface *surface) {
@@ -236,15 +257,18 @@ void CastleEngine::drawZXUI(Graphics::Surface *surface) {
 	surface->fillRect(backRect, black);
 
 	Common::String message;
-	int deadline;
+	int deadline = -1;
 	getLatestMessages(message, deadline);
-	if (deadline <= _countdown) {
+	if (deadline > 0 && deadline <= _countdown) {
 		//debug("deadline: %d countdown: %d", deadline, _countdown);
 		drawStringInSurface(message, 120, 179, front, black, surface);
 		_temporaryMessages.push_back(message);
 		_temporaryMessageDeadlines.push_back(deadline);
-	} else
-		drawStringInSurface(_currentArea->_name, 120, 179, front, black, surface);
+	} else {
+		if (_gameStateControl == kFreescapeGameStatePlaying) {
+			drawStringInSurface(_currentArea->_name, 120, 179, front, black, surface);
+		}
+	}
 
 	for (int k = 0; k < int(_keysCollected.size()); k++) {
 		surface->copyRectToSurface((const Graphics::Surface)*_keysBorderFrames[0], 99 - k * 4, 177, Common::Rect(0, 0, 6, 11));
@@ -256,7 +280,8 @@ void CastleEngine::drawZXUI(Graphics::Surface *surface) {
 	surface->copyRectToSurface((const Graphics::Surface)*_spiritsMeterIndicatorFrame, 140 + _spiritsMeterPosition, 156, Common::Rect(0, 0, 15, 8));
 	drawEnergyMeter(surface, Common::Point(63, 154));
 
-	int flagFrameIndex = (_ticks / 10) % 4;
+	int ticks = g_system->getMillis() / 20;
+	int flagFrameIndex = (ticks / 10) % 4;
 	surface->copyRectToSurface(*_flagFrames[flagFrameIndex], 264, 9, Common::Rect(0, 0, _flagFrames[flagFrameIndex]->w, _flagFrames[flagFrameIndex]->h));
 }
 

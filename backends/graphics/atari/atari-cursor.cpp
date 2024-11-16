@@ -92,8 +92,7 @@ void Cursor::setSurface(const void *buf, int w, int h, int hotspotX, int hotspot
 }
 
 void Cursor::setPalette(const byte *colors, uint start, uint num) {
-	if (colors)
-		memcpy(&_palette[start * 3], colors, num * 3);
+	memcpy(&_palette[start * 3], colors, num * 3);
 
 	_surfaceChanged = true;
 }
@@ -212,10 +211,8 @@ bool Cursor::restoreBackground(const Graphics::Surface &srcSurface, bool force) 
 }
 
 bool Cursor::draw(bool directRendering, bool force) {
-	if (!isVisible() || (!force && !isChanged())) {
-		 _visibilityChanged = _positionChanged = _surfaceChanged = false;
+	if (!isVisible() || (!force && !isChanged()))
 		return false;
-	}
 
 	Graphics::Surface &dstSurface = *_parentScreen->offsettedSurf;
 	const int dstBitsPerPixel     = _manager->getBitsPerPixel(dstSurface.format);

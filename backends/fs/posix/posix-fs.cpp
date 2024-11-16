@@ -266,22 +266,23 @@ AbstractFSNode *POSIXFilesystemNode::getParent() const {
 }
 
 Common::SeekableReadStream *POSIXFilesystemNode::createReadStream() {
-	return PosixIoStream::makeFromPath(getPath(), false);
+	return PosixIoStream::makeFromPath(getPath(), StdioStream::WriteMode_Read);
 }
 
 Common::SeekableReadStream *POSIXFilesystemNode::createReadStreamForAltStream(Common::AltStreamType altStreamType) {
 #ifdef MACOSX
 	if (altStreamType == Common::AltStreamType::MacResourceFork) {
 		// Check the actual fork on a Mac computer
-		return PosixIoStream::makeFromPath(getPath() + "/..namedfork/rsrc", false);
+		return PosixIoStream::makeFromPath(getPath() + "/..namedfork/rsrc", StdioStream::WriteMode_Read);
 	}
 #endif
 
 	return nullptr;
 }
 
-Common::SeekableWriteStream *POSIXFilesystemNode::createWriteStream() {
-	return PosixIoStream::makeFromPath(getPath(), true);
+Common::SeekableWriteStream *POSIXFilesystemNode::createWriteStream(bool atomic) {
+	return PosixIoStream::makeFromPath(getPath(), atomic ?
+			StdioStream::WriteMode_WriteAtomic : StdioStream::WriteMode_Write);
 }
 
 bool POSIXFilesystemNode::createDirectory() {

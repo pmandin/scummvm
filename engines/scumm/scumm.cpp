@@ -193,6 +193,13 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		}
 	}
 
+	if (_game.platform == Common::kPlatformMacintosh) {
+		ConfMan.registerDefault("mac_graphics_smoothing", true);
+		if (ConfMan.hasKey("mac_graphics_smoothing", _targetName)) {
+			_useMacGraphicsSmoothing = ConfMan.getBool("mac_graphics_smoothing");
+		}
+	}
+
 	setTimerAndShakeFrequency();
 
 	camera.reset();
@@ -247,7 +254,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		_debugMode = true;
 
 	_copyProtection = ConfMan.getBool("copy_protection");
-    if (ConfMan.getBool("demo_mode") || ConfMan.getBool("enable_demo_mode"))
+	if (ConfMan.getBool("demo_mode") || ConfMan.getBool("enable_demo_mode"))
 		_game.features |= GF_DEMO;
 	if (ConfMan.hasKey("nosubtitles")) {
 		// We replaced nosubtitles *ages* ago. Just convert it silently
@@ -312,11 +319,11 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	case Common::kRenderEGA:
 		// An actual use case for letting users change the render mode on Monkey Island 1 (Amiga):
 		// between revisions and localizations there were two variants of the executable:
-		// 
+		//
 		// - One which used the EGA palette for actors, resulting in
 		//   characters having the usual "sunburnt" effect; as an example,
 		//   one of the italian versions shipped with this executable.
-		// 
+		//
 		// - One which used a custom paler palette for actors, which might
 		//   be how most of the people experienced the game.
 		//
@@ -362,6 +369,10 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	// Steam Win and Mac versions share the same DOS data files.
 	bool isSteamVersion = Common::String(_game.preferredTag).equalsIgnoreCase("steam");
 
+	// defaults
+	_screenWidth = 320;
+	_screenHeight = 200;
+
 	if (_game.platform == Common::kPlatformFMTowns && _game.version == 3) {	// FM-TOWNS V3 games originally use 320x240, and we have an option to trim to 200
 		_screenWidth = 320;
 		if (ConfMan.getBool("trim_fmtowns_to_200_pixels"))
@@ -376,11 +387,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	} else if (_game.platform == Common::kPlatformNES) {
 		_screenWidth = 256;
 		_screenHeight = 240;
-	} else if (!isSteamVersion && _useMacScreenCorrectHeight && _game.platform == Common::kPlatformMacintosh && _game.version == 3) {
-		_screenWidth = 320;
-		_screenHeight = 240;
-		_screenDrawOffset = 20;
-	} else {
+	} else if (!isSteamVersion && _useMacScreenCorrectHeight && _game.platform == Common::kPlatformMacintosh && _game.version >= 3) {
 		_screenWidth = 320;
 		_screenHeight = 200;
 	}
@@ -969,17 +976,6 @@ Common::Error ScummEngine::init() {
 		_useOriginalGUI = ConfMan.getBool("original_gui");
 	}
 
-	// Register original bug fixes as defaults...
-	ConfMan.registerDefault("enhancements", kEnhGameBreakingBugFixes | kEnhGrp1);
-	if (!ConfMan.hasKey("enhancements", _targetName)) {
-		if (ConfMan.hasKey("enable_enhancements", _targetName) && ConfMan.getBool("enable_enhancements", _targetName)) {
-			// Was the "enable_enhancements" key previously set to true?
-			// Convert it to a full activation of the enhancement flags then!
-			ConfMan.setInt("enhancements", kEnhGameBreakingBugFixes | kEnhGrp1 | kEnhGrp2 | kEnhGrp3 | kEnhGrp4);
-		}
-	}
-
-	_activeEnhancements = (int32)ConfMan.getInt("enhancements");
 	_enableAudioOverride = ConfMan.getBool("audio_override");
 
 	// Add default file directories.
@@ -1190,8 +1186,11 @@ Common::Error ScummEngine::init() {
 
 	Common::Path macResourceFile;
 
-	if (_game.platform == Common::kPlatformMacintosh) {
+	if (_game.platform == Common::kPlatformMacintosh && _game.heversion == 0) {
 		Common::MacResManager resource;
+
+		_macScreen = new Graphics::Surface();
+		_macScreen->create(640, _useMacScreenCorrectHeight ? 480 : 400, Graphics::PixelFormat::createFormatCLUT8());
 
 		// \xAA is a trademark glyph in Mac OS Roman. We try that, but
 		// also the Windows version, the UTF-8 version, and just plain
@@ -1211,17 +1210,13 @@ Common::Error ScummEngine::init() {
 					macResourceFile = indyFileNames[i];
 
 					_textSurfaceMultiplier = 2;
-					_macScreen = new Graphics::Surface();
-					_macScreen->create(640, _useMacScreenCorrectHeight ? 480 : 400, Graphics::PixelFormat::createFormatCLUT8());
-
 					_macGui = new MacGui(this, macResourceFile);
 					break;
 				}
 			}
 
 			if (macResourceFile.empty()) {
-				return Common::Error(Common::kReadingFailed, _(
-"This game requires the 'Indy' Macintosh executable for its fonts."));
+				return Common::Error(Common::kReadingFailed, _("This game requires the 'Indy' Macintosh executable for its fonts."));
 			}
 
 		} else if (_game.id == GID_LOOM) {
@@ -1237,16 +1232,13 @@ Common::Error ScummEngine::init() {
 					macResourceFile = loomFileNames[i];
 
 					_textSurfaceMultiplier = 2;
-					_macScreen = new Graphics::Surface();
-					_macScreen->create(640, _useMacScreenCorrectHeight ? 480 : 400, Graphics::PixelFormat::createFormatCLUT8());
 					_macGui = new MacGui(this, macResourceFile);
 					break;
 				}
 			}
 
 			if (macResourceFile.empty()) {
-				return Common::Error(Common::kReadingFailed, _(
-"This game requires the 'Loom' Macintosh executable for its music and fonts."));
+				return Common::Error(Common::kReadingFailed, _("This game requires the 'Loom' Macintosh executable for its music and fonts."));
 			}
 		} else if (_game.id == GID_MONKEY) {
 			// Try both with and without underscore in the
@@ -1261,14 +1253,70 @@ Common::Error ScummEngine::init() {
 			for (int i = 0; i < ARRAYSIZE(monkeyIslandFileNames); i++) {
 				if (resource.exists(monkeyIslandFileNames[i])) {
 					macResourceFile = monkeyIslandFileNames[i];
+					break;
 				}
 			}
 
 			if (macResourceFile.empty()) {
-				GUI::MessageDialog dialog(_(
-"Could not find the 'Monkey Island' Macintosh executable to read the\n"
-"instruments from. Music will be disabled."), _("OK"));
+				GUI::MessageDialog dialog(_("Could not find the 'Monkey Island' Macintosh executable to read resources\n"
+											"and instruments from. Music and Mac GUI will be disabled."), _("OK"));
 				dialog.runModal();
+			} else {
+				_macGui = new MacGui(this, macResourceFile);
+			}
+		} else if (_game.id == GID_INDY4 && _language != Common::JA_JPN) {
+			static const char *indy4FileNames[] = {
+				"Fate of Atlantis",
+				"Fate_of_Atlantis",
+				"Fate of Atlantis 1.1",
+				"Fate_of_Atlantis_1.1",
+				"Indy Fate",
+				"Indy_Fate",
+				"fate_v1.5",
+				"Indy 12/15/92",
+				"Indy_12/15/92",
+				"Indy 12-15-92",
+				"Indy_12-15-92",
+				"Fate of Atlantis v1.5",
+				"Fate_of_Atlantis_v1.5",
+				"Fate of Atlantis v.1.5",
+				"Fate_of_Atlantis_v.1.5"
+			};
+
+			for (int i = 0; i < ARRAYSIZE(indy4FileNames); i++) {
+				if (resource.exists(indy4FileNames[i])) {
+					macResourceFile = indy4FileNames[i];
+					break;
+				}
+			}
+
+			if (macResourceFile.empty()) {
+				GUI::MessageDialog dialog(_("Could not find the 'Fate of Atlantis' Macintosh executable.\n"
+											"Mac GUI will not be shown."),
+										_("OK"));
+				dialog.runModal();
+			} else {
+				_macGui = new MacGui(this, macResourceFile);
+			}
+		} else if (_game.id == GID_MONKEY2) {
+			static const char *monkeyIsland2FileNames[] = {
+				"LeChuck's Revenge",
+				"LeChuck's_Revenge"};
+
+			for (int i = 0; i < ARRAYSIZE(monkeyIsland2FileNames); i++) {
+				if (resource.exists(monkeyIsland2FileNames[i])) {
+					macResourceFile = monkeyIsland2FileNames[i];
+					break;
+				}
+			}
+
+			if (macResourceFile.empty()) {
+				GUI::MessageDialog dialog(_("Could not find the 'LeChuck's Revenge' Macintosh executable.\n"
+											"Mac GUI will not be shown."),
+										  _("OK"));
+				dialog.runModal();
+			} else {
+				_macGui = new MacGui(this, macResourceFile);
 			}
 		}
 
@@ -1285,8 +1333,14 @@ Common::Error ScummEngine::init() {
 		if (!_macScreen && _renderMode == Common::kRenderMacintoshBW)
 			_renderMode = Common::kRenderDefault;
 
-		if (_macGui)
-			_macGui->initialize();
+		memset(_completeScreenBuffer, 0, 320 * 200);
+
+		if (_macGui) {
+			if (!_macGui->initialize()) {
+				delete _macGui;
+				_macGui = nullptr;
+			}
+		}
 	}
 
 	// Initialize backend
@@ -1295,8 +1349,17 @@ Common::Error ScummEngine::init() {
 	} else if (_renderMode == Common::kRenderCGA_BW || (_renderMode == Common::kRenderEGA && _supportsEGADithering)) {
 		initGraphics(_screenWidth * 2, _screenHeight * 2);
 	} else {
-		int screenWidth = _screenWidth * _textSurfaceMultiplier;
-		int screenHeight = _screenHeight * _textSurfaceMultiplier;
+		int screenWidth = _screenWidth;
+		int screenHeight = _screenHeight;
+
+		if (_macScreen && _game.platform == Common::kPlatformMacintosh && _game.version >= 3 && _game.heversion == 0) {
+			screenWidth *= 2;
+			screenHeight *= 2;
+			screenHeight += 2 * 2 * _macScreenDrawOffset;
+		} else {
+			screenWidth *= _textSurfaceMultiplier;
+			screenHeight *= _textSurfaceMultiplier;
+		}
 
 		if (_game.features & GF_16BIT_COLOR
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
@@ -1901,7 +1964,7 @@ void ScummEngine::resetScumm() {
 	_nextTop = 0;
 
 	_currentCursor = 0;
-	_cursor.state = 0;
+	_cursor.state = (_game.id == GID_MONKEY && _game.platform == Common::kPlatformMacintosh) ? 1 : 0;
 	_userPut = 0;
 
 	_newEffect = 129;
@@ -2220,6 +2283,8 @@ void ScummEngine::setupMusic(int midi) {
 			_musicEngine->setQuality(MacSound::kQualityLowest);
 		else if (ConfMan.hasKey("mac_snd_quality"))
 			_musicEngine->setQuality(ConfMan.getInt("mac_snd_quality"));
+		_musicEngine->toggleMusic(!ConfMan.hasKey("music_mute") || !ConfMan.getBool("music_mute"));
+		_musicEngine->toggleSoundEffects(!ConfMan.hasKey("mute") || !ConfMan.getBool("mute"));
 		_sound->_musicType = MDT_MACINTOSH;
 	} else if (_game.id == GID_MANIAC && _game.version == 1) {
 		_musicEngine = new Player_V1(this, _mixer, MidiDriver::getMusicType(dev) != MT_PCSPK);
@@ -2434,7 +2499,7 @@ Common::Error ScummEngine::go() {
 	// In ScummVM 2.7.0, original GUI support was added.
 	// Unfortunately it came with an issue: in v4-7 games users could
 	// overwrite autosaves (slot 0). Why? Because I forgot about autosaves :-)
-	// 
+	//
 	// To amend this from 2.9.0 onwards we check for savegames which are on slot 0
 	// and are not autosaves (the heuristic is not optimal, but it will have to do),
 	// and performs a mass rename. Unless the user has used all 99 slots, in which case
@@ -2673,7 +2738,7 @@ double ScummEngine::getTimerFrequency() {
 	// the song end when the visuals are done. Just two checks are being done on VAR_MUSIC_TIMER
 	// within the relevant scripts at the beginning of the intro, and then in the end there is
 	// this check which fails because at that point Var[151 Bit 8] seems to be deactivated:
-	// 
+	//
 	// if (Var[151 Bit 8]) {
 	//   breakHere();
 	//   VAR_RESULT = isSoundRunning(93);
@@ -2835,7 +2900,7 @@ load_game:
 	// - Set screen shake off
 	//
 	// to work and to be timed correctly.
-	// 
+	//
 	// Again, from the disasms, we call runAllScripts() on a loop,
 	// while the _saveLoadFlag is active.
 	if (_game.version == 7 && !isFTDOSDemo) {
@@ -2905,6 +2970,10 @@ load_game:
 			playActorSounds();
 	}
 
+	scummLoop_handleSound();
+
+	camera._last = camera._cur;
+
 	// It's verified from FT and DIG disasms that this is where
 	// these two functions should be called; this will delay the
 	// scripts executions between checkExecVerbs() and runAllScripts()
@@ -2913,10 +2982,6 @@ load_game:
 		processInput();
 		checkExecVerbs();
 	}
-
-	scummLoop_handleSound();
-
-	camera._last = camera._cur;
 
 	_res->increaseExpireCounter();
 
@@ -3328,13 +3393,13 @@ void ScummEngine_v3::terminateSaveMenuScript() {
 		int chainedArgs[NUM_SCRIPT_LOCAL];
 		// We only needed the first slot (0), but just like getWordVararg(), let's not leave memory uninitalized...
 		for (int i = 0; i < NUM_SCRIPT_LOCAL; i++)
-			chainedArgs[i] = 0; 
+			chainedArgs[i] = 0;
 
 		int cur = _currentScript;
 		int scriptToChain = _game.platform == Common::kPlatformFMTowns ? 5 : 6;
-		
+
 		assert(cur != 0xFF);
-		
+
 		vm.slot[cur].number = 0;
 		vm.slot[cur].status = ssDead;
 		_currentScript = 0xFF;
@@ -3964,9 +4029,10 @@ bool ScummEngine::startManiac() {
 void ScummEngine::pauseEngineIntern(bool pause) {
 	if (pause) {
 		// Pause sound & video
-		if (_sound && canPauseSoundsDuringSave()) {
-			_oldSoundsPaused = _sound->_soundsPaused;
+		_needsSoundUnpause = false;
+		if (_sound && canPauseSoundsDuringSave() && !_sound->_soundsPaused) {
 			_sound->pauseSounds(true);
+			_needsSoundUnpause = true;
 		}
 	} else {
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
@@ -3981,8 +4047,8 @@ void ScummEngine::pauseEngineIntern(bool pause) {
 		_system->updateScreen();
 
 		// Resume sound & video
-		if (_sound && canPauseSoundsDuringSave())
-			_sound->pauseSounds(_oldSoundsPaused);
+		if (_sound && canPauseSoundsDuringSave() && _needsSoundUnpause)
+			_sound->pauseSounds(false);
 	}
 }
 

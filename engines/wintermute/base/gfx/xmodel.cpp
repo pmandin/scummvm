@@ -39,6 +39,7 @@
 #include "engines/wintermute/base/gfx/xframe_node.h"
 #include "engines/wintermute/base/gfx/xmaterial.h"
 #include "engines/wintermute/base/gfx/xmodel.h"
+#include "engines/wintermute/base/gfx/3deffect.h"
 #include "engines/wintermute/base/gfx/xfile.h"
 #include "engines/wintermute/base/gfx/xfile_loader.h"
 #include "engines/wintermute/dcgf.h"
@@ -56,14 +57,13 @@ XModel::XModel(BaseGame *inGame, BaseObject *owner) : BaseObject(inGame) {
 
 	_rootFrame = nullptr;
 
-	_drawingViewport.setEmpty();
-	_lastWorldMat.setToIdentity();
-	_lastViewMat.setToIdentity();
-	_lastProjMat.setToIdentity();
+	memset(&_drawingViewport, 0, sizeof(DXViewport));
+	DXMatrixIdentity(&_lastWorldMat);
+	DXMatrixIdentity(&_lastViewMat);
+	DXMatrixIdentity(&_lastProjMat);
 	_lastOffsetX = _lastOffsetY = 0;
 
-	_BBoxStart = Math::Vector3d(0.0f, 0.0f, 0.0f);
-	_BBoxEnd = Math::Vector3d(0.0f, 0.0f, 0.0f);
+	_BBoxStart = _BBoxEnd = DXVector3(0.0f, 0.0f, 0.0f);
 	_boundingRect.setEmpty();
 
 	for (int i = 0; i < X_NUM_ANIMATION_CHANNELS; i++) {
@@ -105,11 +105,6 @@ void XModel::cleanup(bool complete) {
 	}
 	_matSprites.clear();
 
-	for (uint i = 0; i < _materialReferences.size(); ++i) {
-		delete _materialReferences[i]._material;
-	}
-	_materialReferences.clear();
-
 	// remove root frame
 	delete _rootFrame;
 	_rootFrame = nullptr;
@@ -135,20 +130,21 @@ bool XModel::loadFromFile(const Common::String &filename, XModel *parentModel) {
 	bool res = xfile->openFile(filename);
 	if (!res) {
 		delete xfile;
-		//return false;
-		error("XModel: Error loading X file: %s", filename.c_str());
+		BaseEngine::LOG(0, "Error loading X file: %s", filename.c_str());
+		return false;
 	}
 
+	// get top level objects
 	_rootFrame = new FrameNode(_gameRef);
 
-	uint numChildren = 0;
+	uint32 numChildren = 0;
 	xfile->getEnum().getChildren(numChildren);
 	for (uint i = 0; i < numChildren; i++) {
 		resLoop = xfile->getEnum().getChild(i, xobj);
 		if (!resLoop)
 			break;
 
-		res = _rootFrame->loadFromXData(filename, this, &xobj, _materialReferences);
+		res = _rootFrame->loadFromXData(filename, this, &xobj);
 		if (!res) {
 			BaseEngine::LOG(0, "Error loading top level object from '%s'", filename.c_str());
 			break;
@@ -196,7 +192,7 @@ bool XModel::mergeFromFile(const Common::String &filename) {
 	XFileData xobj;
 	bool resLoop = false;
 
-	uint numChildren = 0;
+	uint32 numChildren = 0;
 	xfile->getEnum().getChildren(numChildren);
 	for (uint i = 0; i < numChildren; i++) {
 		resLoop = xfile->getEnum().getChild(i, xobj);
@@ -214,6 +210,7 @@ bool XModel::mergeFromFile(const Common::String &filename) {
 		res = findBones(true);
 	}
 
+	// remember path for save/load purposes
 	bool found = false;
 	for (uint i = 0; i < _mergedModels.size(); ++i) {
 		if (scumm_stricmp(_mergedModels[i], filename.c_str()) == 0) {
@@ -236,6 +233,7 @@ bool XModel::mergeFromFile(const Common::String &filename) {
 bool XModel::loadAnimationSet(const Common::String &filename, XFileData *xobj) {
 	bool res = true;
 
+	// create the animation set object
 	AnimationSet *animSet = new AnimationSet(_gameRef, this);
 	res = loadName(animSet, xobj);
 	if (!res) {
@@ -248,10 +246,11 @@ bool XModel::loadAnimationSet(const Common::String &filename, XFileData *xobj) {
 		animSet->setName(PathUtil::getFileName(filename).c_str());
 	}
 
+	// query through the child objects to load the animations
 	XFileData xchildData;
 	XClassType objectType;
 
-	uint numChildren = 0;
+	uint32 numChildren = 0;
 	xobj->getChildren(numChildren);
 
 	for (uint32 i = 0; i < numChildren; i++) {
@@ -296,7 +295,8 @@ bool XModel::loadAnimation(const Common::String &filename, XFileData *xobj, Anim
 	// create the new object
 	Animation *anim = new Animation(_gameRef);
 
-	uint numChildren = 0;
+	// load the animation
+	uint32 numChildren = 0;
 	xobj->getChildren(numChildren);
 
 	for (uint32 i = 0; i < numChildren; i++) {
@@ -370,9 +370,9 @@ bool XModel::update() {
 
 	// update matrices
 	if (_rootFrame) {
-		Math::Matrix4 tempMat;
-		tempMat.setToIdentity();
-		_rootFrame->updateMatrices(tempMat);
+		DXMatrix tempMat;
+		DXMatrixIdentity(&tempMat);
+		_rootFrame->updateMatrices(&tempMat);
 
 		return _rootFrame->updateMeshes();
 	} else {
@@ -395,11 +395,9 @@ bool XModel::playAnim(int channel, const Common::String &name, uint32 transition
 
 	// find animation set by name
 	AnimationSet *anim = getAnimationSetByName(name);
-
 	if (anim) {
 		char *currentAnim = _channels[channel]->getName();
 		if (_owner && currentAnim) {
-			// clean this up later
 			transitionTime = _owner->getAnimTransitionTime(currentAnim, const_cast<char *>(name.c_str()));
 		}
 
@@ -463,7 +461,7 @@ bool XModel::isAnimPending(char *animName) {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool XModel::updateShadowVol(ShadowVolume *shadow, Math::Matrix4 &modelMat, const Math::Vector3d &light, float extrusionDepth) {
+bool XModel::updateShadowVol(ShadowVolume *shadow, DXMatrix *modelMat, DXVector3 *light, float extrusionDepth) {
 	if (_rootFrame) {
 		return _rootFrame->updateShadowVol(shadow, modelMat, light, extrusionDepth);
 	} else {
@@ -475,7 +473,7 @@ bool XModel::updateShadowVol(ShadowVolume *shadow, Math::Matrix4 &modelMat, cons
 bool XModel::render() {
 	if (_rootFrame) {
 		// set culling
-		if(_owner && !_owner->_drawBackfaces) {
+		if (_owner && !_owner->_drawBackfaces) {
 			_gameRef->_renderer3D->enableCulling();
 		} else {
 			_gameRef->_renderer3D->disableCulling();
@@ -483,6 +481,11 @@ bool XModel::render() {
 
 		// render everything
 		bool res = _rootFrame->render(this);
+
+		// remember matrices for object picking purposes
+		_gameRef->_renderer3D->getWorldTransform(&_lastWorldMat);
+		_gameRef->_renderer3D->getViewTransform(&_lastViewMat);
+		_gameRef->_renderer3D->getProjectionTransform(&_lastProjMat);
 
 		// remember scene offset
 		Rect32 rc;
@@ -523,7 +526,7 @@ bool XModel::renderFlatShadowModel() {
 }
 
 //////////////////////////////////////////////////////////////////////////
-Math::Matrix4 *XModel::getBoneMatrix(const char *boneName) {
+DXMatrix *XModel::getBoneMatrix(const char *boneName) {
 	FrameNode *bone = _rootFrame->findFrame(boneName);
 
 	if (bone) {
@@ -544,76 +547,121 @@ bool XModel::isTransparentAt(int x, int y) {
 		return false;
 	}
 
-	Math::Ray ray = _gameRef->_renderer3D->rayIntoScene(x, y);
+	x += _lastOffsetX;
+	y += _lastOffsetY;
+
+	if (!_gameRef->_renderer3D->_camera)
+		return true;
+
+	float resWidth, resHeight;
+	float layerWidth, layerHeight;
+	float modWidth, modHeight;
+	bool customViewport;
+	_gameRef->_renderer3D->getProjectionParams(&resWidth, &resHeight, &layerWidth, &layerHeight, &modWidth, &modHeight, &customViewport);
+
+	x -= _drawingViewport._x + modWidth;
+	y -= _drawingViewport._y + modHeight;
+
+	if (customViewport) {
+		x += _gameRef->_renderer3D->_drawOffsetX;
+		y += _gameRef->_renderer3D->_drawOffsetY;
+	}
+
+	DXVector3 pickRayDir;
+	DXVector3 pickRayOrig;
+
+	// Compute the vector of the pick ray in screen space
+	DXVector3 vec;
+	vec._x =  (((2.0f * x) / (_drawingViewport._width)) - 1) / _lastProjMat.matrix._11;
+	vec._y = -(((2.0f * y) / (_drawingViewport._height)) - 1) / _lastProjMat.matrix._22;
+	vec._z =  1.0f;
+
+	// Get the inverse view matrix
+	DXMatrix m;
+	DXMatrixInverse(&m, nullptr, &_lastViewMat);
+
+	// Transform the screen space pick ray into 3D space
+	pickRayDir._x  = vec._x * m.matrix._11 + vec._y * m.matrix._21 + vec._z * m.matrix._31;
+	pickRayDir._y  = vec._x * m.matrix._12 + vec._y * m.matrix._22 + vec._z * m.matrix._32;
+	pickRayDir._z  = vec._x * m.matrix._13 + vec._y * m.matrix._23 + vec._z * m.matrix._33;
+	pickRayOrig._x = m.matrix._41;
+	pickRayOrig._y = m.matrix._42;
+	pickRayOrig._z = m.matrix._43;
 
 	// transform to model space
-	Math::Vector3d end = ray.getOrigin() + ray.getDirection();
-	Math::Matrix4 m = _lastWorldMat;
-	m.inverse();
-	m.transform(&ray.getOrigin(), true);
-	m.transform(&end, true);
-	Math::Vector3d pickRayDirection = end - ray.getOrigin();
+	DXVector3 end = pickRayOrig + pickRayDir;
+	DXMatrixInverse(&m, nullptr, &_lastWorldMat);
+	DXVec3TransformCoord(&pickRayOrig, &pickRayOrig, &m);
+	DXVec3TransformCoord(&end, &end, &m);
+	pickRayDir = end - pickRayOrig;
 
-	return !_rootFrame->pickPoly(&ray.getOrigin(), &pickRayDirection);
+	return !_rootFrame->pickPoly(&pickRayOrig, &pickRayDir);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void XModel::updateBoundingRect() {
-	_BBoxStart = Math::Vector3d(0, 0, 0);
-	_BBoxStart = Math::Vector3d(0, 0, 0);
+	_BBoxStart = _BBoxEnd = DXVector3(0, 0, 0);
 
 	if (_rootFrame) {
 		_rootFrame->getBoundingBox(&_BBoxStart, &_BBoxEnd);
 	}
 
-	_boundingRect.left = INT_MAX_VALUE;
-	_boundingRect.top = INT_MAX_VALUE;
-	_boundingRect.right = INT_MIN_VALUE;
-	_boundingRect.bottom = INT_MIN_VALUE;
+	_boundingRect.left = _boundingRect.top = INT_MAX_VALUE;
+	_boundingRect.right = _boundingRect.bottom = INT_MIN_VALUE;
 
-	Math::Vector3d vec2d(0, 0, 0);
+	DXMatrix viewMat, projMat, worldMat;
+	DXVector3 vec2d(0, 0, 0);
+	_gameRef->_renderer3D->getViewTransform(&viewMat);
+	_gameRef->_renderer3D->getProjectionTransform(&projMat);
+	_gameRef->_renderer3D->getWorldTransform(&worldMat);
 
-	float x1 = _BBoxStart.x();
-	float x2 = _BBoxEnd.x();
-	float y1 = _BBoxStart.y();
-	float y2 = _BBoxEnd.y();
-	float z1 = _BBoxStart.z();
-	float z2 = _BBoxEnd.z();
+	_drawingViewport = _gameRef->_renderer3D->getViewPort();
 
-	int32 screenX = 0;
-	int32 screenY = 0;
+	float x1 = _BBoxStart._x;
+	float x2 = _BBoxEnd._x;
+	float y1 = _BBoxStart._y;
+	float y2 = _BBoxEnd._y;
+	float z1 = _BBoxStart._z;
+	float z2 = _BBoxEnd._z;
 
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x1, y1, z1), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
+	DXVector3 v111(x1 ,y1, z1);
+	DXVec3Project(&vec2d, &v111, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
+	DXVector3 v211(x2, y1, z1);
+	DXVec3Project(&vec2d, &v211, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
+	DXVector3 v112(x1, y1, z2);
+	DXVec3Project(&vec2d, &v112, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
+	DXVector3 v212(x2, y1, z2);
+	DXVec3Project(&vec2d, &v212, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
 
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x1, y1, z2), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
+	DXVector3 v121(x1, y2, z1);
+	DXVec3Project(&vec2d, &v121, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
+	DXVector3 v221(x2, y2, z1);
+	DXVec3Project(&vec2d, &v221, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
+	DXVector3 v122(x1, y2, z2);
+	DXVec3Project(&vec2d, &v122, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
+	DXVector3 v222(x2, y2, z2);
+	DXVec3Project(&vec2d, &v222, &_drawingViewport, &projMat, &viewMat, &worldMat);
+	updateRect(&_boundingRect, &vec2d);
 
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x1, y2, z1), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
-
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x1, y2, z2), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
-
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x2, y1, z1), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
-
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x2, y1, z2), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
-
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x2, y2, z1), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
-
-	_gameRef->_renderer3D->project(_lastWorldMat, Math::Vector3d(x2, y2, z2), screenX, screenY);
-	updateRect(&_boundingRect, screenX, screenY);
+	_boundingRect.left -= _gameRef->_renderer3D->_drawOffsetX;
+	_boundingRect.right -= _gameRef->_renderer3D->_drawOffsetX;
+	_boundingRect.bottom -= _gameRef->_renderer3D->_drawOffsetY;
+	_boundingRect.top -= _gameRef->_renderer3D->_drawOffsetY;
 }
 
 //////////////////////////////////////////////////////////////////////////
-void XModel::updateRect(Rect32 *rc, int32 x, int32 y) {
-	rc->left   = MIN(rc->left, x);
-	rc->right  = MAX(rc->right, x);
-	rc->top    = MIN(rc->top, y);
-	rc->bottom = MAX(rc->bottom, y);
+void XModel::updateRect(Rect32 *rc, DXVector3 *vec) {
+	rc->left   = MIN(rc->left, (int32)vec->_x);
+	rc->right  = MAX(rc->right, (int32)vec->_x);
+	rc->top    = MIN(rc->top, (int32)vec->_y);
+	rc->bottom = MAX(rc->bottom, (int32)vec->_y);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -700,8 +748,8 @@ bool XModel::parseAnim(byte *buffer) {
 //////////////////////////////////////////////////////////////////////////
 bool XModel::parseEvent(AnimationSet *anim, byte *buffer) {
 	TOKEN_TABLE_START(commands)
-	TOKEN_TABLE(NAME)
-	TOKEN_TABLE(FRAME)
+		TOKEN_TABLE(NAME)
+		TOKEN_TABLE(FRAME)
 	TOKEN_TABLE_END
 
 	byte *params;
@@ -785,7 +833,6 @@ bool XModel::setMaterialTheora(const char *materialName, const char *theoraFilen
 	}
 
 	VideoTheoraPlayer *theora = new VideoTheoraPlayer(_gameRef);
-
 	if (!theora || theora->initialize(theoraFilename)) {
 		delete theora;
 		return false;
@@ -813,6 +860,97 @@ bool XModel::setMaterialTheora(const char *materialName, const char *theoraFilen
 }
 
 //////////////////////////////////////////////////////////////////////////
+bool XModel::setMaterialEffect(const char *materialName, const char *effectFilename) {
+	if (!materialName || !effectFilename)
+		return false;
+	if (!_rootFrame)
+		return false;
+
+
+	Effect3D *effect = new Effect3D(_gameRef);
+	if (!effect->createFromFile(effectFilename)) {
+		delete effect;
+		return false;
+	}
+
+	XModelMatSprite *matSprite = nullptr;
+	for (uint32 i = 0 ; i < _matSprites.size(); i++) {
+		if (scumm_stricmp(_matSprites[i]->_matName, materialName) == 0) {
+			matSprite = _matSprites[i];
+			break;
+		}
+	}
+	if (matSprite) {
+		matSprite->setEffect(effect);
+	} else {
+		matSprite = new XModelMatSprite(materialName, effect);
+		_matSprites.add(matSprite);
+	}
+	_rootFrame->setMaterialEffect(matSprite->_matName, matSprite->_effect, matSprite->_effectParams);
+
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool XModel::removeMaterialEffect(const char *materialName) {
+	if (!materialName)
+		return false;
+	if (!_rootFrame)
+		return false;
+
+	for (uint32 i = 0; i < _matSprites.size(); i++) {
+		if (scumm_stricmp(_matSprites[i]->_matName, materialName) == 0) {
+			delete _matSprites[i];
+			_matSprites[i] = nullptr;
+			_matSprites.remove_at(i);
+			_rootFrame->removeMaterialEffect(materialName);
+			return true;
+		}
+	}
+	return false;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool XModel::setMaterialEffectParam(const char *materialName, const char *paramName, ScValue *val) {
+	if (!materialName)
+		return false;
+	if (!_rootFrame)
+		return false;
+
+
+	for (uint32 i = 0 ; i < _matSprites.size(); i++) {
+		if (scumm_stricmp(_matSprites[i]->_matName, materialName) == 0) {
+			if (_matSprites[i]->_effectParams) {
+				_matSprites[i]->_effectParams->setParam(paramName, val);
+				return true;
+			} else
+				return false;
+		}
+	}
+	return false;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool XModel::setMaterialEffectParam(const char *materialName, const char *paramName, DXVector4 val) {
+	if (!materialName)
+		return false;
+	if (!_rootFrame)
+		return false;
+
+
+	for (uint32 i = 0; i < _matSprites.size(); i++) {
+		if (scumm_stricmp(_matSprites[i]->_matName, materialName) == 0) {
+			if (_matSprites[i]->_effectParams) {
+				_matSprites[i]->_effectParams->setParam(paramName, val);
+				return true;
+			} else
+				return false;
+		}
+	}
+	return false;
+}
+
+//////////////////////////////////////////////////////////////////////////
 bool XModel::initializeSimple() {
 	if (!_rootFrame) {
 		return false;
@@ -825,8 +963,18 @@ bool XModel::initializeSimple() {
 		} else if (_matSprites[i]->_sprite) {
 			_rootFrame->setMaterialSprite(_matSprites[i]->_matName, _matSprites[i]->_sprite);
 		}
+
+		if (_matSprites[i]->_effectFile) {
+			Effect3D *effect = new Effect3D(_gameRef);
+			if (effect->createFromFile(_matSprites[i]->_effectFile)) {
+				_matSprites[i]->_effect = effect;
+				_rootFrame->setMaterialEffect(_matSprites[i]->_matName, _matSprites[i]->_effect, _matSprites[i]->_effectParams);
+			} else {
+				delete effect;
+				effect = nullptr;
+			}
+		}
 	}
-	// TODO: Effects
 
 	if (_parentModel) {
 		findBones(false, _parentModel);
@@ -844,7 +992,7 @@ bool XModel::persist(BasePersistenceManager *persistMgr) {
 	persistMgr->transferRect32(TMEMBER(_boundingRect));
 
 	if (!persistMgr->getIsSaving()) {
-		_drawingViewport.setEmpty();
+		memset(&_drawingViewport, 0, sizeof(DXViewport));
 	}
 
 	persistMgr->transferSint32(TMEMBER(_lastOffsetX));
@@ -862,7 +1010,6 @@ bool XModel::persist(BasePersistenceManager *persistMgr) {
 		for (int i = 0; i < X_NUM_ANIMATION_CHANNELS; i++) {
 			_channels[i] = nullptr;
 		}
-
 		_rootFrame = nullptr;
 
 		if (getFilename()) {
@@ -931,9 +1078,6 @@ bool XModel::persist(BasePersistenceManager *persistMgr) {
 			_matSprites.add(MatSprite);
 		}
 	}
-
-	if (!persistMgr->getIsSaving())
-		initializeSimple();
 
 	return true;
 }

@@ -98,6 +98,8 @@ MODULE_OBJS := \
 	ext/dll_img.o \
 	ext/dll_installutil.o \
 	ext/dll_kernel32.o \
+	ext/dll_protect.o \
+	ext/dll_routine.o \
 	ext/dll_shell32.o \
 	ext/dll_tools.o \
 	ext/scene_achievements.o \
@@ -106,6 +108,7 @@ MODULE_OBJS := \
 	ext/wme_galaxy.o \
 	ext/wme_steam.o \
 	ext/wme_windowmode.o \
+	ext/wme_vlink.o \
 	debugger/breakpoint.o \
 	debugger/debugger_controller.o \
 	debugger/error.o \
@@ -161,9 +164,14 @@ MODULE_OBJS += \
 	ad/ad_waypoint_group3d.o \
 	base/gfx/3dcamera.o \
 	base/gfx/3dlight.o \
+	base/gfx/3deffect.o \
+	base/gfx/3deffect_params.o \
+	base/gfx/3dface.o \
 	base/gfx/3dloader_3ds.o \
 	base/gfx/3dmesh.o \
 	base/gfx/3dshadow_volume.o \
+	base/gfx/3dutils.o \
+	base/gfx/3dvertex.o \
 	base/gfx/base_renderer3d.o \
 	base/gfx/skin_mesh_helper.o \
 	base/gfx/xactive_animation.o \
@@ -174,9 +182,10 @@ MODULE_OBJS += \
 	base/gfx/xfile_loader.o \
 	base/gfx/xframe_node.o \
 	base/gfx/xmaterial.o \
+	base/gfx/xmath.o \
 	base/gfx/xmesh.o \
 	base/gfx/xmodel.o \
-	base/gfx/xskinmesh_loader.o \
+	base/gfx/xskinmesh.o \
 	base/gfx/opengl/base_surface_opengl3d.o \
 	base/gfx/opengl/base_render_opengl3d.o \
 	base/gfx/opengl/base_render_opengl3d_shader.o \

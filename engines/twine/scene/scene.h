@@ -23,7 +23,6 @@
 #define TWINE_SCENE_SCENE_H
 
 #include "common/scummsys.h"
-#include "common/util.h"
 #include "twine/scene/actor.h"
 #include "twine/shared.h"
 
@@ -127,9 +126,9 @@ private:
 	bool loadSceneLBA2();
 
 	/** Initialize new scene */
-	bool initScene(int32 index);
+	bool loadScene(int32 index);
 	/** Reset scene */
-	void resetScene();
+	void clearScene();
 
 	// the first actor is the own hero
 	ActorStruct _sceneActors[NUM_MAX_ACTORS]; // ListObjet
@@ -137,22 +136,22 @@ private:
 	bool _isOutsideScene = false; // lba2
 
 	/** Timer for the next sample ambience in scene */
-	int32 _sampleAmbienceTime = 0;
+	int32 _timerNextAmbiance = 0;
 	int16 _sampleAmbiance[4]{0};
 	int16 _sampleRepeat[4]{0};
 	int16 _sampleRound[4]{0};
 	int16 _sampleFrequency[4]{0}; // lba2
 	int16 _sampleVolume[4]{0}; // lba2
-	int16 _sampleMinDelay = 0;
-	int16 _sampleMinDelayRnd = 0;
+	int16 _sampleMinDelay = 0; // SecondMin
+	int16 _sampleMinDelayRnd = 0; // SecondEcart
 
 	int16 _samplePlayed = 0;
 
 public:
 	int16 _cubeJingle = 0;
 private:
-	IVec3 _sceneHeroPos;
-	IVec3 _zoneHeroPos;
+	IVec3 _sceneHeroPos; // CubeStartX, CubeStartY, CubeStartZ
+	IVec3 _zoneHeroPos; // NewPosX, NewPosY, NewPosZ
 
 	int32 _currentGameOverScene = 0;
 
@@ -163,13 +162,13 @@ public:
 	Scene(TwinEEngine *engine) : _engine(engine) {}
 	~Scene();
 
-	int32 _needChangeScene = LBA1SceneId::Citadel_Island_Prison;
-	int32 _currentSceneIdx = LBA1SceneId::Citadel_Island_Prison; // NumCube
-	int32 _previousSceneIdx = LBA1SceneId::Citadel_Island_Prison;
+	int32 _newCube = LBA1SceneId::Citadel_Island_Prison;
+	int32 _numCube = LBA1SceneId::Citadel_Island_Prison; // NumCube
+	int32 _oldcube = LBA1SceneId::Citadel_Island_Prison;
 
 	int32 _planet = -1;
 
-	int32 _holomapTrajectory = -1;
+	int32 _numHolomapTraj = -1;
 
 	TextBankId _sceneTextBank = TextBankId::None;
 	int32 _alphaLight = 0;
@@ -181,13 +180,13 @@ public:
 	uint8 _currentCubeX = 0; // lba2
 	uint8 _currentCubeY = 0; // lba2
 
-	IVec3 _newHeroPos;
+	IVec3 _sceneStart;
 
 	/** Hero Y coordinate before fall */
 	int16 _startYFalling = 0;
 
 	/** Hero type of position in scene */
-	ScenePositionType _heroPositionType = ScenePositionType::kNoPosition; // twinsenPositionModeInNewCube
+	ScenePositionType _flagChgCube = ScenePositionType::kNoPosition; // twinsenPositionModeInNewCube
 
 	// ACTORS
 	int32 _nbObjets = 0;
@@ -197,7 +196,7 @@ public:
 	int16 _mecaPenguinIdx = 0;
 
 	/** Current followed actor in scene */
-	int16 _currentlyFollowedActor = OWN_ACTOR_SCENE_INDEX;
+	int16 _numObjFollow = OWN_ACTOR_SCENE_INDEX;
 	/** Current actor in zone - climbing a ladder */
 	bool _flagClimbing = false;
 	bool _enableEnhancements = false;
@@ -210,7 +209,7 @@ public:
 	int32 _sceneNumTracks = 0;
 	IVec3 _sceneTracks[NUM_MAX_TRACKS];
 
-	bool _enableGridTileRendering = true;
+	bool _flagRenderGrid = true; // FlagAffGrille
 
 	uint8 _listFlagCube[NUM_SCENES_FLAGS]{0}; // ListVarCube
 
@@ -230,7 +229,7 @@ public:
 	bool loadSceneCubeXY(int sceneNum, int32 *cubeX, int32 *cubeY);
 
 	/** Process scene environment sound */
-	void processEnvironmentSound();
+	void processEnvironmentSound(); // GereAmbiance
 	void initSceneVars();
 
 	bool isGameRunning() const;

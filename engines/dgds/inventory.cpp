@@ -107,7 +107,15 @@ void Inventory::drawHeader(Graphics::ManagedSurface &surf) {
 	const DgdsFont *font = RequestData::getMenuFont();
 	const RequestData &r = _reqData._requests[0];
 
-	static const char *title = "INVENTORY";
+	static const char *title;
+
+	if (DgdsEngine::getInstance()->getGameLang() == Common::EN_ANY)
+		title = "INVENTORY";
+	else if (DgdsEngine::getInstance()->getGameLang() == Common::DE_DEU)
+		title = "INVENTAR";
+	else
+		error("Unsupported language %d", DgdsEngine::getInstance()->getGameLang());
+
 	int titleWidth = font->getStringWidth(title);
 	int y1 = r._rect.y + 7;
 	int x1 = r._rect.x + 112;
@@ -212,7 +220,7 @@ void Inventory::drawItems(Graphics::ManagedSurface &surf) {
 		return;
 
 	// TODO: does this need to be adjusted ever?
-	const Common::Rect drawMask(0, 0, 320, 200);
+	const Common::Rect drawMask(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	int offset = _itemOffset;
 	Common::Array<GameItem> &items = engine->getGDSScene()->getGameItems();
 	for (auto & item: items) {

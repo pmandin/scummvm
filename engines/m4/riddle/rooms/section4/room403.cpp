@@ -24,6 +24,7 @@
 #include "m4/graphics/gr_series.h"
 #include "m4/riddle/vars.h"
 #include "m4/gui/gui_vmng.h"
+#include "m4/riddle/riddle.h"
 
 namespace M4 {
 namespace Riddle {
@@ -62,14 +63,14 @@ void Room403::init() {
 
 	if (_G(game).previous_room != KERNEL_RESTORING_GAME) {
 		_val1 = 0;
-		_val2 = -1;
+		_ripleyTrigger = -1;
 		_val3 = 0;
-		_val4 = -1;
+		_wolfTrigger = -1;
 		_val5 = 0;
-		_val6 = 0;
-		_val7 = 0;
-		_val8 = 0;
-		_val9 = 0;
+		_ripleyMode = 0;
+		_ripleyShould = 0;
+		_wolfMode = 0;
+		_wolfShould = 0;
 		_val10 = 0;
 		_sound1.clear();
 		_val12 = 0;
@@ -152,14 +153,14 @@ void Room403::init() {
 				_wolfEdger = series_load("WOLF EDGER LOOP");
 
 				_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x300, 0,
-					triggerMachineByHashCallbackNegative, "WOLFIE");
+					triggerMachineByHashCallback, "WOLFIE");
 
 				if (_val12) {
 					sendWSMessage_10000(1, _wolfie, _wolfTurnHand, 45, 45, -1,
 						_wolfTurnHand, 45, 45, 0);
 				} else {
-					_val8 = 2001;
-					_val9 = 2300;
+					_wolfMode = 2001;
+					_wolfShould = 2300;
 					sendWSMessage_10000(1, _wolfie, _wolfEdger, 1, 6, 110,
 						_wolfEdger, 6, 6, 0);
 				}
@@ -169,7 +170,7 @@ void Room403::init() {
 				ws_demand_facing(11);
 				ws_hide_walker();
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "RIP on ladder/plank");
+					triggerMachineByHashCallback, "RIP on ladder/plank");
 
 				switch (_val10) {
 				case 1:
@@ -215,6 +216,9 @@ void Room403::init() {
 			} else {
 				_ventClosed = series_show("SPRITE OF VENT CLOSED", 0x600, 16);
 			}
+
+			player_set_commands_allowed(true);
+
 		} else if (_G(flags)[V132]) {
 			_G(flags)[V132] = 0;
 			_G(camera_reacts_to_player) = false;
@@ -233,19 +237,20 @@ void Room403::init() {
 				_wolfEdger = series_load("WOLF EDGER LOOP");
 
 				_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x300, 0,
-					triggerMachineByHashCallbackNegative, "WOLFIE");
+					triggerMachineByHashCallback, "WOLFIE");
 				sendWSMessage_10000(1, _wolfie, _wolfEdger, 1, 6, 110,
 					_wolfEdger, 6, 6, 0);
-				_val8 = 2001;
-				_val9 = 2300;
+				_wolfMode = 2001;
+				_wolfShould = 2300;
 			}
 
-			if (0) {
-				ws_demand_location(4, 296);
-				ws_walk(80, 300, nullptr, 300, 3);
-			} else {
+			if (_G(kittyScreaming)) {
 				MoveScreenDelta(-640, 0);
 				ws_demand_location(1110, 322);
+				player_set_commands_allowed(true);
+			} else {
+				ws_demand_location(4, 296);
+				ws_walk(80, 300, nullptr, 300, 3);
 			}
 		}
 	}
@@ -267,46 +272,46 @@ void Room403::daemon() {
 		break;
 
 	case 101:
-		_val6 = 1000;
-		_val7 = 1105;
+		_ripleyMode = 1000;
+		_ripleyShould = 1105;
 		break;
 
 	case 102:
-		if (_val2 != -1) {
-			kernel_timing_trigger(1, _val2);
-			_val2 = -1;
+		if (_ripleyTrigger != -1) {
+			kernel_timing_trigger(1, _ripleyTrigger);
+			_ripleyTrigger = -1;
 		} else {
 			kernel_timing_trigger(1, 103);
 		}
 		break;
 
 	case 103:
-		switch (_val6) {
+		switch (_ripleyMode) {
 		case 1000:
-			switch (_val7) {
+			switch (_ripleyShould) {
 			case 1100:
-				_val8 = 2000;
-				_val9 = 2100;
+				_wolfMode = 2000;
+				_wolfShould = 2100;
 				kernel_timing_trigger(1, 110);
 				player_update_info();
 				ws_hide_walker();
 				player_set_commands_allowed(false);
 
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "rip takes wolf");
+					triggerMachineByHashCallback, "rip takes wolf");
 				_ripTalksWolf = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 					_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0xf00, 0,
-					triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+					triggerMachineByHashCallback, "rip talks wolf SHADOW");
 
 				sendWSMessage_10000(1, _ripOnLadder, _ripTalkPay, 1, 10, 102,
 					_ripTalkPay, 10, 10, 0);
 				sendWSMessage_10000(1, _ripTalksWolf, _safariShadow, 1, 1, -1,
 					_safariShadow, 1, 1, 0);
-				_val7 = 1101;
+				_ripleyShould = 1101;
 				break;
 
 			case 1101:
-				_val7 = 1003;
+				_ripleyShould = 1003;
 				kernel_timing_trigger(1, 102);
 
 				conv_load("conv403a", 10, 10, 101);
@@ -347,15 +352,15 @@ void Room403::daemon() {
 					_val5 = 0;
 					sendWSMessage_10000(1, _ripOnLadder, _ripTalkPay, 10, 1, 305,
 						_ripTalkPay, 1, 1, 0);
-					_val9 = 2251;
+					_wolfShould = 2251;
 					_G(flags)[V124] = 1;
 				} else {
 					sendWSMessage_10000(1, _ripOnLadder, _ripTalkPay, 10, 1, 103,
 						_ripTalkPay, 1, 1, 0);
-					_val7 = 1106;
+					_ripleyShould = 1106;
 
 					if (!_G(flags)[V115])
-						_val9 = 2103;
+						_wolfShould = 2103;
 				}
 				break;
 
@@ -368,15 +373,15 @@ void Room403::daemon() {
 				if (!_G(flags)[V115] || _flag2 ||
 						!inv_player_has("POMERANIAN MARKS")) {
 					_flag2 = false;
-					_val8 = 2001;
-					_val9 = 2300;
+					_wolfMode = 2001;
+					_wolfShould = 2300;
 					kernel_timing_trigger(1, 110);
 					player_set_commands_allowed(true);
 				} else {
 					player_set_commands_allowed(false);
 					_val12 = 1;
-					_val8 = 2000;
-					_val9 = 2230;
+					_wolfMode = 2000;
+					_wolfShould = 2230;
 					kernel_timing_trigger(1, 110);
 				}
 				break;
@@ -387,7 +392,7 @@ void Room403::daemon() {
 			break;
 
 		case 1010:
-			switch (_val7) {
+			switch (_ripleyShould) {
 			case 1200:
 				player_set_commands_allowed(false);
 				terminateMachineAndNull(_ventClosed);
@@ -395,34 +400,34 @@ void Room403::daemon() {
 				ws_hide_walker();
 
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "RIP climbs ladder");
+					triggerMachineByHashCallback, "RIP climbs ladder");
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 1, 12, 103,
 					_ripClimbsLadder, 12, 12, 0);
-				_val7 = 1202;
+				_ripleyShould = 1202;
 				break;
 
 			case 1202:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 13, 23, 103,
 					_ripClimbsLadder, 23, 23, 0);
-				_val7 = 1203;
+				_ripleyShould = 1203;
 				break;
 
 			case 1203:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 24, 33, 103,
 					_ripClimbsLadder, 33, 33, 0);
-				_val7 = 1204;
+				_ripleyShould = 1204;
 				break;
 
 			case 1204:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 34, 40, 103,
 					_ripClimbsLadder, 40, 40, 0);
-				_val7 = 1205;
+				_ripleyShould = 1205;
 				break;
 
 			case 1205:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 41, 52, 103,
 					_ripClimbsLadder, 52, 52, 0);
-				_val7 = 1209;
+				_ripleyShould = 1209;
 				break;
 
 			case 1209:
@@ -434,31 +439,31 @@ void Room403::daemon() {
 				player_set_commands_allowed(false);
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 52, 36, 103,
 					_ripClimbsLadder, 36, 36, 0);
-				_val7 = 1212;
+				_ripleyShould = 1212;
 				break;
 
 			case 1212:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 35, 26, 103,
 					_ripClimbsLadder, 26, 26, 0);
-				_val7 = 1213;
+				_ripleyShould = 1213;
 				break;
 
 			case 1213:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 25, 14, 103,
 					_ripClimbsLadder, 14, 14, 0);
-				_val7 = 1214;
+				_ripleyShould = 1214;
 				break;
 
 			case 1214:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 13, 4, 103,
 					_ripClimbsLadder, 4, 4, 0);
-				_val7 = 1215;
+				_ripleyShould = 1215;
 				break;
 
 			case 1215:
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 3, 1, 103,
 					_ripClimbsLadder, 1, 1, 0);
-				_val7 = 1219;
+				_ripleyShould = 1219;
 				break;
 
 			case 1219:
@@ -480,21 +485,21 @@ void Room403::daemon() {
 				digi_play("403_s06", 2);
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 60, 74, 103,
 					_ripClimbsLadder, 74, 74, 0);
-				_val7 = 1223;
+				_ripleyShould = 1223;
 				break;
 
 			case 1230:
 				player_set_commands_allowed(false);
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 74, 69, 103,
 					_ripClimbsLadder, 69, 69, 0);
-				_val7 = 1232;
+				_ripleyShould = 1232;
 				break;
 
 			case 1232:
 				digi_play("403_s06", 2);
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 68, 53, 103,
 					_ripClimbsLadder, 53, 53, 0);
-				_val7 = 1210;
+				_ripleyShould = 1210;
 				break;
 
 			case 1240:
@@ -502,7 +507,7 @@ void Room403::daemon() {
 				digi_preload("403R29");
 				series_stream("VENT POPUP LADDER", 10, 0, 103);
 				kernel_timing_trigger(390, 350);
-				_val7 = 1230;
+				_ripleyShould = 1230;
 				break;
 
 			default:
@@ -511,24 +516,24 @@ void Room403::daemon() {
 			break;
 
 		case 1020:
-			switch (_val7) {
+			switch (_ripleyShould) {
 			case 1300:
 				player_set_commands_allowed(false);
 				_ripLegUp = series_load("RIP GETS A LEG UP");
 				ws_hide_walker();
 
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "RIP climbs plank");
+					triggerMachineByHashCallback, "RIP climbs plank");
 				sendWSMessage_10000(1, _ripOnLadder, _ripLegUp, 1, 10, 103,
 					_ripLegUp, 10, 10, 0);
-				_val7 = 1302;
+				_ripleyShould = 1302;
 				break;
 
 			case 1302:
 				digi_play("403_s08", 2);
 				sendWSMessage_10000(1, _ripOnLadder, _ripLegUp, 11, 44, 103,
 					_ripLegUp, 44, 44, 0);
-				_val7 = 1303;
+				_ripleyShould = 1303;
 				break;
 
 			case 1303:
@@ -541,7 +546,7 @@ void Room403::daemon() {
 				sendWSMessage_10000(1, _ripOnLadder, _ripLegUp, 44, 1, 103,
 					_ripLegUp, 1, 1, 0);
 				digi_play("403_s08", 2);
-				_val7 = 1312;
+				_ripleyShould = 1312;
 				break;
 
 			case 1312:
@@ -567,7 +572,7 @@ void Room403::daemon() {
 					sendWSMessage_10000(1, _ripOnLadder, _noTreat, 1, 12, 103,
 						_noTreat, 12, 12, 0);
 
-				_val7 = 1322;
+				_ripleyShould = 1322;
 				break;
 
 			case 1322:
@@ -580,7 +585,7 @@ void Room403::daemon() {
 					sendWSMessage_10000(1, _ripOnLadder, _noTreat, 13, 28, 103,
 						_noTreat, 28, 28, 0);
 
-				_val7 = 1323;
+				_ripleyShould = 1323;
 				break;
 
 			case 1323:
@@ -605,7 +610,7 @@ void Room403::daemon() {
 					sendWSMessage_10000(1, _ripOnLadder, _noTreat, 28, 21, 103,
 						_noTreat, 21, 21, 0);
 
-				_val7 = 1332;
+				_ripleyShould = 1332;
 				break;
 
 			case 1332:
@@ -618,7 +623,7 @@ void Room403::daemon() {
 					sendWSMessage_10000(1, _ripOnLadder, _noTreat, 20, 1, 103,
 						_noTreat, 44, 44, 0);
 
-				_val7 = 1333;
+				_ripleyShould = 1333;
 				break;
 
 			case 1333:
@@ -628,7 +633,7 @@ void Room403::daemon() {
 
 				hotspot_set_active("GRATE", 1);
 				hotspot_set_active("TURTLE TREAT", false);
-				_val7 = 1310;
+				_ripleyShould = 1310;
 				kernel_timing_trigger(1, 103);
 				break;
 
@@ -637,7 +642,7 @@ void Room403::daemon() {
 				digi_preload("403R29");
 				series_stream("VENT POPUP PLANK", 10, 0, 103);
 				kernel_timing_trigger(390, 350);
-				_val7 = 1330;
+				_ripleyShould = 1330;
 				break;
 
 			case 1400:
@@ -653,7 +658,7 @@ void Room403::daemon() {
 
 					hotspot_set_active("GRATE", false);
 					hotspot_set_active("TURTLE TREATS", true);
-					_val7 = 1402;
+					_ripleyShould = 1402;
 				}
 				break;
 
@@ -671,7 +676,7 @@ void Room403::daemon() {
 					sendWSMessage_10000(1, _ripOnLadder, _noTreat, 53, 81, 103,
 						_noTreat, 81, 81, 0);
 
-				_val7 = 1412;
+				_ripleyShould = 1412;
 				break;
 
 			case 1412:
@@ -684,13 +689,13 @@ void Room403::daemon() {
 					kernel_timing_trigger(1, 440);
 				}
 
-				_val7 = 1413;
+				_ripleyShould = 1413;
 				break;
 
 			case 1413:
 				sendWSMessage_10000(1, _ripOnLadder, _noTreat, 81, 53, 103,
 					_noTreat, 28, 28, 0);
-				_val7 = 1414;
+				_ripleyShould = 1414;
 				break;
 
 			case 1414:
@@ -706,14 +711,14 @@ void Room403::daemon() {
 				_ripPlankEdger = series_load("RIPLEY ON PLANK USES EDGER");
 				sendWSMessage_10000(1, _ripOnLadder, _ripPlankEdger, 1, 20, 103,
 					_ripPlankEdger, 20, 20, 0);
-				_val7 = 1502;
+				_ripleyShould = 1502;
 				break;
 
 			case 1502:
 				digi_play("403_s10", 2);
 				sendWSMessage_10000(1, _ripOnLadder, _ripPlankEdger, 20, 63, 103,
 					_noTreat, 52, 52, 0);
-				_val7 = 1503;
+				_ripleyShould = 1503;
 				break;
 
 			case 1504:
@@ -733,12 +738,12 @@ void Room403::daemon() {
 		break;
 
 	case 110:
-		switch (_val8) {
+		switch (_wolfMode) {
 		case 2000:
 		case 2001:
-			if (_val4 != -1) {
-				kernel_timing_trigger(1, _val4);
-				_val4 = -1;
+			if (_wolfTrigger != -1) {
+				kernel_timing_trigger(1, _wolfTrigger);
+				_wolfTrigger = -1;
 			} else {
 				kernel_timing_trigger(1, 111);
 			}
@@ -750,13 +755,13 @@ void Room403::daemon() {
 		break;
 
 	case 111:
-		switch (_val8) {
+		switch (_wolfMode) {
 		case 2000:
-			switch (_val9) {
+			switch (_wolfShould) {
 			case 2100:
 				sendWSMessage_10000(1, _wolfie, _wolfTurnTalk, 1, 7, 110,
 					_wolfTurnTalk, 7, 7, 0);
-				_val9 = 2102;
+				_wolfShould = 2102;
 				break;
 
 			case 2101:
@@ -785,17 +790,17 @@ void Room403::daemon() {
 			case 2105:
 				sendWSMessage_10000(1, _wolfie, _wolfTurnTalk, 7, 1, 110,
 					_wolfEdger, 1, 1, 0);
-				_val8 = 2001;
-				_val9 = 2300;
+				_wolfMode = 2001;
+				_wolfShould = 2300;
 				break;
 
 			case 2230:
 				terminateMachineAndNull(_wolfie);
 				_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x300, 0,
-					triggerMachineByHashCallbackNegative, "WOLFIE");
+					triggerMachineByHashCallback, "WOLFIE");
 				sendWSMessage_10000(1, _wolfie, _wolfTurnHand, 11, 45, 111,
 					_wolfTurnHand, 45, 45, 0);
-				_val9 = 2231;
+				_wolfShould = 2231;
 
 				if (!_sound1.empty()) {
 					digi_play(_sound1.c_str(), 1);
@@ -809,19 +814,19 @@ void Room403::daemon() {
 
 			case 2232:
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "rip talks wolf");
+					triggerMachineByHashCallback, "rip talks wolf");
 				player_update_info();
 
 				_ripTalksWolf = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 					_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0xf00, 0,
-					triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+					triggerMachineByHashCallback, "rip talks wolf SHADOW");
 				sendWSMessage_10000(1, _ripTalksWolf, _safariShadow, 1, 1, -1,
 					_safariShadow, 1, 1, 0);
 
 				ws_hide_walker();
 				sendWSMessage_10000(1, _ripOnLadder, _ripTalkPay, 1, 10, 111,
 					_ripTalkPay, 10, 10, 0);
-				_val9 = 2233;
+				_wolfShould = 2233;
 				break;
 
 			case 2233:
@@ -834,12 +839,12 @@ void Room403::daemon() {
 				player_set_commands_allowed(false);
 				sendWSMessage_10000(1, _wolfie, _wolfTurnHand, 45, 11, 111,
 					_wolfTurnHand, 11, 11, 0);
-				_val9 = 2235;
+				_wolfShould = 2235;
 				break;
 
 			case 2235:
-				_val8 = 2001;
-				_val9 = 2300;
+				_wolfMode = 2001;
+				_wolfShould = 2300;
 				kernel_timing_trigger(1, 110);
 
 				if (!_G(flags)[V052])
@@ -867,13 +872,13 @@ void Room403::daemon() {
 			case 2253:
 				sendWSMessage_10000(1, _wolfie, _wolfTurnHand, 15, 34, 111,
 					_wolfTurnHand, 34, 34, 0);
-				_val9 = 2254;
+				_wolfShould = 2254;
 				break;
 
 			case 2254:
 				sendWSMessage_10000(1, _wolfie, _wolfTalkLeave, 40, 60, 111,
 					_wolfTalkLeave, 60, 60, 0);
-				_val9 = 2255;
+				_wolfShould = 2255;
 
 				if (!_sound1.empty()) {
 					digi_play(_sound1.c_str(), 1);
@@ -884,17 +889,17 @@ void Room403::daemon() {
 			case 2255:
 				sendWSMessage_10000(1, _wolfie, _wolfTalkLeave, 60, 40, 111,
 					_wolfTalkLeave, 40, 40, 0);
-				_val9 = 2256;
+				_wolfShould = 2256;
 				break;
 
 			case 2256:
 				sendWSMessage_10000(1, _wolfie, _wolfTurnHand, 34, 15, 111,
 					_wolfTurnHand, 15, 15, 0);
-				_val9 = 2257;
+				_wolfShould = 2257;
 				break;
 
 			case 2257:
-				_val9 = 2102;
+				_wolfShould = 2102;
 				kernel_timing_trigger(1, 110);
 				conv_resume();
 				break;
@@ -902,7 +907,7 @@ void Room403::daemon() {
 			case 2258:
 				sendWSMessage_10000(1, _wolfie, _wolfTalkLeave, 1, 18, 111,
 					_wolfTalkLeave, 18, 18, 0);
-				_val9 = 2250;
+				_wolfShould = 2250;
 				break;
 
 			case 2260:
@@ -911,7 +916,7 @@ void Room403::daemon() {
 
 				if (!_sound1.empty()) {
 					digi_play(_sound1.c_str(), 1, 255, 111);
-					_val9 = 2262;
+					_wolfShould = 2262;
 					_sound1.clear();
 				}
 				break;
@@ -923,6 +928,7 @@ void Room403::daemon() {
 			case 2270:
 				sendWSMessage_10000(1, _wolfie, _wolfTurnHand, 45, 11, 111,
 					_wolfTurnHand, 11, 11, 0);
+				_wolfShould = 2272;
 
 				if (!_sound1.empty()) {
 					digi_play(_sound1.c_str(), 1);
@@ -931,9 +937,10 @@ void Room403::daemon() {
 				break;
 
 			case 2272:
-				_val8 = 2001;
-				_val9 = 2300;
+				_wolfMode = 2001;
+				_wolfShould = 2300;
 				kernel_timing_trigger(1, 110);
+				conv_resume();
 				break;
 
 			default:
@@ -942,11 +949,11 @@ void Room403::daemon() {
 			break;
 
 		case 2001:
-			if (_val9 == 2300) {
+			if (_wolfShould == 2300) {
 				if (imath_ranged_rand(1, 3) == 1) {
 					frame = imath_ranged_rand(1, 6);
 					sendWSMessage_10000(1, _wolfie, _wolfEdger,
-						imath_ranged_rand(1, 6), imath_ranged_rand(1, 6), 100,
+						imath_ranged_rand(1, 6), imath_ranged_rand(1, 6), 110,
 						_wolfEdger, frame, frame, 0);
 					sendWSMessage_190000(_wolfie, 8);
 					sendWSMessage_1a0000(_wolfie, 6);
@@ -978,12 +985,12 @@ void Room403::daemon() {
 	case 200:
 		player_set_commands_allowed(false);
 		_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf");
+			triggerMachineByHashCallback, "rip talks wolf");
 
 		player_update_info();
 		_ripTalksWolf = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0xf00, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+			triggerMachineByHashCallback, "rip talks wolf SHADOW");
 		sendWSMessage_10000(1, _ripTalksWolf, _safariShadow, 1, 1, -1,
 			_safariShadow, 1, 1, 0);
 
@@ -1032,12 +1039,12 @@ void Room403::daemon() {
 	case 210:
 		player_set_commands_allowed(false);
 		_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf");
+			triggerMachineByHashCallback, "rip talks wolf");
 
 		player_update_info();
 		_ripTalksWolf = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0xf00, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+			triggerMachineByHashCallback, "rip talks wolf SHADOW");
 
 		sendWSMessage_10000(1, _ripTalksWolf, _safariShadow, 1, 1, -1,
 			_safariShadow, 1, 1, 0);
@@ -1087,12 +1094,12 @@ void Room403::daemon() {
 		break;
 
 	case 218:
-		_val4 = -1;
-		_val8 = 2000;
-		_val9 = 2252;
+		_wolfTrigger = -1;
+		_wolfMode = 2000;
+		_wolfShould = 2252;
 		kernel_timing_trigger(1, 110);
-		_val6 = 1000;
-		_val7 = 1103;
+		_ripleyMode = 1000;
+		_ripleyShould = 1103;
 		kernel_timing_trigger(1, 102);
 
 		conv_load("conv403a", 0, 10, 101);
@@ -1111,12 +1118,12 @@ void Room403::daemon() {
 	case 220:
 		player_set_commands_allowed(false);
 		_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf");
+			triggerMachineByHashCallback, "rip talks wolf");
 
 		player_update_info();
 		_ripTalksWolf = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0xf00, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+			triggerMachineByHashCallback, "rip talks wolf SHADOW");
 
 		sendWSMessage_10000(1, _ripTalksWolf, _safariShadow, 1, 1, -1,
 			_safariShadow, 1, 1, 0);
@@ -1152,12 +1159,12 @@ void Room403::daemon() {
 	case 230:
 		player_set_commands_allowed(false);
 		_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf");
+			triggerMachineByHashCallback, "rip talks wolf");
 
 		player_update_info();
 		_ripTalksWolf = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0xf00, 0,
-			triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+			triggerMachineByHashCallback, "rip talks wolf SHADOW");
 
 		sendWSMessage_10000(1, _ripTalksWolf, _safariShadow, 1, 1, -1,
 			_safariShadow, 1, 1, 0);
@@ -1185,8 +1192,8 @@ void Room403::daemon() {
 		break;
 
 	case 237:
-		_val8 = 2001;
-		_val9 = 2300;
+		_wolfMode = 2001;
+		_wolfShould = 2300;
 		kernel_timing_trigger(1, 110);
 		player_set_commands_allowed(true);
 		break;
@@ -1227,8 +1234,8 @@ void Room403::daemon() {
 		break;
 
 	case 310:
-		_wolfWalker = triggerMachineByHash_3000(8, 8, S4_NORMAL_DIRS, S4_SHADOW_DIRS,
-			620, 313, 3, triggerMachineByHashCallbackNegative, "wolf_walker");
+		_wolfWalker = triggerMachineByHash_3000(8, 8, *S4_NORMAL_DIRS, *S4_SHADOW_DIRS,
+			620, 313, 3, triggerMachineByHashCallback, "wolf_walker");
 		DisposePath(_wolfWalker->walkPath);
 		_wolfWalker->walkPath = CreateCustomPath(1067, 313, -1);
 		ws_custom_walk(_wolfWalker, 3, 312);
@@ -1259,7 +1266,7 @@ void Room403::daemon() {
 		sendWSMessage_60000(_wolfWalker);
 		_wolfIndicatesTomb = series_load("WOLF INDICATES TOMB");
 		_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x900, 0,
-			triggerMachineByHashCallbackNegative, "WOLFIE");
+			triggerMachineByHashCallback, "WOLFIE");
 		sendWSMessage_10000(1, _wolfie, _wolfIndicatesTomb, 1, 93, -1,
 			_wolfIndicatesTomb, 93, 93, 0);
 		digi_play("403w01", 1, 255, 316);
@@ -1303,7 +1310,7 @@ void Room403::daemon() {
 		sendWSMessage_120000(-1);
 		terminateMachineAndNull(_wolfie);
 
-		_wolfWalker = triggerMachineByHash_3000(8, 8, S4_NORMAL_DIRS, S4_SHADOW_DIRS,
+		_wolfWalker = triggerMachineByHash_3000(8, 8, *S4_NORMAL_DIRS, *S4_SHADOW_DIRS,
 			1067, 313, 3, triggerMachineByHashCallback3000, "wolf_walker");
 		sendWSMessage_10000(_wolfWalker, 620, 313, 3, 324, 0);
 		break;
@@ -1374,12 +1381,12 @@ void Room403::daemon() {
 		_G(flags)[V125] = 3;
 		_turtlePopup = series_load("403 turtle popup");
 		_wolfJustSo = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "Turtle POPUP");
+			triggerMachineByHashCallback, "Turtle POPUP");
 		sendWSMessage_10000(1, _wolfJustSo, _turtlePopup, 1, 46, -1,
 			_turtlePopup, 46, 46, 0);
 		midi_play("turtle", 255, 1, -1, 949);
-		_val6 = 1020;
-		_val7 = 1330;
+		_ripleyMode = 1020;
+		_ripleyShould = 1330;
 		kernel_timing_trigger(1, 102);
 		break;
 
@@ -1389,7 +1396,7 @@ void Room403::daemon() {
 		ws_hide_walker();
 
 		_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x300, 0,
-			triggerMachineByHashCallbackNegative, "RIP plants plank");
+			triggerMachineByHashCallback, "RIP plants plank");
 		sendWSMessage_10000(1, _ripOnLadder, _ripPutBoard, 57, 1, 443,
 			_ripPutBoard, 1, 1, 0);
 		break;
@@ -1424,9 +1431,6 @@ void Room403::daemon() {
 	}
 }
 
-#define TRIGGER _G(kernel).trigger_mode = KT_DAEMON; \
-	kernel_timing_trigger(1, 102); \
-	_G(kernel).trigger_mode = KT_PARSE
 #define MONEY(ITEM) (player_said(ITEM, "WOLF") && inv_player_has(ITEM))
 
 void Room403::pre_parser() {
@@ -1442,23 +1446,23 @@ void Room403::pre_parser() {
 		_G(player).waiting_for_walk = false;
 
 		if (player_said("TURTLE", "TURTLE TREAT")) {
-			_val6 = 1020;
-			_val7 = 1410;
+			_ripleyMode = 1020;
+			_ripleyShould = 1410;
 			inv_move_object("TURTLE", 403);
 		} else if (player_said("TURTLE TREATS", "TURTLE TREAT")) {
-			_val6 = 1020;
-			_val7 = 1400;
+			_ripleyMode = 1020;
+			_ripleyShould = 1400;
 		} else if (player_said("EDGER", "TURTLE TREAT")) {
 			if (_G(flags)[V125] != 2) {
-				_val6 = 1020;
-				_val7 = 1500;
+				_ripleyMode = 1020;
+				_ripleyShould = 1500;
 			}
 		} else {
-			_val6 = 1020;
-			_val7 = 1330;
+			_ripleyMode = 1020;
+			_ripleyShould = 1330;
 		}
 
-		TRIGGER;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 		return;
 	}
 
@@ -1469,21 +1473,21 @@ void Room403::pre_parser() {
 		_G(player).waiting_for_walk = false;
 
 		if (lookFlag && player_said("GRATE")) {
-			_val6 = 1020;
-			_val7 = 1340;
+			_ripleyMode = 1020;
+			_ripleyShould = 1340;
 		} else if (player_said("TURTLE TREATS", "GRATE")) {
-			_val6 = 1020;
-			_val7 = 1400;
+			_ripleyMode = 1020;
+			_ripleyShould = 1400;
 		} else if (player_said("TURTLE", "GRATE")) {
-			_val6 = 1020;
-			_val7 = 1410;
+			_ripleyMode = 1020;
+			_ripleyShould = 1410;
 			inv_move_object("TURTLE", 403);
 		} else {
-			_val6 = 1020;
-			_val7 = 1330;
+			_ripleyMode = 1020;
+			_ripleyShould = 1330;
 		}
 
-		TRIGGER;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 		return;
 	}
 
@@ -1499,14 +1503,14 @@ void Room403::pre_parser() {
 		intr_cancel_sentence();
 
 		if (useFlag && player_said("GRATE")) {
-			_val6 = 1020;
-			_val7 = 1320;
+			_ripleyMode = 1020;
+			_ripleyShould = 1320;
 		} else {
-			_val6 = 1020;
-			_val7 = 1310;
+			_ripleyMode = 1020;
+			_ripleyShould = 1310;
 		}
 
-		TRIGGER;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 		return;
 	}
 
@@ -1517,14 +1521,14 @@ void Room403::pre_parser() {
 		_G(player).waiting_for_walk = false;
 
 		if (lookFlag && player_said("GRATE")) {
-			_val6 = 1010;
-			_val7 = 1240;
+			_ripleyMode = 1010;
+			_ripleyShould = 1240;
 		} else {
-			_val6 = 1010;
-			_val7 = 1230;
+			_ripleyMode = 1010;
+			_ripleyShould = 1230;
 		}
 
-		TRIGGER;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 	}
 
 	if (_val10 == 1) {
@@ -1536,14 +1540,14 @@ void Room403::pre_parser() {
 			intr_cancel_sentence();
 
 			if (useFlag && player_said("GRATE")) {
-				_val6 = 1010;
-				_val7 = 1220;
+				_ripleyMode = 1010;
+				_ripleyShould = 1220;
 			} else {
-				_val6 = 1010;
-				_val7 = 1210;
+				_ripleyMode = 1010;
+				_ripleyShould = 1210;
 			}
 
-			TRIGGER;
+			kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 		}
 	}
 
@@ -1552,9 +1556,7 @@ void Room403::pre_parser() {
 		_G(player).ready_to_walk = true;
 		_G(player).waiting_for_walk = false;
 
-		_G(kernel).trigger_mode = KT_PARSE;
-		kernel_timing_trigger(1, 69);
-		_G(kernel).trigger_mode = KT_PREPARSE;
+		kernel_timing_trigger(1, 69, KT_PARSE, KT_PREPARSE);
 	}
 
 	if (!_flag1 && !player_said("WALK TO") &&
@@ -1568,30 +1570,24 @@ void Room403::pre_parser() {
 			player_set_commands_allowed(false);
 			intr_cancel_sentence();
 			_G(flags)[V114] = 1;
-			_val8 = 2000;
-			_val9 = 2232;
+			_wolfMode = 2000;
+			_wolfShould = 2232;
 			_G(flags)[V111]++;
 
-			_G(kernel).trigger_mode = KT_DAEMON;
-			kernel_timing_trigger(1, 69);
-			_G(kernel).trigger_mode = KT_PREPARSE;
+			kernel_timing_trigger(1, 69, KT_DAEMON, KT_PREPARSE);
 		} else if (MONEY("US DOLLARS") || MONEY("CHINESE YUAN") ||
 				MONEY("PERUVIAN INTI") || MONEY("SIKKIMESE RUPEE")) {
 			_G(flags)[V116] = 1;
 			intr_cancel_sentence();
-			_G(kernel).trigger_mode = KT_DAEMON;
-			kernel_timing_trigger(1, 230);
-			_G(kernel).trigger_mode = KT_PREPARSE;
+			kernel_timing_trigger(1, 230, KT_DAEMON, KT_PREPARSE);
 		} else {
 			if (talkFlag && player_said("WOLF"))
 				intr_cancel_sentence();
 
 			player_set_commands_allowed(false);
-			_val8 = 2000;
-			_val9 = 2234;
-			_G(kernel).trigger_mode = KT_DAEMON;
-			kernel_timing_trigger(1, 110);
-			_G(kernel).trigger_mode = KT_PREPARSE;
+			_wolfMode = 2000;
+			_wolfShould = 2234;
+			kernel_timing_trigger(1, 110, KT_DAEMON, KT_PREPARSE);
 		}
 	}
 
@@ -1619,10 +1615,10 @@ void Room403::parser() {
 		}
 	} else if (talkFlag && player_said("WOLF")) {
 		player_set_commands_allowed(false);
-		_val4 = -1;
-		_val6 = 1000;
-		_val7 = 1100;
-		TRIGGER;
+		_wolfTrigger = -1;
+		_ripleyMode = 1000;
+		_ripleyShould = 1100;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 	} else if (enterFlag && player_said("CASTLE")) {
 		switch (_G(kernel).trigger) {
 		case -1:
@@ -1686,37 +1682,37 @@ void Room403::parser() {
 			inv_object_is_here("STEP LADDER")) {
 		digi_play(_G(flags)[V131] == 403 ? "403R10" : "403R46", 1);
 	} else if (useFlag && player_said("PLANK") && inv_object_is_here("PLANK")) {
-		_val6 = 1020;
-		_val7 = 1300;
-		TRIGGER;
-	} else if (useFlag && player_said("STEP LADDER") && inv_object_is_here("STEP LADDER")) {
-		_val6 = 1010;
-		_val7 = 1200;
-		TRIGGER;
+		_ripleyMode = 1020;
+		_ripleyShould = 1300;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
+	} else if (useFlag && HERE("STEP LADDER")) {
+		_ripleyMode = 1010;
+		_ripleyShould = 1200;
+		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 	} else if (player_said("POMERANIAN MARKS", "WOLF") &&
 			inv_player_has("POMERANIAN MARKS")) {
 		if (!_G(flags)[V115] || _G(flags)[V114]) {
 			player_set_commands_allowed(false);
-			_val4 = 200;
+			_wolfTrigger = 200;
 		} else {
 			_G(flags)[V114] = 1;
 			_G(flags)[V111]++;
 			player_set_commands_allowed(false);
-			_val4 = 210;
+			_wolfTrigger = 210;
 		}
 	} else if (MONEY("US DOLLARS") || MONEY("CHINESE YUAN") ||
 			MONEY("PERUVIAN INTI") || MONEY("SIKKIMESE RUPEE")) {
 		if (!_G(flags)[V116]) {
 			_G(flags)[V116] = 1;
 			player_set_commands_allowed(false);
-			_val4 = 220;
+			_wolfTrigger = 220;
 		}
 	} else if (player_said("EDGER", "BELL") && inv_player_has("EDGER")) {
 		edgerBell();
 	} else if (player_said("EDGER", "URN")) {
 		// No implementation
 	} else if ((player_said("STEP LADDER", "TOMB") ||
-			player_said("STEP LADDER", "STAIRS")) ||
+			player_said("STEP LADDER", "STAIRS")) &&
 			stepLadderTomb()) {
 		// No implementation
 	} else if (player_said("STEP LADDER", "WALL")) {
@@ -1795,25 +1791,22 @@ void Room403::conv403a() {
 				if (inv_player_has("POMERANIAN MARKS")) {
 					conv_resume();
 				} else {
-					_val9 = 2260;
+					_wolfShould = 2260;
 				}
 				break;
 
 			case 10:
 				_sound1 = sound;
-				_val9 = 2270;
-				_G(kernel).trigger_mode = KT_DAEMON;
-				kernel_timing_trigger(1, 110);
-				_G(kernel).trigger_mode = KT_PARSE;
+				_wolfShould = 2270;
+				kernel_timing_trigger(1, 110, KT_DAEMON, KT_PARSE);
 				break;
 
 			case 11:
 				if (entry == 0) {
 					_sound1 = sound;
-					_val9 = 2253;
-					return;
+					_wolfShould = 2253;
 				} else {
-					_val9 = 2101;
+					_wolfShould = 2101;
 					digi_play(sound, 1, 255, 1);
 				}
 				break;
@@ -1824,7 +1817,7 @@ void Room403::conv403a() {
 					midi_play("DANZIG1", 255, 1, -1, 949);
 				}
 
-				_val9 = 2250;
+				_wolfShould = 2250;
 				digi_play(sound, 1, 255, 1);
 				break;
 
@@ -1841,17 +1834,17 @@ void Room403::conv403a() {
 			case 32:
 			case 33:
 				_flag2 = true;
-				_val9 = 2101;
+				_wolfShould = 2101;
 				digi_play(sound, 1, 255, 1);
 				break;
 
 			default:
-				_val9 = 2101;
+				_wolfShould = 2101;
 				digi_play(sound, 1, 255, 1);
 				break;
 			}
 		} else if (who == 1) {
-			_val7 = 1102;
+			_ripleyShould = 1102;
 			digi_play(sound, 1, 255, 1);
 		}
 	} else {
@@ -1863,9 +1856,9 @@ void Room403::conv403a1() {
 	int who = conv_whos_talking();
 
 	if (who <= 0) {
-		_val9 = (_val9 == 2250) ? 2252 : 2102;
+		_wolfShould = (_wolfShould == 2250) ? 2252 : 2102;
 	} else if (who == 1) {
-		_val7 = 1103;
+		_ripleyShould = 1103;
 	}
 
 	conv_resume();
@@ -1880,7 +1873,7 @@ void Room403::edgerBell() {
 			player_update_info();
 			ws_hide_walker();
 			_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-				triggerMachineByHashCallbackNegative, "RIP rings bell");
+				triggerMachineByHashCallback, "RIP rings bell");
 
 			terminateMachineAndNull(_bell);
 			sendWSMessage_10000(1, _ripOnLadder, _ripRingsBell, 1, 19, 1,
@@ -1908,7 +1901,7 @@ void Room403::edgerBell() {
 		if (_G(flags)[V119] >= 7) {
 			ws_walk_load_shadow_series(S4_SHADOW_DIRS, S4_SHADOW_NAMES);
 			ws_walk_load_walker_series(S4_NORMAL_DIRS, S4_NORMAL_NAMES);
-			_wolfWalker = triggerMachineByHash_3000(8, 8, S4_NORMAL_DIRS, S4_SHADOW_DIRS, 620, 323, 3,
+			_wolfWalker = triggerMachineByHash_3000(8, 8, *S4_NORMAL_DIRS, *S4_SHADOW_DIRS, 620, 323, 3,
 				triggerMachineByHashCallback3000, "wolf_walker");
 			_wolfAdmonish = series_load("WOLF ADMONISHES RIP");
 			kernel_timing_trigger(120, 4);
@@ -1924,7 +1917,7 @@ void Room403::edgerBell() {
 	case 5:
 		sendWSMessage_60000(_wolfWalker);
 		_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
-			triggerMachineByHashCallbackNegative, "WOLFIE");
+			triggerMachineByHashCallback, "WOLFIE");
 		sendWSMessage_10000(1, _wolfie, _wolfAdmonish, 1, 18, 6,
 			_wolfAdmonish, 18, 18, 0);
 
@@ -1955,7 +1948,7 @@ void Room403::edgerBell() {
 	case 9:
 		terminateMachineAndNull(_wolfie);
 		_wolfWalker = triggerMachineByHash_3000(8, 8,
-			S4_NORMAL_DIRS, S4_SHADOW_DIRS, 687, 323, 3,
+			*S4_NORMAL_DIRS, *S4_SHADOW_DIRS, 687, 323, 3,
 			triggerMachineByHashCallback3000, "wolf_walker");
 		sendWSMessage_10000(_wolfWalker, 620, 323, 3, 10, 0);
 		playNum2(_G(flags)[V119]);
@@ -2069,7 +2062,7 @@ bool Room403::takePlank() {
 			ws_hide_walker();
 
 			_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x300, 0,
-				triggerMachineByHashCallbackNegative, "RIP plants plank");
+				triggerMachineByHashCallback, "RIP plants plank");
 			sendWSMessage_10000(1, _ripOnLadder, _ripPutBoard, 57, 1, 2,
 				_ripPutBoard, 1, 1, 0);
 			return true;
@@ -2157,8 +2150,8 @@ bool Room403::takeStepLadder() {
 	case 1:
 		if (_G(flags)[V131] == 403) {
 			digi_play("403w08", 1, 255, 3);
-			_val8 = 2000;
-			_val9 = 2100;
+			_wolfMode = 2000;
+			_wolfShould = 2100;
 			kernel_timing_trigger(15, 2);
 		} else {
 			digi_play("403_s03", 2);
@@ -2177,7 +2170,7 @@ bool Room403::takeStepLadder() {
 		return true;
 
 	case 3:
-		_val9 = 2105;
+		_wolfShould = 2105;
 		digi_play("403r47", 1);
 		return true;
 
@@ -2211,8 +2204,8 @@ void Room403::takeStepLadder_() {
 	case 1:
 		if (_G(flags)[V131] == 403) {
 			digi_play("403w08", 1, 255, 3);
-			_val8 = 2000;
-			_val9 = 2100;
+			_wolfMode = 2000;
+			_wolfShould = 2100;
 			kernel_timing_trigger(15, 2);
 		} else {
 			digi_play("403_s03", 2);
@@ -2230,7 +2223,7 @@ void Room403::takeStepLadder_() {
 		break;
 
 	case 3:
-		_val9 = 2105;
+		_wolfShould = 2105;
 		digi_play("403r47", 1);
 		break;
 
@@ -2258,11 +2251,11 @@ void Room403::useJournal() {
 	} else if (_G(flags)[kEpitaphCartoon]) {
 		if (_G(kernel).trigger == 6)
 			_G(flags)[kGraveyardCartoon] = 1;
-		sendWSMessage_multi(nullptr);
+		sketchInJournal(nullptr);
 	} else {
 		if (_G(kernel).trigger == 6)
 			_G(flags)[kGraveyardCartoon] = 1;
-		sendWSMessage_multi("403r41");
+		sketchInJournal("403r41");
 	}
 }
 
@@ -2285,6 +2278,17 @@ void Room403::playNum2(int num) {
 	default:
 		break;
 	}
+}
+
+void Room403::syncGame(Common::Serializer &s) {
+	s.syncAsSint32LE(_ripleyMode);
+	s.syncAsSint32LE(_ripleyShould);
+	s.syncAsSint32LE(_wolfMode);
+	s.syncAsSint32LE(_wolfShould);
+	s.syncAsSint32LE(_val1);
+	s.syncAsSint32LE(_val3);
+	s.syncAsSint32LE(_val5);
+	s.syncAsSint32LE(_val10);
 }
 
 } // namespace Rooms

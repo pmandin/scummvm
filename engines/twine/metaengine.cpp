@@ -20,14 +20,13 @@
  */
 
 #include "backends/keymapper/action.h"
-#include "backends/keymapper/standard-actions.h"
+#include "backends/keymapper/keymap.h"
 #include "base/plugins.h"
-#include "common/fs.h"
-#include "common/savefile.h"
 #include "common/system.h"
 #include "common/translation.h"
 #include "engines/advancedDetector.h"
 #include "graphics/managed_surface.h"
+#include "graphics/palette.h"
 #include "graphics/scaler.h"
 #include "twine/achievements_tables.h"
 #include "twine/detection.h"
@@ -195,7 +194,11 @@ void TwinEMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
 	TwinEEngine *engine = (TwinEEngine *)g_engine;
 	const Graphics::ManagedSurface &managedSurface = engine->_workVideoBuffer;
 	const Graphics::Surface &screenSurface = managedSurface.rawSurface();
-	::createThumbnail(&thumb, (const uint8 *)screenSurface.getPixels(), screenSurface.w, screenSurface.h, engine->_screens->_palette);
+	Graphics::Palette *pal = &engine->_screens->_ptrPal;
+	if (engine->_screens->_flagPalettePcx) {
+		pal = &engine->_screens->_palettePcx;
+	}
+	::createThumbnail(&thumb, (const uint8 *)screenSurface.getPixels(), screenSurface.w, screenSurface.h, pal->data());
 }
 
 //
@@ -222,31 +225,6 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("p");
 		gameKeyMap->addAction(act);
 
-		act = new Action("NEXTROOM", _("Debug Next Room"));
-		act->setCustomEngineActionEvent(TwinEActionType::NextRoom);
-		act->addDefaultInputMapping("r");
-		gameKeyMap->addAction(act);
-
-		act = new Action("PREVIOUSROOM", _("Debug Previous Room"));
-		act->setCustomEngineActionEvent(TwinEActionType::PreviousRoom);
-		act->addDefaultInputMapping("f");
-		gameKeyMap->addAction(act);
-
-		act = new Action("APPLYCELLINGGRID", _("Debug Apply Celling Grid"));
-		act->setCustomEngineActionEvent(TwinEActionType::ApplyCellingGrid);
-		act->addDefaultInputMapping("t");
-		gameKeyMap->addAction(act);
-
-		act = new Action("INCREASECELLINGGRIDINDEX", _("Debug Increase Celling Grid Index"));
-		act->setCustomEngineActionEvent(TwinEActionType::IncreaseCellingGridIndex);
-		act->addDefaultInputMapping("g");
-		gameKeyMap->addAction(act);
-
-		act = new Action("DECREASECELLINGGRIDINDEX", _("Debug Decrease Celling Grid Index"));
-		act->setCustomEngineActionEvent(TwinEActionType::DecreaseCellingGridIndex);
-		act->addDefaultInputMapping("b");
-		gameKeyMap->addAction(act);
-
 		act = new Action("DEBUGGRIDCAMERAPRESSUP", _("Debug Grid Camera Up"));
 		act->setCustomEngineActionEvent(TwinEActionType::DebugGridCameraPressUp);
 		act->addDefaultInputMapping("s");
@@ -266,21 +244,6 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act = new Action("DEBUGGRIDCAMERAPRESSRIGHT", _("Debug Grid Camera Right"));
 		act->setCustomEngineActionEvent(TwinEActionType::DebugGridCameraPressRight);
 		act->addDefaultInputMapping("c");
-		gameKeyMap->addAction(act);
-
-		act = new Action("DEBUGPLACEACTORATCENTEROFSCREEN", _("Place actor at center of screen"));
-		act->setCustomEngineActionEvent(TwinEActionType::DebugPlaceActorAtCenterOfScreen);
-		act->addDefaultInputMapping("v");
-		gameKeyMap->addAction(act);
-
-		act = new Action("DEBUGMENU", _("Debug Menu"));
-		act->setCustomEngineActionEvent(TwinEActionType::DebugMenu);
-		act->addDefaultInputMapping("MOUSE_RIGHT");
-		gameKeyMap->addAction(act);
-
-		act = new Action("DEBUGMENUEXEC", _("Debug Menu Execute"));
-		act->setCustomEngineActionEvent(TwinEActionType::DebugMenuActivate);
-		act->addDefaultInputMapping("MOUSE_LEFT");
 		gameKeyMap->addAction(act);
 
 		act = new Action("CHANGETONORMALBEHAVIOUR", _("Normal Behaviour"));
@@ -373,7 +336,7 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("JOY_UP");
 		gameKeyMap->addAction(act);
 
-		act = new Action("MOVEBACKWARD", _("Move Backward"));
+		act = new Action("MOVEBACKWARD", _("Move Backwards"));
 		act->setCustomEngineActionEvent(TwinEActionType::MoveBackward);
 		act->addDefaultInputMapping("DOWN");
 		act->addDefaultInputMapping("KP2");

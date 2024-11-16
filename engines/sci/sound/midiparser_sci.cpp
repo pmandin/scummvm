@@ -51,11 +51,13 @@ MidiParser_SCI::MidiParser_SCI(SciVersion soundVersion, SciMusic *music) :
 	_ppqn = 1;
 	setTempo(16667);
 
+	_track = nullptr;
+	_pSnd = nullptr;
+	_loopTick = 0;
 	_masterVolume = 15;
 	_volume = 127;
 
 	_resetOnPause = false;
-	_pSnd = nullptr;
 
 	_mainThreadCalled = false;
 
@@ -165,7 +167,7 @@ void MidiParser_SCI::midiMixChannels() {
 	SciSpan<byte> outData = _mixedData->allocate(totalSize * 2, Common::String::format("mixed sound.%d", _pSnd ? _pSnd->resourceId : -1)); // FIXME: creates overhead and still may be not enough to hold all data
 
 	long ticker = 0;
-	byte channelNr, curDelta;
+	byte channelNr;
 	byte midiCommand = 0, midiParam, globalPrev = 0;
 	long newDelta;
 	SoundResource::Channel *channel;
@@ -175,7 +177,7 @@ void MidiParser_SCI::midiMixChannels() {
 		channel = &_track->channels[channelNr];
 		if (!validateNextRead(channel))
 			break;
-		curDelta = channel->data[channel->curPos++];
+		byte curDelta = channel->data[channel->curPos++];
 		channel->time += (curDelta == 0xF8 ? 240 : curDelta); // when the command is supposed to occur
 		if (curDelta == 0xF8)
 			continue;

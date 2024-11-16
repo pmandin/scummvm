@@ -29,12 +29,15 @@
 
 namespace Freescape {
 
-uint8 k8bitMaxVariable = 64;
+uint8 k8bitVariableShield = 63;
 
 Common::String detokenise8bitCondition(Common::Array<uint16> &tokenisedCondition, FCLInstructionVector &instructions, bool isAmigaAtari) {
 	Common::String detokenisedStream;
 	Common::Array<uint8>::size_type bytePointer = 0;
 	Common::Array<uint8>::size_type sizeOfTokenisedContent = tokenisedCondition.size();
+
+	if (sizeOfTokenisedContent == 0)
+		error("No tokenised content");
 
 	// on the 8bit platforms, all instructions have a conditional flag;
 	// we'll want to convert them into runs of "if shot? then", "if collided? then" or "if timer? then",
@@ -81,6 +84,7 @@ Common::String detokenise8bitCondition(Common::Array<uint16> &tokenisedCondition
 
 			if (bytePointer > 0) {
 				detokenisedStream += "ENDIF\n";
+				assert(conditionalInstructions->size() > 0);
 				// Allocate the next vector of instructions
 				conditionalInstructions = new FCLInstructionVector();
 			}
@@ -434,7 +438,7 @@ Common::String detokenise8bitCondition(Common::Array<uint16> &tokenisedCondition
 
 		case 47:
 			detokenisedStream += "IFLTE (v";
-			currentInstruction = FCLInstruction(Token::IFGTEQ);
+			currentInstruction = FCLInstruction(Token::IFLTEQ);
 			break;
 
 		case 48:
@@ -469,6 +473,9 @@ Common::String detokenise8bitCondition(Common::Array<uint16> &tokenisedCondition
 		// throw in a newline
 		detokenisedStream += "\n";
 	}
+
+	// This fails in Castle Master
+	//assert(conditionalInstructions->size() > 0);
 
 	return detokenisedStream;
 }

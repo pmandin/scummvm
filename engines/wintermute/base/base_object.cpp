@@ -41,6 +41,8 @@
 #include "engines/wintermute/base/gfx/base_surface.h"
 #include "engines/wintermute/base/gfx/base_renderer3d.h"
 #include "engines/wintermute/base/gfx/xmodel.h"
+#include "engines/wintermute/base/gfx/xmath.h"
+#include "engines/wintermute/base/gfx/3dutils.h"
 #include "engines/wintermute/wintermute.h"
 #endif
 
@@ -100,16 +102,16 @@ BaseObject::BaseObject(BaseGame *inGame) : BaseScriptHolder(inGame) {
 #ifdef ENABLE_WME3D
 	_xmodel = nullptr;
 	_shadowModel = nullptr;
-	_posVector = Math::Vector3d(0.0f, 0.0f, 0.0f);
+	_posVector = DXVector3(0.0f, 0.0f, 0.0f);
 	_angle = 0.0f;
 	_scale3D = 1.0f;
-	_worldMatrix.setToIdentity();
+	DXMatrixIdentity(&_worldMatrix);
 
 	_shadowImage = nullptr;
 	_shadowSize = 10.0f;
 	_shadowType = SHADOW_NONE;
 	_shadowColor = 0x80000000;
-	_shadowLightPos = Math::Vector3d(-40.0f, 200.0f, -40.0f);
+	_shadowLightPos = DXVector3(-40.0f, 200.0f, -40.0f);
 	_drawBackfaces = true;
 #endif
 
@@ -561,8 +563,7 @@ bool BaseObject::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 		double x = stack->pop()->getFloat();
 		double y = stack->pop()->getFloat();
 		double z = stack->pop()->getFloat();
-		// invert z coordinate because of OpenGL coordinate system
-		_shadowLightPos = Math::Vector3d(x, y, -z);
+		_shadowLightPos = DXVector3(x, y, z);
 
 		stack->pushNULL();
 		return STATUS_OK;
@@ -1367,36 +1368,25 @@ bool BaseObject::afterMove() {
 }
 
 #ifdef ENABLE_WME3D
-bool BaseObject::getMatrix(Math::Matrix4 *modelMatrix, Math::Vector3d *posVect) {
+bool BaseObject::getMatrix(DXMatrix *modelMatrix, DXVector3 *posVect) {
 	if (posVect == nullptr) {
 		posVect = &_posVector;
 	}
 
-	Math::Matrix4 scale;
-	scale.setToIdentity();
-	scale(0, 0) = _scale3D;
-	scale(1, 1) = _scale3D;
-	scale(2, 2) = _scale3D;
+	DXMatrix matRot, matScale, matTrans;
+	DXMatrixRotationYawPitchRoll(&matRot, degToRad(_angle), 0, 0);
+	DXMatrixScaling(&matScale, _scale3D, _scale3D, _scale3D);
 
-	float sinOfAngle = _angle.getSine();
-	float cosOfAngle = _angle.getCosine();
-	Math::Matrix4 rotation;
-	rotation.setToIdentity();
-	rotation(0, 0) = cosOfAngle;
-	rotation(0, 2) = sinOfAngle;
-	rotation(2, 0) = -sinOfAngle;
-	rotation(2, 2) = cosOfAngle;
-	Math::Matrix4 translation;
-	translation.setToIdentity();
-	translation.setPosition(*posVect);
+	DXMatrixTranslation(&matTrans, posVect->_x, posVect->_y, posVect->_z);
+	DXMatrixMultiply(modelMatrix, &matRot, &matScale);
+	DXMatrixMultiply(modelMatrix, modelMatrix, &matTrans);
 
-	*modelMatrix = translation * rotation * scale;
 	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseObject::renderModel() {
-	Math::Matrix4 objectMat;
+	DXMatrix objectMat;
 	getMatrix(&objectMat);
 
 	_gameRef->_renderer3D->setWorldTransform(objectMat);

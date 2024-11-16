@@ -49,6 +49,7 @@ ShadowVolumeOpenGL::~ShadowVolumeOpenGL() {
 bool ShadowVolumeOpenGL::render() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
+	_gameRef->_renderer3D->_lastTexture = nullptr;
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, _vertices.data());
@@ -82,14 +83,14 @@ bool ShadowVolumeOpenGL::renderToStencilBuffer() {
 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 
 	// Draw back-side of shadow volume in stencil/z only
-	glCullFace(GL_FRONT);
+	glFrontFace(GL_CCW);
 	render();
 
 	// Decrement stencil buffer value
 	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 
 	// Draw front-side of shadow volume in stencil/z only
-	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 	render();
 
 	// Restore render states
@@ -120,9 +121,10 @@ bool ShadowVolumeOpenGL::renderToScene() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_ALPHA_TEST);
 
-	_gameRef->_renderer3D->setProjection2D();
-
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	BaseRenderOpenGL3D *renderer = dynamic_cast<BaseRenderOpenGL3D *>(_gameRef->_renderer3D);
+	renderer->setProjection2D();
 
 	glEnableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -151,22 +153,22 @@ bool ShadowVolumeOpenGL::renderToScene() {
 
 //////////////////////////////////////////////////////////////////////////
 bool ShadowVolumeOpenGL::initMask() {
-	Rect32 viewport = _gameRef->_renderer->getViewPort();
+	DXViewport viewport = _gameRef->_renderer3D->getViewPort();
 
-	_shadowMask[0].x = viewport.left;
-	_shadowMask[0].y = viewport.bottom;
+	_shadowMask[0].x = viewport._x;
+	_shadowMask[0].y = viewport._height;
 	_shadowMask[0].z = 0.0f;
 
-	_shadowMask[1].x = viewport.left;
-	_shadowMask[1].y = viewport.top;
+	_shadowMask[1].x = viewport._x;
+	_shadowMask[1].y = viewport._y;
 	_shadowMask[1].z = 0.0f;
 
-	_shadowMask[2].x = viewport.right;
-	_shadowMask[2].y = viewport.bottom;
+	_shadowMask[2].x = viewport._width;
+	_shadowMask[2].y = viewport._height;
 	_shadowMask[2].z = 0.0f;
 
-	_shadowMask[3].x = viewport.right;
-	_shadowMask[3].y = viewport.top;
+	_shadowMask[3].x = viewport._width;
+	_shadowMask[3].y = viewport._y;
 	_shadowMask[3].z = 0.0f;
 
 	byte a = RGBCOLGetA(_color);

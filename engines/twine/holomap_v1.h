@@ -23,9 +23,10 @@
 #define TWINE_HOLOMAPV1_H
 
 #include "twine/holomap.h"
+#include "twine/shared.h"
 
 #define NUM_HOLOMAPCOLORS 32
-#define HOLOMAP_PALETTE_INDEX 192
+#define HOLOMAP_PALETTE_INDEX (12*16)
 
 namespace TwinE {
 
@@ -66,26 +67,26 @@ private:
 	// float _distanceModifier = 1.0f;
 
 	int32 _numHoloPos = 0;
-	Location _listHoloPos[MAX_HOLO_POS_2];
+	Location _listHoloPos[MAX_HOLO_POS];
 
-	int32 _holomapPaletteIndex = 0;
-	uint8 _paletteHolomap[NUMOFCOLORS * 3]{0};
+	int32 _rotPalPos = 0;
+	uint8 _rotPal[NUMOFCOLORS * 3]{0};
 
-	void drawHolomapText(int32 centerx, int32 top, const char *title);
+	void drawTitle(int32 centerx, int32 top, const char *title);
 	int32 searchNextArrow(int32 num) const;
 	int32 searchPrevArrow(int32 num) const;
-
+	void drawCursor(); // DrawCurseur
 	void drawListPos(int xRot, int yRot, int zRot, bool lower);
 
 	/**
 	 * Renders a holomap path with single path points appearing slowly one after another
 	 */
-	void drawHoloObj(const IVec3 &angle, int32 x, int32 y);
+	void drawHoloObj(const IVec3 &angle, int32 x, int32 y, int16 size);
 	void computeCoorGlobe(Common::SeekableReadStream *holomapSurfaceStream);
 	void computeCoorMapping();
 	void computeGlobeProj();
 	void drawHoloMap(uint8 *holomapImage, uint32 holomapImageSize);
-	void renderHolomapVehicle(uint &frameNumber, ActorMoveStruct &move, AnimTimerDataStruct &animTimerData, BodyData &bodyData, AnimData &animData);
+	void renderHolomapVehicle(uint &frameNumber, RealValue &move, AnimTimerDataStruct &animTimerData, BodyData &bodyData, AnimData &animData);
 
 	/**
 	 * Controls the size/zoom of the holomap planet
@@ -96,6 +97,20 @@ private:
 public:
 	HolomapV1(TwinEEngine *engine) : Super(engine) {}
 	virtual ~HolomapV1() = default;
+
+	int32 _current = 0;
+	int32 _otimer = 0;
+	int32 _dalpha = 0;
+	int32 _dbeta = 0;
+	int32 _calpha = 0;
+	int32 _cbeta = 0;
+	int32 _cgamma = 0;
+	int32 _oalpha = 0;
+	int32 _obeta = 0;
+	bool _automove = false;
+	bool _flagredraw = false;
+	bool _dialstat = false;
+	bool _flagpal = false;
 
 	/**
 	 * Set Holomap location position
@@ -113,7 +128,7 @@ public:
 	 */
 	void clrHoloPos(int32 locationIdx) override;
 
-	void drawHolomapTrajectory(int32 trajectoryIndex) override;
+	void holoTraj(int32 trajectoryIndex) override;
 
 	/** Load Holomap content */
 	void initHoloDatas() override;

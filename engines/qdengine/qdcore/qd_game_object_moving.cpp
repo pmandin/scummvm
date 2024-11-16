@@ -276,7 +276,11 @@ bool qdGameObjectMoving::save_script_body(Common::WriteStream &fh, int indent) c
 	for (int i = 0; i <= indent; i++) {
 		fh.writeString("\t");
 	}
-	fh.writeString(Common::String::format("<control>%d</control>\r\n", _control_types));
+
+	if (debugChannelSet(-1, kDebugLog))
+		fh.writeString(Common::String::format("<control>%s</control>\r\n", control2str(_control_types).c_str()));
+	else
+		fh.writeString(Common::String::format("<control>%d</control>\r\n", _control_types));
 
 	return true;
 }
@@ -755,14 +759,17 @@ Vect3f qdGameObjectMoving::get_future_r(float dt, bool &end_movement, bool real_
 				dr.normalize(dist);
 				r = R() + dr;
 			}
-		} else if (_impulse_timer > FLT_EPS || has_control_type(CONTROL_AUTO_MOVE)) {
+		} else if (_impulse_timer > FLT_EPS || g_engine->_gameVersion < 20050223 || has_control_type(CONTROL_AUTO_MOVE)) {
 			float time = dt;
-			if (!has_control_type(CONTROL_AUTO_MOVE)) {
+			if ((g_engine->_gameVersion < 20050223 && _impulse_timer > FLT_EPS) ||
+				(g_engine->_gameVersion > 20050223 && !has_control_type(CONTROL_AUTO_MOVE)) ){
 				if (_impulse_timer < dt) {
 					time = _impulse_timer;
 					if (real_moving)
 						_impulse_timer = 0.0f;
-					end_movement = true;
+
+					if (g_engine->_gameVersion > 20050223 || !has_control_type(CONTROL_AUTO_MOVE))
+						end_movement = true;
 				} else if (real_moving)
 					_impulse_timer -= dt;
 			}
@@ -1039,8 +1046,6 @@ bool qdGameObjectMoving::update_screen_pos() {
 				qdGameObjectStateWalk::OffsetType offs_type = qdGameObjectStateWalk::OFFSET_WALK;
 				switch (_movement_mode) {
 				case MOVEMENT_MODE_STOP:
-					offs_type = qdGameObjectStateWalk::OFFSET_STATIC;
-					break;
 				case MOVEMENT_MODE_TURN:
 					offs_type = qdGameObjectStateWalk::OFFSET_STATIC;
 					break;
@@ -1050,7 +1055,7 @@ bool qdGameObjectMoving::update_screen_pos() {
 				case MOVEMENT_MODE_MOVE:
 					offs_type = qdGameObjectStateWalk::OFFSET_WALK;
 					break;
-			case MOVEMENT_MODE_END:
+				case MOVEMENT_MODE_END:
 					offs_type = qdGameObjectStateWalk::OFFSET_END;
 					break;
 				}
@@ -1800,7 +1805,8 @@ bool qdGameObjectMoving::load_data(Common::SeekableReadStream &fh, int save_vers
 	_circuit_objs.clear();
 	for (int i = 0; i < num; i++) {
 		qdNamedObjectReference circ_ref;
-		circ_ref.load_data(fh, save_version);
+		if (!circ_ref.load_data(fh, save_version))
+			return false;
 		_circuit_objs.push_back(dynamic_cast<qdGameObjectMoving *>(
 		                            qdGameDispatcher::get_dispatcher()->get_named_object(&circ_ref)));
 	}
@@ -2702,4 +2708,63 @@ bool qdGameObjectMoving::get_debug_info(Common::String &buf) const {
 #endif
 	return true;
 }
+
+#define defFlag(x) { qdGameObjectMoving::x, #x }
+
+struct FlagsList {
+	int f;
+	const char *s;
+} static controlList[] = {
+	defFlag(CONTROL_MOUSE),
+	defFlag(CONTROL_KEYBOARD),
+	defFlag(CONTROL_COLLISION),
+	defFlag(CONTROL_AVOID_COLLISION),
+	defFlag(CONTROL_AUTO_MOVE),
+	defFlag(CONTROL_CLEAR_PATH),
+	defFlag(CONTROL_FOLLOW_ACTIVE_PERSONAGE),
+	defFlag(CONTROL_REPEAT_ACTIVE_PERSONAGE_MOVEMENT),
+	defFlag(CONTROL_ATTACHMENT_WITH_DIR_REL),
+	defFlag(CONTROL_ATTACHMENT_WITHOUT_DIR_REL),
+	defFlag(CONTROL_ATTACHMENT_TO_ACTIVE_WITH_MOVING),
+	defFlag(CONTROL_ACTIVE_CLICK_REACTING),
+	defFlag(CONTROL_ANIMATED_ROTATION),
+};
+
+Common::String qdGameObjectMoving::control2str(int fl, bool truncate) {
+	Common::String res;
+
+	for (int i = 0; i < ARRAYSIZE(controlList); i++) {
+		if (fl & controlList[i].f) {
+			if (!res.empty())
+				res += " | ";
+
+			res += &controlList[i].s[truncate ? 8 : 0];
+
+			fl &= ~controlList[i].f;
+		}
+	}
+
+	if (fl)
+		res += Common::String::format(" | %x", fl);
+
+	return res;
+}
+
+#define defEnum(x) #x
+
+static const char *movementList[] = {
+	defEnum(MOVEMENT_MODE_STOP),
+	defEnum(MOVEMENT_MODE_TURN),
+	defEnum(MOVEMENT_MODE_START),
+	defEnum(MOVEMENT_MODE_MOVE),
+	defEnum(MOVEMENT_MODE_END),
+};
+
+Common::String qdGameObjectMoving::movement2str(int fl, bool truncate) {
+	if (fl >= ARRAYSIZE(movementList) || fl < 0)
+		return Common::String::format("<%d>", fl);
+
+	return Common::String(&movementList[fl][truncate ? 14 : 0]);
+}
+
 } // namespace QDEngine

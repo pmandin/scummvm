@@ -136,13 +136,10 @@ void OpenGLShaderRenderer::drawTexturedRect2D(const Common::Rect &screenRect, co
 	_bitmapShader->unbind();
 }
 
-void OpenGLShaderRenderer::updateProjectionMatrix(float fov, float yminValue, float ymaxValue, float nearClipPlane, float farClipPlane) {
-	// Determining xmaxValue and ymaxValue still needs some work for matching the 3D view in freescape games
-	/*float aspectRatio = _screenW / (float)_screenH;
-	float xmaxValue = nearClipPlane * tan(Common::deg2rad(fov) / 2);
+void OpenGLShaderRenderer::updateProjectionMatrix(float fov, float aspectRatio, float nearClipPlane, float farClipPlane) {
+	float xmaxValue = nearClipPlane * tan(Math::deg2rad(fov) / 2);
 	float ymaxValue = xmaxValue / aspectRatio;
-	_projectionMatrix = Math::makeFrustumMatrix(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);*/
-	_projectionMatrix = Math::makeFrustumMatrix(1.5, -1.5, yminValue, ymaxValue, nearClipPlane, farClipPlane);
+	_projectionMatrix = Math::makeFrustumMatrix(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);
 }
 
 void OpenGLShaderRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest) {
@@ -468,14 +465,22 @@ void OpenGLShaderRenderer::setStippleData(byte *data) {
 void OpenGLShaderRenderer::useStipple(bool enabled) {
 	_triangleShader->use();
 	if (enabled) {
+		GLfloat factor = 0;
+		glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &factor);
 		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(0.0f, -1.0f);
-		_triangleShader->setUniform("useStipple", true);
+		glPolygonOffset(factor - 1.0f, -1.0f);
+		if (_renderMode == Common::kRenderZX    ||
+			_renderMode == Common::kRenderCPC   ||
+			_renderMode == Common::kRenderCGA   ||
+			_renderMode == Common::kRenderHercG)
+			setStippleData((byte *)_variableStippleArray);
+		else
+			setStippleData(_defaultStippleArray);
 	} else {
 		glPolygonOffset(0, 0);
 		glDisable(GL_POLYGON_OFFSET_FILL);
-		_triangleShader->setUniform("useStipple", false);
 	}
+	_triangleShader->setUniform("useStipple", enabled);
 }
 
 void OpenGLShaderRenderer::useColor(uint8 r, uint8 g, uint8 b) {

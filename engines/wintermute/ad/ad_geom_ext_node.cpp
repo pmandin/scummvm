@@ -44,6 +44,7 @@ AdGeomExtNode::AdGeomExtNode(BaseGame *inGame) : BaseClass(inGame) {
 //////////////////////////////////////////////////////////////////////////
 AdGeomExtNode::~AdGeomExtNode() {
 	delete[] _namePattern;
+	_namePattern = nullptr;
 }
 
 TOKEN_DEF_START
@@ -139,7 +140,7 @@ bool AdGeomExtNode::setupNode(const char *namePattern, TGeomNodeType type, bool 
 
 //////////////////////////////////////////////////////////////////////////
 bool AdGeomExtNode::matchesName(const char *name) {
-	return Common::matchString(name, _namePattern);
+	return BaseUtils::matchesPattern(_namePattern, name);
 }
 
 } // namespace Wintermute

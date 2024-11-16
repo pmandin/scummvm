@@ -28,9 +28,47 @@ namespace Riddle {
 namespace Rooms {
 
 void Room634::init() {
+	switch (_G(game).previous_room) {
+	case KERNEL_RESTORING_GAME:
+		digi_preload("950_s28c");
+		break;
+
+	case 629:
+		ws_demand_location(372, 342, 1);
+		break;
+
+	case 633:
+		ws_demand_location(-30, 310, 3);
+		ws_walk(30, 310, nullptr, 1, 3);
+		player_set_commands_allowed(false);
+		break;
+
+	case 635:
+		ws_demand_location(670, 310, 9);
+		ws_walk(605, 310, nullptr, 1, 9);
+		player_set_commands_allowed(false);
+		break;
+
+	case 640:
+		ws_demand_location(365, 267, 5);
+		break;
+
+	default:
+		digi_preload("950_s28c");
+		ws_demand_location(372, 342, 1);
+		break;
+	}
+
+	digi_play_loop("950_28c", 3);
 }
 
-void Room634::daemon() {
+void Room634::parser() {
+	Maze::parser();
+
+	checkExitLeft(633);
+	checkExitRight(635);
+	checkExitUp(640);
+	checkExitDown(629);
 }
 
 } // namespace Rooms

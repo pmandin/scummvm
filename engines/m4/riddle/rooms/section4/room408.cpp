@@ -23,6 +23,7 @@
 #include "m4/riddle/rooms/section4/section4.h"
 #include "m4/graphics/gr_series.h"
 #include "m4/riddle/vars.h"
+#include "m4/riddle/riddle.h"
 
 namespace M4 {
 namespace Riddle {
@@ -93,7 +94,7 @@ void Room408::init() {
 				_val9 = 2200;
 				_wolf = series_load("WOLF CLPNG LOOP LOOKS TO SIDE");
 				_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0xd00, 0,
-					triggerMachineByHashCallbackNegative, "WOLFIE");
+					triggerMachineByHashCallback, "WOLFIE");
 				sendWSMessage_10000(1, _wolfie, _wolf, 1, 10, 110, _wolf, 10, 10, 0);
 			}
 
@@ -111,7 +112,7 @@ void Room408::init() {
 					hotspot_set_active("WOLF", true);
 					_wolf = series_load("WOLF CLPNG LOOP LOOKS TO SIDE");
 					_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0xd00, 0,
-						triggerMachineByHashCallbackNegative, "WOLFIE");
+						triggerMachineByHashCallback, "WOLFIE");
 					sendWSMessage_10000(1, _wolfie, _wolf, 1, 10, 110, _wolf, 10, 10, 0);
 					_val8 = 2001;
 					_val9 = 2200;
@@ -142,7 +143,7 @@ void Room408::init() {
 			ws_hide_walker();
 
 			_exit = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0, 0,
-				triggerMachineByHashCallbackNegative, "RIP ENTERS from GIZMO");
+				triggerMachineByHashCallback, "RIP ENTERS from GIZMO");
 			sendWSMessage_10000(1, _exit, _ripExits, 1, 75, 40, _ripExits, 75, 75, 0);
 			digi_play("408_s01", 2);
 			break;
@@ -161,7 +162,7 @@ void Room408::init() {
 				hotspot_set_active("WOLF", true);
 				_wolf = series_load("WOLF CLPNG LOOP LOOKS TO SIDE");
 				_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0xd00, 0,
-					triggerMachineByHashCallbackNegative, "WOLFIE");
+					triggerMachineByHashCallback, "WOLFIE");
 				sendWSMessage_10000(1, _wolfie, _wolf, 1, 10, 110, _wolf, 10, 10, 0);
 				_val8 = 2001;
 				_val9 = 2200;
@@ -241,10 +242,10 @@ void Room408::daemon() {
 				player_update_info();
 				_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 					_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "rip talks wolf");
+					triggerMachineByHashCallback, "rip talks wolf");
 				_ripleyShadow = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 					_G(player_info).x, _G(player_info).y, _G(player_info).scale, 0x100, 0,
-					triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+					triggerMachineByHashCallback, "rip talks wolf SHADOW");
 
 				sendWSMessage_10000(1, _ripley, _ripHandsBehindBack, 1, 15, 102,
 					_ripHandsBehindBack, 15, 15, 0);
@@ -401,10 +402,10 @@ void Room408::daemon() {
 		player_update_info();
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale,
-			0x100, 0, triggerMachineByHashCallbackNegative, "rip talks wolf");
+			0x100, 0, triggerMachineByHashCallback, "rip talks wolf");
 		_ripleyShadow = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale,
-			0x100, 0, triggerMachineByHashCallbackNegative, "rip talks wolf SHADOW");
+			0x100, 0, triggerMachineByHashCallback, "rip talks wolf SHADOW");
 
 		sendWSMessage_10000(1, _ripleyShadow, _ripShadowSeries, 1, 1, -1,
 			_ripShadowSeries, 1, 1, 0);
@@ -439,7 +440,7 @@ void Room408::daemon() {
 		break;
 
 	case 300:
-		_wolfWalker = triggerMachineByHash_3000(8, 8, S4_NORMAL_DIRS, S4_SHADOW_DIRS,
+		_wolfWalker = triggerMachineByHash_3000(8, 8, *S4_NORMAL_DIRS, *S4_SHADOW_DIRS,
 			-20, 345, 3, triggerMachineByHashCallback3000, "WOLF_WALKER");
 		sendWSMessage_10000(_wolfWalker, 660, 345, 9, -1, 0);
 		kernel_timing_trigger(400, 302);
@@ -618,7 +619,7 @@ void Room408::parser() {
 	} else if (lookFlag && player_said("TOPIARY")) {
 		digi_play("408r02", 1);
 	} else if (lookFlag && player_said("SUNDIAL")) {
-		digi_play(player_been_here(408) ? "408r32" : "408r04", 1);
+		digi_play(player_been_here(407) ? "408r32" : "408r04", 1);
 	} else if (lookFlag && player_said_any("BUSH", "BUSH ")) {
 		digi_play("408r05", 1);
 	} else if (lookFlag && player_said("PLANK") && inv_object_is_here("PLANK")) {
@@ -735,9 +736,9 @@ void Room408::parser() {
 			digi_play("com016", 1);
 		} else if (_G(kernel).trigger == 6) {
 			_G(flags)[kCastleCartoon] = 1;
-			sendWSMessage_multi("com015");
+			sketchInJournal("com015");
 		} else {
-			sendWSMessage_multi("com015");
+			sketchInJournal("com015");
 		}
 	} else if (lookFlag && player_said(" ")) {
 		digi_play("408r01", 1);

@@ -34,6 +34,7 @@
 #include "graphics/framelimiter.h"
 
 #include "freescape/area.h"
+#include "freescape/font.h"
 #include "freescape/gfx.h"
 #include "freescape/objects/entrance.h"
 #include "freescape/objects/geometricobject.h"
@@ -57,7 +58,7 @@ enum CameraMovement {
 	kRightMovement
 };
 
-enum FREESCAPEAction {
+enum FreescapeAction {
 	kActionNone,
 	kActionEscape,
 	kActionSave,
@@ -68,7 +69,6 @@ enum FREESCAPEAction {
 	kActionMoveLeft,
 	kActionMoveRight,
 	kActionShoot,
-	kActionRunMode,
 	kActionChangeAngle,
 	kActionChangeStepSize,
 	kActionToggleRiseLower,
@@ -93,6 +93,9 @@ enum FREESCAPEAction {
 	// Total Eclipse
 	kActionRest,
 	// Castle
+	kActionRunMode,
+	kActionWalkMode,
+	kActionCrawlMode,
 	kActionSelectPrince,
 	kActionSelectPrincess,
 };
@@ -106,6 +109,7 @@ enum {
 	kFreescapeDebugParser = 1 << 1,
 	kFreescapeDebugCode = 1 << 2,
 	kFreescapeDebugMedia = 1 << 4,
+	kFreescapeDebugGroup = 1 << 5,
 };
 
 enum GameStateControl {
@@ -184,6 +188,7 @@ public:
 	void drawFullscreenSurface(Graphics::Surface *surface);
 	virtual void loadBorder();
 	virtual void processBorder();
+	void waitInLoop(int maxWait);
 	void drawBorder();
 	void drawTitle();
 	virtual void drawBackground();
@@ -238,7 +243,7 @@ public:
 
 	Common::Archive *_dataBundle;
 	void loadDataBundle();
-	Graphics::Surface *loadBundledImage(const Common::String &name);
+	Graphics::Surface *loadBundledImage(const Common::String &name, bool appendRenderMode = true);
 	byte *getPaletteFromNeoImage(Common::SeekableReadStream *stream, int offset);
 	Graphics::ManagedSurface *loadAndConvertNeoImage(Common::SeekableReadStream *stream, int offset, byte *palette = nullptr);
 	Graphics::ManagedSurface *loadAndCenterScrImage(Common::SeekableReadStream *stream);
@@ -329,7 +334,7 @@ public:
 	void changeStepSize();
 
 	void changeAngle();
-	void rise();
+	bool rise();
 	void lower();
 	bool checkFloor(Math::Vector3d currentPosition);
 	bool tryStepUp(Math::Vector3d currentPosition);
@@ -391,7 +396,8 @@ public:
 	// Instructions
 	bool checkConditional(FCLInstruction &instruction, bool shot, bool collided, bool timer, bool activated);
 	bool checkIfGreaterOrEqual(FCLInstruction &instruction);
-	void executeExecute(FCLInstruction &instruction);
+	bool checkIfLessOrEqual(FCLInstruction &instruction);
+	void executeExecute(FCLInstruction &instruction, bool shot, bool collided, bool activated);
 	void executeIncrementVariable(FCLInstruction &instruction);
 	void executeDecrementVariable(FCLInstruction &instruction);
 	void executeSetVariable(FCLInstruction &instruction);
@@ -479,8 +485,6 @@ public:
 	Math::Vector3d _scaleVector;
 	float _nearClipPlane;
 	float _farClipPlane;
-	float _yminValue;
-	float _ymaxValue;
 
 	// Text messages and Fonts
 	void insertTemporaryMessage(const Common::String message, int deadline);
@@ -504,11 +508,14 @@ public:
 	void drawFullscreenMessage(Common::String message, uint32 front, Graphics::Surface *surface);
 
 	// Font loading and rendering
-	void loadFonts(Common::SeekableReadStream *file, int offset, Common::BitArray &font);
+	void loadFonts(Common::SeekableReadStream *file, int offset);
 	void loadFonts(byte *font, int charNumber);
+	Common::Array<Graphics::ManagedSurface *> getChars(Common::SeekableReadStream *file, int offset, int charsNumber);
+	Common::Array<Graphics::ManagedSurface *> getCharsAmigaAtariInternal(int sizeX, int sizeY, int additional, int m1, int m2, Common::SeekableReadStream *file, int offset, int charsNumber);
+	Common::Array<Graphics::ManagedSurface *> getCharsAmigaAtari(Common::SeekableReadStream *file, int offset, int charsNumber);
 	Common::StringArray _currentAreaMessages;
 	Common::StringArray _currentEphymeralMessages;
-	Common::BitArray _font;
+	Font _font;
 	bool _fontLoaded;
 	virtual void drawStringInSurface(const Common::String &str, int x, int y, uint32 fontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0);
 	virtual void drawStringInSurface(const Common::String &str, int x, int y, uint32 primaryFontColor, uint32 secondaryFontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0);
@@ -523,6 +530,7 @@ public:
 
 	StateVars _gameStateVars;
 	uint32 _gameStateBits;
+	void checkIfPlayerWasCrushed();
 	virtual bool checkIfGameEnded();
 	virtual void endGame();
 	int _endGameDelayTicks;

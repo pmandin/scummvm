@@ -636,7 +636,7 @@ void OpenGLGraphicsManager::updateScreen() {
 	int rotation = getRotationMode();
 	int rotatedWidth = _windowWidth;
 	int rotatedHeight = _windowHeight;
-			
+
 	if (rotation == Common::kRotation90 || rotation == Common::kRotation270) {
 		rotatedWidth = _windowHeight;
 		rotatedHeight = _windowWidth;
@@ -914,15 +914,11 @@ void OpenGLGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int 
 
 	Graphics::PixelFormat inputFormat;
 	Graphics::PixelFormat maskFormat;
-#ifdef USE_RGB_COLOR
 	if (format) {
 		inputFormat = *format;
 	} else {
 		inputFormat = Graphics::PixelFormat::createFormatCLUT8();
 	}
-#else
-	inputFormat = Graphics::PixelFormat::createFormatCLUT8();
-#endif
 
 #ifdef USE_SCALERS
 	bool wantScaler = (_currentState.scaleFactor > 1) && !dontScale && _scalerPlugins[_currentState.scalerIndex]->get<ScalerPluginObject>().canDrawCursor();

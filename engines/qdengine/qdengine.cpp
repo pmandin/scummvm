@@ -134,6 +134,12 @@ Common::Error QDEngineEngine::run() {
 	Common::String firstFileName;
 	Common::String script_name;
 
+
+	if (getFeatures() & GF_BROKEN_VIDEOS)
+		warning("YEEEEES");
+
+	warning("%s, %x", _gameDescription->filesDescriptions[0].md5, getFeatures());
+
 	if (p) {
 		firstFileName = p->getFileName();
 		script_name = firstFileName.c_str();
@@ -414,6 +420,8 @@ static int detectVersion(Common::String gameID) {
 		return 20030919;		// QDSCR_GAME_TITLE = 182, 06b1cf45d (repo-vss)
 	} else if (gameID == "nupogodi3" && g_engine->getLanguage() == Common::RU_RUS) {
 		return 20031014;		// QDSCR_TEXT_DB = 184, d864cc279 (repo-vss)
+	} else if (gameID == "nupogodi3" && g_engine->getLanguage() == Common::CS_CZE) {
+		return 20031014;		// QDSCR_TEXT_DB = 184, d864cc279 (repo-vss)
 	} else if (gameID == "nupogodi3" && g_engine->getLanguage() == Common::LT_LTU) {
 		return 20031206;		// QDSCR_TEXT_DB = 185
 	} else if (gameID == "pilots3") {
@@ -428,6 +436,8 @@ static int detectVersion(Common::String gameID) {
 		return 20050101;		// QDSCR_GLOBAL_DEPEND = 214
 	} else if (gameID == "maski") {
 		return 20060129;		// QDSCR_GAME_TITLE = 214, 54bcf92 (repo-git)
+	} else if (gameID == "3mice1" && (g_engine->getFeatures() & ADGF_DEMO)) {
+		return 20060129;		// QDSCR_SCREEN_TRANSFORM = 232
 	} else if (gameID == "3mice1") {
 		return 20060715;		// QDSCR_SCREEN_TRANSFORM = 232
 	} else if (gameID == "shveik") {

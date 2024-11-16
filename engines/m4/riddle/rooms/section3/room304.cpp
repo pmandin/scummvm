@@ -81,7 +81,8 @@ void Room304::init() {
 			digi_preload("304_s04");
 			player_set_commands_allowed(false);
 
-			_val2 = _val3 = _val4 = 0;
+			_useSword = _useHandlingStick = false;
+			_val4 = 0;
 			ws_demand_location(452, 285, 9);
 			kernel_timing_trigger(1, 49);
 			_trunk = series_show_sprite("one frame trunk", 0, 0);
@@ -100,7 +101,7 @@ void Room304::init() {
 			_mei3 = series_load("MEI CHEN NY WALKER POS4");
 			_G(globals)[GLB_TEMP_5] = _mei3 << 24;
 
-			_machine1 = TriggerMachineByHash(32, nullptr, -1, -1, intrMsgNull, false, "MACHINE mc");
+			_mei = TriggerMachineByHash(32, nullptr, -1, -1, intrMsgNull, false, "MACHINE mc");
 
 			LoadWSAssets("304 FL SN SCRIPT", _G(master_palette));
 			AddWSAssetCELS("test3", 2, nullptr);
@@ -154,7 +155,7 @@ void Room304::daemon() {
 
 void Room304::pre_parser() {
 	bool takeFlag = player_said("take");
-	bool gearFlag = player_said("gear");
+	bool useFlag = player_said("gear");
 
 	if (_flag1) {
 		terminateMachineAndNull(_machine3);
@@ -164,31 +165,32 @@ void Room304::pre_parser() {
 		interface_show();
 	}
 
+	// At the very start of the game, you can't freely move around
+	// the room until the Cobra has been dealt with
 	if (_G(flags)[V001]) {
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+		_G(player).resetWalk();
 
-		if ((takeFlag || gearFlag) && player_said("samurai sword")) {
+		if ((takeFlag || useFlag) && player_said("samurai sword")) {
 			player_set_commands_allowed(false);
-			_val2 = 1;
+			_useSword = true;
 			digi_preload("304_s10");
 			digi_preload("304_s05");
 			_cutSnake = series_load("CUT SNAKE");
 			sendWSMessage(0xa0000, 0, _machine2, 0, nullptr, 1);
 		}
 
-		if ((takeFlag || gearFlag) && player_said("handling stick")) {
+		if ((takeFlag || useFlag) && player_said("handling stick")) {
 			digi_preload("304_s03");
 			digi_preload("304_s08");
 			digi_preload("304_s02");
 			digi_preload("304_s11");
+			_useHandlingStick = true;
 		}
 	}
 }
 
 void Room304::parser() {
-	bool lookFlag = player_said_any("look", "look any");
+	bool lookFlag = player_said_any("look", "look at");
 	bool takeFlag = player_said("take");
 	bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
 
@@ -273,11 +275,11 @@ void Room304::parser() {
 			digi_play("304r64", 1);
 		}
 	} else if (_G(flags)[V001] && (takeFlag || useFlag) && player_said("handling stick")) {
-		// This is such an enormous switch in the original that
-		// it's been refactored to it's own method
-		handlingStick();
+		// Catching snake with the handling stick, or killing it
+		// with the sword
+		handlingStickAndSword();
 	
-	} if (lookFlag && player_said_any("native mask", "shield")) {
+	} else if (lookFlag && player_said_any("native mask", "shield")) {
 		digi_play("304r05", 1);
 	} else if (lookFlag && player_said("mailbag")) {
 		digi_play("304r15", 1);
@@ -414,27 +416,28 @@ void Room304::intrMsg(frac16 myMessage, struct machine *sender) {
 
 			digi_play("304_s06", 1);
 			r->_val4 = 1;
-			sendWSMessage(0x200000, 0, r->_machine1, 0, nullptr, 1);
+			sendWSMessage(0x200000, 0, r->_mei, 0, nullptr, 1);
 			return;
 		}
 
-		if (r->_val3) {
+		if (r->_useHandlingStick) {
 			ws_demand_location(382, 295);
+			ws_hide_walker();
 			player_set_commands_allowed(false);
 			terminateMachineAndNull(r->_machine2);
 			terminateMachineAndNull(r->_stick);
 			digi_stop(1);
 			terminateMachineAndNull(r->_trunk);
 
-			r->_handle = series_stream("SNAKE HANDLE", 5, 0, 17);
-			series_stream_break_on_frame(r->_handle, 10, 13);
-			sendWSMessage(0x200000, 0, r->_machine1, 0, nullptr, 1);
+			r->_safe3 = series_stream("SNAKE HANDLE", 5, 0, 17);
+			series_stream_break_on_frame(r->_safe3, 10, 13);
+			sendWSMessage(0x200000, 0, r->_mei, 0, nullptr, 1);
 			_G(flags)[V084] = 2;
 			return;
 		}
 	}
 
-	if ((myMessage >> 16) == 58 && r->_val2) {
+	if ((myMessage >> 16) == 58 && r->_useSword) {
 		ws_demand_location(382, 295);
 		ws_hide_walker();
 		player_set_commands_allowed(false);
@@ -446,30 +449,31 @@ void Room304::intrMsg(frac16 myMessage, struct machine *sender) {
 		series_ranged_play("CUT SNAKE", 1, 0, 0, 10, 100, 0x200, 4, 11);
 		_G(kernel).trigger_mode = oldMode;
 
-		sendWSMessage(0x200000, 0, r->_machine1, 0, nullptr, 1);
+		sendWSMessage(0x200000, 0, r->_mei, 0, nullptr, 1);
 		_G(flags)[V084] = 1;
 	}
 }
 
-void Room304::handlingStick() {
+void Room304::handlingStickAndSword() {
 	switch (_G(kernel).trigger) {
 	case 13:
-		series_stream_break_on_frame(_field64, 29, 14);
+		series_stream_break_on_frame(_safe3, 29, 14);
 		digi_play("304_s03", 1);
 		break;
 	case 14:
-		series_stream_break_on_frame(_field64, 106, 15);
+		series_stream_break_on_frame(_safe3, 106, 15);
 		digi_play("304_s08", 1);
 		break;
 	case 15:
-		series_stream_break_on_frame(_field64, 111, 16);
+		series_stream_break_on_frame(_safe3, 111, 16);
 		digi_play("304_s02", 1);
 		break;
 	case 16:
-		series_stream_break_on_frame(_field64, 145, 19);
+		series_stream_break_on_frame(_safe3, 145, 19);
 		midi_stop();
 		digi_play("304_s11", 1);
 		break;
+
 	case 17:
 		if (_G(flags)[V084] == 1) {
 			digi_unload("304_s10");
@@ -482,13 +486,13 @@ void Room304::handlingStick() {
 			digi_unload("304_s11");
 		}
 
-		terminateMachineAndNull(_machine1);
+		terminateMachineAndNull(_mei);
 		series_unload(_mei1);
 		series_unload(_mei2);
 
 		ws_unhide_walker();
 		player_update_info();
-		ws_demand_location(_G(player_info).x + 28,
+		ws_demand_location(_G(player_info).x - 28,
 			_G(player_info).y + 9);
 
 		ws_walk_load_walker_series(S3_NORMAL_DIRS2, S3_NORMAL_NAMES2);
@@ -497,14 +501,14 @@ void Room304::handlingStick() {
 		_headUp1 = series_load("fl returns to head up");
 		_headUp2 = series_ranged_play("fl returns to head up",
 			1, 0, 0, 0, 100, 0x100, 250, 31);
-		_machine1 = triggerMachineByHash_3000(8, 3, S3_NORMAL_DIRS2, S3_SHADOW_DIRS2,
+		_mei = triggerMachineByHash_3000(8, 3, *S3_NORMAL_DIRS2, *S3_SHADOW_DIRS2,
 			464, 283, 8, triggerMachineByHashCallback3000, "mc");
-		ws_demand_facing(8);
+		ws_demand_facing(_mei, 8);
 		kernel_timing_trigger(1, 74);
 		break;
 
 	case 18:
-		sendWSMessage_10000(_machine1, 73, 275, 3, 20, 0);
+		sendWSMessage_10000(_mei, 73, 275, 3, 20, 0);
 		break;
 
 	case 19:
@@ -512,7 +516,7 @@ void Room304::handlingStick() {
 		break;
 
 	case 20:
-		sendWSMessage_10000(_machine1, 29, 295, 3, 21, 1);
+		sendWSMessage_10000(_mei, 29, 295, 3, 21, 1);
 		break;
 
 	case 21:
@@ -521,7 +525,7 @@ void Room304::handlingStick() {
 		series_unload(_headUp1);
 
 		_headUp1 = series_load("lf talk 1");
-		ws_hide_walker(_machine1);
+		ws_hide_walker(_mei);
 		series_unload(221);
 		series_unload(222);
 
@@ -533,20 +537,20 @@ void Room304::handlingStick() {
 		break;
 
 	case 22:
-		ws_unhide_walker(_machine1);
+		ws_unhide_walker(_mei);
 		setGlobals1(_suit1, 1, 15, 15, 15, 1, 16, 19, 20, 23, 1);
 		sendWSMessage_110000(-1);
 
 		_headUp2 = series_ranged_play("MC UNTIES LF", -1, 0, 82, 82, 100, 0x200, 250);
 		setGlobals3(_suit2, 1, 24);
-		sendWSMessage_F0000(_machine1, 23);
+		sendWSMessage_F0000(_mei, 23);
 		digi_play("304m04", 1);
 		break;
 
 	case 23:
 		terminateMachineAndNull(_headUp2);
 		series_unload(_suit2);
-		series_ranged_play("MC UNITES LF", 1, 1, 83, 98, 100, 0xf05, 7, 25);
+		series_ranged_play("MC UNTIES LF", 1, 1, 83, 98, 100, 0xf05, 7, 25);
 		digi_play("304f02", 1);
 		break;
 
@@ -591,7 +595,7 @@ void Room304::handlingStick() {
 		break;
 
 	case 33:
-		_headUp2 = series_ranged_play("fl talk 1", -1, 0, 0, 0, 100, 0x200, 250);
+		_headUp2 = series_ranged_play("lf talk 1", -1, 0, 0, 0, 100, 0x200, 250);
 		break;
 
 	case 34:
@@ -612,14 +616,14 @@ void Room304::handlingStick() {
 		_headUp2 = series_ranged_play("lf talk 1", -1, 0, 0, 0, 100, 0x200, 250);
 		_suit3 = series_load("mc stand and talk pos3");
 		setGlobals1(_suit3, 1, 1, 1, 8, 1);
-		sendWSMessage_110000(_machine1, 38);
+		sendWSMessage_110000(_mei, 38);
 		digi_play("304m05", 1, 255, 38);
 		break;
 
 	case 38:
 		if (_ctr1 >= 1) {
 			_ctr1 = 0;
-			sendWSMessage_140000(_machine1, 39);
+			sendWSMessage_140000(_mei, 39);
 		} else {
 			++_ctr1;
 		}
@@ -635,7 +639,7 @@ void Room304::handlingStick() {
 		series_unload(_suit1);
 		_safe1 = series_load("rip opens safe part 1");
 		_safe2 = series_load("rip opens safe part 2");
-		ws_walk(510, 300, 0, 43, 3);
+		ws_walk(510, 300, nullptr, 43, 3);
 		digi_preload("304r51");
 		digi_play("304r51", 1, 255, 79);
 		break;
@@ -689,7 +693,7 @@ void Room304::handlingStick() {
 		digi_unload("304_f05");
 		digi_unload("304r52");
 		sendWSMessage_140000(-1);
-		ws_hide_walker();
+		ws_hide_walker(_mei);
 
 		_field60 = series_ranged_play_xy("mc hand to chin pos3",
 			1, 0, 0, 17, 29, 295, 100, 0x100, 9);
@@ -759,19 +763,19 @@ void Room304::handlingStick() {
 		break;
 
 	case 64:
-		ws_unhide_walker(_machine1);
+		ws_unhide_walker(_mei);
 		series_unload(_suit3);
 		break;
 
 	case 65:
 		setGlobals1(_suit3, 1, 10, 11, 16, 1, 17, 24, 1, 1, 1);
-		sendWSMessage_110000(_machine1, -1);
+		sendWSMessage_110000(_mei, -1);
 		digi_play("304m08", 1, 255, 66);
 		kernel_timing_trigger(60, 69);
 		break;
 
 	case 66:
-		sendWSMessage_120000(_machine1, -1);
+		sendWSMessage_120000(_mei, -1);
 		_G(game).setRoom(303);
 		break;
 
@@ -780,14 +784,14 @@ void Room304::handlingStick() {
 		break;
 
 	case 69:
-		ws_walk(458, 263, 0, -1, 2);
+		ws_walk(458, 263, nullptr, -1, 2);
 		kernel_timing_trigger(30, 678);
 		break;
 
 	case 71:
 		if (_ctr1 >= 1) {
 			_ctr1 = 0;
-			sendWSMessage_140000(72);
+			sendWSMessage_140000(_mei, 72);
 		} else {
 			++_ctr1;
 		}
@@ -798,8 +802,8 @@ void Room304::handlingStick() {
 		_suit1 = series_load("rip suit rt hand gest talk pos3");
 		setGlobals1(_suit1, 1, 11, 12, 15, 1);
 		sendWSMessage_110000(73);
-		digi_play(_val3 ? "304r24" : "304r23", 1, 255, 73);
-		sendWSMessage_10000(_machine1, 242, 274, 3, 18, 0);
+		digi_play(_useHandlingStick ? "304r24" : "304r23", 1, 255, 73);
+		sendWSMessage_10000(_mei, 242, 274, 3, 18, 0);
 		break;
 
 	case 73:
@@ -815,8 +819,8 @@ void Room304::handlingStick() {
 		_ctr1 = 0;
 		_suit3 = series_load("mei ny hands out talk pos4");
 		setGlobals1(_suit3, 1, 9, 10, 15, 1);
-		sendWSMessage_110000(71);
-		digi_play(_val3 ? "304m03" : "304m02", 1, 255, 71);
+		sendWSMessage_110000(_mei, 71);
+		digi_play(_useHandlingStick ? "304m03" : "304m02", 1, 255, 71);
 		break;
 
 	case 75:

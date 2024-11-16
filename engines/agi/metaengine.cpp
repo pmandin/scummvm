@@ -130,12 +130,24 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	},
 
 	{
-		GAMEOPTION_DISABLE_MOUSE,
+		GAMEOPTION_ENABLE_MOUSE,
 		{
 			_s("Mouse support"),
 			_s("Enables mouse support. Allows to use mouse for movement and in game menus."),
 			"mousesupport",
 			true,
+			0,
+			0
+		}
+	},
+
+	{
+		GAMEOPTION_ENABLE_PREDICTIVE_FOR_MOUSE,
+		{
+			_s("Predictive Input Dialog on mouse click"),
+			_s("Enables the assistive Predictive Input Dialog specifically for when clicking the left mouse button within text input fields.\nThe Predictive Input Dialog can still be activated on demand if there's a specified key mapping for it"),
+			"predictivedlgonmouseclick",
+			false,
 			0,
 			0
 		}
@@ -208,7 +220,7 @@ public:
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 
 	bool hasFeature(MetaEngineFeature f) const override;
@@ -306,9 +318,9 @@ SaveStateList AgiMetaEngine::listSaves(const char *target) const {
 	return saveList;
 }
 
-void AgiMetaEngine::removeSaveState(const char *target, int slot) const {
+bool AgiMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String fileName = Common::String::format("%s.%03d", target, slot);
-	g_system->getSavefileManager()->removeSavefile(fileName);
+	return g_system->getSavefileManager()->removeSavefile(fileName);
 }
 
 int AgiMetaEngine::getMaximumSaveSlot() const { return 999; }

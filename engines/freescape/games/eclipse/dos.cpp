@@ -31,13 +31,20 @@ namespace Freescape {
 extern byte kEGADefaultPalette[16][3];
 byte kEclipseCGAPaletteRedGreen[4][3] = {
 	{0x00, 0x00, 0x00},
-	{0x00, 0xff, 0xff},
-	{0xff, 0x00, 0xff},
+	{0x55, 0xff, 0x55},
+	{0xff, 0x55, 0x55},
+	{0xff, 0xff, 0x55},
+};
+
+byte kEclipseCGAPalettePinkBlue[4][3] = {
+	{0x00, 0x00, 0x00},
+	{0x55, 0xff, 0xff},
+	{0xff, 0x55, 0xff},
 	{0xff, 0xff, 0xff},
 };
 
 static const CGAPaletteEntry rawCGAPaletteByArea[] {
-	{1, (byte *)kEclipseCGAPaletteRedGreen},
+	{1, (byte *)kEclipseCGAPalettePinkBlue},
 	{2, (byte *)kEclipseCGAPaletteRedGreen},
 	{3, (byte *)kEclipseCGAPaletteRedGreen},
 	{4, (byte *)kEclipseCGAPaletteRedGreen},
@@ -91,9 +98,9 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 			error("Failed to open TOTEE.EXE");
 
 		loadMessagesFixedSize(&file, 0x710f, 16, 20);
-		loadSoundsFx(&file, 0xd670, 1);
+		loadSoundsFx(&file, 0xd670, 5);
 		loadSpeakerFxDOS(&file, 0x7396 + 0x200, 0x72a1 + 0x200);
-		loadFonts(&file, 0xd403, _font);
+		loadFonts(&file, 0xd403);
 		load8bitBinary(&file, 0x3ce0, 16);
 		for (auto &it : _areaMap) {
 			it._value->addStructure(_areaMap[255]);
@@ -121,8 +128,8 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 			error("Failed to open TOTEC.EXE");
 
 		loadMessagesFixedSize(&file, 0x594f, 16, 20);
-		load1bPCM(&file, 0xd038 - 4);
-		loadFonts(&file, 0xb785, _font);
+		loadSoundsFx(&file, 0xb9f0, 5);
+		loadFonts(&file, 0xb785);
 		load8bitBinary(&file, 0x2530, 4);
 		for (auto &it : _areaMap) {
 			it._value->addStructure(_areaMap[255]);
@@ -220,7 +227,7 @@ void EclipseEngine::loadSoundsFx(Common::SeekableReadStream *file, int offset, i
 		return;
 	}
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < number; i++) {
 		_soundsFx[i] = load1bPCM(file, offset);
 		offset += (_soundsFx[i]->size / 8) + 4;
 	}

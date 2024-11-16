@@ -58,7 +58,7 @@ public:
 	int getMaximumSaveSlot() const override;
 	SaveStateList listSaves(const char *target) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
 		if (!target)
 			target = getName();
@@ -94,20 +94,20 @@ Common::KeymapArray HugoMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	act->addDefaultInputMapping("KP_PLUS");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");
 	act->addDefaultInputMapping("KP_MINUS");
 	engineKeyMap->addAction(act);
-	
+
 	act = new Action("USERHELP", _("User help"));
 	act->setCustomEngineActionEvent(kActionUserHelp);
 	act->addDefaultInputMapping("F1");
@@ -218,7 +218,7 @@ Common::KeymapArray HugoMetaEngine::initKeymaps(const char *target) const {
 	act->setCustomEngineActionEvent(kActionMoveBottomRight);
 	act->addDefaultInputMapping("KP3");
 	gameKeyMap->addAction(act);
-	
+
 	KeymapArray keymaps(2);
 	keymaps[0] = engineKeyMap;
 	keymaps[1] = gameKeyMap;
@@ -335,8 +335,8 @@ SaveStateDescriptor HugoMetaEngine::querySaveMetaInfos(const char *target, int s
 	return desc;
 }
 
-void HugoMetaEngine::removeSaveState(const char *target, int slot) const {
-	g_system->getSavefileManager()->removeSavefile(getSavegameFile(slot, target));
+bool HugoMetaEngine::removeSaveState(const char *target, int slot) const {
+	return g_system->getSavefileManager()->removeSavefile(getSavegameFile(slot, target));
 }
 
 } // End of namespace Hugo

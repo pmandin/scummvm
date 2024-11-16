@@ -35,15 +35,9 @@ void DrillerEngine::loadAssetsAmigaFullGame() {
 			error("Failed to open 'driller' executable for Amiga");
 
 		_border = loadAndConvertNeoImage(&file, 0x137f4);
-		byte *palette = (byte *)malloc(16 * 3);
-		for (int i = 0; i < 16; i++) { // gray scale palette
-			palette[i * 3 + 0] = i * (255 / 16);
-			palette[i * 3 + 1] = i * (255 / 16);
-			palette[i * 3 + 2] = i * (255 / 16);
-		}
-		_title = loadAndConvertNeoImage(&file, 0x10, palette);
+		_title = loadAndConvertNeoImage(&file, 0xce);
 
-		loadFonts(&file, 0x8940, _font);
+		loadFonts(&file, 0x8940);
 		loadMessagesFixedSize(&file, 0xc66e, 14, 20);
 		loadGlobalObjects(&file, 0xbd62, 8);
 		load8bitBinary(&file, 0x29c16, 16);
@@ -68,7 +62,7 @@ void DrillerEngine::loadAssetsAmigaFullGame() {
 		if (!file.isOpen())
 			error("Failed to open 'driller' executable for Amiga");
 
-		loadFonts(&file, 0xa62, _font);
+		loadFonts(&file, 0xa62);
 		loadMessagesFixedSize(&file, 0x499a, 14, 20);
 		loadGlobalObjects(&file, 0x4098, 8);
 		load8bitBinary(&file, 0x21a3e, 16);
@@ -120,12 +114,12 @@ void DrillerEngine::loadAssetsAmigaDemo() {
 		error("Failed to open 'driller' file");
 
 	if (_variant & GF_AMIGA_MAGAZINE_DEMO) {
-		loadFonts(&file, 0xa62, _font);
+		loadFonts(&file, 0xa62);
 		loadMessagesFixedSize(&file, 0x3df0, 14, 20);
 		loadGlobalObjects(&file, 0x3ba6, 8);
 		_demoMode = false;
 	} else {
-		loadFonts(&file, 0xa30, _font);
+		loadFonts(&file, 0xa30);
 		loadMessagesFixedSize(&file, 0x3960, 14, 20);
 		loadGlobalObjects(&file, 0x3716, 8);
 	}
@@ -174,11 +168,11 @@ void DrillerEngine::drawAmigaAtariSTUI(Graphics::Surface *surface) {
 	}
 
 	drawStringInSurface(_currentArea->_name, 188, 185, primaryFontColor, secondaryFontColor, black, surface);
-	drawStringInSurface(Common::String::format("%07d", score), 240, 129, primaryFontColor, secondaryFontColor, black, surface);
+	drawStringInSurface(Common::String::format("%07d", score), 241, 129, primaryFontColor, secondaryFontColor, black, surface);
 
 	int seconds, minutes, hours;
 	getTimeFromCountdown(seconds, minutes, hours);
-	drawStringInSurface(Common::String::format("%02d:", hours), 208, 7, primaryFontColor, secondaryFontColor, black, surface);
+	drawStringInSurface(Common::String::format("%02d:", hours), 210, 7, primaryFontColor, secondaryFontColor, black, surface);
 	drawStringInSurface(Common::String::format("%02d:", minutes), 230, 7, primaryFontColor, secondaryFontColor, black, surface);
 	drawStringInSurface(Common::String::format("%02d", seconds), 254, 7, primaryFontColor, secondaryFontColor, black, surface);
 
@@ -241,6 +235,9 @@ void DrillerEngine::initAmigaAtari() {
 	_infoScreenArea = Common::Rect(125, 172, 152, 197);
 	_saveGameArea = Common::Rect(9, 145, 39, 154);
 	_loadGameArea = Common::Rect(9, 156, 39, 164);
+
+	_borderExtra = nullptr;
+	_borderExtraTexture = nullptr;
 }
 
 } // End of namespace Freescape

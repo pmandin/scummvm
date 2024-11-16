@@ -133,7 +133,6 @@ MODULE_OBJS = \
 	lingo/xlibs/panel.o \
 	lingo/xlibs/popupmenuxobj.o \
 	lingo/xlibs/porta.o \
-	lingo/xlibs/portaxcmd.o \
 	lingo/xlibs/prefpath.o \
 	lingo/xlibs/printomatic.o \
 	lingo/xlibs/processxobj.o \
@@ -176,7 +175,6 @@ MODULE_OBJS += \
 	debugger/dt-cast.o \
 	debugger/dt-controlpanel.o \
 	debugger/dt-lists.o \
-	debugger/dt-logger.o \
 	debugger/dt-score.o \
 	debugger/dt-script-d2.o \
 	debugger/dt-script-d4.o \

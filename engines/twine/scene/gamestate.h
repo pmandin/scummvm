@@ -22,7 +22,6 @@
 #ifndef TWINE_SCENE_GAMESTATE_H
 #define TWINE_SCENE_GAMESTATE_H
 
-#include "common/savefile.h"
 #include "common/scummsys.h"
 #include "twine/menu/menu.h"
 #include "twine/shared.h"
@@ -108,7 +107,7 @@ public:
 	int16 _magicLevelIdx = 0;
 
 	/** Store the number of inventory keys */
-	int16 _inventoryNumKeys = 0;
+	int16 _nbLittleKeys = 0;
 	/** Store the number of inventory kashes */
 	int16 _goldPieces = 0;
 	int16 _zlitosPieces = 0;
@@ -135,9 +134,9 @@ public:
 
 	char _sceneName[30] {};
 
-	TextId _gameChoices[10];  // inGameMenuData
-	int32 _numChoices = 0;   // numOfOptionsInChoice
-	TextId _choiceAnswer = TextId::kNone; // inGameMenuAnswer
+	TextId _gameListChoice[10];  // inGameMenuData
+	int32 _gameNbChoices = 0;   // numOfOptionsInChoice
+	TextId _gameChoice = TextId::kNone; // inGameMenuAnswer
 
 	void setDarts(int16 value) {
 		setGameFlag(InventoryItems::kiDart, value);
@@ -210,7 +209,7 @@ public:
 	bool loadGame(Common::SeekableReadStream *file);
 	bool saveGame(Common::WriteStream *file);
 
-	void processGameChoices(TextId choiceIdx);
+	void gameAskChoice(TextId choiceIdx);
 
 	void processGameoverAnimation();
 };

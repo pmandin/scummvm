@@ -25,7 +25,6 @@
 #include "common/file.h"
 #include "common/md5.h"
 #include "common/str-array.h"
-#include "common/translation.h"
 #include "common/util.h"
 
 #include "engines/advancedDetector.h"
@@ -53,6 +52,7 @@ class QDEngineMetaEngineDetection : public AdvancedMetaEngineDetection<ADGameDes
 
 public:
 	QDEngineMetaEngineDetection() : AdvancedMetaEngineDetection(QDEngine::GAME_DESCRIPTIONS, QDEngine::GAME_NAMES) {
+		_flags = kADFlagMatchFullPaths;
 	}
 
 	~QDEngineMetaEngineDetection() override {}

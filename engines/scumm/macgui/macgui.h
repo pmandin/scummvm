@@ -37,6 +37,8 @@ class Actor;
 class MacGuiImpl;
 
 class MacGui {
+	friend class ScummEngine;
+
 private:
 	MacGuiImpl *_impl = nullptr;
 
@@ -44,7 +46,9 @@ public:
 	MacGui(ScummEngine *vm, const Common::Path &resourceFile);
 	~MacGui();
 
-	void initialize();
+	int getNumColors() const;
+
+	bool initialize();
 	void reset();
 	void update(int delta);
 	void updateWindowManager();

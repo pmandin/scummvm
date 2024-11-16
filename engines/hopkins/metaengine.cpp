@@ -105,7 +105,7 @@ public:
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 
 	Common::KeymapArray initKeymaps(const char *target) const override;
@@ -170,9 +170,9 @@ int HopkinsMetaEngine::getMaximumSaveSlot() const {
 	return MAX_SAVES;
 }
 
-void HopkinsMetaEngine::removeSaveState(const char *target, int slot) const {
+bool HopkinsMetaEngine::removeSaveState(const char *target, int slot) const {
 	Common::String filename = Common::String::format("%s.%03d", target, slot);
-	g_system->getSavefileManager()->removeSavefile(filename);
+	return g_system->getSavefileManager()->removeSavefile(filename);
 }
 
 SaveStateDescriptor HopkinsMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
@@ -210,13 +210,13 @@ Common::KeymapArray HopkinsMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");
@@ -255,7 +255,7 @@ Common::KeymapArray HopkinsMetaEngine::initKeymaps(const char *target) const {
 	gameKeyMap->addAction(act);
 
 
-	
+
 	KeymapArray keymaps(2);
 	keymaps[0] = engineKeyMap;
 	keymaps[1] = gameKeyMap;

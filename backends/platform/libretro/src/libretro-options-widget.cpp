@@ -218,7 +218,7 @@ bool LibretroOptionsWidget::generatePlaylist(Common::String playlistPath) {
 	filestream_close(playlistFile);
 
 	Common::String response;
-	if (success){
+	if (success) {
 		response = _("Done");
 		if (!cleanSuccess)
 			response += " (" +  _("cleaning failed") + ")";
@@ -291,5 +291,6 @@ bool LibretroOptionsWidget::save() {
 
 	ConfMan.setBool("libretro_hooks_clear", _hooksClear->getState(), _domain);
 
+	/* Always return true to call applyBackendSettings every time settings are applied */
 	return true;
 }

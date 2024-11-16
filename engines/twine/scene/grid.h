@@ -122,7 +122,7 @@ private:
 	 * @param gridEntry current grid index
 	 * @param dest destination block buffer
 	 */
-	void createCellingGridColumn(const uint8 *gridEntry, uint32 gridEntrySize, uint8 *dest, uint32 destSize);
+	void calcGraphMsk(const uint8 *gridEntry, uint32 gridEntrySize, uint8 *dest, uint32 destSize);
 	/**
 	 * Create grid Y column in block buffer
 	 * @param gridEntry current grid index
@@ -194,15 +194,15 @@ public:
 	const uint8 *getBlockBufferGround(const IVec3 &pos, int32 &ground);
 
 	/** New grid camera x, y and z coordinates */
-	IVec3 _newCamera;
+	IVec3 _startCube; // StartXCube, StartYCube, StartZCube
 
 	/** Current grid camera x, y and z coordinates */
 	IVec3 _worldCube; // WorldXCube WorldYCube
 
 	/** Flag to know if the engine is using celling grids */
-	int16 _useCellingGrid = 0;
+	int16 _zoneGrm = 0;
 	/** Current celling grid index */
-	int16 _cellingGridIdx = 0;
+	int16 _indexGrm = 0;
 
 	/**
 	 * Draw 3D actor over bricks

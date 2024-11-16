@@ -41,12 +41,12 @@ namespace Wintermute {
 class Light3D : public BaseScriptable {
 public:
 	bool persist(BasePersistenceManager *persistMgr);
-	bool getViewMatrix(Math::Matrix4 *viewMatrix);
+	bool getViewMatrix(DXMatrix *viewMatrix);
 	Light3D(BaseGame *inGame);
 	virtual ~Light3D();
 	uint32 _diffuseColor;
-	Math::Vector3d _position;
-	Math::Vector3d _target;
+	DXVector3 _pos;
+	DXVector3 _target;
 	bool _isSpotlight;
 	bool _active;
 	float _falloff;
@@ -55,7 +55,6 @@ public:
 	bool _isAvailable;
 
 	bool setLight(int index = 0);
-	bool loadFrom3DS(Common::MemoryReadStream &fileStream);
 };
 
 } // namespace Wintermute

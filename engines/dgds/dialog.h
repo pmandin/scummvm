@@ -114,8 +114,8 @@ public:
 	uint16 _time;
 	uint16 _nextDialogFileNum; // HOC onward, always set 0 in dragon.
 	uint16 _nextDialogDlgNum;
-	uint16 _unk1; // Willy onward, always set 0 in dragon and HoC
-	uint16 _unk2; // Willy onward, always set 0 in dragon and HoC
+	uint16 _talkDataNum; // Willy onward, always set 0 in dragon and HoC
+	uint16 _talkDataHeadNum; // Willy onward, always set 0 in dragon and HoC
 	Common::Array<DialogAction> _action;
 	Common::String _str;
 
@@ -132,8 +132,6 @@ public:
 	void clear();
 
 	Common::Error syncState(Common::Serializer &s);
-
-	void fixupStringAndActions();
 
 private:
 	void drawType1(Graphics::ManagedSurface *dst, DialogDrawStage stage);

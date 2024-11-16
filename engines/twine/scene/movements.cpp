@@ -56,7 +56,7 @@ IVec3 Movements::getShadow(const IVec3 &pos) { // GetShadow
 	return shadowCoord;
 }
 
-void Movements::initRealAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
+void Movements::initRealAngle(int16 startAngle, int16 endAngle, int16 stepAngle, RealValue *movePtr) {
 	movePtr->startValue = ClampAngle(startAngle);
 	movePtr->endValue = ClampAngle(endAngle);
 	movePtr->timeValue = ClampAngle(stepAngle);
@@ -67,7 +67,7 @@ void Movements::clearRealAngle(ActorStruct *actorPtr) {
 	initRealAngle(actorPtr->_beta, actorPtr->_beta, LBAAngles::ANGLE_0, &actorPtr->realAngle);
 }
 
-void Movements::setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
+void Movements::initRealValue(int16 startAngle, int16 endAngle, int16 stepAngle, RealValue *movePtr) {
 	movePtr->startValue = startAngle;
 	movePtr->endValue = endAngle;
 	movePtr->timeValue = stepAngle;
@@ -182,7 +182,7 @@ int32 Movements::getAngle(int32 x0, int32 z0, int32 x1, int32 z1) {
 #endif
 }
 
-void Movements::initRealAngleConst(int32 start, int32 end, int32 duration, ActorMoveStruct *movePtr) const { // ManualRealAngle
+void Movements::initRealAngleConst(int32 start, int32 end, int32 duration, RealValue *movePtr) const { // ManualRealAngle
 	const int16 cstart = ClampAngle(start);
 	const int16 cend = ClampAngle(end);
 
@@ -242,14 +242,9 @@ void Movements::update() {
 	_changedCursorKeys.update(_engine);
 }
 
-bool Movements::processBehaviourExecution(int actorIdx) {
-	bool executeAction = false;
-	if (_engine->_input->toggleActionIfActive(TwinEActionType::SpecialAction)) {
-		executeAction = true;
-	}
+void Movements::processBehaviourExecution(int actorIdx) {
 	switch (_engine->_actor->_heroBehaviour) {
 	case HeroBehaviourType::kNormal:
-		executeAction = true;
 		break;
 	case HeroBehaviourType::kAthletic:
 		_engine->_animations->initAnim(AnimationTypes::kJump, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
@@ -295,7 +290,6 @@ bool Movements::processBehaviourExecution(int actorIdx) {
 	case HeroBehaviourType::kMax:
 		break;
 	}
-	return executeAction;
 }
 
 bool Movements::processAttackExecution(int actorIdx) {
@@ -394,14 +388,16 @@ void Movements::processManualRotationExecution(int actorIdx) {
 		tempAngle = LBAAngles::ANGLE_0;
 	}
 
-	initRealAngleConst(actor->_beta, actor->_beta + tempAngle, actor->_speed, &actor->realAngle);
+	initRealAngleConst(actor->_beta, actor->_beta + tempAngle, actor->_srot, &actor->realAngle);
 }
 
 void Movements::processManualAction(int actorIdx) {
 	if (IS_HERO(actorIdx)) {
 		_actionNormal = false;
 		if (_engine->_input->isHeroActionActive()) {
-			_actionNormal = processBehaviourExecution(actorIdx);
+			processBehaviourExecution(actorIdx);
+		} else if (_engine->_input->toggleActionIfActive(TwinEActionType::SpecialAction)) {
+			_actionNormal = true;
 		}
 	}
 
@@ -419,10 +415,10 @@ void Movements::processFollowAction(int actorIdx) {
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
 	const ActorStruct *followedActor = _engine->_scene->getActor(actor->_followedActor);
 	int32 newAngle = getAngle(actor->posObj(), followedActor->posObj());
-	if (actor->_staticFlags.bSprite3D) {
+	if (actor->_flags.bSprite3D) {
 		actor->_beta = newAngle;
 	} else {
-		initRealAngleConst(actor->_beta, newAngle, actor->_speed, &actor->realAngle);
+		initRealAngleConst(actor->_beta, newAngle, actor->_srot, &actor->realAngle);
 	}
 }
 
@@ -434,7 +430,7 @@ void Movements::processRandomAction(int actorIdx) {
 
 	if (actor->brickCausesDamage()) {
 		const int32 angle = ClampAngle(actor->_beta + (_engine->getRandomNumber() & (LBAAngles::ANGLE_180 - 1)) - LBAAngles::ANGLE_90 + LBAAngles::ANGLE_180);
-		initRealAngleConst(actor->_beta, angle, actor->_speed, &actor->realAngle);
+		initRealAngleConst(actor->_beta, angle, actor->_srot, &actor->realAngle);
 		actor->_delayInMillis = _engine->timerRef + _engine->getRandomNumber(_engine->toSeconds(6)) + _engine->toSeconds(6);
 		_engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx);
 	}
@@ -443,7 +439,7 @@ void Movements::processRandomAction(int actorIdx) {
 		_engine->_animations->initAnim(AnimationTypes::kForward, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx);
 		if (_engine->timerRef > actor->_delayInMillis) {
 			const int32 angle = ClampAngle(actor->_beta + (_engine->getRandomNumber() & (LBAAngles::ANGLE_180 - 1)) - LBAAngles::ANGLE_90);
-			initRealAngleConst(actor->_beta, angle, actor->_speed, &actor->realAngle);
+			initRealAngleConst(actor->_beta, angle, actor->_srot, &actor->realAngle);
 			actor->_delayInMillis = _engine->timerRef + _engine->getRandomNumber(_engine->toSeconds(6)) + _engine->toSeconds(6);
 		}
 	}
@@ -471,7 +467,7 @@ void Movements::manualRealAngle(ActorStruct *actor) {
 		tempAngle = -LBAAngles::ANGLE_90;
 	}
 
-	initRealAngleConst(actor->_beta, actor->_beta + tempAngle, actor->_speed, &actor->realAngle);
+	initRealAngleConst(actor->_beta, actor->_beta + tempAngle, actor->_srot, &actor->realAngle);
 }
 
 void Movements::doDir(int32 actorIdx) {
@@ -481,17 +477,17 @@ void Movements::doDir(int32 actorIdx) {
 	}
 
 	if (actor->_workFlags.bIsFalling) {
-		if (actor->_controlMode == ControlMode::kManual) {
+		if (actor->_move == ControlMode::kManual) {
 			manualRealAngle(actor);
 			// TODO: _lastJoyFlag = _joyFlag;
 		}
 		return;
 	}
-	if (!actor->_staticFlags.bSprite3D && actor->_controlMode != ControlMode::kManual) {
+	if (!actor->_flags.bSprite3D && actor->_move != ControlMode::kManual) {
 		actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
 	}
 
-	switch (actor->_controlMode) {
+	switch (actor->_move) {
 	case ControlMode::kManual:
 		processManualAction(actorIdx);
 		break;
@@ -519,7 +515,7 @@ void Movements::doDir(int32 actorIdx) {
 	case ControlMode::kTrackAttack: // unused
 		break;
 	default:
-		warning("Unknown control mode %d", (int)actor->_controlMode);
+		warning("Unknown control mode %d", (int)actor->_move);
 		break;
 	}
 }

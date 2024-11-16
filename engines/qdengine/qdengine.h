@@ -59,6 +59,10 @@ enum QDEngineDebugChannels {
 	kDebugText,
 };
 
+enum {
+	GF_BROKEN_VIDEOS = 1
+};
+
 class QDEngineEngine : public Engine {
 private:
 	const ADGameDescription *_gameDescription;
@@ -92,6 +96,7 @@ public:
 	 * Returns the game Id
 	 */
 	Common::String getGameId() const;
+	Common::String getTargetName() const { return _targetName; }
 
 	const char *getExeName() const;
 

@@ -91,14 +91,14 @@ void Room603::init() {
 		ws_walk_load_walker_series(NORMAL_DIRS1, NORMAL_NAMES1);
 		ws_walk_load_shadow_series(SHADOW_DIRS1, SHADOW_NAMES1);
 
-		_shenWalker = triggerMachineByHash_3000(8, 12, NORMAL_DIRS1, SHADOW_DIRS1, 525, 238, 3,
+		_shenWalker = triggerMachineByHash_3000(8, 12, *NORMAL_DIRS1, *SHADOW_DIRS1, 525, 238, 3,
 			triggerMachineByHashCallback3000, "shen suit gun walker");
 		sendWSMessage_10000(_shenWalker, 535, 235, 3, 10, 1);
 
 		ws_walk_load_walker_series(NORMAL_DIRS2, NORMAL_NAMES2);
 		ws_walk_load_shadow_series(SHADOW_DIRS2, SHADOW_NAMES2);
 
-		_kuangWalker = triggerMachineByHash_3000(8, 13, NORMAL_DIRS2, SHADOW_DIRS2, 554, 245, 2,
+		_kuangWalker = triggerMachineByHash_3000(8, 13, *NORMAL_DIRS2, *SHADOW_DIRS2, 554, 245, 2,
 			triggerMachineByHashCallback3000, "kuang suit walker");
 		sendWSMessage_10000(_kuangWalker, 563, 244, 2, -1, 1);
 		return;
@@ -219,7 +219,7 @@ void Room603::init() {
 		_door = series_show("603DOOR", 0xf00, 16, -1, -1, 23, 100, 0, 0);
 		_ttDigShirtOff = series_load("TT DIG LOOP NO SHIRT");
 		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0xf00, 0,
-			triggerMachineByHashCallbackNegative, "tt");
+			triggerMachineByHashCallback, "tt");
 		sendWSMessage_10000(1, _tt, _ttDigShirtOff, 2, 2, 200, _ttDigShirtOff, 2, 2, 0);
 
 		_trigger1 = 200;
@@ -247,7 +247,7 @@ void Room603::init() {
 
 		if (_val5) {
 			_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, 0,
-				triggerMachineByHashCallbackNegative, "tt");
+				triggerMachineByHashCallback, "tt");
 			sendWSMessage_10000(1, _tt, _ttD01, 1, 1, 400, _ttD01, 1, 1, 0);
 			_trigger1 = 400;
 			hotspot_set_active("twelvetrees ", false);
@@ -255,7 +255,7 @@ void Room603::init() {
 
 		} else {
 			_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0xf00, 0,
-				triggerMachineByHashCallbackNegative, "tt");
+				triggerMachineByHashCallback, "tt");
 			sendWSMessage_10000(1, _tt, _ttDigShirtOn, 1, 1, 500,
 				_ttDigShirtOn, 1, 1, 0);
 			_trigger1 = 500;
@@ -666,12 +666,12 @@ void Room603::daemon() {
 			break;
 
 		case 10:
-			if (_num1 == 9) {
+			if (_num1 == 10) {
 				sendWSMessage_10000(1, _ripley, _ripHandsHips, 12, 12, 300,
-					_ripHandChin, 12, 12, 0);
+					_ripHandsHips, 12, 12, 0);
 			} else {
 				sendWSMessage_10000(1, _ripley, _ripHandsHips, 12, 1, 300,
-					_ripHandsHips, 1, 1, 0);
+					_rp04, 1, 1, 0);
 				_num2 = 0;
 			}
 			break;
@@ -782,7 +782,7 @@ void Room603::daemon() {
 		terminateMachineAndNull(_ripley);
 		_treesGoneHome = series_show("603rp02a", 0x100, 16);
 		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, 0,
-			triggerMachineByHashCallbackNegative, "tt");
+			triggerMachineByHashCallback, "tt");
 		sendWSMessage_10000(1, _tt, _tt03, 1, 39, 322, _tt03, 39, 39, 0);
 		break;
 
@@ -808,7 +808,7 @@ void Room603::daemon() {
 	case 326:
 		terminateMachineAndNull(_tt);
 		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, 0,
-			triggerMachineByHashCallbackNegative, "tt");
+			triggerMachineByHashCallback, "tt");
 		sendWSMessage_10000(1, _tt, _ttD01, 1, 1, 400, _ttD01, 1, 1, 0);
 		_val8 = 6;
 		_val7 = 6;
@@ -959,7 +959,7 @@ void Room603::daemon() {
 		_trigger1 = 0;
 		terminateMachineAndNull(_ttShadow);
 
-		_tt = triggerMachineByHash_3000(8, 9, SECTION6_NORMAL_DIRS, SECTION6_SHADOW_DIRS,
+		_tt = triggerMachineByHash_3000(8, 9, *SECTION6_NORMAL_DIRS, *SECTION6_SHADOW_DIRS,
 			291, 293, 4, triggerMachineByHashCallback3000, "tt walker");
 		sendWSMessage_10000(_tt, 357, 283, 1, 405, 0);
 		conv_resume();
@@ -981,7 +981,7 @@ void Room603::daemon() {
 	case 410:
 		terminateMachineAndNull(_tt);
 		terminateMachineAndNull(_ttShadow);
-		_tt = triggerMachineByHash_3000(8, 9, SECTION6_NORMAL_DIRS, SECTION6_SHADOW_DIRS,
+		_tt = triggerMachineByHash_3000(8, 9, *SECTION6_NORMAL_DIRS, *SECTION6_SHADOW_DIRS,
 			291, 293, 4, triggerMachineByHashCallback3000, "tt walker");
 		sendWSMessage_10000(_tt, 397, 286, 2, 415, 0);
 		kernel_timing_trigger(200, 411);
@@ -1176,7 +1176,7 @@ void Room603::daemon() {
 	case 510:
 		terminateMachineAndNull(_tt);
 		_trigger1 = 0;
-		_tt = triggerMachineByHash_3000(8, 9, SECTION6_NORMAL_DIRS, SECTION6_SHADOW_DIRS,
+		_tt = triggerMachineByHash_3000(8, 9, *SECTION6_NORMAL_DIRS, *SECTION6_SHADOW_DIRS,
 			291, 293, 4, triggerMachineByHashCallback3000, "tt walker");
 		sendWSMessage_10000(_tt, 357, 283, 3, 0x200, 0);
 		kernel_timing_trigger(100, 511);
@@ -1202,7 +1202,7 @@ void Room603::daemon() {
 	case 530:
 		terminateMachineAndNull(_tt);
 		_trigger1 = 0;
-		_tt = triggerMachineByHash_3000(8, 9, SECTION6_NORMAL_DIRS, SECTION6_SHADOW_DIRS,
+		_tt = triggerMachineByHash_3000(8, 9, *SECTION6_NORMAL_DIRS, *SECTION6_SHADOW_DIRS,
 			291, 293, 4, triggerMachineByHashCallback3000, "tt walker");
 		sendWSMessage_10000(_tt, 397, 286, 2, 533, 0);
 		kernel_timing_trigger(70, 531);
@@ -1305,7 +1305,7 @@ void Room603::parser() {
 			sendWSMessage_150000(-1);
 			ws_hide_walker();
 			_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 311, 308, -59, 0x100, 0,
-				triggerMachineByHashCallbackNegative, "rip");
+				triggerMachineByHashCallback, "rip");
 			_G(kernel).trigger_mode = KT_DAEMON;
 			sendWSMessage_10000(1, _ripley, _rp01, 1, 15, 302, _rp01, 15, 15, 0);
 			sendWSMessage_1e0000(0, 0);
@@ -1331,7 +1331,7 @@ void Room603::parser() {
 		ws_hide_walker();
 		_val2 = 1;
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 345, 300, -56, 0x100, 1,
-			triggerMachineByHashCallbackNegative, "rip");
+			triggerMachineByHashCallback, "rip");
 		_shadow = series_show("safari shadow 2", 0xf00, 128, -1, -1, 0, 56, 345, 300);
 		_G(kernel).trigger_mode = KT_DAEMON;
 		sendWSMessage_10000(1, _ripley, _ripTalk, 1, 1, 300, _ripTalk, 1, 1, 0);
@@ -1350,7 +1350,7 @@ void Room603::parser() {
 		ws_hide_walker();
 		_val2 = 1;
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 311, 308, -59, 0x100, 1,
-			triggerMachineByHashCallbackNegative, "rip");
+			triggerMachineByHashCallback, "rip");
 		_shadow = series_show("safari shadow 2", 0xf00, 128, -1, -1, 0, 59, 311, 308);
 		_G(kernel).trigger_mode = KT_DAEMON;
 
@@ -1492,7 +1492,7 @@ void Room603::parser() {
 
 		_G(flags)[GLB_TEMP_5] = 0;
 		_G(game).setRoom(495);
-		_G(flags)[V129] = 4;
+		_G(flags)[kTravelDest] = 4;
 	} else if (_G(kernel).trigger == 556) {
 		digi_stop(1);
 		digi_stop(2);
@@ -1578,7 +1578,7 @@ void Room603::conv603a() {
 					_pu01 = series_stream("603pu03", 5, 0, 30);
 					_val8 = 6;
 
-					if (_val5)
+					if (_trigger1)
 						kernel_timing_trigger(1, _trigger1, KT_DAEMON, KT_PARSE);
 				} else {
 					_pu01 = series_stream("603pu03a", 5, 0, 30);
@@ -1709,7 +1709,7 @@ void Room603::conv603a() {
 		_ttShadow = series_show("tt walker shadow 4", 0xf00, 0, -1, -1, 0, 53, 291, 293);
 		_trigger1 = 400;
 		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, 0,
-			triggerMachineByHashCallbackNegative, "tt");
+			triggerMachineByHashCallback, "tt");
 		_G(kernel).trigger_mode = KT_DAEMON;
 		sendWSMessage_10000(1, _tt, _tt03, 110, 122, 400, _ttD01, 1, 1, 0);
 		_G(kernel).trigger_mode = KT_PARSE;
@@ -1723,7 +1723,7 @@ void Room603::conv603a() {
 		ws_hide_walker();
 		_val2 = 1;
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 345, 300, -56, 0x100, 1,
-			triggerMachineByHashCallbackNegative, "rip");
+			triggerMachineByHashCallback, "rip");
 		_shadow = series_show("safari shadow 2", 0xf00, 128, -1, -1, 0, 56, 345, 300);
 		_G(kernel).trigger_mode = KT_DAEMON;
 		sendWSMessage_10000(1, _ripley, _ripHandsBehindBack, 1, 15, 300,

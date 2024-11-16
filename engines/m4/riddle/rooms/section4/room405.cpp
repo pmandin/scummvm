@@ -22,6 +22,7 @@
 #include "m4/riddle/rooms/section4/room405.h"
 #include "m4/graphics/gr_series.h"
 #include "m4/riddle/vars.h"
+#include "m4/riddle/riddle.h"
 
 namespace M4 {
 namespace Riddle {
@@ -69,7 +70,7 @@ void Room405::init() {
 		_val9 = 0;
 	}
 
-	if (!_G(flags)[V338] || !inv_object_is_here("GERMAN BANKNOTE"))
+	if (!_G(flags)[kGermanBanknoteFound] || !inv_object_is_here("GERMAN BANKNOTE"))
 		hotspot_set_active("GERMAN BANKNOTE", false);
 
 	_safariShadow = series_load("SAFARI SHADOW 3");
@@ -79,7 +80,7 @@ void Room405::init() {
 
 	_candlesBurning = series_load("TWO CANDLES BURNING");
 	_candles = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0, 0,
-		triggerMachineByHashCallbackNegative, "candles");
+		triggerMachineByHashCallback, "candles");
 	sendWSMessage_10000(1, _candles, _candlesBurning, 1, 8, -1,
 		_candlesBurning, 1, 8, 0);
 
@@ -99,7 +100,7 @@ void Room405::init() {
 	} else {
 		ws_walk_load_shadow_series(SHADOW_DIRS, SHADOW_NAMES);
 		ws_walk_load_walker_series(NORMAL_DIRS, NORMAL_NAMES);
-		_baron = triggerMachineByHash_3000(8, 11, NORMAL_DIRS, SHADOW_DIRS, 185, 365, 1,
+		_baron = triggerMachineByHash_3000(8, 11, *NORMAL_DIRS, *SHADOW_DIRS, 185, 365, 1,
 			triggerMachineByHashCallback3000, "BARON_walker");
 		ws_walk(329, 320, nullptr, 20, 9);
 	}
@@ -136,10 +137,11 @@ void Room405::daemon() {
 
 	case 22:
 		ws_demand_location(286, 324, 7);
-		ws_hide_walker();
+		ws_hide_walker(_baron);
 		sendWSMessage_150000(-1);
+		ws_hide_walker(_G(my_walker));
 		_baronWalker = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x600, 0,
-			triggerMachineByHashCallbackNegative, "BARON talks rip");
+			triggerMachineByHashCallback, "BARON talks rip");
 		sendWSMessage_10000(1, _baronWalker, _baronShakeSit, 1, 48, 23,
 			_baronShakeSit, 48, 48, 0);
 		digi_play("405b01", 1);
@@ -148,13 +150,12 @@ void Room405::daemon() {
 	case 23:
 		sendWSMessage_10000(1, _baronWalker, _baronShakeSit, 48, 100, 24,
 			_baronShakeSit, 100, 100, 0);
-		break;
 		digi_play("405b01a", 1, 255, 25);
 		break;
 
 	case 24:
 		_ripTalksBaron = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x600, 0,
-			triggerMachineByHashCallbackNegative, "rip talks baron");
+			triggerMachineByHashCallback, "rip talks baron");
 		_val5 = 1000;
 		_val6 = 1103;
 		kernel_timing_trigger(1, 102);
@@ -202,6 +203,7 @@ void Room405::daemon() {
 	case 31:
 		sendWSMessage_10000(1, _ripTalksBaron, _ripHandLetter, 30, 84, -1,
 			_ripHandLetter, 84, 84, 0);
+		kernel_timing_trigger(45, 32);
 		break;
 
 	case 32:
@@ -224,7 +226,7 @@ void Room405::daemon() {
 
 	case 36:
 		_baronWalker = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0x600, 0,
-			triggerMachineByHashCallbackNegative, "BARON talks rip");
+			triggerMachineByHashCallback, "BARON talks rip");
 		sendWSMessage_10000(1, _baronWalker, _baronTalkLoop, 1, 1, 110,
 			_baronTalkLoop, 1, 1, 0);
 		kernel_timing_trigger(1, 37);
@@ -525,6 +527,7 @@ void Room405::daemon() {
 				sendWSMessage_10000(1, _baronWalker, _baronLeanForward, 11, 11, 111,
 					_baronLeanForward, 11, 11, 0);
 				_val8 = 2162;
+				conv_resume();
 				break;
 
 			case 2150:
@@ -581,12 +584,12 @@ void Room405::daemon() {
 		break;
 
 	case 667:
-		series_stream_check_series(_response, 15);
+		series_set_frame_rate(_response, 15);
 		series_stream_break_on_frame(_response, 10, 668);
 		break;
 
 	case 668:
-		series_stream_check_series(_response, 5);
+		series_set_frame_rate(_response, 5);
 		ws_OverrideCrunchTime(_response);
 		break;
 
@@ -672,6 +675,14 @@ void Room405::parser() {
 				break;
 			}
 		}
+	} else if (lookFlag && player_said("SOFA")) {
+		if (!_G(flags)[kGermanBanknoteFound] && inv_object_is_here("GERMAN BANKNOTE")) {
+			_G(flags)[kGermanBanknoteFound] = 1;
+			doAction("405r15");
+			hotspot_set_active("GERMAN BANKNOTE", true);
+		} else {
+			doAction("405r12");
+		}
 	} else if (lookFlag && player_said("GERMAN BAKNOTE") && inv_object_is_here("GERMAN BAKNOTE")) {
 		doAction("405r17");
 	} else if (lookFlag && player_said(" ")) {
@@ -700,7 +711,7 @@ void Room405::parser() {
 		} else {
 			if (_G(kernel).trigger == 6)
 				_G(flags)[kCastleCartoon] = 1;
-			sendWSMessage_multi("com015");
+			sketchInJournal("com015");
 		}
 	} else {
 		return;
@@ -782,14 +793,18 @@ void Room405::conv405a() {
 				if (entry == 1) {
 					_val6 = 1230;
 					_sound2 = sound;
-				} else if (entry == 5) {
-					_val8 = 2171;
+				} else {
+					if (entry == 5)
+						_val8 = 2171;
+
 					_val6 = 1102;
 					digi_play(sound, 1, 255, 1);
 				}
 				break;
 
 			default:
+				_val6 = 1102;
+				digi_play(sound, 1, 255, 1);
 				break;
 			}
 		}

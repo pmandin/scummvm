@@ -19,7 +19,6 @@
  *
  */
 
-#include "common/config-manager.h"
 #include "common/language.h"
 #include "common/translation.h"
 #include "engines/advancedDetector.h"
@@ -35,8 +34,17 @@ static const PlainGameDescriptor twineGames[] = {
 };
 
 static const DebugChannelDef debugFlagList[] = {
-	{TwinE::kDebugScripts, "Scripts", "Scripts debugging"},
-	{TwinE::kDebugTime, "Time", "Time debugging"},
+	{TwinE::kDebugScriptsMove, "scriptsmove", "Move script debugging"},
+	{TwinE::kDebugScriptsLife, "scriptslife", "Life script debugging"},
+	{TwinE::kDebugResources, "resources", "Resources debugging"},
+	{TwinE::kDebugTimers, "timers", "Timer debugging"},
+	{TwinE::kDebugImGui, "imgui", "UI for debugging"},
+	{TwinE::kDebugInput, "input", "Input debugging"},
+	{TwinE::kDebugMovies, "movies", "Movies debugging"},
+	{TwinE::kDebugPalette, "palette", "Palette debugging"},
+	{TwinE::kDebugCollision, "collision", "Collision debugging"},
+	{TwinE::kDebugAnimation, "animation", "Animation debugging"},
+	{TwinE::kDebugHolomap, "holomap", "Holomap debugging"},
 	DEBUG_CHANNEL_END
 };
 
@@ -146,6 +154,11 @@ static const ADGameDescription twineGameDescriptions[] = {
 	// RELENT.EXE
 	// 14 Oct 1994 at 13:22
 	TWINE_DETECTION_ENTRY("lba", "Relentless: Twinsen's Adventure - CD Original North America Version", AD_ENTRY1s("RELENT.EXE", "c1a887e38283d43f271249ad9f2a73ef", 258513), Common::kPlatformDOS, TwinE::TF_VERSION_USA | ADGF_CD),
+
+	// Relentless: Little Big Adventure (Europe) (EN, FR, DE, IT, ES)
+	// text.hqr
+	// 22 February 1997 at 14:20
+	TWINE_DETECTION_ENTRY("lba", "", AD_ENTRY1s("text.hqr", "c30df57432c324a5f4673e013f88acf9", 258513), Common::kPlatformUnknown, 0),
 
 	// Little Big Adventure - Demo Version (FR)
 	// LBA.EXE

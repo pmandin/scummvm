@@ -662,7 +662,7 @@ bool LauncherDialog::doGameDetection(const Common::Path &path) {
 		Common::U32String msg(_("ScummVM couldn't open the specified directory!"));
 #ifdef ANDROID_BACKEND
 		msg += Common::U32String("\n\n");
-		msg += _("Did you add this directory to the SAF? Press the help button [?] on the top for detailed instructions");
+		msg += _("Have you given ScummVM access rights to this directory? Press the help button [?] on the top for detailed instructions");
 #endif
 		MessageDialog alert(msg);
 		alert.runModal();
@@ -686,7 +686,7 @@ bool LauncherDialog::doGameDetection(const Common::Path &path) {
 		Common::U32String msg(_("ScummVM could not find any game in the specified directory!"));
 #ifdef ANDROID_BACKEND
 		msg += Common::U32String("\n\n");
-		msg += _("Did you add this directory to the SAF? Press the help button [?] on the top for detailed instructions");
+		msg += _("Have you given ScummVM access rights to this directory? Press the help button [?] on the top for detailed instructions");
 #endif
 		MessageDialog alert(msg);
 		alert.runModal();
@@ -1256,7 +1256,7 @@ void LauncherSimple::groupEntries(const Common::Array<LauncherEntry> &metadata) 
 			attrs.push_back(language);
 		}
 		_list->setGroupHeaderFormat(Common::U32String(""), Common::U32String(""));
-		// I18N: List group when no languageis specified
+		// I18N: List group when no language is specified
 		metadataNames[""] = _("Language not detected");
 		const Common::LanguageDescription *l = Common::g_languages;
 		for (; l->code; ++l) {
@@ -1404,7 +1404,7 @@ void LauncherGrid::groupEntries(const Common::Array<LauncherEntry> &metadata) {
 			attrs.push_back(iter->engineid);
 		}
 		_grid->setGroupHeaderFormat(Common::U32String(""), Common::U32String(""));
-		// I18N: List grouping when no enginr is specified
+		// I18N: List grouping when no engine is specified
 		metadataNames[""] = _("Unknown Engine");
 		Common::HashMap<Common::String, MetadataEngine, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo>::iterator i = _metadataParser._engineInfo.begin();
 		for (; i != _metadataParser._engineInfo.end(); ++i) {

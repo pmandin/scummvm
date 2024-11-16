@@ -28,6 +28,8 @@
 
 #include "graphics/surface.h"
 
+#include "scumm/macgui/macgui_colors.h"
+
 namespace Scumm {
 
 class MacGuiImpl;
@@ -42,18 +44,19 @@ public:
 	MacIndy3Gui(ScummEngine *vm, const Common::Path &resourceFile);
 	~MacIndy3Gui();
 
-	const Common::String name() const { return "Indy"; }
+	const Common::String name() const override { return "Indy"; }
+	int getNumColors() const override { return 16; }
 
 	Graphics::Surface _textArea;
 
-	const Graphics::Font *getFontByScummId(int32 id);
+	const Graphics::Font *getFontByScummId(int32 id) override;
 
-	void setupCursor(int &width, int &height, int &hotspotX, int &hotspotY, int &animate);
+	void setupCursor(int &width, int &height, int &hotspotX, int &hotspotY, int &animate) override;
 
-	Graphics::Surface *textArea() { return &_textArea; }
-	void clearTextArea() { _textArea.fillRect(Common::Rect(_textArea.w, _textArea.h), kBlack); }
-	void initTextAreaForActor(Actor *a, byte color);
-	void printCharToTextArea(int chr, int x, int y, int color);
+	Graphics::Surface *textArea() override { return &_textArea; }
+	void clearTextArea() override { _textArea.fillRect(Common::Rect(_textArea.w, _textArea.h), kBlack); }
+	void initTextAreaForActor(Actor *a, byte color) override;
+	void printCharToTextArea(int chr, int x, int y, int color) override;
 
 	// There is a distinction between the GUI being allowed and being
 	// active. Allowed means that it's allowed to draw verbs, but not that
@@ -65,22 +68,22 @@ public:
 	// it's not drawing verbs, so the SCUMM engine is allowed to draw in
 	// the verb area to clear the power meters and text.
 
-	bool isVerbGuiActive() const;
+	bool isVerbGuiActive() const override;
 
-	void reset();
-	void resetAfterLoad();
-	void update(int delta);
-	bool handleEvent(Common::Event event);
+	void reset() override;
+	void resetAfterLoad() override;
+	void update(int delta) override;
+	bool handleEvent(Common::Event event) override;
 
 protected:
-	bool getFontParams(FontId fontId, int &id, int &size, int &slant) const;
+	bool getFontParams(FontId fontId, int &id, int &size, int &slant) const override;
 
-	bool handleMenu(int id, Common::String &name);
+	bool handleMenu(int id, Common::String &name) override;
 
-	void runAboutDialog();
-	bool runOpenDialog(int &saveSlotToHandle);
-	bool runSaveDialog(int &saveSlotToHandle, Common::String &name);
-	bool runOptionsDialog();
+	void runAboutDialog() override;
+	bool runOpenDialog(int &saveSlotToHandle) override;
+	bool runSaveDialog(int &saveSlotToHandle, Common::String &saveName) override;
+	bool runOptionsDialog() override;
 	bool runIqPointsDialog();
 
 private:
@@ -144,9 +147,9 @@ private:
 
 		// Primitives
 		void fill(Common::Rect r);
-		void drawBitmap(Common::Rect r, const uint16 *bitmap, Color color) const;
+		void drawBitmap(Common::Rect r, const uint16 *bitmap, byte color) const;
 		void drawShadowBox(Common::Rect r) const;
-		void drawShadowFrame(Common::Rect r, Color shadowColor, Color fillColor);
+		void drawShadowFrame(Common::Rect r, byte shadowColor, byte fillColor);
 
 		void markScreenAsDirty(Common::Rect r) const;
 	};

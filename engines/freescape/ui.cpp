@@ -23,6 +23,60 @@
 
 namespace Freescape {
 
+void FreescapeEngine::waitInLoop(int maxWait) {
+	for (int i = 0; i < maxWait; i++ ) {
+		Common::Event event;
+		while (_eventManager->pollEvent(event)) {
+			Common::Point mousePos;
+			switch (event.type) {
+			case Common::EVENT_QUIT:
+			case Common::EVENT_RETURN_TO_LAUNCHER:
+				quitGame();
+				return;
+
+			case Common::EVENT_MOUSEMOVE:
+				if (_hasFallen)
+					break;
+				mousePos = event.mouse;
+
+				if (_demoMode)
+					break;
+
+				if (_shootMode) {;
+					break;
+				} else {
+					// Mouse pointer is locked into the the middle of the screen
+					// since we only need the relative movements. This will not affect any touchscreen device
+					// so on-screen controls are still accesible
+					mousePos.x = g_system->getWidth() * ( _viewArea.left + _viewArea.width() / 2) / _screenW;
+					mousePos.y = g_system->getHeight() * (_viewArea.top + _viewArea.height() / 2) / _screenW;
+					if (_invertY)
+						event.relMouse.y = -event.relMouse.y;
+
+					g_system->warpMouse(mousePos.x, mousePos.y);
+					_eventManager->purgeMouseEvents();
+				}
+
+				rotate(event.relMouse.x * _mouseSensitivity, event.relMouse.y * _mouseSensitivity);
+				break;
+
+			case Common::EVENT_SCREEN_CHANGED:
+				_gfx->computeScreenViewport();
+				_gfx->clear(0, 0, 0, true);
+				break;
+			default:
+				break;
+			}
+		}
+		_gfx->clear(0, 0, 0, true);
+		drawFrame();
+		_gfx->flipBuffer();
+		g_system->updateScreen();
+		g_system->delayMillis(15); // try to target ~60 FPS
+	}
+	_gfx->clear(0, 0, 0, true);
+}
+
 void FreescapeEngine::titleScreen() {
 	if (!_title)
 		return;
@@ -70,11 +124,15 @@ void FreescapeEngine::titleScreen() {
 }
 
 Graphics::Surface *FreescapeEngine::drawStringsInSurface(const Common::Array<Common::String> &lines, Graphics::Surface *surface) {
+	if (!_fontLoaded)
+		return surface;
+
 	uint32 color = 0;
 	uint32 back = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0x00, 0x00, 0x00);
 
 	switch (_renderMode) {
 		case Common::kRenderCGA:
+		case Common::kRenderHercG:
 			color = 1;
 			break;
 		case Common::kRenderZX:
@@ -133,30 +191,49 @@ void FreescapeEngine::borderScreen() {
 	if (isDOS() || isSpectrum()) {
 		Common::Array<Common::String> lines;
 		int pad = 25;
-		if (isSpectrum() && isCastle())
-			pad = 22;
-		else if (isDOS() && !isCastle())
-			pad = 30;
+		if (isDOS()) {
+			if (isDOS() && !isCastle())
+				pad = 30;
 
-		if (isDOS())
-			lines.push_back(centerAndPadString("Configuration Menu", pad));
-		else
-			lines.push_back(centerAndPadString("Control Options", pad));
-		lines.push_back("");
-		lines.push_back(centerAndPadString("1: KEYBOARD ONLY   ", pad));
-		lines.push_back(centerAndPadString("2: IBM JOYSTICK    ", pad));
-		lines.push_back(centerAndPadString("3: AMSTRAD JOYSTICK", pad));
-		lines.push_back("");
-		lines.push_back("");
-		if (isDOS())
+			lines.push_back(centerAndPadString("CONFIGURATION MENU", pad));
+			lines.push_back("");
+			lines.push_back(centerAndPadString("1: KEYBOARD ONLY   ", pad));
+			lines.push_back(centerAndPadString("2: IBM JOYSTICK    ", pad));
+			lines.push_back(centerAndPadString("3: AMSTRAD JOYSTICK", pad));
+			lines.push_back("");
+			lines.push_back("");
 			lines.push_back(centerAndPadString("SPACEBAR:  BEGIN MISSION", pad));
-		else
-			lines.push_back(centerAndPadString("Enter: Begin Mission", pad));
-		lines.push_back("");
-		if (isDOS())
+			lines.push_back("");
 			lines.push_back(centerAndPadString("COPYRIGHT 1988 INCENTIVE", pad));
-		else
-			lines.push_back(centerAndPadString("(c) 1988 Incentive", pad));
+		} else if (isSpectrum()) {
+			if (isSpectrum() && isCastle())
+				pad = 22;
+
+			if (_language == Common::ES_ESP) {
+				assert(isCastle());
+				lines.push_back(centerAndPadString("MENU DE OPCIONES", pad));
+				lines.push_back("");
+				lines.push_back(centerAndPadString("1 TECLADO          ", pad));
+				lines.push_back(centerAndPadString("2 JOYSTICK SINCLAIR", pad));
+				lines.push_back(centerAndPadString("3 JOYSTICK KEMSTON ", pad));
+				lines.push_back(centerAndPadString("4 JOYSTICK CURSOR  ", pad));
+				lines.push_back("");
+				lines.push_back(centerAndPadString("ENTER: EMPEZAR MISION", pad));
+				lines.push_back(centerAndPadString("(c) 1990 INCENTIVE", pad));
+			} else {
+				lines.push_back(centerAndPadString("CONTROL OPTIONS", pad));
+				lines.push_back("");
+				lines.push_back(centerAndPadString("1 KEYBOARD         ", pad));
+				lines.push_back(centerAndPadString("2 SINCLAIR JOYSTICK", pad));
+				lines.push_back(centerAndPadString("3 KEMSTON JOYSTICK ", pad));
+				lines.push_back(centerAndPadString("4 CURSOR JOYSTICK  ", pad));
+				lines.push_back("");
+				lines.push_back(centerAndPadString("ENTER: BEGIN MISSION", pad));
+				if (!isCastle())
+					lines.push_back("");;
+				lines.push_back(centerAndPadString("(c) 1990 INCENTIVE", pad));
+			}
+		}
 
 		lines.push_back("");
 

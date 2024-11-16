@@ -48,10 +48,9 @@ AdObject3D::AdObject3D(BaseGame *inGame) : AdObject(inGame) {
 
 	_velocity = 1.0f;
 	_angVelocity = 1.0f;
-	_lastPosVector = Math::Vector3d(0.0f, 0.0f, 0.0f);
+	_lastPosVector = DXVector3(0.0f, 0.0f, 0.0f);
 
 	_state = _nextState = STATE_READY;
-
 	_dropToFloor = true;
 	_shadowType = SHADOW_STENCIL;
 
@@ -84,7 +83,7 @@ void AdObject3D::clearIgnoredLights() {
 //////////////////////////////////////////////////////////////////////////
 bool AdObject3D::addIgnoredLight(char *lightName) {
 	for (uint32 i = 0; i < _ignoredLights.size(); i++) {
-		if (_ignoredLights[i] == lightName) {
+		if (scumm_stricmp(_ignoredLights[i], lightName) == 0) {
 			return true;
 		}
 	}
@@ -96,7 +95,8 @@ bool AdObject3D::addIgnoredLight(char *lightName) {
 //////////////////////////////////////////////////////////////////////////
 bool AdObject3D::removeIgnoredLight(char *lightName) {
 	for (uint32 i = 0; i < _ignoredLights.size(); i++) {
-		if (_ignoredLights[i] == lightName) {
+		if (scumm_stricmp(_ignoredLights[i], lightName) == 0) {
+			delete[] _ignoredLights[i];
 			_ignoredLights.remove_at(i);
 			return true;
 		}
@@ -109,8 +109,8 @@ bool AdObject3D::update() {
 	AdGame *adGame = (AdGame *)_gameRef;
 
 	// drop to floor
-	if (_dropToFloor && adGame->_scene && adGame->_scene->_sceneGeometry) {
-		_posVector.y() = adGame->_scene->_sceneGeometry->getHeightAt(_posVector, 5.0f);
+	if (_dropToFloor && adGame->_scene && adGame->_scene->_geom) {
+		_posVector._y = adGame->_scene->_geom->getHeightAt(_posVector, 5.0f);
 	}
 
 	getMatrix(&_worldMatrix);
@@ -126,9 +126,19 @@ bool AdObject3D::update() {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool AdObject3D::convert3DTo2D(Math::Matrix4 *worldMat, int32 *posX, int32 *posY) {
-	Math::Vector3d origin(0.0f, 0.0f, 0.0f);
-	_gameRef->_renderer3D->project(*worldMat, origin, *posX, *posY);
+bool AdObject3D::convert3DTo2D(DXMatrix *worldMat, int32 *posX, int32 *posY) {
+	DXMatrix viewMat, projMat;
+	DXVector3 vec2d(0.0f, 0.0f, 0.0f);
+	DXVector3 origin(0.0f, 0.0f, 0.0f);
+	_gameRef->_renderer3D->getViewTransform(&viewMat);
+	_gameRef->_renderer3D->getProjectionTransform(&projMat);
+
+	DXViewport viewport = _gameRef->_renderer3D->getViewPort();
+
+	DXVec3Project(&vec2d, &origin, &viewport, &projMat, &viewMat, worldMat);
+
+	*posX = vec2d._x + _gameRef->_offsetX - _gameRef->_renderer3D->_drawOffsetX;
+	*posY = vec2d._y + _gameRef->_offsetY - _gameRef->_renderer3D->_drawOffsetY;
 
 	return true;
 }
@@ -142,8 +152,8 @@ bool AdObject3D::display() {
 bool AdObject3D::setupLights() {
 	AdGame *adGame = (AdGame *)_gameRef;
 
-	if (adGame->_scene && adGame->_scene->_sceneGeometry) {
-		return adGame->_scene->_sceneGeometry->enableLights(_posVector, _ignoredLights);
+	if (adGame->_scene && adGame->_scene->_geom) {
+		return adGame->_scene->_geom->enableLights(_posVector, _ignoredLights);
 	} else {
 		return false;
 	}
@@ -171,10 +181,9 @@ bool AdObject3D::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "SkipTo3D") == 0) {
 		stack->correctParams(3);
-		_posVector.x() = stack->pop()->getFloat();
-		_posVector.y() = stack->pop()->getFloat();
-		// scripts will expect a Direct3D coordinate system
-		_posVector.z() = -stack->pop()->getFloat();
+		_posVector._x = stack->pop()->getFloat();
+		_posVector._y = stack->pop()->getFloat();
+		_posVector._z = stack->pop()->getFloat();
 
 		stack->pushNULL();
 
@@ -203,15 +212,15 @@ bool AdObject3D::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	else if (strcmp(name, "GetBonePosition3D") == 0) {
 		stack->correctParams(1);
 		const char *boneName = stack->pop()->getString();
-		Math::Vector3d pos(0, 0, 0);
+		DXVector3 pos(0, 0, 0);
 		getBonePosition3D(boneName, &pos);
 
 		ScValue *val = stack->getPushValue();
 
 		if (val) {
-			val->setProperty("X", pos.x());
-			val->setProperty("Y", pos.y());
-			val->setProperty("Z", pos.z());
+			val->setProperty("X", pos._x);
+			val->setProperty("Y", pos._y);
+			val->setProperty("Z", pos._z);
 		}
 
 		return true;
@@ -250,31 +259,28 @@ ScValue *AdObject3D::scGetProperty(const Common::String &name) {
 	// Angle
 	//////////////////////////////////////////////////////////////////////////
 	if (name == "Angle") {
-		float tmp = 0.0f;
-		_scValue->setFloat(tmp);
-		_angle = tmp;
+		_scValue->setFloat(_angle);
 		return _scValue;
 	}
 	//////////////////////////////////////////////////////////////////////////
 	// PosX
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "PosX") {
-		_scValue->setFloat(_posVector.x());
+		_scValue->setFloat(_posVector._x);
 		return _scValue;
 	}
 	//////////////////////////////////////////////////////////////////////////
 	// PosY
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "PosY") {
-		_scValue->setFloat(_posVector.y());
+		_scValue->setFloat(_posVector._y);
 		return _scValue;
 	}
 	//////////////////////////////////////////////////////////////////////////
 	// PosZ
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "PosZ") {
-		// scripts will expect a Direct3D coordinate system
-		_scValue->setFloat(-_posVector.z());
+		_scValue->setFloat(_posVector._z);
 		return _scValue;
 	}
 	//////////////////////////////////////////////////////////////////////////
@@ -379,22 +385,21 @@ bool AdObject3D::scSetProperty(const char *name, ScValue *value) {
 	// PosX
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "PosX") == 0) {
-		_posVector.x() = value->getFloat();
+		_posVector._x = value->getFloat();
 		return true;
 	}
 	//////////////////////////////////////////////////////////////////////////
 	// PosY
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "PosY") == 0) {
-		_posVector.y() = value->getFloat();
+		_posVector._y = value->getFloat();
 		return true;
 	}
 	//////////////////////////////////////////////////////////////////////////
 	// PosZ
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "PosZ") == 0) {
-		// scripts will expect a Direct3D coordinate system
-		_posVector.z() = -value->getFloat();
+		_posVector._z = value->getFloat();
 		return true;
 	}
 
@@ -404,8 +409,8 @@ bool AdObject3D::scSetProperty(const char *name, ScValue *value) {
 	else if (strcmp(name, "X") == 0) {
 		_posX = value->getInt();
 		AdGame *adGame = (AdGame *)_gameRef;
-		Math::Vector3d pos;
-		if (adGame->_scene->_sceneGeometry && adGame->_scene->_sceneGeometry->convert2Dto3D(_posX, _posY, &pos)) {
+		DXVector3 pos;
+		if (adGame->_scene->_geom && adGame->_scene->_geom->convert2Dto3D(_posX, _posY, &pos)) {
 			_posVector = pos;
 		}
 		return true;
@@ -417,8 +422,8 @@ bool AdObject3D::scSetProperty(const char *name, ScValue *value) {
 	else if (strcmp(name, "Y") == 0) {
 		_posY = value->getInt();
 		AdGame *adGame = (AdGame *)_gameRef;
-		Math::Vector3d pos;
-		if (adGame->_scene->_sceneGeometry && adGame->_scene->_sceneGeometry->convert2Dto3D(_posX, _posY, &pos)) {
+		DXVector3 pos;
+		if (adGame->_scene->_geom && adGame->_scene->_geom->convert2Dto3D(_posX, _posY, &pos)) {
 			_posVector = pos;
 		}
 		return true;
@@ -560,13 +565,13 @@ bool AdObject3D::persist(BasePersistenceManager *persistMgr) {
 //////////////////////////////////////////////////////////////////////////
 bool AdObject3D::skipTo(int x, int y, bool tolerant) {
 	AdGame *adGame = (AdGame *)_gameRef;
-	Math::Vector3d pos;
+	DXVector3 pos;
 
 	bool success;
 	if (tolerant) {
-		success = adGame->_scene->_sceneGeometry && adGame->_scene->_sceneGeometry->convert2Dto3DTolerant(x, y, &pos);
+		success = adGame->_scene->_geom && adGame->_scene->_geom->convert2Dto3DTolerant(x, y, &pos);
 	} else {
-		success = adGame->_scene->_sceneGeometry && adGame->_scene->_sceneGeometry->convert2Dto3D(x, y, &pos);
+		success = adGame->_scene->_geom && adGame->_scene->_geom->convert2Dto3D(x, y, &pos);
 	}
 
 	if (success) {
@@ -595,45 +600,51 @@ bool AdObject3D::getBonePosition2D(const char *boneName, int32 *x, int32 *y) {
 	}
 
 	AdGame *adGame = (AdGame *)_gameRef;
-
-	if (!adGame->_scene || !adGame->_scene->_sceneGeometry)
+	if (!adGame->_scene || !adGame->_scene->_geom)
 		return false;
 
-	Math::Matrix4 *boneMat = _xmodel->getBoneMatrix(boneName);
-
+	DXMatrix *boneMat = _xmodel->getBoneMatrix(boneName);
 	if (!boneMat) {
 		return false;
 	}
 
-	Math::Matrix4 bonePosMat = *boneMat * _worldMatrix;
+	DXMatrix bonePosMat;
+	DXMatrixMultiply(&bonePosMat, boneMat, &_worldMatrix);
 
-	Math::Vector4d vectBone4 = Math::Vector4d(0.0f, 0.0f, 0.0f, 0.0f);
-	bonePosMat.transformVector(&vectBone4);
-	Math::Vector3d vectBone(vectBone4.x(), vectBone4.y(), vectBone4.z());
+	DXVector4 vectBone4;
+	DXVector3 vectBone3(0, 0, 0);
+	DXVec3Transform(&vectBone4, &vectBone3, &bonePosMat);
+	DXVector3 vectBone(vectBone4._x, vectBone4._y, vectBone4._z);
 
-	adGame->_scene->_sceneGeometry->convert3Dto2D(&vectBone, x, y);
+	adGame->_scene->_geom->convert3Dto2D(&vectBone, x, y);
 	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool AdObject3D::getBonePosition3D(const char *boneName, Math::Vector3d *pos, Math::Vector3d *offset) {
+bool AdObject3D::getBonePosition3D(const char *boneName, DXVector3 *pos, DXVector3 *offset) {
 	if (!_xmodel) {
 		return false;
 	}
 
-	Math::Matrix4 *boneMat = _xmodel->getBoneMatrix(boneName);
+	DXMatrix *boneMat = _xmodel->getBoneMatrix(boneName);
 	if (!boneMat) {
 		return false;
 	}
 
-	Math::Matrix4 bonePosMat = *boneMat * _worldMatrix;
-	*pos = Math::Vector3d(0.0f, 0.0f, 0.0f);
-
-	if (offset) {
-		*pos = *offset;
+	DXVector3 vz(0, 0, 0);
+	if (!offset) {
+		offset = &vz;
 	}
 
-	bonePosMat.transform(pos, true);
+	DXMatrix bonePosMat;
+	DXMatrixMultiply(&bonePosMat, boneMat, &_worldMatrix);
+
+	DXVector4 vectBone4;
+	DXVec3Transform(&vectBone4, offset, &bonePosMat);
+
+	pos->_x = vectBone4._x;
+	pos->_y = vectBone4._y;
+	pos->_z = vectBone4._z;
 
 	return true;
 }

@@ -174,10 +174,10 @@ void Sections::m4SceneLoad() {
 }
 
 void Sections::m4RunScene() {
-	game_control_cycle();
-
 	if (!player_been_here(_G(game).room_id))
 		player_enters_scene(_G(game).room_id);
+
+	game_control_cycle();
 }
 
 void Sections::m4EndScene() {
@@ -221,6 +221,9 @@ void Sections::m4EndScene() {
 	ClearWSAssets(_WS_ASSET_SEQU, 0, 255);
 	ClearWSAssets(_WS_ASSET_DATA, 0, 255);
 	ClearWSAssets(_WS_ASSET_CELS, 0, 255);
+
+	// Dump a list of any resources remaining in memory
+	_G(resources).dumpResources();
 
 	// Reload the walker and show scripts.
 	if (!LoadWSAssets("walker script", &_G(master_palette)[0]))
@@ -396,10 +399,14 @@ void Sections::pal_game_task() {
 			if (_G(kernel).camera_pan_instant) {
 				delta = _cameraShiftAmount;
 				_cameraShiftAmount = 0;
-			} else if (_cameraShiftAmount > 0) {
-				delta = imath_min(_cameraShiftAmount, camera_pan_step);
 			} else {
-				delta = imath_max(_cameraShiftAmount, camera_pan_step);
+				if (_cameraShiftAmount > 0) {
+					delta = imath_min(_cameraShiftAmount, camera_pan_step);
+				} else {
+					delta = imath_max(_cameraShiftAmount, -camera_pan_step);
+				}
+
+				_cameraShiftAmount -= delta;
 			}
 
 			MoveScreenDelta(game_buff_ptr, delta, 0);
@@ -409,10 +416,14 @@ void Sections::pal_game_task() {
 			if (_G(kernel).camera_pan_instant) {
 				delta = _cameraShift_vert_Amount;
 				_cameraShift_vert_Amount = 0;
-			} else if (_cameraShift_vert_Amount > 0) {
-				delta = imath_min(_cameraShift_vert_Amount, camera_pan_step);
 			} else {
-				delta = imath_max(_cameraShift_vert_Amount, camera_pan_step);
+				if (_cameraShift_vert_Amount > 0) {
+					delta = imath_min(_cameraShift_vert_Amount, camera_pan_step);
+				} else {
+					delta = imath_max(_cameraShift_vert_Amount, camera_pan_step);
+				}
+
+				_cameraShift_vert_Amount -= delta;
 			}
 		}
 	}
@@ -451,6 +462,14 @@ void Sections::camera_shift_xy(int32 x, int32 y) {
 
 	_cameraShiftAmount = -sc->x1 - x + _G(kernel).letter_box_x;
 	_cameraShift_vert_Amount = -sc->y1 - y + _G(kernel).letter_box_y;
+}
+
+void Sections::adv_camera_pan_step(int32 step) {
+	camera_pan_step = step;
+}
+
+Room *Sections::getRoom(int room) const {
+	return (*_sections[(room / 100) - 1])[room];
 }
 
 /*------------------------------------------------------------------------*/

@@ -33,8 +33,6 @@ namespace M4 {
 namespace Burger {
 namespace GUI {
 
-#define INTERFACE_SPRITES 22
-
 Interface::Interface() : M4::Interface() {
 	_x1 = 0;
 	_y1 = 374;
@@ -401,8 +399,8 @@ ControlStatus Interface::trackHotspots(int event, int x, int y) {
 	if (event == 5 && hotspot) {
 		_G(player).walk_x = x;
 		_G(player).walk_y = y;
-		_G(click_x) = x;
-		_G(click_y) = y;
+		_G(player).click_x = x;
+		_G(player).click_y = y;
 
 		if (hotspot) {
 			if (hotspot->feet_x != 0x7fff)

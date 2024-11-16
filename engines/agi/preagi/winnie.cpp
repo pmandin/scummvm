@@ -428,6 +428,7 @@ int WinnieEngine::parser(int pc, int index, uint8 *buffer) {
 				break;
 			case IDO_WTP_SAVE_GAME:
 				saveGame();
+				getSelection(kSelAnyKey);
 				_room = IDI_WTP_ROOM_HOME;
 				return IDI_WTP_PAR_GOTO;
 			case IDO_WTP_LOAD_GAME:
@@ -560,8 +561,6 @@ void WinnieEngine::dropObj(int iRoom) {
 
 		if (isRightObj(iRoom, _gameStateWinnie.iObjHave, &iCode)) {
 			// object has been dropped in the right place
-			printStr(IDS_WTP_OK);
-			getSelection(kSelAnyKey);
 			playSound(IDI_WTP_SND_DROP_OK);
 			printObjStr(_gameStateWinnie.iObjHave, IDI_WTP_OBJ_DROP);
 			getSelection(kSelAnyKey);
@@ -598,11 +597,12 @@ void WinnieEngine::dropObj(int iRoom) {
 
 			// object has been dropped in the wrong place
 			printStr(IDS_WTP_WRONG_PLACE);
-			getSelection(kSelAnyKey);
-
 			playSound(IDI_WTP_SND_DROP);
-			drawRoomPic();
 
+			// draw the object by redrawing the room and
+			// reprinting the message. the original just
+			// drew the object.
+			drawRoomPic();
 			printStr(IDS_WTP_WRONG_PLACE);
 			getSelection(kSelAnyKey);
 
@@ -648,11 +648,11 @@ void WinnieEngine::wind() {
 		return;
 
 	printStr(IDS_WTP_WIND_0);
-	playSound(IDI_WTP_SND_WIND_0);
+	playSound(IDI_WTP_SND_WIND_1); // not a bug, IDI_WTP_SND_WIND_0 isn't used here
 	getSelection(kSelAnyKey);
 
 	printStr(IDS_WTP_WIND_1);
-	playSound(IDI_WTP_SND_WIND_0);
+	playSound(IDI_WTP_SND_WIND_1);
 	getSelection(kSelAnyKey);
 
 	dropObjRnd();
@@ -796,12 +796,13 @@ void WinnieEngine::getMenuMouseSel(int *iSel, int fCanSel[], int x, int y) {
 	}
 }
 
-void WinnieEngine::makeSel(int *iSel, int fCanSel[]) {
+bool WinnieEngine::makeSel(int *iSel, int fCanSel[]) {
 	if (fCanSel[*iSel])
-		return;
+		return true;
 
 	keyHelp();
 	clrMenuSel(iSel, fCanSel);
+	return false;
 }
 
 void WinnieEngine::getMenuSel(char *szMenu, int *iSel, int fCanSel[]) {
@@ -943,31 +944,55 @@ void WinnieEngine::getMenuSel(char *szMenu, int *iSel, int fCanSel[]) {
 					break;
 				case Common::KEYCODE_n:
 					*iSel = IDI_WTP_SEL_NORTH;
-					makeSel(iSel, fCanSel);
+					if (makeSel(iSel, fCanSel)) {
+						// Menu selection made, hide the mouse cursor
+						CursorMan.showMouse(false);
+						return;
+					}
 					break;
 				case Common::KEYCODE_s:
 					if (event.kbd.flags & Common::KBD_CTRL) {
 						flipFlag(VM_FLAG_SOUND_ON);
 					} else {
 						*iSel = IDI_WTP_SEL_SOUTH;
-						makeSel(iSel, fCanSel);
+						if (makeSel(iSel, fCanSel)) {
+							// Menu selection made, hide the mouse cursor
+							CursorMan.showMouse(false);
+							return;
+						}
 					}
 					break;
 				case Common::KEYCODE_e:
 					*iSel = IDI_WTP_SEL_EAST;
-					makeSel(iSel, fCanSel);
+					if (makeSel(iSel, fCanSel)) {
+						// Menu selection made, hide the mouse cursor
+						CursorMan.showMouse(false);
+						return;
+					}
 					break;
 				case Common::KEYCODE_w:
 					*iSel = IDI_WTP_SEL_WEST;
-					makeSel(iSel, fCanSel);
+					if (makeSel(iSel, fCanSel)) {
+						// Menu selection made, hide the mouse cursor
+						CursorMan.showMouse(false);
+						return;
+					}
 					break;
 				case Common::KEYCODE_t:
 					*iSel = IDI_WTP_SEL_TAKE;
-					makeSel(iSel, fCanSel);
+					if (makeSel(iSel, fCanSel)) {
+						// Menu selection made, hide the mouse cursor
+						CursorMan.showMouse(false);
+						return;
+					}
 					break;
 				case Common::KEYCODE_d:
 					*iSel = IDI_WTP_SEL_DROP;
-					makeSel(iSel, fCanSel);
+					if (makeSel(iSel, fCanSel)) {
+						// Menu selection made, hide the mouse cursor
+						CursorMan.showMouse(false);
+						return;
+					}
 					break;
 				case Common::KEYCODE_RETURN:
 					switch (*iSel) {
@@ -993,7 +1018,8 @@ void WinnieEngine::getMenuSel(char *szMenu, int *iSel, int fCanSel[]) {
 					}
 					break;
 				default:
-					if (!event.kbd.flags) { // if the control/alt/shift keys are not pressed
+					// show help if the control/alt/shift keys are not pressed
+					if (!(event.kbd.flags & Common::KBD_NON_STICKY)) {
 						keyHelp();
 						clrMenuSel(iSel, fCanSel);
 					}
@@ -1047,10 +1073,12 @@ void WinnieEngine::gameLoop() {
 
 		if (decodePhase == 3) {
 			for (iBlock = 0; iBlock < IDI_WTP_MAX_BLOCK; iBlock++) {
-				if (parser(hdr.ofsBlock[iBlock] - _roomOffset, iBlock, roomdata) == IDI_WTP_PAR_GOTO) {
+				int result = parser(hdr.ofsBlock[iBlock] - _roomOffset, iBlock, roomdata);
+				if (result == IDI_WTP_PAR_GOTO) {
 					decodePhase = 0;
 					break;
-				} else if (parser(hdr.ofsBlock[iBlock] - _roomOffset, iBlock, roomdata) == IDI_WTP_PAR_BACK) {
+				}
+				if (result == IDI_WTP_PAR_BACK) {
 					decodePhase = 2;
 					break;
 				}
@@ -1082,7 +1110,7 @@ void WinnieEngine::drawPic(const char *szName) {
 	file.close();
 
 	_picture->setOffset(IDI_WTP_PIC_X0, IDI_WTP_PIC_Y0);
-	_picture->decodePicture(buffer, size, 1, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
+	_picture->decodePictureFromBuffer(buffer, size, true, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
 	_picture->setOffset(0, 0);
 	_picture->showPic(IDI_WTP_PIC_X0, IDI_WTP_PIC_Y0, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
 
@@ -1099,7 +1127,7 @@ void WinnieEngine::drawObjPic(int iObj, int x0, int y0) {
 	parseObjHeader(&objhdr, buffer, sizeof(WTP_OBJ_HDR));
 
 	_picture->setOffset(x0, y0);
-	_picture->decodePicture(buffer + objhdr.ofsPic - _objOffset, objSize, 0, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
+	_picture->decodePictureFromBuffer(buffer + objhdr.ofsPic - _objOffset, objSize, false, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
 	_picture->setOffset(0, 0);
 	_picture->showPic(10, 0, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
 
@@ -1119,7 +1147,7 @@ void WinnieEngine::drawRoomPic() {
 
 	// draw room picture
 	_picture->setOffset(IDI_WTP_PIC_X0, IDI_WTP_PIC_Y0);
-	_picture->decodePicture(buffer + roomhdr.ofsPic - _roomOffset, 4096, 1, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
+	_picture->decodePictureFromBuffer(buffer + roomhdr.ofsPic - _roomOffset, 4096, true, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
 	_picture->setOffset(0, 0);
 	_picture->showPic(IDI_WTP_PIC_X0, IDI_WTP_PIC_Y0, IDI_WTP_PIC_WIDTH, IDI_WTP_PIC_HEIGHT);
 
@@ -1147,7 +1175,8 @@ bool WinnieEngine::playSound(ENUM_WTP_SOUND iSound) {
 	file.read(data, size);
 	file.close();
 
-	_game.sounds[0] = AgiSound::createFromRawResource(data, size, 0, _soundemu);
+	const bool isAgiV1 = true; // DOS uses AGIv1 sounds
+	_game.sounds[0] = AgiSound::createFromRawResource(data, size, 0, _soundemu, isAgiV1);
 	if (_game.sounds[0] == nullptr) {
 		return false;
 	}

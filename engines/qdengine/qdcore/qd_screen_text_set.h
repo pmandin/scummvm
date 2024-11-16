@@ -92,6 +92,10 @@ public:
 		return _texts.empty();
 	}
 
+	int size() const {
+		return _texts.size();
+	}
+
 	void set_max_text_width(int width) {
 		_max_text_width = width;
 		format_texts();
@@ -130,7 +134,7 @@ private:
 	//! Расстояние между соседними текстами в пикселах.
 	int _space;
 
-	typedef Std::vector<qdScreenText> texts_container_t;
+	typedef Common::Array<qdScreenText> texts_container_t;
 	//! Тексты.
 	texts_container_t _texts;
 

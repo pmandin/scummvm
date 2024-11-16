@@ -95,19 +95,17 @@ void TinyGLRenderer::drawTexturedRect2D(const Common::Rect &screenRect, const Co
 	tglBlit(((TinyGLTexture *)texture)->getBlitTexture(), transform);
 }
 
-void TinyGLRenderer::updateProjectionMatrix(float fov, float yminValue, float ymaxValue, float nearClipPlane, float farClipPlane) {
+void TinyGLRenderer::updateProjectionMatrix(float fov, float aspectRatio, float nearClipPlane, float farClipPlane) {
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
 
-	// Determining xmaxValue and ymaxValue still needs some work for matching the 3D view in freescape games
-	/*float aspectRatio = _screenW / (float)_screenH;
-
-	float xmaxValue = nearClipPlane * tan(Common::deg2rad(fov) / 2);
+	float xmaxValue = nearClipPlane * tan(Math::deg2rad(fov) / 2);
 	float ymaxValue = xmaxValue / aspectRatio;
-	// debug("max values: %f %f", xmaxValue, ymaxValue);
 
-	tglFrustumf(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);*/
-	tglFrustumf(1.5, -1.5, yminValue, ymaxValue, nearClipPlane, farClipPlane);
+	// Corrected glFrustum call
+	tglFrustum(-xmaxValue, xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);
+	tglScalef(-1.0f, 1.0f, 1.0f);
+
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 }
@@ -132,7 +130,51 @@ void TinyGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, 
 	polygonOffset(false);
 }
 
-void TinyGLRenderer::renderPlayerShootBall(byte color, const Common::Point position, int frame, const Common::Rect viewArea) {}
+void TinyGLRenderer::renderPlayerShootBall(byte color, const Common::Point position, int frame, const Common::Rect viewArea) {
+	/*uint8 r, g, b;
+
+	tglMatrixMode(TGL_PROJECTION);
+	tglLoadIdentity();
+	tglOrtho(0, _screenW, _screenH, 0, 0, 1);
+	tglMatrixMode(TGL_MODELVIEW);
+	tglLoadIdentity();
+	if (_renderMode == Common::kRenderCGA || _renderMode == Common::kRenderZX) {
+		r = g = b = 255;
+	} else {
+		r = g = b = 255;
+		tglEnable(TGL_BLEND);
+		tglBlendFunc(TGL_ONE_MINUS_DST_COLOR, TGL_ZERO);
+	}
+
+	tglDisable(TGL_DEPTH_TEST);
+	tglDepthMask(TGL_FALSE);
+
+	tglColor3ub(r, g, b);
+	int triangleAmount = 20;
+	float twicePi = (float)(2.0 * M_PI);
+	float coef = (9 - frame) / 9.0;
+	float radius = (1 - coef) * 4.0;
+
+	Common::Point initial_position(viewArea.left + viewArea.width() / 2 + 2, viewArea.height() + viewArea.top);
+	Common::Point ball_position = coef * position + (1 - coef) * initial_position;
+
+	tglEnableClientState(TGL_VERTEX_ARRAY);
+	copyToVertexArray(0, Math::Vector3d(ball_position.x, ball_position.y, 0));
+
+	for(int i = 0; i <= triangleAmount; i++) {
+		float x = ball_position.x + (radius * cos(i *  twicePi / triangleAmount));
+		float y = ball_position.y + (radius * sin(i * twicePi / triangleAmount));
+		copyToVertexArray(i + 1, Math::Vector3d(x, y, 0));
+	}
+
+	tglVertexPointer(3, TGL_FLOAT, 0, _verts);
+	tglDrawArrays(TGL_TRIANGLE_FAN, 0, triangleAmount + 2);
+	tglDisableClientState(TGL_VERTEX_ARRAY);
+
+	tglDisable(TGL_BLEND);
+	tglEnable(TGL_DEPTH_TEST);
+	tglDepthMask(TGL_TRUE);*/
+}
 
 
 void TinyGLRenderer::renderPlayerShootRay(byte color, const Common::Point position, const Common::Rect viewArea) {
@@ -199,14 +241,14 @@ void TinyGLRenderer::renderCrossair(const Common::Point crossairPosition) {
 	copyToVertexArray(0, Math::Vector3d(crossairPosition.x - 3, crossairPosition.y, 0));
 	copyToVertexArray(1, Math::Vector3d(crossairPosition.x - 1, crossairPosition.y, 0));
 
-	copyToVertexArray(2, Math::Vector3d(crossairPosition.x + 1, crossairPosition.y, 0));
-	copyToVertexArray(3, Math::Vector3d(crossairPosition.x + 3, crossairPosition.y, 0));
+	copyToVertexArray(2, Math::Vector3d(crossairPosition.x + 2, crossairPosition.y, 0));
+	copyToVertexArray(3, Math::Vector3d(crossairPosition.x + 4, crossairPosition.y, 0));
 
 	copyToVertexArray(4, Math::Vector3d(crossairPosition.x, crossairPosition.y - 3, 0));
 	copyToVertexArray(5, Math::Vector3d(crossairPosition.x, crossairPosition.y - 1, 0));
 
-	copyToVertexArray(6, Math::Vector3d(crossairPosition.x, crossairPosition.y + 1, 0));
-	copyToVertexArray(7, Math::Vector3d(crossairPosition.x, crossairPosition.y + 3, 0));
+	copyToVertexArray(6, Math::Vector3d(crossairPosition.x, crossairPosition.y + 2, 0));
+	copyToVertexArray(7, Math::Vector3d(crossairPosition.x, crossairPosition.y + 4, 0));
 
 	tglVertexPointer(3, TGL_FLOAT, 0, _verts);
 	tglDrawArrays(TGL_LINES, 0, 8);
@@ -237,8 +279,8 @@ void TinyGLRenderer::useStipple(bool enabled) {
 			_renderMode == Common::kRenderCPC ||
 			_renderMode == Common::kRenderCGA)
 			tglPolygonStipple(_variableStippleArray);
-		/*else
-			tglPolygonStipple(_defaultStippleArray);*/
+		else
+			tglPolygonStipple(_defaultStippleArraySmall);
 	} else {
 		tglPolygonOffset(0, 0);
 		tglDisable(TGL_POLYGON_OFFSET_FILL);
@@ -279,8 +321,81 @@ void TinyGLRenderer::renderFace(const Common::Array<Math::Vector3d> &vertices) {
 	tglDisableClientState(TGL_VERTEX_ARRAY);
 }
 
+void TinyGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, byte color) {
+	/*uint8 r1, g1, b1, r2, g2, b2;
+	byte *stipple = nullptr;
+	getRGBAt(color, 0, r1, g1, b1, r2, g2, b2, stipple);
+
+	int triangleAmount = 20;
+	float twicePi = (float)(2.0 * M_PI);*/
+
+	// Quick billboard effect inspired from this code:
+	// http://www.lighthouse3d.com/opengl/billboarding/index.php?billCheat
+	/*glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	GLfloat m[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	for(int i = 1; i < 4; i++)
+		for(int j = 0; j < 4; j++ ) {
+			if (i == 2)
+				continue;
+			if (i == j)
+				m[i*4 + j] = 1.0;
+			else
+				m[i*4 + j] = 0.0;
+		}
+
+	glLoadMatrixf(m);*/
+	/*tglDisable(TGL_DEPTH_TEST);
+	tglDepthMask(TGL_FALSE);
+
+	setStippleData(stipple);
+	useColor(r1, g1, b1);
+
+	tglEnableClientState(TGL_VERTEX_ARRAY);
+	copyToVertexArray(0, position);
+	float adj = 1.25; // Perspective correction
+
+	for(int i = 0; i <= triangleAmount; i++) {
+		copyToVertexArray(i + 1,
+			Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
+						position.z() + (adj * radius * sin(i * twicePi / triangleAmount)))
+		);
+	}
+
+	tglVertexPointer(3, TGL_FLOAT, 0, _verts);
+	tglDrawArrays(TGL_TRIANGLE_FAN, 0, triangleAmount + 2);
+	tglDisableClientState(TGL_VERTEX_ARRAY);
+
+	if (r1 != r2 || g1 != g2 || b1 != b2) {
+		useStipple(true);
+		useColor(r2, g2, b2);
+
+		tglEnableClientState(TGL_VERTEX_ARRAY);
+		copyToVertexArray(0, position);
+
+		for(int i = 0; i <= triangleAmount; i++) {
+			copyToVertexArray(i + 1,
+				Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
+							position.z() + (adj * radius * sin(i * twicePi / triangleAmount)))
+			);
+		}
+
+		tglVertexPointer(3, TGL_FLOAT, 0, _verts);
+		tglDrawArrays(TGL_TRIANGLE_FAN, 0, triangleAmount + 2);
+		tglDisableClientState(TGL_VERTEX_ARRAY);
+
+		useStipple(false);
+	}
+
+	tglEnable(TGL_DEPTH_TEST);
+	tglDepthMask(TGL_TRUE);
+	//tglPopMatrix();*/
+}
+
 void TinyGLRenderer::depthTesting(bool enabled) {
 	if (enabled) {
+		tglClear(TGL_DEPTH_BUFFER_BIT);
 		tglEnable(TGL_DEPTH_TEST);
 	} else {
 		tglDisable(TGL_DEPTH_TEST);

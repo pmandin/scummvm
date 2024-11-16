@@ -30,6 +30,9 @@
 
 #include "engines/wintermute/base/gfx/xmesh.h"
 
+class Effect3D;
+class Effect3DParams;
+
 #if defined(USE_OPENGL_SHADERS)
 
 #include "graphics/opengl/shader.h"
@@ -38,20 +41,23 @@ namespace Wintermute {
 
 class XMeshOpenGLShader : public XMesh {
 public:
-	XMeshOpenGLShader(BaseGame *inGame, OpenGL::Shader *shader, OpenGL::Shader *flatShadowShader);
+	XMeshOpenGLShader(BaseGame *inGame, OpenGL::Shader *shader);
 	~XMeshOpenGLShader() override;
 
-	bool loadFromXData(const Common::String &filename, XFileData *xobj, Common::Array<MaterialReference> &materialReferences) override;
+	bool loadFromXData(const Common::String &filename, XFileData *xobj) override;
 	bool render(XModel *model) override;
 	bool renderFlatShadowModel() override;
 	bool update(FrameNode *parentFrame) override;
+
+private:
+	void renderEffect(Material *material);
 
 protected:
 	GLuint _vertexBuffer;
 	GLuint _indexBuffer;
 
 	OpenGL::Shader *_shader;
-	OpenGL::Shader *_flatShadowShader;
+	OpenGL::Shader *_flatShadowShader{};
 };
 
 } // namespace Wintermute

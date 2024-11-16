@@ -41,7 +41,7 @@ public:
 	bool hasFeature(MetaEngineFeature f) const override;
 	int getMaximumSaveSlot() const override { return 99; }
 	SaveStateList listSaves(const char *target) const override;
-	void removeSaveState(const char *target, int slot) const override;
+	bool removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
@@ -88,8 +88,8 @@ SaveStateList DraciMetaEngine::listSaves(const char *target) const {
 	return saveList;
 }
 
-void DraciMetaEngine::removeSaveState(const char *target, int slot) const {
-	g_system->getSavefileManager()->removeSavefile(Draci::DraciEngine::getSavegameFile(slot));
+bool DraciMetaEngine::removeSaveState(const char *target, int slot) const {
+	return g_system->getSavefileManager()->removeSavefile(Draci::DraciEngine::getSavegameFile(slot));
 }
 
 SaveStateDescriptor DraciMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
@@ -140,13 +140,13 @@ Common::KeymapArray DraciMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action(kStandardActionLeftClick, _("Left click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action(kStandardActionRightClick, _("Right click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");
@@ -207,7 +207,7 @@ Common::KeymapArray DraciMetaEngine::initKeymaps(const char *target) const {
 	act->addDefaultInputMapping("JOY_UP");
 	gameKeyMap->addAction(act);
 
-	
+
 	KeymapArray keymaps(2);
 	keymaps[0] = engineKeyMap;
 	keymaps[1] = gameKeyMap;

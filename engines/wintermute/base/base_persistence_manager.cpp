@@ -190,9 +190,9 @@ void BasePersistenceManager::getSaveStateDesc(int slot, SaveStateDescriptor &des
 	desc.setPlayTime(0);
 }
 
-void BasePersistenceManager::deleteSaveSlot(int slot) {
+bool BasePersistenceManager::deleteSaveSlot(int slot) {
 	Common::String filename = getFilenameForSlot(slot);
-	g_system->getSavefileManager()->removeSavefile(filename);
+	return g_system->getSavefileManager()->removeSavefile(filename);
 }
 
 uint32 BasePersistenceManager::getMaxUsedSlot() {
@@ -826,11 +826,11 @@ bool BasePersistenceManager::transferVector2(const char *name, Vector2 *val) {
 #ifdef ENABLE_WME3D
 //////////////////////////////////////////////////////////////////////////
 // Vector3
-bool BasePersistenceManager::transferVector3d(const char *name, Math::Vector3d *val) {
+bool BasePersistenceManager::transferVector3d(const char *name, DXVector3 *val) {
 	if (_saving) {
-		putFloat(val->x());
-		putFloat(val->y());
-		putFloat(val->z());
+		putFloat(val->_x);
+		putFloat(val->_y);
+		putFloat(val->_z);
 
 		if (_saveStream->err()) {
 			return STATUS_FAILED;
@@ -838,9 +838,37 @@ bool BasePersistenceManager::transferVector3d(const char *name, Math::Vector3d *
 
 		return STATUS_OK;
 	} else {
-		val->x() = getFloat();
-		val->y() = getFloat();
-		val->z() = getFloat();
+		val->_x = getFloat();
+		val->_y = getFloat();
+		val->_z = getFloat();
+
+		if (_loadStream->err()) {
+			return STATUS_FAILED;
+		}
+
+		return STATUS_OK;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Vector4
+bool BasePersistenceManager::transferVector4d(const char *name, DXVector4 *val) {
+	if (_saving) {
+		putFloat(val->_x);
+		putFloat(val->_y);
+		putFloat(val->_z);
+		putFloat(val->_w);
+
+		if (_saveStream->err()) {
+			return STATUS_FAILED;
+		}
+
+		return STATUS_OK;
+	} else {
+		val->_x = getFloat();
+		val->_y = getFloat();
+		val->_z = getFloat();
+		val->_w = getFloat();
 
 		if (_loadStream->err()) {
 			return STATUS_FAILED;
@@ -852,12 +880,10 @@ bool BasePersistenceManager::transferVector3d(const char *name, Math::Vector3d *
 
 //////////////////////////////////////////////////////////////////////////
 // Matrix4
-bool BasePersistenceManager::transferMatrix4(const char *name, Math::Matrix4 *val) {
+bool BasePersistenceManager::transferMatrix4(const char *name, DXMatrix *val) {
 	if (_saving) {
-		for (int r = 0; r < 4; ++r) {
-			for (int c = 0; c < 4; ++c) {
-				putFloat((*val)(r, c));
-			}
+		for (int i = 0; i < 16; ++i) {
+			putFloat(val->_m4x4[i]);
 		}
 
 		if (_saveStream->err()) {
@@ -866,10 +892,8 @@ bool BasePersistenceManager::transferMatrix4(const char *name, Math::Matrix4 *va
 
 		return STATUS_OK;
 	} else {
-		for (int r = 0; r < 4; ++r) {
-			for (int c = 0; c < 4; ++c) {
-				(*val)(r, c) = getFloat();
-			}
+		for (int i = 0; i < 16; ++i) {
+			val->_m4x4[i] = getFloat();
 		}
 
 		if (_loadStream->err()) {
@@ -880,9 +904,9 @@ bool BasePersistenceManager::transferMatrix4(const char *name, Math::Matrix4 *va
 	}
 }
 
-bool BasePersistenceManager::transferAngle(const char *name, Math::Angle *val) {
+bool BasePersistenceManager::transferAngle(const char *name, float *val) {
 	if (_saving) {
-		putFloat(val->getDegrees());
+		putFloat(*val);
 
 		if (_saveStream->err()) {
 			return STATUS_FAILED;

@@ -84,6 +84,7 @@ static BuiltinProto builtins[] = {
 	{ "deleteAt",		LB::b_deleteAt,		2, 2, 400, HBLTIN_LIST },	//			D4 h
 	{ "deleteOne",		LB::b_deleteOne,	2, 2, 400, HBLTIN_LIST },	//			D4 h, undocumented?
 	{ "deleteProp",		LB::b_deleteProp,	2, 2, 400, HBLTIN_LIST },	//			D4 h
+	{ "duplicate",		LB::b_duplicateList,1, 1, 500, FBLTIN_LIST },	//				D5 f
 	{ "findPos",		LB::b_findPos,		2, 2, 400, FBLTIN_LIST },	//			D4 f
 	{ "findPosNear",	LB::b_findPosNear,	2, 2, 400, FBLTIN_LIST },	//			D4 f
 	{ "getaProp",		LB::b_getaProp,		2, 2, 400, FBLTIN_LIST },	//			D4 f
@@ -219,6 +220,7 @@ static BuiltinProto builtins[] = {
 	{ "version",		LB::b_version,		0, 0, 300, KBLTIN },	//		D3 k
 	// References
 	{ "cast",			LB::b_cast,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "castLib",		LB::b_castLib,		1, 1, 500, FBLTIN },	//				D5 f
 	{ "member",			LB::b_member,		1, 2, 500, FBLTIN },	//				D5 f
 	{ "script",			LB::b_script,		1, 1, 400, FBLTIN },	//			D4 f
 	{ "window",			LB::b_window,		1, 1, 400, FBLTIN },	//			D4 f
@@ -771,6 +773,14 @@ void LB::b_deleteProp(int nargs) {
 		break;
 	}
 }
+
+
+void LB::b_duplicateList(int nargs) {
+	Datum list = g_lingo->pop();
+	TYPECHECK2(list, ARRAY, PARRAY);
+	g_lingo->push(list.clone());
+}
+
 
 void LB::b_findPos(int nargs) {
 	Datum prop = g_lingo->pop();
@@ -3355,6 +3365,13 @@ void LB::b_cast(int nargs) {
 	g_lingo->push(res);
 }
 
+void LB::b_castLib(int nargs) {
+	Datum d = g_lingo->pop();
+	Datum res = d.asInt();
+	res.type = CASTLIBREF;
+	g_lingo->push(res);
+}
+
 void LB::b_member(int nargs) {
 	Movie *movie = g_director->getCurrentMovie();
 	CastMemberID res;
@@ -3371,7 +3388,9 @@ void LB::b_member(int nargs) {
 		Datum library = g_lingo->pop();
 		Datum member = g_lingo->pop();
 		int libId = -1;
-		if (library.isNumeric()) {
+		if (library.type == CASTLIBREF) {
+			libId = library.u.i;
+		} else if (library.isNumeric()) {
 			libId = library.asInt();
 		} else {
 			libId = movie->getCastLibIDByName(library.asString());

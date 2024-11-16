@@ -35,6 +35,25 @@ void DarkEngine::initCPC() {
 extern byte kCPCPaletteTitleData[4][3];
 extern byte kCPCPaletteBorderData[4][3];
 
+byte kCPCPaletteDarkTitle[16][3] = {
+	{0x00, 0x00, 0x00}, // 0: X
+	{0xff, 0xff, 0xff}, // 1: ?
+	{0x80, 0x80, 0x80}, // 2: X
+	{0xff, 0x00, 0xff}, // 3: X
+	{0x80, 0x80, 0x80}, // 4: X
+	{0xff, 0xff, 0x00}, // 5: X
+	{0x80, 0x00, 0x00}, // 6: X
+	{0xff, 0x00, 0x00}, // 7: X
+	{0x00, 0x80, 0x80}, // 8: X
+	{0xff, 0x00, 0x80}, // 9: X
+	{0xff, 0x80, 0x00}, // 10: X
+	{0xff, 0x80, 0x80}, // 11: X
+	{0x00, 0xff, 0x00}, // 12: X
+	{0x00, 0x00, 0x80}, // 13: X
+	{0x00, 0x00, 0xff}, // 14: X
+	{0x00, 0x80, 0x00}, // 15: X
+};
+
 extern Graphics::ManagedSurface *readCPCImage(Common::SeekableReadStream *file, bool mode0);
 
 void DarkEngine::loadAssetsCPCFullGame() {
@@ -45,7 +64,7 @@ void DarkEngine::loadAssetsCPCFullGame() {
 		error("Failed to open DARK1.SCR");
 
 	_title = readCPCImage(&file, false);
-	_title->setPalette((byte*)&kCPCPaletteTitleData, 0, 4);
+	_title->setPalette((byte*)&kCPCPaletteDarkTitle, 0, 16);
 
 	file.close();
 	file.open("DARK2.SCR");
@@ -62,7 +81,7 @@ void DarkEngine::loadAssetsCPCFullGame() {
 		error("Failed to open DARKCODE.BIN");
 
 	loadMessagesFixedSize(&file, 0x5d9, 16, 27);
-	loadFonts(&file, 0x60f3, _font);
+	loadFonts(&file, 0x60f3);
 	loadGlobalObjects(&file, 0x9a, 23);
 	load8bitBinary(&file, 0x6255, 16);
 	_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
@@ -91,13 +110,13 @@ void DarkEngine::drawCPCUI(Graphics::Surface *surface) {
 
 	int score = _gameStateVars[k8bitVariableScore];
 	int ecds = _gameStateVars[kVariableActiveECDs];
-	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 199, 137, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 199, 145, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 199, 153, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 200, 137, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 200, 145, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 200, 153, front, back, surface);
 
 	drawStringInSurface(Common::String::format("%02d", int(_angleRotations[_angleRotationIndex])), 72, 168, front, back, surface);
 	drawStringInSurface(Common::String::format("%3d", _playerSteps[_playerStepIndex]), 72, 177, front, back, surface);
-	drawStringInSurface(Common::String::format("%07d", score), 94, 8, front, back, surface);
+	drawStringInSurface(Common::String::format("%07d", score), 95, 8, front, back, surface);
 	drawStringInSurface(Common::String::format("%3d%%", ecds), 191, 8, front, back, surface);
 
 	int seconds, minutes, hours;
@@ -116,21 +135,24 @@ void DarkEngine::drawCPCUI(Graphics::Surface *surface) {
 	int energy = _gameStateVars[k8bitVariableEnergy]; // called fuel in this game
 	int shield = _gameStateVars[k8bitVariableShield];
 
+	_gfx->readFromPalette(_gfx->_inkColor, r, g, b);
+	uint32 inkColor = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+
 	if (shield >= 0) {
 		Common::Rect shieldBar;
-		shieldBar = Common::Rect(72, 140, 143 - (_maxShield - shield), 148);
-		surface->fillRect(shieldBar, back);
+		shieldBar = Common::Rect(72, 141 - 1, 143 - (_maxShield - shield), 146);
+		surface->fillRect(shieldBar, inkColor);
 
-		shieldBar = Common::Rect(72, 141, 143 - (_maxShield - shield), 147);
+		shieldBar = Common::Rect(72, 143 - 1, 143 - (_maxShield - shield), 144);
 		surface->fillRect(shieldBar, front);
 	}
 
 	if (energy >= 0) {
 		Common::Rect energyBar;
-		energyBar = Common::Rect(72, 147, 143 - (_maxEnergy - energy), 155);
-		surface->fillRect(energyBar, back);
+		energyBar = Common::Rect(72, 147 + 1, 143 - (_maxEnergy - energy), 155 - 1);
+		surface->fillRect(energyBar, inkColor);
 
-		energyBar = Common::Rect(72, 148, 143 - (_maxEnergy - energy), 154);
+		energyBar = Common::Rect(72, 148 + 2, 143 - (_maxEnergy - energy), 154 - 2);
 		surface->fillRect(energyBar, front);
 	}
 	drawBinaryClock(surface, 300, 124, front, back);

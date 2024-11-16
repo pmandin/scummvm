@@ -96,7 +96,7 @@ void AdScene::setDefaults() {
 	_pfRequester = nullptr;
 	_mainLayer = nullptr;
 #ifdef ENABLE_WME3D
-	_sceneGeometry = nullptr;
+	_geom = nullptr;
 #endif
 	_pfPointsNum = 0;
 	_persistentState = false;
@@ -156,8 +156,8 @@ void AdScene::setDefaults() {
 	_viewport = nullptr;
 
 #ifdef ENABLE_WME3D
-	_nearPlane = -1.0f;
-	_farPlane = -1.0f;
+	_nearClipPlane = -1.0f;
+	_farClipPlane = -1.0f;
 
 	_2DPathfinding = false;
 	_maxShadowType = SHADOW_FLAT;
@@ -170,8 +170,6 @@ void AdScene::setDefaults() {
 	_fogStart = 0.0f;
 	_fogEnd = 0.0f;
 #endif
-
-	_viewport = nullptr;
 }
 
 
@@ -219,9 +217,10 @@ void AdScene::cleanup() {
 		_gameRef->unregisterObject(_objects[i]);
 	}
 	_objects.clear();
+
 #ifdef ENABLE_WME3D
-	delete _sceneGeometry;
-	_sceneGeometry = nullptr;
+	delete _geom;
+	_geom = nullptr;
 #endif
 	delete _viewport;
 	_viewport = nullptr;
@@ -575,8 +574,8 @@ bool AdScene::initLoop() {
 #endif
 
 #ifdef ENABLE_WME3D
-	if (_sceneGeometry) {
-		return _sceneGeometry->initLoop();
+	if (_geom) {
+		return _geom->initLoop();
 	}
 #endif
 	return STATUS_OK;
@@ -829,14 +828,15 @@ bool AdScene::loadBuffer(char *buffer, bool complete) {
 
 #ifdef ENABLE_WME3D
 		case TOKEN_GEOMETRY:
-			delete _sceneGeometry;
-			_sceneGeometry = nullptr;
+			delete _geom;
+			_geom = nullptr;
 			if (!_gameRef->_useD3D) {
 				break;
 			}
-			_sceneGeometry = new AdSceneGeometry(_gameRef);
-			if (_sceneGeometry == nullptr || !_sceneGeometry->loadFile(params)) {
-				delete _sceneGeometry;
+			_geom = new AdSceneGeometry(_gameRef);
+			if (_geom == nullptr || !_geom->loadFile(params)) {
+				delete _geom;
+				_geom = nullptr;
 				cmd = PARSERR_GENERIC;
 			}
 			break;
@@ -992,11 +992,11 @@ bool AdScene::loadBuffer(char *buffer, bool complete) {
 			break;
 
 		case TOKEN_NEAR_CLIPPING_PLANE:
-			parser.scanStr(params, "%f", &_nearPlane);
+			parser.scanStr(params, "%f", &_nearClipPlane);
 			break;
 
 		case TOKEN_FAR_CLIPPING_PLANE:
-			parser.scanStr(params, "%f", &_farPlane);
+			parser.scanStr(params, "%f", &_farClipPlane);
 			break;
 
 		case TOKEN_2D_PATHFINDING:
@@ -1034,8 +1034,8 @@ bool AdScene::loadBuffer(char *buffer, bool complete) {
 	}
 
 #ifdef ENABLE_WME3D
-	if (_sceneGeometry && camera[0] != '\0') {
-		_sceneGeometry->setActiveCamera(camera, _fov, _nearPlane, _farPlane);
+	if (_geom && camera[0] != '\0') {
+		_geom->setActiveCamera(camera, _fov, _nearClipPlane, _farClipPlane);
 	}
 #endif
 
@@ -1045,17 +1045,17 @@ bool AdScene::loadBuffer(char *buffer, bool complete) {
 	_initialized = true;
 
 #ifdef ENABLE_WME3D
-	if (_sceneGeometry) {
+	if (_geom) {
 		if (waypointHeight >= 0.0f) {
-			_sceneGeometry->_waypointHeight = waypointHeight;
-			_sceneGeometry->dropWaypoints();
+			_geom->_waypointHeight = waypointHeight;
+			_geom->dropWaypoints();
 		}
 
-		Camera3D *activeCamera = _sceneGeometry->getActiveCamera();
+		Camera3D *activeCamera = _geom->getActiveCamera();
 		if (activeCamera != nullptr) {
 			_gameRef->_renderer->setup3D(activeCamera);
 			_gameRef->_renderer->setScreenViewport();
-			_sceneGeometry->render(false);
+			_geom->render(false);
 		}
 	}
 
@@ -1212,11 +1212,13 @@ bool AdScene::traverseNodes(bool doUpdate) {
 		}
 
 #ifdef ENABLE_WME3D
-		if (!doUpdate && _sceneGeometry && _layers[j]->_main) {
+		// render depth info for stencil shadows
+		if (!doUpdate && _geom && _layers[j]->_main) {
 			_gameRef->getOffset(&mainOffsetX, &mainOffsetY);
 
-			if (_gameRef->getMaxShadowType() >= SHADOW_STENCIL) {
-				_sceneGeometry->renderShadowGeometry();
+			TShadowType shadowType = _gameRef->getMaxShadowType();
+			if (shadowType >= SHADOW_STENCIL) {
+				_gameRef->renderShadowGeometry();
 			}
 		}
 #endif
@@ -1242,7 +1244,7 @@ bool AdScene::traverseNodes(bool doUpdate) {
 						_gameRef->_renderer->setup2D();
 					}
 
-					if (!node->_entity->_is3D || _sceneGeometry) {
+					if (!node->_entity->_is3D || _geom) {
 						if (doUpdate) {
 							node->_entity->update();
 						} else {
@@ -1266,6 +1268,7 @@ bool AdScene::traverseNodes(bool doUpdate) {
 				}
 			}
 			break;
+
 			default:
 				error("AdScene::TraverseNodes - Unhandled enum");
 				break;
@@ -1283,9 +1286,10 @@ bool AdScene::traverseNodes(bool doUpdate) {
 	} // each layer
 
 #ifdef ENABLE_WME3D
-	if (!doUpdate && _sceneGeometry) {
+	// display hidden geometry
+	if (!doUpdate && _geom) {
 		_gameRef->setOffset(mainOffsetX, mainOffsetY);
-		_sceneGeometry->render(_showGeometry);
+		_geom->render(_showGeometry);
 	}
 #endif
 
@@ -1329,8 +1333,8 @@ bool AdScene::updateFreeObjects() {
 		}
 
 #ifdef ENABLE_WME3D
-		if (adGame->_objects[i]->_is3D && _sceneGeometry) {
-			Camera3D *activeCamera = _sceneGeometry->getActiveCamera();
+		if (adGame->_objects[i]->_is3D && _geom) {
+			Camera3D *activeCamera = _geom->getActiveCamera();
 			if (activeCamera != nullptr) {
 				_gameRef->_renderer->setup3D(activeCamera, !is3DSet);
 				is3DSet = true;
@@ -1347,8 +1351,8 @@ bool AdScene::updateFreeObjects() {
 			continue;
 		}
 #ifdef ENABLE_WME3D
-		if (_objects[i]->_is3D && _sceneGeometry) {
-			Camera3D *activeCamera = _sceneGeometry->getActiveCamera();
+		if (_objects[i]->_is3D && _geom) {
+			Camera3D *activeCamera = _geom->getActiveCamera();
 			if (activeCamera != nullptr) {
 				_gameRef->_renderer->setup3D(activeCamera, !is3DSet);
 				is3DSet = true;
@@ -1373,7 +1377,7 @@ bool AdScene::updateFreeObjects() {
 //////////////////////////////////////////////////////////////////////////
 bool AdScene::displayRegionContent(AdRegion *region, bool display3DOnly) {
 	AdGame *adGame = (AdGame *)_gameRef;
-	Common::Array<AdObject *> objects;
+	BaseArray<AdObject *> objects;
 	AdObject *obj;
 
 	// global objects
@@ -1393,7 +1397,7 @@ bool AdScene::displayRegionContent(AdRegion *region, bool display3DOnly) {
 	}
 
 	// sort by _posY
-	Common::sort(objects.begin(), objects.end(), AdScene::compareObjs);
+	qsort(objects.data(), objects.size(), sizeof(AdObject *), AdScene::compareObjs);
 
 	// display them
 	for (uint32 i = 0; i < objects.size(); i++) {
@@ -1406,8 +1410,8 @@ bool AdScene::displayRegionContent(AdRegion *region, bool display3DOnly) {
 #ifndef ENABLE_WME3D
 		_gameRef->_renderer->setup2D();
 #else
-		if (objects[i]->_is3D && _sceneGeometry) {
-			Camera3D *activeCamera = _sceneGeometry->getActiveCamera();
+		if (objects[i]->_is3D && _geom) {
+			Camera3D *activeCamera = _geom->getActiveCamera();
 			if (activeCamera != nullptr) {
 				_gameRef->_renderer->setup3D(activeCamera);
 			}
@@ -1416,15 +1420,9 @@ bool AdScene::displayRegionContent(AdRegion *region, bool display3DOnly) {
 		}
 #endif
 
-#ifndef ENABLE_WME3D
 		if (_gameRef->_editorMode || !obj->_editorOnly) {
 			obj->display();
 		}
-#else
-		if ((_gameRef->_editorMode || !obj->_editorOnly) && (!objects[i]->_is3D || _sceneGeometry)) {
-			obj->display();
-		}
-#endif
 		obj->_drawn = true;
 	}
 
@@ -1445,12 +1443,18 @@ bool AdScene::displayRegionContent(AdRegion *region, bool display3DOnly) {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool AdScene::compareObjs(const AdObject *obj1, const AdObject *obj2) {
-	if (obj1->_posY < obj2->_posY) {
-		return true;
-	} else {
-		return false;
-	}
+int AdScene::compareObjs(const void *obj1, const void *obj2) {
+	void *o1 = const_cast<void *>(obj1);
+	void *o2 = const_cast<void *>(obj2);
+	AdObject *object1 = *(AdObject **)o1;
+	AdObject *object2 = *(AdObject **)o2;
+
+	if (object1->_posY < object2->_posY)
+		return -1;
+	else if (object1->_posY > object2->_posY)
+		return 1;
+	else
+		return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1484,9 +1488,11 @@ bool AdScene::displayRegionContentOld(AdRegion *region) {
 #ifndef ENABLE_WME3D
 			_gameRef->_renderer->setup2D();
 #else
-			Camera3D *activeCamera = _sceneGeometry->getActiveCamera();
-			if (activeCamera != nullptr) {
-				_gameRef->_renderer->setup3D(activeCamera);
+			if (obj->_is3D && _geom) {
+				Camera3D *activeCamera = _geom->getActiveCamera();
+				if (activeCamera != nullptr) {
+					_gameRef->_renderer->setup3D(activeCamera);
+				}
 			} else {
 				_gameRef->_renderer->setup2D();
 			}
@@ -1969,11 +1975,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 		stack->correctParams(1);
 		const char *nodeName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.EnableNode3D: Scene doesn't contain any geometry");
 			stack->pushBool(false);
 		} else {
-			bool ret = _sceneGeometry->enableNode(nodeName, true);
+			bool ret = _geom->enableNode(nodeName, true);
 			stack->pushBool(ret);
 		}
 
@@ -1987,11 +1993,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 		stack->correctParams(1);
 		const char *nodeName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.EnableNode3D: Scene doesn't contain any geometry");
 			stack->pushBool(false);
 		} else {
-			bool ret = _sceneGeometry->enableNode(nodeName, false);
+			bool ret = _geom->enableNode(nodeName, false);
 			stack->pushBool(ret);
 		}
 
@@ -2005,9 +2011,8 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 		stack->correctParams(1);
 		const char *nodeName = stack->pop()->getString();
 
-		if (_sceneGeometry) {
-			bool ret = _sceneGeometry->isNodeEnabled(nodeName);
-			stack->pushBool(ret);
+		if (_geom) {
+			stack->pushBool(_geom->isNodeEnabled(nodeName));
 		} else {
 			stack->pushBool(false);
 		}
@@ -2023,11 +2028,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 
 		const char *lightName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.EnableLight: Scene doesn't contain any geometry");
 			stack->pushBool(false);
 		} else {
-			bool res = _sceneGeometry->enableLight(lightName);
+			bool res = _geom->enableLight(lightName, true);
 			stack->pushBool(res);
 		}
 
@@ -2042,11 +2047,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 
 		const char *lightName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.DisableLight: Scene doesn't contain any geometry");
 			stack->pushBool(false);
 		} else {
-			bool res = _sceneGeometry->enableLight(lightName, false);
+			bool res = _geom->enableLight(lightName, false);
 			stack->pushBool(res);
 		}
 
@@ -2061,9 +2066,8 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 
 		const char *lightName = stack->pop()->getString();
 
-		if (_sceneGeometry) {
-			bool res = _sceneGeometry->isLightEnabled(lightName);
-			stack->pushBool(res);
+		if (_geom) {
+			stack->pushBool(_geom->isLightEnabled(lightName));
 		} else {
 			stack->pushBool(false);
 		}
@@ -2079,8 +2083,8 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 
 		int index = stack->pop()->getInt();
 
-		if (_sceneGeometry && index >= 0 && static_cast<uint>(index) < _sceneGeometry->_lights.size()) {
-			stack->pushString(_sceneGeometry->_lights[index]->getName());
+		if (_geom && index >= 0 && static_cast<uint>(index) < _geom->_lights.size()) {
+			stack->pushString(_geom->_lights[index]->getName());
 		} else {
 			stack->pushNULL();
 		}
@@ -2097,11 +2101,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 		const char *lightName = stack->pop()->getString();
 		uint32 color = static_cast<uint32>(stack->pop()->getInt());
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.SetLightColor: Scene doesn't contain any geometry");
 			stack->pushBool(false);
 		} else {
-			bool ret = _sceneGeometry->setLightColor(lightName, color);
+			bool ret = _geom->setLightColor(lightName, color);
 			stack->pushBool(ret);
 		}
 
@@ -2115,11 +2119,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 		stack->correctParams(1);
 		const char *lightName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.GetLightColor: Scene doesn't contain any geometry");
 			stack->pushInt(0);
 		} else {
-			stack->pushInt(_sceneGeometry->getLightColor(lightName));
+			stack->pushInt(_geom->getLightColor(lightName));
 		}
 
 		return STATUS_OK;
@@ -2132,18 +2136,17 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 		stack->correctParams(1);
 		const char *lightName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.GetLightPosition: Scene doesn't contain any geometry");
 			stack->pushInt(0);
 		} else {
-			Math::Vector3d pos = _sceneGeometry->getLightPos(lightName);
+			DXVector3 pos = _geom->getLightPos(lightName);
 			ScValue *val = stack->getPushValue();
 
 			if (val) {
-				val->setProperty("X", pos.x());
-				val->setProperty("Y", pos.y());
-				// invert z coordinate to change to OpenGL coordinate system
-				val->setProperty("Z", -pos.z());
+				val->setProperty("X", pos._x);
+				val->setProperty("Y", pos._y);
+				val->setProperty("Z", pos._z);
 			}
 		}
 
@@ -2158,11 +2161,11 @@ bool AdScene::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack,
 
 		const char *cameraName = stack->pop()->getString();
 
-		if (!_sceneGeometry) {
+		if (!_geom) {
 			script->runtimeError("Scene.SetActiveCamera: Scene doesn't contain any geometry");
 			stack->pushBool(false);
 		} else {
-			bool res = _sceneGeometry->setActiveCamera(cameraName, _fov, _nearPlane, _farPlane);
+			bool res = _geom->setActiveCamera(cameraName, _fov, _nearClipPlane, _farClipPlane);
 			if (!res) {
 				script->runtimeError("Scene.SetActiveCamera failed");
 			}
@@ -2491,8 +2494,8 @@ ScValue *AdScene::scGetProperty(const Common::String &name) {
 	// GeometryFile
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "GeometryFile") {
-		if (_sceneGeometry && _sceneGeometry->getFilename()) {
-			_scValue->setString(_sceneGeometry->getFilename());
+		if (_geom && _geom->getFilename()) {
+			_scValue->setString(_geom->getFilename());
 		} else {
 			_scValue->setNULL();
 		}
@@ -2504,8 +2507,8 @@ ScValue *AdScene::scGetProperty(const Common::String &name) {
 	// WaypointsHeight
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "WaypointsHeight") {
-		if (_sceneGeometry) {
-			_scValue->setFloat(_sceneGeometry->_waypointHeight);
+		if (_geom) {
+			_scValue->setFloat(_geom->_waypointHeight);
 		} else {
 			_scValue->setFloat(0.0f);
 		}
@@ -2559,8 +2562,8 @@ ScValue *AdScene::scGetProperty(const Common::String &name) {
 	// NumLights
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "NumLights") {
-		if (_sceneGeometry) {
-			_scValue->setInt(_sceneGeometry->_lights.size());
+		if (_geom) {
+			_scValue->setInt(_geom->_lights.size());
 		} else {
 			_scValue->setInt(0);
 		}
@@ -2696,9 +2699,9 @@ bool AdScene::scSetProperty(const char *name, ScValue *value) {
 	// WaypointsHeight
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "WaypointsHeight") == 0) {
-		if (_sceneGeometry) {
-			_sceneGeometry->_waypointHeight = value->getFloat();
-			_sceneGeometry->dropWaypoints();
+		if (_geom) {
+			_geom->_waypointHeight = value->getFloat();
+			_geom->dropWaypoints();
 		}
 
 		return STATUS_OK;
@@ -2768,11 +2771,11 @@ bool AdScene::saveAsText(BaseDynamicBuffer *buffer, int indent) {
 	}
 
 #ifdef ENABLE_WME3D
-	if (_sceneGeometry) {
-		if (_sceneGeometry->getFilename())
-			buffer->putTextIndent(indent + 2, "GEOMETRY=\"%s\"\n", _sceneGeometry->getFilename());
+	if (_geom) {
+		if (_geom->getFilename())
+			buffer->putTextIndent(indent + 2, "GEOMETRY=\"%s\"\n", _geom->getFilename());
 
-		Camera3D *activeCamera = _sceneGeometry->getActiveCamera();
+		Camera3D *activeCamera = _geom->getActiveCamera();
 		if (activeCamera != nullptr) {
 			buffer->putTextIndent(indent + 2, "CAMERA=\"%s\"\n", activeCamera->getName());
 		}
@@ -2780,11 +2783,11 @@ bool AdScene::saveAsText(BaseDynamicBuffer *buffer, int indent) {
 		if (_fov >= 0.0f)
 			buffer->putTextIndent(indent + 2, "FOV_OVERRIDE=%f\n", _fov);
 
-		if (_nearPlane >= 0.0f)
-			buffer->putTextIndent(indent + 2, "NEAR_CLIPPING_PLANE=%f\n", _nearPlane);
+		if (_nearClipPlane >= 0.0f)
+			buffer->putTextIndent(indent + 2, "NEAR_CLIPPING_PLANE=%f\n", _nearClipPlane);
 
-		if (_farPlane >= 0.0f)
-			buffer->putTextIndent(indent + 2, "FAR_CLIPPING_PLANE=%f\n", _farPlane);
+		if (_farClipPlane >= 0.0f)
+			buffer->putTextIndent(indent + 2, "FAR_CLIPPING_PLANE=%f\n", _farClipPlane);
 
 		if (_showGeometry)
 			buffer->putTextIndent(indent + 2, "EDITOR_SHOW_GEOMETRY=%s\n", "TRUE");
@@ -2799,7 +2802,7 @@ bool AdScene::saveAsText(BaseDynamicBuffer *buffer, int indent) {
 		if (_ambientLightColor != 0x00000000)
 			buffer->putTextIndent(indent + 2, "AMBIENT_LIGHT_COLOR { %d,%d,%d }\n", RGBCOLGetR(_ambientLightColor), RGBCOLGetG(_ambientLightColor), RGBCOLGetB(_ambientLightColor));
 
-		buffer->putTextIndent(indent + 2, "WAYPOINT_HEIGHT=%f\n", _sceneGeometry->_waypointHeight);
+		buffer->putTextIndent(indent + 2, "WAYPOINT_HEIGHT=%f\n", _geom->_waypointHeight);
 
 		buffer->putTextIndent(indent + 2, "EDITOR_RESOLUTION_WIDTH=%d\n", _editorResolutionWidth);
 		buffer->putTextIndent(indent + 2, "EDITOR_RESOLUTION_HEIGHT=%d\n", _editorResolutionHeight);
@@ -3002,9 +3005,9 @@ bool AdScene::persist(BasePersistenceManager *persistMgr) {
 	persistMgr->transferPtr(TMEMBER_PTR(_fader));
 #ifdef ENABLE_WME3D
 	if (BaseEngine::instance().getFlags() & GF_3D) {
-		persistMgr->transferPtr(TMEMBER(_sceneGeometry));
+		persistMgr->transferPtr(TMEMBER(_geom));
 	} else {
-		_sceneGeometry = nullptr;
+		_geom = nullptr;
 	}
 #endif
 	persistMgr->transferSint32(TMEMBER(_height));
@@ -3051,8 +3054,8 @@ bool AdScene::persist(BasePersistenceManager *persistMgr) {
 		persistMgr->transferSint32(TMEMBER(_editorResolutionWidth));
 		persistMgr->transferSint32(TMEMBER(_editorResolutionHeight));
 		persistMgr->transferFloat(TMEMBER(_fov));
-		persistMgr->transferFloat(TMEMBER(_nearPlane));
-		persistMgr->transferFloat(TMEMBER(_farPlane));
+		persistMgr->transferFloat(TMEMBER(_nearClipPlane));
+		persistMgr->transferFloat(TMEMBER(_farClipPlane));
 		persistMgr->transferBool(TMEMBER(_2DPathfinding));
 		persistMgr->transferSint32(TMEMBER_INT(_maxShadowType));
 		persistMgr->transferBool(TMEMBER(_scroll3DCompatibility));
@@ -3063,12 +3066,15 @@ bool AdScene::persist(BasePersistenceManager *persistMgr) {
 		persistMgr->transferFloat(TMEMBER(_fogEnd));
 	} else {
 		_editorResolutionWidth = _editorResolutionHeight = 0;
-		_fov = _nearPlane = _farPlane = -1.0f;
+		_fov = _nearClipPlane = _farClipPlane = -1.0f;
 		_2DPathfinding = false;
 		_maxShadowType = SHADOW_SIMPLE;
 		_scroll3DCompatibility = false;
 		_ambientLightColor = 0x00000000;
 		_fogEnabled = false;
+		_fogColor = 0x00FFFFFF;
+		_fogStart = 0.0f;
+		_fogEnd = 0.0f;
 	}
 #endif
 
@@ -3078,10 +3084,10 @@ bool AdScene::persist(BasePersistenceManager *persistMgr) {
 //////////////////////////////////////////////////////////////////////////
 bool AdScene::afterLoad() {
 #ifdef ENABLE_WME3D
-	if (_sceneGeometry) {
-		int activeCamera = _sceneGeometry->_activeCamera;
-		if (activeCamera >= 0 && static_cast<uint>(activeCamera) < _sceneGeometry->_cameras.size()) {
-			_sceneGeometry->setActiveCamera(activeCamera, _fov, _nearPlane, _farPlane);
+	if (_geom) {
+		int activeCamera = _geom->_activeCamera;
+		if (activeCamera >= 0 && static_cast<uint>(activeCamera) < _geom->_cameras.size()) {
+			_geom->setActiveCamera(activeCamera, _fov, _nearClipPlane, _farClipPlane);
 		}
 	}
 #endif
@@ -3654,6 +3660,7 @@ bool AdScene::getSceneObjects(BaseArray<AdObject *> &objects, bool interactiveOn
 				//if (regionObj.size() > 0) Objects.Append(RegionObj);
 			}
 			break;
+
 			default:
 				debugC(kWintermuteDebugGeneral, "AdScene::GetSceneObjects - Unhandled enum");
 				break;
@@ -3712,7 +3719,7 @@ bool AdScene::getRegionObjects(AdRegion *region, BaseArray<AdObject *> &objects,
 	}
 
 	// sort by _posY
-	Common::sort(objects.begin(), objects.end(), AdScene::compareObjs);
+	qsort(objects.data(), objects.size(), sizeof(AdObject *), AdScene::compareObjs);
 
 	return STATUS_OK;
 }

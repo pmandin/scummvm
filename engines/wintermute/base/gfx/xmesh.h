@@ -43,6 +43,9 @@ class Material;
 class ShadowVolume;
 class VideoTheoraPlayer;
 class SkinMeshHelper;
+class DXMesh;
+class Effect3D;
+class Effect3DParams;
 struct XMeshObject;
 
 class XMesh : public BaseNamedObject {
@@ -51,40 +54,36 @@ public:
 	XMesh(BaseGame *inGame);
 	virtual ~XMesh();
 
-	virtual bool loadFromXData(const Common::String &filename, XFileData *xobj, Common::Array<MaterialReference> &materialReferences);
+	virtual bool loadFromXData(const Common::String &filename, XFileData *xobj);
 	bool findBones(FrameNode *rootFrame);
 	virtual bool update(FrameNode *parentFrame);
 	virtual bool render(XModel *model) = 0;
 	virtual bool renderFlatShadowModel() = 0;
-	bool updateShadowVol(ShadowVolume *shadow, Math::Matrix4 &modelMat, const Math::Vector3d &light, float extrusionDepth);
+	bool updateShadowVol(ShadowVolume *shadow, DXMatrix *modelMat, DXVector3 *light, float extrusionDepth);
 
-	bool pickPoly(Math::Vector3d *pickRayOrig, Math::Vector3d *pickRayDir);
+	bool pickPoly(DXVector3 *pickRayOrig, DXVector3 *pickRayDir);
 
-	Math::Vector3d _BBoxStart;
-	Math::Vector3d _BBoxEnd;
+	DXVector3 _BBoxStart;
+	DXVector3 _BBoxEnd;
 
 	bool setMaterialSprite(const Common::String &matName, BaseSprite *sprite);
 	bool setMaterialTheora(const Common::String &matName, VideoTheoraPlayer *theora);
+	bool setMaterialEffect(const Common::String &matName, Effect3D *effect, Effect3DParams *params);
+	bool removeMaterialEffect(const Common::String &matName);
 
 	bool invalidateDeviceObjects();
 	bool restoreDeviceObjects();
 
 protected:
-
-	void updateBoundingBox();
-
-	uint32 _numAttrs;
-
-	// Wintermute3D used the ID3DXSKININFO interface
-	// we will only store, whether this mesh is skinned at all
-	// and factor out the necessary computations into some functions
-	bool _skinnedMesh;
+	bool generateMesh();
 
 	SkinMeshHelper *_skinMesh;
+	DXMesh *_blendedMesh;
+	DXMesh *_staticMesh;
 
-	BaseArray<Math::Matrix4 *> _boneMatrices;
+	DXMatrix **_boneMatrices;
 
-	Common::Array<uint32> _adjacency;
+	uint32 *_adjacency;
 
 	BaseArray<Material *> _materials;
 };

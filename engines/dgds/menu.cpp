@@ -33,7 +33,6 @@
 #include "dgds/font.h"
 #include "dgds/globals.h"
 #include "dgds/menu.h"
-#include "dgds/music.h"
 #include "dgds/request.h"
 #include "dgds/scene.h"
 #include "dgds/sound.h"
@@ -64,6 +63,7 @@ enum MenuButtonIds {
 	kMenuOptionsSoundsOnOff = 137,
 	kMenuOptionsMusicOnOff = 140,
 	kMenuOptionsSoundsOnOffHoC = 175,
+	kMenuOptionsSoundsOnOffDE = 172, // German version
 	kMenuOptionsMusicOnOffHoC = 171,
 	kMenuOptionsVCR = 135,
 	kMenuOptionsPlay = 136,
@@ -150,24 +150,45 @@ void Menu::setScreenBuffer() {
 
 bool Menu::updateOptionsGadget(Gadget *gadget) {
 	Audio::Mixer *mixer = DgdsEngine::getInstance()->_mixer;
+	const char *mouseStr, *soundStr, *musicStr, *onStr, *offStr;
+	if (DgdsEngine::getInstance()->getGameLang() == Common::EN_ANY) {
+		mouseStr = "MOUSE";
+		soundStr = "SOUND";
+		musicStr = "MUSIC";
+		onStr = "ON";
+		offStr = "OFF";
+	} else if (DgdsEngine::getInstance()->getGameLang() == Common::DE_DEU) {
+		mouseStr = "MAUS";
+		soundStr = "TON";
+		musicStr = "MUSIK";
+		onStr = "AN";
+		offStr = "AUS";
+	} else {
+		error("Unsupported language %d", DgdsEngine::getInstance()->getGameLang());
+	}
 
 	switch (gadget->_gadgetNo) {
 	case kMenuOptionsJoystickOnOff:
 	case kMenuOptionsJoystickOnOffHoC:
-		gadget->_buttonName = "JOYSTICK ON";
-		return false;
+		gadget->_buttonName = Common::String::format("JOYSTICK %s", onStr);
+		return true;
 	case kMenuOptionsMouseOnOff:
 	case kMenuOptionsMouseOnOffHoC:
-		gadget->_buttonName = "MOUSE ON";
-		return false;
+		gadget->_buttonName = Common::String::format("%s %s", mouseStr, onStr);
+		return true;
 	case kMenuOptionsSoundsOnOff: // same id as kMenuMaybeBetterSaveYes
-	case kMenuOptionsSoundsOnOffHoC:
-		gadget->_buttonName = (!mixer->isSoundTypeMuted(Audio::Mixer::kSFXSoundType)) ? "SOUNDS ON" : "SOUNDS OFF";
+	case kMenuOptionsSoundsOnOffDE:
+	case kMenuOptionsSoundsOnOffHoC: {
+		bool isMuted = mixer->isSoundTypeMuted(Audio::Mixer::kSFXSoundType);
+		gadget->_buttonName = Common::String::format("%s %s", soundStr, isMuted ? offStr : onStr);
 		return true;
+	}
 	case kMenuOptionsMusicOnOff:
-	case kMenuOptionsMusicOnOffHoC:
-		gadget->_buttonName = (!mixer->isSoundTypeMuted(Audio::Mixer::kMusicSoundType)) ? "MUSIC ON" : "MUSIC OFF";
+	case kMenuOptionsMusicOnOffHoC: {
+		bool isMuted = mixer->isSoundTypeMuted(Audio::Mixer::kMusicSoundType);
+		gadget->_buttonName = Common::String::format("%s %s", musicStr, isMuted ? offStr : onStr);
 		return true;
+	}
 	default:
 		return false;
 	}
@@ -179,19 +200,18 @@ void Menu::configureGadget(MenuId menu, Gadget *gadget) {
 	// a bit of a hack - set up the gadget with the correct value before we draw it.
 	if (menu == kMenuControls) {
 		SliderGadget *slider = dynamic_cast<SliderGadget *>(gadget);
+		if (!slider)
+			return;
 		switch (gadget->_gadgetNo) {
 		case kMenuSliderControlsDifficulty:
-			assert(slider);
 			slider->setSteps(3, false);
 			slider->setValue(engine->getDifficulty()); // TODO: set a difficulty value
 			break;
 		case kMenuSliderControlsTextSpeed:
-			assert(slider);
 			slider->setSteps(10, false);
 			slider->setValue(9 - engine->getTextSpeed());
 			break;
 		case kMenuSliderControlsDetailLevel:
-			assert(slider);
 			slider->setSteps(2, true);
 			slider->setValue(engine->getDetailLevel());
 			break;
@@ -485,20 +505,29 @@ void Menu::handleClick(const Common::Point &mouse) {
 		drawMenu(kMenuRestart);
 		break;
 	case kMenuSliderControlsDifficulty: {
-		int16 setting = dynamic_cast<SliderGadget *>(gadget)->onClick(mouse);
+		SliderGadget *slider = dynamic_cast<SliderGadget *>(gadget);
+		if (!slider)
+			break;
+		int16 setting = slider->onClick(mouse);
 		engine->setDifficulty(setting);
 		// redraw for update.
 		drawMenu(_curMenu);
 		break;
 	}
 	case kMenuSliderControlsTextSpeed: {
-		int16 setting = dynamic_cast<SliderGadget *>(gadget)->onClick(mouse);
+		SliderGadget *slider = dynamic_cast<SliderGadget *>(gadget);
+		if (!slider)
+			break;
+		int16 setting = slider->onClick(mouse);
 		engine->setTextSpeed(9 - setting);
 		drawMenu(_curMenu);
 		break;
 	}
 	case kMenuSliderControlsDetailLevel: {
-		int16 setting = dynamic_cast<SliderGadget *>(gadget)->onClick(mouse);
+		SliderGadget *slider = dynamic_cast<SliderGadget *>(gadget);
+		if (!slider)
+			break;
+		int16 setting = slider->onClick(mouse);
 		engine->setDetailLevel(static_cast<DgdsDetailLevel>(setting));
 		drawMenu(_curMenu);
 		break;
@@ -535,7 +564,7 @@ void Menu::handleClick(const Common::Point &mouse) {
 		drawMenu(_curMenu);
 		break;
 	default:
-		debug("Clicked ID %d", clickedMenuItem);
+		debug(1, "Clicked ID %d", clickedMenuItem);
 		break;
 	}
 }
@@ -546,7 +575,6 @@ void Menu::handleClickOptionsMenu(const Common::Point &mouse) {
 	Gadget *gadget = getClickedMenuItem(mouse);
 	int16 clickedMenuItem = gadget->_gadgetNo;
 	Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
-	DgdsMidiPlayer *midiPlayer = engine->_soundPlayer->getMidiPlayer();
 
 	switch (clickedMenuItem) {
 	case kMenuOptionsJoystickOnOff:
@@ -556,6 +584,7 @@ void Menu::handleClickOptionsMenu(const Common::Point &mouse) {
 		// Do nothing - we don't toggle joystick or mouse functionality
 		break;
 	case kMenuOptionsSoundsOnOff: // same id as kMenuMaybeBetterSaveYes
+	case kMenuOptionsSoundsOnOffDE:
 	case kMenuOptionsSoundsOnOffHoC:
 		soundType = Audio::Mixer::kSFXSoundType;
 		// fall through
@@ -563,12 +592,14 @@ void Menu::handleClickOptionsMenu(const Common::Point &mouse) {
 	case kMenuOptionsMusicOnOffHoC:
 		if (!mixer->isSoundTypeMuted(soundType)) {
 			mixer->muteSoundType(soundType, true);
-			midiPlayer->syncVolume();
-			midiPlayer->pause();
+			warning("TODO: Sync volume and pause music");
+			//midiPlayer->syncVolume();
+			//engine->_soundPlayer->pauseMusic();
 		} else {
 			mixer->muteSoundType(soundType, false);
-			midiPlayer->syncVolume();
-			midiPlayer->resume();
+			warning("TODO: Sync volume and resume music");
+			//midiPlayer->syncVolume();
+			//engine->_soundPlayer->resumeMusic();
 		}
 
 		updateOptionsGadget(gadget);
@@ -596,7 +627,7 @@ void Menu::handleClickSkipPlayIntroMenu(const Common::Point &mouse) {
 	case kMenuIntroJumpToIntroduction:
 		hideMenu();
 		if (engine->getGameId() == GID_HOC)
-			engine->changeScene(98);
+			engine->changeScene(100);
 		else if (engine->getGameId() == GID_WILLY)
 			engine->changeScene(24);
 		break;

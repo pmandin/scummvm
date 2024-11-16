@@ -521,7 +521,7 @@ const Font *MacFontManager::getFont(MacFont *macFont) {
 	}
 
 #ifdef USE_FREETYPE2
-	if (!font) {
+	if (!font && !(_mode & MacGUIConstants::kWMModeForceMacFonts)) {
 		if (_mode & kWMModeUnicode) {
 			if (macFont->getSize() <= 0) {
 				debugC(1, kDebugLevelMacGUI, "MacFontManager::getFont() - Font size <= 0!");
@@ -534,7 +534,7 @@ const Font *MacFontManager::getFont(MacFont *macFont) {
 				int newId = macFont->getId();
 				int newSlant = macFont->getSlant();
 				int familyId = getFamilyId(newId, newSlant);
-				if (_fontInfo.contains(familyId)) {
+				if (_fontInfo.contains(familyId) && !(_mode & kWMModeForceMacFontsInWin95)) {
 					font = Graphics::loadTTFFontFromArchive(_fontInfo[familyId]->name, macFont->getSize(), Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeMonochrome);
 					_uniFonts[macFont->getSize()] = font;
 				} else {
@@ -806,11 +806,13 @@ void MacFontManager::generateFontSubstitute(MacFont &macFont) {
 	Common::String name;
 
 #ifdef USE_FREETYPE2
-	// Check if we have TTF data for this font.
-	name = getFontName(macFont.getId(), 0, macFont.getSlant());
-	if (_ttfData.contains(name)) {
-		generateTTFFont(macFont, _ttfData[name]);
-		return;
+	if (!(_mode & MacGUIConstants::kWMModeForceMacFonts)) {
+		// Check if we have TTF data for this font.
+		name = getFontName(macFont.getId(), 0, macFont.getSlant());
+		if (_ttfData.contains(name)) {
+			generateTTFFont(macFont, _ttfData[name]);
+			return;
+		}
 	}
 #endif
 

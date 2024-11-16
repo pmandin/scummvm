@@ -110,7 +110,7 @@ const GameIdStrToEnum gameIdStrToEnum[] = {
 	{ nullptr,           nullptr,           GID_ALL,              false, SCI_VERSION_NONE }
 };
 
-Common::String customizeGuiOptions(Common::Path gamePath, Common::String guiOptions, SciVersion version) {
+Common::String customizeGuiOptions(Common::Path gamePath, Common::String guiOptions, Common::Platform platform, Common::String idStr, SciVersion version) {
 	struct RMode {
 		SciVersion min;
 		SciVersion max;
@@ -130,22 +130,26 @@ Common::String customizeGuiOptions(Common::Path gamePath, Common::String guiOpti
 		{ SCI_VERSION_01,		SCI_VERSION_01,				"9801VID.DRV",		GUIO_RENDERPC98_16C },
 		{ SCI_VERSION_1_LATE,	SCI_VERSION_1_LATE,			"9801V8.DRV",		GUIO_RENDERPC98_8C },
 		{ SCI_VERSION_01,		SCI_VERSION_01,				"9801V8M.DRV",		GUIO_RENDERPC98_8C },
-		{ SCI_VERSION_01,		SCI_VERSION_01,				"9801VID.DRV",		GUIO_RENDERPC98_8C },
+		{ SCI_VERSION_01,		SCI_VERSION_01,				"9801VID.DRV",		GUIO_RENDERPC98_8C }
 	};
 
-	Common::FSNode node(gamePath);
+	if (idStr.equals("kq6") && platform == Common::kPlatformWindows)
+		return guiOptions + GUIO_RENDERWIN_256C + GUIO_RENDERWIN_16C;
 
-	if (!node.exists()) {
+	Common::FSNode node(gamePath);
+	Common::FSList files;
+	if (!node.getChildren(files, Common::FSNode::kListFilesOnly)) {
 		warning("Game path '%s' could not be accessed", gamePath.toString().c_str());
 		return guiOptions;
 	}
 
-	Common::FSList files;
-	node.getChildren(files, Common::FSNode::kListFilesOnly);
 	for (Common::FSList::const_iterator i = files.begin(); i != files.end(); ++i) {
 		for (int ii = 0; ii < ARRAYSIZE(rmodes); ii++) {
-			if ((version == SCI_VERSION_NONE || (version >= rmodes[ii].min && version <= rmodes[ii].max)) && i->getFileName().equalsIgnoreCase(rmodes[ii].gfxDriverName))
-				guiOptions += rmodes[ii].guio;
+			if (version == SCI_VERSION_NONE || (rmodes[ii].min <= version && version <= rmodes[ii].max)) {
+				if (i->getFileName().equalsIgnoreCase(rmodes[ii].gfxDriverName)) {
+					guiOptions += rmodes[ii].guio;
+				}
+			}
 		}
 	}
 

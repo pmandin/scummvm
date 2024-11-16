@@ -845,7 +845,7 @@ void GrimEngine::updateDisplayScene() {
 		if (g_movie->isPlaying()) {
 			_movieTime = g_movie->getMovieTime();
 			if (g_movie->isUpdateNeeded()) {
-				g_driver->prepareMovieFrame(g_movie->getDstSurface());
+				g_driver->prepareMovieFrame(g_movie->getDstSurface(), g_movie->getDstPalette());
 				g_movie->clearUpdateNeeded();
 			}
 			int frame = g_movie->getFrame();
@@ -914,7 +914,7 @@ void GrimEngine::drawNormalMode() {
 	if (g_movie->isPlaying() && _movieSetup == _currSet->getCurrSetup()->_name) {
 		_movieTime = g_movie->getMovieTime();
 		if (g_movie->isUpdateNeeded()) {
-			g_driver->prepareMovieFrame(g_movie->getDstSurface());
+			g_driver->prepareMovieFrame(g_movie->getDstSurface(), g_movie->getDstPalette());
 			g_movie->clearUpdateNeeded();
 		}
 		if (g_movie->getFrame() >= 0)
@@ -1263,6 +1263,16 @@ void GrimEngine::savegameRestore() {
 	lua_Restore(_savedState);
 	Debug::debug(Debug::Engine, "Lua restored successfully.");
 
+	if (getGameType() == GType_GRIM && !(getGameFlags() & ADGF_DEMO) &&
+		_savedState->saveMajorVersion() == 22 &&
+		_savedState->saveMinorVersion() >= 7 &&
+		_savedState->saveMinorVersion() <= 28) {
+		// Since ResidualVM 0.2.0, a ResidualVM/ScummVM specific patch was provided broken.
+		// We patch here the code to fix all saves containing this invalid code.
+		// cf. bug #13139 and #14987
+		lua_PatchGrimSave();
+	}
+
 	delete _savedState;
 
 	_justSaveLoaded = true;
@@ -1277,6 +1287,7 @@ void GrimEngine::savegameRestore() {
 	if (g_imuse)
 		g_imuse->pause(false);
 	g_movie->pause(false);
+
 	debug(2, "GrimEngine::savegameRestore() finished.");
 
 	_shortFrame = true;
@@ -1672,19 +1683,6 @@ void GrimEngine::pauseEngineIntern(bool pause) {
 	} else {
 		_frameStart += _system->getMillis() - _pauseStartTime;
 	}
-}
-
-
-Graphics::Surface *loadPNG(const Common::Path &filename) {
-	Image::PNGDecoder d;
-	Common::SeekableReadStream *s = SearchMan.createReadStreamForMember(filename);
-	if (!s)
-		return nullptr;
-	d.loadStream(*s);
-	delete s;
-
-	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
-	return srf;
 }
 
 void GrimEngine::debugLua(const Common::String &str) {
