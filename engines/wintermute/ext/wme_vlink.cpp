@@ -207,7 +207,8 @@ bool SXVlink::scSetProperty(const char *name, ScValue *value) {
 
 //////////////////////////////////////////////////////////////////////////
 bool SXVlink::persist(BasePersistenceManager *persistMgr) {
-	persistMgr->transferPtr(TMEMBER_PTR(_gameRef));
+	BaseScriptable::persist(persistMgr);
+
 	persistMgr->transferSint32(TMEMBER(_volume));
 	return STATUS_OK;
 }

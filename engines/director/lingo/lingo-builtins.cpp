@@ -52,7 +52,7 @@
 
 namespace Director {
 
-static BuiltinProto builtins[] = {
+static const BuiltinProto builtins[] = {
 	// Math
 	{ "abs",			LB::b_abs,			1, 1, 200, FBLTIN },	// D2 function
 	{ "atan",			LB::b_atan,			1, 1, 400, FBLTIN },	//			D4 f
@@ -245,8 +245,8 @@ void Lingo::initBuiltIns() {
 	initBuiltIns(builtins);
 }
 
-void Lingo::initBuiltIns(BuiltinProto protos[]) {
-	for (BuiltinProto *blt = protos; blt->name; blt++) {
+void Lingo::initBuiltIns(const BuiltinProto protos[]) {
+	for (const BuiltinProto *blt = protos; blt->name; blt++) {
 		if (blt->version > _vm->getVersion())
 			continue;
 
@@ -288,8 +288,8 @@ void Lingo::cleanupBuiltIns() {
 	_builtinConsts.clear();
 }
 
-void Lingo::cleanupBuiltIns(BuiltinProto protos[]) {
-	for (BuiltinProto *blt = protos; blt->name; blt++) {
+void Lingo::cleanupBuiltIns(const BuiltinProto protos[]) {
+	for (const BuiltinProto *blt = protos; blt->name; blt++) {
 		switch (blt->type) {
 		case CBLTIN:
 			_builtinCmds.erase(blt->name);
@@ -2027,7 +2027,7 @@ void LB::b_alert(int nargs) {
 
 	if (!debugChannelSet(-1, kDebugFewFramesOnly)) {
 		g_director->_wm->clearHandlingWidgets();
-		GUI::MessageDialog dialog(g_director->getCurrentMovie()->getCast()->decodeString(alert), _("OK"));
+		GUI::MessageDialog dialog(alert.c_str(), _("OK"));
 		dialog.runModal();
 	}
 }

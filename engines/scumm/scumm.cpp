@@ -85,9 +85,9 @@
 #include "scumm/util.h"
 #include "scumm/verbs.h"
 #include "scumm/imuse/drivers/pcspk.h"
-#include "scumm/imuse/drivers/mac_m68k.h"
 #include "scumm/imuse/drivers/amiga.h"
 #include "scumm/imuse/drivers/fmtowns.h"
+#include "scumm/imuse/drivers/macintosh.h"
 #include "scumm/imuse/drivers/midi.h"
 #include "scumm/detection_steam.h"
 
@@ -366,18 +366,13 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		break;
 	}
 
-	// Steam Win and Mac versions share the same DOS data files.
-	bool isSteamVersion = Common::String(_game.preferredTag).equalsIgnoreCase("steam");
-
 	// defaults
 	_screenWidth = 320;
 	_screenHeight = 200;
 
-	if (_game.platform == Common::kPlatformFMTowns && _game.version == 3) {	// FM-TOWNS V3 games originally use 320x240, and we have an option to trim to 200
-		_screenWidth = 320;
-		if (ConfMan.getBool("trim_fmtowns_to_200_pixels"))
-			_screenHeight = 200;
-		else
+	if (_game.platform == Common::kPlatformFMTowns && _game.version == 3) {
+		// FM-TOWNS V3 games originally use 320x240, and we have an option to trim to 200
+		if (!ConfMan.getBool("trim_fmtowns_to_200_pixels"))
 			_screenHeight = 240;
 	} else if (_game.version == 8 || _game.heversion >= 71) {
 		// COMI uses 640x480. Likewise starting from version 7.1, HE games use
@@ -387,9 +382,6 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	} else if (_game.platform == Common::kPlatformNES) {
 		_screenWidth = 256;
 		_screenHeight = 240;
-	} else if (!isSteamVersion && _useMacScreenCorrectHeight && _game.platform == Common::kPlatformMacintosh && _game.version >= 3) {
-		_screenWidth = 320;
-		_screenHeight = 200;
 	}
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
@@ -1189,8 +1181,11 @@ Common::Error ScummEngine::init() {
 	if (_game.platform == Common::kPlatformMacintosh && _game.heversion == 0) {
 		Common::MacResManager resource;
 
-		_macScreen = new Graphics::Surface();
-		_macScreen->create(640, _useMacScreenCorrectHeight ? 480 : 400, Graphics::PixelFormat::createFormatCLUT8());
+		// Indy3 and LOOM *must* use the _macScreen
+		if (isUsingOriginalGUI() || _game.version == 3) {
+			_macScreen = new Graphics::Surface();
+			_macScreen->create(640, _useMacScreenCorrectHeight ? 480 : 400, Graphics::PixelFormat::createFormatCLUT8());
+		}
 
 		// \xAA is a trademark glyph in Mac OS Roman. We try that, but
 		// also the Windows version, the UTF-8 version, and just plain
@@ -1210,6 +1205,11 @@ Common::Error ScummEngine::init() {
 					macResourceFile = indyFileNames[i];
 
 					_textSurfaceMultiplier = 2;
+					// FIXME: THIS IS A TEMPORARY WORKAROUND!
+					// The reason why we are initializing the Mac GUI even without original GUI active
+					// is because the engine will attempt to load Mac fonts from resources... using the
+					// _macGui object. This is not optimal, ideally we would want to decouple resource
+					// handling from the responsibilities of a simulated OS interface.
 					_macGui = new MacGui(this, macResourceFile);
 					break;
 				}
@@ -1232,6 +1232,11 @@ Common::Error ScummEngine::init() {
 					macResourceFile = loomFileNames[i];
 
 					_textSurfaceMultiplier = 2;
+					// FIXME: THIS IS A TEMPORARY WORKAROUND!
+					// The reason why we are initializing the Mac GUI even without original GUI active
+					// is because the engine will attempt to load Mac fonts from resources... using the
+					// _macGui object. This is not optimal, ideally we would want to decouple resource
+					// handling from the responsibilities of a simulated OS interface.
 					_macGui = new MacGui(this, macResourceFile);
 					break;
 				}
@@ -1261,7 +1266,7 @@ Common::Error ScummEngine::init() {
 				GUI::MessageDialog dialog(_("Could not find the 'Monkey Island' Macintosh executable to read resources\n"
 											"and instruments from. Music and Mac GUI will be disabled."), _("OK"));
 				dialog.runModal();
-			} else {
+			} else if (isUsingOriginalGUI()) {
 				_macGui = new MacGui(this, macResourceFile);
 			}
 		} else if (_game.id == GID_INDY4 && _language != Common::JA_JPN) {
@@ -1295,7 +1300,7 @@ Common::Error ScummEngine::init() {
 											"Mac GUI will not be shown."),
 										_("OK"));
 				dialog.runModal();
-			} else {
+			} else if (isUsingOriginalGUI()) {
 				_macGui = new MacGui(this, macResourceFile);
 			}
 		} else if (_game.id == GID_MONKEY2) {
@@ -1315,7 +1320,7 @@ Common::Error ScummEngine::init() {
 											"Mac GUI will not be shown."),
 										  _("OK"));
 				dialog.runModal();
-			} else {
+			} else if (isUsingOriginalGUI()) {
 				_macGui = new MacGui(this, macResourceFile);
 			}
 		}
@@ -1433,6 +1438,11 @@ Common::Error ScummEngine::init() {
 
 	resetScumm();
 	resetScummVars();
+
+	if (!_copyProtection && _game.id == GID_TENTACLE) {
+		VAR(124) = 1;
+		_bitVars[352 >> 3] |= (1 << (352 & 7));
+	}
 
 	if (_game.version >= 5 && _game.version <= 7 && _game.id != GID_DIG) {
 		_sound->setupSound();
@@ -2156,6 +2166,9 @@ void ScummEngine::setupMusic(int midi) {
 	case MT_APPLEIIGS:
 		_sound->_musicType = MDT_APPLEIIGS;
 		break;
+	case MT_MACINTOSH:
+		_sound->_musicType = MDT_MACINTOSH;
+		break;
 	default:
 		_sound->_musicType = MDT_MIDI;
 		break;
@@ -2240,7 +2253,7 @@ void ScummEngine::setupMusic(int midi) {
 		// Adding AdLib capabilities to the player may still be a good
 		// idea, because there are plenty of sound resources that exist
 		// only as ADL and SPK.
-		_sound->_musicType = MDT_MIDI;
+		//_sound->_musicType = MDT_MIDI;
 	}
 
 	/* Bind the mixer to the system => mixer will be invoked
@@ -2321,16 +2334,12 @@ void ScummEngine::setupMusic(int midi) {
 		bool enable_gs = (_game.id == GID_TENTACLE || _game.id == GID_SAMNMAX) ? false : (ConfMan.getBool("enable_gs") && MidiDriver::getMusicType(dev) != MT_MT32);
 		bool newSystem = (_game.id == GID_SAMNMAX);
 
-		if (isMacM68kIMuse()) {
-			// We setup this driver as native MIDI driver to avoid playback
-			// of the Mac music via a selected MIDI device.
-			nativeMidiDriver = new IMuseDriver_MacM68k(_mixer);
-			// The Mac driver is never MT-32.
-			_native_mt32 = enable_gs = false;
-			// Ignore non-native drivers. This also ignores the multi MIDI setting.
-			useOnlyNative = true;
-		} else if (_sound->_musicType == MDT_AMIGA) {
+		if (_sound->_musicType == MDT_AMIGA) {
 			nativeMidiDriver = new IMuseDriver_Amiga(_mixer);
+			_native_mt32 = enable_gs = false;
+			useOnlyNative = true;
+		} else if (_sound->_musicType == MDT_MACINTOSH) {
+			nativeMidiDriver = new IMuseDriver_Macintosh(this, _mixer, _game.id);
 			_native_mt32 = enable_gs = false;
 			useOnlyNative = true;
 		} else if (_sound->_musicType != MDT_ADLIB && _sound->_musicType != MDT_TOWNS && _sound->_musicType != MDT_PCSPK) {
@@ -2353,15 +2362,18 @@ void ScummEngine::setupMusic(int midi) {
 			}
 		}
 
-		_imuse = IMuse::create(this, nativeMidiDriver, adlibMidiDriver, isMacM68kIMuse() ? MDT_MACINTOSH : _sound->_musicType, _native_mt32);
+		_imuse = IMuse::create(this, nativeMidiDriver, adlibMidiDriver, _sound->_musicType, _native_mt32);
 
-		if (_game.platform == Common::kPlatformFMTowns) {
+		if (_sound->_musicType == MDT_TOWNS) {
 			_musicEngine = _townsPlayer = new Player_Towns_v2(this, _mixer, _imuse, true);
 			if (!_townsPlayer->init())
 				error("ScummEngine::setupMusic(): Failed to initialize FM-Towns audio driver");
 		} else {
 			_musicEngine = _imuse;
 		}
+
+		if (_sound->_musicType == MDT_MACINTOSH && ConfMan.hasKey("mac_snd_quality"))
+			_musicEngine->setQuality(ConfMan.getInt("mac_snd_quality"));
 
 		if (_imuse) {
 			_imuse->addSysexHandler

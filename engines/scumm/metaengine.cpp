@@ -200,10 +200,6 @@ Common::Path ScummEngine_v70he::generateFilename(const int room) const {
 	return Common::Path(result, Common::Path::kNoSeparator);
 }
 
-bool ScummEngine::isMacM68kIMuse() const {
-	return _game.platform == Common::kPlatformMacintosh && (_game.id == GID_MONKEY2 || _game.id == GID_INDY4) && !(_game.features & GF_MAC_CONTAINER);
-}
-
 } // End of namespace Scumm
 
 #pragma mark -
@@ -377,7 +373,7 @@ Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine,
 		return Common::kUnsupportedGameidError;
 	}
 
-	if (res.game.heversion != 0 && !strcmp(res.extra, "Steam")) {
+	if (res.game.heversion != 0 && (res.extra && !strcmp(res.extra, "Steam"))) {
 		if (!strcmp(res.game.gameid, "baseball") ||
 			!strcmp(res.game.gameid, "soccer") ||
 			!strcmp(res.game.gameid, "baseball2001") ||
@@ -411,10 +407,13 @@ Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine,
 		res.language = Common::parseLanguage(ConfMan.get("language"));
 
 	// V3 FM-TOWNS games *always* should use the corresponding music driver,
-	// anything else makes no sense for them.
+	// anything else makes no sense for them. Same for Mac (but not limited to V3).
 	// TODO: Maybe allow the null driver, too?
 	if (res.game.platform == Common::kPlatformFMTowns && res.game.version == 3)
 		res.game.midi = MDT_TOWNS;
+	else if (res.game.platform == Common::kPlatformMacintosh && res.game.version < 7)
+		res.game.midi = MDT_MACINTOSH;
+
 	// Finally, we have massaged the GameDescriptor to our satisfaction, and can
 	// instantiate the appropriate game engine. Hooray!
 	switch (res.game.version) {
@@ -601,10 +600,12 @@ GUI::OptionsContainerWidget *ScummMetaEngine::buildLoomOptionsWidget(GUI::GuiObj
 	if (extra == "VGA")
 		return new Scumm::LoomVgaGameOptionsWidget(boss, name, target);
 
-	if (extra == "Steam")
+	if (extra == "Steam" && platform != Common::kPlatformMacintosh)
 		return MetaEngine::buildEngineOptionsWidget(boss, name, target);
+	else if (extra == "Steam" && platform == Common::kPlatformMacintosh)
+		return nullptr;
 	else if (platform == Common::kPlatformMacintosh)
-		return new Scumm::LoomMonkeyMacGameOptionsWidget(boss, name, target, GID_LOOM);
+		return new Scumm::MacGameOptionsWidget(boss, name, target, GID_LOOM, extra);
 
 	// These EGA Loom settings are only relevant for the EGA
 	// version, since that is the only one that has an overture.
@@ -616,7 +617,7 @@ GUI::OptionsContainerWidget *ScummMetaEngine::buildMI1OptionsWidget(GUI::GuiObje
 	Common::Platform platform = Common::parsePlatform(ConfMan.get("platform", target));
 
 	if (platform == Common::kPlatformMacintosh && extra != "Steam")
-		return new Scumm::LoomMonkeyMacGameOptionsWidget(boss, name, target, GID_MONKEY);
+		return new Scumm::MacGameOptionsWidget(boss, name, target, GID_MONKEY, extra);
 
 	if (extra != "CD" && extra != "FM-TOWNS" && extra != "SEGA")
 		return nullptr;
@@ -628,6 +629,7 @@ GUI::OptionsContainerWidget *ScummMetaEngine::buildMI1OptionsWidget(GUI::GuiObje
 GUI::OptionsContainerWidget *ScummMetaEngine::buildEngineOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const {
 	Common::String gameid = ConfMan.get("gameid", target);
 	Common::String extra = ConfMan.get("extra", target);
+	Common::Platform platform = Common::parsePlatform(ConfMan.get("platform", target));
 
 	if (gameid == "loom") {
 		GUI::OptionsContainerWidget *widget = buildLoomOptionsWidget(boss, name, target);
@@ -635,6 +637,14 @@ GUI::OptionsContainerWidget *ScummMetaEngine::buildEngineOptionsWidget(GUI::GuiO
 			return widget;
 	} else if (gameid == "monkey") {
 		GUI::OptionsContainerWidget *widget = buildMI1OptionsWidget(boss, name, target);
+		if (widget)
+			return widget;
+	} else if (platform == Common::kPlatformMacintosh) {
+		GUI::OptionsContainerWidget *widget = nullptr;
+		if (gameid == "monkey2")
+			widget = new Scumm::MacGameOptionsWidget(boss, name, target, GID_MONKEY2, extra);
+		else if (gameid == "atlantis")
+			widget = new Scumm::MacGameOptionsWidget(boss, name, target, GID_INDY4, extra);
 		if (widget)
 			return widget;
 	}

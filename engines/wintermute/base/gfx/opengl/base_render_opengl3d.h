@@ -29,9 +29,6 @@
 
 #include "graphics/transform_struct.h"
 
-#include "math/matrix4.h"
-#include "math/ray.h"
-
 #if defined(USE_OPENGL_GAME)
 
 #include "graphics/opengl/system_headers.h"
@@ -151,10 +148,16 @@ public:
 
 	bool setViewport3D(DXViewport *viewport) override;
 
+	void postfilter() override;
+	void setPostfilter(PostFilter postFilter) override { _postFilterMode = postFilter; };
+
 private:
+	void renderSimpleShadow(BaseObject *object);
+
 	SimpleShadowVertex _simpleShadow[4]{};
 	Common::Array<DXVector4> _lightPositions;
 	Common::Array<DXVector3> _lightDirections;
+	GLuint _filterTexture;
 };
 
 } // wintermute namespace

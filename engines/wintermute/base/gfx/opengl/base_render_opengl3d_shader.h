@@ -30,9 +30,6 @@
 #include "graphics/opengl/system_headers.h"
 #include "graphics/transform_struct.h"
 
-#include "math/matrix4.h"
-#include "math/ray.h"
-
 #if defined(USE_OPENGL_SHADERS)
 
 #include "graphics/opengl/shader.h"
@@ -140,9 +137,14 @@ public:
 
 	bool setViewport3D(DXViewport *viewport) override;
 
+	void postfilter() override;
+	void setPostfilter(PostFilter postFilter) override { _postFilterMode = postFilter; };
+
 	OpenGL::Shader *_shadowMaskShader;
 
 private:
+	void renderSimpleShadow(BaseObject *object);
+
 	DXMatrix _glProjectionMatrix;
 	float _alphaRef;
 

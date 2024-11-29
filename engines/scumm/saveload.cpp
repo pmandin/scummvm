@@ -70,7 +70,7 @@ struct SaveInfoSection {
 
 #define SaveInfoSectionSize (4+4+4 + 4+4 + 4+2)
 
-#define CURRENT_VER 121
+#define CURRENT_VER 123
 #define INFOSECTION_VERSION 2
 
 #pragma mark -
@@ -520,12 +520,21 @@ uint32 *ScummEngine_v8::fetchScummVMSaveStateThumbnail(int slotId, bool isHeapSa
 			// Now take the pixels from the surface, extract the RGB components, process them
 			// with the brightness parameter, and store them in an appropriate structure
 			// which the SCUMM graphics pipeline can use...
-			byte r, g, b;
+			byte r = 0, g = 0, b = 0;
+			byte bpp = thumbnailSurface->format.bpp();
 			uint32 *processedThumbnail = new uint32[thumbnailSurface->w * thumbnailSurface->h];
 			for (int i = 0; i < thumbnailSurface->h; i++) {
 				for (int j = 0; j < thumbnailSurface->w; j++) {
-					uint32 *ptr = (uint32 *)thumbnailSurface->getBasePtr(j, i);
-					thumbnailSurface->format.colorToRGB(*ptr, r, g, b);
+					if (bpp == 32) {
+						uint32 *ptr = (uint32 *)thumbnailSurface->getBasePtr(j, i);
+						thumbnailSurface->format.colorToRGB(*ptr, r, g, b);
+					} else if (bpp == 16) {
+						uint16 *ptr = (uint16 *)thumbnailSurface->getBasePtr(j, i);
+						thumbnailSurface->format.colorToRGB(*ptr, r, g, b);
+					} else if (bpp == 8) {
+						uint8 *ptr = (uint8 *)thumbnailSurface->getBasePtr(j, i);
+						thumbnailSurface->format.colorToRGB(*ptr, r, g, b);
+					}
 
 					processedThumbnail[i * thumbnailSurface->w + j] = getPaletteColorFromRGB(
 						_currentPalette,
@@ -1335,7 +1344,6 @@ bool ScummEngine::changeSavegameName(int slot, char *newName) {
 
 void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	int i;
-	int var120Backup;
 	int var98Backup;
 	uint8 md5Backup[16];
 
@@ -1529,7 +1537,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 
 	// Don't restore the mouse position when using
 	// the original GUI, since the originals didn't
-	if (isUsingOriginalGUI()) {
+	if (s.isLoading() && isUsingOriginalGUI()) {
 		s.skip(2);
 		s.skip(2);
 	} else {
@@ -1650,7 +1658,6 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 			x *= 2;
 			y *= 2;
 		} else if (_macScreen) {
-			y += _macScreenDrawOffset;
 			x *= 2;
 			y *= 2;
 		}
@@ -1921,7 +1928,14 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	//
 	// Save/load script variables
 	//
-	var120Backup = _scummVars[120];
+
+	// From disasm...
+	int32 dottVarsBackup[5];
+	if (_game.id == GID_TENTACLE) {
+		for (int j = 0; j < 5; j++)
+			dottVarsBackup[j] = _scummVars[120 + j];
+	}
+
 	var98Backup = _scummVars[98];
 
 	s.syncArray(_roomVars, _numRoomVariables, Common::Serializer::Sint32LE, VER(38));
@@ -1939,7 +1953,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 			const char *soundCards[] = {
 				"PC Speaker", "IBM PCjr/Tandy", "Creative Music System", "AdLib", "Roland MT-32/CM-32L"
 			};
-			
+
 			GUI::MessageDialog dialog(
 				Common::U32String::format(_("Warning: incompatible sound settings detected between the current configuration and this saved game.\n\n"
 					"Current music device: %s (id %d)\nSave file music device: %s (id %d)\n\n"
@@ -1952,8 +1966,14 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 		}
 	}
 
-	if (_game.id == GID_TENTACLE)	// Maybe misplaced, but that's the main idea
-		_scummVars[120] = var120Backup;
+	// This is again from disasm...
+	if (_game.id == GID_TENTACLE) {
+		for (int j = 0; j < 5; j++)
+			_scummVars[120 + j] = dottVarsBackup[j];
+
+		_scummVars[70] = 1;
+	}
+
 	if (_game.id == GID_INDY4)
 		_scummVars[98] = var98Backup;
 
@@ -2147,6 +2167,12 @@ void ScummEngine_v5::saveLoadWithSerializer(Common::Serializer &s) {
 
 	if (s.isLoading() && _game.platform == Common::kPlatformMacintosh) {
 		if ((_game.id == GID_LOOM && !_macCursorFile.empty()) || _macGui) {
+			setBuiltinCursor(0);
+		}
+
+		// Also reset Mac cursors if the original GUI isn't enabled for games
+		// which replace cursors that override the default cursor palette - bug #15520.
+		if (_game.version == 5 && !_macGui) {
 			setBuiltinCursor(0);
 		}
 	}

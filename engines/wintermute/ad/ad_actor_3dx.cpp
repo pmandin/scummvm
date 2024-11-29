@@ -26,7 +26,6 @@
  */
 
 #include "common/util.h"
-#include "math/utils.h"
 
 #include "engines/wintermute/ad/ad_actor_3dx.h"
 #include "engines/wintermute/ad/ad_attach_3dx.h"
@@ -394,7 +393,6 @@ bool AdActor3DX::display() {
 	}
 
 	TShadowType shadowType = _gameRef->getMaxShadowType(this);
-
 	if (shadowType == SHADOW_STENCIL) {
 		displayShadowVolume();
 	} else if (shadowType > SHADOW_NONE) {

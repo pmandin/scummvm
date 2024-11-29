@@ -39,22 +39,30 @@ Renderer *CreateGfxTinyGL(int screenW, int screenH, Common::RenderMode renderMod
 
 TinyGLRenderer::TinyGLRenderer(int screenW, int screenH, Common::RenderMode renderMode) : Renderer(screenW, screenH, renderMode, true) {
 	_verts = (Vertex *)malloc(sizeof(Vertex) * kVertexArraySize);
-	_texturePixelFormat = TinyGLTexture::getRGBAPixelFormat();
+	_texCoord = (Coord *)malloc(sizeof(Coord) * kVertexArraySize);
+	_texturePixelFormat = getRGBAPixelFormat();
 	_variableStippleArray = nullptr;
 }
 
 TinyGLRenderer::~TinyGLRenderer() {
+	for (auto &it : _stippleTextureCache) {
+		delete (TinyGL3DTexture *)it._value;
+	}
 	TinyGL::destroyContext();
 	free(_verts);
+	free(_texCoord);
 }
 
-Texture *TinyGLRenderer::createTexture(const Graphics::Surface *surface) {
-	return new TinyGLTexture(surface);
+Texture *TinyGLRenderer::createTexture(const Graphics::Surface *surface, bool is3D) {
+	if (is3D)
+		return new TinyGL3DTexture(surface);
+	else
+		return new TinyGL2DTexture(surface);
 }
 
 void TinyGLRenderer::freeTexture(Texture *texture) {
-	TinyGLTexture *glTexture = static_cast<TinyGLTexture *>(texture);
-	delete glTexture;
+	//TinyGLTexture *glTexture = static_cast<TinyGLTexture *>(texture);
+	delete texture;
 }
 
 void TinyGLRenderer::init() {
@@ -73,6 +81,10 @@ void TinyGLRenderer::init() {
 	tglDisable(TGL_LIGHTING);
 	tglDisable(TGL_TEXTURE_2D);
 	tglEnable(TGL_DEPTH_TEST);
+	_stippleEnabled = false;
+	_lastColorSet0 = 0;
+	_lastColorSet1 = 0;
+	_stippleTexture = nullptr;
 }
 
 void TinyGLRenderer::setViewport(const Common::Rect &rect) {
@@ -92,7 +104,47 @@ void TinyGLRenderer::drawTexturedRect2D(const Common::Rect &screenRect, const Co
 
 	TinyGL::BlitTransform transform(sLeft + viewPort[0], sTop + viewPort[1]);
 	transform.sourceRectangle(textureRect.left, textureRect.top, sWidth, sHeight);
-	tglBlit(((TinyGLTexture *)texture)->getBlitTexture(), transform);
+	tglBlit(((TinyGL2DTexture *)texture)->getBlitTexture(), transform);
+}
+
+void TinyGLRenderer::drawSkybox(Texture *texture, Math::Vector3d camera) {
+	TinyGL3DTexture *glTexture = static_cast<TinyGL3DTexture *>(texture);
+	tglDisable(TGL_DEPTH_TEST);
+	tglEnable(TGL_TEXTURE_2D);
+	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_REPEAT);
+
+	tglBindTexture(TGL_TEXTURE_2D, glTexture->_id);
+	tglColor4f(1.f, 1.f, 1.f, 1.f);
+	tglVertexPointer(3, TGL_FLOAT, 0, _skyVertices);
+	tglNormalPointer(TGL_FLOAT, 0, _skyNormals);
+	if (texture->_width == 1008)
+		tglTexCoordPointer(2, TGL_FLOAT, 0, _skyUvs1008);
+	else if (texture->_width == 128)
+		tglTexCoordPointer(2, TGL_FLOAT, 0, _skyUvs128);
+	else
+		error("Unsupported skybox texture width %d", glTexture->_width);
+
+	tglEnableClientState(TGL_VERTEX_ARRAY);
+	tglEnableClientState(TGL_TEXTURE_COORD_ARRAY);
+	tglEnableClientState(TGL_NORMAL_ARRAY);
+
+	tglPolygonMode(TGL_BACK, TGL_FILL);
+
+	tglPushMatrix();
+	{
+		tglTranslatef(camera.x(), camera.y(), camera.z());
+		tglDrawArrays(TGL_QUADS, 0, 16);
+	}
+	tglPopMatrix();
+
+	tglDisableClientState(TGL_NORMAL_ARRAY);
+	tglDisableClientState(TGL_TEXTURE_COORD_ARRAY);
+	tglDisableClientState(TGL_VERTEX_ARRAY);
+
+	tglBindTexture(TGL_TEXTURE_2D, 0);
+	tglDisable(TGL_TEXTURE_2D);
+	tglEnable(TGL_DEPTH_TEST);
+	tglFlush();
 }
 
 void TinyGLRenderer::updateProjectionMatrix(float fov, float aspectRatio, float nearClipPlane, float farClipPlane) {
@@ -260,31 +312,27 @@ void TinyGLRenderer::renderCrossair(const Common::Point crossairPosition) {
 }
 
 void TinyGLRenderer::setStippleData(byte *data) {
-	if (!data)
+	if (!data) {
+		_stippleTexture = nullptr;
+		assert(_stippleEnabled == false);
+		_variableStippleArray = nullptr;
 		return;
+	}
+	if (_stippleTextureCache.contains(uint64(data))) {
+
+	}
+	assert(_stippleTextureCache.size() <= 16);
 
 	_variableStippleArray = data;
-	//for (int i = 0; i < 128; i++)
-	//	_variableStippleArray[i] = data[(i / 16) % 4];
 }
 
 void TinyGLRenderer::useStipple(bool enabled) {
+	_stippleEnabled = enabled;
+
 	if (enabled) {
-		TGLfloat factor = 0;
-		tglGetFloatv(TGL_POLYGON_OFFSET_FACTOR, &factor);
-		tglEnable(TGL_POLYGON_OFFSET_FILL);
-		tglPolygonOffset(factor - 5.0f, -1.0f);
-		tglEnable(TGL_POLYGON_STIPPLE);
-		if (_renderMode == Common::kRenderZX  ||
-			_renderMode == Common::kRenderCPC ||
-			_renderMode == Common::kRenderCGA)
-			tglPolygonStipple(_variableStippleArray);
-		else
-			tglPolygonStipple(_defaultStippleArraySmall);
+		assert(_variableStippleArray);
 	} else {
-		tglPolygonOffset(0, 0);
-		tglDisable(TGL_POLYGON_OFFSET_FILL);
-		tglDisable(TGL_POLYGON_STIPPLE);
+		_stippleTexture = nullptr;
 	}
 }
 
@@ -306,6 +354,16 @@ void TinyGLRenderer::renderFace(const Common::Array<Math::Vector3d> &vertices) {
 		return;
 	}
 
+	if (_stippleEnabled) {
+		if (_stippleTextureCache.contains(uint64(_variableStippleArray))) {
+			_stippleTexture = _stippleTextureCache[uint64(_variableStippleArray)];
+		} else {
+			_stippleTexture = new TinyGL3DTexture(_variableStippleArray, _lastColorSet0, _lastColorSet1);
+			_stippleTextureCache[uint64(_variableStippleArray)] = _stippleTexture;
+		}
+	} else if (_variableStippleArray)
+		return; // We are in the middle of a stipple rendering operation, so we should skip this face
+
 	tglEnableClientState(TGL_VERTEX_ARRAY);
 	uint vi = 0;
 	for (uint i = 1; i < vertices.size() - 1; i++) { // no underflow since vertices.size() > 2
@@ -317,8 +375,61 @@ void TinyGLRenderer::renderFace(const Common::Array<Math::Vector3d> &vertices) {
 		copyToVertexArray(vi + 2, v2);
 	}
 	tglVertexPointer(3, TGL_FLOAT, 0, _verts);
+
+	if (_stippleEnabled) {
+		tglClear(TGL_STENCIL_BUFFER_BIT);
+		tglEnable(TGL_STENCIL_TEST);
+		tglStencilFunc(TGL_ALWAYS, 1, 0xFF);        // Always pass stencil test
+		tglStencilOp(TGL_KEEP, TGL_KEEP, TGL_REPLACE); // Replace stencil buffer where drawn
+		tglEnable(TGL_DEPTH_TEST);
+		tglDepthMask(TGL_TRUE);
+		tglColorMask(TGL_FALSE, TGL_FALSE, TGL_FALSE, TGL_FALSE);
+	}
+
 	tglDrawArrays(TGL_TRIANGLES, 0, vi + 3);
 	tglDisableClientState(TGL_VERTEX_ARRAY);
+
+	if (_stippleEnabled) {
+		tglColorMask(TGL_TRUE, TGL_TRUE, TGL_TRUE, TGL_TRUE);
+		tglStencilFunc(TGL_EQUAL, 1, 0xFF); // Only render where stencil value is 1
+		tglStencilOp(TGL_KEEP, TGL_KEEP, TGL_KEEP); // Don't change stencil buffer
+
+		tglMatrixMode(TGL_PROJECTION);
+		tglPushMatrix();
+
+		tglLoadIdentity();
+		tglOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0); // Orthographic projection
+
+		tglScalef(1, 1, 1);
+		tglMatrixMode(TGL_MODELVIEW);
+		tglPushMatrix();
+		tglLoadIdentity();
+
+		tglEnable(TGL_TEXTURE_2D);
+		tglBindTexture(TGL_TEXTURE_2D, _stippleTexture->_id);
+		tglColor4f(1.f, 1.f, 1.f, 1.f);
+		tglDepthMask(TGL_FALSE);
+
+		tglBegin(TGL_QUADS);
+		tglTexCoord2f(0.0f, 0.0f); tglVertex2f(0.0f, 0.0f);
+		tglTexCoord2f(1.0, 0.0f); tglVertex2f(1.0, 0.0f);
+		tglTexCoord2f(1.0, 1.0); tglVertex2f(1.0, 1.0);
+		tglTexCoord2f(0.0f, 1.0); tglVertex2f(0.0f, 1.0);
+		tglEnd();
+
+		tglDepthMask(TGL_TRUE);
+		tglDisable(TGL_STENCIL_TEST);
+		tglDisable(TGL_TEXTURE_2D);
+		tglDisable(TGL_TEXTURE);
+		tglFlush();
+		tglBindTexture(TGL_TEXTURE_2D, 0);
+
+		tglMatrixMode(TGL_PROJECTION);
+		tglPopMatrix();
+
+		tglMatrixMode(TGL_MODELVIEW);
+		tglPopMatrix();
+	}
 }
 
 void TinyGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, byte color) {
@@ -405,7 +516,7 @@ void TinyGLRenderer::depthTesting(bool enabled) {
 void TinyGLRenderer::polygonOffset(bool enabled) {
 	if (enabled) {
 		tglEnable(TGL_POLYGON_OFFSET_FILL);
-		tglPolygonOffset(-10.0f, 1.0f);
+		tglPolygonOffset(-1.0f, 1.0f);
 	} else {
 		tglPolygonOffset(0, 0);
 		tglDisable(TGL_POLYGON_OFFSET_FILL);
@@ -413,11 +524,13 @@ void TinyGLRenderer::polygonOffset(bool enabled) {
 }
 
 void TinyGLRenderer::useColor(uint8 r, uint8 g, uint8 b) {
+	_lastColorSet1 = _lastColorSet0;
+	_lastColorSet0 = _texturePixelFormat.RGBToColor(r, g, b);
 	tglColor3ub(r, g, b);
 }
 
 void TinyGLRenderer::clear(uint8 r, uint8 g, uint8 b, bool ignoreViewport) {
-	tglClear(TGL_DEPTH_BUFFER_BIT);
+	tglClear(TGL_DEPTH_BUFFER_BIT | TGL_STENCIL_BITS);
 	if (ignoreViewport) {
 		tglClearColor(r / 255., g / 255., b / 255., 1.0);
 		tglClear(TGL_COLOR_BUFFER_BIT);
@@ -499,7 +612,7 @@ Graphics::Surface *TinyGLRenderer::getScreenshot() {
 	TinyGL::getSurfaceRef(glBuffer);
 
 	Graphics::Surface *s = new Graphics::Surface();
-	s->create(_screenW, _screenH, TinyGLTexture::getRGBAPixelFormat());
+	s->create(_screenW, _screenH, getRGBAPixelFormat());
 	s->copyFrom(glBuffer);
 
 	return s;

@@ -31,9 +31,6 @@
 #include "graphics/transform_struct.h"
 #include "graphics/surface.h"
 
-#include "math/matrix4.h"
-#include "math/ray.h"
-
 #if defined(USE_OPENGL_SHADERS)
 
 #include "graphics/opengl/system_headers.h"
@@ -55,6 +52,12 @@ class ShadowVolume;
 
 #define DEFAULT_NEAR_PLANE 90.0f
 #define DEFAULT_FAR_PLANE  10000.0f
+
+enum PostFilter {
+	kPostFilterOff,
+	kPostFilterBlackAndWhite,
+	kPostFilterSepia
+};
 
 class BaseRenderer3D : public BaseRenderer {
 public:
@@ -160,6 +163,8 @@ public:
 	                                 const BaseArray<AdGeneric *> &generics, const BaseArray<Light3D *> &lights, Camera3D *camera) = 0;
 	virtual void renderShadowGeometry(const BaseArray<AdWalkplane *> &planes, const BaseArray<AdBlock *> &blocks, const BaseArray<AdGeneric *> &generics, Camera3D *camera) = 0;
 
+	virtual void postfilter() = 0;
+	virtual void setPostfilter(PostFilter postFilter) = 0;
 	bool flip() override;
 	bool indicatorFlip() override;
 	bool forcedFlip() override;
@@ -180,6 +185,7 @@ protected:
 	Graphics::TSpriteBlendMode _batchBlendMode;
 	bool _batchAlphaDisable;
 	BaseSurfaceOpenGL3D *_batchTexture;
+	PostFilter _postFilterMode;
 
 	// NOT declared in sub class: HRESULT CreateShaderQuad();
 	virtual void setAmbientLightRenderState() = 0;

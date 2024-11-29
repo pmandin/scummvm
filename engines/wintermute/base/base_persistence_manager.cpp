@@ -43,12 +43,6 @@
 #include "common/system.h"
 #include "common/savefile.h"
 
-#ifdef ENABLE_WME3D
-#include "math/angle.h"
-#include "math/matrix4.h"
-#include "math/vector3d.h"
-#endif
-
 namespace Wintermute {
 
 // The original WME-Lite savegames had the following:
@@ -823,7 +817,6 @@ bool BasePersistenceManager::transferVector2(const char *name, Vector2 *val) {
 	}
 }
 
-#ifdef ENABLE_WME3D
 //////////////////////////////////////////////////////////////////////////
 // Vector3
 bool BasePersistenceManager::transferVector3d(const char *name, DXVector3 *val) {
@@ -921,7 +914,6 @@ bool BasePersistenceManager::transferAngle(const char *name, float *val) {
 
 	return STATUS_OK;
 }
-#endif
 
 
 //////////////////////////////////////////////////////////////////////////

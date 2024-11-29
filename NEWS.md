@@ -29,6 +29,8 @@ For a more comprehensive changelog of the latest experimental code, see:
      is now active by default.
    - Added optional dependency for libmpcdec (musepack) for sound.
    - There is now a checkbox for the --copy-protection command-line option.
+   - Reduced memory usage on platforms with dynamic detection plugins.
+   - Improved GUI usability on small screens.
 
  ADL:
    - Added Apple II checkerboard cursor as a visual option.
@@ -198,6 +200,10 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added more game variants.
    - Restored the ability to choose language of subtitles on PC versions.
 
+ Sword25:
+   - Fixed looping scene background sounds.
+   - Fixed actor lighting when walking.
+
  Teenagent:
    - Added support for Polish floppy version.
 
@@ -248,6 +254,10 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  macOS port:
    - Autoupdates now use Sparkle 2.x.
+
+ 3DS port:
+   - Integrated the port-specific options dialog with the main GUI.
+   - Increased available memory on the Old 3DS.
 
 
 #### 2.8.1 (2024-03-31)

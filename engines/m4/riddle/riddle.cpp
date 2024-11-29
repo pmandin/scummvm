@@ -311,7 +311,7 @@ void RiddleEngine::global_parser() {
 			if (_messageLog._result != 16) {
 				_G(flags)[V052] = 1;
 
-				if (_G(player).walker_in_this_scene && _G(flags)[292]) {
+				if (_G(player).walker_in_this_scene && _G(flags)[V292]) {
 					player_update_info();
 
 					switch (_G(player_info).facing) {
@@ -704,7 +704,9 @@ void sketchInJournal(const char *digiName) {
 
 		setGlobals1(_G(ripSketching), 1, start, start, start, 0, start + 1, finish, finish, finish);
 		sendWSMessage_110000(3);
-		digi_play(digiName, 1);
+
+		if (digiName)
+			digi_play(digiName, 1);
 		break;
 
 	case 3:

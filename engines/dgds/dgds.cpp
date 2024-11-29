@@ -182,7 +182,8 @@ bool DgdsEngine::changeScene(int sceneNum) {
 	}
 
 	const Common::String sceneFile = Common::String::format("S%d.SDS", sceneNum);
-	if (!_resource->hasResource(sceneFile)) {
+	bool haveSceneFile = _resource->hasResource(sceneFile);
+	if (!haveSceneFile && sceneNum != 2) {
 		warning("Tried to switch to non-existent scene %d", sceneNum);
 		return false;
 	}
@@ -212,12 +213,18 @@ bool DgdsEngine::changeScene(int sceneNum) {
 
 	_gdsScene->runChangeSceneOps();
 
-	if (!_scene->getDragItem())
-		setMouseCursor(_gdsScene->getDefaultMouseCursor());
+	if (!_scene->getDragItem()) {
+		int16 cursorNum = (getGameId() == GID_WILLY) ? -2 : -1;
+		setMouseCursor(cursorNum);
+	}
 
 	_storedAreaBuffer.fillRect(Common::Rect(SCREEN_WIDTH, SCREEN_HEIGHT), 0);
 
-	_scene->load(sceneFile, _resource, _decompressor);
+	if (haveSceneFile)
+		_scene->load(sceneFile, _resource, _decompressor);
+	else
+		_scene->setSceneNum(sceneNum);
+
 	// These are done inside the load function in the original.. cleaner here..
 	if (!_isDemo)
 		_scene->addInvButtonToHotAreaList();
@@ -244,8 +251,13 @@ bool DgdsEngine::changeScene(int sceneNum) {
 	return true;
 }
 
-void DgdsEngine::setMouseCursor(uint num) {
-	if (!_icons || (int)num >= _icons->loadedFrameCount())
+void DgdsEngine::setMouseCursor(int num) {
+	if (num == -1)
+		num = _gdsScene->getDefaultMouseCursor();
+	else if (num == -2)
+		num = _gdsScene->getDefaultMouseCursor2();
+
+	if (!_icons || num >= _icons->loadedFrameCount())
 		return;
 
 	if ((int)num == _currentCursor)
@@ -253,7 +265,7 @@ void DgdsEngine::setMouseCursor(uint num) {
 
 	const Common::Array<MouseCursor> &cursors = _gdsScene->getCursorList();
 
-	if (num >= cursors.size())
+	if (num >= (int)cursors.size())
 		error("Not enough cursor info, need %d have %d", num, cursors.size());
 
 	_currentCursorHot = cursors[num].getHot();
@@ -707,6 +719,7 @@ Common::Error DgdsEngine::run() {
 			if (getGameId() == GID_WILLY) {
 				_scene->drawVisibleHeads(&_compositionBuffer);
 				_scene->drawAndUpdateDialogs(&_compositionBuffer);
+				_scene->updateHotAreasFromDynamicRects();
 			} else {
 				_scene->drawAndUpdateDialogs(&_compositionBuffer);
 				_scene->drawVisibleHeads(&_compositionBuffer);
@@ -718,6 +731,7 @@ Common::Error DgdsEngine::run() {
 			_clock.update(gameRunning);
 
 			g_system->copyRectToScreen(_compositionBuffer.getPixels(), SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
 			_justChangedScene1 = false;
 			_justChangedScene2 = false;
 		}
@@ -743,6 +757,10 @@ Common::Error DgdsEngine::run() {
 				_lastGlobalFade = fade;
 				_lastGlobalFadedPal = _gamePals->getCurPalNum();
 			}
+
+			// TODO: When should we show the cursor again?
+			if (globals->isHideMouseCursor() && !_menu->menuShown())
+				CursorMan.showMouse(false);
 		}
 
 		g_system->updateScreen();

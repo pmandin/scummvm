@@ -71,14 +71,14 @@ void Room403::init() {
 		_ripleyShould = 0;
 		_wolfMode = 0;
 		_wolfShould = 0;
-		_val10 = 0;
+		_ladderMode = 0;
 		_sound1.clear();
 		_val12 = 0;
 
 		_G(flags)[V313] = player_been_here(403) && (
 			(_G(flags)[V110] && inv_player_has("TURTLE")) ||
 			inv_player_has("STEP LADDER") ||
-			_G(flags)[GLB_TEMP_12] ||
+			_G(flags)[V018] ||
 			!inv_object_is_here("STEP LADDER")) ? 0 : 1;
 		_plank = inv_object_in_scene("PLANK", 403) ? 2 : 0;
 
@@ -131,9 +131,9 @@ void Room403::init() {
 			break;
 		}
 
-		if (_G(flags)[V133] && !_G(flags)[GLB_TEMP_12] && _G(flags)[V131] != 403 &&
+		if (_G(flags)[V133] && !_G(flags)[V018] && _G(flags)[V131] != 403 &&
 				!inv_player_has("TURTLE") && !inv_player_has("EDGER")) {
-			_edger = series_place_sprite("ONE FRAME EDGER", 0, 0, 0, 0x100, 0xf00);
+			_edger = series_place_sprite("ONE FRAME EDGER", 0, 0, 0, 100, 0xf00);
 			hotspot_set_active("EDGER", true);
 		}
 
@@ -166,13 +166,13 @@ void Room403::init() {
 				}
 			}
 
-			if (_val10) {
+			if (_ladderMode) {
 				ws_demand_facing(11);
 				ws_hide_walker();
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
 					triggerMachineByHashCallback, "RIP on ladder/plank");
 
-				switch (_val10) {
+				switch (_ladderMode) {
 				case 1:
 					_ripClimbsLadder = series_load("RIPLEY CLIMBS LADDER");
 					sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 52, 52, -1,
@@ -311,7 +311,7 @@ void Room403::daemon() {
 				break;
 
 			case 1101:
-				_ripleyShould = 1003;
+				_ripleyShould = 1103;
 				kernel_timing_trigger(1, 102);
 
 				conv_load("conv403a", 10, 10, 101);
@@ -320,7 +320,7 @@ void Room403::daemon() {
 				conv_export_value_curr(_G(flags)[V122], 2);
 				conv_export_value_curr(_G(flags)[V120], 3);
 
-				conv_export_value_curr(inv_player_has("POMERANIAN MARKS") ? 1 : 0, 5);
+				conv_export_value_curr(inv_player_has("POMERANIAN MARKS") ? 1 : 0, 4);
 				conv_export_pointer_curr(&_G(flags)[V114], 5);
 				conv_export_pointer_curr(&_G(flags)[V115], 6);
 				conv_export_value_curr(_G(flags)[V337], 10);
@@ -431,7 +431,7 @@ void Room403::daemon() {
 				break;
 
 			case 1209:
-				_val10 = 1;
+				_ladderMode = 1;
 				player_set_commands_allowed(true);
 				break;
 
@@ -471,7 +471,7 @@ void Room403::daemon() {
 				ws_unhide_walker();
 				_ventClosed = series_show("SPRITE OF VENT CLOSED", 0x600, 16);
 				series_unload(_ripClimbsLadder);
-				_val10 = 0;
+				_ladderMode = 0;
 				player_set_commands_allowed(true);
 				break;
 
@@ -479,6 +479,7 @@ void Room403::daemon() {
 				player_set_commands_allowed(false);
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 53, 59, 103,
 					_ripClimbsLadder, 59, 59, 0);
+				_ripleyShould = 1222;
 				break;
 
 			case 1222:
@@ -486,6 +487,11 @@ void Room403::daemon() {
 				sendWSMessage_10000(1, _ripOnLadder, _ripClimbsLadder, 60, 74, 103,
 					_ripClimbsLadder, 74, 74, 0);
 				_ripleyShould = 1223;
+				break;
+
+			case 1223:
+				_ladderMode = 2;
+				player_set_commands_allowed(true);
 				break;
 
 			case 1230:
@@ -537,7 +543,7 @@ void Room403::daemon() {
 				break;
 
 			case 1303:
-				_val10 = 3;
+				_ladderMode = 3;
 				player_set_commands_allowed(true);
 				break;
 
@@ -553,10 +559,12 @@ void Room403::daemon() {
 				terminateMachineAndNull(_ripOnLadder);
 				ws_unhide_walker();
 				series_unload(_ripLegUp);
-				_val10 = 0;
+				_ladderMode = 0;
 
 				if (_G(flags)[V125] == 3)
 					kernel_timing_trigger(1, 442);
+				else
+					player_set_commands_allowed(true);
 				break;
 
 			case 1320:
@@ -592,9 +600,9 @@ void Room403::daemon() {
 				if (_G(flags)[V125]) {
 					hotspot_set_active("GRATE", false);
 					hotspot_set_active("TURTLE TREAT", true);
-					_val10 = 5;
+					_ladderMode = 5;
 				} else {
-					_val10 = 4;
+					_ladderMode = 4;
 				}
 
 				player_set_commands_allowed(true);
@@ -618,10 +626,10 @@ void Room403::daemon() {
 
 				if (_G(flags)[V125] == 1)
 					sendWSMessage_10000(1, _ripOnLadder, _ripTurtle, 20, 1, 103,
-						_ripTurtle, 44, 44, 0);
+						_ripLegUp, 44, 44, 0);
 				else
 					sendWSMessage_10000(1, _ripOnLadder, _noTreat, 20, 1, 103,
-						_noTreat, 44, 44, 0);
+						_ripLegUp, 44, 44, 0);
 
 				_ripleyShould = 1333;
 				break;
@@ -654,12 +662,13 @@ void Room403::daemon() {
 					sendWSMessage_10000(1, _ripOnLadder, _ripTurtle, 29, 52, 103,
 						_ripTurtle, 52, 52, 0);
 					_G(flags)[V125] = 1;
-					_val10 = 5;
+					_ladderMode = 5;
 
 					hotspot_set_active("GRATE", false);
-					hotspot_set_active("TURTLE TREATS", true);
-					_ripleyShould = 1402;
+					hotspot_set_active("TURTLE TREAT", true);
 				}
+
+				_ripleyShould = 1402;
 				break;
 
 			case 1402:
@@ -680,7 +689,7 @@ void Room403::daemon() {
 				break;
 
 			case 1412:
-				if (_val10 != 5) {
+				if (_ladderMode != 5) {
 					digi_play("403r50", 1, 255, 103);
 				} else if (_G(flags)[V125] == 1) {
 					digi_play("403r51", 1, 255, 103);
@@ -700,7 +709,7 @@ void Room403::daemon() {
 
 			case 1414:
 				inv_give_to_player("TURTLE");
-				_val10 = 4;
+				_ladderMode = 4;
 				hotspot_set_active("GRATE", true);
 				hotspot_set_active("TURTLE TREAT", false);
 				player_set_commands_allowed(true);
@@ -721,7 +730,7 @@ void Room403::daemon() {
 				_ripleyShould = 1503;
 				break;
 
-			case 1504:
+			case 1503:
 				_G(flags)[V125] = 2;
 				series_unload(_ripPlankEdger);
 				player_set_commands_allowed(true);
@@ -1439,11 +1448,9 @@ void Room403::pre_parser() {
 	bool enterFlag = player_said("enter");
 	bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
 
-	if (_val10 == 5) {
+	if (_ladderMode == 5) {
 		intr_cancel_sentence();
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+		_G(player).resetWalk();
 
 		if (player_said("TURTLE", "TURTLE TREAT")) {
 			_ripleyMode = 1020;
@@ -1466,11 +1473,9 @@ void Room403::pre_parser() {
 		return;
 	}
 
-	if (_val10 == 4) {
+	if (_ladderMode == 4) {
 		intr_cancel_sentence();
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+		_G(player).resetWalk();
 
 		if (lookFlag && player_said("GRATE")) {
 			_ripleyMode = 1020;
@@ -1491,10 +1496,8 @@ void Room403::pre_parser() {
 		return;
 	}
 
-	if (_val10 == 3) {
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+	if (_ladderMode == 3) {
+		_G(player).resetWalk();
 
 		if (lookFlag && player_said("grate")) {
 			return;
@@ -1502,7 +1505,7 @@ void Room403::pre_parser() {
 
 		intr_cancel_sentence();
 
-		if (useFlag && player_said("GRATE")) {
+		if (player_said("TURTLE TREATS", "GRATE")) {
 			_ripleyMode = 1020;
 			_ripleyShould = 1320;
 		} else {
@@ -1514,11 +1517,9 @@ void Room403::pre_parser() {
 		return;
 	}
 
-	if (_val10 == 2) {
+	if (_ladderMode == 2) {
 		intr_cancel_sentence();
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+		_G(player).resetWalk();
 
 		if (lookFlag && player_said("GRATE")) {
 			_ripleyMode = 1010;
@@ -1531,10 +1532,8 @@ void Room403::pre_parser() {
 		kernel_timing_trigger(1, 102, KT_DAEMON, KT_PARSE);
 	}
 
-	if (_val10 == 1) {
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+	if (_ladderMode == 1) {
+		_G(player).resetWalk();
 
 		if (!(lookFlag && player_said("GRATE"))) {
 			intr_cancel_sentence();
@@ -1552,9 +1551,7 @@ void Room403::pre_parser() {
 	}
 
 	if (player_said("PLANK", "URN") || player_said("EDGER", "URN")) {
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+		_G(player).resetWalk();
 
 		kernel_timing_trigger(1, 69, KT_PARSE, KT_PREPARSE);
 	}
@@ -1574,7 +1571,7 @@ void Room403::pre_parser() {
 			_wolfShould = 2232;
 			_G(flags)[V111]++;
 
-			kernel_timing_trigger(1, 69, KT_DAEMON, KT_PREPARSE);
+			kernel_timing_trigger(1, 110, KT_DAEMON, KT_PREPARSE);
 		} else if (MONEY("US DOLLARS") || MONEY("CHINESE YUAN") ||
 				MONEY("PERUVIAN INTI") || MONEY("SIKKIMESE RUPEE")) {
 			_G(flags)[V116] = 1;
@@ -1594,9 +1591,7 @@ void Room403::pre_parser() {
 	if ((lookFlag && player_said(" ")) ||
 			(enterFlag && player_said("GRAVEYARD")) ||
 			(enterFlag && player_said("CASTLE GROUNDS"))) {
-		_G(player).need_to_walk = false;
-		_G(player).ready_to_walk = true;
-		_G(player).waiting_for_walk = false;
+		_G(player).resetWalk();
 	}
 }
 
@@ -1709,8 +1704,10 @@ void Room403::parser() {
 		}
 	} else if (player_said("EDGER", "BELL") && inv_player_has("EDGER")) {
 		edgerBell();
+	} else if (player_said("PLANK", "URN")) {
+		plankUrn();
 	} else if (player_said("EDGER", "URN")) {
-		// No implementation
+		edgerUrn();
 	} else if ((player_said("STEP LADDER", "TOMB") ||
 			player_said("STEP LADDER", "STAIRS")) &&
 			stepLadderTomb()) {
@@ -1898,7 +1895,7 @@ void Room403::edgerBell() {
 		_bell = series_place_sprite("ONE FRAME BELL", 0, 0, 0, 100, 0xf00);
 		series_unload(_ripRingsBell);
 
-		if (_G(flags)[V119] >= 7) {
+		if (_G(flags)[V119] < 7) {
 			ws_walk_load_shadow_series(S4_SHADOW_DIRS, S4_SHADOW_NAMES);
 			ws_walk_load_walker_series(S4_NORMAL_DIRS, S4_NORMAL_NAMES);
 			_wolfWalker = triggerMachineByHash_3000(8, 8, *S4_NORMAL_DIRS, *S4_SHADOW_DIRS, 620, 323, 3,
@@ -1967,6 +1964,44 @@ void Room403::edgerBell() {
 		series_unload(S4_SHADOW_DIRS[0]);
 		series_unload(_ripHeadTurn);
 		sendWSMessage_150000(-1);
+		player_set_commands_allowed(true);
+		break;
+
+	default:
+		break;
+	}
+}
+
+void Room403::plankUrn() {
+	switch (_G(kernel).trigger) {
+	case 69:
+		player_set_commands_allowed(false);
+		ws_walk(1110, 322, nullptr, 1, 11);
+		_plank = 2;
+		break;
+
+	case 1:
+		_ripPutBoard = series_load("RIPLEY PUTS BOARD ON POTS");
+		ws_hide_walker();
+		_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x300, 0,
+			triggerMachineByHashCallback, "RIP plants plank");
+		sendWSMessage_10000(1, _ripOnLadder, _ripPutBoard, 1, 41, 2,
+			_ripPutBoard, 41, 41, 0);
+		break;
+
+	case 2:
+		digi_play("403_s07", 2);
+		sendWSMessage_10000(1, _ripOnLadder, _ripPutBoard, 41, 57, 3,
+			_ripPutBoard, 57, 57, 0);
+		break;
+
+	case 3:
+		_board = series_place_sprite("1 SPRITE OF BOARD", 0, 0, 0, 100, 0xf00);
+		hotspot_set_active("PLANK", true);
+		inv_move_object("PLANK", 403);
+		terminateMachineAndNull(_ripOnLadder);
+		ws_unhide_walker();
+		series_unload(_ripPutBoard);
 		player_set_commands_allowed(true);
 		break;
 
@@ -2288,7 +2323,7 @@ void Room403::syncGame(Common::Serializer &s) {
 	s.syncAsSint32LE(_val1);
 	s.syncAsSint32LE(_val3);
 	s.syncAsSint32LE(_val5);
-	s.syncAsSint32LE(_val10);
+	s.syncAsSint32LE(_ladderMode);
 }
 
 } // namespace Rooms
