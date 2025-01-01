@@ -141,7 +141,7 @@ Resource ResourceManager::getResourceInfo(Common::String name) {
 
 bool ResourceManager::hasResource(Common::String name) const {
 	name.toLowercase();
-	return _resources.contains(name);
+	return _resources.contains(name) || Common::File::exists(Common::Path(name));
 }
 
 DgdsChunkReader::DgdsChunkReader(Common::SeekableReadStream *stream)
@@ -176,7 +176,7 @@ bool DgdsChunkReader::isPacked() const {
 		packed = (_id == ID_BIN || _id == ID_VGA);
 		break;
 	case EX_CDS:
-		packed = (_id == ID_TT3);
+		packed = (_id == ID_TT3 || _id == ID_BIN || _id == ID_VGA);
 		break;
 	case EX_GDS:
 	case EX_SDS:

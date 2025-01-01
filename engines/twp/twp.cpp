@@ -181,8 +181,6 @@ TwpEngine::TwpEngine(OSystem *syst, const TwpGameDescription *gameDesc)
 	_dialog.reset(new Dialog());
 	_dialog->_tgt.reset(new EngineDialogTarget());
 	sq_resetobject(&_defaultObj);
-	sq_resetobject(&_cutscene.closureOverride);
-	sq_resetobject(&_cutscene.envObj);
 
 	_audio.reset(new AudioSystem());
 	_scene.reset(new Scene());
@@ -351,7 +349,6 @@ void TwpEngine::clickedAt(const Math::Vector2d &scrPos) {
 		if (!_hud->_active && _cursor.doubleClick) {
 			walkFast(true);
 			_holdToMove = true;
-			return;
 		}
 
 		if (_cursor.isLeftDown()) {
@@ -555,11 +552,11 @@ void TwpEngine::update(float elapsed) {
 			}
 
 			_inputState.setHotspot(_noun1 != nullptr);
-			bool hudVisible = _inputState.getInputActive() && _inputState.getInputVerbsActive() && _dialog->getState() == DialogState::None && !_cutscene.id;
+			bool hudVisible = _inputState.getInputActive() && _inputState.getInputVerbsActive() && _dialog->getState() == DialogState::None && !_cutscene;
 			_hud->setVisible(hudVisible);
 			_sentence.setVisible(_hud->isVisible());
 			_uiInv.setVisible(hudVisible);
-			_actorSwitcher.setVisible((_dialog->getState() == DialogState::None) && !_cutscene.id);
+			_actorSwitcher.setVisible((_dialog->getState() == DialogState::None) && !_cutscene);
 			// Common::String cursortxt = Common::String::format("%s (%d, %d) - (%d, %d)", cursorText().c_str(), (int)roomPos.getX(), (int)roomPos.getY(), (int)scrPos.getX(), (int)scrPos.getY());
 			//_sentence.setText(cursortxt.c_str());
 			_sentence.setText(cursorText());
@@ -589,7 +586,7 @@ void TwpEngine::update(float elapsed) {
 			Common::String cText = !_noun1 ? "" : _textDb->getText(_noun1->getName());
 			_sentence.setText(cText);
 			_inputState.setCursorShape(CursorShape::Normal);
-			if (_cursor.leftDown)
+			if (_cursor.isLeftDown() || _cursor.isRightDown())
 				clickedAt(scrPos);
 		}
 	}
@@ -604,32 +601,30 @@ void TwpEngine::update(float elapsed) {
 	_actorSwitcher.update(actorSwitcherSlots(), elapsed);
 	const uint32 endMiscTime = _system->getMillis();
 
+	// update cutscene
+	if (_cutscene) {
+		if (_cutscene->update(elapsed)) {
+			_cutscene.reset();
+		}
+	}
 	const uint32 endUpdateCutsceneTime = _system->getMillis();
 
 	// update threads: make a copy of the threads because during threads update, new threads can be added
-	Common::Array<Common::SharedPtr<Thread> > threads(_threads);
-	Common::Array<Common::SharedPtr<Thread> > threadsToRemove;
+	Common::Array<Common::SharedPtr<ThreadBase> > threads(_threads);
+	Common::Array<Common::SharedPtr<ThreadBase> > threadsToRemove;
 
 	bool isNotInDialog = _dialog->getState() == DialogState::None;
 	for (auto it = threads.begin(); it != threads.end(); it++) {
-		Common::SharedPtr<Thread> thread(*it);
-		if ((isNotInDialog || !thread->isGlobal() || !thread->_pauseable) && thread->update(elapsed)) {
+		Common::SharedPtr<ThreadBase> thread(*it);
+		if ((isNotInDialog || !thread->isGlobal()) && thread->update(elapsed)) {
 			threadsToRemove.push_back(thread);
 		}
 	}
 	// remove threads that are terminated
 	for (auto it = threadsToRemove.begin(); it != threadsToRemove.end(); it++) {
-		Common::SharedPtr<Thread> thread(*it);
+		Common::SharedPtr<ThreadBase> thread(*it);
 		size_t i = find(_threads, *it);
 		if (i != (size_t)-1) {
-			// if cutscene reset information
-			if (it->get()->getId() == _cutscene.id) {
-				_cutscene.id = 0;
-				g_twp->_inputState.setState(_cutscene.inputState);
-				g_twp->_inputState.setShowCursor(_cutscene.showCursor);
-				if (_cutscene.showCursor)
-					g_twp->_inputState.setInputActive(true);
-			}
 			_threads.remove_at(i);
 		}
 	}
@@ -850,7 +845,7 @@ static void moveCursorTo(const Math::Vector2d &pos) {
 }
 
 static void gotoObject(bool next) {
-	if (!g_twp->_room || !g_twp->_inputState._inputActive || !g_twp->_inputState._showCursor)
+	if (!g_twp->_room || !g_twp->_actor || !g_twp->_inputState._inputActive || !g_twp->_inputState._showCursor)
 		return;
 
 	// get all objects touchable and on screen and get their distance to the actor
@@ -1324,6 +1319,10 @@ Common::Error TwpEngine::run() {
 		}
 	}
 
+#ifdef USE_IMGUI
+	_system->setImGuiCallbacks(ImGuiCallbacks());
+#endif
+
 	return Common::kNoError;
 }
 
@@ -1350,7 +1349,7 @@ Common::Error TwpEngine::loadGameStream(Common::SeekableReadStream *stream) {
 }
 
 bool TwpEngine::canSaveGameStateCurrently(Common::U32String *msg) {
-	return _saveGameManager->_allowSaveGame && !_cutscene.id;
+	return _saveGameManager->_allowSaveGame && !_cutscene;
 }
 
 Common::Error TwpEngine::saveGameState(int slot, const Common::String &desc, bool isAutosave) {
@@ -1702,7 +1701,7 @@ void TwpEngine::exitRoom(Common::SharedPtr<Room> nextRoom) {
 
 		// stop all local threads
 		for (size_t i = 0; i < _threads.size(); i++) {
-			Common::SharedPtr<Thread> thread = _threads[i];
+			Common::SharedPtr<ThreadBase> thread = _threads[i];
 			if (!thread->isGlobal()) {
 				thread->stop();
 			}
@@ -1722,9 +1721,6 @@ void TwpEngine::actorExit(Common::SharedPtr<Object> actor) {
 	if (actor && _room) {
 		if (sqrawexists(_room->_table, "actorExit")) {
 			sqcall(_room->_table, "actorExit", actor->_table);
-		}
-		if (_followActor == actor) {
-			_followActor = _actor;
 		}
 	}
 }
@@ -2070,42 +2066,14 @@ float TwpEngine::getRandom(float min, float max) const {
 	return min + scale * (max - min);
 }
 
-SQRESULT TwpEngine::skipCutscene() {
-	if (!_cutscene.id)
-		return 0;
-
-	if ((_dialog->getState() != DialogState::None) || _cutscene.inOverride || (_cutscene.closureOverride._type == OT_NULL)) {
-		_noOverride->reset();
-		return 0;
+void TwpEngine::skipCutscene() {
+	if (!_cutscene)
+		return;
+	if (_cutscene->hasOverride()) {
+		_cutscene->cutsceneOverride();
+		return;
 	}
-
-	_cutscene.inOverride = true;
-	HSQUIRRELVM vm = getVm();
-	HSQUIRRELVM v = vm;
-
-	// stop cutscene
-	sq_addref(v, &_cutscene.envObj);
-	Common::SharedPtr<Thread> thread(sqthread(_cutscene.id));
-	thread->stop();
-
-	// create thread and store it on the stack
-	HSQOBJECT threadObj;
-	sq_resetobject(&threadObj);
-	sq_newthread(vm, 1024);
-	if (SQ_FAILED(sq_getstackobj(vm, -1, &threadObj)))
-		return sq_throwerror(v, "Couldn't get coroutine thread from stack");
-
-	Common::String name(Common::String::format("cutscene override: %s", thread->getName().c_str()));
-	Common::SharedPtr<Thread> t(new Thread(name, true, threadObj, _cutscene.envObj, _cutscene.closureOverride, {}));
-	_threads.push_back(t);
-	_cutscene.id = t->getId();
-
-	debugC(kDebugSysScript, "create cutscene override");
-
-	// call the closure in the thread
-	if (!t->call())
-		return sq_throwerror(v, "call failed");
-	return 0;
+	_noOverride->reset();
 }
 
 Scaling *TwpEngine::getScaling(const Common::String &name) {

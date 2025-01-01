@@ -113,8 +113,8 @@
 { // Supplied by goodoldgeorg in bug report #4163
 	{
 		"gob2",
-		"",
-		AD_ENTRY1("intro.stk", "c47faf1d406504e6ffe63243610bb1f4"),
+		"v1.02",
+		AD_ENTRY1s("intro.stk", "c47faf1d406504e6ffe63243610bb1f4", 828799),
 		IT_ITA,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
@@ -127,7 +127,7 @@
 	{
 		"gob2",
 		"v1.02",
-		AD_ENTRY1("intro.stk", "cd3e1df8b273636ee32e34b7064f50e8"),
+		AD_ENTRY1s("intro.stk", "cd3e1df8b273636ee32e34b7064f50e8", 874488),
 		RU_RUS,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
@@ -156,7 +156,7 @@
 	{
 		"gob2",
 		"CD v1.000",
-		AD_ENTRY1("intro.stk", "9de5fbb41cf97182109e5fecc9d90347"),
+		AD_ENTRY1s("intro.stk", "9de5fbb41cf97182109e5fecc9d90347", 4328864),
 		EN_USA,
 		kPlatformDOS,
 		ADGF_CD,
@@ -195,7 +195,7 @@
 	{
 		"gob2",
 		"CD v2.01",
-		AD_ENTRY1("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04"),
+		AD_ENTRY1s("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04", 4541724),
 		EN_ANY,
 		kPlatformDOS,
 		ADGF_CD,
@@ -208,7 +208,7 @@
 	{
 		"gob2",
 		"CD v2.01",
-		AD_ENTRY1("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04"),
+		AD_ENTRY1s("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04", 4541724),
 		DE_DEU,
 		kPlatformDOS,
 		ADGF_CD,
@@ -221,7 +221,7 @@
 	{
 		"gob2",
 		"CD v2.01",
-		AD_ENTRY1("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04"),
+		AD_ENTRY1s("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04", 4541724),
 		FR_FRA,
 		kPlatformDOS,
 		ADGF_CD,
@@ -234,7 +234,7 @@
 	{
 		"gob2",
 		"CD v2.01",
-		AD_ENTRY1("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04"),
+		AD_ENTRY1s("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04", 4541724),
 		IT_ITA,
 		kPlatformDOS,
 		ADGF_CD,
@@ -247,7 +247,7 @@
 	{
 		"gob2",
 		"CD v2.01",
-		AD_ENTRY1("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04"),
+		AD_ENTRY1s("intro.stk", "24a6b32757752ccb1917ce92fd7c2a04", 4541724),
 		ES_ESP,
 		kPlatformDOS,
 		ADGF_CD,
@@ -497,7 +497,7 @@
 { // Supplied by fac76 in bug report #3608
 	{
 		"gob2",
-		"",
+		"v1.02",
 		AD_ENTRY1s("intro.stk", "eebf2810122cfd17399260cd1468e994", 554014),
 		EN_GRB,
 		kPlatformAmiga,
@@ -524,7 +524,7 @@
 	{
 		"gob2",
 		"",
-		AD_ENTRY1("intro.stk", "686c88f7302a80b744aae9f8413e853d"),
+		AD_ENTRY1s("intro.stk", "686c88f7302a80b744aae9f8413e853d", 554384),
 		IT_ITA,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
@@ -566,7 +566,7 @@
 { // Supplied by bgk in bug report #3161
 	{
 		"gob2",
-		"",
+		"v1.02",
 		AD_ENTRY1s("intro.stk", "4b13c02d1069b86bcfec80f4e474b98b", 554680),
 		FR_FRA,
 		kPlatformAtariST,

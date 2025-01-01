@@ -75,7 +75,7 @@
 	{
 		"gob3",
 		"v1.00",
-		AD_ENTRY1("intro.stk", "1e2f64ec8dfa89f42ee49936a27e66e7"),
+		AD_ENTRY1s("intro.stk", "1e2f64ec8dfa89f42ee49936a27e66e7", 159444),
 		EN_USA,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,
@@ -152,7 +152,7 @@
 { // Supplied by SiRoCs in bug report #3949
 	{
 		"gob3",
-		"",
+		"v1.00",
 		AD_ENTRY1s("intro.stk", "d3b72938fbbc8159198088811f9e6d19", 160382),
 		ES_ESP,
 		kPlatformDOS,
@@ -286,7 +286,7 @@
 	{
 		"gob3",
 		"",
-		AD_ENTRY1("intro.stk", "bd679eafde2084d8011f247e51b5a805"),
+		AD_ENTRY1s("intro.stk", "bd679eafde2084d8011f247e51b5a805", 197532),
 		EN_GRB,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
@@ -299,7 +299,7 @@
 	{
 		"gob3",
 		"",
-		AD_ENTRY1("intro.stk", "bd679eafde2084d8011f247e51b5a805"),
+		AD_ENTRY1s("intro.stk", "bd679eafde2084d8011f247e51b5a805", 197532),
 		DE_DEU,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,

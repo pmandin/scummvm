@@ -72,9 +72,9 @@ void Room801::init() {
 	_ripLooksLRDownSeries = series_load("rip looks l r down", -1, nullptr);
 	series_load("SAFARI SHADOW 5", -1, nullptr);
 	_mtcsh1Series = series_load("MCTSH1", -1, nullptr);
-	_farmerDisplacementMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1024, 0, triggerMachineByHashCallback, "farmer displacement");
+	_farmerDisplacementMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1024, false, triggerMachineByHashCallback, "farmer displacement");
 	sendWSMessage_10000(1, _farmerDisplacementMach, _farmerDisplacementSeries, 1, 14, 0, _farmerDisplacementSeries, 14, 14, 0);
-	_farmerShadowMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 151, 317, 100, 1280, 0, triggerMachineByHashCallback, "farmer shadow");
+	_farmerShadowMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 151, 317, 100, 1280, false, triggerMachineByHashCallback, "farmer shadow");
 	sendWSMessage_10000(1, _farmerShadowMach, _mtcsh1Series, 1, 1, -1, _mtcsh1Series, 1, 1, 0);
 	if (inv_player_has("farmer's shovel"))
 		hotspot_set_active(_G(currentSceneDef).hotspots, "farmer's shovel", false);
@@ -88,7 +88,7 @@ void Room801::init() {
 		_G(flags)[V251] = 0;
 		_G(flags)[V252] = 0;
 		_G(flags)[V273] = 0;
-		_unkVal1 = 0;
+		_cellarDoorOpened = 0;
 
 		hotspot_set_active(_G(currentSceneDef).hotspots, "root cellar  ", true);
 		hotspot_set_active(_G(currentSceneDef).hotspots, "root cellar ", false);
@@ -111,7 +111,7 @@ void Room801::init() {
 														 20, 310, 3, triggerMachineByHashCallback3000, "mc_trek");
 		kernel_timing_trigger(60, 1, nullptr);
 	} else if (_G(game).previous_room == KERNEL_RESTORING_GAME) {
-		if (_unkVal1) {
+		if (_cellarDoorOpened) {
 			hotspot_set_active(_G(currentSceneDef).hotspots, "root cellar ", true);
 			hotspot_set_active(_G(currentSceneDef).hotspots, "root cellar  ", false);
 			hotspot_set_active(_G(currentSceneDef).hotspots, "ROOT CELLAR", true);
@@ -125,14 +125,14 @@ void Room801::init() {
 			_cellarDoorClosedMach = series_place_sprite("CELLAR DOOR CLOSED", 0, 0, -53, 100, 1280);
 		}
 
-		_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, 0, triggerMachineByHashCallback, "mc talk frames");
+		_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, false, triggerMachineByHashCallback, "mc talk frames");
 		_safariShadow5Mach = series_show("SAFARI SHADOW 5", 1280, 16, -1, -1, 0, 50, 124, 304);
 		sendWSMessage_10000(1, _mcTrekMach, _meiPrattleLoopSeries, 42, 42, 0, _meiPrattleLoopSeries, 42, 42, 0);
 	} else {
 		ws_demand_facing(_G(my_walker), 8);
 		ws_demand_location(_G(my_walker), 525, 301);
 		_ripReturnsFromRootCellarSeries = series_load("rip returns from root cellar", -1, nullptr);
-		_unkVal1 = 1;
+		_cellarDoorOpened = 1;
 		hotspot_set_active(_G(currentSceneDef).hotspots, "root cellar ", true);
 		hotspot_set_active(_G(currentSceneDef).hotspots, "root cellar  ", false);
 		hotspot_set_active(_G(currentSceneDef).hotspots, "ROOT CELLAR", true);
@@ -143,17 +143,16 @@ void Room801::init() {
 }
 
 void Room801::pre_parser() {
-	player_said("take");
-	bool lookCheck = (player_said("look") || player_said("look at"));
+	const bool lookFl = player_said_any("look", "look at");
 
-	if (lookCheck && player_said("farm")) {
+	if (lookFl && player_said("farm")) {
 		digi_play("801R23", 1, 255, -1, -1);
 		_G(player).need_to_walk = false;
 		_G(player).ready_to_walk = true;
 		_G(player).waiting_for_walk = false;
 	}
 
-	if (lookCheck && player_said(" ")) {
+	if (lookFl && player_said(" ")) {
 		_G(player).need_to_walk = false;
 		_G(player).ready_to_walk = true;
 		_G(player).waiting_for_walk = false;
@@ -161,35 +160,14 @@ void Room801::pre_parser() {
 }
 
 void Room801::parser() {
-	bool lookFl = false;
-	bool takeFl = false;
-	bool gearFl = false;
-	bool talkFl = false;
-	bool goFl = false;
+	const bool lookFl = player_said_any("look", "look at");
+	const bool takeFl = player_said_any("talk", "talk to");
+	const bool gearFl = player_said("gear");
+	const bool talkFl = player_said("take");
+	const bool goFl = player_said("go");
 
-	if (player_said("look") || player_said("look at")) {
-		lookFl = true;
-	}
-
-	if (player_said("talk") || player_said("talk TO")) {
-		talkFl = true;
-	}
-
-	if (player_said("take")) {
-		takeFl = true;
-	}
-
-	if (player_said("gear")) {
-		gearFl = true;
-	}
-
-	if (player_said("go")) {
-		goFl = true;
-	}
-
-	if (player_said("conv801a")) {
+	if (player_said("conv801a"))
 		room801_conv801a();
-	}
 
 	else if (_G(kernel).trigger == 747) {
 		_unkVal2 = 4;
@@ -200,7 +178,7 @@ void Room801::parser() {
 	} // if (_G(kernel).trigger == 747)
 
 	else if (lookFl && _G(walker).ripley_said(SAID)) {
-		// Nothing (though it may be important to keep it because of the cascade of checks
+		// Nothing, though it's important to keep it because of the digi_play call in ripley_said (+ the cascade of checks)
 	}
 
 	else if (lookFl && player_said("house")) {
@@ -471,7 +449,7 @@ void Room801::parser() {
 				ws_hide_walker();
 				terminateMachine(_cellarDoorClosedMach);
 				_ripOpensCellarSeries = series_load("RIP OPENS CELLAR", -1, nullptr);
-				_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 256, 0, triggerMachineByHashCallback, "rip opens cellar");
+				_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 256, false, triggerMachineByHashCallback, "rip opens cellar");
 				sendWSMessage_10000(1, _ripAnimationMach, _ripOpensCellarSeries, 1, 28, 10, _ripOpensCellarSeries, 28, 28, 0);
 			}
 			break;
@@ -510,7 +488,7 @@ void Room801::parser() {
 				ws_hide_walker(_G(my_walker));
 				terminateMachine(_cellarDoorOpenMach);
 				_ripClosesCellarSeries = series_load("RIP CLOSES CELLAR", -1, nullptr);
-				_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 256, 0, triggerMachineByHashCallback, "rip closes cellar");
+				_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 256, false, triggerMachineByHashCallback, "rip closes cellar");
 				sendWSMessage_10000(1, _ripAnimationMach, _ripClosesCellarSeries, 1, 19, 10, _ripClosesCellarSeries, 34, 34, 0);
 			}
 			break;
@@ -543,7 +521,7 @@ void Room801::parser() {
 		if (_G(flags)[V252] || _G(flags)[V253] || _G(flags)[V255]) {
 			ws_hide_walker(_G(my_walker));
 			player_set_commands_allowed(false);
-			_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 167, 303, 49, 1280, 1, triggerMachineByHashCallback, "rip talking to farmer");
+			_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 167, 303, 49, 1280, true, triggerMachineByHashCallback, "rip talking to farmer");
 			sendWSMessage_10000(1, _ripAnimationMach, _ripTrekHeadTurnSeries, 1, 1, -1, _ripTrekHeadTurnSeries, 1, 1, 0);
 			_safariShadow5Mach2 = series_show("SAFARI SHADOW 5", 1280, 144, -1, -1, 0, 48, 167, 303);
 			_unkVal5 = 1;
@@ -661,7 +639,7 @@ void Room801::parser() {
 		case -1:
 			player_set_commands_allowed(false);
 			ws_hide_walker(_G(my_walker));
-			_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 256, 0, triggerMachineByHashCallback, "rip enters cellar");
+			_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 256, false, triggerMachineByHashCallback, "rip enters cellar");
 			sendWSMessage_10000(1, _ripAnimationMach, _ripEntersRootCellarSeries, 1, 14, 5, _ripEntersRootCellarSeries, 15, 19, 0);
 			break;
 		case 5:
@@ -716,14 +694,14 @@ void Room801::daemon() {
 	case 7:
 		player_set_commands_allowed(false);
 		ws_hide_walker(_G(my_walker));
-		_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, 0, triggerMachineByHashCallback, "mc talk frames");
+		_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, false, triggerMachineByHashCallback, "mc talk frames");
 		_safariShadow5Mach = series_show("SAFARI SHADOW 5", 1280, 16, -1, -1, 0, 50, 124, 304);
 		sendWSMessage_10000(1, _mcTrekMach, _meiPrattleLoopSeries, 42, 42, 0, _meiPrattleLoopSeries, 42, 42, 0);
 
 		if (_G(flags)[V260]) {
 			kernel_timing_trigger(30, 81, nullptr);
 		} else {
-			_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0, 0, triggerMachineByHashCallback, "rip returns from cellar");
+			_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0, false, triggerMachineByHashCallback, "rip returns from cellar");
 			sendWSMessage_10000(1, _ripAnimationMach, _ripReturnsFromRootCellarSeries, 1, 22, 8, _ripReturnsFromRootCellarSeries, 22, 22, 0);
 		}
 		break;
@@ -739,9 +717,9 @@ void Room801::daemon() {
 		break;
 	case 10:
 		terminateMachine(_farmerDisplacementMach);
-		_planeShadowMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 2048, 0, triggerMachineByHashCallback, "shadow of de plane");
-		_farmerDisplacementMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1024, 0, triggerMachineByHashCallback, "farmer looks to zero");
-		_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 1536, 0, triggerMachineByHashCallback, "rip looks to zero");
+		_planeShadowMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 2048, false, triggerMachineByHashCallback, "shadow of de plane");
+		_farmerDisplacementMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1024, false, triggerMachineByHashCallback, "farmer looks to zero");
+		_ripAnimationMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 1536, false, triggerMachineByHashCallback, "rip looks to zero");
 		sendWSMessage_10000(1, _planeShadowMach, _planeShadowSeries, 1, 47, 2, _planeShadowSeries, 47, 47, 0);
 		_unkFlag1 = false;
 		sendWSMessage_10000(1, _farmerDisplacementMach, _farmerLooksToZeroSeries, 1, 48, 12, _farmerLooksToZeroSeries, 48, 48, 0);
@@ -754,7 +732,7 @@ void Room801::daemon() {
 	case 11:
 		digi_play("801_s01", 2, 255, -1, -1);
 		sendWSMessage_60000(_mcTrekMach);
-		_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, 0, triggerMachineByHashCallback, "mei chen looks to zero");
+		_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, false, triggerMachineByHashCallback, "mei chen looks to zero");
 		sendWSMessage_10000(1, _mcTrekMach, _meiPrattleLoopSeries, 1, 7, 0, _meiPrattleLoopSeries, 7, 7, 0);
 		_safariShadow5Mach = series_show("SAFARI SHADOW 5", 1280, 16, -1, -1, 0, 50, 124, 304);
 		break;
@@ -875,9 +853,9 @@ void Room801::daemon() {
 			series_unload(_farmerLooksToZeroSeries);
 			series_unload(_meiLookToZeroSeries);
 			series_unload(_ripLooksToZeroSeries);
-			_farmerDisplacementMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1024, 0, triggerMachineByHashCallback, "farmer talk frames");
+			_farmerDisplacementMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1024, false, triggerMachineByHashCallback, "farmer talk frames");
 			sendWSMessage_10000(1, _farmerDisplacementMach, _farmerTalkLoopSeries, 1, 1, 0, _farmerTalkLoopSeries, 1, 1, 0);
-			_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, 0, triggerMachineByHashCallback, "mc talk frames");
+			_mcTrekMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 1280, false, triggerMachineByHashCallback, "mc talk frames");
 			sendWSMessage_10000(1, _mcTrekMach, _meiPrattleLoopSeries, 8, 17, 33, _meiPrattleLoopSeries, 17, 17, 0);
 			_ripTrekHatTipPos5Series = series_load("RIP TREK HAT TIP POS5", -1, nullptr);
 			kernel_timing_trigger(210, 62, nullptr);
@@ -1134,12 +1112,16 @@ void Room801::daemon() {
 	}
 }
 
+void Room801::syncGame(Common::Serializer &s) {
+	s.syncAsSint32LE(_cellarDoorOpened);
+}
+
 void Room801::room801_conv801a() {
-	int32 entry = conv_current_entry();
-	int32 node = conv_current_node();
+	const int32 entry = conv_current_entry();
+	const int32 node = conv_current_node();
 
 	if (_G(kernel).trigger == 1) {
-		int32 who = conv_whos_talking();
+		const int32 who = conv_whos_talking();
 		if (who <= 0) {
 			_unkVal3 = 1;
 			_ripOpensCellarSeries = 1;
@@ -1164,7 +1146,7 @@ void Room801::room801_conv801a() {
 		return;
 	}
 
-	int32 who = conv_whos_talking();
+	const int32 who = conv_whos_talking();
 	if (who <= 0) {
 		if ((node == 1 && entry == 0) || (node == 1 && entry == 1) || (node == 1 && entry == 2) || (node == 4 && entry == 2))
 			_unkVal3 = 3;

@@ -20,9 +20,11 @@
  */
 
 #include "common/system.h"
+#include "common/macresman.h"
 
 #include "graphics/cursorman.h"
 #include "graphics/macgui/macwindowmanager.h"
+#include "graphics/paletteman.h"
 #include "graphics/primitives.h"
 #include "graphics/surface.h"
 
@@ -40,16 +42,11 @@ namespace Scumm {
 // ---------------------------------------------------------------------------
 
 MacGuiImpl::MacDialogWindow::MacDialogWindow(MacGuiImpl *gui, OSystem *system, Graphics::Surface *from, Common::Rect bounds, MacDialogWindowStyle windowStyle, MacDialogMenuStyle menuStyle) : _gui(gui), _system(system), _from(from), _bounds(bounds) {
-	_gui->updatePalette();
-
 	// Only apply menu style if the menu is open.
 	Graphics::MacMenu *menu = _gui->_windowManager->getMenu();
 
 	if (!menu->_active)
 		menuStyle = kMenuStyleNone;
-
-	_black = _gui->getBlack();
-	_white = _gui->getWhite();
 
 	_pauseToken = _gui->_vm->pauseEngine();
 
@@ -59,6 +56,9 @@ MacGuiImpl::MacDialogWindow::MacDialogWindow(MacGuiImpl *gui, OSystem *system, G
 
 	_shakeWasEnabled = _gui->_vm->_shakeEnabled;
 	_gui->_vm->setShake(0);
+
+	_black = _gui->getBlack();
+	_white = _gui->getWhite();
 
 	_backup = new Graphics::Surface();
 	_backup->create(bounds.width(), bounds.height(), Graphics::PixelFormat::createFormatCLUT8());
@@ -79,15 +79,25 @@ MacGuiImpl::MacDialogWindow::MacDialogWindow(MacGuiImpl *gui, OSystem *system, G
 	s->fillRect(r, _white);
 
 	if (windowStyle == kWindowStyleNormal) {
-		int growths[] = { 1, -3, -1 };
+		if (_gui->_vm->_game.version < 6) {
+			int growths[] = { 1, -3, -1 };
 
-		for (int i = 0; i < ARRAYSIZE(growths); i++) {
-			r.grow(growths[i]);
+			for (int i = 0; i < ARRAYSIZE(growths); i++) {
+				r.grow(growths[i]);
+				s->frameRect(r, _black);
+			}
+		} else {
+			uint32 light = _gui->_windowManager->findBestColor(0xCC, 0xCC, 0xFF);
+			uint32 medium = _gui->_windowManager->findBestColor(0xBB, 0xBB, 0xBB);
+			uint32 dark = _gui->_windowManager->findBestColor(0x66, 0x66, 0x99);
 
-			s->hLine(r.left, r.top, r.right - 1, _black);
-			s->hLine(r.left, r.bottom - 1, r.right - 1, _black);
-			s->vLine(r.left, r.top + 1, r.bottom - 2, _black);
-			s->vLine(r.right - 1, r.top + 1, r.bottom - 2, _black);
+			s->frameRect(r, _black);
+			s->frameRect(Common::Rect(r.left, r.top, r.right, r.bottom), dark);
+			s->frameRect(Common::Rect(r.left, r.top, r.right - 1, r.bottom - 1), light);
+			s->frameRect(Common::Rect(r.left + 1, r.top + 1, r.right - 1, r.bottom - 1), medium);
+			s->frameRect(Common::Rect(r.left + 2, r.top + 2, r.right - 2, r.bottom - 2), dark);
+			s->frameRect(Common::Rect(r.left + 3, r.top + 3, r.right - 2, r.bottom - 2), light);
+			s->frameRect(Common::Rect(r.left + 3, r.top + 3, r.right - 3, r.bottom - 3), _black);
 		}
 	} else if (windowStyle == kWindowStyleRounded) {
 		r.grow(1);
@@ -118,6 +128,24 @@ MacGuiImpl::MacDialogWindow::MacDialogWindow(MacGuiImpl *gui, OSystem *system, G
 		// thing that is actually used for is the Edit menu, which we
 		// don't implement. In ScummVM, the menu bar is just a drawing
 		// at the point, so we can retouch it to look correct.
+		//
+		// However, the Mac Window Manager's ideas of what's black and
+		// what's white may no longer be valid.
+
+		uint32 macWhite = _gui->_macWhite;
+		uint32 macBlack = _gui->_macBlack;
+
+		if (macWhite != _white || macBlack != _black) {
+			for (int y = 0; y < 20; y++) {
+				for (int x = 0; x < realScreen->w; x++) {
+					uint32 color = realScreen->getPixel(x, y);
+					if (color == macWhite)
+						realScreen->setPixel(x, y, _white);
+					else if (color == macBlack)
+						realScreen->setPixel(x, y, _black);
+				}
+			}
+		}
 
 		if (menuStyle == kMenuStyleDisabled) {
 			for (int y = 0; y < 19; y++) {
@@ -130,7 +158,10 @@ MacGuiImpl::MacDialogWindow::MacDialogWindow(MacGuiImpl *gui, OSystem *system, G
 			for (int y = 1; y < 19; y++) {
 				for (int x = 10; x < 38; x++) {
 					uint32 color = realScreen->getPixel(x, y);
-					realScreen->setPixel(x, y, _gui->_windowManager->inverter(color));
+					if (color == _black)
+						realScreen->setPixel(x, y, _white);
+					else
+						realScreen->setPixel(x, y, _black);
 				}
 			}
 		}
@@ -158,6 +189,8 @@ MacGuiImpl::MacDialogWindow::~MacDialogWindow() {
 	_widgets.clear();
 	_pauseToken.clear();
 	_gui->_vm->setShake(_shakeWasEnabled);
+
+	_gui->restoreScreen();
 }
 
 void MacGuiImpl::MacDialogWindow::copyToScreen(Graphics::Surface *s) const {
@@ -169,6 +202,7 @@ void MacGuiImpl::MacDialogWindow::copyToScreen(Graphics::Surface *s) const {
 
 void MacGuiImpl::MacDialogWindow::show() {
 	_visible = true;
+
 	copyToScreen();
 	_dirtyRects.clear();
 	_gui->_windowManager->pushCursor(Graphics::MacGUIConstants::kMacCursorArrow);
@@ -234,10 +268,23 @@ MacGuiImpl::MacEditText *MacGuiImpl::MacDialogWindow::addEditText(Common::Rect b
 	return editText;
 }
 
-MacGuiImpl::MacPicture *MacGuiImpl::MacDialogWindow::addPicture(Common::Rect bounds, int id, bool enabled) {
-	MacGuiImpl::MacPicture *picture = new MacPicture(this, bounds, id, false);
-	addWidget(picture, kWidgetPicture);
-	return picture;
+MacGuiImpl::MacImage *MacGuiImpl::MacDialogWindow::addIcon(int x, int y, int id, bool enabled) {
+	Graphics::Surface *icon = nullptr;
+	Graphics::Surface *mask = nullptr;
+	MacGuiImpl::MacImage *image = nullptr;
+
+	if (_gui->loadIcon(id, &icon, &mask)) {
+		image = new MacImage(this, Common::Rect(x, y, x + icon->w, y + icon->h), icon, mask, false);
+		addWidget(image, kWidgetIcon);
+	}
+
+	return image;
+}
+
+MacGuiImpl::MacImage *MacGuiImpl::MacDialogWindow::addPicture(Common::Rect bounds, int id, bool enabled) {
+	MacGuiImpl::MacImage *image = new MacImage(this, bounds, _gui->loadPict(id), nullptr, false);
+	addWidget(image, kWidgetImage);
+	return image;
 }
 
 MacGuiImpl::MacSlider *MacGuiImpl::MacDialogWindow::addSlider(int x, int y, int h, int minValue, int maxValue, int pageSize, bool enabled) {
@@ -246,15 +293,23 @@ MacGuiImpl::MacSlider *MacGuiImpl::MacDialogWindow::addSlider(int x, int y, int 
 	return slider;
 }
 
-MacGuiImpl::MacPictureSlider *MacGuiImpl::MacDialogWindow::addPictureSlider(int backgroundId, int handleId, bool enabled, int minX, int maxX, int minValue, int maxValue, int leftMargin, int rightMargin) {
-	MacPicture *background = (MacPicture *)_widgets[backgroundId];
-	MacPicture *handle = (MacPicture *)_widgets[handleId];
+MacGuiImpl::MacImageSlider *MacGuiImpl::MacDialogWindow::addImageSlider(int backgroundId, int handleId, bool enabled, int minX, int maxX, int minValue, int maxValue, int leftMargin, int rightMargin) {
+	MacImage *background = (MacImage *)_widgets[backgroundId];
+	MacImage *handle = (MacImage *)_widgets[handleId];
 
 	background->setVisible(false);
 	handle->setVisible(false);
 
-	MacGuiImpl::MacPictureSlider *slider = new MacPictureSlider(this, background, handle, enabled, minX, maxX, minValue, maxValue, leftMargin, rightMargin);
-	addWidget(slider, kWidgetPictureSlider);
+	MacGuiImpl::MacImageSlider *slider = new MacImageSlider(this, background, handle, enabled, minX, maxX, minValue, maxValue, leftMargin, rightMargin);
+	addWidget(slider, kWidgetImageSlider);
+	return slider;
+}
+
+MacGuiImpl::MacImageSlider *MacGuiImpl::MacDialogWindow::addImageSlider(Common::Rect bounds, MacImage *handle, bool enabled, int minX, int maxX, int minValue, int maxValue) {
+	handle->setVisible(false);
+
+	MacGuiImpl::MacImageSlider *slider = new MacImageSlider(this, bounds, handle, enabled, minX, maxX, minValue, maxValue);
+	addWidget(slider, kWidgetImageSlider);
 	return slider;
 }
 
@@ -262,6 +317,63 @@ MacGuiImpl::MacListBox *MacGuiImpl::MacDialogWindow::addListBox(Common::Rect bou
 	MacGuiImpl::MacListBox *listBox = new MacListBox(this, bounds, texts, enabled, contentUntouchable);
 	addWidget(listBox, kWidgetListBox);
 	return listBox;
+}
+
+MacGuiImpl::MacPopUpMenu *MacGuiImpl::MacDialogWindow::addPopUpMenu(Common::Rect bounds, Common::String text, int textWidth, Common::StringArray texts, bool enabled) {
+	MacGuiImpl::MacPopUpMenu *popUpMenu = new MacPopUpMenu(this, bounds, text, textWidth, texts, enabled);
+	addWidget(popUpMenu, kWidgetPopUpMenu);
+	return popUpMenu;
+}
+
+void MacGuiImpl::MacDialogWindow::addControl(Common::Rect bounds, uint16 controlId) {
+	Common::MacResManager resource;
+
+	resource.open(_gui->_resourceFile);
+
+	Common::SeekableReadStream *cntl = resource.getResource(MKTAG('C', 'N', 'T', 'L'), controlId);
+	if (cntl) {
+		byte cntlHeader[22];
+
+		cntl->read(cntlHeader, sizeof(cntlHeader));
+		Common::String cntlText = cntl->readPascalString();
+
+		uint16 procId = READ_BE_UINT16(cntlHeader + 16);
+
+		if ((procId & 0xFFF0) == 0x03F0) {
+			uint16 textWidth = READ_BE_UINT16(cntlHeader + 12);
+			uint16 menuId = READ_BE_UINT16(cntlHeader + 14);
+
+			Common::SeekableReadStream *menu = resource.getResource(MKTAG('M', 'E', 'N', 'U'), menuId);
+			if (menu) {
+				menu->skip(14);
+				menu->skip(menu->readByte());
+
+				Common::StringArray items;
+
+				while (true) {
+					Common::String str;
+
+					str = menu->readPascalString();
+
+					if (str.empty())
+						break;
+
+					items.push_back(str);
+					menu->skip(4);
+				}
+
+				delete menu;
+
+				addPopUpMenu(bounds, cntlText, textWidth, items, true);
+			} else
+				warning("MacGuiImpl::addPopUpMenu: Could not load MENU %d", menuId);
+		} else
+			warning("MacGuiImpl::addPopUpMenu: Unknown control ProcID: %d", procId);
+		delete cntl;
+	} else
+		warning("MacGuiImpl::addPopUpMenu: Could not load CNTL %d", controlId);
+
+	resource.close();
 }
 
 void MacGuiImpl::MacDialogWindow::markRectAsDirty(Common::Rect r) {
@@ -328,6 +440,11 @@ void MacGuiImpl::MacDialogWindow::undrawBeamCursor() {
 }
 
 void MacGuiImpl::MacDialogWindow::update(bool fullRedraw) {
+	if (_dirtyPalette) {
+		_gui->_vm->updatePalette();
+		_dirtyPalette = false;
+	}
+
 	for (uint i = 0; i < _widgets.size(); i++) {
 		if (_widgets[i]->isVisible())
 			_widgets[i]->draw();
@@ -401,11 +518,21 @@ void MacGuiImpl::MacDialogWindow::fillPattern(Common::Rect r, uint16 pattern, bo
 	markRectAsDirty(r);
 }
 
-int MacGuiImpl::MacDialogWindow::runDialog(Common::Array<int> &deferredActionIds) {
+void MacGuiImpl::MacDialogWindow::queueEvent(MacWidget *widget, MacDialogEventType type) {
+	MacDialogEvent event;
+
+	event.widget = widget;
+	event.type = type;
+
+	_eventQueue.push(event);
+}
+
+bool MacGuiImpl::MacDialogWindow::runDialog(MacGuiImpl::MacDialogEvent &dialogEvent) {
+	for (uint i = 0; i < _widgets.size(); i++)
+		_widgets[i]->rememberValue();
+
 	// The first time the function is called, show the dialog and redraw
 	// all widgets completely.
-
-	deferredActionIds.clear();
 
 	if (!_visible) {
 		show();
@@ -418,229 +545,224 @@ int MacGuiImpl::MacDialogWindow::runDialog(Common::Array<int> &deferredActionIds
 		}
 	}
 
-	// Run the dialog until something interesting happens to a widget. It's
-	// up to the caller to repeat the calls to runDialog() until the dialog
-	// has ended.
+	// Handle all incoming events and turn them into dialog events.
 
 	bool buttonPressed = false;
 	uint32 nextMouseRepeat = 0;
 
-	while (!_gui->_vm->shouldQuit()) {
-		Common::Event event;
-		int widgetId = -1;
+	Common::Event event;
 
-		while (_system->getEventManager()->pollEvent(event)) {
-			// Adjust mouse coordinates to the dialog window
+	while (_system->getEventManager()->pollEvent(event)) {
+		// Adjust mouse coordinates to the dialog window
 
-			if (Common::isMouseEvent(event)) {
-				_realMousePos.x = event.mouse.x;
-				_realMousePos.y = event.mouse.y;
+		if (Common::isMouseEvent(event)) {
+			_realMousePos.x = event.mouse.x;
+			_realMousePos.y = event.mouse.y;
 
-				event.mouse.x -= (_bounds.left + _margin);
-				event.mouse.y -= (_bounds.top + _margin);
+			event.mouse.x -= (_bounds.left + _margin);
+			event.mouse.y -= (_bounds.top + _margin);
 
-				_oldMousePos = _mousePos;
+			_oldMousePos = _mousePos;
 
-				_mousePos.x = event.mouse.x;
-				_mousePos.y = event.mouse.y;
+			_mousePos.x = event.mouse.x;
+			_mousePos.y = event.mouse.y;
 
-				// Update engine mouse position
-				_gui->_vm->_mouse.x = _realMousePos.x / 2;
-				_gui->_vm->_mouse.y = _realMousePos.y / 2;
-			}
-
-			int w;
-
-			switch (event.type) {
-			case Common::EVENT_LBUTTONDOWN:
-				// When a widget is clicked, it becomes the
-				// focused widget. Focused widgets are often
-				// indicated by some sort of highlight, e.g.
-				// buttons become inverted.
-				//
-				// This highlight is usually only shown while
-				// the mouse is within the widget bounds, but
-				// as long as it remains focused it can regain
-				// the highlight by moving the cursor back into
-				// the widget bounds again.
-				//
-				// It's unclear to me if Macs should handle
-				// double clicks on mouse down, mouse up or
-				// both.
-
-				buttonPressed = true;
-				nextMouseRepeat = _system->getMillis() + 40;
-				setFocusedWidget(event.mouse.x, event.mouse.y);
-				if (_focusedWidget) {
-					_focusedWidget->handleMouseDown(event);
-
-					uint32 now = _system->getMillis();
-					bool doubleClick =
-						(now - _lastClickTime < 500 &&
-						ABS(event.mouse.x - _lastClickPos.x) < 5 &&
-						ABS(event.mouse.y - _lastClickPos.y) < 5);
-
-					_lastClickTime = _system->getMillis();
-					_lastClickPos.x = event.mouse.x;
-					_lastClickPos.y = event.mouse.y;
-
-					if (doubleClick && _focusedWidget->handleDoubleClick(event))
-						return _focusedWidget->getId();
-				}
-				break;
-
-			case Common::EVENT_LBUTTONUP:
-				buttonPressed = false;
-
-				// Only the focused widget receives the button
-				// up event. If the widget handles the event,
-				// control is passed back to the caller of
-				// runDialog() so that it can react, e.g. to
-				// the user clicking the "Okay" button.
-
-				if (_focusedWidget) {
-					MacWidget *widget = _focusedWidget;
-
-					if (widget->findWidget(event.mouse.x, event.mouse.y)) {
-						widgetId = widget->getId();
-						if (widget->handleMouseUp(event)) {
-							clearFocusedWidget();
-							return widgetId;
-						}
-					}
-
-					clearFocusedWidget();
-				}
-
-				updateCursor();
-				break;
-
-			case Common::EVENT_MOUSEMOVE:
-				// The "beam" cursor can be hidden, but will
-				// become visible again when the user moves
-				// the mouse.
-
-				if (_beamCursor)
-					_beamCursorVisible = true;
-
-				// Only the focused widget receives mouse move
-				// events, and then only if the mouse is within
-				// the widget's area of control. This are of
-				// control is usually the widget bounds, but
-				// widgets can redefine findWidget() to change
-				// this, e.g. for slider widgets.
-
-				if (_focusedWidget) {
-					bool wasActive = _focusedWidget->findWidget(_oldMousePos.x, _oldMousePos.y);
-					bool isActive = _focusedWidget->findWidget(_mousePos.x, _mousePos.y);
-
-					if (wasActive != isActive)
-						_focusedWidget->setRedraw();
-
-					// The widget gets mouse events while
-					// it's active, but also one last one
-					// when it becomes inactive.
-
-					if (isActive || wasActive)
-						_focusedWidget->handleMouseMove(event);
-				} else {
-					updateCursor();
-				}
-
-				break;
-
-			case Common::EVENT_WHEELUP:
-				if (!_gui->_vm->enhancementEnabled(kEnhUIUX) || _focusedWidget)
-					break;
-
-				w = findWidget(event.mouse.x, event.mouse.y);
-				if (w >= 0)
-					_widgets[w]->handleWheelUp();
-
-				break;
-
-			case Common::EVENT_WHEELDOWN:
-				if (!_gui->_vm->enhancementEnabled(kEnhUIUX) || _focusedWidget)
-					break;
-
-				w = findWidget(event.mouse.x, event.mouse.y);
-				if (w >= 0)
-					_widgets[w]->handleWheelDown();
-
-				break;
-
-			case Common::EVENT_KEYDOWN:
-				// Ignore keyboard while mouse is pressed
-				if (buttonPressed)
-					break;
-
-				// Handle default button
-				if (event.kbd.keycode == Common::KEYCODE_RETURN) {
-					MacWidget *widget = getDefaultWidget();
-					if (widget && widget->isEnabled() && widget->isVisible()) {
-						for (int i = 0; i < 2; i++) {
-							widget->setRedraw();
-							widget->draw(i == 0);
-							update();
-
-							for (int j = 0; j < 10; j++) {
-								_system->delayMillis(10);
-								_system->updateScreen();
-							}
-						}
-
-						return widget->getId();
-					}
-				}
-
-				// Otherwise, give widgets a chance to react
-				// to key presses. All widgets get a chance,
-				// whether or not they are focused. This may
-				// be a bad idea, if there is ever more than
-				// one edit text widget in the window.
-				//
-				// Typing hides the "beam" cursor.
-
-				for (uint i = 0; i < _widgets.size(); i++) {
-					if (_widgets[i]->isVisible() && _widgets[i]->isEnabled() && _widgets[i]->handleKeyDown(event)) {
-						if (_beamCursor) {
-							_beamCursorVisible = false;
-							undrawBeamCursor();
-						}
-
-						if (_widgets[i]->shouldDeferAction())
-							deferredActionIds.push_back(_widgets[i]->getId());
-
-						break;
-					}
-				}
-
-				if (!deferredActionIds.empty())
-					return kDialogWantsAttention;
-
-				break;
-
-			default:
-				break;
-			}
+			// Update engine mouse position
+			_gui->_vm->_mouse.x = _realMousePos.x / 2;
+			_gui->_vm->_mouse.y = _realMousePos.y / 2;
 		}
 
-		// A focused widget implies that the mouse button is being
-		// held down. It must be active and visible, so it can receive
-		// mouse repeat events, e.g. for holding down scroll buttons
-		// on a slider widget.
+		int w;
 
-		if (_focusedWidget && _system->getMillis() > nextMouseRepeat) {
+		switch (event.type) {
+		case Common::EVENT_LBUTTONDOWN:
+			// When a widget is clicked, it becomes the focused
+			// widget. Focused widgets are often indicated by some
+			// sort of highlight, e.g. buttons become inverted.
+			//
+			// This highlight is usually only shown while the mouse
+			// is within the widget bounds, but as long as it
+			// remains focused it can regain the highlight by
+			// moving the cursor back into the widget bounds again.
+			//
+			// It's unclear to me if Macs should handle double
+			// clicks on mouse down, mouse up or both.
+
+			buttonPressed = true;
 			nextMouseRepeat = _system->getMillis() + 40;
-			_focusedWidget->handleMouseHeld();
-		}
+			setFocusedWidget(event.mouse.x, event.mouse.y);
+			if (_focusedWidget) {
+				_focusedWidget->handleMouseDown(event);
 
-		_system->delayMillis(10);
-		update();
-		_system->updateScreen();
+				uint32 now = _system->getMillis();
+				bool doubleClick =
+					(now - _lastClickTime < 500 &&
+					ABS(event.mouse.x - _lastClickPos.x) < 5 &&
+					ABS(event.mouse.y - _lastClickPos.y) < 5);
+
+				_lastClickTime = _system->getMillis();
+				_lastClickPos.x = event.mouse.x;
+				_lastClickPos.y = event.mouse.y;
+
+				if (doubleClick && _focusedWidget->handleDoubleClick(event))
+					queueEvent(_focusedWidget, kDialogClick);
+			}
+			break;
+
+		case Common::EVENT_LBUTTONUP:
+			buttonPressed = false;
+
+			// Only the focused widget receives the button up
+			// event. If the widget handles the event, it produces
+			// a dialog click event.
+
+			if (_focusedWidget) {
+				MacWidget *widget = _focusedWidget;
+
+				if (widget->findWidget(event.mouse.x, event.mouse.y)) {
+					if (widget->handleMouseUp(event)) {
+						clearFocusedWidget();
+						queueEvent(widget, kDialogClick);
+					}
+				}
+
+				clearFocusedWidget();
+			}
+
+			updateCursor();
+			break;
+
+		case Common::EVENT_MOUSEMOVE:
+			// The "beam" cursor can be hidden, but will become
+			// visible again when the user moves the mouse.
+
+			if (_beamCursor)
+				_beamCursorVisible = true;
+
+			// Only the focused widget receives mouse move events,
+			// and then only if the mouse is within the widget's
+			// area of control. This are of control is usually the
+			// widget bounds, but widgets can redefine findWidget()
+			// to change this, e.g. for slider widgets.
+
+			if (_focusedWidget) {
+				bool wasActive = _focusedWidget->findWidget(_oldMousePos.x, _oldMousePos.y);
+				bool isActive = _focusedWidget->findWidget(_mousePos.x, _mousePos.y);
+
+				if (wasActive != isActive)
+					_focusedWidget->setRedraw();
+
+				// The widget gets mouse events while it's
+				// active, but also one last one when it
+				// becomes inactive.
+
+				if (isActive || wasActive)
+					_focusedWidget->handleMouseMove(event);
+			} else {
+				updateCursor();
+			}
+
+			break;
+
+		case Common::EVENT_WHEELUP:
+			if (!_gui->_vm->enhancementEnabled(kEnhUIUX) || _focusedWidget)
+				break;
+
+			w = findWidget(event.mouse.x, event.mouse.y);
+			if (w >= 0)
+				_widgets[w]->handleWheelUp();
+
+			break;
+
+		case Common::EVENT_WHEELDOWN:
+			if (!_gui->_vm->enhancementEnabled(kEnhUIUX) || _focusedWidget)
+				break;
+
+			w = findWidget(event.mouse.x, event.mouse.y);
+			if (w >= 0)
+				_widgets[w]->handleWheelDown();
+
+			break;
+
+		case Common::EVENT_KEYDOWN:
+			// Ignore keyboard while mouse is pressed
+			if (buttonPressed)
+				break;
+
+			// Handle default button
+			if (event.kbd.keycode == Common::KEYCODE_RETURN) {
+				MacWidget *widget = getDefaultWidget();
+				if (widget && widget->isEnabled() && widget->isVisible()) {
+					for (int i = 0; i < 2; i++) {
+						widget->setRedraw();
+						widget->draw(i == 0);
+						update();
+
+						for (int j = 0; j < 10; j++) {
+							_system->delayMillis(10);
+							_system->updateScreen();
+						}
+					}
+
+					queueEvent(widget, kDialogClick);
+				}
+			}
+
+			// Otherwise, give widgets a chance to react to key
+			// presses. All widgets get a chance, whether or not
+			// they are focused. This may be a bad idea if there
+			// is ever more than one edit text widget in the
+			// window.
+			//
+			// Typing hides the "beam" cursor.
+
+			for (uint i = 0; i < _widgets.size(); i++) {
+				if (_widgets[i]->isVisible() && _widgets[i]->isEnabled() && _widgets[i]->handleKeyDown(event)) {
+					if (_beamCursor) {
+						_beamCursorVisible = false;
+						undrawBeamCursor();
+					}
+
+					if (_widgets[i]->reactsToKeyDown())
+						queueEvent(_widgets[i], kDialogKeyDown);
+
+					break;
+				}
+			}
+
+			break;
+
+		default:
+			break;
+		}
 	}
 
-	return kDialogQuit;
+	// A focused widget implies that the mouse button is being held down.
+	// It must be active and visible, so it can receive mouse repeat
+	// events, e.g. for holding down scroll buttons on a slider widget.
+
+	if (_focusedWidget && _system->getMillis() > nextMouseRepeat) {
+		nextMouseRepeat = _system->getMillis() + 40;
+		_focusedWidget->handleMouseHeld();
+	}
+
+	for (uint i = 0; i < _widgets.size(); i++) {
+		if (_widgets[i]->valueHasChanged())
+			queueEvent(_widgets[i], kDialogValueChange);
+	}
+
+	if (!_eventQueue.empty()) {
+		dialogEvent = _eventQueue.pop();
+		return true;
+	}
+
+	return false;
+}
+
+void MacGuiImpl::MacDialogWindow::delayAndUpdate() {
+	_system->delayMillis(10);
+	update();
+	_system->updateScreen();
 }
 
 void MacGuiImpl::MacDialogWindow::updateCursor() {
@@ -664,7 +786,13 @@ void MacGuiImpl::MacDialogWindow::updateCursor() {
 	}
 }
 
-MacGuiImpl::MacWidget *MacGuiImpl::MacDialogWindow::getWidget(MacWidgetType type, int nr) const {
+MacGuiImpl::MacWidget *MacGuiImpl::MacDialogWindow::getWidget(uint nr) const {
+	if (nr < _widgets.size())
+		return _widgets[nr];
+	return nullptr;
+}
+
+MacGuiImpl::MacWidget *MacGuiImpl::MacDialogWindow::getWidget(MacWidgetType type, uint nr) const {
 	for (uint i = 0; i < _widgets.size(); i++) {
 		if (_widgets[i]->getType() == type) {
 			if (nr == 0)
@@ -674,6 +802,22 @@ MacGuiImpl::MacWidget *MacGuiImpl::MacDialogWindow::getWidget(MacWidgetType type
 	}
 
 	return nullptr;
+}
+
+void MacGuiImpl::MacDialogWindow::drawSprite(const MacImage *image, int x, int y) {
+	const Graphics::Surface *surface = image->getImage();
+	const Graphics::Surface *mask = image->getMask();
+
+	if (mask) {
+		for (int y1 = 0; y1 < mask->h; y1++) {
+			for (int x1 = 0; x1 < mask->w; x1++) {
+				if (mask->getPixel(x1, y1) == 255)
+					_innerSurface.setPixel(x + x1, y + y1, surface->getPixel(x1, y1));
+			}
+		}
+		markRectAsDirty(Common::Rect(x, y, x + surface->w, y + surface->h));
+	} else
+		drawSprite(image->getImage(), x, y);
 }
 
 void MacGuiImpl::MacDialogWindow::drawSprite(const Graphics::Surface *sprite, int x, int y) {

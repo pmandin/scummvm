@@ -36,6 +36,7 @@
 #include "dgds/request.h"
 #include "dgds/scene.h"
 #include "dgds/sound.h"
+#include "dgds/minigames/china_train.h"
 
 namespace Dgds {
 
@@ -46,9 +47,12 @@ enum MenuButtonIds {
 	kMainMenuWillyLoad = 111,
 	kMainMenuWillyRestart = 112,
 	kMainMenuWillyQuit = 113,
-	kMainMenuWillyHelp = 114,
+	kMainMenuWillyHelp = 120,
 	kMainMenuWillySoundsOnOff = 115,
 	kMainMenuWillyMusicOnOff = 116,
+
+	kMenuWillyCreditsDone = 176,
+	kMenuWillyHelpDone = 174,
 
 	kMenuMainPlay = 120,
 	kMenuMainControls = 20,
@@ -120,12 +124,12 @@ enum MenuButtonIds {
 	kMenuRestartYes = 163,
 	kMenuRestartNo = 164,
 
-	// For Dragon arcade
-	kMenuDragonReplayArcadeYes = 139,
-	kMenuDragonReplayArcadeNo = 140,
+	// For Dragon/HOC arcade
+	kMenuReplayArcadeYes = 139,
+	kMenuReplayArcadeNo = 140,
 
-	kMenuDragonFrustratedArcadeWin = 147,
-	kMenuDragonFrustratedArcadeKeepTrying = 148,
+	kMenuFrustratedArcadeWin = 147,
+	kMenuFrustratedArcadeKeepTrying = 148,
 
 	kMenuGameOverQuit = 169,
 	kMenuGameOverRestart = 168,
@@ -136,7 +140,7 @@ enum MenuButtonIds {
 	kMenuTankTrainPlayArcade = 154,
 };
 
-Menu::Menu() : _curMenu(kMenuNone), _dragGadget(nullptr), _selectedItem(0), _numSelectable(0) {
+Menu::Menu() : _curMenu(kMenuNone), _dragGadget(nullptr), _selectedItem(0), _numSelectable(0), _creditsOffset(0) {
 	_screenBuffer.create(SCREEN_WIDTH, SCREEN_HEIGHT, Graphics::PixelFormat::createFormatCLUT8());
 }
 
@@ -148,6 +152,42 @@ void Menu::setRequestData(const REQFileData &data) {
 	for (auto &req : data._requests) {
 		_menuRequests[req._fileNum] = req;
 	}
+}
+
+void Menu::readRESData(const char *fname) {
+	DgdsEngine *engine = DgdsEngine::getInstance();
+	Common::SeekableReadStream *s = engine->getResourceManager()->getResource(fname);
+
+	if (!s)
+		error("Couldn't open RES file for menu help %s", fname);
+
+	_helpStrings.clear();
+	Common::Array<Common::String> message;
+	while (!s->eos() && !s->err()) {
+		Common::String str = s->readLine();
+		if (str == "!" || s->eos()) {
+			_helpStrings.push_back(message);
+			message.clear();
+		} else {
+			message.push_back(str);
+		}
+	}
+
+	delete s;
+}
+
+void Menu::loadCredits() {
+	DgdsEngine *engine = DgdsEngine::getInstance();
+	Common::SeekableReadStream *s = engine->getResourceManager()->getResource("CREDITS.RES");
+
+	if (!s)
+		error("Couldn't open CREDITS.RES");
+
+	_credits.clear();
+	while (!s->eos() && !s->err()) {
+		_credits.push_back(s->readLine());
+	}
+	_creditsOffset = 0;
 }
 
 void Menu::setScreenBuffer() {
@@ -229,7 +269,17 @@ void Menu::configureGadget(MenuId menu, Gadget *gadget) {
 		}
 	} else if (menu == kMenuOptions) {
 		updateOptionsGadget(gadget);
+	} else if (menu == kMenuMain && engine->getGameId() == GID_WILLY) {
+		// HACK: Enable this button which for some reason is disabled
+		// by default in data?
+		if (gadget->_gadgetNo == kMainMenuWillyHelp)
+			toggleGadget(kMainMenuWillyHelp, true);
 	}
+}
+
+void Menu::onTick() {
+	if (_curMenu == kMenuWillyCredits)
+		drawMenu(kMenuWillyCredits);
 }
 
 void Menu::drawMenu(MenuId menu) {
@@ -263,6 +313,9 @@ void Menu::drawMenu(MenuId menu) {
 	}
 
 	drawMenuText(managed);
+
+	if (_curMenu == kMenuWillyCredits)
+		drawCreditsText(managed);
 
 	// Can't use transparent blit here as the font is often color 0.
 	screen->copyRectToSurface(*managed.surfacePtr(), 0, 0, Common::Rect(screen->w, screen->h));
@@ -321,6 +374,45 @@ void Menu::drawMenuText(Graphics::ManagedSurface &dst) {
 		font->drawString(dst.surfacePtr(), textItem._txt, parentX + textItem._x, parentY + textItem._y, w, 0);
 		pos++;
 	}
+}
+
+static byte _creditsColor(int y) {
+	if (y < 31 || y > 86)
+		return 17; // Cyan
+	else if (y < 32 || y > 85)
+		return 18; // Slightly darker cyan
+	else if (y < 33 || y > 84)
+		return 19; // Darker cyan
+	else if (y < 34 || y > 83)
+		return 30; // Grey
+	return 0; // Black.
+}
+
+void Menu::drawCreditsText(Graphics::ManagedSurface &dst) {
+	const DgdsFont *font = RequestData::getMenuFont();
+	const int lineHeight = font->getFontHeight();
+
+	DgdsRect dlgRect = _menuRequests[_curMenu]._rect;
+
+	const int dlgWidth = dlgRect.width;
+
+	const int yMin = 30;
+	const int yMax = 87;
+	for (uint i = 0; i < _credits.size(); i++) {
+		int dstY = i * lineHeight + yMax - _creditsOffset / 4;
+		if (dstY > yMax)
+			break;
+		if (dstY > yMin) {
+			int lineW = font->getStringWidth(_credits[i]);
+			int xoff = dlgRect.x + (dlgWidth - lineW) / 2;
+			font->drawString(dst.surfacePtr(), _credits[i], xoff, dlgRect.y + dstY, dlgRect.width, _creditsColor(dstY));
+		}
+	}
+
+	_creditsOffset++;
+
+	if ((uint)_creditsOffset / 4 > lineHeight * (_credits.size() + 1) + (yMax - yMin))
+		_creditsOffset = 0;
 }
 
 Gadget *Menu::getClickedMenuItem(const Common::Point &mouseClick) {
@@ -389,8 +481,9 @@ void Menu::onMouseLUp(const Common::Point &mouse) {
 		if (_curMenu == kMenuOptions)
 			isToggle = updateOptionsGadget(gadget);
 		drawMenu(_curMenu);
-		g_system->delayMillis(500);
+		g_system->delayMillis(300);
 		gadget->toggle(true);
+		isToggle = true;
 	}
 
 	if (_curMenu == kMenuOptions)
@@ -402,6 +495,26 @@ void Menu::onMouseLUp(const Common::Point &mouse) {
 
 	if (isToggle)
 		drawMenu(_curMenu);
+}
+
+
+static void _toggleSoundType(Audio::Mixer::SoundType soundType) {
+	DgdsEngine *engine = DgdsEngine::getInstance();
+	Audio::Mixer *mixer = engine->_mixer;
+	const char *typeStr = (soundType == Audio::Mixer::kMusicSoundType) ? "music" : "sfx";
+	if (!mixer->isSoundTypeMuted(soundType)) {
+		mixer->muteSoundType(soundType, true);
+		warning("TODO: Sync volume and pause %s", typeStr);
+		//midiPlayer->syncVolume();
+		//if (soundType == Audio::Mixer::kMusicSoundType)
+		//	engine->_soundPlayer->pauseMusic();
+	} else {
+		mixer->muteSoundType(soundType, false);
+		warning("TODO: Sync volume and resume %s", typeStr);
+		//midiPlayer->syncVolume();
+		//if (soundType == Audio::Mixer::kMusicSoundType)
+		//	engine->_soundPlayer->resumeMusic();
+	}
 }
 
 void Menu::handleClick(const Common::Point &mouse) {
@@ -419,8 +532,16 @@ void Menu::handleClick(const Common::Point &mouse) {
 	//case kMenuCalibratePlay:
 	//case kMenuCalibratePlayHoC:
 	//case kMenuMouseCalibrationPlay:
-		_curMenu = kMenuNone;
-		CursorMan.showMouse(false);
+		hideMenu();
+		if (engine->getGameId() == GID_WILLY && clickedMenuItem == kMainMenuWillyHelp) {
+			// TODO: Based on some variable this should instead:
+			//drawMenu(kMenuWillyHelp); // with the first message from WVCR.RES
+			// The OnLine help system
+			// is not available now.
+			engine->changeScene(80);
+		} else {
+			CursorMan.showMouse(false);
+		}
 		break;
 	case kMenuMainControls:
 		drawMenu(kMenuControls);
@@ -428,7 +549,16 @@ void Menu::handleClick(const Common::Point &mouse) {
 	case kMenuMainOptions:
 		drawMenu(kMenuOptions);
 		break;
-	case kMenuMainCalibrate:
+	case kMenuMainCalibrate: // same as credits button in Willy Beamish
+		if (engine->getGameId() == GID_WILLY) {
+			debug("TODO: Implement willy beamish credits");
+			hideMenu();
+			loadCredits();
+			drawMenu(kMenuWillyCredits);
+		} else {
+			debug("Ignoring calibration request");
+		}
+		break;
 	//case kMenuJoystickCalibrationOK:
 	//case kMenuMouseCalibrationCalibrate: // NOTE: same ID as kMenuIntroJumpToGame (for HOC)
 	case kMenuIntroJumpToGame:
@@ -443,9 +573,12 @@ void Menu::handleClick(const Common::Point &mouse) {
 			drawMenu(_curMenu);
 		}
 		break;
-	case kMenuMainFiles:
+	case kMenuMainFiles: // Same ID as Play in Willy Beamish
 	//case kMenuSaveCancel:
-		drawMenu(kMenuFiles);
+		if (engine->getGameId() == GID_WILLY)
+			hideMenu();
+		else
+			drawMenu(kMenuFiles);
 		break;
 	case kMenuMainQuit:
 		drawMenu(kMenuReallyQuit);
@@ -544,21 +677,29 @@ void Menu::handleClick(const Common::Point &mouse) {
 		drawMenu(_curMenu);
 		break;
 	}
-	case kMenuDragonReplayArcadeYes:
-	case kMenuDragonReplayArcadeNo:
-		if (engine->getGameId() == GID_DRAGON && _curMenu == kMenuReplayArcade) {
+	case kMenuReplayArcadeYes:
+	case kMenuReplayArcadeNo:
+		if (_curMenu != kMenuReplayArcade)
+			break;
+		if (engine->getGameId() == GID_DRAGON) {
 			DragonGlobals *dragonGlobals = static_cast<DragonGlobals *>(engine->getGameGlobals());
-			dragonGlobals->setArcadeState(clickedMenuItem == kMenuDragonReplayArcadeYes ? 20 : 10);
-			_curMenu = kMenuNone;
+			dragonGlobals->setArcadeState(clickedMenuItem == kMenuReplayArcadeYes ? 20 : 10);
+		} else if (engine->getGameId() == GID_HOC) {
+			engine->getChinaTrain()->setMenuResult(clickedMenuItem == kMenuReplayArcadeYes);
 		}
+		hideMenu();
 		break;
-	case kMenuDragonFrustratedArcadeWin:
-	case kMenuDragonFrustratedArcadeKeepTrying:
-		if (engine->getGameId() == GID_DRAGON && _curMenu == kMenuArcadeFrustrated) {
+	case kMenuFrustratedArcadeWin:
+	case kMenuFrustratedArcadeKeepTrying:
+		if (_curMenu != kMenuArcadeFrustrated)
+			break;
+		if (engine->getGameId() == GID_DRAGON) {
 			DragonGlobals *dragonGlobals = static_cast<DragonGlobals *>(engine->getGameGlobals());
-			dragonGlobals->setArcadeState(clickedMenuItem == kMenuDragonFrustratedArcadeWin ? 6 : 20);
-			_curMenu = kMenuNone;
+			dragonGlobals->setArcadeState(clickedMenuItem == kMenuFrustratedArcadeWin ? 6 : 20);
+		} else if (engine->getGameId() == GID_HOC) {
+			engine->getChinaTrain()->setMenuResult(clickedMenuItem == kMenuFrustratedArcadeKeepTrying);
 		}
+		hideMenu();
 		break;
 	case kMenuTankTrainSkipArcade:
 		hideMenu();
@@ -568,12 +709,26 @@ void Menu::handleClick(const Common::Point &mouse) {
 			engine->changeScene(106);	// skip train mini-game
 		break;
 	case kMenuTankTrainPlayArcade:
-		// TODO
-		if (currentScene == 73)
-			warning("Play tank mini-game");
-		else if (currentScene == 84)
-			warning("Play train mini-game");
-		drawMenu(_curMenu);
+		if (currentScene == 73) {
+			// Tank game - not implemented.
+			warning("TODO: Play tank mini-game");
+			drawMenu(_curMenu);
+		} else if (currentScene == 84) {
+			// Play train game - open the "save before arcade" menu.
+			drawMenu(kMenuSaveBeforeArcade);
+		}
+		break;
+	case kMainMenuWillySoundsOnOff:
+		_toggleSoundType(Audio::Mixer::kSFXSoundType);
+		updateOptionsGadget(gadget);
+		break;
+	case kMainMenuWillyMusicOnOff:
+		_toggleSoundType(Audio::Mixer::kMusicSoundType);
+		updateOptionsGadget(gadget);
+		break;
+	case kMenuWillyCreditsDone:
+	case kMenuWillyHelpDone:
+		hideMenu();
 		break;
 	default:
 		debug(1, "Clicked ID %d", clickedMenuItem);
@@ -582,11 +737,8 @@ void Menu::handleClick(const Common::Point &mouse) {
 }
 
 void Menu::handleClickOptionsMenu(const Common::Point &mouse) {
-	DgdsEngine *engine = DgdsEngine::getInstance();
-	Audio::Mixer *mixer = engine->_mixer;
 	Gadget *gadget = getClickedMenuItem(mouse);
 	int16 clickedMenuItem = gadget->_gadgetNo;
-	Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
 
 	switch (clickedMenuItem) {
 	case kMenuOptionsJoystickOnOff:
@@ -599,23 +751,13 @@ void Menu::handleClickOptionsMenu(const Common::Point &mouse) {
 	case kMenuOptionsSoundsOnOffDE:
 	case kMenuOptionsSoundsOnOffHoC:
 	case kMainMenuWillySoundsOnOff:
-		soundType = Audio::Mixer::kSFXSoundType;
-		// fall through
+		_toggleSoundType(Audio::Mixer::kSFXSoundType);
+		updateOptionsGadget(gadget);
+		break;
 	case kMenuOptionsMusicOnOff:
 	case kMenuOptionsMusicOnOffHoC:
 	case kMainMenuWillyMusicOnOff:
-		if (!mixer->isSoundTypeMuted(soundType)) {
-			mixer->muteSoundType(soundType, true);
-			warning("TODO: Sync volume and pause music");
-			//midiPlayer->syncVolume();
-			//engine->_soundPlayer->pauseMusic();
-		} else {
-			mixer->muteSoundType(soundType, false);
-			warning("TODO: Sync volume and resume music");
-			//midiPlayer->syncVolume();
-			//engine->_soundPlayer->resumeMusic();
-		}
-
+		_toggleSoundType(Audio::Mixer::kMusicSoundType);
 		updateOptionsGadget(gadget);
 		break;
 	default:

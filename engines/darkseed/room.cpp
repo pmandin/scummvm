@@ -243,6 +243,8 @@ bool Room::load() {
 	}
 
 	_pal.load(g_engine->getPictureFilePath(Common::Path(Common::String::format("%s.pal", filenameBase.c_str()))), false);
+	_workPal.load(_pal);
+	_palLoaded = false;
 
 	loadLocationSprites(Common::Path(Common::String::format("%s.nsp", filenameBase.c_str())));
 
@@ -292,7 +294,7 @@ Common::String Room::stripSpaces(const Common::String &source) {
 
 void Room::draw() {
 	if (!_palLoaded) {
-		_pal.installPalette();
+		_workPal.installPalette();
 		_palLoaded = true;
 	}
 	_pic.draw(0x45, 0x28);
@@ -332,8 +334,6 @@ int Room::checkCursorAndMoveableObjects() {
 			if (_roomObj[i].objNum == 25) {
 				if (g_engine->_objectVar.getVar(80) < 3) {
 					hasObject = false;
-				} else {
-					hasObject = true;
 				}
 			}
 
@@ -357,11 +357,11 @@ int Room::checkCursorAndStaticObjects(int x, int y) {
 	bool hasObject = false;
 	_collisionType = 0;
 	for (uint i = 0; i < _roomObj.size(); i++) {
-		if (_roomObj[i].type == 0
-			&& _roomObj[i].xOffset <= cursorSprite._width + g_engine->_cursor.getX()
-			&& g_engine->_cursor.getX() <= _roomObj[i].width + _roomObj[i].xOffset
-			&& _roomObj[i].yOffset <= cursorSprite._height + g_engine->_cursor.getY()
-			&& g_engine->_cursor.getY() <= _roomObj[i].height + _roomObj[i].yOffset
+		if (_roomObj[i].type == 0 // check if the cursor rect overlaps with room rect.
+			&& g_engine->_cursor.getX() + cursorSprite._width >= _roomObj[i].xOffset
+			&& _roomObj[i].xOffset +_roomObj[i].width >= g_engine->_cursor.getX()
+			&& g_engine->_cursor.getY() + cursorSprite._height >= _roomObj[i].yOffset
+			&& _roomObj[i].yOffset + _roomObj[i].height >= g_engine->_cursor.getY()
 		) {
 			if (actionMode != kPointerAction && _roomObj[i].objNum >= 5) {
 				hasObject = true;
@@ -379,11 +379,9 @@ int Room::checkCursorAndStaticObjects(int x, int y) {
 				}
 			}
 
-			if (_roomObj[i].objNum == 0x19 && hasObject) {
+			if (_roomObj[i].objNum == 25 && hasObject) {
 				if (g_engine->_objectVar.getVar(80) < 2) {
 					hasObject = false;
-				} else {
-					hasObject = true;
 				}
 			}
 
@@ -711,9 +709,10 @@ void Room::printRoomDescriptionText() const {
 }
 
 int Room::getRoomExitAtCursor() {
+	auto cursorRect = g_engine->_cursor.getRect();
 	for (uint i = 0; i < _roomObj.size(); i++) {
 		Common::Rect roomRect(_roomObj[i].xOffset, _roomObj[i].yOffset, _roomObj[i].xOffset + _roomObj[i].width, _roomObj[i].yOffset + _roomObj[i].height);
-		if (_roomObj[i].type == 0 && _roomObj[i].objNum < 6 && roomRect.contains(g_engine->_cursor.getPosition())) {
+		if (_roomObj[i].type == 0 && _roomObj[i].objNum < 6 && roomRect.intersects(cursorRect)) {
 			_selectedObjIndex = i;
 			return _roomObj[i].objNum;
 		}
@@ -1007,7 +1006,7 @@ void Room::runRoomObjects() {
 					   _roomNumber == 64 || _roomNumber == 65 || _roomNumber == 63 ||
 					   _roomNumber == 66 ||
 					   _roomNumber == 67 || _roomNumber == 28 || _roomNumber == 37 ||
-					   _roomNumber == 39 || _roomNumber == 32 || _roomNumber == 57 ||
+					   _roomNumber == 39 || _roomNumber == 57 ||
 					   _roomNumber == 60 || _roomNumber == 44 ||
 					   _roomNumber == 38 || _roomNumber == 25) {
 				const Sprite &sprite = _locationSprites.getSpriteAt(spriteNum);
@@ -1389,24 +1388,25 @@ void Room::loadRoom61AWalkableLocations() {
 }
 
 void Room::restorePalette() {
+	_workPal.load(_pal);
 	_palLoaded = false;
 }
 
 void Room::darkenSky() {
 	if (isOutside() && g_engine->_currentTimeInSeconds / 3600 > 16) {
-		Pal workPal(_pal);
+		_workPal.load(_pal);
 		int timeOffset = g_engine->_currentTimeInSeconds - 61200;
 		if (timeOffset == 0) {
 			timeOffset = 1;
 		}
 		for (int i = 0; i < DARKSEED_PAL_SIZE; i++) {
-			uint8 p = workPal._palData[i];
+			uint8 p = _workPal._palData[i];
 			if (p == 0) {
 				p = 1;
 			}
-			workPal._palData[i] = p - (p / (26 - timeOffset / 750));
+			_workPal._palData[i] = p - (p / (26 - timeOffset / 750));
 		}
-		workPal.installPalette();
+		_palLoaded = false;
 	}
 }
 

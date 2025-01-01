@@ -24,6 +24,8 @@
 #include "common/file.h"
 #include "common/rect.h"
 
+#include "audio/mixer.h"
+
 #include "graphics/surface.h"
 
 #include "dgds/dgds.h"
@@ -69,6 +71,7 @@ static const byte ChinaSliderColors[] = {
 
 static const byte WillyBackgroundColor = 16;
 static const byte WillyButtonColor = 20;
+static const byte WillyHeaderTxtColor = 0;
 
 static const byte MenuBackgroundColors[] {
 	0x71, 0x71, 0x71, 0x71, 0x71, 0x7B, 0x71, 0x7B, 0x7B, 0x7B, 0x7B, 0x7B,
@@ -432,7 +435,8 @@ byte ButtonGadget::drawWillyBg(Graphics::ManagedSurface *dst, bool enabled) cons
 	uint16 cornerFrame = enabled ? 8 : 16;
 	RequestData::drawCorners(dst, cornerFrame, pt.x, pt.y, _width, _height);
 	int16 fillHeight = enabled ? _height - 8 : _height - 6;
-	dst->fillRect(Common::Rect(Common::Point(pt.x + 8, pt.y + 3), _width - 16, fillHeight), WillyButtonColor);
+	if (_width > 16 && fillHeight > 0)
+		dst->fillRect(Common::Rect(Common::Point(pt.x + 8, pt.y + 3), _width - 16, fillHeight), WillyButtonColor);
 	return 0;
 }
 
@@ -475,7 +479,7 @@ void ButtonGadget::draw(Graphics::ManagedSurface *dst) const {
 
 		yoffset = y + yoffset / 2;
 		if (gameId == GID_WILLY)
-			yoffset--;
+			yoffset -= 2;
 
 		int lineWidth = font->getStringWidth(line1);
 		font->drawString(dst, line1, x + (_width - lineWidth) / 2 + 1, yoffset + 2, lineWidth, textCol);
@@ -544,12 +548,16 @@ void ButtonGadget::drawWillyBmpButtons(Graphics::ManagedSurface *dst) const {
 	case 114: // HELP (questionmark icon)
 		drawCenteredBmpIcon(dst, kWillyQuestionMark);
 		break;
-	case 115: // SFX (bam icon)
-		drawCenteredBmpIcon(dst, kWillyBam);
+	case 115: { // SFX (bam icon)
+		bool sfxOff = DgdsEngine::getInstance()->_mixer->isSoundTypeMuted(Audio::Mixer::kSFXSoundType);
+		drawCenteredBmpIcon(dst, sfxOff ? kWillyNoBam : kWillyBam);
 		break;
-	case 116: // MUSIC (musical note icon)
-		drawCenteredBmpIcon(dst, kWillyMusicNote);
+	}
+	case 116: { // MUSIC (musical note icon)
+		bool musicOff = DgdsEngine::getInstance()->_mixer->isSoundTypeMuted(Audio::Mixer::kMusicSoundType);
+		drawCenteredBmpIcon(dst, musicOff ? kWillyNoMusicNote : kWillyMusicNote);
 		break;
+	}
 	case 120: // HELP (questionmark and text icon)
 		drawCenteredBmpIcon(dst, kWillyHelpText);
 		break;
@@ -822,18 +830,27 @@ void ImageGadget::draw(Graphics::ManagedSurface *dst) const {
 	if (!xstep || !ystep)
 		return;
 
+	const DgdsGameId gameId = DgdsEngine::getInstance()->getGameId();
+
 	int xoff = _x + _parentX;
 	int yoff = _y + _parentY;
-	Common::Rect drawRect(Common::Point(xoff, yoff), _width, _height);
+	int fillHeight = _height;
+	if (gameId == GID_WILLY)
+		fillHeight++;
+
+	Common::Rect drawRect(Common::Point(xoff, yoff), _width, fillHeight);
 	dst->fillRect(drawRect, _col1);
 	// Note: not quite the same as the original logic here, but gets the same result.
 	_drawFrame(dst, xoff, yoff, _width, _height, _sval1I, _sval1I);
 
-	// NOTE: This only done in inventory in originals
-	if (DgdsEngine::getInstance()->getGameId() == GID_DRAGON)
+	// NOTE: This only done in inventory in originals, but no other
+	// Request uses the ImageGadget.
+	if (gameId == GID_DRAGON)
 		RequestData::drawCorners(dst, 19, xoff - 2, yoff - 2, _width + 4, _height + 4);
-	else
+	else if (gameId == GID_HOC)
 		RequestData::drawCorners(dst, 19, xoff - 4, yoff - 4, _width + 8, _height + 8);
+	else if (gameId == GID_WILLY)
+		RequestData::drawCorners(dst, 25, xoff - 4, yoff - 4, _width + 8, _height + 8);
 }
 
 Common::String RequestData::dump() const {
@@ -1040,8 +1057,11 @@ void RequestData::drawBackgroundNoSliders(Graphics::ManagedSurface *dst, const C
 	drawCorners(dst, cornerOffset, _rect.x, _rect.y, _rect.width, _rect.height);
 	if (gameId == GID_DRAGON)
 		drawHeader(dst, _rect.x, _rect.y, _rect.width, 4, header, DragonHeaderTxtColor, true, DragonHeaderTopColor, DragonHeaderBottomColor);
-	else
+	else if (gameId == GID_HOC)
 		drawHeader(dst, _rect.x, _rect.y + 4, _rect.width, 4, header, ChinaHeaderTxtColor, true, ChinaHeaderTopColor, ChinaHeaderBottomColor);
+	else { // WILLY
+		drawHeader(dst, _rect.x, _rect.y + 4, _rect.width, 4, header, WillyHeaderTxtColor, false, 0, 0);
+	}
 }
 
 /*static*/

@@ -52,6 +52,7 @@ Console::Console(DgdsEngine *vm) : _vm(vm) {
 	registerCmd("scene", WRAP_METHOD(Console, cmdScene));
 	registerCmd("scriptdump", WRAP_METHOD(Console, cmdScriptDump));
 	registerCmd("trigger", WRAP_METHOD(Console, cmdTrigger));
+	registerCmd("hotarea", WRAP_METHOD(Console, cmdSetHotAreaDebug));
 }
 
 bool Console::cmdFileInfo(int argc, const char **argv) {
@@ -306,7 +307,7 @@ bool Console::cmdTrigger(int argc, const char **argv) {
 		debugPrintf("Trigger %d is %d\n", num, val);
 	} else if (argc == 3) {
 		bool enable = atoi(argv[2]);
-		scene->enableTrigger(num, enable);
+		scene->enableTrigger(0, num, enable);
 		debugPrintf("Trigger %d set to %d\n", num, enable);
 	}
 
@@ -494,5 +495,21 @@ bool Console::cmdScriptDump(int argc, const char **argv) {
 
 	return true;
 }
+
+bool Console::cmdSetHotAreaDebug(int argc, const char **argv) {
+	if (argc > 1) {
+		debugPrintf("Usage: %s\n", argv[0]);
+		debugPrintf("Toggle whether to show debug boxes around scene hot areas\n");
+		return true;
+	}
+
+	DgdsEngine *engine = DgdsEngine::getInstance();
+
+	bool enabled = engine->getDebugShowHotAreas();
+	debugPrintf("Turned %s hot area debug\n", enabled ? "OFF" : "ON");
+	engine->setDebugShowHotAreas(!enabled);
+	return true;
+}
+
 
 } // End of namespace Dgds

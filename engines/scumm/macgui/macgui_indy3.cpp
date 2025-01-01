@@ -1000,19 +1000,19 @@ bool MacIndy3Gui::getFontParams(FontId fontId, int &id, int &size, int &slant) c
 		return true;
 
 	case kIndy3VerbFontRegular:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 9;
 		slant = Graphics::kMacFontRegular;
 		return true;
 
 	case kIndy3VerbFontBold:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 9;
 		slant = Graphics::kMacFontBold;
 		return true;
 
 	case kIndy3VerbFontOutline:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 9;
 		slant = Graphics::kMacFontBold | Graphics::kMacFontOutline | Graphics::kMacFontCondense;
 		return true;
@@ -1088,16 +1088,16 @@ bool MacIndy3Gui::handleMenu(int id, Common::String &name) {
 	switch (id) {
 	case 204:	// IQ Points
 		runIqPointsDialog();
-		break;
+		return true;
 
 	case 205:	// Options
 		runOptionsDialog();
-		break;
+		return true;
 
 	case 206:	// Quit
 		if (runQuitDialog())
 			_vm->quitGame();
-		break;
+		return true;
 
 	default:
 		debug("MacIndy3Gui::handleMenu: Unknown menu command: %d", id);
@@ -1367,10 +1367,15 @@ bool MacIndy3Gui::runOpenDialog(int &saveSlotToHandle) {
 
 	MacDialogWindow *window = createDialog((_vm->_renderMode == Common::kRenderMacintoshBW) ? 4000 : 4001);
 
-	MacButton *buttonSave = (MacButton *)window->getWidget(kWidgetButton, 0);
+	MacButton *buttonOpen = (MacButton *)window->getWidget(kWidgetButton, 0);
 	MacButton *buttonCancel = (MacButton *)window->getWidget(kWidgetButton, 2);
+	MacButton *buttonEject = (MacButton *)window->getWidget(kWidgetButton, 3);
+	MacButton *buttonDrive = (MacButton *)window->getWidget(kWidgetButton, 4);
 
-	window->setDefaultWidget(buttonSave);
+	window->setDefaultWidget(buttonOpen);
+	buttonEject->setEnabled(false);
+	buttonDrive->setEnabled(false);
+
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(244)));
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(245)));
 
@@ -1382,27 +1387,37 @@ bool MacIndy3Gui::runOpenDialog(int &saveSlotToHandle) {
 	MacListBox *listBox = window->addListBox(Common::Rect(14, 41, 232, 187), savegameNames, true);
 
 	drawFakePathList(window, Common::Rect(14, 18, 231, 37), "Indy Last Crusade");
-
-	// When quitting, the default action is to not open a saved game
-	bool ret = false;
-	Common::Array<int> deferredActionsIds;
+	drawFakeDriveLabel(window, Common::Rect(239, 41, 349, 61), "ScummVM");
 
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonSave->getId() || clicked == listBox->getId()) {
-			ret = true;
-			saveSlotToHandle =
-				listBox->getValue() < ARRAYSIZE(slotIds) ? slotIds[listBox->getValue()] : -1;
-			break;
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonOpen || event.widget == listBox) {
+					saveSlotToHandle =
+						listBox->getValue() < ARRAYSIZE(slotIds) ? slotIds[listBox->getValue()] : -1;
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
+
+				break;
+
+			default:
+				break;
+			}
 		}
 
-		if (clicked == buttonCancel->getId())
-			break;
+		window->delayAndUpdate();
 	}
 
+	// When quitting, do not load the saved game
 	delete window;
-	return ret;
+	return false;
 }
 
 bool MacIndy3Gui::runSaveDialog(int &saveSlotToHandle, Common::String &saveName) {
@@ -1425,9 +1440,16 @@ bool MacIndy3Gui::runSaveDialog(int &saveSlotToHandle, Common::String &saveName)
 
 	MacButton *buttonSave = (MacButton *)window->getWidget(kWidgetButton, 0);
 	MacButton *buttonCancel = (MacButton *)window->getWidget(kWidgetButton, 1);
+	MacButton *buttonEject = (MacButton *)window->getWidget(kWidgetButton, 2);
+	MacButton *buttonDrive = (MacButton *)window->getWidget(kWidgetButton, 3);
+	MacStaticText *saveText = (MacStaticText *)window->getWidget(kWidgetStaticText, 0);
 	MacEditText *editText = (MacEditText *)window->getWidget(kWidgetEditText);
 
 	window->setDefaultWidget(buttonSave);
+	buttonEject->setEnabled(false);
+	buttonDrive->setEnabled(false);
+	saveText->setText(_strsStrings[kMSISaveGameFileAs]);
+
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(244)));
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(245)));
 
@@ -1437,6 +1459,7 @@ bool MacIndy3Gui::runSaveDialog(int &saveSlotToHandle, Common::String &saveName)
 	prepareSaveLoad(savegameNames, busySlots, slotIds, ARRAYSIZE(busySlots));
 
 	drawFakePathList(window, Common::Rect(16, 8, 198, 27), "Indy Last Crusade");
+	drawFakeDriveLabel(window, Common::Rect(205, 31, 304, 51), "ScummVM");
 
 	int firstAvailableSlot = -1;
 	for (int i = 0; i < ARRAYSIZE(busySlots); i++) {
@@ -1448,36 +1471,43 @@ bool MacIndy3Gui::runSaveDialog(int &saveSlotToHandle, Common::String &saveName)
 
 	window->addListBox(Common::Rect(16, 31, 199, 129), savegameNames, true, true);
 
-	// When quitting, the default action is not to save a game
-	bool ret = false;
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonSave->getId()) {
-			ret = true;
-			saveName = editText->getText();
-			saveSlotToHandle = firstAvailableSlot;
-			break;
-		}
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonSave) {
+					saveName = editText->getText();
+					saveSlotToHandle = firstAvailableSlot;
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
 
-		if (clicked == buttonCancel->getId())
-			break;
+				break;
 
-		if (clicked == kDialogWantsAttention) {
-			// Cycle through deferred actions
-			for (uint i = 0; i < deferredActionsIds.size(); i++) {
-				if (deferredActionsIds[i] == editText->getId()) {
+			case kDialogKeyDown:
+				if (event.widget == editText) {
 					// Disable "Save" button when text is empty
 					buttonSave->setEnabled(!editText->getText().empty());
 				}
+
+				break;
+
+			default:
+				break;
 			}
 		}
+
+		window->delayAndUpdate();
 	}
 
+	// When quitting, do not save the game
 	delete window;
-	return ret;
+	return false;
 }
 
 bool MacIndy3Gui::runOptionsDialog() {
@@ -1515,59 +1545,66 @@ bool MacIndy3Gui::runOptionsDialog() {
 	if (!sound)
 		checkboxMusic->setEnabled(false);
 
-	MacPictureSlider *sliderTextSpeed = window->addPictureSlider(4, 5, true, 5, 105, 0, 9);
+	MacImageSlider *sliderTextSpeed = window->addImageSlider(4, 5, true, 5, 105, 0, 9);
 	sliderTextSpeed->setValue(textSpeed);
 
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(_vm->VAR_MACHINE_SPEED)));
 
-	// When quitting, the default action is not to not apply options
-	bool ret = false;
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonOk->getId()) {
-			ret = true;
-			break;
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonOk) {
+					// Update settings
+
+					// TEXT SPEED
+					_vm->_defaultTextSpeed = CLIP<int>(sliderTextSpeed->getValue(), 0, 9);
+					ConfMan.setInt("original_gui_text_speed", _vm->_defaultTextSpeed);
+					_vm->setTalkSpeed(_vm->_defaultTextSpeed);
+
+					// SOUND&MUSIC ACTIVATION
+					// 0 - Sound&Music on
+					// 1 - Sound on, music off
+					// 2 - Sound&Music off
+					bool disableSound = checkboxSound->getValue() == 0;
+					bool disableMusic = checkboxMusic->getValue() == 0;
+
+					_vm->_musicEngine->toggleMusic(!disableMusic);
+					_vm->_musicEngine->toggleSoundEffects(!disableSound);
+					ConfMan.setBool("music_mute", disableMusic);
+					ConfMan.setBool("mute", disableSound);
+					ConfMan.flushToDisk();
+
+					_vm->syncSoundSettings();
+
+					// SCROLLING ACTIVATION
+					_vm->_snapScroll = checkboxScrolling->getValue() == 0;
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
+
+				break;
+
+			case kDialogValueChange:
+				if (event.widget == checkboxSound)
+					checkboxMusic->setEnabled(checkboxSound->getValue() != 0);
+				break;
+
+			default:
+				break;
+			}
 		}
 
-		if (clicked == buttonCancel->getId())
-			break;
-
-		if (clicked == checkboxSound->getId())
-			checkboxMusic->setEnabled(checkboxSound->getValue() != 0);
-	}
-
-	if (ret) {
-		// Update settings
-
-		// TEXT SPEED
-		_vm->_defaultTextSpeed = CLIP<int>(sliderTextSpeed->getValue(), 0, 9);
-		ConfMan.setInt("original_gui_text_speed", _vm->_defaultTextSpeed);
-		_vm->setTalkSpeed(_vm->_defaultTextSpeed);
-
-		// SOUND&MUSIC ACTIVATION
-		// 0 - Sound&Music on
-		// 1 - Sound on, music off
-		// 2 - Sound&Music off
-		bool disableSound = checkboxSound->getValue() == 0;
-		bool disableMusic = checkboxMusic->getValue() == 0;
-
-		_vm->_musicEngine->toggleMusic(!disableMusic);
-		_vm->_musicEngine->toggleSoundEffects(!disableSound);
-		ConfMan.setBool("music_mute", disableMusic);
-		ConfMan.setBool("mute", disableSound);
-		ConfMan.flushToDisk();
-
-		_vm->syncSoundSettings();
-
-		// SCROLLING ACTIVATION
-		_vm->_snapScroll = checkboxScrolling->getValue() == 0;
+		window->delayAndUpdate();
 	}
 
 	delete window;
-	return ret;
+	return false;
 }
 
 bool MacIndy3Gui::runIqPointsDialog() {
@@ -1582,8 +1619,8 @@ bool MacIndy3Gui::runIqPointsDialog() {
 
 	MacDialogWindow *window = createDialog((_vm->_renderMode == Common::kRenderMacintoshBW) ? 1001 : 1002);
 
-	MacButton *buttonOk = (MacButton *)window->getWidget(kWidgetButton, 0);
-	MacButton *buttonCancel = (MacButton *)window->getWidget(kWidgetButton, 1);
+	MacButton *buttonDone = (MacButton *)window->getWidget(kWidgetButton, 0);
+	MacButton *buttonReset = (MacButton *)window->getWidget(kWidgetButton, 1);
 
 	MacStaticText *textSeriesIQ = (MacStaticText *)window->getWidget(kWidgetStaticText, 2);
 
@@ -1591,21 +1628,31 @@ bool MacIndy3Gui::runIqPointsDialog() {
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(244)));
 	window->addSubstitution(Common::String::format("%d", _vm->VAR(245)));
 
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonOk->getId())
-			break;
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonDone) {
+					delete window;
+					return true;
+				} else if (event.widget == buttonReset) {
+					if (!_vm->enhancementEnabled(kEnhUIUX) || runOkCancelDialog("Are you sure you want to reset the series IQ score?")) {
+						((ScummEngine_v4 *)_vm)->clearSeriesIQPoints();
+						window->replaceSubstitution(1, Common::String::format("%d", _vm->VAR(245)));
+						textSeriesIQ->setRedraw(true);
+					}
+				}
 
-		if (clicked == buttonCancel->getId()) {
-			if (!_vm->enhancementEnabled(kEnhUIUX) || runOkCancelDialog("Are you sure you want to reset the series IQ score?")) {
-				((ScummEngine_v4 *)_vm)->clearSeriesIQPoints();
-				window->replaceSubstitution(1, Common::String::format("%d", _vm->VAR(245)));
-				textSeriesIQ->setRedraw(true);
+				break;
+
+			default:
+				break;
 			}
 		}
+
+		window->delayAndUpdate();
 	}
 
 	delete window;

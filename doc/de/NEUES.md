@@ -1,7 +1,21 @@
 Umfangreichere Informationen über die Änderungen des aktuellen Codes findest Du unter:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2.9.0 (XX.XX.XXXX)
+#### 2.10.0 (xx.xx.xxxx)
+
+ Neue Spiele:
+   - Unterstützung für Dark Seed hinzugefügt.
+
+ Nuvie:
+   - Funktion "Charakter übertragen" zum Hauptmenü hinzugefügt.
+
+ SCUMM:
+   - Unterstützung für die "klassischen" SE-Varianten von MI1, MI2, DOTT und FT hinzugefügt.
+   - Unterstützung für die neue Sprachausgabe und verbesserten Soundeffekte der
+     Remastered-Version von Day of the Tentacle hinzugefügt.
+
+
+#### 2.9.0 "Close Encounters of the 2.9th Kind" (22.12.2024)
 
  Neue Spiele:
    - Unterstützung für Orion Burger hinzugefügt.
@@ -33,12 +47,25 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  ADL:
    - Der "gemusterte" Mauszeiger von Apple II wurde als Darstellungsoption hinzugefügt.
+   - Kaputte Zeichenketten in Time Zone entfernt.
+   - Gegenstände können jetzt mit "GET ALL" in einer Szene korrekt aufgehoben werden.
+   - Der Status nicht besuchter Räume wird jetzt korrekt wiederhergestellt.
 
  AGI:
+   - Apple II-Spiele werden jetzt erkannt. Auch, wenn diese nicht offiziell unterstützt werden, können die meisten Spiele gestartet werden.
    - Anzeigedauer für zeitbasierte Text-Boxen korrigiert. Diese wurden nur halb so lang wie vorgesehen
      angezeigt, weshalb unter anderem der Intro-Text in King's Quest III nur schwer zu lesen war.
    - Der "vorhersagende" Eingabe-Dialog, der bei einem Eingabefeld angezeigt wird, ist jetzt eine optionale
      Spiel-Einstellung und standardmäßig deaktiviert.
+   - Fehler behoben, durch den die Hexen am Ende von Black Couldron nicht verschwinden.
+   - Fehler behoben, durch den Maus-Events in King's Quest III nicht korrekt ausgeführt wurden.
+   - Absturz auf einigen Plattformen behoben, der auftritt, wenn in Mixed-Up Mother Goose der Kinderreim abgespielt wird.
+   - Uhr in der Apple IIgs-Version von Gold Rush korrigiert.
+   - Audiofehler in der PC-Booter-Version von Donald Duck's Playground korrigiert.
+   - Erkennung von PC-Booter-Spielen verbessert.
+   - Unterstützung für Sound-Wiedergabe in CoCo3-Spielen hinzugefügt.
+   - Zahlreiche Fehler in Winnie The Pooh In The Hundred Acre Wood korrigiert, unter anderem
+     wurde behoben, dass Tigger niemals erscheint und Eeyore seinen Ballon nicht annimmt.
 
  AGOS:
    - Unterstützung für Tastenkürzel hinzugefügt.
@@ -47,7 +74,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      Elvira 2 geführt hat.
 
  AGS:
-   - Der AGS-Code wurde mit der Upstream-Version 3.6.1.29 synchronisiert.
+   - Der AGS-Code wurde mit der Upstream-Version 3.6.1.30 synchronisiert.
    - Kommandozeilenoption --language hinzugefügt, mit der die Sprache eines Spiels gesetzt werden kann.
    - Fehlerhaftes Verhalten der Treppen in älteren Episoden von Maniac Mansion Mania korrigiert,
      die durch fehlerhafte Wegfindung verursacht wurde.
@@ -109,6 +136,10 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  GLK/ADVSYS:
    - Verbesserte Interpretation von Eingabe-Befehlen.
 
+ Gob:
+   - Blount wird im Gehirn-Level von Gob3 nicht mehr deaktiviert.
+   - Flackernder Mauszeiger in einigen Videos in Gob3 und Lost in Time korrigiert.
+
  Groovie:
    - Unterstützung für Tastenkürzel hinzugefügt.
 
@@ -137,6 +168,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Lure:
    - Unterstützung für Tastenkürzel hinzugefügt.
 
+ M4:
+   - Der Status von Dialogen wird jetzt korrekt wiederhergestellt.
+
  MADE:
    - Unterstützung für Tastenkürzel hinzugefügt.
 
@@ -148,6 +182,10 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Fehler in Xeen behoben, der dafür sorgt, dass einige Sound-Effekte abrupt beendet werden.
    - Fehlerhafte SP/Edelstein-Voraussetzungen im erweiterten Modus von MM1 korrigiert.
    - Spruch-Punkte und Edelsteine werden jetzt korrekt abgezogen, wenn Zaubersprüche verwendet werden.
+
+ Nancy:
+   - Absturz beim Start des Spiels und einige kaputte Rätsel in The Vampire Diaries korrigiert.
+   - Absturz in den russischen Versionen einiger früher Nancy Drew-Spiele behoben.
 
  NGI:
    - Unterstützung für die litauische Version von Full Pipe hinzugefügt.
@@ -166,11 +204,15 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      Graustufenmodus für viele SCI 1-DOS-Spiele sowie ein 16-Farben-Modus für die
      Windows-Version von KQ6 hinzugefügt. Für alle PC-98-Spiele steht jetzt ein
      Modus für 8 Farben zur Verfügung.
+   - Sprachdateien-Patch von AllTinker für die CD-Version von Gabriel Knight 1 hinzugefügt.
+     Dieser Patch korrigiert die meisten Störgeräusche in den DPCM8-Audiodaten der Sprachausgabe.
    - Verbesserte Unterstützung für PCjr-Audio.
+   - Verbesserte Einstellungen für die CD-Version von KQ6. Die DOS-Version verhält sich nun eher wie das Original.
    - Verbesserte Unterstützung für die Mac-Version von KQ6.
    - Benutzeroberfläche zum speichern/laden in der FM-Towns-Version von KQ5 hinzugefügt.
    - Zahlreiche Skriptfehler in verschiedenen Spielen behoben.
-   - Unterstützung für die deutsche Version von KQ5 hinzugefügt.
+   - Skalierungsfehler in SCI1.1-Spielen behoben.
+   - Unbekannte Fan-Spiele werden nun besser über die Rückfalloption der Erkennungsdatenbank erkannt.
    - Unterstützung für die spanische Version von SQ3 hinzugefügt.
    - Unterstützung für die russischen Versionen von Camelot, Laura Bow und PQ2 hinzugefügt.
    - Unterstützung für die russische Fan-Übersetzung von QFG3 hinzugefügt.
@@ -200,6 +242,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für weitere Spiele-Versionen hinzugefügt.
    - Die Sprache der Untertitel kann in der PC-Version nun wieder ausgewählt werden.
 
+ Sword25:
    - Sound-Schleifen in Szenen-Hintergründen korrigiert.
    - Charakter-Beleuchtung in Gang-Sequenzen korrigiert.
 
@@ -208,7 +251,6 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Tinsel:
    - Unterstützung für Tastenkürzel hinzugefügt.
-   - Unterstützung für die japanische Mac-Version von Discworld 1 hinzugefügt.
 
  Titanic:
    - Absturz behoben, der auftritt, wenn das Wort "that" in einer Konversation verwendet wird.
@@ -217,8 +259,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Absturz bei schnellem Cursor-Wechsel behoben.
 
  TsAGE:
-   - Unterstützung für russische Fan-Übersetzung von Ringworld hinzugefügt.
    - Unterstützung für Tastenkürzel hinzugefügt.
+   - Unterstützung für russische Fan-Übersetzung von Ringworld hinzugefügt.
+   - Unterstützung für russische Fan-Übersetzung von Blue Force hinzugefügt.
 
  Toon:
    - Unterstützung für Tastenkürzel hinzugefügt.
@@ -237,6 +280,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Einige Fehler der Kollisionserkennung behoben.
 
  Ultima:
+   - Fehler behobenb, durch den die Wegfindung in Ultima VI einige Türen nicht erkannt hat.
    - Standard-Tastenbelgung für Gamepasds in Ultima VIII angepasst.
    - Verbesserung der Spieler-Bewegung über Tastatureingaben in Ultima VIII.
    - Verwendung der Zielscheibe in Ultima VIII pausiert das Spiel nun nicht mehr.
@@ -250,14 +294,29 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  ZVision:
    - Verbesserte Unterstützung von RTL-Sprachen.
 
+ Android-Portierung:
+   - Unterstützung für Android 15 hinzugefügt.
+   - Spiele können jetzt direkt vom Homescreen aus mit einem langen Druck auf das ScummVM-Icon
+     oder über die Auswahl eines Widgets gestartet werden.
+   - Überarbeitung des Gamepad-Modus mit einer verbesserten Benutzeroberfläche.
+   - Die Benutzeroberfläche wird jetzt anhand der Pixeldichte des Displays skaliert.
+   - Mehrere Stabilitätsverbesserungen.
+
  macOS-Portierung:
    - Der Auto-Updater verwendet nun Sparkle 2.x.
+   - Spielstände werden jetzt standardmäßig im Application Support-Verzeichnis gespeichert.
 
  3DS-Portierung:
    - Port-spezifische Optionen in die Benutzeroberfläche integriert.
    - Verbesserte Speicherverfügbarkeit auf 3DS-Geräten der ersten Generation.
+   - Abstürze aufgrund verändertem Speicherverhalten in neuen 3DS-Geräten behoben.
 
-#### 2.8.1 (31.03.2024)
+ iOS-Portierung:
+   - Unterstützung für Apple Pencil hinzugefügt.
+   - App-Icons für den "Dark"- und "Tinted"-Modus hinzugefügt.
+   - Mehrere Stabilitätsverbesserungen.
+
+#### 2.8.1 "Oh MMy!" (31.03.2024)
 
  Allgemein:
    - Fehler bei der Erkennung der GLSL-Version auf einigen OpenGL ES2-Plattformen behoben.

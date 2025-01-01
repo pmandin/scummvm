@@ -311,6 +311,8 @@ void ScummEngine::copyHeapSaveGameToFile(int slot, const char *saveName) {
 		delete saveFile;
 	}
 
+	delete heapSaveFile;
+
 	if (saveFailed)
 		debug(1, "State save as '%s' FAILED", fileName.c_str());
 	else
@@ -2044,20 +2046,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 		syncWithSerializer(s, info);
 
 		if (s.isLoading() && info.playing) {
-			if (info.numLoops < 0 && _game.platform != Common::kPlatformFMTowns) {
-				// If we are loading, and the music being loaded was supposed to loop
-				// forever, then resume playing it. This helps a lot when the audio CD
-				// is used to provide ambient music (see bug #1150).
-				// FM-Towns versions handle this in Player_Towns_v1::restoreAfterLoad().
-				_sound->playCDTrackInternal(info.track, info.numLoops, info.start, info.duration);
-			} else if (_game.id == GID_LOOM && info.start != 0 && info.duration != 0) {
-				// Reload audio for LOOM CD/Steam. We move the offset forward by a little bit
-				// to restore the correct sync.
-				int startOffset = (int)(VAR(VAR_MUSIC_TIMER) * 1.25);
-
-				_sound->_cdMusicTimer = VAR(VAR_MUSIC_TIMER);
-				_sound->playCDTrackInternal(info.track, info.numLoops, info.start + startOffset, info.duration - VAR(VAR_MUSIC_TIMER));
-			}
+			_sound->restoreCDAudioAfterLoad(info);
 		}
 	}
 

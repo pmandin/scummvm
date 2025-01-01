@@ -108,6 +108,7 @@ add_engine() {
 	set_var _engine_${1}_subengines "${4}"
 	set_var _engine_${1}_base "${5}"
 	set_var _engine_${1}_deps "${6}"
+	set_var _engine_${1}_components "${7}"
 	for sub in ${4}; do
 		set_var _engine_${sub}_sub "yes"
 		set_var _engine_${sub}_parent "${1}"
@@ -120,6 +121,15 @@ add_feature() {
 	# This is a list of settings, where one must be "yes" for the feature to
 	# be enabled
 	set_var _feature_${1}_settings "${3}"
+}
+
+# Add a component: id name settings-list use-define
+add_component() {
+	add_feature "$1" "$2" "$3"
+
+	set_var _components "$(get_var _components) ${1}"
+
+	set_var _component_${1}_define "${4}"
 }
 
 _srcdir=`dirname $0`
@@ -269,6 +279,7 @@ _detection_features_static=yes
 _detection_features_full=yes
 # The following variables are automatically detected, and should not
 # be modified otherwise. Consider them read-only.
+_3d=no
 _posix=no
 _has_posix_spawn=no
 _has_fseeko_offt_64=no
@@ -279,31 +290,67 @@ _need_memalign=yes
 _have_x86=no
 _have_amd64=no
 _imgui=yes
+_indeo3=auto
+_indeo45=auto
+_hnm=auto
+_fmtowns_pc98_audio=auto
+_sid_audio=auto
+_vgmtrans_audio=auto
+_midi=auto
+_universaltracker=auto
 
 # Add (virtual) features
 add_feature 16bit "16bit color" "_16bit"
+add_feature 3d "3D rendering" "_3d"
 add_feature bink "Bink" "_bink"
 add_feature cloud "cloud" "_cloud"
 add_feature faad "libfaad" "_faad"
 add_feature flac "FLAC" "_flac"
+add_feature fribidi "FriBidi" "_fribidi"
 add_feature freetype2 "FreeType2" "_freetype2"
 add_feature highres "high resolution" "_highres"
-add_feature mad "MAD" "_mad"
 add_feature jpeg "JPEG" "_jpeg"
-add_feature mpeg2 "mpeg2" "_mpeg2"
+add_feature mad "MAD" "_mad"
 add_feature opengl_game_classic "OpenGL (classic)" "_opengl_game_classic"
 add_feature opengl_game_shaders "OpenGL with shaders" "_opengl_game_shaders"
 add_feature png "PNG" "_png"
-add_feature gif "GIF" "_gif"
-add_feature theoradec "libtheoradec" "_theoradec"
-add_feature tinygl "TinyGL" "_tinygl"
-add_feature vpx "libvpx" "_vpx"
 add_feature vorbis "Vorbis file support" "_vorbis _tremor"
 add_feature zlib "zlib" "_zlib"
-add_feature lua "lua" "_lua"
-add_feature fribidi "FriBidi" "_fribidi"
 add_feature test_cxx11 "Test C++11" "_test_cxx11"
-add_feature imgui "imgui" "_imgui"
+
+# Components are features which may be disabled if unused by the engines
+add_component enet "ENet" "_enet" "USE_ENET"
+add_component fmtowns_pc98_audio "FM-TOWNS/PC98 audio" "_fmtowns_pc98_audio" "USE_FMTOWNS_PC98_AUDIO"
+add_component gif "GIF" "_gif" "USE_GIF"
+add_component hnm "HNM" "_hnm" "USE_HNM"
+add_component imgui "Dear ImGui based debugger" "_imgui" "USE_IMGUI"
+add_component indeo3 "Indeo 3" "_indeo3" "USE_INDEO3"
+add_component indeo45 "Indeo 4&5" "_indeo45" "USE_INDEO45"
+add_component lua "Lua" "_lua" "USE_LUA"
+add_component vpx "libvpx" "_vpx" "USE_VPX"
+add_component theoradec "libtheoradec" "_theoradec" "USE_THEORADEC"
+add_component midi "MIDI synthesis" "_midi" "USE_MIDI"
+add_component mpc "MPC" "_libmpcdec" "USE_MPCDEC"
+add_component mpeg2 "mpeg2" "_mpeg2" "USE_MPEG2"
+add_component sid_audio "SID audio" "_sid_audio" "USE_SID_AUDIO"
+add_component tinygl "TinyGL" "_tinygl" "USE_TINYGL"
+add_component universaltracker "External Tracker Libraries" "_universaltracker" "USE_UNIVERSALTRACKER"
+add_component vgmtrans_audio "VGMTrans Soundfont audio" "_vgmtrans_audio" "USE_VGMTRANS_AUDIO"
+
+# The following list of features cannot be declared as components
+# because they are used in the common code:
+# 16bit: used by the GUI
+# 3d: not a real feature
+# cloud: used by the GUI
+# flac: used by DefaultAudioCDManager
+# fribidi: used by the GUI
+# freetype2: used by the GUI
+# highres: not a real feature
+# mad: used by DefaultAudioCDManager
+# png: used by the GUI
+# vorbis: used by DefaultAudioCDManager
+# zlib: used by the GUI
+# test_cxx11: used by the build system
 
 # Directories for installing ScummVM.
 # This list is closely based on what GNU autoconf does,
@@ -1850,7 +1897,7 @@ sailfish)
 	docdir='/usr/share/org.scummvm.scummvm/doc/scummvm'
 	# Use static libraries on Sailfish. Sailfish limits our
 	# ability to link with libraries from other packages. And if we ship
-	# dynamic library but always load it and noone else uses it, then we're
+	# dynamic library but always load it and no one else uses it, then we're
 	# no better off than using static libraries. Additionally shipping
 	# libraries is a hassle.
 	if [ -n "$JPEG_PREFIX" ]; then
@@ -2639,14 +2686,17 @@ __attribute__ ((used)) unsigned short ebcdic_mm[] = { 0xC2C9, 0xC785, 0x95C4, 0x
 const char * _ebcdic() { char* s = (char*) ebcdic_mm; s = (char*) ebcdic_ii; return s; }
 int main() { _ascii (); _ebcdic (); return 0; }
 EOF
-$CXX $LDFLAGS $CXXFLAGS -o $TMPO$HOSTEXEEXT tmp_endianness_check.cpp >> "$TMPLOG" 2>&1
+# Make sure that this particular object always has regular machine code content,
+# so that the checks below can be done, even with LTO on.
+test "$have_gcc" = yes && no_lto_regular_machine_code_removal=-ffat-lto-objects
+$CXX $LDFLAGS $CXXFLAGS $no_lto_regular_machine_code_removal -o $TMPO$HOSTEXEEXT tmp_endianness_check.cpp >> "$TMPLOG" 2>&1
 if $_strings $TMPO$HOSTEXEEXT 2>> "$TMPLOG"| grep BIGenDianSyS >/dev/null; then
 	_endian=big
 elif $_strings $TMPO$HOSTEXEEXT 2>> "$TMPLOG" | grep LiTTleEnDian >/dev/null; then
 	_endian=little
 fi
-echo $_endian;
-cc_check_clean tmp_endianness_check.cpp $TMPO-tmp_endianness_check.dwo
+echo $_endian
+cc_check_clean tmp_endianness_check.cpp $TMPO-tmp_endianness_check.dwo tmp_endianness_check.dwo
 
 case $_endian in
 	big)
@@ -2863,7 +2913,7 @@ case $_host_os in
 		append_var CXXFLAGS "-fpic"
 		append_var CXXFLAGS "-ffunction-sections"
 		append_var CXXFLAGS "-funwind-tables"
-		if test "$_debug_build" = no; then
+		if test "$_optimizations" = "yes"; then
 			_optimization_level=-Os
 			append_var CXXFLAGS "-fomit-frame-pointer"
 			append_var CXXFLAGS "-fstrict-aliasing"
@@ -3054,6 +3104,13 @@ EOF
 			# When building for MacOS X 10.5 or below
 			if test "$_macos_min_version" -lt 1060 ; then
 				add_line_to_config_mk 'MACOSX_LEOPARD_OR_BELOW = 1'
+
+				# OSX 10.4/10.5 has no native C++11 support, thus we need to
+				# embed an updated libstdc++ in the bundle, and fix its
+				# dynamic references with install_name_tool(1), which requires
+				# linking with a bit of padding for the updated references.
+				append_var LDFLAGS "-Wl,-headerpad_max_install_names"
+
 				if test "$_debug_build" != no ; then
 					# Prefer DWARF over stabs on older OSX; this requires a
 					# newer GDB, but we need it for the updated toolchain
@@ -3070,9 +3127,17 @@ EOF
 				add_line_to_config_mk 'MACOSX_64_BITS_ONLY = 1'
 			fi
 		fi
-		if test "$_host_cpu" = "aarch64" ; then
+
+		case $_host_cpu in
+		powerpc*)
+			# We use -force_cpusubtype_ALL to ensure the binary runs on every
+			# PowerPC machine.
+			append_var LDFLAGS "-force_cpusubtype_ALL"
+			;;
+		aarch64)
 			add_line_to_config_mk 'MACOSX_ARM64 = 1'
-		fi
+			;;
+		esac
 
 		# Avoid "file has no symbols" noise from ranlib, if it's new enough
 		ranlib_version=`$_ranlib -V 2>/dev/null`
@@ -3290,11 +3355,11 @@ EOF
 		append_var DEFINES "-DDISABLE_DOSBOX_OPL"
 		append_var DEFINES "-DDISABLE_FANCY_THEMES"
 		append_var DEFINES "-DDISABLE_NES_APU"
-		append_var DEFINES "-DDISABLE_SID"
 		append_var DEFINES "-DREDUCE_MEMORY_USAGE"
 		add_line_to_config_mk 'N64 = 1'
 		_detection_features_full=no
 		_nuked_opl=no
+		_sid_audio=no
 		;;
 	openbsd*)
 		append_var LDFLAGS "-L/usr/local/lib"
@@ -3357,8 +3422,12 @@ EOF
 		add_line_to_config_h "#define PREFIX \"${prefix}\""
 		;;
 	psp)
-		_optimization_level=-O2
+		_optimization_level=-O3
 		_freetypepath="$PSPDEV/psp/bin"
+		if test "$_dynamic_modules" = yes ; then
+			_detection_features_static=no
+			_plugins_default=dynamic
+		fi
 		append_var CXXFLAGS "-I$PSPSDK/include"
 		# FIXME: Why is the following in CXXFLAGS and not in DEFINES? Change or document this.
 		append_var CXXFLAGS "-D_PSP_FW_VERSION=150"
@@ -3624,6 +3693,7 @@ if test -n "$_host"; then
 
 			FREETYPE2_STATIC_LIBS="-lfreetype"
 			FREETYPE2_CFLAGS="-I${KOS32_SDK_DIR}/sources/freetype/include"
+			_freetypeconfig=
 			_freetype_found="true"
 
 			SDL_CFLAGS="-I${KOS32_SDK_DIR}/sources/SDL-1.2.2_newlib/include"
@@ -3971,10 +4041,10 @@ case $_backend in
 	atari)
 		define_in_config_if_yes yes "ATARI"
 		append_var DEFINES "-DDISABLE_LAUNCHERDISPLAY_GRID"
-		append_var DEFINES "-DDISABLE_SID"
 		append_var DEFINES "-DDISABLE_NES_APU"
 		#append_var DEFINES "-DDISABLE_DOSBOX_OPL"
 		append_var LIBS "-lgem"
+		_sid_audio=no
 		;;
 	dc)
 		append_var INCLUDES '-I$(srcdir)/backends/platform/dc'
@@ -4106,6 +4176,40 @@ case $_backend in
 esac
 
 append_var MODULES "backends/platform/$_backend"
+
+#
+# Check if specific components are not used by enabled engines and disable them
+#
+echo "Checking for unused components..."
+awk -f "$_srcdir/engines.awk" -v _pass=pass1 < /dev/null
+
+. ./engines.awk.out
+
+for f in $_features_disabled; do
+    set_var $(get_var _feature_${f}_settings) "no"
+done
+
+# Special cases for pseudo-components
+if test "$_midi" = no ; then
+	_mt32emu=no
+	_fluidsynth=no
+	_fluidlite=no
+	_timidity=no
+	_sonivox=no
+
+	echo "   Disabling mt32emu, fluidsynth, fluidlite, timidity and sonivox because MIDI is unused by enabled engines"
+fi
+
+if test "$_universaltracker" = no ; then
+	_libmikmod=no
+	_libopenmpt=no
+
+	echo "   Disabling MikMod and OpenMPT because Universal Tracker playback is unused by enabled engines"
+fi
+
+rm -f engines.awk.out
+
+echo "...check complete"
 
 #
 # Check for pkg-config
@@ -4277,11 +4381,6 @@ EOF
 			;;
 	esac
 fi
-
-#
-# Check whether ENet networking support is requested
-#
-define_in_config_if_yes "$_enet" 'USE_ENET'
 
 #
 # Check and set additional stuff needed for ENet.
@@ -4961,11 +5060,6 @@ echo "$_detection_features_full"
 define_in_config_if_yes "$_mt32emu" 'USE_MT32EMU'
 
 #
-# Check whether Lua support is requested
-#
-define_in_config_if_yes "$_lua" 'USE_LUA'
-
-#
 # Check whether Nuked OPL emulator support is disabled
 #
 define_in_config_if_no "$_nuked_opl" 'DISABLE_NUKED_OPL'
@@ -5341,7 +5435,6 @@ if test "$_gif" = yes ; then
 	append_var LIBS "$GIF_LIBS"
 	append_var INCLUDES "$GIF_CFLAGS"
 fi
-define_in_config_if_yes "$_gif" 'USE_GIF'
 echo "$_gif"
 
 #
@@ -5364,7 +5457,7 @@ if test "$_theoradec" = yes ; then
 	append_var LIBS "$THEORADEC_LIBS"
 	append_var INCLUDES "$THEORADEC_CFLAGS"
 fi
-define_in_config_if_yes "$_theoradec" 'USE_THEORADEC'
+
 if test ! "$_theoradec" = notsupported ; then
 	echo "$_theoradec"
 fi
@@ -5414,7 +5507,7 @@ if test "$_vpx" = yes ; then
 	append_var LIBS "$VPX_LIBS -lvpx"
 	append_var INCLUDES "$VPX_CFLAGS"
 fi
-define_in_config_if_yes "$_vpx" 'USE_VPX'
+
 if test ! "$_vpx" = notsupported ; then
 	echo "$_vpx"
 fi
@@ -5540,7 +5633,6 @@ if test "$_mpeg2" = yes ; then
 	append_var INCLUDES "$MPEG2_CFLAGS"
 	append_var LIBS "$MPEG2_LIBS -lmpeg2"
 fi
-define_in_config_if_yes "$_mpeg2" 'USE_MPEG2'
 echo "$_mpeg2"
 
 #
@@ -5855,7 +5947,6 @@ EOF
 	fi
 fi
 
-define_in_config_if_yes "$_libmpcdec" "USE_MPCDEC"
 echo "$_libmpcdec"
 
 #
@@ -6761,7 +6852,6 @@ EOF
 else
 	echo "$_imgui"
 fi
-define_in_config_if_yes "$_imgui" 'USE_IMGUI'
 
 #
 # Enable vkeybd / event recorder
@@ -6897,8 +6987,15 @@ echo_n "Building TinyGL support... "
 if test "$_16bit" = "no"; then
 	_tinygl=no
 fi
-define_in_config_if_yes $_tinygl 'USE_TINYGL'
 echo "$_tinygl"
+
+echo_n "Building any 3D game... "
+if (test "$_tinygl" = yes || test "$_opengl_game_classic" = yes || test "$_opengl_game_shaders" = yes); then
+	_3d=yes
+else
+	_3d=no
+fi
+echo "$_3d"
 
 #
 # Check whether to build Bink video support
@@ -7343,7 +7440,7 @@ _engines_built_static=""
 _engines_built_dynamic=""
 _engines_skipped=""
 
-awk -f "$_srcdir/engines.awk" < /dev/null
+awk -f "$_srcdir/engines.awk" -v _pass=pass2 < /dev/null
 
 echo "Creating config.h"
 cat > config.h.new << EOF

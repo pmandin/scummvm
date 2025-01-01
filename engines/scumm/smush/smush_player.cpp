@@ -35,6 +35,7 @@
 #include "scumm/scumm.h"
 #include "scumm/scumm_v7.h"
 #include "scumm/sound.h"
+#include "scumm/macgui/macgui.h"
 #include "scumm/smush/codec37.h"
 #include "scumm/smush/codec47.h"
 #include "scumm/smush/smush_font.h"
@@ -182,17 +183,20 @@ public:
 
 static StringResource *getStrings(ScummEngine *vm, const char *file, bool is_encoded) {
 	debugC(DEBUG_SMUSH, "trying to read text resources from %s", file);
-	ScummFile theFile(vm);
+	ScummFile *theFile = vm->instantiateScummFile();
 
-	vm->openFile(theFile, file);
-	if (!theFile.isOpen()) {
+	vm->openFile(*theFile, file);
+	if (!theFile->isOpen()) {
+		delete theFile;
 		return 0;
 	}
-	int32 length = theFile.size();
+	int32 length = theFile->size();
 	char *filebuffer = new char [length + 1];
 	assert(filebuffer);
-	theFile.read(filebuffer, length);
+	theFile->read(filebuffer, length);
 	filebuffer[length] = 0;
+	theFile->close();
+	delete theFile;
 
 	if (is_encoded && READ_BE_UINT32(filebuffer) == MKTAG('E','T','R','S')) {
 		assert(length > ETRS_HEADER_LENGTH);
@@ -663,7 +667,7 @@ void SmushPlayer::handleTextResource(uint32 subType, int32 subSize, Common::Seek
 		Common::Rect clipRect(MAX<int>(0, left), MAX<int>(0, top), MIN<int>(left + width, _width), MIN<int>(top + height, _height));
 		sf->drawStringWrap(str, _dst, clipRect, pos_x, pos_y, color, flg);
 	} else {
-		// Similiar to the wrapped text, COMI will pass on rect coords here, which will later be lost. Unlike with the wrapped text, it will
+		// Similar to the wrapped text, COMI will pass on rect coords here, which will later be lost. Unlike with the wrapped text, it will
 		// finally use the full screen dimenstions. SCUMM7 renders directly from here (see comment above), but also with the full screen.
 		Common::Rect clipRect(0, 0, _width, _height);
 		sf->drawString(str, _dst, clipRect, pos_x, pos_y, color, flg);
@@ -1023,8 +1027,8 @@ void SmushPlayer::parseNextFrame() {
 		if (_seekFile.size() > 0) {
 			delete _base;
 
-			ScummFile *tmp = new ScummFile(_vm);
-			if (!g_scumm->openFile(*tmp, Common::Path(_seekFile)))
+			ScummFile *tmp = _vm->instantiateScummFile();
+			if (!_vm->openFile(*tmp, Common::Path(_seekFile)))
 				error("SmushPlayer: Unable to open file %s", _seekFile.c_str());
 			_base = tmp;
 			_base->readUint32BE();
@@ -1190,13 +1194,15 @@ void SmushPlayer::unpause() {
 
 void SmushPlayer::play(const char *filename, int32 speed, int32 offset, int32 startFrame) {
 	// Verify the specified file exists
-	ScummFile f(_vm);
-	_vm->openFile(f, filename);
-	if (!f.isOpen()) {
+	ScummFile *file = _vm->instantiateScummFile();
+
+	_vm->openFile(*file, filename);
+	if (!file->isOpen()) {
 		warning("SmushPlayer::play() File not found %s", filename);
 		return;
 	}
-	f.close();
+	file->close();
+	delete file;
 
 	_updateNeeded = false;
 	_warpNeeded = false;
@@ -1233,86 +1239,94 @@ void SmushPlayer::play(const char *filename, int32 speed, int32 offset, int32 st
 	int skipped = 0;
 
 	for (;;) {
-		uint32 now, elapsed;
 		bool skipFrame = false;
 
-		if (_insanity) {
-			// Seeking makes a mess of trying to sync the audio to
-			// the sound. Synt to time instead.
-			now = _vm->_system->getMillis() - _pauseTime;
-			elapsed = now - _startTime;
-		} else if (_vm->_mixer->isSoundHandleActive(*_compressedFileSoundHandle)) {
-			// Compressed SMUSH files.
-			elapsed = _vm->_mixer->getSoundElapsedTime(*_compressedFileSoundHandle);
-		} else if (_vm->_mixer->isSoundHandleActive(*_IACTchannel)) {
-			// Curse of Monkey Island SMUSH files.
-			elapsed = _vm->_mixer->getSoundElapsedTime(*_IACTchannel);
-		} else {
-			// For other SMUSH files, we don't necessarily have any
-			// one channel to sync against, so we have to use
-			// elapsed real time.
-			now = _vm->_system->getMillis() - _pauseTime;
-			elapsed = now - _startTime;
+		if (!_paused) {
+			uint32 now, elapsed;
+
+			if (_insanity) {
+				// Seeking makes a mess of trying to sync the audio to
+				// the sound. Sync to time instead.
+				now = _vm->_system->getMillis() - _pauseTime;
+				elapsed = now - _startTime;
+			} else if (_vm->_mixer->isSoundHandleActive(*_compressedFileSoundHandle)) {
+				// Compressed SMUSH files.
+				elapsed = _vm->_mixer->getSoundElapsedTime(*_compressedFileSoundHandle);
+			} else if (_vm->_mixer->isSoundHandleActive(*_IACTchannel)) {
+				// Curse of Monkey Island SMUSH files.
+				elapsed = _vm->_mixer->getSoundElapsedTime(*_IACTchannel);
+			} else {
+				// For other SMUSH files, we don't necessarily have any
+				// one channel to sync against, so we have to use
+				// elapsed real time.
+				now = _vm->_system->getMillis() - _pauseTime;
+				elapsed = now - _startTime;
+			}
+
+			if (elapsed >= ((_frame - _startFrame) * 1000) / _speed) {
+				if (elapsed >= ((_frame + 1) * 1000) / _speed)
+					skipFrame = true;
+				else
+					skipFrame = false;
+				timerCallback();
+			}
+
+			_vm->scummLoop_handleSound();
+
+			if (_warpNeeded) {
+				_vm->_system->warpMouse(_vm->_macScreen ? _warpX * 2 : _warpX, _vm->_macScreen ? (_warpY * 2 + 2 * _vm->_macScreenDrawOffset) : _warpY);
+				_warpNeeded = false;
+			}
 		}
 
-		if (elapsed >= ((_frame - _startFrame) * 1000) / _speed) {
-			if (elapsed >= ((_frame + 1) * 1000) / _speed)
-				skipFrame = true;
-			else
-				skipFrame = false;
-			timerCallback();
-		}
-
-		_vm->scummLoop_handleSound();
-
-		if (_warpNeeded) {
-			_vm->_system->warpMouse(_vm->_macScreen ? _warpX * 2 : _warpX, _vm->_macScreen ? (_warpY * 2 + 2 * _vm->_macScreenDrawOffset) : _warpY);
-			_warpNeeded = false;
-		}
 		_vm->parseEvents();
 		_vm->processInput();
-		if (_palDirtyMax >= _palDirtyMin) {
-			// Apply gamma correction for Mac versions
-			if (_vm->_macScreen) {
-				byte palette[768];
-				memcpy(palette, _pal, 768);
-				for (int i = 0; i < ARRAYSIZE(palette); i++) {
-					palette[i] = _vm->_macGammaCorrectionLookUp[_pal[i]];
-				}
 
-				_vm->_system->getPaletteManager()->setPalette(palette + _palDirtyMin * 3, _palDirtyMin, _palDirtyMax - _palDirtyMin + 1);
-			} else {
-				_vm->_system->getPaletteManager()->setPalette(_pal + _palDirtyMin * 3, _palDirtyMin, _palDirtyMax - _palDirtyMin + 1);
-			}
-
-			_palDirtyMax = -1;
-			_palDirtyMin = 256;
-			skipFrame = false;
-		}
-		if (skipFrame) {
-			if (++skipped > 10) {
-				skipFrame = false;
-				skipped = 0;
-			}
-		} else
-			skipped = 0;
-		if (_updateNeeded) {
-			if (!skipFrame) {
-				// WORKAROUND for bug #2415: "FT DEMO: assertion triggered
-				// when playing movie". Some frames there are 384 x 224
-				int frameWidth = MIN(_width, _vm->_screenWidth);
-				int frameHeight = MIN(_height, _vm->_screenHeight);
-
+		if (!_paused) {
+			if (_palDirtyMax >= _palDirtyMin) {
+				// Apply gamma correction for Mac versions
 				if (_vm->_macScreen) {
-					_vm->mac_drawBufferToScreen(_dst, frameWidth, 0, 0, frameWidth, frameHeight);
+					byte palette[768];
+					memcpy(palette, _pal, 768);
+					for (int i = 0; i < ARRAYSIZE(palette); i++) {
+						palette[i] = _vm->_macGammaCorrectionLookUp[_pal[i]];
+					}
+
+					_vm->_system->getPaletteManager()->setPalette(palette + _palDirtyMin * 3, _palDirtyMin, _palDirtyMax - _palDirtyMin + 1);
 				} else {
-					_vm->_system->copyRectToScreen(_dst, _width, 0, 0, frameWidth, frameHeight);
+					_vm->_system->getPaletteManager()->setPalette(_pal + _palDirtyMin * 3, _palDirtyMin, _palDirtyMax - _palDirtyMin + 1);
 				}
 
-				_vm->_system->updateScreen();
-				_updateNeeded = false;
+				_palDirtyMax = -1;
+				_palDirtyMin = 256;
+				skipFrame = false;
+			}
+			if (skipFrame) {
+				if (++skipped > 10) {
+					skipFrame = false;
+					skipped = 0;
+				}
+			} else
+				skipped = 0;
+			if (_updateNeeded) {
+				if (!skipFrame) {
+					// WORKAROUND for bug #2415: "FT DEMO: assertion triggered
+					// when playing movie". Some frames there are 384 x 224
+					int frameWidth = MIN(_width, _vm->_screenWidth);
+					int frameHeight = MIN(_height, _vm->_screenHeight);
+
+					if (_vm->_macScreen) {
+						_vm->mac_drawBufferToScreen(_dst, frameWidth, 0, 0, frameWidth, frameHeight);
+					} else {
+						_vm->_system->copyRectToScreen(_dst, _width, 0, 0, frameWidth, frameHeight);
+					}
+
+					_vm->_system->updateScreen();
+					_updateNeeded = false;
+				}
 			}
 		}
+
 		if (_endOfFile)
 			break;
 		if (_vm->shouldQuit() || _vm->_saveLoadFlag || _vm->_smushVideoShouldFinish) {
@@ -1324,6 +1338,12 @@ void SmushPlayer::play(const char *filename, int32 speed, int32 offset, int32 st
 			_imuseDigital->stopSMUSHAudio(); // For DIG & COMI
 			break;
 		}
+
+		if (_vm->_macGui) {
+			_vm->_macGui->updateWindowManager();
+			_vm->_system->updateScreen();
+		}
+
 		_vm->_system->delayMillis(10);
 	}
 

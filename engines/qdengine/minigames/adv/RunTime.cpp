@@ -52,19 +52,19 @@ public:
 	bool timeIsOut() const;
 	float leftTime() const;
 	float timeCost() const {
-		return timeCost_;
+		return _timeCost;
 	}
 
 	void quant(float dt);
 
 private:
 	float _gameTime;
-	float timeCost_;
-	int lastEventTime_;
-	mgVect3f startPos_;
-	mgVect2f size_;
-	Direction direction_;
-	QDObject timeBar_;
+	float _timeCost;
+	int _lastEventTime;
+	mgVect3f _startPos;
+	mgVect2f _size;
+	Direction _direction;
+	QDObject _timeBar;
 
 	MinigameManager *_runtime;
 };
@@ -798,7 +798,7 @@ float MinigameManager::getDepth(const mgVect3f& pos) const {
 QDObject MinigameManager::getObject(const char *name) const {
 	if (!name || !*name) {
 		warning("MinigameManager::getObject(): null name");
-		return QDObject::ZERO;
+		return QDObject(0, "ZERO OBJECT");
 	}
 
 	qdMinigameObjectInterface *obj = _scene->object_interface(name);
@@ -807,7 +807,7 @@ QDObject MinigameManager::getObject(const char *name) const {
 
 	if (obj)
 		return QDObject(obj, name);
-	return QDObject::ZERO;
+	return QDObject(0, "ZERO OBJECT");
 }
 
 bool MinigameManager::testObject(const char *name) const {
@@ -1013,6 +1013,82 @@ void MinigameManager::GameInfoIndex::read(Common::ReadStream &in) {
 	_gameLevel = in.readUint32LE();
 }
 
+int MinigameManager::getParameter(const char* name, const int& defValue) {
+	return round(getParameter(name, (float)defValue));
+}
+
+bool MinigameManager::getParameter(const char* name, int& out, bool obligatory) {
+	float retValue = out;
+	if (getParameter(name, retValue, obligatory)) {
+		out = round(retValue);
+		return true;
+	}
+	return false;
+}
+
+float MinigameManager::getParameter(const char* name, const float &defValue) {
+	if (const char *data = parameter(name, false)) {
+		float retValue = defValue;
+		if (sscanf(data, "%f", &retValue) == 1)
+			return retValue;
+		error("The parameter [%s] contains wrong data type. It must be a number", name);
+	}
+	return defValue;
+
+}
+
+bool MinigameManager::getParameter(const char* name, float &out, bool obligatory) {
+	if (const char * data = parameter(name, obligatory)) {
+		float retValue = out;
+		if (sscanf(data, "%f", &retValue) == 1) {
+			out = retValue;
+			return true;
+		}
+		error("The parameter [%s] contains wrong data type. It must be a number", name);
+	}
+	return false;
+
+}
+
+mgVect2f MinigameManager::getParameter(const char* name, const mgVect2f& defValue) {
+	if (const char * data = parameter(name, false)) {
+		mgVect2f retValue = defValue;
+		if (sscanf(data, "%f %f", &retValue.x, &retValue.y) == 2)
+			return retValue;
+		error("The parameter [%s] contains wrong data type. It must be a pair of numbers", name);
+	}
+	return defValue;
+
+}
+
+bool MinigameManager::getParameter(const char* name, mgVect2f& out, bool obligatory) {
+	if (const char * data = parameter(name, obligatory)) {
+		mgVect2f retValue = out;
+		if (sscanf(data, "%f %f", &retValue.x, &retValue.y) == 2) {
+			out = retValue;
+			return true;
+		}
+		error("The parameter [%s] contains wrong data type. It must be a pair of numbers", name);
+	}
+	return false;
+
+}
+
+mgVect2i MinigameManager::getParameter(const char* name, const mgVect2i& defValue) {
+	mgVect2f retValue = getParameter(name, mgVect2f(defValue.x, defValue.y));
+	return mgVect2i(round(retValue.x), round(retValue.y));
+
+}
+
+bool MinigameManager::getParameter(const char* name, mgVect2i& out, bool obligatory) {
+	mgVect2f retValue = mgVect2f(out.x, out.y);
+	if (getParameter(name, retValue, obligatory)) {
+		out = mgVect2i(round(retValue.x), round(retValue.y));
+		return true;
+	}
+	return false;
+}
+
 //========================================================================================================================
 
 
@@ -1025,45 +1101,45 @@ TimeManager::TimeManager(HoldData<TimeManagerData> &data_, MinigameManager *runt
 	} else
 		_gameTime = -1.f;
 
-	timeCost_ = 0.f;
+	_timeCost = 0.f;
 
 	if (_gameTime > 0) {
 		if (const char *data = _runtime->parameter("time_bar"))
-			timeBar_ = _runtime->getObject(data);
+			_timeBar = _runtime->getObject(data);
 
 		if (const char *data = _runtime->parameter("time_cost"))
-			sscanf(data, "%f", &timeCost_);
+			sscanf(data, "%f", &_timeCost);
 	}
 
-	direction_ = DOWN; // Default value
+	_direction = DOWN; // Default value
 
-	if (timeBar_) {
+	if (_timeBar) {
 		TimeManagerData myData;
-		myData.crd = _runtime->world2game(timeBar_);
+		myData.crd = _runtime->world2game(_timeBar);
 
 		data_.process(myData);
 
-		startPos_ = myData.crd;
-		size_ = _runtime->getSize(timeBar_);
+		_startPos = myData.crd;
+		_size = _runtime->getSize(_timeBar);
 
 		if (const char *data = _runtime->parameter("time_bar_direction")) {
 			int dir;
 			if (sscanf(data, "%d", &dir) == 1) {
 				assert(dir >= 0 && dir <= 3);
-				direction_ = Direction(dir);
+				_direction = Direction(dir);
 			}
 		}
 	} else
-		size_ = mgVect2f(-1.f, -1.f);
+		_size = mgVect2f(-1.f, -1.f);
 
 	assert(_runtime->getTime() == 0.f);
 
-	lastEventTime_ = 0;
+	_lastEventTime = 0;
 }
 
 TimeManager::~TimeManager() {
-	if (timeBar_)
-		_runtime->release(timeBar_);
+	if (_timeBar)
+		_runtime->release(_timeBar);
 
 }
 
@@ -1083,8 +1159,8 @@ float TimeManager::leftTime() const {
 
 void TimeManager::quant(float dt) {
 	int seconds = round(_runtime->getTime());
-	if (seconds != lastEventTime_) {
-		lastEventTime_ = seconds;
+	if (seconds != _lastEventTime) {
+		_lastEventTime = seconds;
 		_runtime->textManager().updateTime(seconds);
 		int amountSeconds = round(leftTime());
 		if (_gameTime < 0.f || amountSeconds > 10)
@@ -1100,29 +1176,29 @@ void TimeManager::quant(float dt) {
 			_runtime->signal(EVENT_TIME_LESS_10_SECOND_LEFT_SECOND_TICK);
 	}
 
-	if (_gameTime <= 0.f || !timeBar_)
+	if (_gameTime <= 0.f || !_timeBar)
 		return;
 
 	float phase = clamp(_runtime->getTime() / _gameTime, 0.f, 1.f);
 	mgVect3f pos;
-	switch (direction_) {
+	switch (_direction) {
 	case UP:
-		pos.y = -size_.y * phase;
+		pos.y = -_size.y * phase;
 		break;
 	case DOWN:
-		pos.y = size_.y * phase;
+		pos.y = _size.y * phase;
 		break;
 	case LEFT:
-		pos.x = -size_.x * phase;
+		pos.x = -_size.x * phase;
 		break;
 	case RIGHT:
-		pos.x = size_.x * phase;
+		pos.x = _size.x * phase;
 		break;
 	}
 
-	pos += startPos_;
+	pos += _startPos;
 
-	timeBar_->set_R(_runtime->game2world(pos));
+	_timeBar->set_R(_runtime->game2world(pos));
 }
 
 } // namespace QDEngine

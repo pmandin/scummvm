@@ -25,6 +25,10 @@
 #include "groovie/video/player.h"
 #include "audio/mixer.h"
 
+namespace Video {
+class VideoDecoder;
+}
+
 namespace Groovie {
 
 class GroovieEngine;
@@ -48,7 +52,10 @@ public:
 	void drawString(Graphics::Surface *surface, const Common::String text, int posx, int posy, uint32 color, bool blackBackground) override;
 	void copyfgtobg(uint8 arg) override;
 
+	bool isFileHandled() override { return _isFileHandled; }
+
 protected:
+	void waitFrame() override;
 	uint16 loadInternal() override;
 	bool playFrameInternal() override;
 	void stopAudioStream() override;
@@ -113,6 +120,9 @@ private:
 	byte _alpha;
 	bool _firstFrame;
 	Common::Rect *_restoreArea;	// Area to be repainted by foreground
+
+	Video::VideoDecoder *_videoDecoder;
+	bool _isFileHandled;
 };
 
 class ROQSoundPlayer : public ROQPlayer {

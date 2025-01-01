@@ -66,7 +66,7 @@ void Room204::init() {
 
 	_courtyardGongSeries = series_load("COURTYARD GONG", -1, nullptr);
 	_malletSpriteSeries = series_load("MALLET SPRITE", -1, nullptr);
-	_field68 = 0;
+	_ripMachineFlag = false;
 	_field44_triggerNum = -1;
 	_field48_triggerNum = -1;
 	_fieldC4 = -1;
@@ -103,9 +103,9 @@ void Room204::init() {
 			if (_field4 == 1) {
 				initWalkerSeries();
 
-				_mcMach = triggerMachineByHash_3000(8, 4, *S8_SHADOW_DIRS2, *S8_SHADOW_DIRS1, _fieldE0, 323, (_fieldDC == 1) ? 10 : 2, Walker::player_walker_callback, "mc walker room 204");
+				_mcMach = triggerMachineByHash_3000(8, 4, *S8_SHADOW_DIRS2, *S8_SHADOW_DIRS1, _fieldE0_x, 323, _meiMachineFlag ? 10 : 2, Walker::player_walker_callback, "mc walker room 204");
 				addMovingMeiHotspot();
-				if (_fieldE0 == 472) {
+				if (_fieldE0_x == 472) {
 					deleteMalletHotspot();
 					addLookMalletHotspot();
 				}
@@ -131,7 +131,7 @@ void Room204::init() {
 		sendWSMessage_10000(_mcMach, 450, 340, 9, -1, true);
 		kernel_timing_trigger(60, 5, nullptr);
 	} else {
-		_fieldDC = 0;
+		_meiMachineFlag = false;
 		_field40 = 0;
 		player_set_commands_allowed(false);
 		if (!_G(flags)[V070]) {
@@ -224,10 +224,11 @@ void Room204::pre_parser() {
 }
 
 void Room204::parser() {
-	bool lookFl = player_said_any("look", "look at");
-	bool takeFl = player_said("take");
-	bool talkFl = player_said_any("talk", "talk to");
-	bool gearFl = player_said("gear");
+	const bool lookFl = player_said_any("look", "look at");
+	const bool takeFl = player_said("take");
+	const bool talkFl = player_said_any("talk", "talk to");
+	const bool gearFl = player_said("gear");
+
 	bool moveAndLookFl = false;
 
 	if (player_said("conv204a")) {
@@ -265,7 +266,7 @@ void Room204::parser() {
 		if (lookFl && player_said("SHIH CHI TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x > 1500) {
-				_fieldDC = 0;
+				_meiMachineFlag = false;
 				_fieldE4_walkerDestX = 1663;
 				moveAndLookFl = true;
 			}
@@ -274,7 +275,7 @@ void Room204::parser() {
 		if (lookFl && player_said("SHIH CHING TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x > 1400) {
-				_fieldDC = 0;
+				_meiMachineFlag = false;
 				_fieldE4_walkerDestX = 1494;
 				moveAndLookFl = true;
 			}
@@ -283,7 +284,7 @@ void Room204::parser() {
 		if (lookFl && player_said("CONFUCIAN ANALECTS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x > 1280) {
-				_fieldDC = 0;
+				_meiMachineFlag = false;
 				_fieldE4_walkerDestX = 1412;
 				moveAndLookFl = true;
 			}
@@ -330,11 +331,11 @@ void Room204::parser() {
 				break;
 
 			case 3:
-				if (_dword1A1898 >= 1) {
-					_dword1A1898 = 0;
+				if (_G(204_dword1A1898) >= 1) {
+					_G(204_dword1A1898) = 0;
 					sendWSMessage_150000(_mcMach, 4);
 				} else {
-					++_dword1A1898;
+					++_G(204_dword1A1898);
 				}
 
 				break;
@@ -343,7 +344,7 @@ void Room204::parser() {
 				series_unload(_meiTalksPos3Series);
 				DisposePath(_mcMach->walkPath);
 
-				_fieldDC = 1;
+				_meiMachineFlag = true;
 				_fieldE4_walkerDestX = 555;
 
 				_mcMach->walkPath = CreateCustomPath(463, 359, 555, 323, -1);
@@ -355,7 +356,7 @@ void Room204::parser() {
 				_field108 = 0;
 				_G(kernel).trigger_mode = KT_DAEMON;
 				kernel_timing_trigger(1, 630, nullptr);
-				_fieldE0 = 555;
+				_fieldE0_x = 555;
 				deleteMeiCheiHotspot();
 				addMovingMeiHotspot();
 
@@ -370,7 +371,7 @@ void Room204::parser() {
 		} // if (lookFl && player_said("CONFUCIAN ANALECTS "))
 
 		if (lookFl && player_said("TAO-TE CHING TABLETS")) {
-			_fieldDC = 0;
+			_meiMachineFlag = false;
 			_fieldE4_walkerDestX = 1328;
 			moveAndLookFl = true;
 		}
@@ -378,7 +379,7 @@ void Room204::parser() {
 		if (lookFl && player_said("SHIH CHI TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x >= 1300) {
-				_fieldDC = 0;
+				_meiMachineFlag = false;
 				_fieldE4_walkerDestX = 1245;
 				moveAndLookFl = true;
 			}
@@ -387,7 +388,7 @@ void Room204::parser() {
 		if (lookFl && player_said("LAO-TZU TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x > 700) {
-				_fieldDC = 0;
+				_meiMachineFlag = false;
 				_fieldE4_walkerDestX = 800;
 				moveAndLookFl = true;
 			}
@@ -396,14 +397,14 @@ void Room204::parser() {
 		if (lookFl && player_said("SHANG TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x < 900) {
-				_fieldDC = 1;
+				_meiMachineFlag = true;
 				_fieldE4_walkerDestX = 717;
 				moveAndLookFl = true;
 			}
 		}
 
 		if (lookFl && player_said("TABLETS OF HISTORY")) {
-			_fieldDC = 1;
+			_meiMachineFlag = true;
 			_fieldE4_walkerDestX = 670;
 			moveAndLookFl = true;
 		}
@@ -411,7 +412,7 @@ void Room204::parser() {
 		if (lookFl && player_said("CONFUCIAN ANALECTS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x < 1280) {
-				_fieldDC = 1;
+				_meiMachineFlag = true;
 				_fieldE4_walkerDestX = 555;
 				moveAndLookFl = true;
 			}
@@ -420,7 +421,7 @@ void Room204::parser() {
 		if (lookFl && player_said("LAO-TZU TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
 			if (_G(player_info).x < 640) {
-				_fieldDC = 1;
+				_meiMachineFlag = true;
 				_fieldE4_walkerDestX = 472;
 				moveAndLookFl = true;
 			}
@@ -441,10 +442,10 @@ void Room204::parser() {
 				case 1:
 					DisposePath(_mcMach->walkPath);
 					_mcMach->walkPath = CreateCustomPath(_fieldE4_walkerDestX, 323, -1);
-					_fieldE0 = 0;
+					_fieldE0_x = 0;
 
 					_G(kernel).trigger_mode = KT_DAEMON;
-					ws_custom_walk(_mcMach, (_fieldDC == 1) ? 10 : 2, 632, true);
+					ws_custom_walk(_mcMach, _meiMachineFlag ? 10 : 2, 632, true);
 					_G(kernel).trigger_mode = KT_PARSE;
 
 					kernel_timing_trigger(5, 2, nullptr);
@@ -452,7 +453,7 @@ void Room204::parser() {
 					break;
 
 				case 2:
-					if (_fieldE0 == _fieldE4_walkerDestX)
+					if (_fieldE0_x == _fieldE4_walkerDestX)
 						kernel_timing_trigger(30, 5, nullptr);
 					else
 						kernel_timing_trigger(1, 2, nullptr);
@@ -906,7 +907,7 @@ void Room204::parser() {
 			player_set_commands_allowed(false);
 			ws_get_walker_info(_mcMach, &_G(player_info).x, &_G(player_info).y, &_G(player_info).scale, &_G(player_info).depth, &_G(player_info).facing);
 
-			_fieldF8 = (_fieldDC == 1) ? 10 : 2;
+			_fieldF8 = _meiMachineFlag ? 10 : 2;
 			DisposePath(_mcMach->walkPath);
 			_mcMach->walkPath = CreateCustomPath(_G(player_info).x + 1, _G(player_info).y, -1);
 			ws_custom_walk(_mcMach, 4, 3, true);
@@ -971,10 +972,10 @@ void Room204::parser() {
 			break;
 
 		case 8:
-			if (_dword1A1898 < 1) {
-				++_dword1A1898;
+			if (_G(204_dword1A1898) < 1) {
+				++_G(204_dword1A1898);
 			} else {
-				_dword1A1898 = 0;
+				_G(204_dword1A1898) = 0;
 				sendWSMessage_150000(_mcMach, 9);
 			}
 
@@ -1072,7 +1073,7 @@ void Room204::daemon() {
 		break;
 
 	case 501:
-		_ripDeltaMachineStateMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, _G(player_info).depth, 0, triggerMachineByHashCallback, "Rip Delta Machine State");
+		_ripDeltaMachineStateMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, _G(player_info).depth, false, triggerMachineByHashCallback, "Rip Delta Machine State");
 		sendWSMessage_10000(1, _ripDeltaMachineStateMach, _ripDropsSeries, 1, 2, 502, _ripDropsSeries, 2, 2, 0);
 
 		break;
@@ -1152,7 +1153,7 @@ void Room204::daemon() {
 	case 517:
 		series_unload(_ripTrekLHandTalkPos4Series);
 		_fieldD4 = 3;
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 		_field108 = 1;
 		kernel_timing_trigger(1, 574, nullptr);
 		kernel_timing_trigger(2, 518, nullptr);
@@ -1406,7 +1407,7 @@ void Room204::daemon() {
 		_field2C = 0;
 		player_update_info(_G(my_walker), &_G(player_info));
 		ws_hide_walker(_G(my_walker));
-		_ripDeltaMachineStateMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, _G(player_info).depth, _field68, triggerMachineByHashCallback, "Rip Absolute Machine State");
+		_ripDeltaMachineStateMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, _G(player_info).depth, _ripMachineFlag, triggerMachineByHashCallback, "Rip Absolute Machine State");
 		switch (_field10) {
 		case 8:
 			sendWSMessage_10000(1, _ripDeltaMachineStateMach, _ripBangsBongSeries, 1, 1, 571, _ripBangsBongSeries, 1, 1, 0);
@@ -1443,7 +1444,7 @@ void Room204::daemon() {
 
 		player_update_info(_G(my_walker), &_G(player_info));
 		ws_hide_walker(_G(my_walker));
-		_ripDeltaMachineStateMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, _G(player_info).depth, 0, triggerMachineByHashCallback, "Rip Delta Machine State");
+		_ripDeltaMachineStateMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, _G(player_info).depth, false, triggerMachineByHashCallback, "Rip Delta Machine State");
 
 		if (_field10 == 8) {
 			sendWSMessage_10000(1, _ripDeltaMachineStateMach, _ripBangsBongSeries, 1, 1, 571, _ripBangsBongSeries, 1, 1, 0);
@@ -1502,7 +1503,7 @@ void Room204::daemon() {
 			_ripDeltaMachineStateMach = nullptr;
 			ws_unhide_walker(_G(my_walker));
 			terminateMachine(_safariShadow3Mach);
-			_field68 = 0;
+			_ripMachineFlag = false;
 
 			if (_field14 == 16)
 				series_unload(_ripTrekTalkerPos3Series);
@@ -1623,7 +1624,7 @@ void Room204::daemon() {
 				break;
 
 			case 15: {
-				int32 rnd = imath_ranged_rand(6, 12);
+				const int32 rnd = imath_ranged_rand(6, 12);
 				sendWSMessage_10000(1, _ripDeltaMachineStateMach, _ripTrekTwoHandTalkPos2Series, rnd, rnd, 571, _ripTrekTwoHandTalkPos2Series, rnd, rnd, 0);
 				}
 
@@ -1649,7 +1650,7 @@ void Room204::daemon() {
 				break;
 
 			case 19: {
-				int32 rnd = imath_ranged_rand(1, 5);
+				const int32 rnd = imath_ranged_rand(1, 5);
 				sendWSMessage_10000(1, _ripDeltaMachineStateMach, _ripTrekTalkerPos3Series, rnd, rnd, 571, _ripTrekTalkerPos3Series, rnd, rnd, 0);
 				}
 
@@ -1716,7 +1717,7 @@ void Room204::daemon() {
 				break;
 
 			case 20: {
-				int32 rnd = imath_ranged_rand(8, 10);
+				const int32 rnd = imath_ranged_rand(8, 10);
 				sendWSMessage_10000(1, _ripDeltaMachineStateMach, _ripTrekHandTalkPos3Series, rnd, rnd, 571, _ripTrekHandTalkPos3Series, rnd, rnd, 0);
 				}
 				break;
@@ -1747,7 +1748,7 @@ void Room204::daemon() {
 		if (_field110_y == 323)
 			_field11C_depth = 3840;
 
-		_meiChenOtherStatesMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _field10C_x, _field110_y, _field118_scale, _field11C_depth, _fieldDC, triggerMachineByHashCallback, "Mei Chen other states machine");
+		_meiChenOtherStatesMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _field10C_x, _field110_y, _field118_scale, _field11C_depth, _meiMachineFlag, triggerMachineByHashCallback, "Mei Chen other states machine");
 		_safariShadow2Mach = series_place_sprite("SAFARI SHADOW 2", 0, _field10C_x, _field110_y, _field118_scale, 3840);
 
 		switch (_fieldD4) {
@@ -1819,15 +1820,15 @@ void Room204::daemon() {
 		} else {
 			switch (_fieldD0) {
 			case 3:
-				_field114_facing = (_fieldDC == 1) ? 10 : 2;
+				_field114_facing = _meiMachineFlag ? 10 : 2;
 				break;
 
 			case 4:
-				_field114_facing = (_fieldDC == 1) ? 9 : 3;
+				_field114_facing = _meiMachineFlag ? 9 : 3;
 				break;
 
 			case 5:
-				_field114_facing = (_fieldDC == 1) ? 8 : 4;
+				_field114_facing = _meiMachineFlag ? 8 : 4;
 				break;
 
 			default:
@@ -1845,8 +1846,8 @@ void Room204::daemon() {
 		}
 
 		terminateMachine(_meiChenOtherStatesMach);
-		_meiChenOtherStatesMach = 0;
-		_fieldDC = 0;
+		_meiChenOtherStatesMach = nullptr;
+		_meiMachineFlag = false;
 		terminateMachine(_safariShadow2Mach);
 
 		switch (_fieldD0) {
@@ -1903,7 +1904,7 @@ void Room204::daemon() {
 				break;
 
 			case 17: {
-				int32 rnd = imath_ranged_rand(1, 4);
+				const int32 rnd = imath_ranged_rand(1, 4);
 				sendWSMessage_10000(1, _meiChenOtherStatesMach, _meiTalksPos3Series, rnd, rnd, 576, _meiTalksPos3Series, rnd, rnd, 0);
 
 				}
@@ -1922,7 +1923,7 @@ void Room204::daemon() {
 				break;
 
 			case 13: {
-				int32 rnd = imath_ranged_rand(1, 4);
+				const int32 rnd = imath_ranged_rand(1, 4);
 				sendWSMessage_10000(1, _meiChenOtherStatesMach, _meiTrekTalkerPos4Series, rnd, rnd, 576, _meiTrekTalkerPos4Series, rnd, rnd, 0);
 
 			} break;
@@ -1983,7 +1984,7 @@ void Room204::daemon() {
 		_field12C_triggerNum = -1;
 		_field130 = 0;
 
-		_acolyteGuardingEntranceMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 2048, 0, triggerMachineByHashCallback, "Acolyte Guarding Entrance");
+		_acolyteGuardingEntranceMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 2048, false, triggerMachineByHashCallback, "Acolyte Guarding Entrance");
 		_acolyteSaysHaltSeries = series_load("ACOLYTE SAYS HALT", -1, nullptr);
 
 		sendWSMessage_10000(1, _acolyteGuardingEntranceMach, _acolyteSaysHaltSeries, 1, 1, 579, _acolyteSaysHaltSeries, 1, 1, 0);
@@ -2095,7 +2096,7 @@ void Room204::daemon() {
 		break;
 
 	case 581:
-		if (_fieldE0 != _fieldE4_walkerDestX) {
+		if (_fieldE0_x != _fieldE4_walkerDestX) {
 			_fieldD4 = 3;
 			_fieldBC_trigger = kernel_trigger_create(582);
 		}
@@ -2118,7 +2119,7 @@ void Room204::daemon() {
 		break;
 
 	case 584:
-		_fieldE0 = _fieldE4_walkerDestX;
+		_fieldE0_x = _fieldE4_walkerDestX;
 		kernel_timing_trigger(1, 578);
 		player_set_commands_allowed(true);
 
@@ -2166,7 +2167,7 @@ void Room204::daemon() {
 	case 596:
 		_field134 = 1;
 		_field10 = 16;
-		_field68 = 1;
+		_ripMachineFlag = true;
 
 		_field18_triggerNum = kernel_trigger_create(597);
 		_G(kernel).trigger_mode = KT_DAEMON;
@@ -2208,7 +2209,7 @@ void Room204::daemon() {
 			break;
 
 		case 2: {
-			int32 rnd = imath_ranged_rand(1, 2);
+			const int32 rnd = imath_ranged_rand(1, 2);
 			sendWSMessage_10000(1, _priestTurningStateMach, _priestWalkerSeries, 1, rnd, 603, _priestWalkerSeries, rnd, rnd, 0);
 			}
 
@@ -2221,9 +2222,9 @@ void Room204::daemon() {
 		break;
 
 	case 605:
-		_field168 = 0;
-		_field170 = 0;
-		_field174 = 0;
+		_checkNode10Fl = false;
+		_checkNode10NegWhoEntry1Fl = false;
+		_checkNode11NegWhoEntry0Fl = false;
 
 		_G(kernel).trigger_mode = KT_PARSE;
 
@@ -2234,15 +2235,15 @@ void Room204::daemon() {
 		break;
 
 	case 606:
-		if (_field164 == 1) {
+		if (_checkNode20Fl) {
 			player_set_commands_allowed(false);
 			kernel_timing_trigger(1, 714, nullptr);
 
-			_field164 = 0;
+			_checkNode20Fl = false;
 			_G(flags)[V056] = 1;
-		} else if (_field168 == 1) {
+		} else if (_checkNode10Fl) {
 			player_set_commands_allowed(false);
-			_field168 = 0;
+			_checkNode10Fl = false;
 			kernel_timing_trigger(1, 660, nullptr);
 		} else {
 			kernel_timing_trigger(1, 607, nullptr);
@@ -2398,7 +2399,7 @@ void Room204::daemon() {
 				DisposePath(_mcMach->walkPath);
 				_mcMach->walkPath = CreateCustomPath(_fieldE4_walkerDestX, 323, -1);
 
-				ws_custom_walk(_mcMach, (_fieldDC == 1) ? 10 : 2, 631, true);
+				ws_custom_walk(_mcMach, _meiMachineFlag ? 10 : 2, 631, true);
 
 			} else if ((_G(game_buff_ptr)->x1 * -1) + 639 <= _G(player_info).x) {
 				hotspot_set_active(_G(currentSceneDef).hotspots, "MEI CHEN", false);
@@ -2412,7 +2413,7 @@ void Room204::daemon() {
 				DisposePath(_mcMach->walkPath);
 				_mcMach->walkPath = CreateCustomPath(_fieldE4_walkerDestX, 323, -1);
 
-				ws_custom_walk(_mcMach, (_fieldDC == 1) ? 10 : 2, 631, true);
+				ws_custom_walk(_mcMach, _meiMachineFlag ? 10 : 2, 631, true);
 
 			}
 
@@ -2428,7 +2429,7 @@ void Room204::daemon() {
 	case 632:
 		deleteMeiCheiHotspot();
 		addMovingMeiHotspot();
-		_fieldE0 = _fieldE4_walkerDestX;
+		_fieldE0_x = _fieldE4_walkerDestX;
 
 		break;
 
@@ -2477,7 +2478,7 @@ void Room204::daemon() {
 
 	case 639:
 		_fieldD4 = 4;
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 		_field108 = 1;
 		kernel_timing_trigger(1, 574, nullptr);
 		_fieldBC_trigger = kernel_trigger_create(588);
@@ -2564,12 +2565,12 @@ void Room204::daemon() {
 		break;
 
 	case 665:
-		digi_play((_field170 == 1) ? "204M26" : "204M27", 1, 255, 666, -1);
+		digi_play(_checkNode10NegWhoEntry1Fl ? "204M26" : "204M27", 1, 255, 666, -1);
 		break;
 
 	case 666:
 		_field10 = 20;
-		digi_play((_field170 == 1) ? "204R48" : "204R49", 1, 255, 667, -1);
+		digi_play(_checkNode10NegWhoEntry1Fl ? "204R48" : "204R49", 1, 255, 667, -1);
 
 		break;
 
@@ -2582,18 +2583,18 @@ void Room204::daemon() {
 
 	case 669:
 		DisposePath(_mcMach->walkPath);
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 		_fieldE4_walkerDestX = 555;
 		_mcMach->walkPath = CreateCustomPath(555, 323, -1);
 		ws_custom_walk(_mcMach, 10, 670, true);
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 
 		break;
 
 	case 670:
 		kernel_timing_trigger(1, 630, nullptr);
-		_fieldDC = 1;
-		_fieldE0 = 555;
+		_meiMachineFlag = true;
+		_fieldE0_x = 555;
 
 		killPriestWalkerMach();
 		deleteMeiCheiHotspot();
@@ -2716,7 +2717,7 @@ void Room204::daemon() {
 
 	case 694:
 		_fieldD4 = 5;
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 		_field108 = 1;
 		kernel_timing_trigger(1, 574, nullptr);
 		_fieldBC_trigger = kernel_trigger_create(695);
@@ -2753,7 +2754,7 @@ void Room204::daemon() {
 
 	case 702:
 		DisposePath(_mcMach->walkPath);
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 		_fieldE4_walkerDestX = 555;
 		_mcMach->walkPath = CreateCustomPath(555, 323, -1);
 		ws_custom_walk(_mcMach, 10, 703, true);
@@ -2764,8 +2765,8 @@ void Room204::daemon() {
 		kernel_timing_trigger(1, 630, nullptr);
 		midi_fade_volume(0, 120);
 		kernel_timing_trigger(120, 1995, nullptr);
-		_fieldDC = 1;
-		_fieldE0 = 555;
+		_meiMachineFlag = true;
+		_fieldE0_x = 555;
 		deleteMeiCheiHotspot();
 		addMovingMeiHotspot();
 		player_set_commands_allowed(true);
@@ -2894,7 +2895,6 @@ void Room204::daemon() {
 
 void Room204::syncGame(Common::Serializer &s) {
 	s.syncAsSint32LE(_dword1A189C);
-	s.syncAsSint32LE(_dword1A1898);
 }
 
 void Room204::initWalkerSeries() {
@@ -2916,8 +2916,7 @@ void Room204::addMovingMeiHotspot() {
 }
 
 void Room204::deleteMalletHotspot() {
-	HotSpotRec *spot = nullptr;
-	for (spot = _G(currentSceneDef).hotspots; spot != nullptr; spot = spot->next) {
+	for (HotSpotRec *spot = _G(currentSceneDef).hotspots; spot != nullptr; spot = spot->next) {
 		if (scumm_stricmp(spot->vocab, "MALLET")) {
 			_G(currentSceneDef).hotspots = hotspot_delete_record(_G(currentSceneDef).hotspots, spot);
 			break;
@@ -2967,22 +2966,22 @@ void Room204::setWalkerDestX() {
 
 	if (_G(player_info).x > 0 && _G(player_info).x <= 639) {
 		_fieldE4_walkerDestX = 555;
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 	}
 
 	if (_G(player_info).x >= 640 && _G(player_info).x <= 959) {
 		_fieldE4_walkerDestX = 800;
-		_fieldDC = 1;
+		_meiMachineFlag = true;
 	}
 
 	if (_G(player_info).x >= 960 && _G(player_info).x <= 1279) {
 		_fieldE4_walkerDestX = 1245;
-		_fieldDC = 0;
+		_meiMachineFlag = false;
 	}
 
 	if (_G(player_info).x >= 1280) {
 		_fieldE4_walkerDestX = 1494;
-		_fieldDC = 0;
+		_meiMachineFlag = false;
 	}
 }
 
@@ -3002,14 +3001,14 @@ void Room204::deleteMeiCheiHotspot() {
 }
 
 void Room204::conv204a() {
-	int32 node = conv_current_node();
-	int32 entry = conv_current_entry();
-	int32 who = conv_whos_talking();
+	const int32 node = conv_current_node();
+	const int32 entry = conv_current_entry();
+	const int32 who = conv_whos_talking();
 
 	if (node == 20)
-		_field164 = 1;
+		_checkNode20Fl = true;
 	else if (node == 10 || node == 11)
-		_field168 = 1;
+		_checkNode10Fl = true;
 
 	if (_G(kernel).trigger == 1) {
 		if (who == 1) {
@@ -3017,10 +3016,10 @@ void Room204::conv204a() {
 		} else if (who <= 0) {
 			_field134 = 1;
 			if (node == 10 && entry == 1)
-				_field170 = 1;
+				_checkNode10NegWhoEntry1Fl = true;
 
 			if (node == 11 && entry == 0)
-				_field174 = 1;
+				_checkNode11NegWhoEntry0Fl = true;
 		}
 
 		conv_resume(conv_get_handle());

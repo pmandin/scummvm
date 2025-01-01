@@ -68,7 +68,7 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 	//GAMEl("karliknos", "???", 3225385, Common::LT_LIT),
 
 #undef SUPPORT_STATUS
-#define SUPPORT_STATUS ADGF_TESTING
+#define SUPPORT_STATUS ADGF_NO_FLAGS
 	// Ну, погоди! Выпуск 3. Песня для зайца
 	// 2003/12/11. K D-Lab
 	GAME("nupogodi3", "7394a5d28590680cfeb6a037101a9c81", 1675230,
@@ -117,7 +117,7 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 			"qd_game.exe", "233ac221814568e5c278f952e76495ce", 757760),
 
 #undef SUPPORT_STATUS
-#define SUPPORT_STATUS ADGF_TESTING
+#define SUPPORT_STATUS ADGF_NO_FLAGS
 	// Маски-шоу
 	// 2005/12/16. Lazy Games
 	GAME("maski", "9a40b7491cac0dd80657cfe52e28ea74", 23128230,
@@ -152,7 +152,7 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 			"qd_game.exe", "a56cb058b46e47754019652d27d974b3", 962560),
 
 #undef SUPPORT_STATUS
-#define SUPPORT_STATUS ADGF_TESTING
+#define SUPPORT_STATUS ADGF_NO_FLAGS
 	// Три маленькие белые мышки. День рождения морской крысы
 	// 2007/12/27. Lazy Games
 	GAME("3mice2", "93d8311ff9c00453f25192743c9e98d9", 8176962,
@@ -163,8 +163,8 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 			"demo1.exe", "ffe20c2dbb131b01fccc1211a41e76e7", 962560),
 
 	// Były Sobie Myszki Trzy: Urodzinowe Śledztwo
-	//GAMEl("3mice2", "???", 10022470,
-	//		"qd_game.exe", "???", 917504, Common::PL_POL),
+	GAMEl("3mice2", "9128a0d801e547cb651c5fc7e09bee04", 8182142,
+			"qd_game.exe", "ffe20c2dbb131b01fccc1211a41e76e7", 962560, Common::PL_POL),
 
 	{ // Demo2, original
 	  // Video is in MP4 format which is not supported

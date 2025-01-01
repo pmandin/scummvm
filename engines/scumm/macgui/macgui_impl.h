@@ -35,16 +35,13 @@
 #include "graphics/font.h"
 #include "graphics/surface.h"
 
-// Use negative values for these. Zero and upwards are reserved for widget IDs.
-
-#define kDialogQuit           -1
-#define kDialogWantsAttention -2
-
 class OSystem;
 
 namespace Graphics {
 struct Surface;
+class Palette;
 class MacWindowManager;
+class MacMenu;
 }
 
 namespace Scumm {
@@ -125,11 +122,16 @@ public:
 		kWidgetCheckbox,
 		kWidgetStaticText,
 		kWidgetEditText,
-		kWidgetPicture,
+		kWidgetIcon,
+		kWidgetImage,
 		kWidgetSlider,
 		kWidgetListBox,
-		kWidgetPictureSlider
+		kWidgetImageSlider,
+		kWidgetPopUpMenu
 	};
+
+	virtual void onMenuOpen();
+	virtual void onMenuClose();
 
 protected:
 	ScummEngine *_vm = nullptr;
@@ -141,6 +143,7 @@ protected:
 	Common::Path _resourceFile;
 
 	bool _paletteDirty = false;
+	bool _suspendPaletteUpdates = false;
 
 	bool _menuIsActive = false;
 	bool _cursorWasVisible = false;
@@ -216,9 +219,12 @@ protected:
 
 	virtual bool getFontParams(FontId fontId, int &id, int &size, int &slant) const;
 
-	Common::String getDialogString(Common::SeekableReadStream *res, int len);
-
 	virtual bool handleMenu(int id, Common::String &name);
+
+	// For older games, there is no problem with displaying the Mac GUI and
+	// the game at the same time. For newer, there is.
+	virtual void saveScreen() {}
+	virtual void restoreScreen() {}
 
 	virtual void runAboutDialog() = 0;
 	virtual bool runOpenDialog(int &saveSlotToHandle);
@@ -228,12 +234,16 @@ protected:
 
 	bool runOkCancelDialog(Common::String text);
 
-	bool readStrings();
+	virtual bool readStrings();
 	void parseSTRSBlock(uint8 *strsData, const MacSTRSParsingEntry *parsingTable, int parsingTableSize);
+
+	void addMenu(Graphics::MacMenu *menu, int menuId);
 
 	// These are non interactable, no point in having them as widgets for now...
 	void drawFakePathList(MacDialogWindow *window, Common::Rect r, const char *text);
 	void drawFakeDriveLabel(MacDialogWindow *window, Common::Rect r, const char *text);
+
+	Graphics::Surface *createRemappedSurface(const Graphics::Surface *surface, const byte *palette, int colorCount);
 
 public:
 	class MacGuiObject {
@@ -265,6 +275,7 @@ public:
 		bool _fullRedraw = false;
 
 		Common::String _text;
+		int _oldValue = 0;
 		int _value = 0;
 
 		int drawText(Common::String text, int x, int y, int w, uint32 fg = 0, uint32 bg = 0, Graphics::TextAlign align = Graphics::kTextAlignLeft, bool wordWrap = false, int deltax = 0) const;
@@ -294,11 +305,19 @@ public:
 		virtual void setValue(int value);
 		int getValue() const { return _value; }
 
+		void rememberValue() {
+			_oldValue = _value;
+		}
+
+		bool valueHasChanged() {
+			return _oldValue != _value;
+		}
+
 		Common::String getText() const;
 
 		virtual bool useBeamCursor() { return false; }
 		virtual bool findWidget(int x, int y) const;
-		virtual bool shouldDeferAction() { return false; }
+		virtual bool reactsToKeyDown() { return false; }
 
 		virtual void draw(bool drawFocused = false) = 0;
 
@@ -326,7 +345,7 @@ public:
 	public:
 		MacButton(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, Common::String text, bool enabled) : MacWidget(window, bounds, text, enabled) {}
 
-		void draw(bool drawFocused = false);
+		void draw(bool drawFocused = false) override;
 
 		bool handleMouseUp(Common::Event &event) { return true; }
 	};
@@ -338,9 +357,9 @@ public:
 	public:
 		MacCheckbox(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, Common::String text, bool enabled);
 
-		bool findWidget(int x, int y) const;
-		void draw(bool drawFocused = false);
-		bool handleMouseUp(Common::Event &event);
+		bool findWidget(int x, int y) const override;
+		void draw(bool drawFocused = false) override;
+		bool handleMouseUp(Common::Event &event) override;
 	};
 
 	// The dialogs add texts as disabled, but we don't want it to be drawn
@@ -352,7 +371,7 @@ public:
 		uint32 _fg;
 		uint32 _bg;
 		Graphics::TextAlign _alignment = Graphics::kTextAlignLeft;
-		bool _wordWrap = false;
+		bool _wordWrap = true;
 
 	public:
 		MacStaticText(
@@ -364,8 +383,8 @@ public:
 			_bg = _white;
 		}
 
-		void getFocus() {}
-		void loseFocus() {}
+		void getFocus() override {}
+		void loseFocus() override {}
 
 		void setWordWrap(bool wordWrap) { _wordWrap = wordWrap; }
 
@@ -384,7 +403,7 @@ public:
 			}
 		}
 
-		void draw(bool drawFocused = false);
+		void draw(bool drawFocused = false) override;
 	};
 
 	class MacEditText : public MacWidget {
@@ -419,7 +438,7 @@ public:
 
 		bool useBeamCursor() override { return true; }
 		bool findWidget(int x, int y) const override;
-		bool shouldDeferAction() override { return true; }
+		bool reactsToKeyDown() override { return true; }
 
 		void draw(bool drawFocused = false) override;
 
@@ -430,17 +449,19 @@ public:
 		void handleMouseMove(Common::Event &event) override;
 	};
 
-	class MacPicture : public MacWidget {
+	class MacImage : public MacWidget {
 	private:
-		Graphics::Surface *_picture = nullptr;
+		Graphics::Surface *_image = nullptr;
+		Graphics::Surface *_mask = nullptr;
 
 	public:
-		MacPicture(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, int id, bool enabled);
-		~MacPicture();
+		MacImage(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, Graphics::Surface *surface, Graphics::Surface *mask, bool enabled);
+		~MacImage();
 
-		Graphics::Surface *getPicture() const { return _picture; }
+		Graphics::Surface *getImage() const { return _image; }
+		Graphics::Surface *getMask() const { return _mask; }
 
-		void draw(bool drawFocused = false);
+		void draw(bool drawFocused = false) override;
 	};
 
 	class MacSliderBase : public MacWidget {
@@ -452,6 +473,11 @@ public:
 		int _handlePos = -1;
 		int _grabOffset = -1;
 
+		Common::HashMap<int, int> _posToValue;
+		Common::HashMap<int, int> _valueToPos;
+
+		int calculateValueFromPos(int pos) const;
+		int calculatePosFromValue(int value) const;
 		int calculateValueFromPos() const;
 		int calculatePosFromValue() const;
 
@@ -461,10 +487,22 @@ public:
 			_minValue(minValue), _maxValue(maxValue),
 			_minPos(minPos), _maxPos(maxPos) {}
 
-		void getFocus() {}
-		void loseFocus() {}
+		virtual ~MacSliderBase() {
+			_posToValue.clear();
+			_valueToPos.clear();
+		}
 
-		void setValue(int value);
+		void getFocus() override {}
+		void loseFocus() override {}
+
+		int getMinValue() const { return _minValue; }
+		int getMaxValue() const { return _maxValue; }
+		void setValue(int value) override;
+
+		void addStop(int pos, int value) {
+			_posToValue[pos] = value;
+			_valueToPos[value] = pos;
+		}
 	};
 
 	class MacSlider : public MacSliderBase {
@@ -499,42 +537,49 @@ public:
 		bool isScrollable() const { return (_maxValue - _minValue) > 0; }
 		int getPageSize() const { return _pageSize; }
 
-		bool findWidget(int x, int y) const;
-		void draw(bool drawFocued = false);
+		bool findWidget(int x, int y) const override;
+		void draw(bool drawFocued = false) override;
 		void redrawHandle(int oldValue, int newValue);
 
-		void handleMouseDown(Common::Event &event);
-		bool handleMouseUp(Common::Event &event);
-		void handleMouseMove(Common::Event &event);
-		void handleMouseHeld();
-		void handleWheelUp();
-		void handleWheelDown();
+		void handleMouseDown(Common::Event &event) override;
+		bool handleMouseUp(Common::Event &event) override;
+		void handleMouseMove(Common::Event &event) override;
+		void handleMouseHeld() override;
+		void handleWheelUp() override;
+		void handleWheelDown() override;
 	};
 
-	class MacPictureSlider : public MacSliderBase {
+	class MacImageSlider : public MacSliderBase {
 	private:
-		MacPicture *_background;
-		MacPicture *_handle;
+		Graphics::Surface *_background;
+		MacImage *_handle;
 		int _minX;
 		int _maxX;
+		bool _freeBackground = false;
+		bool _snapWhileDragging = false;
 
 		void eraseHandle();
 		void drawHandle();
 
 	public:
-		 MacPictureSlider(MacGuiImpl::MacDialogWindow *window, MacPicture *background, MacPicture *handle, bool enabled, int minX, int maxX, int minValue, int maxValue, int leftMargin, int rightMargin)
+		 MacImageSlider(MacGuiImpl::MacDialogWindow *window, MacImage *background, MacImage *handle, bool enabled, int minX, int maxX, int minValue, int maxValue, int leftMargin, int rightMargin)
 			: MacSliderBase(window, background->getBounds(), minValue, maxValue, minX + leftMargin, maxX - rightMargin, enabled),
-			_background(background), _handle(handle), _minX(minX),
-			_maxX(maxX) {}
+			_background(background->getImage()), _handle(handle), _minX(minX), _maxX(maxX) {}
+		MacImageSlider(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, MacImage *handle, bool enabled, int minX, int maxX, int minValue, int maxValue);
+		~MacImageSlider();
 
-		bool findWidget(int x, int y) const;
-		void draw(bool drawFocused = false);
+		void setValue(int value) override;
 
-		void handleMouseDown(Common::Event &event);
-		bool handleMouseUp(Common::Event &event);
-		void handleMouseMove(Common::Event &event);
-		void handleWheelUp();
-		void handleWheelDown();
+		bool findWidget(int x, int y) const override;
+		void draw(bool drawFocused = false) override;
+
+		void setSnapWhileDragging(bool snap) { _snapWhileDragging = snap; }
+
+		void handleMouseDown(Common::Event &event) override;
+		bool handleMouseUp(Common::Event &event) override;
+		void handleMouseMove(Common::Event &event) override;
+		void handleWheelUp() override;
+		void handleWheelDown() override;
 	};
 
 	class MacListBox : public MacWidget {
@@ -551,36 +596,65 @@ public:
 		MacListBox(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, Common::StringArray texts, bool enabled, bool contentUntouchable = true);
 		~MacListBox();
 
-		void getFocus() {}
-		void loseFocus() {}
+		void getFocus() override {}
+		void loseFocus() override {}
 
-		void setValue(int value) {
+		void setValue(int value) override {
 			if (value != _value) {
 				_value = value;
 				updateTexts();
 			}
 		}
 
-		int getValue() {
-			return _value;
-		}
+		bool findWidget(int x, int y) const override;
+		void setRedraw(bool fullRedraw = false) override;
+		void draw(bool drawFocused = false) override;
 
-		bool findWidget(int x, int y) const;
-		void setRedraw(bool fullRedraw = false);
-		void draw(bool drawFocused = false);
+		void handleMouseDown(Common::Event &event) override;
+		bool handleDoubleClick(Common::Event &event) override;
+		bool handleMouseUp(Common::Event &event) override;
+		void handleMouseMove(Common::Event &event) override;
+		void handleMouseHeld() override;
+		void handleWheelUp() override;
+		void handleWheelDown() override;
+		bool handleKeyDown(Common::Event &event) override;
+	};
 
-		void handleMouseDown(Common::Event &event);
-		bool handleDoubleClick(Common::Event &event);
-		bool handleMouseUp(Common::Event &event);
-		void handleMouseMove(Common::Event &event);
-		void handleMouseHeld();
-		void handleWheelUp();
-		void handleWheelDown();
-		bool handleKeyDown(Common::Event &event);
+	class MacPopUpMenu : public MacWidget {
+	private:
+		Common::StringArray _texts;
+		int _textWidth;
+		bool _menuVisible = false;
+		int _selected;
+		Graphics::Surface _popUpBackground;
+		Common::Rect _popUpBounds;
+
+	public:
+		MacPopUpMenu(MacGuiImpl::MacDialogWindow *window, Common::Rect bounds, Common::String text, int textWidth, Common::StringArray texts, bool enabled);
+		~MacPopUpMenu();
+
+		bool findWidget(int x, int y) const override;
+		void draw(bool drawFocused = false) override;
+
+		void handleMouseDown(Common::Event &event) override;
+		bool handleMouseUp(Common::Event &event) override;
+		void handleMouseMove(Common::Event &event) override;
+	};
+
+	enum MacDialogEventType {
+		kDialogClick,
+		kDialogValueChange,
+		kDialogKeyDown
+	};
+
+	struct MacDialogEvent {
+		MacWidget *widget;
+		MacDialogEventType type;
 	};
 
 	class MacDialogWindow {
 	private:
+		Common::Queue<MacDialogEvent> _eventQueue;
 		uint32 _black;
 		uint32 _white;
 
@@ -623,6 +697,9 @@ public:
 
 		Common::StringArray _substitutions;
 		Common::Array<Common::Rect> _dirtyRects;
+		bool _dirtyPalette = false;
+
+		void queueEvent(MacGuiImpl::MacWidget *widget, MacGuiImpl::MacDialogEventType type);
 
 		void copyToScreen(Graphics::Surface *s = nullptr) const;
 
@@ -641,10 +718,14 @@ public:
 		bool isVisible() const { return _visible; }
 
 		void show();
-		int runDialog(Common::Array<int> &deferredActionIds);
+		bool runDialog(MacDialogEvent &dialogEvent);
+		void delayAndUpdate();
 		void updateCursor();
 
-		MacWidget *getWidget(MacWidgetType type, int nr = 0) const;
+		uint getNumWidgets() const { return _widgets.size(); }
+
+		MacWidget *getWidget(uint nr) const;
+		MacWidget *getWidget(MacWidgetType type, uint nr = 0) const;
 
 		void setDefaultWidget(MacWidget *widget) { _defaultWidget = widget; }
 		MacWidget *getDefaultWidget() const { return _defaultWidget; }
@@ -661,10 +742,16 @@ public:
 		MacGuiImpl::MacCheckbox *addCheckbox(Common::Rect bounds, Common::String text, bool enabled);
 		MacGuiImpl::MacStaticText *addStaticText(Common::Rect bounds, Common::String text, bool enabled, Graphics::TextAlign alignment = Graphics::kTextAlignLeft);
 		MacGuiImpl::MacEditText *addEditText(Common::Rect bounds, Common::String text, bool enabled);
-		MacGuiImpl::MacPicture *addPicture(Common::Rect bounds, int id, bool enabled);
+		MacGuiImpl::MacImage *addIcon(int x, int y, int id, bool enabled);
+		MacGuiImpl::MacImage *addPicture(Common::Rect bounds, int id, bool enabled);
+		MacGuiImpl::
 		MacGuiImpl::MacSlider *addSlider(int x, int y, int h, int minValue, int maxValue, int pageSize, bool enabled);
-		MacGuiImpl::MacPictureSlider *addPictureSlider(int backgroundId, int handleId, bool enabled, int minX, int maxX, int minValue, int maxValue, int leftMargin = 0, int rightMargin = 0);
+		MacGuiImpl::MacImageSlider *addImageSlider(int backgroundId, int handleId, bool enabled, int minX, int maxX, int minValue, int maxValue, int leftMargin = 0, int rightMargin = 0);
+		MacGuiImpl::MacImageSlider *addImageSlider(Common::Rect bounds, MacImage *handle, bool enabled, int minX, int maxX, int minValue, int maxValue);
 		MacGuiImpl::MacListBox *addListBox(Common::Rect bounds, Common::StringArray texts, bool enabled, bool contentUntouchable = false);
+		MacGuiImpl::MacPopUpMenu *addPopUpMenu(Common::Rect bounds, Common::String text, int textWidth, Common::StringArray texts, bool enabled);
+
+		void addControl(Common::Rect bounds, uint16 controlId);
 
 		void addSubstitution(Common::String text) { _substitutions.push_back(text); }
 		void replaceSubstitution(int nr, Common::String text) { _substitutions[nr] = text; }
@@ -681,6 +768,7 @@ public:
 
 		void drawDottedHLine(int x0, int y, int x1);
 		void fillPattern(Common::Rect r, uint16 pattern, bool fillBlack = true, bool fillWhite = true);
+		void drawSprite(const MacImage *image, int x, int y);
 		void drawSprite(const Graphics::Surface *sprite, int x, int y);
 		void drawSprite(const Graphics::Surface *sprite, int x, int y, Common::Rect clipRect);
 		void drawTexts(Common::Rect r, const TextLine *lines, bool inverse = false);
@@ -696,8 +784,11 @@ public:
 	virtual int getNumColors() const = 0;
 
 	Graphics::Surface *surface() { return _surface; }
-	uint32 getBlack() const;
-	uint32 getWhite() const;
+	virtual uint32 getBlack() const;
+	virtual uint32 getWhite() const;
+
+	uint32 _macWhite;
+	uint32 _macBlack;
 
 	virtual const Common::String name() const = 0;
 
@@ -712,12 +803,13 @@ public:
 	virtual bool handleEvent(Common::Event event);
 
 	static void menuCallback(int id, Common::String &name, void *data);
-	virtual bool initialize();
+	bool initialize();
 	void updateWindowManager();
 
 	const Graphics::Font *getFont(FontId fontId);
 	virtual const Graphics::Font *getFontByScummId(int32 id) = 0;
 
+	bool loadIcon(int id, Graphics::Surface **icon, Graphics::Surface **mask);
 	Graphics::Surface *loadPict(int id);
 
 	virtual bool isVerbGuiActive() const { return false; }
@@ -725,8 +817,8 @@ public:
 	virtual void resetAfterLoad() = 0;
 	virtual void update(int delta) = 0;
 
-	bool runQuitDialog();
-	bool runRestartDialog();
+	virtual bool runQuitDialog();
+	virtual bool runRestartDialog();
 
 	virtual void setupCursor(int &width, int &height, int &hotspotX, int &hotspotY, int &animate) = 0;
 
@@ -735,8 +827,11 @@ public:
 	virtual void initTextAreaForActor(Actor *a, byte color) {}
 	virtual void printCharToTextArea(int chr, int x, int y, int color) {}
 
+	void setMacGuiColors(Graphics::Palette &palette);
+
 	MacDialogWindow *createWindow(Common::Rect bounds, MacDialogWindowStyle style = kWindowStyleNormal, MacDialogMenuStyle menuStyle = kMenuStyleDisabled);
 	MacDialogWindow *createDialog(int dialogId);
+	MacDialogWindow *createDialog(int dialogId, Common::Rect bounds);
 	void drawBanner(char *message);
 	void undrawBanner();
 

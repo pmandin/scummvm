@@ -41,7 +41,7 @@ class TTMEnviro : public ScriptParserData {
 public:
 	TTMEnviro() : _totalFrames(330), _enviro(0), _creditScrollMeasure(0),
 			_creditScrollYOffset(0), _xOff(0), _yOff(0), _xScroll(0), _yScroll(0),
-			ScriptParserData() {
+			_cdsSeqNum(-1), _cdsJumped(false), _cdsDelay(0), ScriptParserData() {
 		ARRAYCLEAR(_scriptPals);
 	}
 
@@ -65,11 +65,14 @@ public:
 	int16 _xScroll;
 	int16 _yScroll;
 	Common::SharedPtr<SoundRaw> _soundRaw;
+	int16 _cdsSeqNum; // The GOTO target to use in the CDS script (Willy Beamish talkie)
+	int16 _cdsDelay;
+	bool _cdsJumped;
 };
 
 enum TTMRunType {
 	kRunTypeStopped = 0,
-	kRunType1 = 1,
+	kRunTypeKeepGoing = 1,
 	kRunTypeMulti = 2,
 	kRunTypeTimeLimited = 3,
 	kRunTypeFinished = 4,
@@ -126,7 +129,7 @@ public:
 	static Common::String readTTMStringVal(Common::SeekableReadStream *scr);
 
 protected:
-	void handleOperation(TTMEnviro &env, TTMSeq &seq, uint16 op, byte count, const int16 *ivals, const Common::String &sval, const Common::Array<Common::Point> &pts);
+	bool handleOperation(TTMEnviro &env, TTMSeq &seq, uint16 op, byte count, const int16 *ivals, const Common::String &sval, const Common::Array<Common::Point> &pts);
 	int32 findGOTOTarget(const TTMEnviro &env, const TTMSeq &seq, int16 frame);
 	void doWipeOp(uint16 code, const TTMEnviro &env, const TTMSeq &seq, const Common::Rect &r);
 	int16 doOpInitCreditScroll(const Image *img);

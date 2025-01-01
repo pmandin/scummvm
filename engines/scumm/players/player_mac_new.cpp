@@ -176,7 +176,7 @@ uint32 fixMul(uint32 fx1, uint32 fx2) {
 
 MacPlayerAudioStream::MacPlayerAudioStream(VblTaskClientDriver *drv, uint32 scummVMOutputrate, bool stereo, bool interpolate, bool internal16Bit) : Audio::AudioStream(), _drv(drv),
 	_vblSmpQty(0), _vblSmpQtyRem(0), _frameSize((stereo ? 2 : 1) * (internal16Bit ? 2 : 1)), _vblCountDown(0), _vblCountDownRem(0), _outputRate(scummVMOutputrate),
-		_vblCbProc(nullptr), _numGroups(1), _isStereo(stereo), _interp(interpolate), _smpInternalSize(internal16Bit ? 2 : 1), _scale(1) {
+		_vblCbProc(nullptr), _numGroups(1), _isStereo(stereo), _interp(interpolate), _smpInternalSize(internal16Bit ? 2 : 1), _upscale(0), _downscale(0) {
 	assert(_drv);
 	_buffers = new SmpBuffer[2];
 	_vblSmpQty = (_outputRate << 16) / VBL_UPDATE_RATE;
@@ -258,7 +258,7 @@ void MacPlayerAudioStream::setMasterVolume(Audio::Mixer::SoundType type, uint16 
 int MacPlayerAudioStream::readBuffer(int16 *buffer, const int numSamples) {
 	static const char errFnNames[2][8] = {"Buffers", "Drivers"};
 	int errNo = -1;
-	for (int i = 0; i < _numGroups && errNo == -1; ++i) 
+	for (int i = 0; i < _numGroups && errNo == -1; ++i)
 		errNo = !_buffers[i].size ? 0 : (_buffers[i].rateConvAcc == -1 ? 1 : -1);
 	if (errNo != -1)
 		error("%s(): init%s() must be called before playback", __FUNCTION__, errFnNames[errNo]);
@@ -287,14 +287,14 @@ int MacPlayerAudioStream::readBuffer(int16 *buffer, const int numSamples) {
 			int diff = smpN - _buffers[ii].lastL;
 			if (diff && _buffers[ii].rateConvAcc && interp)
 				diff = (diff * _buffers[ii].rateConvAcc) >> RATECNV_BIT_PRECSN;
-			smpL += (int32)((_buffers[ii].lastL + diff) * (_buffers[ii].volume * _scale / numch));
+			smpL += (int32)((_buffers[ii].lastL + diff) * ((_buffers[ii].volume << _upscale) / numch));
 
 			if (_isStereo) {
 				smpN = _smpInternalSize == 2 ? *reinterpret_cast<int16*>(&_buffers[ii].pos[2]) : _buffers[ii].pos[1];
 				diff = smpN - _buffers[ii].lastR;
 				if (diff && _buffers[ii].rateConvAcc && interp)
 					diff = (diff * _buffers[ii].rateConvAcc) >> RATECNV_BIT_PRECSN;
-				smpR += (int32)((_buffers[ii].lastR + diff) * (_buffers[ii].volume * _scale / numch));
+				smpR += (int32)((_buffers[ii].lastR + diff) * ((_buffers[ii].volume << _upscale) / numch));
 			}
 		}
 
@@ -331,9 +331,9 @@ int MacPlayerAudioStream::readBuffer(int16 *buffer, const int numSamples) {
 			}
 		}
 
-		*buffer++ = CLIP<int32>((smpL / _numGroups) >> 2, -32768, 32767);
+		*buffer++ = CLIP<int32>((smpL / _numGroups) >> (2 + _downscale), -32768, 32767);
 		if (_isStereo)
-			*buffer++ = CLIP<int32>((smpR / _numGroups) >> 2, -32768, 32767);
+			*buffer++ = CLIP<int32>((smpR / _numGroups) >> (2 + _downscale), -32768, 32767);
 	}
 	return numSamples;
 }
@@ -721,7 +721,7 @@ bool MacSndChannel::playDoubleBuffer(byte numChan, byte bitsPerSample, uint32 ra
 		return false;
 	}
 
-	_dblBuff = new DoubleBufferIntern(getHandle(),  1024, bitsPerSample, numChan, callback, numMixChan);	
+	_dblBuff = new DoubleBufferIntern(getHandle(),  1024, bitsPerSample, numChan, callback, numMixChan);
 	setupRateConv(_drv->getStatus().deviceRate, 0x10000, rate, false);
 	_duration = _tmrInc = _tmrPos = _loopSt = _loopEnd = _rcPos = _smpWtAcc = _phase = 0;
 
@@ -1265,13 +1265,23 @@ MacSndResource::MacSndResource(uint32 id, Common::SeekableReadStream *&in, Commo
 	_snd.enc = in->readByte();
 	_snd.baseFreq = in->readByte();
 
-	byte *buff = new byte[_snd.len];
-	if (in->read(buff, _snd.len) != _snd.len)
+	uint32 realSize = in->size() - in->pos();
+	if (_snd.len > realSize) {
+		debug(6, "%s(): Invalid data in resource '%d' - Fixing out of range samples count (samples buffer size '%d', samples count '%d')", __FUNCTION__, id, realSize, _snd.len);
+		_snd.len = realSize;
+	}
+	if ((int32)_snd.loopend > (int32)realSize) {
+		debug(6, "%s(): Invalid data in resource '%d' - Fixing out of range loop end (samples buffer size '%d', loop end '%d')", __FUNCTION__, id, realSize, _snd.loopend);
+		_snd.loopend = realSize;
+	}
+
+	byte *buff = new byte[realSize];
+	if (in->read(buff, realSize) != realSize)
 		error("%s(): Data error", __FUNCTION__);
 	_snd.data = Common::SharedPtr<const byte>(buff, Common::ArrayDeleter<const byte>());
 }
 
-MacSndResource::MacSndResource(uint32 id, const byte *in) : _id(id) {
+MacSndResource::MacSndResource(uint32 id, const byte *in, uint32 size) : _id(id) {
 	in += 4;
 	_snd.len = READ_BE_UINT32(in);
 	in += 4;
@@ -1284,8 +1294,18 @@ MacSndResource::MacSndResource(uint32 id, const byte *in) : _id(id) {
 	_snd.enc = *in++;
 	_snd.baseFreq = *in++;
 
-	byte *buff = new byte[_snd.len];
-	memcpy(buff, in, _snd.len);
+	size -= 22;
+	if (_snd.len > size) {
+		debug(6, "%s(): Invalid data in resource '%d' - Fixing out of range samples count (samples buffer size '%d', samples count '%d')", __FUNCTION__, id, size, _snd.len);
+		_snd.len = size;
+	}
+	if ((int32)_snd.loopend > (int32)size) {
+		debug(6, "%s(): Invalid data in resource '%d' - Fixing out of range loop end (samples buffer size '%d', loop end '%d')", __FUNCTION__, id, size, _snd.loopend);
+		_snd.loopend = size;
+	}
+
+	byte *buff = new byte[size];
+	memcpy(buff, in, size);
 	_snd.data = Common::SharedPtr<const byte>(buff, Common::ArrayDeleter<const byte>());
 }
 

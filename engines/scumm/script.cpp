@@ -593,6 +593,13 @@ int ScummEngine::readVar(uint var) {
 			return !ConfMan.getBool("subtitles");
 		}
 
+		// WORKAROUND: The Macintosh version version of MI2 first sets the
+		// machine speed to 2, then immediately to 1, in script 1. This affects
+		// at the very least the number of bats in the Scabb Island swamp.
+		if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh && var == VAR_MACHINE_SPEED && enhancementEnabled(kEnhRestoredContent)) {
+			return 2;
+		}
+
 #if defined(USE_ENET) && defined(USE_LIBCURL)
 		if (_enableHECompetitiveOnlineMods) {
 			// HACK: If we're reading var586, competitive mods enabled, playing online,
@@ -1041,6 +1048,16 @@ void ScummEngine::runEntryScript() {
 	}
 	if (VAR_ENTRY_SCRIPT2 != 0xFF && VAR(VAR_ENTRY_SCRIPT2))
 		runScript(VAR(VAR_ENTRY_SCRIPT2), 0, 0, nullptr);
+
+	// WORKAROUND: The Macintosh version of MI2 doesn't have any bats in the
+	// Scabb Island swamp, because that line has been removed from the entry
+	// script for room 20. We re-insert that call here.
+	if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh &&
+		_currentRoom == 20 && enhancementEnabled(kEnhRestoredContent)) {
+		int args[NUM_SCRIPT_LOCAL];
+		memset(args, 0, sizeof(args));
+		runScript(215, false, false, args);
+	}
 }
 
 void ScummEngine::runQuitScript() {

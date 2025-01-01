@@ -29,7 +29,9 @@
 
 namespace Scumm {
 
+#ifdef ENABLE_SCUMM
 class ScummEngine;
+#endif
 
 class BaseScummFile : public Common::SeekableReadStream {
 protected:
@@ -60,14 +62,16 @@ public:
 #endif
 };
 
+#ifdef ENABLE_SCUMM
+
 class ScummFile : public BaseScummFile {
 protected:
-	int32	_subFileStart;
+	int64	_subFileStart;
 	int32	_subFileLen;
 	bool	_myEos; // Have we read past the end of the subfile?
 	bool    _isMac;
 
-	void setSubfileRange(int32 start, int32 len);
+	void setSubfileRange(int64 start, int32 len);
 	void resetSubfile();
 
 public:
@@ -84,6 +88,8 @@ public:
 	bool seek(int64 offs, int whence = SEEK_SET) override;
 	uint32 read(void *dataPtr, uint32 dataSize) override;
 };
+
+#endif
 
 class ScummDiskImage : public BaseScummFile {
 private:
@@ -139,6 +145,8 @@ struct SteamIndexFile {
 	int32 len;
 };
 
+#ifdef ENABLE_SCUMM
+
 class ScummSteamFile : public ScummFile {
 private:
 	const SteamIndexFile &_indexFile;
@@ -149,6 +157,30 @@ public:
 
 	bool open(const Common::Path &filename) override;
 };
+
+struct PAKFile {
+	uint64 start;
+	uint32 len;
+};
+
+typedef Common::HashMap<Common::String, PAKFile> PAKFileHashMap;
+
+class ScummPAKFile : public ScummFile {
+private:
+	PAKFileHashMap _pakIndex;
+
+	void readIndex(const Common::Path &containerFile, bool isFT);
+
+public:
+	ScummPAKFile(const ScummEngine *vm, bool indexFiles = true);
+	~ScummPAKFile() override { _pakIndex.clear(); }
+
+	bool openSubFile(const Common::Path &filePath) override;
+	PAKFile *getPAKFileIndex(Common::String fileName);
+	void setPAKFileIndex(Common::String fileName, const PAKFile &pakFile);
+};
+
+#endif
 
 } // End of namespace Scumm
 

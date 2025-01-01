@@ -20,6 +20,7 @@
  */
 
 #include "dgds/ads.h"
+#include "dgds/globals.h"
 
 namespace Dgds {
 
@@ -131,11 +132,6 @@ bool ADSInterpreter::load(const Common::String &filename) {
 	return true;
 }
 
-static const uint16 ADS_SEQ_OPCODES[] = {
-	0x2000, 0x2005, 0x2010, 0x2015, 0x4000, 0x4010, 0x1330,
-	0x1340, 0x1360, 0x1370, 0x1320, 0x1310, 0x1350
-};
-
 bool ADSInterpreter::updateSeqTimeAndFrame(const TTMEnviro *env, Common::SharedPtr<TTMSeq> seq) {
 	if (seq->_timeInterval != 0) {
 		uint32 now = DgdsEngine::getInstance()->getThisFrameMs();
@@ -162,16 +158,31 @@ bool ADSInterpreter::updateSeqTimeAndFrame(const TTMEnviro *env, Common::SharedP
 	return true;
 }
 
+static const uint16 ADS_USED_SEQ_OPCODES[] = {
+	0x2000, 0x2005, 0x2010, 0x2015, 0x4000, 0x4010, 0x1330,
+	0x1340, 0x1360, 0x1370, 0x1320, 0x1310, 0x1350
+};
+
 void ADSInterpreter::findUsedSequencesForSegment(int idx) {
 	_adsData->_usedSeqs[idx].clear();
 	int64 startoff = _adsData->scr->pos();
 	uint16 opcode = 0;
 	// Skip the segment number.
 	int16 segno = _adsData->scr->readUint16LE();
+
+	DgdsGameId gameId = DgdsEngine::getInstance()->getGameId();
+	//
+	// HoC and Dragon call a sequence "used" if there is any dependency on
+	// the sequence (reordering, if conditions), but to simplify the use of
+	// getStateForSceneOp, later games only call it "used" if it is directly
+	// started.
+	//
+	int n_ops_to_check = (gameId == GID_DRAGON || gameId == GID_HOC) ? ARRAYSIZE(ADS_USED_SEQ_OPCODES) : 2;
 	while (opcode != 0xffff && _adsData->scr->pos() < _adsData->scr->size()) {
 		opcode = _adsData->scr->readUint16LE();
-		for (uint16 o : ADS_SEQ_OPCODES) {
-			if (opcode == o) {
+		for (int i = 0; i < n_ops_to_check; i++) {
+			uint16 op = ADS_USED_SEQ_OPCODES[i];
+			if (opcode == op) {
 				int16 envno = _adsData->scr->readSint16LE();
 				int16 seqno = _adsData->scr->readSint16LE();
 				Common::SharedPtr<TTMSeq> seq = findTTMSeq(envno, seqno);
@@ -187,7 +198,7 @@ void ADSInterpreter::findUsedSequencesForSegment(int idx) {
 						}
 					}
 					if (!already_added) {
-						debug(10, "ADS seg no %d (idx %d) uses seq %d %d", segno, idx, envno, seqno);
+						debug(10, "ADS seg no %d (idx %d) uses env %d seq %d", segno, idx, envno, seqno);
 						_adsData->_usedSeqs[idx].push_back(seq);
 					}
 				}
@@ -342,7 +353,9 @@ bool ADSInterpreter::logicOpResult(uint16 code, const TTMEnviro *env, const TTMS
 	int16 seqNum = seq ? seq->_seqNum : 0;
 	const char *optype = (code < 0x1300 ? "while" : "if");
 
-	assert(seq || code == 0x1380 || code == 0x1390);
+	assert(seq || (code & 0xFF) >= 0x80);
+
+	Globals *globals = DgdsEngine::getInstance()->getGameGlobals();
 
 	switch (code) {
 	case 0x1010: // WHILE paused
@@ -375,7 +388,7 @@ bool ADSInterpreter::logicOpResult(uint16 code, const TTMEnviro *env, const TTMS
 	case 0x1070: // WHILE RUNNING
 	case 0x1370: // IF_RUNNING, 2 params
 		debugN(10, "ADS 0x%04x: %s running env %d seq %d (%s)", code, optype, envNum, seqNum, tag);
-		return seq->_runFlag == kRunType1 || seq->_runFlag == kRunTypeMulti || seq->_runFlag == kRunTypeTimeLimited;
+		return seq->_runFlag == kRunTypeKeepGoing || seq->_runFlag == kRunTypeMulti || seq->_runFlag == kRunTypeTimeLimited;
 	case 0x1080:
 	case 0x1090:
 		warning("Unimplemented IF/WHILE operation 0x%x", code);
@@ -390,6 +403,29 @@ bool ADSInterpreter::logicOpResult(uint16 code, const TTMEnviro *env, const TTMS
 		debugN(10, "ADS 0x%04x: if detail >= %d", code, arg);
 		return true;
 		//return ((int)DgdsEngine::getInstance()->getDetailLevel() >= arg);
+	//
+	// NOTE: The globals for the following ops use the numbers from Willy
+	// Beamish (0x4F, 0x50).  If these ops are used in any of the other newer
+	// games (Quarky or Johnny Castaway) they may need updating.
+	//
+	case 0x13A0: // IF some_ads_variable[0] <=
+		debugN(10, "ADS 0x%04x: if adsVariable[0] <= %d", code, arg);
+		return globals->getGlobal(0x50) <= arg;
+	case 0x13A1: // IF some_ads_variable[1] <=
+		debugN(10, "ADS 0x%04x: if adsVariable[1] <= %d", code, arg);
+		return globals->getGlobal(0x4F) <= arg;
+	case 0x13B0: // IF some_ads_variable[0] >
+		debugN(10, "ADS 0x%04x: if adsVariable[0] > %d", code, arg);
+		return globals->getGlobal(0x50) > arg;
+	case 0x13B1: // IF some_ads_variable[1] >
+		debugN(10, "ADS 0x%04x: if adsVariable[1] > %d", code, arg);
+		return globals->getGlobal(0x4F) > arg;
+	case 0x13C0: // IF some_ads_variable[0] ==
+		debugN(10, "ADS 0x%04x: if adsVariable[0] == %d", code, arg);
+		return globals->getGlobal(0x50) == arg;
+	case 0x13C1: // IF some_ads_variable[1] ==
+		debugN(10, "ADS 0x%04x: if adsVariable[1] == %d", code, arg);
+		return globals->getGlobal(0x4F) == arg;
 	default:
 		error("Not an ADS logic op: %04x, how did we get here?", code);
 	}
@@ -405,7 +441,7 @@ bool ADSInterpreter::handleLogicOp(uint16 code, Common::SeekableReadStream *scr)
 		Common::SharedPtr<TTMSeq> seq;
 		TTMEnviro *env = nullptr;
 
-		if (code != 0x1380 && code != 0x1390) {
+		if ((code & 0xFF) < 0x80) {
 			enviro = scr->readUint16LE();
 			seqnum = scr->readUint16LE();
 			seq = findTTMSeq(enviro, seqnum);
@@ -415,7 +451,7 @@ bool ADSInterpreter::handleLogicOp(uint16 code, Common::SeekableReadStream *scr)
 				return false;
 			}
 		} else {
-			// TODO: this value is not actually enviro? for now just read it.
+			// We load this into "enviro" but it's just the parameter of the op.
 			enviro = scr->readUint16LE();
 		}
 
@@ -544,6 +580,13 @@ bool ADSInterpreter::handleOperation(uint16 code, Common::SeekableReadStream *sc
 	case 0x1370: // IF RUNNING, 2 params
 	case 0x1380: // IF DETAIL LEVEL <= x, 1 param (HOC+ only)
 	case 0x1390: // IF DETAIL LEVEL >= x, 1 param (HOC+ only)
+	// The next 6 are in HoC code but maybe never used?
+	case 0x13A0: // IF _adsVariable[0] <=
+	case 0x13A1: // IF _adsVariable[1] <=
+	case 0x13B0: // IF _adsVariable[0] >
+	case 0x13B1: // IF _adsVariable[1] >
+	case 0x13C0: // IF _adsVariable[0] ==
+	case 0x13C1: // IF _adsVariable[1] ==
 		return handleLogicOp(code, scr);
 	case 0x1500: // ELSE / Skip to end-if, 0 params
 		debug(10, "ADS 0x%04x: else (skip to end if)", code);
@@ -582,7 +625,7 @@ bool ADSInterpreter::handleOperation(uint16 code, Common::SeekableReadStream *sc
 
 		_currentTTMSeq = seq;
 		if (runCount == 0) {
-			seq->_runFlag = kRunType1;
+			seq->_runFlag = kRunTypeKeepGoing;
 		} else if (runCount < 0) {
 			// Negative run count sets the cut time
 			seq->_timeCut = DgdsEngine::getInstance()->getThisFrameMs() + (-runCount * MS_PER_FRAME);
@@ -738,19 +781,11 @@ bool ADSInterpreter::handleOperation(uint16 code, Common::SeekableReadStream *sc
 		return true;
 	}
 
-	case 0xffff:	// END
+	case 0xFFFF:	// END
 		debug(10, "ADS 0xFFFF: end");
 		return false;
 
 	//// unknown / to-be-implemented
-	// The next 6 are in HoC code but maybe never used?
-	case 0x13A0: // IF some_ads_variable[0] <=
-	case 0x13A1: // IF some_ads_variable[1] <=
-	case 0x13B0: // IF some_ads_variable[0] >
-	case 0x13B1: // IF some_ads_variable[1] >
-	case 0x13C0: // IF some_ads_variable[0] ==
-	case 0x13C1: // IF some_ads_variable[1] ==
-
 	case 0xFF10:
 	case 0xFFF0: // END_IF, 0 params
 	default: {
@@ -769,21 +804,38 @@ int16 ADSInterpreter::getStateForSceneOp(uint16 segnum) {
 	int idx = getArrIndexOfSegNum(segnum);
 	if (idx < 0)
 		return 0;
-	if (!(_adsData->_state[idx] & 4)) {
-		for (const Common::SharedPtr<TTMSeq> &seq: _adsData->_usedSeqs[idx]) {
-			if (!seq)
-				return 0;
-			if (seq->_runFlag != kRunTypeStopped && !seq->_selfLoop)
-				return 1;
+
+	// Slightly different implementation after Dragon.
+	// Finished is also a "stopped" state in HoC+
+	if (DgdsEngine::getInstance()->getGameId() == GID_DRAGON) {
+		if (!(_adsData->_state[idx] & 4)) {
+			for (const Common::SharedPtr<TTMSeq> &seq: _adsData->_usedSeqs[idx]) {
+				if (!seq)
+					error("getStateForSceneOp: used seq for seg %d should not be null", segnum);
+				if (seq->_runFlag != kRunTypeStopped && !seq->_selfLoop)
+					return 1;
+			}
+			return 0;
 		}
-		return 0;
+	} else {
+		int state = (_adsData->_state[idx] & 0xfff7);
+		if (state != 4 && state != 1) {
+			for (const Common::SharedPtr<TTMSeq> &seq: _adsData->_usedSeqs[idx]) {
+				if (!seq)
+					error("getStateForSceneOp: used seq for seg %d should not be null", segnum);
+				if (seq->_runFlag != kRunTypeStopped && seq->_runFlag != kRunTypeFinished && !seq->_selfLoop)
+					return 1;
+			}
+			return 0;
+		}
 	}
+
 	return 1;
 }
 
 
 int ADSInterpreter::getArrIndexOfSegNum(uint16 segnum) {
-	int32 startoff = _adsData->scr->pos();
+	const int32 startoff = _adsData->scr->pos();
 	int result = -1;
 	for (int i = 0; i < _adsData->_maxSegments; i++) {
 		_adsData->scr->seek(_adsData->_segments[i]);
@@ -856,7 +908,7 @@ bool ADSInterpreter::run() {
 		seq->_lastFrame = -1;
 		int sflag = seq->_scriptFlag;
 		TTMRunType rflag = seq->_runFlag;
-		if (sflag == 6 || (rflag != kRunType1 && rflag != kRunTypeTimeLimited && rflag != kRunTypeMulti && rflag != kRunTypePaused)) {
+		if (sflag == 6 || (rflag != kRunTypeKeepGoing && rflag != kRunTypeTimeLimited && rflag != kRunTypeMulti && rflag != kRunTypePaused)) {
 			if (sflag != 6 && sflag != 5 && rflag == kRunTypeFinished) {
 				seq->_runFlag = kRunTypeStopped;
 			}
@@ -947,7 +999,6 @@ void ADSInterpreter::setGotoTarget(int32 target) {
 }
 
 int ADSInterpreter::numArgs(uint16 opcode) const {
-	// TODO: This list is from DRAGON, there may be more entries in newer games.
 	switch (opcode) {
 	case 0x1080:
 	case 0x1090:

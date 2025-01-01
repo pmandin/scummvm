@@ -52,7 +52,7 @@ void PreAgiEngine::initialize() {
 
 	//_game._vm->_text->charAttrib_Set(15, 0);
 
-	_defaultColor = 0xF;
+	_defaultColor = IDA_DEFAULT;
 
 	//_game._vm->_text->configureScreen(0); // hardcoded
 
@@ -99,16 +99,63 @@ void PreAgiEngine::clearGfxScreen(int attr) {
 	_gfx->drawDisplayRect(0, 0, DISPLAY_DEFAULT_WIDTH - 1, IDI_MAX_ROW_PIC * 8 - 1, (attr & 0xF0) / 0x10);
 }
 
+byte PreAgiEngine::getWhite() const {
+	switch (_renderMode) {
+	case Common::kRenderCGA:
+		return 3;
+	case Common::kRenderHercA:
+	case Common::kRenderHercG:
+		return 1;
+	default:
+		return 15;
+	}
+}
+
 // String functions
 
 void PreAgiEngine::drawStr(int row, int col, int attr, const char *buffer) {
-	int code;
-
 	if (attr == kColorDefault)
 		attr = _defaultColor;
 
-	for (int iChar = 0; iChar < (int)strlen(buffer); iChar++) {
-		code = buffer[iChar];
+	byte foreground = attr & 0x0f;
+	byte background = attr >> 4;
+
+	// Simplistic CGA and Hercules mapping that handles all text
+	// in Mickey and Winnie. Troll text is handled correctly in
+	// graphics mode, but the original switched to CGA 16 color
+	// text mode for some parts, and we are not doing that.
+	switch (_renderMode) {
+	case Common::kRenderCGA:
+		// Map non-black text to white
+		if (foreground != 0) {
+			foreground = 3;
+		}
+		// Map white background to white
+		if (background == 15) {
+			background = 3;
+		}
+		break;
+	case Common::kRenderHercA:
+	case Common::kRenderHercG:
+		// Map non-black text to amber/green
+		if (foreground != 0) {
+			foreground = 1;
+		}
+		// Map white background to amber/green,
+		// all others to black
+		if (background == 0x0f) {
+			background = 1;
+		} else {
+			background = 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+	const int stringLength = (int)strlen(buffer);
+	for (int iChar = 0; iChar < stringLength; iChar++) {
+		int code = buffer[iChar];
 
 		switch (code) {
 		case '\n':
@@ -123,7 +170,7 @@ void PreAgiEngine::drawStr(int row, int col, int attr, const char *buffer) {
 			break;
 
 		default:
-			_gfx->drawCharacter(row, col, code, attr & 0x0f, attr >> 4, false);
+			_gfx->drawCharacter(row, col, code, foreground, background, false);
 
 			if (++col == 320 / 8) {
 				col = 0;
@@ -131,11 +178,6 @@ void PreAgiEngine::drawStr(int row, int col, int attr, const char *buffer) {
 			}
 		}
 	}
-}
-
-void PreAgiEngine::drawStrMiddle(int row, int attr, const char *buffer) {
-	int col = (25 / 2) - (strlen(buffer) / 2);  // 25 = 320 / 8 (maximum column)
-	drawStr(row, col, attr, buffer);
 }
 
 void PreAgiEngine::clearTextArea() {
@@ -245,18 +287,72 @@ int PreAgiEngine::getSelection(SelectionTypes type) {
 	return 0;
 }
 
-void PreAgiEngine::playNote(int16 frequency, int32 length) {
-	_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, frequency, length);
-	waitForTimer(length);
+bool PreAgiEngine::playSpeakerNote(int16 frequency, int32 length, WaitOptions options) {
+	// play note, unless this is a pause
+	if (frequency != 0) {
+		_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, frequency, length);
+	}
+
+	// wait for note length
+	bool completed = wait(length, options);
+
+	// stop note if the wait was interrupted
+	if (!completed) {
+		if (frequency != 0) {
+			_speakerStream->stop();
+		}
+	}
+
+	return completed;
 }
 
-void PreAgiEngine::waitForTimer(int msec_delay) {
-	uint32 start_time = _system->getMillis();
+// A wait function that updates the screen, optionally allows events to be
+// processed, and optionally allows keyboard and mouse events to interrupt
+// the wait. Processing events keeps the program window responsive, but for
+// very short delays it may be better to not process events so that they
+// are buffered and not lost.
+bool PreAgiEngine::wait(uint32 delay, WaitOptions options) {
+	Common::Event event;
+	uint32 startTime = _system->getMillis();
 
-	while (_system->getMillis() < start_time + msec_delay) {
+	bool processEvents = (options & kWaitProcessEvents) != 0;
+	bool allowInterrupt = (options == kWaitAllowInterrupt);
+
+	while (!shouldQuit()) {
+		// process events
+		if (processEvents) {
+			while (_eventMan->pollEvent(event)) {
+				switch (event.type) {
+				case Common::EVENT_KEYDOWN:
+					// don't interrupt if a modifier is pressed
+					if (event.kbd.flags & Common::KBD_NON_STICKY) {
+						continue;
+					}
+					// fall through
+				case Common::EVENT_LBUTTONUP:
+				case Common::EVENT_RBUTTONUP:
+					if (!allowInterrupt) {
+						continue;
+					}
+					// fall through
+				case Common::EVENT_RETURN_TO_LAUNCHER:
+				case Common::EVENT_QUIT:
+					return false; // interrupted by quit or input
+				default:
+					break;
+				}
+			}
+		}
+
+		if (_system->getMillis() - startTime >= delay) {
+			return true; // delay completed
+		}
+
 		_system->updateScreen();
 		_system->delayMillis(10);
 	}
+
+	return false; // interrupted by quit
 }
 
 } // End of namespace Agi

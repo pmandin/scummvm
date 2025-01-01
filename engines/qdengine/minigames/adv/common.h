@@ -27,29 +27,27 @@
 
 namespace QDEngine {
 
-typedef mgVect3<int> mgVect3i;
+class MinigameManager;
 
-using namespace std;
+typedef mgVect3<int> mgVect3i;
 
 class QDObject {
 	qdMinigameObjectInterface *_obj;
 
 #ifdef _DEBUG
-	Common::String name_;
+	Common::String _name;
 #endif
 
 public:
-	static QDObject ZERO;
-
 	QDObject(qdMinigameObjectInterface* obj = 0, const char* name = "") : _obj(obj) {
 #ifdef _DEBUG
-		name_ = name;
+		_name = name;
 #endif
 	}
 
 	const char *getName() const; // DEBUG ONLY
 	bool hit(const mgVect2f& point) const;
-	float depth() const;
+	float depth(MinigameManager *runtime) const;
 
 	void setState(const char* name);
 
@@ -76,16 +74,6 @@ typedef Std::vector<mgVect3f> Coords;
 
 class MinigameManager;
 extern MinigameManager *g_runtime;
-
-int getParameter(const char* name, const int& defValue);
-bool getParameter(const char* name, int& out, bool obligatory);
-float getParameter(const char* name, const float &defValue);
-bool getParameter(const char* name, float &out, bool obligatory);
-mgVect2f getParameter(const char* name, const mgVect2f& defValue);
-bool getParameter(const char* name, mgVect2f& out, bool obligatory);
-mgVect2i getParameter(const char* name, const mgVect2i& defValue);
-bool getParameter(const char* name, mgVect2i& out, bool obligatory);
-
 
 enum SystemEvent {
 	EVENT_TIME_1_SECOND_TICK,

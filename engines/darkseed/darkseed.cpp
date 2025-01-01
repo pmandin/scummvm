@@ -58,6 +58,7 @@ Common::String DarkseedEngine::getGameId() const {
 
 Common::Error DarkseedEngine::run() {
 	initGraphics(640, 350);
+	_canSaveGame = false;
 	_sound = new Sound(_mixer);
 	if (_sound->init() > 0) {
 		return Common::kAudioDeviceInitFailed;
@@ -665,7 +666,7 @@ void DarkseedEngine::handleInput() {
 			return;
 		}
 		_player->_heroMoving = false;
-		if (_useDoorTarget || _doorEnabled) {
+		if (_doorEnabled) {
 			for (unsigned int i = 0; i < _room->_room1.size(); i++) {
 				RoomExit &roomExit = _room->_room1[i];
 				if (roomExit.roomNumber != 0xff
@@ -1031,7 +1032,7 @@ void DarkseedEngine::loadRoom(int roomNumber) {
 	}
 	_printedcomeheredawson = false;
 	_objectVar.setObjectRunningCode(53, 0);
-	_objectVar[56] = 0; // evil sargent anim spriteNumber
+	_objectVar[56] = 0; // evil sergeant anim spriteNumber
 	_objectVar.setObjectRunningCode(72, 0);
 	for (int i = 31; i < 34; i++) {
 		if (_objectVar.getMoveObjectRoom(i) == 99) {
@@ -1282,9 +1283,7 @@ void DarkseedEngine::updateDisplay() { // AKA ServiceRoom
 							y = 0x71;
 						} else if (_player->_frameIdx == 4) {
 							x = 0x75;
-							y = 0x69;
 						} else if (_player->_frameIdx == 7) {
-							x = 0xa6;
 							y = 0x5b;
 						}
 
@@ -1294,7 +1293,7 @@ void DarkseedEngine::updateDisplay() { // AKA ServiceRoom
 					} else if (_animation->_otherNspAnimationType_maybe == 43 || _animation->_otherNspAnimationType_maybe == 44) {
 						const Sprite &animSprite = _player->_animations.getSpriteAt(_player->_frameIdx);
 						_sprites.addSpriteToDrawList(303, 105, &animSprite, 240 - _player->_position.y, animSprite._width, animSprite._height, _player->_flipSprite);
-					} else if (_animation->_otherNspAnimationType_maybe == 62) { // sargent approaches jail cell.
+					} else if (_animation->_otherNspAnimationType_maybe == 62) { // sergeant approaches jail cell.
 						const Sprite &animSprite = _player->_animations.getSpriteAt(_player->_frameIdx);
 						_sprites.addSpriteToDrawList(_player->_position.x - animSprite._width / 2, _player->_position.y - animSprite._height, &animSprite, 240 - _player->_position.y, animSprite._width, animSprite._height, _player->_flipSprite);
 					} else if (_animation->_otherNspAnimationType_maybe == 45 || _animation->_otherNspAnimationType_maybe == 46) { // pull lever
@@ -1660,20 +1659,21 @@ void DarkseedEngine::handleObjCollision(int targetObjNum) {
 
 void DarkseedEngine::lookCode(int objNum) {
 	if (objNum == 71 && _objectVar[71] == 2) {
-		_console->addTextLine("You see the car keys in the ignition.");
+		_console->addI18NText(kI18N_CarKeysIgnitionText);
 		return;
 	}
 	if (objNum == 189) {
-		_console->addTextLine("You see the iron bars of your cell.");
+		_console->addI18NText(kI18N_YouSeeIronBarsText);
 		return;
 	}
 	if (objNum == 141) {
-		_console->addTextLine("You see Delbert, not much to look at.");
+		_console->addI18NText(kI18N_YouSeeDelbertText);
 		return;
 	}
 	if (objNum == 42) {
 		switch (_objectVar[42]) {
 		case 0:
+		case 4:
 			_console->printTosText(652);
 			break;
 		case 1:
@@ -1685,9 +1685,6 @@ void DarkseedEngine::lookCode(int objNum) {
 			break;
 		case 3:
 			_console->printTosText(658);
-			break;
-		case 4:
-			_console->printTosText(652);
 			break;
 		default:
 			break;
@@ -1727,11 +1724,11 @@ void DarkseedEngine::lookCode(int objNum) {
 		return;
 	}
 	if (objNum == 138) {
-		_console->addTextLine("You see the clerk.");
+		_console->addI18NText(kI18N_YouSeeTheClerkText);
 		return;
 	}
 	if (objNum == 86 && _objectVar[86] != 0) {
-		_console->addTextLine("You see the open glove box.");
+		_console->addI18NText(kI18N_YouSeeTheOpenGloveBoxText);
 		return;
 	}
 	if (objNum == 9) {
@@ -1894,7 +1891,7 @@ void DarkseedEngine::lookCode(int objNum) {
 		}
 		return;
 	}
-	_console->addTextLine(Common::String::format("You see the %s.", _objectVar.getObjectName(objNum)));
+	_console->addTextLine(Common::String::format("%s %s.", getI18NText(kI18N_youSeeTheText), _objectVar.getObjectName(objNum)));
 }
 
 void DarkseedEngine::printTime() {
@@ -2332,7 +2329,7 @@ void DarkseedEngine::runObjects() {
 		_objectVar.setObjectRunningCode(72, 2);
 		_console->printTosText(933);
 	}
-	// jail sargent
+	// jail sergeant
 	if (_room->_roomNumber == 30 && (_objectVar.getObjectRunningCode(53) == 1 || _objectVar.getObjectRunningCode(53) == 2)
 			  && (_animation->_otherNspAnimationType_maybe != 40 || !_animation->_isPlayingAnimation_maybe)) {
 		if (_objectVar.getObjectRunningCode(53) == 1) {
@@ -2370,17 +2367,16 @@ void DarkseedEngine::runObjects() {
 				if (_animation->_isPlayingAnimation_maybe && _animation->_otherNspAnimationType_maybe == 53) {
 					_animation->_isPlayingAnimation_maybe = false;
 				}
-				if (!_player->_heroMoving) {
-					Common::Point oldCursor = g_engine->_cursor.getPosition();
-					Common::Point newTarget = {322, 226};
-					g_engine->_cursor.setPosition(newTarget);
-					_player->calculateWalkTarget();
-					g_engine->_cursor.setPosition(oldCursor);
-					_player->playerFaceWalkTarget();
-					if (!_printedcomeheredawson) {
-						_console->printTosText(934);
-						_printedcomeheredawson = true;
-					}
+
+				Common::Point oldCursor = g_engine->_cursor.getPosition();
+				Common::Point newTarget = {322, 226};
+				g_engine->_cursor.setPosition(newTarget);
+				_player->calculateWalkTarget();
+				g_engine->_cursor.setPosition(oldCursor);
+				_player->playerFaceWalkTarget();
+				if (!_printedcomeheredawson) {
+					_console->printTosText(934);
+					_printedcomeheredawson = true;
 				}
 			}
 		}
@@ -2418,7 +2414,7 @@ void DarkseedEngine::runObjects() {
 				} else {
 					playSound(25, 5, -1);
 				}
-				_console->addTextLine("The phone is ringing.");
+				_console->addI18NText(kI18N_ThePhoneIsRingingText);
 			}
 			break;
 		case 1080:
@@ -2446,7 +2442,7 @@ void DarkseedEngine::runObjects() {
 					playSound(29, 5, -1);
 //					FUN_1208_0dac_sound_related(95,5); TODO floppy sound
 				}
-				_console->addTextLine("The doorbell is ringing.");
+				_console->addI18NText(kI18N_TheDoorbellIsRingingText);
 			}
 			break;
 		case 900:
@@ -2627,6 +2623,7 @@ void DarkseedEngine::restartGame() {
 }
 
 void DarkseedEngine::newGame() {
+	_canSaveGame = false;
 	_redrawFrame = false;
 	_sprites.clearSpriteDrawList();
 	removeFullscreenPic();
@@ -2647,10 +2644,12 @@ void DarkseedEngine::newGame() {
 	waitForSpeech();
 	_systemTimerCounter = 4;
 	_cursor.showCursor(true);
+	_canSaveGame = true;
 }
 
 void DarkseedEngine::waitForSpeech() {
 	while (_sound && _sound->isPlayingSpeech()) {
+		_console->draw();
 		updateEvents();
 		if (_room) {
 			_room->update();
@@ -2662,6 +2661,7 @@ void DarkseedEngine::waitForSpeech() {
 
 void DarkseedEngine::waitForSpeechOrSfx() {
 	while (_sound && (_sound->isPlayingSpeech() || _sound->isPlayingSfx())) {
+		_console->draw();
 		updateEvents();
 		if (_room) {
 			_room->update();

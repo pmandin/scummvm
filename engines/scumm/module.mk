@@ -15,6 +15,7 @@ MODULE_OBJS := \
 	debugger.o \
 	dialogs.o \
 	file.o \
+	file_engine.o \
 	file_nes.o \
 	gfx_gui.o \
 	gfx_mac.o \
@@ -46,6 +47,7 @@ MODULE_OBJS := \
 	macgui/macgui_loom.o \
 	macgui/macgui_strings.o \
 	macgui/macgui_v5.o \
+	macgui/macgui_v6.o \
 	macgui/macgui_widgets.o \
 	metaengine.o \
 	midiparser_ro.o \
@@ -84,6 +86,8 @@ MODULE_OBJS := \
 	script.o \
 	scumm.o \
 	sound.o \
+	soundcd.o \
+	soundse.o \
 	string.o \
 	usage_bits.o \
 	util.o \

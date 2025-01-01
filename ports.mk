@@ -60,7 +60,7 @@ dist-generic: $(EXECUTABLE) $(PLUGINS)
 	mkdir -p ./dist-generic/scummvm/data
 	mkdir -p ./dist-generic/scummvm/doc
 	rm -f ./dist-generic/scummvm/$(EXECUTABLE)
-	cp $(EXECUTABLE) ./dist-generic/scummvm
+	$(STRIP) "$(EXECUTABLE)" -o "./dist-generic/scummvm/$(EXECUTABLE)"
 	cp $(DIST_FILES_DOCS) ./dist-generic/scummvm/doc
 	cp $(DIST_FILES_THEMES) ./dist-generic/scummvm/data
 ifdef DIST_FILES_ENGINEDATA
@@ -339,6 +339,9 @@ endif
 	chmod 755 scummvm
 	cp scummvm $(bundle_name)/ScummVM
 	cp $(srcdir)/dists/ios7/ios-help.zip $(bundle_name)/ios-help.zip
+	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-29.png $(bundle_name)/AppIcon29x29~ipad.png
+	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-40.png $(bundle_name)/AppIcon40x40~ipad.png
+	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-76.png $(bundle_name)/AppIcon76x76~ipad.png
 	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-29@2x.png $(bundle_name)/AppIcon29x29@2x.png
 	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-29@2x.png $(bundle_name)/AppIcon29x29@2x~ipad.png
 	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-29@3x.png $(bundle_name)/AppIcon29x29@3x.png
@@ -539,7 +542,7 @@ OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libmikmod.a
 endif
 
 ifdef USE_OPENMPT
-OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libopenmpt.a
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libopenmpt.a $(STATICLIBPATH)/lib/libmpg123.a
 endif
 
 ifdef USE_MPEG2
@@ -588,10 +591,8 @@ endif
 endif
 
 # Special target to create a static linked binary for macOS.
-# We use -force_cpusubtype_ALL to ensure the binary runs on every
-# PowerPC machine.
 scummvm-static: $(DETECT_OBJS) $(OBJS)
-	+$(LD) $(LDFLAGS) -force_cpusubtype_ALL -o scummvm-static $(PRE_OBJS_FLAGS) $(DETECT_OBJS) $(OBJS) $(POST_OBJS_FLAGS) \
+	+$(LD) $(LDFLAGS) -o scummvm-static $(PRE_OBJS_FLAGS) $(DETECT_OBJS) $(OBJS) $(POST_OBJS_FLAGS) \
 		-framework CoreMIDI \
 		$(OSX_STATIC_LIBS) \
 		$(OSX_ZLIB)

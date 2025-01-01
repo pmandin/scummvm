@@ -41,7 +41,7 @@ enum : byte {
 struct ChanControlNode;
 struct DeviceChannel {
 	DeviceChannel(const uint32 *pitchtable) : pitchTable(pitchtable), frequency(0), phase(0), end(nullptr), pos(nullptr), smpBuffStart(nullptr),
-		smpBuffEnd(nullptr), loopStart(nullptr), loopEnd(nullptr), pitch(0), mute(true), release(false), instr(nullptr),
+		smpBuffEnd(nullptr), loopStart(nullptr), loopEnd(nullptr), pitch(0), mute(true), release(false), instr(nullptr), rhtm(false),
 		prog(0), baseFreq(0), note(0), volumeL(0), volumeR(0), rate(0), totalLevelL(0), totalLevelR(0), node(nullptr), prev(nullptr), next(nullptr) {}
 	~DeviceChannel() {}
 
@@ -64,6 +64,7 @@ struct DeviceChannel {
 	uint32 rate;
 	uint16 prog;
 	byte note;
+	bool rhtm;
 	bool mute;
 	bool release;
 	const ChanControlNode *node;
@@ -139,7 +140,6 @@ private:
 	void *_timerParam;
 	Common::TimerManager::TimerProc _timerProc;
 
-	const byte _loopstLim;
 	const byte _version;
 };
 
@@ -319,7 +319,7 @@ void DeviceChannel::recalcFrequency() {
 	int cpos = (pitch >> 7) + 60 - baseFreq;
 	if (cpos < 0)
 		frequency = (uint32)-1;
-	else if (pitch & 0x7F)
+	else if ((pitch & 0x7F) && cpos < 0x7F)
 		frequency = pitchTable[cpos] + (((pitchTable[cpos + 1] - pitchTable[cpos]) * (pitch & 0x7F)) >> 7);
 	else
 		frequency = pitchTable[cpos];
@@ -327,7 +327,7 @@ void DeviceChannel::recalcFrequency() {
 
 IMSMacSoundSystem::IMSMacSoundSystem(Audio::Mixer *mixer, byte version) : VblTaskClientDriver(), _mixer(mixer), _macstr(nullptr), _sdrv(nullptr), _vblTskProc(this, &VblTaskClientDriver::vblCallback),
 	_musicChan(0), _sfxChan(0), _quality(22), _feedBufferSize(1024), _channels(nullptr), _timerParam(nullptr), _timerProc(nullptr), _pitchTable(nullptr),
-	_ampTable(nullptr), _mixTable(nullptr), _numChannels(version ? 12 : 8), _defaultInstrID(0), _version(version), _loopstLim(version ? 10 : 12), _stereo(false) {
+	_ampTable(nullptr), _mixTable(nullptr), _numChannels(version ? 12 : 8), _defaultInstrID(0), _version(version), _stereo(false) {
 	_pitchTable = new uint32[128]();
 	assert(_pitchTable);
 	_channels = new DeviceChannel*[_numChannels];
@@ -388,13 +388,27 @@ bool IMSMacSoundSystem::init(const char *const *instrFileNames, int numInstrFile
 	int16 *d1 = &_mixTable[m];
 	int16 *d2 = &_mixTable[m - 1];
 
-	byte base = _internal16Bit? 0 : 128;
-	uint16 ml = _internal16Bit ? _numChannels : 1;
-	uint16 sv = _stereo ? 2 : 1;
-	for (uint32 i = 0; i < m; ++i) {
-		int val = (((((i * (m - _numChannels)) << 7) >> 1) / (((_numChannels >> 1) - 1) * i + m - _numChannels) + base) * ml * sv) >> 7;
-		*d1++ = base + val;
-		*d2-- = base -val - 1;
+	if (_version == 0) {
+		byte sh = _internal16Bit ? 5 : 0;
+		byte div = _internal16Bit ? 1 : _numChannels;
+		byte base = _internal16Bit? 0 : 128;
+		for (uint32 i = 0; i < m; ++i) {
+			uint16 val = (i << sh) / div;
+			*d1++ = base + val;
+			*d2-- = base - val - 1;
+		}
+	} else if (_internal16Bit) {
+		for (uint32 i = 0; i < m; ++i) {
+			uint16 val = (((i * _numChannels * 127) << 6) / (((_numChannels >> 1) - 1) * i + _numChannels * 127)) << 1;
+			*d1++ = val;
+			*d2-- = -val - 1;
+		}
+	} else {
+		for (uint32 i = 0; i < m; ++i) {
+			uint16 val = ((((i * _numChannels * 127) << 7) >> 1) / (((_numChannels >> 1) - 1) * i + _numChannels * 127) + 128) >> 7;
+			*d1++ = (byte)(128 + val);
+			*d2-- = (byte)(128 - val - 1);
+		}
 	}
 
 	_macstr = new MacPlayerAudioStream(this, _mixer->getOutputRate(), _stereo, false, internal16Bit);
@@ -412,8 +426,13 @@ bool IMSMacSoundSystem::init(const char *const *instrFileNames, int numInstrFile
 	// Only MI2 and FOA have MIDI sound effects. Also, the later versions use a different update method.
 	if (_version == 0) {
 		_macstr->addVolumeGroup(Audio::Mixer::kSFXSoundType);
-		_macstr->setVblCallback(&_vblTskProc);
+		_macstr->setVblCallback(&_vblTskProc);		
 	}
+
+	// The stream will by default expect 8-bit data and scale that to 16-bit. Or at least only low amplitude 16-bit data that only needs minor adjustment.
+	// For full range 16-bit input, we need some post-process downscaling, otherwise the application of the ScummVM global volume setting will cause overflows.
+	if (internal16Bit)
+		_macstr->scaleVolume(0, 5);
 
 	_mixer->playStream(Audio::Mixer::kPlainSoundType, &_soundHandle, _macstr, -1, Audio::Mixer::kMaxChannelVolume, 0, DisposeAfterUse::NO, true);
 
@@ -457,6 +476,11 @@ void IMSMacSoundSystem::noteOn(const ChanControlNode *node) {
 
 	debug(6, "NOTE ON: ims part %d, chan node %d, note %d, instr id %d (%s)", node->in ? node->in->getNumber() : node->number, node->number, node->note, node->prog, c->instr.get()->name());
 
+	// SAMNMAX: This is a workaround to fix a hanging note in the final credits track. The issue is present in the original game,too.
+	bool fixHangingNote = (c->instr.get()->id() == 321 && c->note == 40);
+	if (fixHangingNote)
+		debug(7, "%s:() Triggered hanging note workaround.", __FUNCTION__);
+
 	recalcVolume(c);
 
 	const MacLowLevelPCMDriver::PCMSound *s = c->instr.get()->data();
@@ -464,14 +488,13 @@ void IMSMacSoundSystem::noteOn(const ChanControlNode *node) {
 	c->rate = s->rate;
 	c->smpBuffStart = s->data.get();
 	c->smpBuffEnd = c->smpBuffStart + s->len;
-	if ((int32)s->loopst >= (int32)s->loopend - _loopstLim) {
+	if ((_version == 0 && (int32)s->loopst >= (int32)s->loopend - 12) || (_version > 0 && (fixHangingNote || !s->loopst || !s->loopend || node->rhythmPart || (int32)s->loopst > (int32)s->len - 10))) {
 		c->loopStart = nullptr;
 		c->loopEnd = c->smpBuffEnd;
 	} else {
 		c->loopStart = c->smpBuffStart + s->loopst;
 		c->loopEnd = c->smpBuffStart + s->loopend;
 	}
-
 	c->pitch = (node->note << 7) + node->pitchBend;
 	c->mute = c->release = false;
 	c->end = c->loopEnd;
@@ -808,7 +831,7 @@ NewMacSoundSystem::NewMacSoundSystem(ScummEngine *vm, Audio::Mixer *mixer) : IMS
 	assert(vm);
 	_defaultInstrID = 0xFFFF;
 	_fileMan = new ScummFile(vm);
-	}
+}
 
 NewMacSoundSystem::~NewMacSoundSystem() {
 	delete _fileMan;
@@ -816,7 +839,7 @@ NewMacSoundSystem::~NewMacSoundSystem() {
 
 bool NewMacSoundSystem::start() {
 	_musicChan = _sdrv->createChannel(Audio::Mixer::kMusicSoundType, MacLowLevelPCMDriver::kSampledSynth, _stereo ? 0xCC : 0x8C, nullptr);
-	return _musicChan ? _sdrv->playDoubleBuffer(_musicChan, _stereo ? 2 : 1, _internal16Bit ? 16 : 8, 0x56220000, &_dbCbProc, _internal16Bit ? _numChannels : 1) : false;
+	return _musicChan ? _sdrv->playDoubleBuffer(_musicChan, _stereo ? 2 : 1, _internal16Bit ? 16 : 8, 0x56220000, &_dbCbProc,  _internal16Bit ? _numChannels : 1) : false;
 }
 
 bool NewMacSoundSystem::loadInstruments(const char *const *fileNames, int numFileNames) {
@@ -833,7 +856,9 @@ bool NewMacSoundSystem::loadInstruments(const char *const *fileNames, int numFil
 	_smpResources.clear();
 	const byte *s = buff;
 	for (uint i = 0; i < num; ++i) {
-		_smpResources.push_back(Common::SharedPtr<MacSndResource>(new MacSndResource(READ_BE_UINT16(s + 2), buff + READ_BE_UINT32(s + 4))));
+		uint32 offset = READ_BE_UINT32(s + 4);
+		uint32 resSize = (i < num - 1 ? READ_BE_UINT32(s + 12) : size) - offset;
+		_smpResources.push_back(Common::SharedPtr<MacSndResource>(new MacSndResource(READ_BE_UINT16(s + 2), buff + offset, resSize)));
 		s += 8;
 	}
 	delete[] buff;
@@ -860,7 +885,10 @@ bool NewMacSoundSystem::loadInstruments(const char *const *fileNames, int numFil
 		ins->sndRes.push_back(getSndResource(READ_BE_UINT16(b)));
 		if (ins->sndRes[0] != nullptr)
 			memset(ins->noteSmplsMapping, 0, 128);
-		int8 numRanges = CLIP<int8>(b[13], 0, 7);
+
+		byte numRanges = CLIP<int8>(b[13], 0, 7);
+		assert(sz >= 16u + numRanges * 8u);
+
 		for (int ii = 0; ii < numRanges; ++ii) {
 			ins->sndRes.push_back(getSndResource(READ_BE_INT16(b + 16 + ii * 8)));
 			if (ins->sndRes.back() != nullptr) {
@@ -881,7 +909,7 @@ bool NewMacSoundSystem::loadInstruments(const char *const *fileNames, int numFil
 Common::SharedPtr<MacSndResource> NewMacSoundSystem::getNoteRangeSndResource(uint16 id, byte note) {
 	assert(note < 128);
 	Common::SharedPtr<MacSndResource> res;
-	for (Common::Array<Common::SharedPtr<Instrument> >::iterator it = _instruments.begin(); res == nullptr && it != _instruments.end(); ++it) {
+	for (Common::Array<Common::SharedPtr<Instrument> >::const_iterator it = _instruments.begin(); res == nullptr && it != _instruments.end(); ++it) {
 		uint16 cid = (*it)->id;
 		if (cid == id)
 			res = (*it)->sndRes[(*it)->noteSmplsMapping[note]];
@@ -891,9 +919,10 @@ Common::SharedPtr<MacSndResource> NewMacSoundSystem::getNoteRangeSndResource(uin
 
 void NewMacSoundSystem::setInstrument(DeviceChannel *chan) {
 	assert(chan && chan->node);
-	if (chan->instr == nullptr || (!chan->node->rhythmPart && chan->prog != chan->node->prog) || chan->note != chan->node->note) {
+	if (chan->instr == nullptr || chan->node->rhythmPart != chan->rhtm || (!chan->node->rhythmPart && chan->prog != chan->node->prog) || chan->note != chan->node->note) {
 		chan->note = chan->node->note;
-		chan->prog = chan->node->prog;
+		chan->prog = chan->node->rhythmPart ? 0 : chan->node->prog;
+		chan->rhtm = chan->node->rhythmPart;
 		chan->instr = chan->node->rhythmPart ? getSndResource(6000 + chan->note) : getNoteRangeSndResource(chan->prog, chan->note);
 	}
 }
@@ -1071,6 +1100,7 @@ void IMuseChannel_Macintosh::noteOn(byte note, byte velocity)  {
 			node->in = this;
 			node->prio = _prio;
 		}
+		node->prog = 0;
 		node->volume = _volume * 6 / 7;
 		node->rhythmPart = true;
 	}
@@ -1098,13 +1128,11 @@ void IMuseChannel_Macintosh::controlChange(byte control, byte value)  {
 		dataEntry(value);
 		break;
 	case 7:
-	case 10:
-		if (control == 7)
-			_volume = value;
-		else
-			_panPos = value;
+	case 10: {
+		byte &param = (control == 7) ? _volume : _panPos;
+		param = value;
 		updateVolume();
-		break;
+		} break;
 	case 17:
 		if (_version == 2)
 			_polyphony = value;
@@ -1266,7 +1294,7 @@ namespace Scumm {
 using namespace IMSMacintosh;
 
 IMuseDriver_Macintosh::IMuseDriver_Macintosh(ScummEngine *vm, Audio::Mixer *mixer, byte gameID) : MidiDriver(), _isOpen(false), _device(nullptr), _imsParts(nullptr), _channels(nullptr),
-	_numParts(32), _numChannels(8), _baseTempo(16666), _quality(1), _musicVolume(0), _sfxVolume(0), _version(-1) {
+	_numParts(32), _numChannels(8), _baseTempo(16666), _quality(1), _musicVolume(0xFFFFFFFF), _sfxVolume(0xFFFFFFFF), _version(-1) {
 
 	switch (gameID) {
 	case GID_TENTACLE:

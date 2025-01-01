@@ -66,6 +66,7 @@ static int nscript_image_copy(lua_State *L);
 static int nscript_image_load(lua_State *L);
 static int nscript_image_load_all(lua_State *L);
 static int nscript_image_print(lua_State *L);
+static int nscript_image_print_raw(lua_State *L);
 static int nscript_image_draw_line(lua_State *L);
 static int nscript_image_blit(lua_State *L);
 static int nscript_image_update_effect(lua_State *L);
@@ -124,6 +125,8 @@ static int nscript_config_set(lua_State *L);
 
 static int nscript_engine_should_quit(lua_State *L);
 
+static int nscript_transfer_save_game(lua_State *L);
+
 void nscript_init_cutscene(lua_State *L, Configuration *cfg, GUI *gui, SoundManager *sm) {
 	cutScene = new ScriptCutscene(gui, cfg, sm);
 
@@ -150,6 +153,9 @@ void nscript_init_cutscene(lua_State *L, Configuration *cfg, GUI *gui, SoundMana
 
 	lua_pushcfunction(L, nscript_image_print);
 	lua_setglobal(L, "image_print");
+
+	lua_pushcfunction(L, nscript_image_print_raw);
+	lua_setglobal(L, "image_print_raw");
 
 	lua_pushcfunction(L, nscript_image_static);
 	lua_setglobal(L, "image_static");
@@ -243,6 +249,9 @@ void nscript_init_cutscene(lua_State *L, Configuration *cfg, GUI *gui, SoundMana
 
 	lua_pushcfunction(L, nscript_engine_should_quit);
 	lua_setglobal(L, "engine_should_quit");
+
+	lua_pushcfunction(L, nscript_transfer_save_game);
+	lua_setglobal(L, "transfer_save_game");
 }
 
 bool nscript_new_image_var(lua_State *L, CSImage *image) {
@@ -454,6 +463,18 @@ static int nscript_image_load_all(lua_State *L) {
 	}
 
 	return 1;
+}
+
+static int nscript_image_print_raw(lua_State *L) {
+	CSImage *img = nscript_get_image_from_args(L, 1);
+	const char *text = lua_tostring(L, 2);
+	uint16 x = lua_tointeger(L, 3);
+	uint16 y = lua_tointeger(L, 4);
+	uint8 color = lua_tointeger(L, 5);
+
+	cutScene->print_text_raw(img, text, x, y, color);
+
+	return 0;
 }
 
 static int nscript_image_print(lua_State *L) {
@@ -1084,6 +1105,53 @@ static int nscript_engine_should_quit(lua_State *L) {
 	return 1;
 }
 
+int nscript_transfer_save_game(lua_State *L) {
+	TransferSaveData saveData = cutScene->load_transfer_save();
+	lua_newtable(L);
+
+	lua_pushstring(L, "game_type");
+	lua_pushinteger(L, saveData.gameType);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "name");
+	lua_pushstring(L, saveData.name.c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "gender");
+	lua_pushinteger(L, saveData.gender);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "class");
+	lua_pushstring(L, saveData.className.c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "str");
+	lua_pushinteger(L, saveData.str);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "dex");
+	lua_pushinteger(L, saveData.dex);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "int");
+	lua_pushinteger(L, saveData.intelligence);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "magic");
+	lua_pushinteger(L, saveData.magic);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "exp");
+	lua_pushinteger(L, saveData.exp);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "level");
+	lua_pushinteger(L, saveData.level);
+	lua_settable(L, -3);
+
+	return 1;
+}
+
 ScriptCutscene::ScriptCutscene(GUI *g, Configuration *cfg, SoundManager *sm) : GUI_Widget(nullptr) {
 	config = cfg;
 	gui = g;
@@ -1359,6 +1427,28 @@ Std::vector<CSMidGameData> ScriptCutscene::load_midgame_file(const char *filenam
 	return v;
 }
 
+TransferSaveData ScriptCutscene::load_transfer_save() {
+	TransferSaveData data;
+	data.gameType = 0;
+	data.name = "";
+	data.gender = 0;
+	data.className = "Avatar";
+	data.str = 0;
+	data.dex = 0;
+	data.intelligence = 0;
+	data.magic = 0;
+	data.exp = 0;
+	data.level = 0;
+
+	if (load_u5_save_file(data)) {
+		return data;
+	}
+
+	load_u4_save_file(data);
+
+	return data;
+}
+
 Std::vector<Std::string> ScriptCutscene::load_text(const char *filename, uint8 idx) {
 	Common::Path path;
 	U6Lib_n lib_n;
@@ -1446,6 +1536,10 @@ void ScriptCutscene::print_text(CSImage *image, const char *s, uint16 *x, uint16
 
 
 	//font->drawStringToShape(image->shp, string, x, y, color);
+}
+
+void ScriptCutscene::print_text_raw(CSImage *image, const char *string, uint16 x, uint16 y, uint8 color) const {
+	((WOUFont *)font)->drawStringToShape(image->shp, string, x, y, color);
 }
 
 void ScriptCutscene::load_palette(const char *filename, int idx) {
@@ -1684,6 +1778,81 @@ int ScriptCutscene::display_wrapped_text_line(Std::string str, uint8 text_color,
 
 	return y;
 }
+
+static constexpr char u4ClassNameTbl[9][9] = {
+	"Mage",
+	"Bard",
+	"Fighter",
+	"Druid",
+	"Tinker",
+	"Paladin",
+	"Ranger",
+	"Shepherd",
+	"Avatar",
+};
+
+bool ScriptCutscene::load_u4_save_file(TransferSaveData &saveData) {
+	NuvieIOFileRead file;
+	Common::Path filename;
+	char name[16];
+
+	config_get_path(config, "party.sav", filename);
+
+	if (file.open(filename) == false) {
+		return false;
+	}
+
+	saveData.gameType = 4;
+	file.seek(10);
+	saveData.level = file.read2() / 100;
+	saveData.exp = file.read2();
+	saveData.str = file.read2();
+	saveData.dex = file.read2();
+	saveData.intelligence = file.read2();
+	saveData.magic = file.read2();
+	file.seek(28);
+	file.readToBuf((unsigned char *)name, 16);
+	saveData.name = Common::String(name).substr(0, 8);
+	saveData.gender = file.read1() == 0xc ? 0 : 1;
+	int classId = file.read1();
+	if (classId < 9) {
+		saveData.className = Common::String(u4ClassNameTbl[classId]);
+	}
+	return true;
+}
+
+bool ScriptCutscene::load_u5_save_file(TransferSaveData &saveData) {
+	NuvieIOFileRead file;
+	Common::Path filename;
+	char name[9];
+
+	config_get_path(config, "saved.gam", filename);
+
+	if (file.open(filename) == false) {
+		return false;
+	}
+
+	saveData.gameType = 5;
+
+	file.seek(2);
+	file.readToBuf((unsigned char *)name, 9);
+	saveData.name = Common::String(name);
+	saveData.gender = file.read1() == 0xc ? 0 : 1;
+	file.read1(); // class
+	file.read1(); // status
+	saveData.str = file.read1();
+	saveData.dex = file.read1();
+	saveData.intelligence = file.read1();
+	saveData.magic = file.read1();
+	file.seek(0x16);
+	saveData.exp = file.read2();
+	saveData.level = file.read1();
+
+	file.close();
+
+	return true;
+}
+
 void CSImage::setScale(uint16 percentage) {
 	if (scale == percentage) {
 		return;

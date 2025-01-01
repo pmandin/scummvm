@@ -163,7 +163,7 @@ public:
 	static uint32 calcRate(uint32 outRate, uint32 factor, uint32 dataRate);
 
 private:
-	void updateStatus(Audio::Mixer::SoundType sndType);	
+	void updateStatus(Audio::Mixer::SoundType sndType);
 	MacSndChannel *findAndCheckChannel(ChanHandle h, const char *caller, byte reqSynthType) const;
 	MacSndChannel *findChannel(ChanHandle h) const;
 	Common::Array<MacSndChannel*> _channels;
@@ -188,7 +188,7 @@ public:
 	void initBuffers(uint32 feedBufferSize);
 	void initDrivers();
 	void addVolumeGroup(Audio::Mixer::SoundType type);
-	void scaleVolume(uint scale) { _scale = scale; }
+	void scaleVolume(uint upscale, uint downscale) { _upscale = upscale; _downscale = downscale; }
 	typedef Common::Functor0Mem<void, VblTaskClientDriver> CallbackProc;
 	void setVblCallback(const CallbackProc *proc);
 	void clearBuffer();
@@ -207,7 +207,8 @@ private:
 
 	VblTaskClientDriver *_drv;
 	int _numGroups;
-	uint16 _scale;
+	uint16 _upscale;
+	uint16 _downscale;
 
 	uint32 _vblSmpQty;
 	uint32 _vblSmpQtyRem;
@@ -243,7 +244,7 @@ public:
 	// Construct from Mac resource stream
 	MacSndResource(uint32 id, Common::SeekableReadStream *&in, Common::String &&name);
 	// Construct from Mac sound data buffer
-	MacSndResource(uint32 id, const byte *in);
+	MacSndResource(uint32 id, const byte *in, uint32 size);
 	~MacSndResource() {}
 	const MacLowLevelPCMDriver::PCMSound *data() const { return &_snd; }
 	uint32 id() const { return _id; }

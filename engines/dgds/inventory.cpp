@@ -48,7 +48,13 @@ void Inventory::open() {
 	// descriptions.
 	_isOpen = true;
 	DgdsEngine *engine = DgdsEngine::getInstance();
+
 	int curScene = engine->getScene()->getNum();
+	if (engine->getGameId() == GID_WILLY) {
+		_openedFromSceneNum = curScene;
+		return;
+	}
+
 	if (curScene != 2) {
 		_openedFromSceneNum = curScene;
 		engine->changeScene(2);
@@ -60,10 +66,14 @@ void Inventory::open() {
 void Inventory::close() {
 	if (!_isOpen)
 		return;
-	assert(_openedFromSceneNum != 0);
+
 	_isOpen = false;
 	DgdsEngine *engine = DgdsEngine::getInstance();
-	engine->changeScene(_openedFromSceneNum);
+	if (engine->getGameId() != GID_WILLY) {
+		assert(_openedFromSceneNum != 0);
+		engine->changeScene(_openedFromSceneNum);
+	}
+
 	_showZoomBox = false;
 	_openedFromSceneNum = 0;
 	_highlightItemNo = -1;
@@ -117,21 +127,42 @@ void Inventory::drawHeader(Graphics::ManagedSurface &surf) {
 	else
 		error("Unsupported language %d", DgdsEngine::getInstance()->getGameLang());
 
-	int titleWidth = font->getStringWidth(title);
-	int y1 = r._rect.y + 7;
-	int x1 = r._rect.x + 112;
-	font->drawString(&surf, title, x1 + 4, y1 + 2, titleWidth, 0);
+	DgdsGameId gameId = DgdsEngine::getInstance()->getGameId();
+	byte txtColor = (gameId == GID_HOC ? 25 : 0);
 
-	// Only draw the box around the title in DRAGON
-	DgdsEngine *engine = DgdsEngine::getInstance();
-	if (engine->getGameId() == GID_DRAGON) {
-		int x2 = x1 + titleWidth + 6;
-		int y2 = y1 + font->getFontHeight();
-		surf.drawLine(x1, y1, x2, y1, 0xdf);
-		surf.drawLine(x2, y1 + 1, x2, y2, 0xdf);
-		surf.drawLine(x1, y1 + 1, x1, y2, 0xff);
-		surf.drawLine(x1 + 1, y2, x1 + titleWidth + 5, y2, 0xff);
+	int titleWidth = font->getStringWidth(title);
+	// Dragon always draws the header in the same spot; HoC centers it.
+	int x1, y1;
+	if (gameId == GID_DRAGON) {
+		// Constant offset
+		x1 = r._rect.x + 112;
+		y1 = r._rect.y + 7;
+	} else if (gameId == GID_HOC) {
+		// Centered on window
+		x1 = r._rect.x + (r._rect.width - font->getStringWidth(title)) / 2 - 3;
+		y1 = r._rect.y + 11;
+	} else { // GID_WILLY
+		// Constant offset
+		x1 = r._rect.x + 154;
+		y1 = r._rect.y + 8;
 	}
+
+	// Draw the border around the text
+	byte topColor = (gameId == GID_DRAGON ? 0xdf : (gameId == GID_HOC ? 16 : 15));
+	byte botColor = (gameId == GID_DRAGON ? 0xff : (gameId == GID_HOC ? 20 : 19));
+	int x2 = x1 + titleWidth + 6;
+	int y2 = y1 + font->getFontHeight();
+	surf.drawLine(x1, y1, x2, y1, topColor);
+	surf.drawLine(x2, y1 + 1, x2, y2, topColor);
+	surf.drawLine(x1, y1 + 1, x1, y2, botColor);
+	surf.drawLine(x1 + 1, y2, x1 + titleWidth + 5, y2, botColor);
+
+	// In willy also fill the area in the middle
+	if (gameId == GID_WILLY)
+		surf.fillRect(Common::Rect(Common::Point(x1 + 1, y1 + 1), titleWidth + 5, font->getFontHeight() - 1), 17);
+
+	font->drawString(&surf, title, x1 + 4, y1 + 2, titleWidth, txtColor);
+
 }
 
 void Inventory::draw(Graphics::ManagedSurface &surf, int itemCount) {
@@ -140,11 +171,15 @@ void Inventory::draw(Graphics::ManagedSurface &surf, int itemCount) {
 	DgdsGameId gameId = engine->getGameId();
 
 	if (_showZoomBox) {
-		_itemZoomBox->setVisible(true);
+		if (gameId != GID_WILLY)
+			_itemZoomBox->setVisible(true);
 		boxreq._rect.width = _fullWidth;
 	} else {
-		_itemZoomBox->setVisible(false);
 		boxreq._rect.width = _itemBox->_width + _itemBox->_x * 2;
+		if (gameId != GID_WILLY) {
+			_itemZoomBox->setVisible(false);
+			boxreq._rect.width--;
+		}
 	}
 
 	//
@@ -203,22 +238,29 @@ void Inventory::draw(Graphics::ManagedSurface &surf, int itemCount) {
 
 void Inventory::drawTime(Graphics::ManagedSurface &surf) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
-	if (engine->getGameId() != GID_DRAGON)
+	if (engine->getGameId() == GID_HOC)
 		return;
 
 	const DgdsFont *font = RequestData::getMenuFont();
 	const Common::String timeStr = engine->getClock().getTimeStr();
-	Common::Point clockpos = Common::Point(_invClock->_x + _invClock->_parentX, _invClock->_y + _invClock->_parentY);
-	surf.fillRect(Common::Rect(clockpos, _invClock->_width, _invClock->_height), 0);
-	RequestData::drawCorners(&surf, 19, clockpos.x - 2, clockpos.y - 2,
-								_invClock->_width + 4, _invClock->_height + 4);
+	const Common::Point clockpos = _invClock->topLeft();
+	if (engine->getGameId() == GID_DRAGON) {
+		surf.fillRect(Common::Rect(clockpos, _invClock->_width, _invClock->_height), 0);
+		RequestData::drawCorners(&surf, 19, clockpos.x - 2, clockpos.y - 2,
+					_invClock->_width + 4, _invClock->_height + 4);
+	} else { // GID_WILLY
+		surf.fillRect(Common::Rect(Common::Point(clockpos.x, clockpos.y - 1),
+					_invClock->_width, _invClock->_height + 2), 0);
+		RequestData::drawCorners(&surf, 25, clockpos.x - 2, clockpos.y - 5,
+					_invClock->_width + 8, _invClock->_height + 7);
+	}
 	font->drawString(&surf, timeStr, clockpos.x + 4, clockpos.y, font->getStringWidth(timeStr), _invClock->_col3);
 }
 
 void Inventory::drawItems(Graphics::ManagedSurface &surf) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	const Common::SharedPtr<Image> &icons = engine->getIcons();
-	int x = 0;
+	int x = (engine->getGameId() == GID_WILLY ? -2 : 0);
 	int y = 0;
 
 	const int xstep = _itemArea->_xStep;
@@ -235,7 +277,7 @@ void Inventory::drawItems(Graphics::ManagedSurface &surf) {
 	const Common::Rect drawMask(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	int offset = _itemOffset;
 	Common::Array<GameItem> &items = engine->getGDSScene()->getGameItems();
-	for (auto & item: items) {
+	for (auto &item: items) {
 		if (!isItemInInventory(item))
 			continue;
 
@@ -260,7 +302,7 @@ void Inventory::drawItems(Graphics::ManagedSurface &surf) {
 
 		// calculate draw offset for the image
 		int drawX = imgAreaX + x + (xstep - item._rect.width) / 2;
-		int drawY = imgAreaY + y +  (ystep - item._rect.height) / 2;
+		int drawY = imgAreaY + y + (ystep - item._rect.height) / 2;
 
 		icons->drawBitmap(item._iconNum, drawX, drawY, drawMask, surf);
 
@@ -268,7 +310,9 @@ void Inventory::drawItems(Graphics::ManagedSurface &surf) {
 		item._rect.y = drawY;
 
 		x += xstep;
-		if (x >= _itemArea->_width) {
+
+		// Willy Beamish area is 270 and step is 54, so hack the width slightly.
+		if (x >= _itemArea->_width - 2) {
 			x = 0;
 			y += ystep;
 		}
@@ -290,7 +334,7 @@ void Inventory::mouseMoved(const Common::Point &pt) {
 			close();
 		}
 	} else {
-		engine->setMouseCursor(engine->getGDSScene()->getDefaultMouseCursor());
+		engine->setMouseCursor(kDgdsMouseGameDefault);
 	}
 }
 
@@ -322,7 +366,7 @@ GameItem *Inventory::itemUnderMouse(const Common::Point &pt) {
 	return nullptr;
 }
 
-bool Inventory::isItemInInventory(GameItem &item) {
+bool Inventory::isItemInInventory(const GameItem &item) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	DgdsGameId gameId = engine->getGameId();
 	bool result = item._inSceneNum == 2; // && (item._flags & 4)
@@ -363,20 +407,22 @@ void Inventory::mouseLUp(const Common::Point &pt) {
 	GameItem *dragItem = engine->getScene()->getDragItem();
 
 	if (dragItem) {
+		if (engine->getGameId() == GID_WILLY)
+			dragItem->_inSceneNum = 2;
 		engine->getScene()->onDragFinish(pt);
 		return;
 	}
 
 	GDSScene *gds = engine->getGDSScene();
 
-	engine->setMouseCursor(gds->getDefaultMouseCursor());
+	engine->setMouseCursor(kDgdsMouseGameDefault);
 
 	int itemsPerPage = (_itemArea->_width / _itemArea->_xStep) * (_itemArea->_height / _itemArea->_yStep);
 	if (_exitButton->containsPoint(pt)) {
 		close();
 	} else if (_nextPageBtn->containsPoint(pt) && _nextPageBtn->isVisible()) {
 		int numInvItems = 0;
-		Common::Array<GameItem> &items = engine->getGDSScene()->getGameItems();
+		const Common::Array<GameItem> &items = engine->getGDSScene()->getGameItems();
 		for (auto &item: items) {
 			if (isItemInInventory(item))
 				numInvItems++;

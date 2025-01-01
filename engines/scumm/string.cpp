@@ -1114,6 +1114,20 @@ void ScummEngine::displayDialog() {
 	if (_isRTL)
 		fakeBidiString(_charsetBuffer + _charsetBufPos, true, sizeof(_charsetBuffer) - _charsetBufPos);
 
+	if ((_game.features & GF_DOUBLEFINE_PAK) && (_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _sound->useRemasteredAudio()) {
+		int numberOfWaits = countNumberOfWaits();
+		int32 currentActor = VAR_TALK_ACTOR != 0xFF ? VAR(VAR_TALK_ACTOR) : 0;
+
+		// Explicitly truncate all relevant params to uint16! This is intentional!
+		_sound->startRemasteredSpeech(
+			(const char *)&_charsetBuffer[_charsetBufPos],
+			(uint16)_currentRoom,
+			(uint16)currentActor,
+			(uint16)_currentScriptSavedForSpeechMI,
+			(uint16)_currentScriptOffsetSavedForSpeechMI,
+			(uint16)numberOfWaits);
+	}
+
 	bool createTextBox = (_macGui && _game.id == GID_INDY3);
 	bool drawTextBox = false;
 
@@ -1207,6 +1221,27 @@ void ScummEngine::displayDialog() {
 	if (_game.platform == Common::kPlatformFMTowns && (c == 0 || c == 2 || c == 3))
 		memcpy(&_curStringRect, &_charset->_str, sizeof(Common::Rect));
 #endif
+}
+
+int ScummEngine::countNumberOfWaits() {
+	int idx, numWaits;
+	byte curChar;
+
+	idx = 0;
+	numWaits = 0;
+
+	if (_charsetBufPos) {
+		do {
+			curChar = _charsetBuffer[idx++];
+			if (curChar == 0xFF || curChar == 0xFE) {
+				if (_charsetBuffer[idx] == 3)
+					++numWaits;
+				++idx;
+			}
+		} while (idx < _charsetBufPos);
+	}
+
+	return numWaits;
 }
 
 void ScummEngine::drawString(int a, const byte *msg) {

@@ -38,6 +38,7 @@ public:
 	void pre_parser() override;
 	void parser() override;
 	void daemon() override;
+	void syncGame(Common::Serializer &s) override;
 
 private:
 	void room801_conv801a();
@@ -69,8 +70,8 @@ private:
 	int32 _rptmr15Series = 0;
 	int32 _shovelSeries = 0;
 
+	int32 _cellarDoorOpened = 0;
 	int32 _counter = 0;
-	int32 _unkVal1 = 0;
 	int32 _unkVal2 = 0;
 	int32 _unkVal3 = 0;
 	int32 _unkVal5 = 0;

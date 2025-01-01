@@ -13,6 +13,7 @@ MODULE_OBJS := \
 	font.o \
 	game_palettes.o \
 	globals.o \
+	head.o \
 	hoc_intro.o \
 	image.o \
 	inventory.o \
@@ -22,6 +23,8 @@ MODULE_OBJS := \
 	request.o \
 	resource.o \
 	scene.o \
+	scene_condition.o \
+	scene_op.o \
 	scripts.o \
 	sound.o \
 	sound_raw.o \

@@ -411,7 +411,7 @@ Common::Error ScummMetaEngine::createInstance(OSystem *syst, Engine **engine,
 	// TODO: Maybe allow the null driver, too?
 	if (res.game.platform == Common::kPlatformFMTowns && res.game.version == 3)
 		res.game.midi = MDT_TOWNS;
-	else if (res.game.platform == Common::kPlatformMacintosh && res.game.version < 7)
+	else if (res.game.platform == Common::kPlatformMacintosh && res.game.version < 7 && res.game.heversion == 0)
 		res.game.midi = MDT_MACINTOSH;
 
 	// Finally, we have massaged the GameDescriptor to our satisfaction, and can
@@ -790,6 +790,15 @@ static const ExtraGuiOption mmDemoModeOption = {
 	0
 };
 
+static const ExtraGuiOption useRemasteredAudio = {
+	_s("Use remastered audio"),
+	_s("Use the remastered speech and sound effects."),
+	"use_remastered_audio",
+	true,
+	0,
+	0
+};
+
 const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &target) const {
 	ExtraGuiOptions options;
 	// Query the GUI options
@@ -814,6 +823,9 @@ const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &
 	}
 	if (target.empty() || guiOptions.contains(GAMEOPTION_AUDIO_OVERRIDE)) {
 		options.push_back(audioOverride);
+	}
+	if (target.empty() || guiOptions.contains(GAMEOPTION_USE_REMASTERED_AUDIO)) {
+		options.push_back(useRemasteredAudio);
 	}
 	if (target.empty() || gameid == "comi") {
 		options.push_back(comiObjectLabelsOption);

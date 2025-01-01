@@ -36,7 +36,6 @@
 #include "scumm/macgui/macgui_v5.h"
 #include "scumm/music.h"
 #include "scumm/sound.h"
-#include "scumm/verbs.h"
 
 namespace Scumm {
 
@@ -55,13 +54,13 @@ const Graphics::Font *MacV5Gui::getFontByScummId(int32 id) {
 bool MacV5Gui::getFontParams(FontId fontId, int &id, int &size, int &slant) const {
 	switch (fontId) {
 	case kAboutFontRegular:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 9;
 		slant = Graphics::kMacFontRegular;
 		return true;
 
 	case kAboutFontBold:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 9;
 		slant = Graphics::kMacFontBold;
 		return true;
@@ -82,13 +81,13 @@ bool MacV5Gui::getFontParams(FontId fontId, int &id, int &size, int &slant) cons
 		return true;
 
 	case kAboutFontHeaderSimple1:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 12;
 		slant = Graphics::kMacFontBold | Graphics::kMacFontItalic | Graphics::kMacFontOutline;
 		return true;
 
 	case kAboutFontHeaderSimple2:
-		id = Graphics::kMacFontChicago;
+		id = Graphics::kMacFontSystem;
 		size = 12;
 		slant = Graphics::kMacFontBold | Graphics::kMacFontItalic | Graphics::kMacFontOutline;
 		return true;
@@ -99,33 +98,30 @@ bool MacV5Gui::getFontParams(FontId fontId, int &id, int &size, int &slant) cons
 }
 
 void MacV5Gui::setupCursor(int &width, int &height, int &hotspotX, int &hotspotY, int &animate) {
-	if (_vm->_game.id == GID_MONKEY) {
+	Common::MacResManager resource;
+	Graphics::MacCursor macCursor;
+
+	resource.open(_resourceFile);
+
+	Common::SeekableReadStream *curs = resource.getResource(MKTAG('C', 'U', 'R', 'S'), 128);
+
+	if (curs && macCursor.readFromStream(*curs)) {
+		width = macCursor.getWidth();
+		height = macCursor.getHeight();
+		hotspotX = macCursor.getHotspotX();
+		hotspotY = macCursor.getHotspotY();
+		animate = 0;
+
+		_windowManager->replaceCursor(Graphics::MacGUIConstants::kMacCursorCustom, &macCursor);
+	} else {
+		// Monkey Island 1 uses the arrow cursor, and we have to use it
+		// for the Fate of Atlantis demo as well.
 		_windowManager->replaceCursor(Graphics::MacGUIConstants::kMacCursorArrow);
 		width = 11;
 		height = 16;
 		hotspotX = 1;
 		hotspotY = 3;
 		animate = 0;
-	} else if (_vm->_game.version == 5) {
-		Common::MacResManager resource;
-		Graphics::MacCursor macCursor;
-
-		resource.open(_resourceFile);
-
-		Common::SeekableReadStream *curs = resource.getResource(MKTAG('C', 'U', 'R', 'S'), 128);
-
-		if (macCursor.readFromStream(*curs)) {
-			width = macCursor.getWidth();
-			height = macCursor.getHeight();
-			hotspotX = macCursor.getHotspotX();
-			hotspotY = macCursor.getHotspotY();
-			animate = 0;
-
-			_windowManager->replaceCursor(Graphics::MacGUIConstants::kMacCursorCustom, &macCursor);
-		}
-
-		delete curs;
-		resource.close();
 	}
 }
 
@@ -135,16 +131,16 @@ bool MacV5Gui::handleMenu(int id, Common::String &name) {
 
 	switch (id) {
 	case 204:   // Fix color map
-		break; // Do a no-op
+		return true;
 
 	case 205:   // Options
 		runOptionsDialog();
-		break;
+		return true;
 
 	case 206:   // Quit
 		if (runQuitDialog())
 			_vm->quitGame();
-		break;
+		return true;
 
 	// Window menu
 	case 402: // Tiny
@@ -202,7 +198,10 @@ void MacV5Gui::runAboutDialog() {
 		runAboutDialogMI2(window);
 		break;
 	case GID_INDY4:
-		runAboutDialogIndy4(window);
+		if (_strsStrings[kMSIAboutString34] != "")
+			runAboutDialogIndy4(window);
+		else
+			runAboutDialogIndy4Demo(window);
 		break;
 	default:
 		break;
@@ -622,8 +621,6 @@ void MacV5Gui::runAboutDialogMI2(MacDialogWindow *window) {
 }
 
 void MacV5Gui::runAboutDialogIndy4(MacDialogWindow *window) {
-	bool isFloppyVersion = _vm->_game.variant && !strcmp(_vm->_game.variant, "Floppy");
-
 	Graphics::Surface *s = window->innerSurface();
 
 	Graphics::Surface *lucasArts = loadPict(5000);
@@ -677,17 +674,10 @@ void MacV5Gui::runAboutDialogIndy4(MacDialogWindow *window) {
 		TEXT_END_MARKER
 	};
 
-	// Annoyingly, this page is missing a string in the CD version of the
-	// game so we need two different versions. Note that the "rough" command
-	// does work in both versions.
+	// In the CD version, kMSIAboutString38 is empty. Probably because it
+	// added a menu item for it instead.
 
-	const TextLine page10_cd[] = {
-		{ 2, 19, kStyleRegular, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString22].c_str() }, // "\xD2djm\xD3  Sound and Music System \xA91992 Eric Johnston
-		{ 2, 39, kStyleRegular, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString23].c_str() }, // "\xD2epx\xD3  Graphics Smoothing System \xA91992 Eric Johnson
-		TEXT_END_MARKER
-	};
-
-	const TextLine page10_floppy[] = {
+	const TextLine page10[] = {
 		{ 2, 19, kStyleRegular, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString22].c_str() }, // "\xD2djm\xD3  Sound and Music System \xA91992 Eric Johnston
 		{ 2, 39, kStyleRegular, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString23].c_str() }, // "\xD2epx\xD3  Graphics Smoothing System \xA91992 Eric Johnson
 		{ 2, 54, kStyleRegular, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString38].c_str() }, // "Type 'rough' to see the difference."
@@ -727,7 +717,7 @@ void MacV5Gui::runAboutDialogIndy4(MacDialogWindow *window) {
 		{ page7,   1,  4300 },
 		{ page8,   1,  4200 },
 		{ page9,   1,  4200 },
-		{ nullptr, 1,  4200 },
+		{ page10,  1,  4200 },
 		{ page11,  1, 14100 },
 		{ page12,  1,     0 }
 	};
@@ -775,16 +765,9 @@ void MacV5Gui::runAboutDialogIndy4(MacDialogWindow *window) {
 			window->markRectAsDirty(Common::Rect(178, 129, s->w - 2, s->h - 2));
 			break;
 
-		case 10:
-			aboutPages[10].text = isFloppyVersion ? page10_floppy : page10_cd;
-			break;
-
 		default:
 			break;
 		}
-
-		if (aboutPages[page].drawArea != 2)
-			window->markRectAsDirty(drawArea);
 
 		if (aboutPages[page].text) {
 			if (aboutPages[page].drawArea == 1) {
@@ -807,6 +790,147 @@ void MacV5Gui::runAboutDialogIndy4(MacDialogWindow *window) {
 
 	delete lucasArts;
 	delete indianaJones;
+}
+
+void MacV5Gui::runAboutDialogIndy4Demo(MacDialogWindow *window) {
+	Graphics::Surface *s = window->innerSurface();
+
+	Graphics::Surface *lucasArts = loadPict(5000);
+
+	const TextLine page4[] = {
+		{ 0, 68, kStyleBold, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString2].c_str() }, // "PRESENTS"
+		TEXT_END_MARKER
+	};
+
+	const TextLine page5[] = {
+		{ 0, 5, kStyleHeaderSimple1, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString3].c_str() }, // "Indiana Jones"
+		{ 73, 18, kStyleBold, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString5].c_str() }, // "and the"
+		{ 40, 31, kStyleHeaderSimple1, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString4].c_str() }, // "Fate of Atlantis"
+//		{ 317, 4, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString3].c_str() }, // "\xA8"
+		{ 178, 125, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString6].c_str() }, // "TM & \xA9 1990 LucasArts Entertainment Company."
+		{ 312, 138, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString7].c_str() }, // "All rights reserved."
+		TEXT_END_MARKER
+	};
+
+	const TextLine page6[] = {
+		{ 0, 47, kStyleRegular, Graphics::kTextAlignCenter, _strsStrings[kMSIAboutString8].c_str() }, // "Macintosh version by
+		{ 50, 62, kStyleHeaderSimple2, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString9].c_str() }, // "Eric Johnston"
+		TEXT_END_MARKER
+	};
+
+	const TextLine page7[] = {
+		{ 85, 32, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString10].c_str() }, // "Created by"
+		{ 55, 47, kStyleHeaderSimple2, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString12].c_str() }, // "Hal Barwood"
+		{ 58, 70, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString11].c_str() }, // "Macintosh Scripting by"
+		{ 44, 85, kStyleHeaderSimple2, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString13].c_str() }, // "Alric Wilmunder"
+		TEXT_END_MARKER
+	};
+
+	const TextLine page8[] = {
+		{ 59, 27, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString14].c_str() }, // "SCUMM Story System"
+		{ 85, 37, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString15].c_str() }, // "created by"
+		{ 35, 57, kStyleHeaderSimple2, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString17].c_str() }, // "Ron Gilbert"
+		{ 102, 72, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString16].c_str() }, // "and"
+		{ 59, 87, kStyleHeaderSimple2, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString18].c_str() }, // "Aric Wilmunder"
+		TEXT_END_MARKER
+	};
+
+	const TextLine page9[] = {
+		{ 29, 37, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString19].c_str() }, // "Stumped?  Hint books are available!"
+		{ 15, 55, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString22].c_str() }, // "In the U.S. call"
+		{ 89, 55, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString20].c_str() }, // "1 (800) STAR-WARS"
+		{ 89, 65, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString24].c_str() }, // "that\xD5s  1 (800) 782-7927"
+		{ 19, 85, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString23].c_str() }, // "In Canada call"
+		{ 89, 85, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString21].c_str() }, // "1 (800) 828-7927"
+		TEXT_END_MARKER
+	};
+
+	const TextLine page10[] = {
+		{ 27, 32, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString25].c_str() }, // "Need a hint NOW?  Having problems?"
+		{ 6, 47, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString29].c_str() }, // "For technical support call"
+		{ 130, 47, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString26].c_str() }, // "1 (415) 721-3333"
+		{ 62, 57, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString30].c_str() }, // "For hints call"
+		{ 130, 57, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString27].c_str() }, // "1 (900) 740-JEDI"
+		{ 5, 72, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString31].c_str() }, // "The charge for the hint line is 75\xA2 per minute."
+		{ 10, 82, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString32].c_str() }, // "(You must have your parents\xD5 permission to"
+		{ 25, 92, kStyleRegular, Graphics::kTextAlignLeft, _strsStrings[kMSIAboutString33].c_str() }, // "call this number if you are under 18.)"
+		TEXT_END_MARKER
+	};
+
+	AboutPage aboutPages[] = {
+		{ nullptr, 0,  3500 },
+		{ nullptr, 0,   100 },
+		{ nullptr, 0,   100 },
+		{ nullptr, 0,   100 },
+		{ page4,   1,  2100 },
+		{ page5,   1,  7000 },
+		{ page6,   2,  4200 },
+		{ page7,   2,  4200 },
+		{ page8,   2,  4200 },
+		{ page9,   2, 14100 },
+		{ page10,  2,     0 }
+	};
+
+	Common::Rect drawAreas[] = {
+		Common::Rect(2, 2, s->w - 2, s->h - 2),
+		Common::Rect(0, 2, s->w, s->h - 2),
+		Common::Rect(176, 10, s->w - 10, s->h - 10)
+	};
+
+	int page = 0;
+
+	window->show();
+
+	uint32 black = getBlack();
+	uint32 white = getWhite();
+
+	while (!_vm->shouldQuit() && page < ARRAYSIZE(aboutPages)) {
+		Common::Rect &drawArea = drawAreas[aboutPages[page].drawArea];
+
+		switch (page) {
+		case 0:
+			s->fillRect(drawArea, black);
+			window->drawSprite(lucasArts, 64, 2, drawArea);
+			break;
+
+		case 1:
+			window->fillPattern(drawArea, 0xD7D7, false, true);
+			break;
+
+		case 2:
+			window->fillPattern(drawArea, 0x5A5A, false, true);
+			break;
+
+		case 3:
+		case 5:
+			s->fillRect(drawArea, white);
+			break;
+
+		case 6:
+			s->fillRect(Common::Rect(176, 129, s->w - 2, s->h - 2), white);
+			window->markRectAsDirty(Common::Rect(176, 129, s->w - 2, s->h - 2));
+			break;
+
+		default:
+			break;
+		}
+
+		if (aboutPages[page].text) {
+			if (aboutPages[page].drawArea == 2) {
+				window->drawTextBox(drawArea, aboutPages[page].text);
+			} else {
+				window->drawTexts(drawArea, aboutPages[page].text);
+			}
+		}
+
+		window->markRectAsDirty(drawArea);
+		window->update();
+		delay(aboutPages[page].delayMs);
+		page++;
+	}
+
+	lucasArts->free();
+	delete lucasArts;
 }
 
 bool MacV5Gui::runOptionsDialog() {
@@ -837,8 +961,8 @@ bool MacV5Gui::runOptionsDialog() {
 	MacCheckbox *checkboxSound = (MacCheckbox *)window->getWidget(kWidgetCheckbox, 0);
 	MacCheckbox *checkboxMusic = nullptr;
 
-	MacPictureSlider *sliderTextSpeed = window->addPictureSlider(4, 5, true, 5, 105, 0, 9);
-	MacPictureSlider *sliderMusicQuality = window->addPictureSlider(8, 9, true, 5, 69, 0, 2, 6, 4);
+	MacImageSlider *sliderTextSpeed = window->addImageSlider(4, 5, true, 5, 105, 0, 9);
+	MacImageSlider *sliderMusicQuality = window->addImageSlider(8, 9, true, 5, 69, 0, 2, 6, 4);
 
 	bool sound = !ConfMan.hasKey("mute") || !ConfMan.getBool("mute");
 	bool music;
@@ -865,56 +989,63 @@ bool MacV5Gui::runOptionsDialog() {
 	sliderTextSpeed->setValue(textSpeed);
 	sliderMusicQuality->setValue(musicQualityOption);
 
-	// When quitting, the default action is not to not apply options
-	bool ret = false;
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonOk->getId()) {
-			ret = true;
-			break;
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonOk) {
+					// TEXT SPEED
+					_vm->_defaultTextSpeed = CLIP<int>(sliderTextSpeed->getValue(), 0, 9);
+					ConfMan.setInt("original_gui_text_speed", _vm->_defaultTextSpeed);
+					_vm->setTalkSpeed(_vm->_defaultTextSpeed);
+
+					// SOUND&MUSIC ACTIVATION
+					sound = checkboxSound->getValue();
+					music = checkboxMusic ? checkboxMusic->getValue() : sound;
+
+					if (!sound)
+						music = false;
+
+					_vm->_musicEngine->toggleMusic(music);
+					_vm->_musicEngine->toggleSoundEffects(sound);
+					ConfMan.setBool("music_mute", !music);
+					ConfMan.setBool("mute", !sound);
+
+					// MUSIC QUALITY SELECTOR
+					musicQuality = musicQuality * 3 + 1 + sliderMusicQuality->getValue();
+					_vm->_musicEngine->setQuality(musicQuality);
+					ConfMan.setInt("mac_snd_quality", musicQuality);
+
+					_vm->syncSoundSettings();
+					ConfMan.flushToDisk();
+
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
+
+				break;
+
+			case kDialogValueChange:
+				if (event.widget == checkboxSound && checkboxMusic) {
+					checkboxMusic->setEnabled(checkboxSound->getValue() != 0);
+				}
+				break;
+
+			default:
+				break;
+			}
 		}
 
-		if (clicked == buttonCancel->getId())
-			break;
-
-		if (clicked == checkboxSound->getId() && checkboxMusic)
-			checkboxMusic->setEnabled(checkboxSound->getValue() != 0);
-	}
-
-	if (ret) {
-		// Update settings
-
-		// TEXT SPEED
-		_vm->_defaultTextSpeed = CLIP<int>(sliderTextSpeed->getValue(), 0, 9);
-		ConfMan.setInt("original_gui_text_speed", _vm->_defaultTextSpeed);
-		_vm->setTalkSpeed(_vm->_defaultTextSpeed);
-
-		// SOUND&MUSIC ACTIVATION
-		sound = checkboxSound->getValue();
-		music = checkboxMusic ? checkboxMusic->getValue() : sound;
-
-		if (!sound)
-			music = false;
-
-		_vm->_musicEngine->toggleMusic(music);
-		_vm->_musicEngine->toggleSoundEffects(sound);
-		ConfMan.setBool("music_mute", !music);
-		ConfMan.setBool("mute", !sound);
-
-		// MUSIC QUALITY SELECTOR
-		musicQuality = musicQuality * 3 + 1 + sliderMusicQuality->getValue();
-		_vm->_musicEngine->setQuality(musicQuality);
-		ConfMan.setInt("mac_snd_quality", musicQuality);
-
-		_vm->syncSoundSettings();
-		ConfMan.flushToDisk();
+		window->delayAndUpdate();
 	}
 
 	delete window;
-	return ret;
+	return false;
 }
 
 void MacV5Gui::resetAfterLoad() {

@@ -43,7 +43,7 @@
 #include "sci/graphics/compare.h"
 #include "sci/graphics/controls16.h"
 #include "sci/graphics/cursor.h"
-#include "sci/graphics/gfxdrivers.h"
+#include "sci/graphics/drivers/gfxdriver.h"
 #include "sci/graphics/palette.h"
 #include "sci/graphics/paint16.h"
 #include "sci/graphics/picture.h"
@@ -1205,6 +1205,12 @@ reg_t kDisposeWindow(EngineState *s, int argc, reg_t *argv) {
 
 	g_sci->_gfxPorts->kernelDisposeWindow(windowId, reanimate);
 	g_sci->_tts->stop();
+
+	// This is only needed for KQ6WinCD when using the mixed speech+text mode with hires graphics enabled.
+	// The original interpreter does not support the mixed mode, but it still does have this code here. So
+	// we can use that without having to make up a solution ourselves.
+	if (g_sci->_gfxScreen && g_sci->_gfxScreen->gfxDriver()->supportsHiResGraphics())
+		g_sci->_gfxPaint16->redrawHiresCels();
 
 	return s->r_acc;
 }

@@ -28,6 +28,7 @@
 #include "base/version.h"
 
 #include "common/system.h"
+#include "common/util.h"
 
 #include "graphics/fontman.h"
 
@@ -254,8 +255,12 @@ void ConsoleDialog::handleTickle() {
 	if (_selectionTime < time) {
 		_selectionTime += kDraggingTime;
 		if (_isDragging && _scrollDirection != 0) {
-			_scrollBar->handleMouseWheel(0, 0, -_scrollDirection);
+			handleMouseWheel(0, 0, -_scrollDirection);
 			_selEnd -= kCharsPerLine * _scrollDirection;
+			if (clampSelection(_selEnd))
+				// Scrolled as far as possible. Don't re-execute this block
+				// unnecessarily.
+				_scrollDirection = 0;
 		}
 	}
 	// Perform the "slide animation".
@@ -905,12 +910,13 @@ void ConsoleDialog::handleMouseDown(int x, int y, int button, int clickCount) {
 
 		w->handleMouseDown(x - (w->getAbsX() - _x), y - (w->getAbsY() - _y), button, clickCount);
 	} else if (_selBegin == -1 || _selEnd == -1) {
-		if (y > _h)
-			return;
+		x = MIN(MAX(x, _leftPadding), kCharsPerLine * kConsoleCharWidth + _leftPadding);
+		y = MIN(MAX(y, _topPadding), (decltype(y))_h - kConsoleLineHeight);
 
 		int lineNumber = (y - _topPadding) / kConsoleLineHeight;
 		int ind = (x - _leftPadding) / kConsoleCharWidth;
 		_selBegin = (_scrollLine - _linesPerPage + 1 + lineNumber) * kCharsPerLine + ind;
+		clampSelection(_selBegin);
 		_selEnd = _selBegin;
 		_isDragging = true;
 	} else {
@@ -920,15 +926,31 @@ void ConsoleDialog::handleMouseDown(int x, int y, int button, int clickCount) {
 	}
 }
 
+bool ConsoleDialog::clampSelection(int &sel) {
+	int oldSel = sel;
+	int lowerBound = 0;
+	int upperBound;
+
+	upperBound = MAX(_promptEndPos, _currentPos);
+	upperBound = MAX(upperBound, _linesPerPage * kCharsPerLine); // at least the whole first page
+	upperBound += kCharsPerLine - (upperBound % kCharsPerLine); // to end of line
+
+	sel = MAX(lowerBound, MIN(upperBound, sel));
+	return sel != oldSel;
+}
+
 void ConsoleDialog::handleMouseMoved(int x, int y, int button) {
 	if (!_isDragging)
 		Dialog::handleMouseMoved(x, y, button);
 	else {
 		int selEndPreviousMove = _selEnd;
+		x = MIN(MAX(x, _leftPadding), kCharsPerLine * kConsoleCharWidth + _leftPadding);
+		y = MIN(MAX(y, _topPadding), (decltype(y))_h - kConsoleLineHeight);
 		int lineNumber = (y - _topPadding) / kConsoleLineHeight;
 		lineNumber = MIN(lineNumber, _linesPerPage - 1);
 		int col = (x - _leftPadding) / kConsoleCharWidth;
 		_selEnd = (_scrollLine - _linesPerPage + 1 + lineNumber) * kCharsPerLine + col;
+		clampSelection(_selEnd);
 
 		if (_selEnd == selEndPreviousMove)
 			return;

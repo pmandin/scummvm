@@ -38,14 +38,44 @@ CP       := cp
 
 LDFLAGS :=
 
-# Raspberry Pi 3 (64 bit)
-ifeq ($(platform), rpi3_64)
+
+# Raspberry Pi 1
+ifeq ($(platform), rpi1)
+   TARGET = $(TARGET_NAME)_libretro.so
+   DEFINES += -fPIC -D_ARM_ASSEM_ -DUSE_CXX11 -marm -DARM
+   LDFLAGS += -shared -Wl,--version-script=$(ROOT_PATH)/link.T -fPIC
+   CFLAGS += -fPIC -marm -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -fomit-frame-pointer -ffast-math
+   CXXFLAGS = $(CFLAGS) -frtti -std=c++11
+   HAVE_OPENGLES2 := 1
+
+# Raspberry Pi 3
+else ifeq ($(platform), rpi3)
+   TARGET = $(TARGET_NAME)_libretro.so
+   DEFINES += -fPIC -D_ARM_ASSEM_ -DUSE_CXX11 -marm -DARM
+   LDFLAGS += -shared -Wl,--version-script=$(ROOT_PATH)/link.T -fPIC
+   CFLAGS += -fPIC -mcpu=cortex-a53 -mtune=cortex-a53 -fomit-frame-pointer -ffast-math
+   CXXFLAGS = $(CFLAGS) -frtti -std=c++11
+   HAVE_OPENGLES2 := 1
+   HAVE_NEON := 1
+
+ # Raspberry Pi 3 (64 bit)
+else ifeq ($(platform), rpi3_64)
    TARGET   = $(TARGET_NAME)_libretro.so
    DEFINES += -fPIC -D_ARM_ASSEM_ -DUSE_CXX11 -DARM -DDEFAULT_PERF_TUNER
    LDFLAGS += -shared -Wl,--version-script=$(ROOT_PATH)/link.T -fPIC
-   CFLAGS  += -fPIC -mcpu=cortex-a53 -mtune=cortex-a53 -fomit-frame-pointer -ffast-math
+   CFLAGS += -fPIC -mcpu=cortex-a53 -mtune=cortex-a53 -fomit-frame-pointer -ffast-math
    CXXFLAGS = $(CFLAGS) -frtti -std=c++11
-   HAVE_OPENGLES2 :=1
+   HAVE_OPENGLES2 := 1
+   HAVE_NEON := 1
+
+# Raspberry Pi 5 (64 bit)
+else ifeq ($(platform), rpi5_64)
+   TARGET = $(TARGET_NAME)_libretro.so
+   DEFINES += -fPIC -D_ARM_ASSEM_ -DUSE_CXX11 -DARM
+   LDFLAGS += -shared -Wl,--version-script=$(ROOT_PATH)/link.T -fPIC
+   CFLAGS += -fPIC -mcpu=cortex-a76 -mtune=cortex-a76 -fomit-frame-pointer -ffast-math
+   CXXFLAGS = $(CFLAGS) -frtti -std=c++11
+   HAVE_OPENGLES2 := 1
    HAVE_NEON := 1
 
 # Raspberry Pi 4 (64 bit)
@@ -315,16 +345,25 @@ else ifneq (,$(findstring armv8,$(platform)))
    HAVE_OPENGLES2 := 1
 
 # Odroid Go Advance
-else ifneq (,$(findstring oga_a35_neon_hardfloat,$(platform)))
+else ifneq (,$(findstring odroidgo2,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
-   DEFINES += -fPIC -D_ARM_ASSEM_ -DARM -marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc
+   DEFINES += -fPIC -D_ARM_ASSEM_ -DARM -DUSE_CXX11 -marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc
+   DEFINES += -fPIC -D_ARM_ASSEM_ -DUSE_CXX11 -DARM
    LDFLAGS += -shared -Wl,--version-script=$(ROOT_PATH)/link.T -fPIC
-   USE_VORBIS = 0
-   USE_THEORADEC = 0
-   USE_TREMOR = 1
-   USE_MT32EMU = 0
-   HAVE_NEON := 1
+   CFLAGS += -fPIC -mcpu=cortex-a35 -fomit-frame-pointer -ffast-math
+   CXXFLAGS = $(CFLAGS) -frtti -std=c++11
    HAVE_OPENGLES2 := 1
+   HAVE_NEON = 1
+
+# RG353x
+else ifneq (,$(findstring rg353x,$(platform)))
+   TARGET = $(TARGET_NAME)_libretro.so
+   DEFINES += -fPIC -D_ARM_ASSEM_ -DUSE_CXX11 -DARM
+   LDFLAGS += -shared -Wl,--version-script=$(ROOT_PATH)/link.T -fPIC
+   CFLAGS += -fPIC -mcpu=cortex-a55 -mtune=cortex-a55 -fomit-frame-pointer -ffast-math
+   CXXFLAGS = $(CFLAGS) -frtti -std=c++11
+   HAVE_OPENGLES2 := 1
+   HAVE_NEON = 1
 
 # Emscripten
 else ifeq ($(platform), emscripten)
@@ -512,7 +551,7 @@ ifneq (,$(findstring $(platform), wiiu vita))
    DEFINES += -Os
 else ifneq (,$(findstring $(platform), ios osx))
    DEFINES += -O1
-else ifneq (,$(findstring $(platform), msvc genode))
+else ifneq (,$(findstring $(platform), msvc genode rpi))
    DEFINES += -O2
 else
    DEFINES += -O3

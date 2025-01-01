@@ -50,22 +50,26 @@ enum SelectionTypes {
 	kSelBackspace
 };
 
+// Options for controlling behavior during waits and sound playback
+enum WaitOptions {
+	kWaitBlock          = 0x00, // no event processing, cannot be interrupted
+	kWaitProcessEvents  = 0x01, // process events, stops on quit
+	kWaitAllowInterrupt = 0x03  // process events, stops on input or quit
+};
+
 class PreAgiEngine : public AgiBase {
 	int _gameId;
 
 protected:
 	void initialize() override;
 
-	void pollTimer() {}
 	int getKeypress() override { return 0; }
 	bool isKeypress() override { return false; }
 	void clearKeyQueue() override {}
 
 	PreAgiEngine(OSystem *syst, const AGIGameDescription *gameDesc);
 	~PreAgiEngine() override;
-	int getGameId() {
-		return _gameId;
-	}
+	int getGameId() const { return _gameId; }
 
 	PictureMgr *_picture;
 
@@ -79,12 +83,13 @@ protected:
 	int loadGame(const Common::String &fileName, bool checkId = true) { return -1; }
 
 	// Game
-	Common::String getTargetName() { return _targetName; }
+	Common::String getTargetName() const { return _targetName; }
 
 	// Screen
 	void clearScreen(int attr, bool overrideDefault = true);
 	void clearGfxScreen(int attr);
 	void setDefaultTextColor(int attr) { _defaultColor = attr; }
+	byte getWhite() const;
 
 	// Keyboard
 	int getSelection(SelectionTypes type);
@@ -94,18 +99,17 @@ protected:
 
 	// Text
 	void drawStr(int row, int col, int attr, const char *buffer);
-	void drawStrMiddle(int row, int attr, const char *buffer);
 	void clearTextArea();
 	void clearRow(int row);
-	void XOR80(char *buffer);
+	static void XOR80(char *buffer);
 	void printStr(const char *szMsg);
 	void printStrXOR(char *szMsg);
 
 	// Saved Games
 	Common::SaveFileManager *getSaveFileMan() { return _saveFileMan; }
 
-	void playNote(int16 frequency, int32 length);
-	void waitForTimer(int msec_delay);
+	bool playSpeakerNote(int16 frequency, int32 length, WaitOptions options);
+	bool wait(uint32 delay, WaitOptions options = kWaitProcessEvents);
 
 private:
 	int _defaultColor;

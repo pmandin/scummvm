@@ -159,16 +159,17 @@ void Darkseed::UseCode::useCode(int objNum) {
 	debug("useCode: objNum = %d", objNum);
 
 	if (objNum == 141) {
-		_console->addTextLine("You touch Delbert...");
+		_console->addI18NText(kI18N_YouTouchDelbertText);
 		return;
 	}
 	if (objNum == 189) {
-		_console->addTextLine("You touch the cold iron bars.");
+		_console->addI18NText(kI18N_YouTouchTheColdIronBarsText);
 		return;
 	}
 	if (objNum == 42) {
 		switch (_objectVar[42]) {
 		case 0:
+		case 4:
 			_console->printTosText(653);
 			break;
 		case 1:
@@ -183,9 +184,6 @@ void Darkseed::UseCode::useCode(int objNum) {
 		case 3:
 			_console->printTosText(655);
 			_objectVar[42] = 4;
-			break;
-		case 4:
-			_console->printTosText(653);
 			break;
 		default:
 			break;
@@ -257,7 +255,7 @@ void Darkseed::UseCode::useCode(int objNum) {
 		_inventory.addItem(26);
 		return;
 	}
-	if ((162 < objNum) && (objNum < 169)) {
+	if (objNum > 162 && objNum < 169) {
 		g_engine->playSound(47, 5, -1);
 	}
 	if (objNum == 175) { // car horn
@@ -336,7 +334,7 @@ void Darkseed::UseCode::useCode(int objNum) {
 			return;
 		}
 		if ((objNum == 28) && (_objectVar[28] == 2)) {
-			_console->addTextLine("The sergeant says 'Nice gun eh? It's a Browning'");
+			_console->addI18NText(kI18N_TheSergeantSaysNiceGunText);
 			return;
 		}
 		if (objNum > 103 && objNum < 111) {
@@ -464,15 +462,13 @@ void Darkseed::UseCode::useCode(int objNum) {
 			}
 			return;
 		}
-		if (objNum < 42 && objNum != 22 && (objNum != 7 || _objectVar[7] == 1) &&
-			objNum != 31 && objNum != 33 && objNum != 32 && objNum != 86) {
+		if (objNum < 42 && objNum != 22 && (objNum != 7 || _objectVar[7] == 1)) {
 			_console->printTosText(955); // "You pick up the "
 			_console->addToCurrentLine(Common::String::format("%s.", _objectVar.getObjectName(objNum)));
 			_inventory.addItem(objNum);
 			g_engine->_room->_collisionType = 0;
-			if (((objNum != 25) || (_objectVar[25] == 1)) || (_objectVar[25] == 101)) {
-				g_engine->_room->removeObjectFromRoom(objNum);
-			}
+			g_engine->_room->removeObjectFromRoom(objNum);
+
 			_objectVar.setMoveObjectRoom(objNum, 254);
 			if (objNum == 28) {
 				_objectVar[28] = 1;
@@ -514,12 +510,12 @@ void Darkseed::UseCode::useCode(int objNum) {
 							g_engine->_sound->playMusic(MusicId::kRadio);
 							g_engine->playSound(0, 6, -1);
 							_objectVar[62] = 101;
-							_console->addTextLine("You turn on the music.");
+							_console->addI18NText(kI18N_YouTurnOnTheMusicText);
 						} else if (_objectVar[62] == 101) {
 							g_engine->_sound->killAllSound();
 							g_engine->_sound->stopMusic();
 							_objectVar[62] = 100;
-							_console->addTextLine("You turn off the music.");
+							_console->addI18NText(kI18N_YouTurnOffTheMusicText);
 						}
 					} else {
 						_objectVar[62] = _objectVar[62] + 1;
@@ -617,7 +613,7 @@ void Darkseed::UseCode::useCode(int objNum) {
 					_objectVar[66] = 0;
 				}
 			} else {
-				_console->addTextLine("You touch the surface of the ornate sigil.");
+				_console->addI18NText(kI18N_YouTouchTheOrnateSignalText);
 			}
 		} else if (objNum == 67 && _objectVar[68] == 0) {
 			if (_objectVar[12] == 2) {
@@ -632,7 +628,7 @@ void Darkseed::UseCode::useCode(int objNum) {
 					_objectVar[67] = 0;
 				}
 			} else {
-				_console->addTextLine("You touch the surface of the ornate sigil.");
+				_console->addI18NText(kI18N_YouTouchTheOrnateSignalText);
 			}
 		} else if ((objNum == 68) && (_objectVar[68] == 0)) {
 			if (_objectVar[12] == 2) {
@@ -644,7 +640,7 @@ void Darkseed::UseCode::useCode(int objNum) {
 					_objectVar[68] = 2;
 				}
 			} else {
-				_console->addTextLine("You touch the surface of the ornate sigil.");
+				_console->addI18NText(kI18N_YouTouchTheOrnateSignalText);
 			}
 		} else if (objNum == 84) {
 			_console->printTosText(566);
@@ -713,7 +709,7 @@ void Darkseed::UseCode::useCodeMoney(int16 targetObjNum) {
 		_player->loadAnimations("givclerk.nsp");
 		g_engine->_animation->setupOtherNspAnimation(6, 35);
 	} else {
-		_console->addTextLine("Choose an item before giving clerk more money.");
+		_console->addI18NText(kI18N_ChooseAnItemBeforeText);
 	}
 }
 
@@ -879,7 +875,7 @@ void Darkseed::UseCode::useCodeShopItems(int16 actionObjNum, int16 targetObjNum)
 		genericResponse(actionObjNum, 112, 996);
 	} else if ((actionObjNum == 38) && (targetObjNum == 49)) {
 		_console->printTosText(251);
-	} else if ((targetObjNum == 147) && (actionObjNum != 7)) {
+	} else if (targetObjNum == 147) {
 		_console->printTosText(319);
 	} else if (targetObjNum == 197) {
 		genericResponse(actionObjNum, 197, 993);
@@ -897,7 +893,7 @@ void Darkseed::UseCode::useCodeShopItems(int16 actionObjNum, int16 targetObjNum)
 		_console->printTosText(386);
 	} else if (targetObjNum == 110) {
 		_console->printTosText(392);
-	} else if ((targetObjNum == 131) && (actionObjNum != 7)) {
+	} else if (targetObjNum == 131) {
 		_console->printTosText(405);
 	} else if (targetObjNum == 85) {
 		_console->printTosText(434);
@@ -975,7 +971,7 @@ void Darkseed::UseCode::useCodeShopItems(int16 actionObjNum, int16 targetObjNum)
 				genericResponse(actionObjNum, 185, 982);
 			} else if ((actionObjNum == 38) && (targetObjNum == 79)) {
 				_console->printTosText(833);
-			} else if ((targetObjNum == 79) && (actionObjNum != 7)) {
+			} else if (targetObjNum == 79) {
 				_console->printTosText(836);
 			} else if ((actionObjNum == 38) && (targetObjNum == 58)) {
 				_console->printTosText(849);
@@ -1555,43 +1551,44 @@ void UseCode::genericResponse(int16 useObjNum, int16 targetObjNum, int16 tosIdx)
 	case 979:
 		_console->addTextLine(
 			Common::String::format(
-				"This sentry cannot be stopped with a %s.",
+				"%s %s.",
+				getI18NText(kI18N_ThisSentryCannotBeStoppedWithText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 980:
 		_console->addTextLine(
 			Common::String::format(
-				"The %s has no effect on the alien tubes.",
+				getI18NText(kI18N_HasNoEffectOnTheAlienTubesText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 981:
 		_console->addTextLine(
 			Common::String::format(
-				"You incinerate the %s inside the power nexus!.",
+				getI18NText(kI18N_YouIncinerateTheText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 982:
 		_console->addTextLine(
 			Common::String::format(
-				"The %s has no effect on this alien monstrosity.",
+				getI18NText(kI18N_HasNoEffectOnTheAlienMonstrosityText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 983:
 		_console->addTextLine(
 			Common::String::format(
-				"The %s is not strong enough to cut the cables.\nPerhaps if you had some wire cutters?",
+				getI18NText(kI18N_cutTheWiresText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 984:
 		_console->addTextLine(
 			Common::String::format(
-				"The %s has no effect on the protected ancient.",
+				getI18NText(kI18N_NoEffectOnTheProtectedAncientText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 985:
 		_console->addTextLine(
 			Common::String::format(
-				"You hide the %s under the pillow.",
+				getI18NText(kI18N_YouHideTheObjectUnderThePillowText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 986:

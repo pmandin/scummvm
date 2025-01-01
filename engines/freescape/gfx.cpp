@@ -143,7 +143,7 @@ void Renderer::clearColorPairArray() {
 }
 
 void Renderer::fillColorPairArray() {
-	for (int i = 4; i < 15; i++) {
+	for (int i = 0; i < 15; i++) {
 		byte *entry = (*_colorMap)[i];
 		int c1;
 		if (_renderMode == Common::kRenderCGA)
@@ -172,7 +172,9 @@ void Renderer::fillColorPairArray() {
 			if (k != 4)
 				break;
 		}
-		assert(c2 >= 0);
+		// The Castle Master CPC release needs the following workaround
+		if (c2 < 0)
+			c2 = c1;
 		assert((c1 < 16) & (c2 < 16));
 		_colorPair[i] = byte(c1) | (byte(c2) << 4);
 	}
@@ -450,24 +452,8 @@ bool Renderer::getRGBAtCPC(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &
 			stipple = nullptr;
 			return true;
 		}
-		readFromPalette(index, r1, g1, b1);
-		r2 = r1;
-		g2 = g1;
-		b2 = b1;
-		stipple = nullptr;
-		return true;
 	}
-
 	assert (_renderMode == Common::kRenderCPC);
-	if (index <= 4) { // Solid colors
-		selectColorFromFourColorPalette(index - 1, r1, g1, b1);
-		r2 = r1;
-		g2 = g1;
-		b2 = b1;
-		stipple = nullptr;
-		return true;
-	}
-
 	stipple = (byte *)_stipples[index - 1];
 	byte *entry = (*_colorMap)[index - 1];
 	uint8 i1 = getCPCPixel(entry[0], 0, true);

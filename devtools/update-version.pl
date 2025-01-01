@@ -5,6 +5,7 @@
 # contain it. Obviously, it should be used before a release.
 
 use strict;
+use File::stat;
 
 if ($#ARGV+1 < 3 or $#ARGV+1 > 4) {
 	# TODO: Allow the user to specify the version as "1.2.3svn"
@@ -48,6 +49,9 @@ my @subs_files = qw(
 	dists/riscos/!Boot,feb
 	dists/amigaos/md2ag.rexx
 	backends/platform/psp/README.PSP
+	backends/platform/atari/build-release.sh
+	backends/platform/atari/build-release030.sh
+	backends/platform/atari/readme.txt
 	);
 
 my %subs = (
@@ -65,11 +69,14 @@ foreach my $file (@subs_files) {
 
 	while (<INPUT>) {
 		while (my ($key, $value) = each(%subs)) {
-			s/\@$key\@/$value/;
+			s/\@$key\@/$value/g;
 		}
 		print OUTPUT;
 	}
 
 	close(INPUT);
 	close(OUTPUT);
+
+	my $stat = stat "$file.in";
+	chmod $stat->mode & 07777, "$file";
 }

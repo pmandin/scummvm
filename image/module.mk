@@ -4,7 +4,7 @@ MODULE_OBJS := \
 	ani.o \
 	bmp.o \
 	cel_3do.o \
-	gif.o \
+	cicn.o \
 	icocur.o \
 	iff.o \
 	jpeg.o \
@@ -20,10 +20,6 @@ MODULE_OBJS := \
 	codecs/cinepak.o \
 	codecs/codec.o \
 	codecs/hlz.o \
-	codecs/hnm.o \
-	codecs/indeo3.o \
-	codecs/indeo4.o \
-	codecs/indeo5.o \
 	codecs/jyv1.o \
 	codecs/mjpeg.o \
 	codecs/msrle.o \
@@ -34,15 +30,36 @@ MODULE_OBJS := \
 	codecs/smc.o \
 	codecs/svq1.o \
 	codecs/truemotion1.o \
-	codecs/xan.o \
-	codecs/indeo/indeo.o \
-	codecs/indeo/indeo_dsp.o \
-	codecs/indeo/mem.o \
-	codecs/indeo/vlc.o
+	codecs/xan.o
+
+ifdef USE_GIF
+MODULE_OBJS += \
+	gif.o
+endif
 
 ifdef USE_MPEG2
 MODULE_OBJS += \
 	codecs/mpeg.o
+endif
+
+ifdef USE_INDEO3
+MODULE_OBJS += \
+	codecs/indeo3.o
+endif
+
+ifdef USE_INDEO45
+MODULE_OBJS += \
+	codecs/indeo4.o \
+	codecs/indeo5.o \
+	codecs/indeo/indeo.o \
+	codecs/indeo/indeo_dsp.o \
+	codecs/indeo/mem.o \
+	codecs/indeo/vlc.o
+endif
+
+ifdef USE_HNM
+MODULE_OBJS += \
+	codecs/hnm.o
 endif
 
 # Include common rules

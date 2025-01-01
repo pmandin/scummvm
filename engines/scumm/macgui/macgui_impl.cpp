@@ -23,12 +23,14 @@
 #include "common/config-manager.h"
 #include "common/enc-internal.h"
 #include "common/macresman.h"
+#include "common/str.h"
 
 #include "graphics/cursorman.h"
 #include "graphics/paletteman.h"
 #include "graphics/fonts/macfont.h"
 #include "graphics/macgui/macwindowmanager.h"
 
+#include "image/cicn.h"
 #include "image/pict.h"
 
 #include "scumm/macgui/macgui_impl.h"
@@ -36,6 +38,12 @@
 #include "scumm/scumm_v4.h"
 
 namespace Scumm {
+
+static void activateMenuCallback(void *ref) {
+	MacGuiImpl *gui = (MacGuiImpl *)ref;
+
+	gui->onMenuOpen();
+}
 
 // ===========================================================================
 // Base class for Macintosh game user interface. Handles menus, fonts, image
@@ -97,7 +105,7 @@ void MacGuiImpl::setPaletteDirty() {
 }
 
 void MacGuiImpl::updatePalette() {
-	if (_paletteDirty) {
+	if (_paletteDirty && !_suspendPaletteUpdates) {
 		_paletteDirty = false;
 		_windowManager->passPalette(_vm->_currentPalette, getNumColors());
 	}
@@ -107,7 +115,7 @@ bool MacGuiImpl::handleEvent(Common::Event event) {
 	// The situation we're trying to avoid here is the user opening e.g.
 	// the save dialog using keyboard shortcuts while the game is paused.
 
-	if (_bannerWindow)
+	if (_bannerWindow || _vm->_messageBannerActive)
 		return false;
 
 	return _windowManager->processEvent(event);
@@ -193,6 +201,7 @@ bool MacGuiImpl::initialize() {
 	_windowManager = new Graphics::MacWindowManager(menuMode);
 	_windowManager->setEngine(_vm);
 	_windowManager->setScreen(640, _vm->_useMacScreenCorrectHeight ? 480 : 400);
+	_windowManager->setEngineActivateMenuCallback(this, activateMenuCallback);
 
 	if (_vm->isUsingOriginalGUI()) {
 		_windowManager->setMenuHotzone(Common::Rect(640, 23));
@@ -209,68 +218,52 @@ bool MacGuiImpl::initialize() {
 			{ 0, nullptr, 0, 0, false }
 		};
 
-		Common::String aboutMenuDef = _strsStrings[kMSIAboutGameName].c_str();
-		int maxMenu = -1;
-		switch (_vm->_game.id) {
-		case GID_INDY3:
-		case GID_LOOM:
-			maxMenu = 130;
-			break;
-		case GID_MONKEY:
-			maxMenu = 131;
-			break;
-		default:
-			maxMenu = 132;
-		}
-
-		if (_vm->_game.id == GID_LOOM) {
-			aboutMenuDef += ";";
-
-			if (!_vm->enhancementEnabled(kEnhUIUX))
-				aboutMenuDef += "(";
-
-			aboutMenuDef += "Drafts Inventory";
-		}
-
-		menu->addStaticMenus(menuSubItems);
-		menu->createSubMenuFromString(0, aboutMenuDef.c_str(), 0);
-
 		menu->setCommandsCallback(menuCallback, this);
 
-		for (int i = 129; i <= maxMenu; i++) {
-			Common::SeekableReadStream *res = resource.getResource(MKTAG('M', 'E', 'N', 'U'), i);
+		// Newer games define their menus through an MBAR resource
 
-			if (!res)
-				continue;
+		Common::SeekableReadStream *mbar = resource.getResource(MKTAG('M', 'B', 'A', 'R'), 128);
 
-			Common::StringArray *menuDef = Graphics::MacMenu::readMenuFromResource(res);
-			Common::String name = menuDef->operator[](0);
-			Common::String string = menuDef->operator[](1);
-			int id = menu->addMenuItem(nullptr, name);
-
-			// The CD version of Fate of Atlantis has a menu item
-			// for toggling graphics smoothing. We retroactively
-			// add that to the remaining V5 games, but not to
-			// Loom and Last Crusade.
-
-			if (_vm->enhancementEnabled(kEnhUIUX)) {
-				if ((_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) && id == 3) {
-					string += ";(-;Smooth Graphics";
-				}
-
-				// Floppy version
-				if (_vm->_game.id == GID_INDY4 && !string.contains("Smooth Graphics") && id == 3) {
-					string += ";(-;Smooth Graphics";
-				}
+		if (mbar) {
+			uint16 numMenus = mbar->readUint16BE();
+			for (uint i = 0; i < numMenus; i++) {
+				uint16 menuId = mbar->readUint16BE();
+				addMenu(menu, menuId);
+			}
+			delete mbar;
+		} else {
+			Common::String aboutMenuDef = _strsStrings[kMSIAboutGameName].c_str();
+			int maxMenu = -1;
+			switch (_vm->_game.id) {
+			case GID_INDY3:
+			case GID_LOOM:
+				maxMenu = 130;
+				break;
+			case GID_MONKEY:
+				maxMenu = 131;
+				break;
+			default:
+				maxMenu = 132;
 			}
 
-			menu->createSubMenuFromString(id, string.c_str(), 0);
+			if (_vm->_game.id == GID_LOOM) {
+				aboutMenuDef += ";";
 
-			delete menuDef;
-			delete res;
+				if (!_vm->enhancementEnabled(kEnhUIUX))
+					aboutMenuDef += "(";
+
+				aboutMenuDef += "Drafts Inventory";
+			}
+
+			menu->addStaticMenus(menuSubItems);
+			menu->createSubMenuFromString(0, aboutMenuDef.c_str(), 0);
+
+			for (int i = 129; i <= maxMenu; i++) {
+				addMenu(menu, i);
+			}
+
+			resource.close();
 		}
-
-		resource.close();
 
 		// Assign sensible IDs to the menu items
 
@@ -282,10 +275,16 @@ bool MacGuiImpl::initialize() {
 			int id = 100 * (i + 1);
 			for (int j = 0; j < numberOfMenuItems; j++) {
 				Graphics::MacMenuItem *subItem = menu->getSubMenuItem(item, j);
-				Common::String name = menu->getName(subItem);
+				Common::String str = menu->getName(subItem);
 
-				if (!name.empty())
+				if (!str.empty()) {
 					menu->setAction(subItem, id++);
+				}
+
+				if (str.contains("^3")) {
+					Common::replace(str, "^3", name());
+					menu->setName(subItem, str);
+				}
 			}
 		}
 	}
@@ -307,6 +306,46 @@ bool MacGuiImpl::initialize() {
 	}
 
 	return true;
+}
+
+void MacGuiImpl::addMenu(Graphics::MacMenu *menu, int menuId) {
+	Common::MacResManager resource;
+
+	resource.open(_resourceFile);
+
+	Common::SeekableReadStream *res = resource.getResource(MKTAG('M', 'E', 'N', 'U'), menuId);
+
+	if (!res) {
+		resource.close();
+		return;
+	}
+
+	Common::StringArray *menuDef = Graphics::MacMenu::readMenuFromResource(res);
+	Common::String name = menuDef->operator[](0);
+	Common::String string = menuDef->operator[](1);
+	int id = menu->addMenuItem(nullptr, name);
+
+	// The CD version of Fate of Atlantis has a menu item for toggling graphics
+	// smoothing. We retroactively add that to the remaining V5 games, but not
+	// to Loom and Last Crusade.
+
+	if (_vm->enhancementEnabled(kEnhUIUX)) {
+		if ((_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) && id == 3) {
+			string += ";(-;Smooth Graphics";
+		}
+
+		// Floppy version
+		if (_vm->_game.id == GID_INDY4 && !string.contains("Smooth Graphics") && id == 3) {
+			string += ";(-;Smooth Graphics";
+		}
+	}
+
+	menu->createSubMenuFromString(id, string.c_str(), 0);
+
+	delete menuDef;
+	delete res;
+
+	resource.close();
 }
 
 bool MacGuiImpl::handleMenu(int id, Common::String &name) {
@@ -403,8 +442,6 @@ void MacGuiImpl::updateWindowManager() {
 	// original did allow you to open the menu with Alt even when the
 	// cursor was visible, so for now it's a feature.
 
-	bool isActive = _windowManager->isMenuActive();
-
 	bool saveCondition = true;
 	bool loadCondition = true;
 
@@ -436,7 +473,7 @@ void MacGuiImpl::updateWindowManager() {
 	bool canLoad = _vm->canLoadGameStateCurrently() && loadCondition;
 	bool canSave = _vm->canSaveGameStateCurrently() && saveCondition;
 
-	Graphics::MacMenuItem *gameMenu = menu->getMenuItem("Game");
+	Graphics::MacMenuItem *gameMenu = menu->getMenuItem(1);
 	Graphics::MacMenuItem *loadMenu = menu->getSubMenuItem(gameMenu, 0);
 	Graphics::MacMenuItem *saveMenu = menu->getSubMenuItem(gameMenu, 1);
 
@@ -446,20 +483,10 @@ void MacGuiImpl::updateWindowManager() {
 	if (saveMenu)
 		saveMenu->enabled = canSave;
 
-	if (isActive) {
-		if (!_menuIsActive) {
-			_cursorWasVisible = CursorMan.showMouse(true);
-			_windowManager->pushCursor(Graphics::MacGUIConstants::kMacCursorArrow);
-		}
-	} else {
-		if (_menuIsActive) {
-			if (_windowManager->getCursorType() == Graphics::MacGUIConstants::kMacCursorArrow)
-				_windowManager->popCursor();
-			CursorMan.showMouse(_cursorWasVisible);
-		}
-	}
+	if (!_windowManager->isMenuActive() && _menuIsActive)
+		onMenuClose();
 
-	if (_vm->_game.version > 3) {
+	if (_vm->_game.version > 3 && _vm->_game.version < 6) {
 		Graphics::MacMenuItem *windowMenu = menu->getMenuItem("Window");
 		Graphics::MacMenuItem *hideDesktopMenu = menu->getSubMenuItem(windowMenu, 0);
 		Graphics::MacMenuItem *hideBarMenu = menu->getSubMenuItem(windowMenu, 1);
@@ -496,17 +523,67 @@ void MacGuiImpl::updateWindowManager() {
 				menu->getSubMenuItem(speechMenu, 1)->checked = true;
 				break;
 			default:
-				warning("MacGuiImpl::updateWindowManager(): Invalid voice mode");
+				warning("MacGuiImpl::updateWindowManager(): Invalid voice mode %d", _vm->_voiceMode);
+				break;
 			}
 		}
-	}
+	} else if (_vm->_game.version >= 6) {
+		// We can't use the name of the menus here, because there are
+		// non-English versions. Let's hope the menu positions are
+		// always the same, at least!
 
-	_menuIsActive = isActive;
+		Graphics::MacMenuItem *videoMenu = menu->getMenuItem(3);
+
+		menu->getSubMenuItem(videoMenu, 0)->enabled = false;
+		menu->getSubMenuItem(videoMenu, 1)->enabled = false;
+		menu->getSubMenuItem(videoMenu, 2)->checked = true;
+		menu->getSubMenuItem(videoMenu, 3)->checked = _vm->_useMacGraphicsSmoothing;
+
+		Graphics::MacMenuItem *soundMenu = menu->getMenuItem(4);
+
+		menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_soundEnabled & 2); // Music
+		menu->getSubMenuItem(soundMenu, 1)->checked = (_vm->_soundEnabled & 1); // Effects
+		menu->getSubMenuItem(soundMenu, 5)->checked = false; // Text Only
+		menu->getSubMenuItem(soundMenu, 6)->checked = false; // Voice Only
+		menu->getSubMenuItem(soundMenu, 7)->checked = false; // Text & Voice
+
+		switch (_vm->_voiceMode) {
+		case 0:	// Voice Only
+			menu->getSubMenuItem(soundMenu, 6)->checked = true;
+			break;
+		case 1: // Voice and Text
+			menu->getSubMenuItem(soundMenu, 7)->checked = true;
+			break;
+		case 2:	// Text Only
+			menu->getSubMenuItem(soundMenu, 5)->checked = true;
+			break;
+		default:
+			warning("MacGuiImpl::updateWindowManager(): Invalid voice mode %d", _vm->_voiceMode);
+			break;
+		}
+	}
 
 	if (menu->isVisible())
 		updatePalette();
 
 	_windowManager->draw();
+}
+
+void MacGuiImpl::onMenuOpen() {
+	if (!_menuIsActive) {
+		_menuIsActive = true;
+		_cursorWasVisible = CursorMan.showMouse(true);
+		_windowManager->pushCursor(Graphics::MacGUIConstants::kMacCursorArrow);
+	}
+}
+
+void MacGuiImpl::onMenuClose() {
+	if (_menuIsActive) {
+		_menuIsActive = false;
+		if (_windowManager->getCursorType() == Graphics::MacGUIConstants::kMacCursorArrow)
+			_windowManager->popCursor();
+		CursorMan.showMouse(_cursorWasVisible);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -525,7 +602,7 @@ const Graphics::Font *MacGuiImpl::getFont(FontId fontId) {
 
 	switch (fontId) {
 	case kSystemFont:
-		id = Graphics::kMacFontChicago;
+		id = Graphics::kMacFontSystem;
 		size = 12;
 		slant = Graphics::kMacFontRegular;
 		break;
@@ -557,7 +634,7 @@ bool MacGuiImpl::getFontParams(FontId fontId, int &id, int &size, int &slant) co
 		return true;
 
 	case kAboutFontRegular:
-		id = Graphics::kMacFontGeneva;
+		id = Graphics::kMacFontApplication;
 		size = 9;
 		slant = Graphics::kMacFontRegular;
 		return true;
@@ -579,52 +656,111 @@ bool MacGuiImpl::getFontParams(FontId fontId, int &id, int &size, int &slant) co
 	}
 }
 
+Graphics::Surface *MacGuiImpl::createRemappedSurface(const Graphics::Surface *surface, const byte *palette, int colorCount) {
+	Graphics::Surface *s = new Graphics::Surface();
+	s->create(surface->w, surface->h, Graphics::PixelFormat::createFormatCLUT8());
+
+	byte paletteMap[256];
+	memset(paletteMap, 0, sizeof(paletteMap));
+
+	const byte monoPalette[] = {
+		0xFF, 0xFF, 0xFF,
+		0x00, 0x00, 0x00
+	};
+
+	if (colorCount == 0) {
+		colorCount = 2;
+		palette = monoPalette;
+	}
+
+	for (int i = 0; i < colorCount; i++) {
+		int r = palette[3 * i];
+		int g = palette[3 * i + 1];
+		int b = palette[3 * i + 2];
+
+		uint32 c;
+
+		c = _windowManager->findBestColor(r, g, b);
+		paletteMap[i] = c;
+	}
+
+	// Colors outside the palette are not remapped.
+
+	for (int i = colorCount; i < 256; i++)
+		paletteMap[i] = i;
+
+	if (palette) {
+		for (int y = 0; y < s->h; y++) {
+			for (int x = 0; x < s->w; x++) {
+				int color = surface->getPixel(x, y);
+				if (color > colorCount)
+					color = getBlack();
+				else
+					color = paletteMap[color];
+
+				s->setPixel(x, y, color);
+			}
+		}
+	} else {
+		s->copyFrom(*surface);
+	}
+
+	return s;
+}
+
+// ---------------------------------------------------------------------------
+// Icon loader
+// ---------------------------------------------------------------------------
+
+bool MacGuiImpl::loadIcon(int id, Graphics::Surface **icon, Graphics::Surface **mask) {
+	bool result = false;
+	Common::MacResManager resource;
+
+	resource.open(_resourceFile);
+
+	Common::SeekableReadStream *res = resource.getResource(MKTAG('c', 'i', 'c', 'n'), id);
+
+	Image::CicnDecoder iconDecoder;
+
+	*icon = nullptr;
+	*mask = nullptr;
+
+	if (res && iconDecoder.loadStream(*res)) {
+		result = true;
+		const Graphics::Surface *s1 = iconDecoder.getSurface();
+		const Graphics::Surface *s2 = iconDecoder.getMask();
+		const byte *palette = iconDecoder.getPalette();
+
+		*icon = createRemappedSurface(s1, palette, iconDecoder.getPaletteColorCount());
+		*mask = new Graphics::Surface();
+		(*mask)->copyFrom(*s2);
+	}
+
+	delete res;
+	resource.close();
+
+	return result;
+}
+
 // ---------------------------------------------------------------------------
 // PICT loader
 // ---------------------------------------------------------------------------
 
 Graphics::Surface *MacGuiImpl::loadPict(int id) {
 	Common::MacResManager resource;
-	Graphics::Surface *s = nullptr;
 
 	resource.open(_resourceFile);
 
 	Common::SeekableReadStream *res = resource.getResource(MKTAG('P', 'I', 'C', 'T'), id);
 
-	Image::PICTDecoder pict;
-	if (pict.loadStream(*res)) {
-		const Graphics::Surface *s1 = pict.getSurface();
-		const byte *palette = pict.getPalette();
+	Image::PICTDecoder pictDecoder;
+	Graphics::Surface *s = nullptr;
 
-		s = new Graphics::Surface();
-		s->create(s1->w, s1->h, Graphics::PixelFormat::createFormatCLUT8());
+	if (res && pictDecoder.loadStream(*res)) {
+		const Graphics::Surface *surface = pictDecoder.getSurface();
+		const byte *palette = pictDecoder.getPalette();
 
-		byte paletteMap[256];
-		memset(paletteMap, 0, ARRAYSIZE(paletteMap));
-
-		for (int i = 0; i < pict.getPaletteColorCount(); i++) {
-			int r = palette[3 * i];
-			int g = palette[3 * i + 1];
-			int b = palette[3 * i + 2];
-
-			uint32 c = _windowManager->findBestColor(r, g, b);
-			paletteMap[i] = c;
-		}
-
-		if (!pict.getPaletteColorCount()) {
-			paletteMap[0] = getWhite();
-			paletteMap[1] = getBlack();
-		}
-
-		if (palette) {
-			for (int y = 0; y < s->h; y++) {
-				for (int x = 0; x < s->w; x++) {
-					int color = s1->getPixel(x, y);
-					s->setPixel(x, y, paletteMap[color]);
-				}
-			}
-		} else
-			s->copyFrom(*s1);
+		s = createRemappedSurface(surface, palette, pictDecoder.getPaletteColorCount());
 	}
 
 	delete res;
@@ -637,7 +773,46 @@ Graphics::Surface *MacGuiImpl::loadPict(int id) {
 // Window handling
 // ---------------------------------------------------------------------------
 
+// In the older Mac games, the GUI and game graphics are made to coexist, so
+// the GUI should look good regardless of what's on screen. In the newer ones
+// there is no such guarantee, so the screen is blacked out whenever the GUI
+// is shown.
+//
+// We hard-code the upper part of the palette to have all the colors used by
+// the Mac Window manager and window borders. This is so that drawing the
+// window will not mess up what's already on screen. The lower part is used for
+// any graphical elements (pictures and icons) in the window. Anything in
+// between is set to black.
+//
+// The Mac window manager gets the palette before gamma correction, the backend
+// gets it afterwards.
+
+void MacGuiImpl::setMacGuiColors(Graphics::Palette &palette) {
+	// Colors used by the Mac Window Manager
+	palette.set(255, 0x00, 0x00, 0x00); // Black
+	palette.set(254, 0xFF, 0xFF, 0xFF); // White
+	palette.set(253, 0x80, 0x80, 0x80); // Gray80
+	palette.set(252, 0x88, 0x88, 0x88); // Gray88
+	palette.set(251, 0xEE, 0xEE, 0xEE); // GrayEE
+	palette.set(250, 0x00, 0xFF, 0x00); // Green
+	palette.set(249, 0x00, 0xCF, 0x00); // Green2
+
+	// Colors used by Mac dialog window borders
+	palette.set(248, 0xCC, 0xCC, 0xFF);
+	palette.set(247, 0xBB, 0xBB, 0xBB);
+	palette.set(246, 0x66, 0x66, 0x99);
+
+	for (int i = 0; i < 246; i++)
+		palette.set(i, 0x00, 0x00, 0x00);
+}
+
 MacGuiImpl::MacDialogWindow *MacGuiImpl::createWindow(Common::Rect bounds, MacDialogWindowStyle windowStyle, MacDialogMenuStyle menuStyle) {
+	if (_vm->_game.version < 6 && _vm->_game.id != GID_MANIAC) {
+		updatePalette();
+		_macBlack = _windowManager->_colorBlack;
+		_macWhite = _windowManager->_colorWhite;
+	}
+
 	if (bounds.left < 0 || bounds.top < 0 || bounds.right >= 640 || bounds.bottom >= 400) {
 		// This happens with the Last Crusade file dialogs.
 		bounds.moveTo((640 - bounds.width()) / 2, 27);
@@ -653,31 +828,39 @@ MacGuiImpl::MacDialogWindow *MacGuiImpl::createWindow(Common::Rect bounds, MacDi
 	return new MacDialogWindow(this, _system, _surface, bounds, windowStyle, menuStyle);
 }
 
-Common::String MacGuiImpl::getDialogString(Common::SeekableReadStream *res, int len) {
-	Common::String str;
+MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId) {
+	Common::Rect bounds;
 
-	for (int i = 0; i < len; i++)
-		str += res->readByte();
+	// Default dialog sizes for dialogs without a DITL resource.
 
-	return str;
+	if (_vm->_game.version < 6) {
+		bounds.top = 0;
+		bounds.left = 0;
+		bounds.bottom = 86;
+		bounds.right = 340;
+
+		bounds.translate(86, 88);
+	} else {
+		bounds.top = 0;
+		bounds.left = 0;
+		bounds.bottom = 113;
+		bounds.right = 267;
+
+		bounds.translate(187, 94);
+	}
+
+	return createDialog(dialogId, bounds);
 }
 
-MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId) {
+MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId, Common::Rect bounds) {
 	uint32 black = getBlack();
 
 	Common::MacResManager resource;
 	Common::SeekableReadStream *res;
 
-	Common::String saveGameFileAsResStr, gameFileResStr;
-	saveGameFileAsResStr = _strsStrings[kMSISaveGameFileAs].c_str();
-	gameFileResStr = _strsStrings[kMSIGameFile].c_str();
+	Common::String gameFileResStr = _strsStrings[kMSIGameFile].c_str();
 
 	resource.open(_resourceFile);
-
-	Common::Rect bounds;
-
-	bool isOpenDialog = dialogId == 4000 || dialogId == 4001;
-	bool isSaveDialog = dialogId == 3998 || dialogId == 3999;
 
 	res = resource.getResource(MKTAG('D', 'L', 'O', 'G'), dialogId);
 	if (res) {
@@ -692,20 +875,117 @@ MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId) {
 		// Compensate for the original not drawing the game at the very top of
 		// the screen.
 		bounds.translate(0, -40);
-	} else {
-		bounds.top = 0;
-		bounds.left = 0;
-		bounds.bottom = 86;
-		bounds.right = 340;
-
-		bounds.translate(86, 88);
 	}
 
 	delete res;
 
-	MacDialogWindow *window = createWindow(bounds);
+	_macWhite = _windowManager->_colorWhite;
+	_macBlack = _windowManager->_colorBlack;
+
+	if (_vm->_game.version >= 6 || _vm->_game.id == GID_MANIAC) {
+		res = resource.getResource(MKTAG('D', 'I', 'T', 'L'), dialogId);
+		if (!res)
+			return nullptr;
+
+		saveScreen();
+
+		// Collect the palettes from all the icons and pictures in the
+		// dialog, and combine them into a single palette that they
+		// will all be remapped to use. This is probably not what the
+		// original did, as the colors become slightly different. Maybe
+		// the original just picked one of the palettes, and then used
+		// the closest available colors for the rest?
+		//
+		// That might explain why some of them have seemingly larger
+		// palettes than necessary, but why not use the exact colors
+		// when we can?
+
+		Common::HashMap<uint32, byte> paletteMap;
+		int numWindowColors = 0;
+
+		// Additional colors for hard-coded elements
+		paletteMap[0xCDCDCD] = numWindowColors++;
+
+		int numItems = res->readUint16BE() + 1;
+
+		for (int i = 0; i < numItems; i++) {
+			res->skip(12);
+			int type = res->readByte();
+			int len = res->readByte();
+
+			Image::PICTDecoder pictDecoder;
+			Image::CicnDecoder iconDecoder;
+
+			const byte *palette = nullptr;
+			int paletteColorCount = 0;
+
+			Common::SeekableReadStream *imageRes = nullptr;
+			Image::ImageDecoder *decoder = nullptr;
+
+			switch (type & 0x7F) {
+			case 32:
+				imageRes = resource.getResource(MKTAG('c', 'i', 'c', 'n'), res->readUint16BE());
+				decoder = &iconDecoder;
+				break;
+
+			case 64:
+				imageRes = resource.getResource(MKTAG('P', 'I', 'C', 'T'), res->readUint16BE());
+				decoder = &pictDecoder;
+				break;
+
+			default:
+				res->skip(len);
+				break;
+			}
+
+			if (imageRes && decoder->loadStream(*imageRes)) {
+				palette = decoder->getPalette();
+				paletteColorCount = decoder->getPaletteColorCount();
+				for (int j = 0; j < paletteColorCount; j++) {
+					uint32 color = (palette[3 * j] << 16) | (palette[3 * j + 1] << 8) | palette[3 * j + 2];
+					if (!paletteMap.contains(color))
+						paletteMap[color] = numWindowColors++;
+				}
+			}
+
+			if (len & 1)
+				res->skip(1);
+
+			delete imageRes;
+		}
+
+		delete res;
+
+		Graphics::Palette palette(256);
+		setMacGuiColors(palette);
+
+		for (auto &k : paletteMap) {
+			int r = (k._key >> 16) & 0xFF;
+			int g = (k._key >> 8) & 0xFF;
+			int b = k._key & 0xFF;
+			palette.set(k._value, r, g, b);
+		}
+
+		_windowManager->passPalette(palette.data(), 256);
+
+		for (int i = 0; i < 256; i++) {
+			byte r, g, b;
+
+			palette.get(i, r, g, b);
+			r = _vm->_macGammaCorrectionLookUp[r];
+			g = _vm->_macGammaCorrectionLookUp[g];
+			b = _vm->_macGammaCorrectionLookUp[b];
+			palette.set(i, r, g, b);
+		}
+
+		_system->getPaletteManager()->setPalette(palette);
+	}
 
 	res = resource.getResource(MKTAG('D', 'I', 'T', 'L'), dialogId);
+	if (!res)
+		return nullptr;
+
+	MacDialogWindow *window = createWindow(bounds);
 
 	if (res) {
 		int numItems = res->readUint16BE() + 1;
@@ -731,40 +1011,33 @@ MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId) {
 
 			switch (type & 0x7F) {
 			case 0:
-			{
 				// User item
-
-				// Skip drive label box and listbox
-				bool doNotDraw = (isOpenDialog && (i == 6 || i == 7)) || ((isOpenDialog || isSaveDialog) && i == 3);
-				if (!doNotDraw) {
-					window->innerSurface()->frameRect(r, black);
-				} else if (_vm->_game.id == GID_INDY3 && i == 3) {
-					drawFakeDriveLabel(window, Common::Rect(r.left + 5, r.top, r.right, r.bottom), "ScummVM");
-				}
-
+//				window->innerSurface()->frameRect(r, black);
+				res->skip(len);
 				break;
-			}
 			case 4:
 				// Button
-				str = getDialogString(res, len);
-				if ((isOpenDialog || isSaveDialog) && (i == 4 || i == 5)) // "Eject" and "Drive"
-					enabled = false;
-
+				res->seek(-1, SEEK_CUR);
+				str = res->readPascalString();
 				window->addButton(r, str, enabled);
 				break;
 
 			case 5:
 				// Checkbox
-				str = getDialogString(res, len);
+				res->seek(-1, SEEK_CUR);
+				str = res->readPascalString();
 				window->addCheckbox(r, str, enabled);
+				break;
+
+			case 7:
+				// Control
+				window->addControl(r, res->readUint16BE());
 				break;
 
 			case 8:
 				// Static text
-				str = getDialogString(res, len);
-				if (isSaveDialog && i == 2)
-					str = saveGameFileAsResStr;
-
+				res->seek(-1, SEEK_CUR);
+				str = res->readPascalString();
 				window->addStaticText(r, str, enabled);
 				break;
 
@@ -782,6 +1055,11 @@ MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId) {
 				res->skip(len);
 				break;
 			}
+			case 32:
+				// Icon
+				window->addIcon(r.left, r.top, res->readUint16BE(), enabled);
+				break;
+
 			case 64:
 				// Picture
 				window->addPicture(r, res->readUint16BE(), enabled);
@@ -835,27 +1113,36 @@ bool MacGuiImpl::runOpenDialog(int &saveSlotToHandle) {
 
 	window->setDefaultWidget(buttonOpen);
 
-	// When quitting, the default action is to not open a saved game
-	bool ret = false;
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonOpen->getId() || clicked == listBox->getId()) {
-			saveSlotToHandle =
-				listBox->getValue() < ARRAYSIZE(slotIds) ?
-				slotIds[listBox->getValue()] : -1;
-			ret = true;
-			break;
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonOpen || event.widget == listBox) {
+					saveSlotToHandle =
+						listBox->getValue() < ARRAYSIZE(slotIds) ?
+						slotIds[listBox->getValue()] : -1;
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
+
+				break;
+
+			default:
+				break;
+			}
 		}
 
-		if (clicked == buttonCancel->getId())
-			break;
+		window->delayAndUpdate();
 	}
 
+	// When quitting, do not load the saved game
 	delete window;
-	return ret;
+	return false;
 }
 
 bool MacGuiImpl::runSaveDialog(int &saveSlotToHandle, Common::String &saveName) {
@@ -906,36 +1193,43 @@ bool MacGuiImpl::runSaveDialog(int &saveSlotToHandle, Common::String &saveName) 
 	window->setDefaultWidget(buttonSave);
 	editText->selectAll();
 
-	// When quitting, the default action is to not open a saved game
-	bool ret = false;
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonSave->getId()) {
-			ret = true;
-			saveName = editText->getText();
-			saveSlotToHandle = firstAvailableSlot;
-			break;
-		}
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonSave) {
+					saveName = editText->getText();
+					saveSlotToHandle = firstAvailableSlot;
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
 
-		if (clicked == buttonCancel->getId())
-			break;
+				break;
 
-		if (clicked == kDialogWantsAttention) {
-			// Cycle through deferred actions
-			for (uint i = 0; i < deferredActionsIds.size(); i++) {
-				if (deferredActionsIds[i] == editText->getId()) {
+			case kDialogKeyDown:
+				if (event.widget == editText) {
 					// Disable "Save" button when text is empty
 					buttonSave->setEnabled(!editText->getText().empty());
 				}
+
+				break;
+
+			default:
+				break;
 			}
 		}
+
+		window->delayAndUpdate();
 	}
 
+	// When quitting, do not save the game
 	delete window;
-	return ret;
+	return false;
 }
 
 void MacGuiImpl::prepareSaveLoad(Common::StringArray &savegameNames, bool *availSlots, int *slotIds, int size) {
@@ -975,32 +1269,35 @@ bool MacGuiImpl::runOkCancelDialog(Common::String text) {
 
 	MacButton *buttonOk = (MacButton *)window->getWidget(kWidgetButton, 0);
 	MacButton *buttonCancel = (MacButton *)window->getWidget(kWidgetButton, 1);
-	MacStaticText *textWidget = (MacStaticText *)window->getWidget(kWidgetStaticText);
-
-	textWidget->setWordWrap(true);
 
 	window->setDefaultWidget(buttonOk);
 	window->addSubstitution(text);
 
-	// When quitting, the default action is to quit
-	bool ret = true;
-
-	Common::Array<int> deferredActionsIds;
-
 	while (!_vm->shouldQuit()) {
-		int clicked = window->runDialog(deferredActionsIds);
+		MacDialogEvent event;
 
-		if (clicked == buttonOk->getId())
-			break;
+		while (window->runDialog(event)) {
+			switch (event.type) {
+			case kDialogClick:
+				if (event.widget == buttonOk) {
+					delete window;
+					return true;
+				} else if (event.widget == buttonCancel) {
+					delete window;
+					return false;
+				}
 
-		if (clicked == buttonCancel->getId()) {
-			ret = false;
-			break;
+			default:
+				break;
+			}
 		}
+
+		window->delayAndUpdate();
 	}
 
+	// Quitting is the same as clicking Ok
 	delete window;
-	return ret;
+	return true;
 }
 
 void MacGuiImpl::drawFakePathList(MacDialogWindow *window, Common::Rect r, const char *text) {

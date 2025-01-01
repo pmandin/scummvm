@@ -113,6 +113,16 @@ public:
 	virtual bool hasTransparentColor() const { return false; }
 	/** Return the transparent color. */
 	virtual uint32 getTransparentColor() const { return 0; }
+
+	/**
+	 * Get the mask data for the decoded image.
+	 */
+	virtual const Graphics::Surface *getMask() const { return 0; }
+
+	/**
+	 * Query whether the decoded image has a mask.
+	 */
+	virtual bool hasMask() const { return getMask() != 0; }
 };
 /** @} */
 } // End of namespace Image
