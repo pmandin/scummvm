@@ -11,6 +11,7 @@ MODULE_OBJS := \
 	formats/ems.o \
 	formats/pak.o \
 	formats/rofs.o \
+	formats/sap.o \
 	formats/sld.o \
 	formats/tim.o \
 	game/clock.o \
