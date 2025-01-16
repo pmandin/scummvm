@@ -84,7 +84,10 @@ Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioT
 
 	_talkChannelHandle = new Audio::SoundHandle();
 
-	if (_vm->_game.features & GF_DOUBLEFINE_PAK)
+	// Initialize the SE sound engine for all doublefine packed games,
+	// except for Maniac Mansion (within DOTT), which doesn't have
+	// associated SE resources in the PAK file.
+	if (_vm->_game.features & GF_DOUBLEFINE_PAK && _vm->_game.id != GID_MANIAC)
 		_soundSE = new SoundSE(_vm, _mixer);
 	_soundCD = new SoundCD(_vm, _mixer, _soundSE, useReplacementAudioTracks);
 
@@ -182,6 +185,7 @@ void Sound::triggerSound(int soundID) {
 	Audio::AudioStream *stream;
 	int size = -1;
 	int rate;
+	uint32 soundTag;
 
 	if (_soundCD->triggerCDSound(soundID))
 		return;
@@ -190,18 +194,19 @@ void Sound::triggerSound(int soundID) {
 
 	ptr = _vm->getResourceAddress(rtSound, soundID);
 
-	if (!ptr) {
+	if (!ptr)
 		return;
-	}
+
+	soundTag = READ_BE_UINT32(ptr);
 
 	// WORKAROUND bug #2221
-	else if (READ_BE_UINT32(ptr) == 0x460e200d) {
+	if (soundTag == 0x460e200d) {
 		// This sound resource occurs in the Macintosh version of Monkey Island.
 		// I do now know whether it is used in any place other than the one
 		// mentioned in the bug report above; in case it is, I put a check here.
 		assert(soundID == 39);
 
-		// The samplerate is copied from the sound resource 39 of the PC CD/VGA
+		// The sample rate is copied from the sound resource 39 of the PC CD/VGA
 		// version of Monkey Island.
 
 		// Read info from the header
@@ -220,8 +225,15 @@ void Sound::triggerSound(int soundID) {
 	// Support for sampled sound effects in Monkey Island 1 and 2
 	else if (_vm->_game.platform != Common::kPlatformFMTowns
 	         && _vm->_game.platform != Common::kPlatformMacintosh
-	         && READ_BE_UINT32(ptr) == MKTAG('S','B','L',' ')) {
+	         && soundTag == MKTAG('S','B','L',' ')) {
 		debugC(DEBUG_SOUND, "Using SBL sound effect");
+
+		if (shouldInjectMISEAudio()) {
+			stream = _soundSE->getAudioStreamFromIndex(soundID, kSoundSETypeSFX);
+			if (stream)
+				_mixer->playStream(Audio::Mixer::kSFXSoundType, nullptr, stream, soundID);
+			return;
+		}
 
 		// SBL resources essentially contain VOC sound data.
 		// There are at least two main variants: in one,
@@ -290,8 +302,7 @@ void Sound::triggerSound(int soundID) {
 		memcpy(sound, ptr + 6, size);
 		stream = Audio::makeRawStream(sound, size, rate, Audio::FLAG_UNSIGNED);
 		_mixer->playStream(Audio::Mixer::kSFXSoundType, nullptr, stream, soundID);
-	}
-	else if (_vm->_game.platform != Common::kPlatformFMTowns && READ_BE_UINT32(ptr) == MKTAG('S','O','U','N')) {
+	} else if (_vm->_game.platform != Common::kPlatformFMTowns && soundTag == MKTAG('S','O','U','N')) {
 		if (_vm->_game.version != 3)
 			ptr += 2;
 
@@ -321,25 +332,24 @@ void Sound::triggerSound(int soundID) {
 			// All other sound types are ignored
 			warning("Scumm::Sound::triggerSound: encountered audio resource with chunk type 'SOUN' and sound type %d", type);
 		}
-	}
-	else {
+	} else {
 		if (_vm->_game.id == GID_MONKEY_VGA || _vm->_game.id == GID_MONKEY_EGA) {
 			// Works around the fact that in some places in MonkeyEGA/VGA,
 			// the music is never explicitly stopped.
 			// Rather it seems that starting a new music is supposed to
 			// automatically stop the old song.
 			if (_vm->_imuse) {
-				if (READ_BE_UINT32(ptr) != MKTAG('A','S','F','X'))
+				if (soundTag != MKTAG('A','S','F','X'))
 					_vm->_imuse->stopAllSounds();
 			}
 		}
 
-		// TODO: If called from MI2SE, this will play the music
-		// multiple times
-		//if (_soundSE) {
-		//	_soundSE->startSound(soundID);
-		//	return;
-		//}
+		if (shouldInjectMISEAudio() && soundTag == MKTAG('S','P','K',' ')) {
+			stream = _soundSE->getAudioStreamFromIndex(soundID, kSoundSETypeSFX);
+			if (stream)
+				_mixer->playStream(Audio::Mixer::kSFXSoundType, nullptr, stream, soundID);
+			return;
+		}
 
 		if (_vm->_musicEngine)
 			_vm->_musicEngine->startSound(soundID);
@@ -610,11 +620,11 @@ void Sound::startTalkSound(uint32 offset, uint32 length, int mode, Audio::SoundH
 			}
 		}
 		return;
-	} else if ((_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) && (_vm->_game.features & GF_DOUBLEFINE_PAK) && _useRemasteredAudio) {
+	} else if (shouldInjectMISEAudio()) {
 		// MI1 and MI2 SE
 		if (_soundSE && !_soundsPaused && _mixer->isReady()) {
-			Audio::AudioStream *input = _soundSE->getAudioStream(
-				_currentMISpeechIndex,
+			Audio::AudioStream *input = _soundSE->getAudioStreamFromOffset(
+				offset,
 				mode == DIGI_SND_MODE_SFX ? kSoundSETypeSFX : kSoundSETypeSpeech);
 
 			_digiSndMode |= mode;
@@ -625,8 +635,6 @@ void Sound::startTalkSound(uint32 offset, uint32 length, int mode, Audio::SoundH
 				else
 					_mixer->playStream(Audio::Mixer::kSpeechSoundType, handle, input, id);
 			}
-
-			_vm->_currentSpeechIndexMI++;
 		}
 
 		return;
@@ -761,8 +769,9 @@ void Sound::startTalkSound(uint32 offset, uint32 length, int mode, Audio::SoundH
 			if (mode == 2 && _vm->_game.id == GID_INDY4 && offset == 0x76ccbd4 && _vm->enhancementEnabled(kEnhGameBreakingBugFixes))
 				input = checkForBrokenIndy4Sample(file.release(), offset);
 
+			// Play remastered audio for DOTT
 			if (!input && _soundSE && _useRemasteredAudio) {
-				input = _soundSE->getAudioStream(
+				input = _soundSE->getAudioStreamFromOffset(
 					origOffset,
 					mode == DIGI_SND_MODE_SFX ? kSoundSETypeSFX : kSoundSETypeSpeech
 				);
@@ -2193,16 +2202,27 @@ void Sound::updateMusicTimer() {
 	}
 }
 
-void Sound::startRemasteredSpeech(const char *msgString, uint16 roomNumber, uint16 actorTalking, uint16 currentScriptNum, uint16 currentScriptOffset, uint16 numWaits) {
+void Sound::startRemasteredSpeech(const char *msgString, uint16 roomNumber, uint16 actorTalking, uint16 numWaits) {
 	// Crudely adapted from the disasm of MI1SE...
 	// TODO: Apply the various speech-line substitutions performed per-game
 
-	int32 soundIndex = _soundSE->handleRemasteredSpeech(msgString, nullptr, roomNumber, actorTalking, currentScriptNum, currentScriptOffset, numWaits);
+	int32 soundIndex = _soundSE->handleMISESpeech(
+		msgString,
+		nullptr,
+		roomNumber,
+		actorTalking,
+		numWaits
+	);
 
 	if (soundIndex >= 0) {
-		_currentMISpeechIndex = soundIndex;
-		talkSound(0, 0, DIGI_SND_MODE_TALKIE);
+		talkSound(soundIndex, 0, DIGI_SND_MODE_TALKIE);
 	}
+}
+
+bool Sound::shouldInjectMISEAudio() const {
+	return (_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) &&
+		   (_vm->_game.features & GF_DOUBLEFINE_PAK) &&
+		   _useRemasteredAudio;
 }
 
 } // End of namespace Scumm

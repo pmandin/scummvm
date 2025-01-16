@@ -347,7 +347,7 @@ public:
 
 		void draw(bool drawFocused = false) override;
 
-		bool handleMouseUp(Common::Event &event) { return true; }
+		bool handleMouseUp(Common::Event &event) override { return true; }
 	};
 
 	class MacCheckbox : public MacWidget {
@@ -766,6 +766,8 @@ public:
 		static void plotPattern(int x, int y, int pattern, void *data);
 		static void plotPatternDarkenOnly(int x, int y, int pattern, void *data);
 
+		void drawRoundRect(const Common::Rect &rect, int arc, uint32 color, bool filled, void (*plotProc)(int, int, int, void *));
+
 		void drawDottedHLine(int x0, int y, int x1);
 		void fillPattern(Common::Rect r, uint16 pattern, bool fillBlack = true, bool fillWhite = true);
 		void drawSprite(const MacImage *image, int x, int y);
@@ -779,7 +781,6 @@ public:
 	virtual ~MacGuiImpl();
 
 	Graphics::MacWindowManager *_windowManager = nullptr;
-	bool _forceMenuClosed = false;
 
 	virtual int getNumColors() const = 0;
 
@@ -803,8 +804,9 @@ public:
 	virtual bool handleEvent(Common::Event event);
 
 	static void menuCallback(int id, Common::String &name, void *data);
-	bool initialize();
+	virtual bool initialize();
 	void updateWindowManager();
+	virtual void updateMenus();
 
 	const Graphics::Font *getFont(FontId fontId);
 	virtual const Graphics::Font *getFontByScummId(int32 id) = 0;

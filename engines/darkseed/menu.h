@@ -31,6 +31,9 @@ public:
 	bool isOpen() const { return _open; }
 
 	void loadMenu();
+private:
+	void drawSoundMenuItem();
+	Common::KeyCode getLocalisedConfirmToQuitKeycode();
 };
 
 } // namespace Darkseed

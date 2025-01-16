@@ -40,7 +40,7 @@ namespace Common {
 	typedef typename super_type::pointer pointer; \
 	typedef typename super_type::const_pointer const_pointer; \
 	typedef typename super_type::reference reference; \
-	typedef typename super_type::const_reference const_reference;
+	typedef typename super_type::const_reference const_reference
 
 enum : uint {
 	kSpanMaxSize = 0xFFFFFFFF,
@@ -542,7 +542,7 @@ class SpanImpl : public SpanBase<ValueType, Derived> {
 #endif
 
 public:
-	COMMON_SPAN_TYPEDEFS
+	COMMON_SPAN_TYPEDEFS;
 
 	inline SpanImpl() : super_type(), _data(nullptr), _size(0) {}
 
@@ -694,7 +694,7 @@ class Span : public SpanImpl<ValueType, Span> {
 	template <typename T> friend class Span;
 
 public:
-	COMMON_SPAN_TYPEDEFS
+	COMMON_SPAN_TYPEDEFS;
 
 	inline Span() : super_type() {}
 
@@ -721,9 +721,9 @@ class NamedSpanImpl : public SpanImpl<ValueType, Derived> {
 #endif
 
 public:
-	COMMON_SPAN_TYPEDEFS
+	COMMON_SPAN_TYPEDEFS;
 
-	inline NamedSpanImpl() : super_type(), _name(), _sourceByteOffset(0) {}
+	inline NamedSpanImpl() = default;
 
 	inline NamedSpanImpl(const pointer data_,
 						 const size_type size_,
@@ -753,7 +753,7 @@ public:
 
 private:
 	String _name;
-	size_type _sourceByteOffset;
+	size_type _sourceByteOffset = 0;
 
 #pragma mark -
 #pragma mark NamedSpanImpl - Subspan
@@ -867,9 +867,9 @@ class NamedSpan : public NamedSpanImpl<ValueType, NamedSpan> {
 	template <typename T> friend class NamedSpan;
 
 public:
-	COMMON_SPAN_TYPEDEFS
+	COMMON_SPAN_TYPEDEFS;
 
-	inline NamedSpan() : super_type() {}
+	inline NamedSpan() = default;
 
 	inline NamedSpan(const pointer data_,
 					 const size_type size_,

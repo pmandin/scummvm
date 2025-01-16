@@ -933,7 +933,7 @@ int MacMenu::calcSubMenuWidth(MacMenuSubMenu *submenu) {
 			}
 		}
 	}
-	return maxWidth > 200 ? 200 : maxWidth;
+	return maxWidth > 225 ? 225 : maxWidth;
 }
 
 void MacMenu::calcSubMenuBounds(MacMenuSubMenu *submenu, int x, int y) {
@@ -967,23 +967,9 @@ void MacMenu::calcSubMenuBounds(MacMenuSubMenu *submenu, int x, int y) {
 }
 
 template <typename T>
-static void drawPixelPlain(int x, int y, int color, void *data) {
-	ManagedSurface *surface = (ManagedSurface *)data;
-
-	if (x >= 0 && x < surface->w && y >= 0 && y < surface->h)
-		*((T *)surface->getBasePtr(x, y)) = (T)color;
-}
-
-template <typename T>
-static void drawFilledRoundRect(ManagedSurface *surface, Common::Rect &rect, int arc, int color) {
-	drawRoundRect(rect, arc, color, true, drawPixelPlain<T>, surface);
-}
-
-template <typename T>
 static void drawMenuPattern(ManagedSurface &srcSurf, ManagedSurface &destSurf, const byte *pattern, int x, int y, int width, uint32 colorKey) {
 	// I am lazy to extend drawString() with plotProc as a parameter, so
 	// fake it here
-
 	for (int ii = 0; ii < srcSurf.h; ii++) {
 		const T *src = (const T *)srcSurf.getBasePtr(0, ii);
 		T *dst = (T *)destSurf.getBasePtr(x, y + ii);
@@ -1045,12 +1031,7 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 
 	// Fill in the corners with black
 	_screen.fillRect(r, _wm->_colorBlack);
-
-	if (_wm->_pixelformat.bytesPerPixel == 1) {
-		drawFilledRoundRect<byte>(&_screen, r, shouldUseDesktopArc ? kDesktopArc : 0, _wm->_colorWhite);
-	} else {
-		drawFilledRoundRect<uint32>(&_screen, r, shouldUseDesktopArc ? kDesktopArc : 0, _wm->_colorWhite);
-	}
+	_screen.drawRoundRect(r, shouldUseDesktopArc ? kDesktopArc : 0, _wm->_colorWhite, true);
 
 	r.top = 7;
 	_screen.fillRect(r, _wm->_colorWhite);
@@ -1084,16 +1065,33 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 		int x = _align == kTextAlignRight ? -kMenuLeftMargin : kMenuLeftMargin;
 		x += it->bbox.left;
 
+		ManagedSurface *s = &_screen;
+		int tx = x, ty = y;
+
+		if (!it->enabled) {
+			s = &_tempSurface;
+			tx = 0;
+			ty = 0;
+			_tempSurface.clear(_wm->_colorGreen);
+		}
+
 		if (it->unicode) {
 			int accOff = _align == kTextAlignRight ? it->bbox.width() - _font->getStringWidth(it->unicodeText) : 0;
 			Common::UnicodeBiDiText utxt(it->unicodeText);
 
-			_font->drawString(&_screen, utxt.visual, x, y, it->bbox.width(), color, _align, 0, true);
-			underlineAccelerator(&_screen, _font, utxt, x + accOff, y, it->shortcutPos, color);
+			_font->drawString(s, utxt.visual, tx, ty, it->bbox.width(), color, _align, 0, true);
+			underlineAccelerator(s, _font, utxt, tx + accOff, ty, it->shortcutPos, color);
 		} else {
 			const Font *font = getMenuFont(it->style);
+			font->drawString(s, it->text, tx, ty, it->bbox.width(), color, Graphics::kTextAlignLeft, 0, true);
+		}
 
-			font->drawString(&_screen, it->text, x, y, it->bbox.width(), color, Graphics::kTextAlignLeft, 0, true);
+		if (!it->enabled) {
+			if (_wm->_pixelformat.bytesPerPixel == 1) {
+				drawMenuPattern<byte>(_tempSurface, _screen, _wm->getBuiltinPatterns()[kPatternCheckers2 - 1], x, y, it->bbox.width(), _wm->_colorGreen);
+			} else {
+				drawMenuPattern<uint32>(_tempSurface, _screen, _wm->getBuiltinPatterns()[kPatternCheckers2 - 1], x, y, it->bbox.width(), _wm->_colorGreen);
+			}
 		}
 	}
 
@@ -1119,6 +1117,8 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 
 	if (r->width() == 0 || r->height() == 0)
 		return;
+
+	bool topMenuEnabled = _activeItem == -1 || _items[_activeItem]->enabled;
 
 	_screen.fillRect(*r, _wm->_colorWhite);
 	_screen.frameRect(*r, _wm->_colorBlack);
@@ -1170,7 +1170,7 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 		}
 
 		int color = _wm->_colorBlack;
-		if (i == menu->highlight && (!text.empty() || !unicodeText.empty()) && menu->items[i]->enabled) {
+		if (i == menu->highlight && (!text.empty() || !unicodeText.empty()) && topMenuEnabled && menu->items[i]->enabled) {
 			color = _wm->_colorWhite;
 			Common::Rect trect(r->left, y - (_wm->_fontMan->hasBuiltInFonts() ? 1 : 0), r->right, y + _font->getFontHeight());
 
@@ -1181,11 +1181,12 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 			ManagedSurface *s = &_screen;
 			int tx = x, ty = y;
 
-			if (!menu->items[i]->enabled) {
+			if (!topMenuEnabled || !menu->items[i]->enabled) {
 				s = &_tempSurface;
 				tx = 0;
 				ty = 0;
 				accelX -= x;
+				arrowX -= x;
 
 				_tempSurface.clear(_wm->_colorGreen);
 			}
@@ -1217,7 +1218,7 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 			if (menu->items[i]->submenu != nullptr)
 				drawSubMenuArrow(s, arrowX, ty, color);
 
-			if (!menu->items[i]->enabled) {
+			if (!topMenuEnabled || !menu->items[i]->enabled) {
 				if (_wm->_pixelformat.bytesPerPixel == 1) {
 					drawMenuPattern<byte>(_tempSurface, _screen, _wm->getBuiltinPatterns()[kPatternCheckers2 - 1], x, y, r->width(), _wm->_colorGreen);
 				} else {
@@ -1236,7 +1237,7 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 		y += _menuDropdownItemHeight;
 	}
 
-	if (recursive && menu->highlight != -1 && menu->items[menu->highlight]->submenu != nullptr)
+	if (recursive && topMenuEnabled && menu->highlight != -1 && menu->items[menu->highlight]->enabled && menu->items[menu->highlight]->submenu != nullptr)
 		renderSubmenu(menu->items[menu->highlight]->submenu, false);
 
 	if (_wm->_mode & kWMModalMenuMode) {
@@ -1336,7 +1337,7 @@ static void scrollCallback(void *data) {
 }
 
 bool MacMenu::mouseClick(int x, int y) {
-	if (!_isModal &&_bbox.contains(x, y)) {
+	if (!_isModal && _bbox.contains(x, y)) {
 		for (uint i = 0; i < _items.size(); i++) {
 			if (_items[i]->bbox.contains(x, y)) {
 				if ((uint)_activeItem == i)
@@ -1373,6 +1374,8 @@ bool MacMenu::mouseClick(int x, int y) {
 	if (!_active)
 		return false;
 
+	bool topMenuEnabled = _activeItem == -1 || _items[_activeItem]->enabled;
+
 	if (_menustack.size() > 0 && _menustack.back()->bbox.contains(x, y)) {
 		MacMenuSubMenu *menu = _menustack.back();
 		int numSubItem = menu->ytoItem(y, _menuDropdownItemHeight);
@@ -1382,7 +1385,7 @@ bool MacMenu::mouseClick(int x, int y) {
 
 		if (numSubItem != _activeSubItem) {
 			if (_wm->_mode & kWMModalMenuMode) {
-				if (_activeSubItem == -1 || menu->items[_activeSubItem]->submenu != nullptr)
+				if (_activeSubItem == -1 || (topMenuEnabled && menu->items[_activeSubItem]->enabled && menu->items[_activeSubItem]->submenu != nullptr))
 					g_system->copyRectToScreen(_wm->_screenCopy->getPixels(), _wm->_screenCopy->pitch, 0, 0, _wm->_screenCopy->w, _wm->_screenCopy->h);
 			}
 
@@ -1434,9 +1437,11 @@ bool MacMenu::mouseClick(int x, int y) {
 		}
 	}
 
-	if (_activeSubItem != -1 && _menustack.back()->items[_activeSubItem]->submenu != nullptr) {
-		if (_menustack.back()->items[_activeSubItem]->submenu->bbox.contains(x, y)) {
-			_menustack.push_back(_menustack.back()->items[_activeSubItem]->submenu);
+	if (topMenuEnabled && _activeSubItem != -1) {
+		Graphics::MacMenuItem *subitem = _menustack.back()->items[_activeSubItem];
+
+		if (subitem->submenu != nullptr && subitem->enabled && subitem->submenu->bbox.contains(x, y)) {
+			_menustack.push_back(subitem->submenu);
 
 			_activeSubItem = 0;
 			_contentIsDirty = true;
@@ -1569,7 +1574,7 @@ bool MacMenu::mouseRelease(int x, int y) {
 		return false;
 
 	bool haveCallBack = false;
-	if (_activeItem != -1 && _activeSubItem != -1 && _menustack.back()->items[_activeSubItem]->enabled) {
+	if (_activeItem != -1 && _activeSubItem != -1 && _items[_activeItem]->enabled && _menustack.back()->items[_activeSubItem]->enabled) {
 		// no action if item has submenu
 		if (_menustack.back()->items[_activeSubItem]->submenu) {
 			return false;
@@ -1603,7 +1608,7 @@ bool MacMenu::processMenuShortCut(uint16 ascii) {
 	ascii = tolower(ascii);
 
 	for (uint i = 0; i < _items.size(); i++) {
-		if (_items[i]->submenu != nullptr) {
+		if (_items[i]->enabled && _items[i]->submenu != nullptr) {
 			for (uint j = 0; j < _items[i]->submenu->items.size(); j++) {
 				if (_items[i]->submenu->items[j]->enabled && tolower(_items[i]->submenu->items[j]->shortcut) == ascii) {
 					if (_items[i]->submenu->items[j]->unicode) {

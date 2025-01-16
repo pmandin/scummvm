@@ -36,11 +36,38 @@ const ADGameDescription gameDescriptions[] = {
 		ADGF_UNSTABLE,
 		GUIO1(GUIO_NONE)
 	},
+{
+		"darkseed",
+		nullptr,
+		AD_ENTRY1s("TOS.EXE", "73854f950819beb0eb0d73bd52cc9030", 149412),
+		Common::ES_ESP,
+		Common::kPlatformDOS,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NONE)
+	},
 	{
 		"darkseed",
 		nullptr,
 		AD_ENTRY1s("TOS.EXE", "ba87f00c3a51ca3e3bb218fc58f128eb", 121662),
 		Common::ZH_ANY,
+		Common::kPlatformDOS,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NONE)
+	},
+    { // unpacked exe
+		"darkseed",
+		"unpacked",
+		AD_ENTRY1s("TOS.EXE", "0fc2751aa16cac26ad3aa9d1cbbb5c7b", 209208),
+		Common::ZH_ANY,
+		Common::kPlatformDOS,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NONE)
+	},
+{
+		"darkseed",
+		nullptr,
+		AD_ENTRY1s("TOS.EXE", "62a636d3d6b19336d059cd2f8b1a365f", 154450),
+		Common::KO_KOR,
 		Common::kPlatformDOS,
 		ADGF_UNSTABLE,
 		GUIO1(GUIO_NONE)
@@ -69,7 +96,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "57581682c29fc7d242b463210b6e54b4", 144422),
 		Common::DE_DEU,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE | ADGF_CD,
+		ADGF_TESTING | ADGF_CD,
 		GUIO1(GUIO_NONE)
 	},
 {
@@ -78,7 +105,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "9b8cdd3b4268d18babf7629fca6a271e", 143534),
 		Common::FR_FRA,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE | ADGF_CD,
+		ADGF_TESTING | ADGF_CD,
 		GUIO1(GUIO_NONE)
 	},
 {
@@ -87,7 +114,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "3c00f3e80fa2c40641278243f96b8398", 170944),
 		Common::ES_ESP,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE | ADGF_CD,
+		ADGF_TESTING | ADGF_CD,
 		GUIO1(GUIO_NONE)
 	},
 	{

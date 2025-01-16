@@ -1594,79 +1594,79 @@ void UseCode::genericResponse(int16 useObjNum, int16 targetObjNum, int16 tosIdx)
 	case 986:
 		_console->addTextLine(
 			Common::String::format(
-				"Don't put the %s in the trunk, you'll forget it.",
+				getI18NText(kI18N_DontPutTheObjectInTheTrunkText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 987:
 		_console->addTextLine(
 			Common::String::format(
-				"The car won't start with the %s.",
+				getI18NText(kI18N_TheCarWontStartWithTheText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 988:
 		_console->addTextLine(
 			Common::String::format(
-				"If you put the %s in the trunk, you'll forget it.",
+				getI18NText(kI18N_IfYouPutTheObjectInTheTrunkText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 989:
 		_console->addTextLine(
 			Common::String::format(
-				"The %s is yours, you haven't lost it.",
+				getI18NText(kI18N_TheObjectIsYoursYouHaventLostItText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 990:
 		_console->addTextLine(
 			Common::String::format(
-				"Not a good place to hide the %s.",
+				getI18NText(kI18N_notAGoodPlaceToHideTheText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 991:
 		_console->addTextLine(
 			Common::String::format(
-				"You try to put the %s inside, but the door won't open",
+				getI18NText(kI18N_youTryToPutTheObjectInsideButTheDoorWontOpenText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 992:
 		_console->addTextLine(
 			Common::String::format(
-				"The kitchen is no place to keep the %s.",
+				getI18NText(kI18N_theKitchenIsNoPlaceToKeepTheText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 993:
 		_console->addTextLine(
 			Common::String::format(
-				"You'll forget the %s here.",
+				getI18NText(kI18N_youllForgetTheObjectHereText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 994:
 		_console->addTextLine(
 			Common::String::format(
-				"You'd rather have the %s with you.",
+				getI18NText(kI18N_youdRatherHaveTheObjectWithYouText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 995:
 		_console->addTextLine(
 			Common::String::format(
-				"The %s has no effect.",
+				getI18NText(kI18N_theObjectHasNoEffectText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 996:
 		_console->addTextLine(
 			Common::String::format(
-				"This is not a good place for the %s.",
+				getI18NText(kI18N_thisIsNotAGoodPlaceForTheText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 997:
 		_console->addTextLine(
 			Common::String::format(
-				"You see a reflection of the %s.",
+				getI18NText(kI18N_youSeeAReflectionOfTheText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 998:
 		_console->addTextLine(
 			Common::String::format(
-				"You don't want to leave the %s under the bed.",
+				getI18NText(kI18N_youDontWantToLeaveTheObjectUnderTheBedText),
 				_objectVar.getObjectName(useObjNum)));
 		break;
 	case 999:
@@ -1674,7 +1674,7 @@ void UseCode::genericResponse(int16 useObjNum, int16 targetObjNum, int16 tosIdx)
 		case 0:
 			_console->addTextLine(
 				Common::String::format(
-					"Using the %s on the %s doesn't make any sense, it must be your headaches!",
+					getI18NText(kI18N_genResponse0_usingTheObjectOnTheObjectItMustBeYourHeadachesText),
 					_objectVar.getObjectName(useObjNum),
 					_objectVar.getObjectName(targetObjNum)
 				)
@@ -1683,7 +1683,7 @@ void UseCode::genericResponse(int16 useObjNum, int16 targetObjNum, int16 tosIdx)
 		case 1:
 			_console->addTextLine(
 				Common::String::format(
-					"The %s will do nothing to the %s.",
+					getI18NText(kI18N_genResponse1_theObjectWillDoNothingToTheText),
 					_objectVar.getObjectName(useObjNum),
 					_objectVar.getObjectName(targetObjNum)
 				)
@@ -1692,7 +1692,7 @@ void UseCode::genericResponse(int16 useObjNum, int16 targetObjNum, int16 tosIdx)
 		case 2:
 			_console->addTextLine(
 				Common::String::format(
-					"The %s doesn't have any effect on the %s.",
+					getI18NText(kI18N_genResponse2_theObjectDoesntHaveAnyEffectOnTheText),
 					_objectVar.getObjectName(useObjNum),
 					_objectVar.getObjectName(targetObjNum)
 				)
@@ -1701,14 +1701,14 @@ void UseCode::genericResponse(int16 useObjNum, int16 targetObjNum, int16 tosIdx)
 		case 3:
 			_console->addTextLine(
 				Common::String::format(
-					"The %s has nothing to do with %s.",
+					getI18NText(kI18N_genResponse3_theObjectHasNothingToDoWithTheText),
 					_objectVar.getObjectName(useObjNum),
 					_objectVar.getObjectName(targetObjNum)
 				)
 			);
 			break;
 		case 4:
-			_console->addTextLine("Are you feeling alright?");
+			_console->addTextLine(getI18NText(kI18N_genResponse4_areYouFeelingAlrightText));
 			break;
 		default:
 			error("Unhandled _genericResponseCounter value");

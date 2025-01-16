@@ -170,6 +170,7 @@ private:
 
 	Common::RandomSource _random;
 	Common::Point _lastMouse; // originals start mouse at 0,0.
+	Common::EventType _lastMouseEvent; // a pending mouse event to process.
 	int _currentCursor;
 	Common::Point _currentCursorHot;
 
@@ -282,6 +283,10 @@ public:
 	void setDebugShowHotAreas(bool enable) { _debugShowHotAreas = enable; }
 	bool getDebugShowHotAreas() const { return _debugShowHotAreas; }
 
+	static void dumpFrame(const Graphics::ManagedSurface &surf, const char *name);
+
+	void dimPalForWillyDialog(bool force);
+
 private:
 	Common::Error syncGame(Common::Serializer &s);
 
@@ -292,6 +297,7 @@ private:
 	void init(bool restarting);
 	void loadGameFiles();
 	void loadRestartFile();
+	void pumpMessages();
 };
 
 } // End of namespace Dgds

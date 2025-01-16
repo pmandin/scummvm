@@ -376,7 +376,10 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 
 	if (_game.platform == Common::kPlatformFMTowns && _game.version == 3) {
 		// FM-TOWNS V3 games originally use 320x240, and we have an option to trim to 200
-		if (!ConfMan.getBool("trim_fmtowns_to_200_pixels"))
+		// FIXME: Don't allow this for Loom yet, though; it used the extra 40 pixels for
+		// various things, and so this option currently causes various issues (see bugs
+		// #15666, #11290, and <https://forums.scummvm.org/viewtopic.php?p=97395#p97395>).
+		if (_game.id == GID_LOOM || !ConfMan.getBool("trim_fmtowns_to_200_pixels"))
 			_screenHeight = 240;
 	} else if (_game.version == 8 || _game.heversion >= 71) {
 		// COMI uses 640x480. Likewise starting from version 7.1, HE games use
@@ -1054,7 +1057,11 @@ Common::Error ScummEngine::init() {
 	// Note: All of these can also occur in 'extracted' form, in which case they
 	// are treated like any other SCUMM game.
 	if (_filenamePattern.genMethod == kGenUnchanged) {
-		if (_game.platform == Common::kPlatformDOS && (_game.features & GF_DOUBLEFINE_PAK)) {
+		if (_game.features & GF_DOUBLEFINE_PAK) {
+			// Extra directories needed for the Mac SE/Remaster versions
+			SearchMan.addSubDirectoryMatching(gameDataDir, "Contents");
+			SearchMan.addSubDirectoryMatching(gameDataDir, "Contents/MacOS");
+			SearchMan.addSubDirectoryMatching(gameDataDir, "Contents/Resources");
 			// Container files used in remastered/SE versions
 			_containerFile = _filenamePattern.pattern; // needs to be set before instantiating ScummPAKFile
 			if (_game.id == GID_MANIAC)
@@ -1234,33 +1241,34 @@ Common::Error ScummEngine::init() {
 		// characters like that.
 
 		MacFileName macFileNames[] = {
-			{ GID_MANIAC,   "Day of the Tentacle",   },
-			{ GID_INDY3,    "Indy\xAA"               },
-			{ GID_INDY3,    "Indy\x99"               },
-			{ GID_INDY3,    "Indy\xE2\x84\xA2"       },
-			{ GID_INDY3,    "Indy"                   },
-			{ GID_LOOM,     "Loom\xAA"               },
-			{ GID_LOOM,     "Loom\x99"               },
-			{ GID_LOOM,     "Loom\xE2\x84\xA2"       },
-			{ GID_LOOM,     "Loom"                   },
-			{ GID_MONKEY,   "Monkey Island"          },
-			{ GID_INDY4,    "Fate of Atlantis"       },
-			{ GID_INDY4,    "Fate of Atlantis 1.1"   },
-			{ GID_INDY4,    "Indy Fate"              },
-			{ GID_INDY4,    "fate v1.5"              },
-			{ GID_INDY4,    "Indy 12/15/92"          },
-			{ GID_INDY4,    "Indy 12-15-92"          },
-			{ GID_INDY4,    "Fate of Atlantis v1.5"  },
-			{ GID_INDY4,    "Fate of Atlantis v.1.5" },
-			{ GID_INDY4,    "Indy Demo"              },
-			{ GID_MONKEY2,  "LeChuck's Revenge"      },
-			{ GID_TENTACLE, "Day of the Tentacle"    },
-			{ GID_SAMNMAX,  "Sam & Max"              },
-			{ GID_SAMNMAX,  "Sam & Max Demo"         },
-			{ GID_DIG,      "The Dig"                },
-			{ GID_DIG,      "The Dig Demo"           },
-			{ GID_FT,       "Full Throttle"          },
-			{ GID_FT,       "Full Throttle Demo"     }
+			{ GID_MANIAC,   "Day of the Tentacle",     },
+			{ GID_INDY3,    "Indy\xAA"                 },
+			{ GID_INDY3,    "Indy\x99"                 },
+			{ GID_INDY3,    "Indy\xE2\x84\xA2"         },
+			{ GID_INDY3,    "Indy"                     },
+			{ GID_LOOM,     "Loom\xAA"                 },
+			{ GID_LOOM,     "Loom\x99"                 },
+			{ GID_LOOM,     "Loom\xE2\x84\xA2"         },
+			{ GID_LOOM,     "Loom"                     },
+			{ GID_MONKEY,   "Monkey Island"            },
+			{ GID_INDY4,    "Fate of Atlantis"         },
+			{ GID_INDY4,    "Fate of Atlantis 1.1"     },
+			{ GID_INDY4,    "Indy Fate"                },
+			{ GID_INDY4,    "fate v1.5"                },
+			{ GID_INDY4,    "Indy 12/15/92"            },
+			{ GID_INDY4,    "Indy 12-15-92"            },
+			{ GID_INDY4,    "Fate of Atlantis v1.5"    },
+			{ GID_INDY4,    "Fate of Atlantis v.1.5"   },
+			{ GID_INDY4,    "Indy Demo"                },
+			{ GID_MONKEY2,  "LeChuck's Revenge"        },
+			{ GID_TENTACLE, "Day of the Tentacle"      },
+			{ GID_TENTACLE, "Day of the Tentacle Demo" },
+			{ GID_SAMNMAX,  "Sam & Max"                },
+			{ GID_SAMNMAX,  "Sam & Max Demo"           },
+			{ GID_DIG,      "The Dig"                  },
+			{ GID_DIG,      "The Dig Demo"             },
+			{ GID_FT,       "Full Throttle"            },
+			{ GID_FT,       "Full Throttle Demo"       }
 		};
 
 		bool macScumm = false;
@@ -1325,7 +1333,8 @@ Common::Error ScummEngine::init() {
 				}
 
 				GUI::MessageDialog dialog(Common::U32String::format(
-	_("Could not find the '%s' Macintosh executable to read resources from. Music and Mac GUI will be disabled"), gameName), _("OK"));
+					_("Could not find the '%s' Macintosh executable to read resources from. %s will be disabled."),
+						gameName, (_game.id == GID_INDY4 || _game.id == GID_MONKEY2 || _game.version > 6) ? _s("The Mac GUI") : _s("The music and the Mac GUI")), _("OK"));
 				dialog.runModal();
 			} else if (isUsingOriginalGUI() || _game.id == GID_INDY3 || _game.id == GID_LOOM) {
 				// FIXME: THIS IS A TEMPORARY WORKAROUND!
@@ -1336,7 +1345,10 @@ Common::Error ScummEngine::init() {
 				_macGui = new MacGui(this, macResourceFile);
 			}
 
-			if (_game.id == GID_INDY3 || _game.id == GID_LOOM)
+			// Maniac Mansion doesn't use the text surface, but it's easier to
+			// pretend that it does.
+
+			if (_game.id == GID_INDY3 || _game.id == GID_LOOM || (_game.id == GID_MANIAC && _macGui))
 				_textSurfaceMultiplier = 2;
 		}
 
@@ -1372,7 +1384,7 @@ Common::Error ScummEngine::init() {
 		int screenWidth = _screenWidth;
 		int screenHeight = _screenHeight;
 
-		if (_macScreen && _game.platform == Common::kPlatformMacintosh && _game.version >= 3 && _game.heversion == 0) {
+		if (_macScreen && _game.platform == Common::kPlatformMacintosh && _game.heversion == 0) {
 			screenWidth *= 2;
 			screenHeight *= 2;
 			screenHeight += 2 * 2 * _macScreenDrawOffset;
@@ -2423,18 +2435,11 @@ void ScummEngine::syncSoundSettings() {
 	int soundVolumeMusic = ConfMan.getInt("music_volume");
 	int soundVolumeSfx = ConfMan.getInt("sfx_volume");
 
-	bool mute = false;
-
-	if (ConfMan.hasKey("mute")) {
-		mute = ConfMan.getBool("mute");
-
-		if (mute)
-			soundVolumeMusic = soundVolumeSfx = 0;
-	}
-
-	_soundEnabled = ((ConfMan.hasKey("music_mute") && ConfMan.getBool("music_mute")) ? 0 : 2) | ((ConfMan.hasKey("sfx_mute") && ConfMan.getBool("sfx_mute")) ? 0 : 1);
+	bool mute = (ConfMan.hasKey("mute") && ConfMan.getBool("mute"));
 
 	if (_game.version >= 6 && _game.platform == Common::kPlatformMacintosh) {
+		_soundEnabled = mute ? 8 : ((ConfMan.hasKey("music_mute") && ConfMan.getBool("music_mute") && _soundEnabled != 8) ? 0 : 2) | ((ConfMan.hasKey("sfx_mute") && ConfMan.getBool("sfx_mute") && _soundEnabled != 8) ? 0 : 1);
+
 		if (_game.version == 6) {
 			if (!(_soundEnabled & 2))
 				soundVolumeMusic = 0;
@@ -2442,6 +2447,8 @@ void ScummEngine::syncSoundSettings() {
 			_mixer->muteSoundType(Audio::Mixer::kMusicSoundType, !(_soundEnabled & 2));
 		}
 		_mixer->muteSoundType(Audio::Mixer::kSFXSoundType, !(_soundEnabled & 1));
+	} else if (mute) {
+		soundVolumeMusic = soundVolumeSfx = 0;
 	}
 
 	if (_musicEngine) {

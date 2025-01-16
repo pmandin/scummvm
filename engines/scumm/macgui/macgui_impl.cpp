@@ -115,6 +115,8 @@ bool MacGuiImpl::handleEvent(Common::Event event) {
 	// The situation we're trying to avoid here is the user opening e.g.
 	// the save dialog using keyboard shortcuts while the game is paused.
 
+	// TODO: We need something for Maniac Mansion here
+
 	if (_bannerWindow || _vm->_messageBannerActive)
 		return false;
 
@@ -170,12 +172,35 @@ MacGuiImpl::DelayStatus MacGuiImpl::delay(uint32 ms) {
 void MacGuiImpl::menuCallback(int id, Common::String &name, void *data) {
 	MacGuiImpl *gui = (MacGuiImpl *)data;
 
+	// This menu item (e.g. a menu separator) has no action, so it can be
+	// immediately ignored.
+	if (id == 0)
+		return;
+
+	Graphics::MacMenu *menu = gui->_windowManager->getMenu();
+	bool forceMenuClosed = false;
+
+	// If the menu is opened through a shortcut key, force it to activate
+	// to avoid screen corruption. In that case, we also force the menu to
+	// close afterwards, or the game will stay paused. Which is
+	// particularly bad during a restart.
+
+	if (!menu->_active) {
+		gui->_windowManager->activateMenu();
+		forceMenuClosed = true;
+	}
+
+	// This is how we keep the menu bar visible.
+
+	menu->closeMenu();
+	menu->setActive(true);
+	menu->setVisible(true);
+	gui->updateWindowManager();
+
 	gui->handleMenu(id, name);
 
-	if (gui->_forceMenuClosed) {
-		gui->_windowManager->getMenu()->closeMenu();
-		gui->_forceMenuClosed = false;
-	}
+	if (forceMenuClosed)
+		menu->closeMenu();
 }
 
 bool MacGuiImpl::initialize() {
@@ -348,30 +373,21 @@ void MacGuiImpl::addMenu(Graphics::MacMenu *menu, int menuId) {
 	resource.close();
 }
 
-bool MacGuiImpl::handleMenu(int id, Common::String &name) {
-	// This menu item (e.g. a menu separator) has no action, so it's
-	// handled trivially.
-	if (id == 0)
-		return true;
+void MacGuiImpl::updateMenus() {
+	// We can't use the name of the menus here, because there are
+	// non-English versions. Let's hope the menu positions are always the
+	// same, at least!
 
-	// This is how we keep the menu bar visible.
 	Graphics::MacMenu *menu = _windowManager->getMenu();
+	Graphics::MacMenuItem *gameMenu = menu->getMenuItem(1);
+	Graphics::MacMenuItem *loadMenu = menu->getSubMenuItem(gameMenu, 0);
+	Graphics::MacMenuItem *saveMenu = menu->getSubMenuItem(gameMenu, 1);
 
-	// If the menu is opened through a shortcut key, force it to activate
-	// to avoid screen corruption. In that case, we also force the menu to
-	// close afterwards, or the game will stay paused. Which is
-	// particularly bad during a restart.
+	loadMenu->enabled = _vm->canLoadGameStateCurrently();
+	saveMenu->enabled = _vm->canSaveGameStateCurrently();
+}
 
-	if (!menu->_active) {
-		_windowManager->activateMenu();
-		_forceMenuClosed = true;
-	}
-
-	menu->closeMenu();
-	menu->setActive(true);
-	menu->setVisible(true);
-	updateWindowManager();
-
+bool MacGuiImpl::handleMenu(int id, Common::String &name) {
 	int saveSlotToHandle = -1;
 	Common::String savegameName;
 
@@ -408,7 +424,7 @@ bool MacGuiImpl::handleMenu(int id, Common::String &name) {
 
 	case 203:	// Pause
 		if (!_vm->_messageBannerActive) {
-			menu->closeMenu();
+			_windowManager->getMenu()->closeMenu();
 
 			if (_vm->_game.version == 3)
 				_vm->mac_showOldStyleBannerAndPause(_vm->getGUIString(gsPause), -1);
@@ -437,131 +453,10 @@ void MacGuiImpl::updateWindowManager() {
 	if (!menu)
 		return;
 
-	// We want the arrow cursor for menus. Note that the menu triggers even
-	// when the mouse is invisible, which may or may not be a bug. But the
-	// original did allow you to open the menu with Alt even when the
-	// cursor was visible, so for now it's a feature.
-
-	bool saveCondition = true;
-	bool loadCondition = true;
-
-	if (_vm->_game.id == GID_INDY3) {
-		// Taken from Mac disasm...
-		// The VAR(94) part tells us whether the copy protection has
-		// failed or not, while the VAR(58) part uses bitmasks to enable
-		// or disable saving and loading during normal gameplay.
-		saveCondition = (_vm->VAR(58) & 0x01) && !(_vm->VAR(94) & 0x10);
-		loadCondition = (_vm->VAR(58) & 0x02) && !(_vm->VAR(94) & 0x10);
-	} else if (_vm->_game.id == GID_LOOM) {
-		// TODO: Complete LOOM with the rest of the proper code from disasm,
-		// for now we only have the copy protection code and a best guess in place...
-		//
-		// Details:
-		// VAR(221) & 0x4000:           Copy protection bit (the only thing I could confirm from the disasm)
-		// VAR(VAR_VERB_SCRIPT) == 5:   Best guess... it prevents saving/loading from e.g. difficulty selection screen
-		// _userPut > 0:                Best guess... it prevents saving/loading during cutscenes
-
-		saveCondition = loadCondition =
-			!(_vm->VAR(221) & 0x4000) &&
-			(_vm->VAR(_vm->VAR_VERB_SCRIPT) == 5) &&
-			(_vm->_userPut > 0);
-	} else {
-		saveCondition = true;
-		loadCondition = true;
-	}
-
-	bool canLoad = _vm->canLoadGameStateCurrently() && loadCondition;
-	bool canSave = _vm->canSaveGameStateCurrently() && saveCondition;
-
-	Graphics::MacMenuItem *gameMenu = menu->getMenuItem(1);
-	Graphics::MacMenuItem *loadMenu = menu->getSubMenuItem(gameMenu, 0);
-	Graphics::MacMenuItem *saveMenu = menu->getSubMenuItem(gameMenu, 1);
-
-	if (loadMenu)
-		loadMenu->enabled = canLoad;
-
-	if (saveMenu)
-		saveMenu->enabled = canSave;
+	updateMenus();
 
 	if (!_windowManager->isMenuActive() && _menuIsActive)
 		onMenuClose();
-
-	if (_vm->_game.version > 3 && _vm->_game.version < 6) {
-		Graphics::MacMenuItem *windowMenu = menu->getMenuItem("Window");
-		Graphics::MacMenuItem *hideDesktopMenu = menu->getSubMenuItem(windowMenu, 0);
-		Graphics::MacMenuItem *hideBarMenu = menu->getSubMenuItem(windowMenu, 1);
-
-		hideDesktopMenu->enabled = false;
-		hideBarMenu->enabled = false;
-
-		// "Fix color map"
-		menu->getSubMenuItem(gameMenu, 5)->enabled = false;
-
-		// Window mode
-		menu->getSubMenuItem(windowMenu, 3)->enabled = false;
-		menu->getSubMenuItem(windowMenu, 4)->enabled = false;
-		menu->getSubMenuItem(windowMenu, 5)->enabled = false;
-
-		if (menu->numberOfMenuItems(windowMenu) >= 8)
-			menu->getSubMenuItem(windowMenu, 7)->checked = _vm->_useMacGraphicsSmoothing;
-
-		Graphics::MacMenuItem *speechMenu = menu->getMenuItem("Speech");
-
-		if (speechMenu) {
-			menu->getSubMenuItem(speechMenu, 0)->checked = false; // Voice Only
-			menu->getSubMenuItem(speechMenu, 1)->checked = false; // Text Only
-			menu->getSubMenuItem(speechMenu, 2)->checked = false; // Voice and Text
-
-			switch (_vm->_voiceMode) {
-			case 0: // Voice Only
-				menu->getSubMenuItem(speechMenu, 0)->checked = true;
-				break;
-			case 1: // Voice and Text
-				menu->getSubMenuItem(speechMenu, 2)->checked = true;
-				break;
-			case 2: // Text Only
-				menu->getSubMenuItem(speechMenu, 1)->checked = true;
-				break;
-			default:
-				warning("MacGuiImpl::updateWindowManager(): Invalid voice mode %d", _vm->_voiceMode);
-				break;
-			}
-		}
-	} else if (_vm->_game.version >= 6) {
-		// We can't use the name of the menus here, because there are
-		// non-English versions. Let's hope the menu positions are
-		// always the same, at least!
-
-		Graphics::MacMenuItem *videoMenu = menu->getMenuItem(3);
-
-		menu->getSubMenuItem(videoMenu, 0)->enabled = false;
-		menu->getSubMenuItem(videoMenu, 1)->enabled = false;
-		menu->getSubMenuItem(videoMenu, 2)->checked = true;
-		menu->getSubMenuItem(videoMenu, 3)->checked = _vm->_useMacGraphicsSmoothing;
-
-		Graphics::MacMenuItem *soundMenu = menu->getMenuItem(4);
-
-		menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_soundEnabled & 2); // Music
-		menu->getSubMenuItem(soundMenu, 1)->checked = (_vm->_soundEnabled & 1); // Effects
-		menu->getSubMenuItem(soundMenu, 5)->checked = false; // Text Only
-		menu->getSubMenuItem(soundMenu, 6)->checked = false; // Voice Only
-		menu->getSubMenuItem(soundMenu, 7)->checked = false; // Text & Voice
-
-		switch (_vm->_voiceMode) {
-		case 0:	// Voice Only
-			menu->getSubMenuItem(soundMenu, 6)->checked = true;
-			break;
-		case 1: // Voice and Text
-			menu->getSubMenuItem(soundMenu, 7)->checked = true;
-			break;
-		case 2:	// Text Only
-			menu->getSubMenuItem(soundMenu, 5)->checked = true;
-			break;
-		default:
-			warning("MacGuiImpl::updateWindowManager(): Invalid voice mode %d", _vm->_voiceMode);
-			break;
-		}
-	}
 
 	if (menu->isVisible())
 		updatePalette();
@@ -570,6 +465,11 @@ void MacGuiImpl::updateWindowManager() {
 }
 
 void MacGuiImpl::onMenuOpen() {
+	// We want the arrow cursor for menus. Note that the menu triggers even
+	// when the mouse is invisible, which may or may not be a bug. But the
+	// original did allow you to open the menu with Alt even when the
+	// cursor was visible, so for now it's a feature.
+
 	if (!_menuIsActive) {
 		_menuIsActive = true;
 		_cursorWasVisible = CursorMan.showMouse(true);
@@ -833,7 +733,7 @@ MacGuiImpl::MacDialogWindow *MacGuiImpl::createDialog(int dialogId) {
 
 	// Default dialog sizes for dialogs without a DITL resource.
 
-	if (_vm->_game.version < 6) {
+	if (_vm->_game.version < 6 && _vm->_game.id != GID_MANIAC) {
 		bounds.top = 0;
 		bounds.left = 0;
 		bounds.bottom = 86;

@@ -22,6 +22,7 @@
 #include "common/system.h"
 #include "common/macresman.h"
 
+#include "graphics/blit.h"
 #include "graphics/cursorman.h"
 #include "graphics/macgui/macwindowmanager.h"
 #include "graphics/paletteman.h"
@@ -805,19 +806,24 @@ MacGuiImpl::MacWidget *MacGuiImpl::MacDialogWindow::getWidget(MacWidgetType type
 }
 
 void MacGuiImpl::MacDialogWindow::drawSprite(const MacImage *image, int x, int y) {
-	const Graphics::Surface *surface = image->getImage();
-	const Graphics::Surface *mask = image->getMask();
+	Graphics::Surface *dstSurface = innerSurface();
+	const Graphics::Surface *srcSurface = image->getImage();
+	const Graphics::Surface *maskSurface = image->getMask();
 
-	if (mask) {
-		for (int y1 = 0; y1 < mask->h; y1++) {
-			for (int x1 = 0; x1 < mask->w; x1++) {
-				if (mask->getPixel(x1, y1) == 255)
-					_innerSurface.setPixel(x + x1, y + y1, surface->getPixel(x1, y1));
-			}
-		}
-		markRectAsDirty(Common::Rect(x, y, x + surface->w, y + surface->h));
+	if (maskSurface) {
+		byte *dst = (byte*)dstSurface->getBasePtr(x, y);
+		const byte *src = (const byte *)srcSurface->getBasePtr(0, 0);
+		const byte *mask = (const byte *)maskSurface->getBasePtr(0, 0);
+
+		assert(srcSurface->format == dstSurface->format);
+
+		Graphics::maskBlit(dst, src, mask,
+			dstSurface->pitch, srcSurface->pitch, maskSurface->pitch,
+			srcSurface->w, srcSurface->h,
+			dstSurface->format.bytesPerPixel);
+		markRectAsDirty(Common::Rect(x, y, x + srcSurface->w, y + srcSurface->h));
 	} else
-		drawSprite(image->getImage(), x, y);
+		drawSprite(srcSurface, x, y);
 }
 
 void MacGuiImpl::MacDialogWindow::drawSprite(const Graphics::Surface *sprite, int x, int y) {
@@ -888,6 +894,13 @@ void MacGuiImpl::MacDialogWindow::plotPatternDarkenOnly(int x, int y, int patter
 	int bit = 0x8000 >> (4 * (y % 4) + (x % 4));
 	if (patterns[pattern] & bit)
 		s->setPixel(x, y, window->_gui->getBlack());
+}
+
+void MacGuiImpl::MacDialogWindow::drawRoundRect(const Common::Rect &rect, int arc, uint32 color, bool filled, void (*plotProc)(int, int, int, void *)) {
+	// FIXME: This is a deprecated method, but we should replace it with
+	// something that matches QuickDraw's rounded rects instead.
+
+	Graphics::drawRoundRect(rect, arc, color, filled, plotProc, this);
 }
 
 void MacGuiImpl::MacDialogWindow::drawTexts(Common::Rect r, const TextLine *lines, bool inverse) {
@@ -985,8 +998,8 @@ void MacGuiImpl::MacDialogWindow::drawTextBox(Common::Rect r, const TextLine *li
 		bg = _white;
 	}
 
-	Graphics::drawRoundRect(r, arc, bg, true, plotPixel, this);
-	Graphics::drawRoundRect(r, arc, fg, false, plotPixel, this);
+	drawRoundRect(r, arc, bg, true, plotPixel);
+	drawRoundRect(r, arc, fg, false, plotPixel);
 	markRectAsDirty(r);
 
 	drawTexts(r, lines, inverse);

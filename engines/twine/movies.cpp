@@ -296,6 +296,7 @@ void Movies::drawNextFrameFla() {
 
 Movies::Movies(TwinEEngine *engine) : _engine(engine) {}
 
+#ifdef USE_GIF
 void Movies::prepareGIF(int index) {
 	Image::GIFDecoder decoder;
 	Common::SeekableReadStream *stream = HQR::makeReadStream(Resources::HQR_FLAGIF_FILE, index);
@@ -312,14 +313,16 @@ void Movies::prepareGIF(int index) {
 	_engine->setPalette(0, decoder.getPaletteColorCount(), decoder.getPalette());
 	Graphics::ManagedSurface& target = _engine->_frontVideoBuffer;
 	const Common::Rect surfaceBounds(0, 0, surface->w, surface->h);
-	target.transBlitFrom(*surface, surfaceBounds, target.getBounds(), 0, false, 0xff, nullptr, true);
+	target.blitFrom(*surface, surfaceBounds, target.getBounds());
 	debugC(1, TwinE::kDebugMovies, "Show gif with id %i from %s", index, Resources::HQR_FLAGIF_FILE);
 	delete stream;
 	_engine->delaySkip(5000);
 	_engine->setPalette(_engine->_screens->_ptrPal);
 }
+#endif
 
 void Movies::playGIFMovie(const char *flaName) {
+#ifdef USE_GIF
 	if (!Common::File::exists(Resources::HQR_FLAGIF_FILE)) {
 		warning("%s file doesn't exist", Resources::HQR_FLAGIF_FILE);
 		return;
@@ -365,6 +368,9 @@ void Movies::playGIFMovie(const char *flaName) {
 	} else {
 		warning("unknown gif image: %s", name.c_str());
 	}
+#else
+	warning("No GIF support compiled in");
+#endif
 }
 
 bool Movies::playMovie(const char *name) { // PlayAnimFla
@@ -540,7 +546,7 @@ bool Movies::playSmkMovie(const char *name, int index) {
 
 			Graphics::ManagedSurface& target = _engine->_frontVideoBuffer;
 			const Common::Rect frameBounds(0, 0, frameSurf->w, frameSurf->h);
-			target.transBlitFrom(*frameSurf, frameBounds, target.getBounds(), 0, false, 0xff, nullptr, true);
+			target.blitFrom(*frameSurf, frameBounds, target.getBounds());
 		}
 	}
 

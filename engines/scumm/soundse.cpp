@@ -47,83 +47,53 @@ void SoundSE::initSoundFiles() {
 	case GID_MONKEY:
 	case GID_MONKEY2:
 		initAudioMappingMI();
-		_musicFilename = "MusicOriginal.xwb";
-		//_musicFilename = "MusicNew.xwb";	// TODO: allow toggle between original and new music
-		indexXWBFile(_musicFilename, &_musicEntries);
-		_sfxFilename = "SFXOriginal.xwb";
-		//_sfxFilename = "SFXNew.xwb";	// TODO: allow toggle between original and new SFX
-		indexXWBFile(_sfxFilename, &_sfxEntries);
-		_speechFilename = "Speech.xwb";
-		indexXWBFile(_speechFilename, &_speechEntries);
-		// TODO: iMUSEClient_Commentary.fsb
+		indexXWBFile(kSoundSETypeMusic);
+		indexXWBFile(kSoundSETypeSFX);
+		indexXWBFile(kSoundSETypeSpeech);
+		indexXWBFile(kSoundSETypeAmbience);
+
+		if (_vm->_game.id == GID_MONKEY2) {
+			indexXWBFile(kSoundSETypeCommentary);
+			// We need the speechcues.xsb file for MI2's speech,
+			// since the file names, which are used to match the
+			// speech cues with the audio files, are stored in there.
+			indexSpeechXSBFile();
+
+			// Patch audio files. Since this relies on file names,
+			// it needs to be called after the file names are defined
+			// from the speech cues above.
+			indexXWBFile(kSoundSETypePatch);
+		}
 		break;
+
 	case GID_TENTACLE:
-		initAudioMapping();
-		_musicFilename = "iMUSEClient_Music.fsb";
-		indexFSBFile(_musicFilename, &_musicEntries);
-		_sfxFilename = "iMUSEClient_SFX.fsb";
-		indexFSBFile(_sfxFilename, &_sfxEntries);
-		_speechFilename = "iMUSEClient_VO.fsb";
-		indexFSBFile(_speechFilename, &_speechEntries);
-		// TODO: iMUSEClient_Commentary.fsb
-		break;
 	case GID_FT:
-		initAudioMapping();
-		_musicFilename = "iMUSEClient_Music.fsb";
-		indexFSBFile(_musicFilename, &_musicEntries);
-		_sfxFilename = "iMUSEClient_SFX_INMEMORY.fsb";
-		indexFSBFile(_sfxFilename, &_sfxEntries);
-		_speechFilename = "iMUSEClient_SPEECH.fsb";
-		indexFSBFile(_speechFilename, &_speechEntries);
-		// TODO: iMUSEClient_SFX_STREAMING.fsb
-		// TODO: iMUSEClient_UI.fsb
-		// TODO: iMUSEClient_Commentary.fsb
+		initAudioMappingDOTTAndFT();
+		indexFSBFile(kSoundSETypeMusic);
+		indexFSBFile(kSoundSETypeSFX);
+		indexFSBFile(kSoundSETypeSpeech);
+		indexFSBFile(kSoundSETypeCommentary);
+		// TODO: iMUSEClient_SFX_STREAMING.fsb for FT
+
+		// Clear the original offset map, as we no longer need it
+		_nameToOffsetDOTTAndFT.clear();
 		break;
 	default:
 		error("initSoundFiles: unhandled game");
 	}
-
-	// Clear the original offset map, as we no longer need it
-	_audioNameToOriginalOffsetMap.clear();
-}
-
-Audio::SeekableAudioStream *SoundSE::getXWBTrack(int track) {
-	// TODO: Enable once WMA audio is implemented.
-	// Also, some of the PCM music tracks are not playing correctly
-	// (e.g. the act 1 track)
-	return nullptr;
-
-	Common::File *cdAudioFile = new Common::File();
-
-	if (!cdAudioFile->open(Common::Path(_musicFilename))) {
-		delete cdAudioFile;
-		return nullptr;
-	}
-
-	AudioEntry entry = _musicEntries[track];
-
-	auto subStream = new Common::SeekableSubReadStream(
-		cdAudioFile,
-		entry.offset,
-		entry.offset + entry.length,
-		DisposeAfterUse::YES
-	);
-
-	return createSoundStream(subStream, entry);
 }
 
 #define WARN_AND_RETURN_XWB(message)          \
 	{                                         \
 		warning("indexXWBFile: %s", message); \
-		f->close();                           \
 		delete f;                             \
 		return;                               \
 	}
 
-void SoundSE::indexXWBFile(const Common::String &filename, AudioIndex *audioIndex) {
+void SoundSE::indexXWBFile(SoundSEType type) {
 	// This implementation is based off unxwb: https://github.com/mariodon/unxwb/
 	// as well as xwbdump: https://raw.githubusercontent.com/wiki/Microsoft/DirectXTK/xwbdump.cpp
-	// Only the parts that apply to the Doublefine releases of
+	// Only the parts that apply to the Special Editions of
 	// MI1 and MI2 have been implemented.
 
 	struct SegmentData {
@@ -132,8 +102,10 @@ void SoundSE::indexXWBFile(const Common::String &filename, AudioIndex *audioInde
 	};
 	SegmentData segments[5] = {};
 
-	Common::File *f = new Common::File();
-	f->open(Common::Path(filename));
+	AudioIndex *audioIndex = getAudioEntries(type);
+	Common::SeekableReadStream *f = getAudioFile(type);
+	if (!f)
+		return;
 
 	const uint32 magic = f->readUint32BE();
 	const uint32 version = f->readUint32LE();
@@ -177,56 +149,129 @@ void SoundSE::indexXWBFile(const Common::String &filename, AudioIndex *audioInde
 		entry.rate = (format >> (2 + 3)) & ((1 << 18) - 1);
 		entry.align = (format >> (2 + 3 + 18)) & ((1 << 8) - 1);
 		entry.bits = (format >> (2 + 3 + 18 + 8)) & ((1 << 1) - 1);
+		entry.isPatched = false;
 
 		audioIndex->push_back(entry);
 	}
 
-	f->seek(segments[kXWBSegmentEntryNames].offset);
+	const uint32 nameOffset = segments[kXWBSegmentEntryNames].offset;
 
-	for (uint32 i = 0; i < entryCount; i++) {
-		Common::String name = f->readString(0, 64);
-		name.toLowercase();
+	if (nameOffset) {
+		f->seek(nameOffset);
 
-		(*audioIndex)[i].name = name;
+		for (uint32 i = 0; i < entryCount; i++) {
+			Common::String name = f->readString(0, 64);
+			name.toLowercase();
 
-		if (!_audioNameToOriginalOffsetMap.contains(name)) {
-			// warning("indexXWBFile: name %s not found in speech.info", name.c_str());
-			_nameToIndex[name] = i;
-			continue;
+			if (type != kSoundSETypePatch) {
+				(*audioIndex)[i].name = name;
+				_nameToIndex[name] = i;
+			} else {
+				// Patch audio resources for MI2
+				// Note: We assume that patch XWB files always contain file names
+
+				// In Monkey Island 2, there's a gag with a phone operator from
+				// the LucasArts help line, Chester, who responds to a call from
+				// a phone located inside the Dinky Island jungle (room 155, boot
+				// param 996). In the classic version, Chester was female, but was
+				// replaced by a male operator in the Special Edition. The original
+				// audio files for Chester are "chf_97_*, and the new audio files
+				// are che_97_*. We patch the female voice for Chester's sound files
+				// here.
+				if (name.hasPrefix("chf_97_jungleb_")) {
+					name.setChar('e', 2);
+				}
+
+				// Note: The original patch also contained the following entries:
+				// - Fixes for audio sync during the skeleton dance / dream
+				//   sequence (boot param 675). These are not needed for the
+				//   classic version, and only apply to the Special Edition.
+				// - Missing music files for Dinky Jungle. We don't use these
+				//   yet, so we don't patch them.
+				//   TODO: Process and patch music entries, once we start using
+				//   the SE audio files for music.
+				const int32 originalAudioIndex = _nameToIndex[name];
+				if (originalAudioIndex < (int32)_speechEntries.size() && _speechEntries[originalAudioIndex].name == name) {
+					_speechEntries[originalAudioIndex].isPatched = true;
+					_nameToIndexPatched[name] = i;
+				}
+			}
 		}
-		
-		const uint32 origOffset = _audioNameToOriginalOffsetMap[name];
-		_offsetToIndex[origOffset] = i;
-		// debug("indexXWBFile: %s -> offset %d, index %d", name.c_str(), origOffset, i);
-		_nameToIndex[name] = i;
 	}
 
-	f->close();
 	delete f;
 }
 
 #undef WARN_AND_RETURN_XWB
 
-#define WARN_AND_RETURN_FSB(message)          \
-	{                                         \
-		warning("indexFSBFile: %s", message); \
-		f->close();                           \
-		delete f;                             \
-		return;                               \
+void SoundSE::indexSpeechXSBFile() {
+	Common::List<uint16> speechIndices;
+
+	AudioIndex *audioIndex = getAudioEntries(kSoundSETypeSpeech);
+	Common::SeekableReadStream *f = getAudioFile("speechcues.xsb");
+	if (!f)
+		return;
+
+	const uint32 magic = f->readUint32BE();
+	if (magic != MKTAG('S', 'D', 'B', 'K')) {
+		warning("Invalid XSB file");
+		delete f;
+		return;
 	}
+
+	f->skip(15);
+	const uint32 entryCount = f->readUint32LE();
+	f->skip(19);
+	const uint32 nameOffset = f->readUint32LE();
+	f->skip(24);
+	const uint32 entriesOffset = f->readUint32LE();
+
+	f->seek(entriesOffset);
+
+	for (uint32 i = 0; i < entryCount; i++) {
+		uint16 entryTag = f->readUint16LE();
+		bool isSpeech = (entryTag == 0x0410);
+		f->skip(7);
+		const uint16 speechIndex = f->readUint16LE();
+		speechIndices.push_back(speechIndex);
+		//debug("indexSpeechXSBFile: speech cue %d -> index %d, offset %d", i, speechIndex, f->pos());
+		f->skip(isSpeech ? 8 : 1);
+	}
+
+	f->seek(nameOffset);
+
+	for (auto &index : speechIndices) {
+		Common::String name = f->readString(0);
+		name.toLowercase();
+
+		if (index < (*audioIndex).size()) {
+			(*audioIndex)[index].name = name;
+			_nameToIndex[name] = index;
+			//debug("indexSpeechXSBFile: %s -> index %d", name.c_str(), index);
+		}
+	}
+
+	delete f;
+}
 
 #define GET_FSB5_OFFSET(X) ((((X) >> (uint64)7) << (uint64)5) & (((uint64)1 << (uint64)32) - 1))
 
-void SoundSE::indexFSBFile(const Common::String &filename, AudioIndex *audioIndex) {
+void SoundSE::indexFSBFile(SoundSEType type) {
 	// Based off DoubleFine Explorer: https://github.com/bgbennyboy/DoubleFine-Explorer/blob/master/uDFExplorer_FSBManager.pas
 	// and fsbext: https://aluigi.altervista.org/search.php?src=fsbext
-	ScummPAKFile *f = new ScummPAKFile(_vm);
-	_vm->openFile(*f, Common::Path(filename));
+
+	AudioIndex *audioIndex = getAudioEntries(type);
+	Common::SeekableReadStream *f = getAudioFile(type);
+	if (!f)
+		return;
 
 	const uint32 headerSize = 60; // 4 * 7 + 8 + 16 + 8
 	const uint32 magic = f->readUint32BE();
-	if (magic != MKTAG('F', 'S', 'B', '5'))
-		WARN_AND_RETURN_FSB("Invalid FSB file")
+	if (magic != MKTAG('F', 'S', 'B', '5')) {
+		warning("Invalid FSB file");
+		delete f;
+		return;
+	}
 
 	/*const uint32 version = */f->readUint32LE();
 	const uint32 sampleCount = f->readUint32LE();
@@ -248,14 +293,14 @@ void SoundSE::indexFSBFile(const Common::String &filename, AudioIndex *audioInde
 	for (uint32 i = 0; i < sampleCount; i++) {
 		const uint32 origOffset = f->readUint32LE();
 		f->skip(4); // samples, used in XMA
-		uint32 type = origOffset & ((1 << 7) - 1);
+		uint32 sampleType = origOffset & ((1 << 7) - 1);
 		const uint32 fileOffset = nameOffset + nameSize + GET_FSB5_OFFSET(origOffset);
 		uint32 size;
 
 		// Meta data, skip it
-		while (type & 1) {
+		while (sampleType & 1) {
 			const uint32 t = f->readUint32LE();
-			type = t & 1;
+			sampleType = t & 1;
 			const uint32 metaDataSize = (t & 0xffffff) >> 1;
 			f->skip(metaDataSize);
 		}
@@ -284,6 +329,7 @@ void SoundSE::indexFSBFile(const Common::String &filename, AudioIndex *audioInde
 		entry.codec = kFSBCodecMP3;
 		entry.align = 0;
 		entry.bits = 16;
+		entry.isPatched = false;
 
 		audioIndex->push_back(entry);
 	}
@@ -318,22 +364,20 @@ void SoundSE::indexFSBFile(const Common::String &filename, AudioIndex *audioInde
 
 		(*audioIndex)[i].name = name;
 
-		if (!_audioNameToOriginalOffsetMap.contains(name)) {
+		if (!_nameToOffsetDOTTAndFT.contains(name)) {
 			//warning("indexFSBFile: name %s not found in audiomapping.info", name.c_str());
 			continue;
 		}
 
-		const uint32 origOffset = _audioNameToOriginalOffsetMap[name];
-		_offsetToIndex[origOffset] = i;
+		const uint32 origOffset = _nameToOffsetDOTTAndFT[name];
+		_offsetToIndexDOTTAndFT[origOffset] = i;
 		//debug("indexFSBFile: %s -> offset %d, index %d", name.c_str(), origOffset, i);
 	}
 
-	f->close();
 	delete f;
 }
 
 #undef GET_FSB5_OFFSET
-#undef WARN_AND_RETURN_FSB
 
 static int32 calculateStringHash(const char *input) {
 	int32 hash = 0;
@@ -445,11 +489,9 @@ static int32 calculateStringSimilarity(const char *str1, const char *str2) {
 }
 
 void SoundSE::initAudioMappingMI() {
-	Common::File *f = new Common::File();
-	if (!f->open(Common::Path("speech.info"))) {
-		delete f;
+	Common::SeekableReadStream *f = getAudioFile("speech.info");
+	if (!f)
 		return;
-	}
 
 	_audioEntriesMI.clear();
 
@@ -479,23 +521,16 @@ void SoundSE::initAudioMappingMI() {
 		//	  entry.localScriptOffset, entry.messageIndex, entry.isEgoTalking, entry.wait,
 		//	  entry.textEnglish.c_str(), entry.speechFile.c_str());
 
-		_audioNameToOriginalOffsetMap[entry.speechFile] = getAudioOffsetForMI(
-			entry.room,
-			entry.script,
-			entry.localScriptOffset,
-			entry.messageIndex
-		);
-
 		_audioEntriesMI.emplace_back(entry);
 	} while (!f->eos());
 
-	f->close();
 	delete f;
 }
 
-void SoundSE::initAudioMapping() {
-	ScummPAKFile *f = new ScummPAKFile(_vm);
-	_vm->openFile(*f, Common::Path("audiomapping.info"));
+void SoundSE::initAudioMappingDOTTAndFT() {
+	Common::SeekableReadStream *f = getAudioFile("audiomapping.info");
+	if (!f)
+		return;
 
 	do {
 		const uint32 origOffset = f->readUint32LE();
@@ -508,14 +543,99 @@ void SoundSE::initAudioMapping() {
 		if (_vm->_game.id == GID_FT)
 			f->skip(4); // unknown flag
 
-		_audioNameToOriginalOffsetMap[name] = origOffset;
+		_nameToOffsetDOTTAndFT[name] = origOffset;
 	} while (!f->eos());
 
-	f->close();
 	delete f;
 }
 
-Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadStream *stream, AudioEntry entry) {
+Common::String SoundSE::getAudioFilename(SoundSEType type) {
+	const bool isMonkey = _vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2;
+	const bool isTentacle = _vm->_game.id == GID_TENTACLE;
+	const bool isFT = _vm->_game.id == GID_FT;
+
+	switch (type) {
+	case kSoundSETypeMusic:
+	case kSoundSETypeCDAudio:
+		return isMonkey ? "MusicOriginal.xwb" : "iMUSEClient_Music.fsb";
+	case kSoundSETypeSpeech:
+		if (isMonkey)
+			return "Speech.xwb";
+		else if (isTentacle)
+			return "iMUSEClient_VO.fsb";
+		else if (isFT)
+			return "iMUSEClient_SPEECH.fsb";
+		else
+			error("getAudioFilename: unknown game type in SoundSEType %d", type);
+		break;
+	case kSoundSETypeSFX:
+		if (isMonkey)
+			return "SFXOriginal.xwb";
+		else if (isTentacle)
+			return "iMUSEClient_SFX.fsb";
+		else if (isFT)
+			return "iMUSEClient_SFX_INMEMORY.fsb";
+		else
+			error("getAudioFilename: unknown game type in SoundSEType %d", type);
+		break;
+	case kSoundSETypeAmbience:
+		return "Ambience.xwb";
+	case kSoundSETypeCommentary:
+		return isMonkey ? "commentary.xwb" : "iMUSEClient_Commentary.fsb";
+	case kSoundSETypePatch:
+		return "patch.xwb";
+	default:
+		error("getAudioFilename: unknown SoundSEType %d", type);
+		break;
+	}
+}
+
+Common::SeekableReadStream *SoundSE::getAudioFile(SoundSEType type) {
+	Common::String audioFileName = getAudioFilename(type);
+	return getAudioFile(audioFileName);
+}
+
+Common::SeekableReadStream *SoundSE::getAudioFile(const Common::String &filename) {
+	if (_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) {
+		Common::File *audioFile = new Common::File();
+		if (!audioFile->open(Common::Path(filename))) {
+			warning("getAudioFile: failed to open %s", filename.c_str());
+			delete audioFile;
+			return nullptr;
+		}
+		return audioFile;
+	} else {
+		ScummPAKFile *audioFile = new ScummPAKFile(_vm);
+		if (!_vm->openFile(*audioFile, Common::Path(filename))) {
+			warning("getAudioFile: failed to open %s", filename.c_str());
+			delete audioFile;
+			return nullptr;
+		}
+		return audioFile;
+	}
+}
+
+SoundSE::AudioIndex *SoundSE::getAudioEntries(SoundSEType type) {
+	switch (type) {
+	case kSoundSETypeMusic:
+	case kSoundSETypeCDAudio:
+		return &_musicEntries;
+	case kSoundSETypeSpeech:
+		return &_speechEntries;
+	case kSoundSETypeSFX:
+		return &_sfxEntries;
+	case kSoundSETypeAmbience:
+		return &_ambienceEntries;
+	case kSoundSETypeCommentary:
+		return &_commentaryEntries;
+	case kSoundSETypePatch:
+		return &_patchEntries;
+	default:
+		error("getAudioEntries: unknown SoundSEType %d", type);
+	}
+}
+
+Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadStream *stream, AudioEntry entry, DisposeAfterUse::Flag disposeAfterUse) {
 	switch (entry.codec) {
 	case kXWBCodecPCM: {
 		byte flags = Audio::FLAG_LITTLE_ENDIAN;
@@ -523,7 +643,7 @@ Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadSt
 			flags |= Audio::FLAG_16BITS;
 		if (entry.channels == 2)
 			flags |= Audio::FLAG_STEREO;
-		return Audio::makeRawStream(stream, entry.rate, flags, DisposeAfterUse::YES);
+		return Audio::makeRawStream(stream, entry.rate, flags, disposeAfterUse);
 	}
 	case kXWBCodecXMA:
 		// Unused in MI1SE and MI2SE
@@ -532,7 +652,7 @@ Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadSt
 		const uint32 blockAlign = (entry.align + 22) * entry.channels;
 		return Audio::makeADPCMStream(
 			stream,
-			DisposeAfterUse::YES,
+			disposeAfterUse,
 			entry.length,
 			Audio::kADPCMMS,
 			entry.rate,
@@ -557,7 +677,7 @@ Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadSt
 #ifdef USE_MAD
 		return Audio::makeMP3Stream(
 			stream,
-			DisposeAfterUse::YES
+			disposeAfterUse
 		);
 #else
 		warning("createSoundStream: MP3 codec is not built in");
@@ -572,37 +692,25 @@ Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadSt
 int32 SoundSE::getSoundIndexFromOffset(uint32 offset) {
 	if (_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) {
 		return offset;
-	} else if (_vm->_game.id == GID_TENTACLE) {
-		if (_offsetToIndex.contains(offset))
-			return _offsetToIndex[offset];
-		else
-			return -1;
+	} else if (_vm->_game.id == GID_TENTACLE || _vm->_game.id == GID_FT) {
+		return (_offsetToIndexDOTTAndFT.contains(offset)) ? (int32)_offsetToIndexDOTTAndFT[offset] : -1;
 	}
 
 	return -1;
 }
 
-SoundSE::AudioEntryMI *SoundSE::getAppropriateSpeechCue(const char *msgString, const char *speechFilenameSubstitution,
+int32 SoundSE::getAppropriateSpeechCue(const char *msgString, const char *speechFilenameSubstitution,
 											   uint16 roomNumber, uint16 actorTalking, uint16 scriptNum, uint16 scriptOffset, uint16 numWaits) {
-	uint32 hash;
+	uint32 hash = calculateStringHash(msgString);
+	uint32 tmpHash = hash;
 	AudioEntryMI *curAudioEntry;
 	uint16 script;
 	int32 currentScore;
-	int32 bestScore;
-	int bestScoreIdx;
-	uint32 tmpHash;
+	int32 bestScore = 0x40000000; // This is the score that we have to minimize...
+	int32 bestScoreIdx = -1;
 
-	hash = calculateStringHash(msgString);
-
-	tmpHash = hash;
-	if (!hash)
-		return nullptr;
-
-	bestScore = 0x40000000; // This is the score that we have to minimize...
-	bestScoreIdx = -1;
-
-	if (_audioEntriesMI.empty())
-		return nullptr;
+	if (!hash || _audioEntriesMI.empty())
+		return -1;
 
 	for (uint curEntryIdx = 0; curEntryIdx < _audioEntriesMI.size(); curEntryIdx++) {
 		curAudioEntry = &_audioEntriesMI[curEntryIdx];
@@ -635,66 +743,50 @@ SoundSE::AudioEntryMI *SoundSE::getAppropriateSpeechCue(const char *msgString, c
 			}
 			if (currentScore < bestScore) {
 				bestScore = currentScore;
-				bestScoreIdx = (int)curEntryIdx;
+				bestScoreIdx = (int32)curEntryIdx;
 			}
 		}
 
 		hash = tmpHash;
 	}
-	if (bestScoreIdx == -1)
-		return nullptr;
-	else
-		return &_audioEntriesMI[bestScoreIdx];
+
+	return bestScoreIdx;
 }
 
-Audio::AudioStream *SoundSE::getAudioStream(uint32 offset, SoundSEType type) {
-	Common::SeekableReadStream *stream;
-	Common::String audioFileName;
-	AudioIndex &audioEntries = _musicEntries;
-	int32 soundIndex = 0;
+Audio::SeekableAudioStream *SoundSE::getAudioStreamFromOffset(uint32 offset, SoundSEType type) {
+	int32 index = getSoundIndexFromOffset(offset);
 
-	switch (type) {
-	case kSoundSETypeMusic:
-		audioFileName = _musicFilename;
-		audioEntries = _musicEntries;
-		soundIndex = getSoundIndexFromOffset(offset);
-		break;
-	case kSoundSETypeSpeech:
-		audioFileName = _speechFilename;
-		audioEntries = _speechEntries;
-		soundIndex = getSoundIndexFromOffset(offset);
-		break;
-	case kSoundSETypeSFX:
-		audioFileName = _sfxFilename;
-		audioEntries = _sfxEntries;
-		soundIndex = getSoundIndexFromOffset(offset);
-		break;
-	}
-
-	if (soundIndex == -1) {
-		warning("getAudioStream: sound index not found for offset %d", offset);
+	if (index < 0) {
+		warning("getAudioStreamFromOffset: sound index not found for offset %d", offset);
 		return nullptr;
 	}
 
-	if (_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2) {
-		Common::File *audioFile = new Common::File();
-		stream = audioFile;
-		if (!audioFile->open(Common::Path(audioFileName))) {
-			delete audioFile;
-			return nullptr;
-		}
-	} else {
-		ScummPAKFile *audioFile = new ScummPAKFile(_vm);
-		stream = audioFile;
-		if (!_vm->openFile(*audioFile, Common::Path(audioFileName))) {
-			delete audioFile;
-			return nullptr;
-		}
+	return getAudioStreamFromIndex(index, type);
+}
+
+Audio::SeekableAudioStream *SoundSE::getAudioStreamFromIndex(int32 index, SoundSEType type) {
+	AudioIndex *audioIndex = getAudioEntries(type);
+	AudioEntry audioEntry = {};
+
+	if (index < 0 || index >= (int32)(*audioIndex).size())
+		return nullptr;
+
+	audioEntry = (*audioIndex)[index];
+
+	// Load patched audio files, if present
+	if (audioEntry.isPatched && _nameToIndexPatched.contains(audioEntry.name)) {
+		int32 patchedEntry = _nameToIndexPatched[audioEntry.name];
+		type = kSoundSETypePatch;
+		audioIndex = getAudioEntries(type);
+		audioEntry = (*audioIndex)[patchedEntry];
 	}
 
-	AudioEntry audioEntry = audioEntries[soundIndex];
+	Common::SeekableReadStream *f = getAudioFile(type);
+	if (!f)
+		return nullptr;
+
 	Common::SeekableSubReadStream *subStream = new Common::SeekableSubReadStream(
-		stream,
+		f,
 		audioEntry.offset,
 		audioEntry.offset + audioEntry.length,
 		DisposeAfterUse::YES
@@ -703,19 +795,13 @@ Audio::AudioStream *SoundSE::getAudioStream(uint32 offset, SoundSEType type) {
 	return createSoundStream(subStream, audioEntry);
 }
 
-uint32 SoundSE::getAudioOffsetForMI(int32 room, int32 script, int32 localScriptOffset, int32 messageIndex) {
-	return ((room + script + messageIndex) << 16) | (localScriptOffset & 0xFFFF);
-}
-
 Common::String calculateCurrentString(const char *msgString) {
-	char currentChar;
+	char currentChar = *msgString;
 	bool shouldContinue = true;
 	char messageBuffer[512];
 	char *outMsgBuffer = messageBuffer;
 
 	memset(messageBuffer, 0, sizeof(messageBuffer));
-
-	currentChar = *msgString;
 
 	// Handle empty string case
 	if (msgString[0] == '\0') {
@@ -793,16 +879,24 @@ Common::String calculateCurrentString(const char *msgString) {
 	return result;
 }
 
-int32 SoundSE::handleRemasteredSpeech(const char *msgString, const char *speechFilenameSubstitution,
-								     uint16 roomNumber, uint16 actorTalking, uint16 scriptNum, uint16 scriptOffset, uint16 numWaits) {
+int32 SoundSE::handleMISESpeech(const char *msgString, const char *speechFilenameSubstitution,
+								     uint16 roomNumber, uint16 actorTalking, uint16 numWaits) {
 
 	// Get the string without the various control codes and special characters...
 	Common::String currentString = calculateCurrentString(msgString);
-	AudioEntryMI *entry = getAppropriateSpeechCue(currentString.c_str(), speechFilenameSubstitution, roomNumber, actorTalking, scriptNum, scriptOffset, numWaits);
-	if (entry) {
-		debug("Selected entry: %s (%s)", entry->textEnglish.c_str(), entry->speechFile.c_str());
+	const int32 entryIndex = getAppropriateSpeechCue(
+		currentString.c_str(),
+		speechFilenameSubstitution,
+		roomNumber, actorTalking,
+		(uint16)_currentScriptSavedForSpeechMI,
+		(uint16)_currentScriptOffsetSavedForSpeechMI,
+		numWaits
+	);
 
-		return _nameToIndex[entry->speechFile];
+	if (entryIndex >= 0 && entryIndex < (int32)_audioEntriesMI.size()) {
+		const AudioEntryMI *entry = &_audioEntriesMI[entryIndex];
+		//debug("Selected entry: %s (%s)", entry->textEnglish.c_str(), entry->speechFile.c_str());
+		return _nameToIndex.contains(entry->speechFile) ? _nameToIndex[entry->speechFile] : -1;
 	}
 
 	return -1;

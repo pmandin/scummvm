@@ -254,7 +254,7 @@ void Room807::parser() {
 			case 10:
 				player_set_commands_allowed(false);
 				setGlobals3(_ripLowReachPos1Series, 1, 24);
-				subD7916(_G(my_walker), 20);
+				sendWSMessage_3840000(_G(my_walker), 20);
 
 				break;
 
@@ -269,7 +269,7 @@ void Room807::parser() {
 			case 40:
 				digi_play("807r14", 1, 255, -1, -1);
 				setGlobals3(_ripLowReachPos1Series, 24, 1);
-				subD7916(_G(my_walker), 50);
+				sendWSMessage_3840000(_G(my_walker), 50);
 
 				break;
 
@@ -379,9 +379,118 @@ void Room807::parser() {
 
 	case 2:
 		if (player_said("wooden post")) {
-			// TODO not implemented yet
+			switch (_G(kernel).trigger) {
+			case -1:
+				if (inv_object_in_scene("wooden post", 807)) {
+					player_set_commands_allowed(false);
+					ws_hide_walker(_G(my_walker));
+					player_update_info(_G(my_walker), &_G(player_info));
+					_safariShadowMach = series_place_sprite(*SAFARI_SHADOWS, 0, 476, 318, _G(player_info).scale, 257);
+					series_play("807rp06", 256, 2, 5, 5, 0, 100, 0, 0, 21, 39);
+					hotspot_set_active(_G(currentSceneDef).hotspots, "wooden post", false);
+				} else {
+					_G(player).command_ready = true;
+				}
+
+				break;
+
+			case 5:
+				if (_G(flags[V274]) == 0 && !inv_object_in_scene("wooden beam", 807)) {
+					inv_give_to_player("wooden post");
+					kernel_examine_inventory_object("PING WOODEN POST", _G(master_palette), 5, 1, 400, 245, 13, nullptr, -1);
+					terminateMachine(_807BeamMach);
+					series_play("807rp06", 256, 2, 10, 5, 0, 100, 0, 0, 0, 20);
+					_G(flags[V274]) = 1;
+				} else {
+					inv_give_to_player("wooden post");
+					kernel_examine_inventory_object("PING WOODEN POST", _G(master_palette), 5, 1, 400, 245, -1, nullptr, -1);
+					terminateMachine(_807BeamMach);
+					series_play("807rp06", 256, 2, 20, 5, 0, 100, 0, 0, 0, 20);
+				}
+
+				break;
+
+			case 10:
+				ws_unhide_walker(_G(my_walker));
+				ws_demand_facing(_G(my_walker), 11);
+				terminateMachine(_safariShadowMach);
+
+				break;
+
+			case 13:
+				terminateMachine(_807Crnk2Mach);
+				terminateMachine(_807DoorMach);
+				series_play("807close", 4095, 0, 15, 0, 0, 100, 0, 0, 0, -1);
+				digi_play("807_s04", 2, 255, -1, -1);
+
+				break;
+
+			case 15:
+				digi_play("807_s04a", 2, 255, -1, -1);
+				player_set_commands_allowed(true);
+				_807DoorMach = series_show("807door", 4095, 0, -1, -1, 0, 100, 0, 0);
+				_807Crnk2Mach = series_show("807crnk2", 4095, 0, -1, -1, 9, 100, 0, 0);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "stone block", true);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "corridor", false);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "chariot ", false);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "north", false);
+
+				break;
+
+			case 20:
+				player_set_commands_allowed(true);
+				ws_unhide_walker(_G(my_walker));
+				ws_demand_facing(_G(my_walker), 11);
+				terminateMachine(_safariShadowMach);
+
+				break;
+
+			default:
+				break;
+			}
 		} else if (player_said("crank")) {
-			// TODO not implemented yet
+			switch (_G(kernel).trigger) {
+			case -1:
+				if (inv_object_in_scene("crank", 807)) {
+					if (inv_object_in_scene("wooden post", 807) && _G(flags[V274]) == 0) {
+						digi_play("807r23", 1, 255, -1, -1);
+					} else {
+						player_set_commands_allowed(false);
+						ws_hide_walker(_G(my_walker));
+						terminateMachine(_807Crnk2Mach);
+						_807Crnk2Mach = series_play("807rp04", 256, 16, 10, 5, 0, 100, 0, 0, 0, -1);
+						player_update_info(_G(my_walker), &_G(player_info));
+						_safariShadowMach = series_place_sprite(*SAFARI_SHADOWS, 0, 476, 318, _G(player_info).scale, 257);
+					}
+				} else {
+					_G(player).command_ready = true;
+				}
+
+				break;
+
+			case 10:
+				inv_give_to_player("CRANK");
+				kernel_examine_inventory_object("PING CRANK", _G(master_palette), 5, 1, 400, 245, 20, nullptr, -1);
+
+				break;
+
+			case 20:
+				terminateMachine(_807Crnk2Mach);
+				_807Crnk2Mach = series_play("807rp04", 256, 2, 30, 5, 0, 100, 0, 0, 0, -1);
+
+				break;
+
+			case 30:
+				player_set_commands_allowed(true);
+				terminateMachine(_safariShadowMach);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "slot", true);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "crank", false);
+				ws_unhide_walker(_G(my_walker));
+				ws_demand_facing(_G(my_walker), 11);
+
+			default:
+				break;
+			}
 		} else if (player_said("wooden beam")) {
 			switch (_G(kernel).trigger) {
 			case -1:
@@ -389,7 +498,7 @@ void Room807::parser() {
 					if (inv_object_in_scene("wooden post", 807)) {
 						player_set_commands_allowed(false);
 						setGlobals3(_ripTrekHiReach2HndSeries, 1, 13);
-						subD7916(_G(my_walker), 10);
+						sendWSMessage_3840000(_G(my_walker), 10);
 					} else {
 						digi_play("807r26", 1, 255, -1, -1);
 					}
@@ -408,7 +517,7 @@ void Room807::parser() {
 			case 15:
 				terminateMachine(_807PostMach);
 				setGlobals3(_ripTrekHiReach2HndSeries, 13, 1);
-				subD7916(_G(my_walker), 20);
+				sendWSMessage_3840000(_G(my_walker), 20);
 
 				break;
 
@@ -431,13 +540,379 @@ void Room807::parser() {
 		break;
 
 	case 3:
+		if (_G(flags[V274]) == 0 && !inv_object_in_scene("wooden post", 807) && !inv_object_in_scene("wooden beam", 807)) {
+			_field34 = 1;
+			conv_load("conv807a", 10, 10, 747);
+			conv_play(conv_get_handle());
+		} else {
+			switch (_G(kernel).trigger) {
+			case -1:
+				player_set_commands_allowed(false);
+				setGlobals1(_ripTalkerPos5Series, 1, 4, 1, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				sendWSMessage_110000(_G(my_walker), -1);
+
+				switch (imath_ranged_rand(1, 4)) {
+				case 1:
+					digi_play("com034", 1, 255, 10, 997);
+					break;
+
+				case 2:
+					digi_play("com035", 1, 255, 10, 997);
+					break;
+
+				case 3:
+					digi_play("com036", 1, 255, 10, 997);
+					break;
+
+				case 4:
+				default:
+					digi_play("com037", 1, 255, 10, 997);
+					break;
+				}
+
+				break;
+
+			case 10:
+				player_set_commands_allowed(true);
+				sendWSMessage_150000(_G(my_walker), -1);
+				switch (imath_ranged_rand(1, 4)) {
+				case 1:
+					digi_play("com038", 1, 255, -1, 997);
+					break;
+
+				case 2:
+					digi_play("com039", 1, 255, -1, 997);
+					break;
+
+				case 3:
+					digi_play("com040", 1, 255, -1, 997);
+					break;
+
+				case 4:
+				default:
+					digi_play("com041", 1, 255, -1, 997);
+					break;
+
+				}
+
+				break;
+
+			default:
+				break;
+			}
+		}
+
+		break;
 	case 4:
+		// No implementation
+		break;
+
 	case 5:
+		if (player_said("north")) {
+			switch (_G(kernel).trigger) {
+			case -1:
+				ws_walk(_G(my_walker), 325, 275, nullptr, 10, 2, false);
+				break;
+
+			case 10:
+				player_set_commands_allowed(false);
+				ws_walk(_G(my_walker), 305, 190, nullptr, -1, 2, true);
+				if (_G(flags[V276]) == 0) {
+					ws_walk(_mcTrekMach, 305, 190, nullptr, -1, -1, true);
+				}
+
+				disable_player_commands_and_fade_init(20);
+
+				break;
+
+			case 20:
+				_G(game).new_room = 808;
+				adv_kill_digi_between_rooms(false);
+				digi_preload("950_s29", -1);
+				digi_play_loop("950_s29", 3, 255, -1, -1);
+
+				break;
+
+			default:
+				break;
+			}
+		} else {
+			switch (_G(kernel).trigger) {
+			case -1: {
+				player_update_info(_G(my_walker), &_G(player_info));
+				const int32 destX = CLIP(_G(player_info).x, (int32)247, (int32)400);
+				const int32 destY = MAX(_G(player_info).y, (int32)342);
+
+				if (_G(flags[V276]) == 0 && _G(flags[V275]) == 0) {
+					_G(flags[V275]) = 1;
+					ws_walk(_G(my_walker), destX, destY, nullptr, 10, -1, true);
+				} else {
+					ws_walk(_G(my_walker), destX, destY, nullptr, 35, -1, false);
+				}
+
+				}
+				break;
+
+			case 10:
+				player_set_commands_allowed(false);
+				digi_play("807m10", 1, 255, 20, -1);
+				ws_turn_to_face(_G(my_walker), 5, -1);
+
+				break;
+
+			case 20:
+				digi_play_loop("807r25", 1, 255, 30, -1);
+				setGlobals1(_ripTalkerPos5Series, 1, 4, 1, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				sendWSMessage_110000(_G(my_walker), -1);
+
+				break;
+
+			case 30:
+				sendWSMessage_150000(_G(my_walker), -1);
+				ws_walk(_mcTrekMach, 320, 560, nullptr, -1, -1, true);
+				ws_walk(_G(my_walker), 320, 560, nullptr, -1, -1, true);
+				disable_player_commands_and_fade_init(40);
+
+				break;
+
+			case 35:
+				if (_G(flags[V276]) == 0) {
+					ws_walk(_mcTrekMach, 320, 560, nullptr, -1, -1, true);
+				}
+
+				ws_walk(_G(my_walker), 320, 560, nullptr, -1, -1, true);
+				disable_player_commands_and_fade_init(40);
+
+				break;
+
+			case 40:
+				_G(game).new_room = 806;
+				adv_kill_digi_between_rooms(false);
+				digi_preload("950_s29", -1);
+				digi_play_loop("950_s29", 2, 255, -1, -1);
+
+				break;
+
+			default:
+				break;
+			}
+		}
+
+		break;
+
 	case 6:
+		if (player_said("stone block")) {
+			digi_play("807r22", 1, 255, -1, -1);
+		} else if (player_said("corridor")) {
+			switch (_G(kernel).trigger) {
+			case -1:
+				player_set_commands_allowed(false);
+				inv_move_object("wooden beam", 807);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "wooden beam", true);
+				ws_hide_walker(_G(my_walker));
+				series_play("807rp02", 4095, 0, 5, 5, 0, 100, 0, 0, 0, 24);
+
+				break;
+
+			case 5:
+				series_play("807rp02", 4095, 0, 10, 5, 0, 100, 0, 0, 25, -1);
+				digi_play("807_s06", 2, 255, -1, -1);
+
+				break;
+
+			case 10:
+				player_set_commands_allowed(true);
+				ws_unhide_walker(_G(my_walker));
+				ws_demand_facing(_G(my_walker), 11);
+				_807PostMach = series_show("807post", 4095, 0, -1, -1, 0, 100, 0, 0);
+
+				break;
+
+			default:
+				break;
+
+			}
+		} else if (player_said("mei chen")) {
+			digi_play("com017", 1, 255, -1, 997);
+		} else
+			_G(player).command_ready = true;
+
+		break;
+
 	case 7:
+		if ((player_said("crank") && inv_object_in_scene("crank", 807)) || player_said("slot")) {
+			switch (_G(kernel).trigger) {
+			case -1:
+				player_set_commands_allowed(false);
+				inv_move_object("wooden post", 807);
+				_field38 = 0;
+				hotspot_set_active(_G(currentSceneDef).hotspots, "wooden post", true);
+				if (_G(flags[V274]) == 0 && !inv_object_in_scene("wooden beam", 807)) {
+					terminateMachine(_807Crnk2Mach);
+					_807Crnk2Mach = series_show("807crnk2", 4095, 0, -1, -1, 9, 100, 0, 0);
+					series_load("807rp06", -1, nullptr);
+					series_play("807rp04", 256, 2, 10, 5, 0, 100, 0, 0, 0, -1);
+				} else {
+					ws_hide_walker(_G(my_walker));
+					series_play("807rp06", 256, 0, 15, 5, 0, 100, 0, 0, 0, 20);
+					player_update_info(_G(my_walker), &_G(player_info));
+					_safariShadowMach = series_place_sprite(*SAFARI_SHADOWS, 0, 476, 318, _G(player_info).scale, 257);
+				}
+
+				break;
+
+			case 10:
+				series_play("807rp06", 256, 0, 15, 5, 0, 100, 0, 0, 0, 20);
+				break;
+
+			case 15:
+				series_play("807rp06", 256, 0, 20, 5, 0, 100, 0, 0, 21, 30);
+				digi_play("807_s05", 2, 255, -1, -1);
+				_807BeamMach = series_show("807beam", 4095, 0, -1, -1, 0, 100, 0, 0);
+
+				break;
+
+			case 20:
+				player_set_commands_allowed(true);
+				ws_unhide_walker(_G(my_walker));
+				ws_demand_facing(_G(my_walker), 11);
+				terminateMachine(_safariShadowMach);
+
+				break;
+
+			default:
+				break;
+			}
+		} else if (player_said("mei chen")) {
+			digi_play("com017", 1, 255, -1, 997);
+		} else
+			_G(player).command_ready = true;
+
+		break;
+
 	case 8:
+		if (player_said("slot")) {
+			switch (_G(kernel).trigger) {
+			case -1:
+				ws_walk(_G(my_walker), 476, 318, 0, 10, 11, true);
+				break;
+
+			case 10:
+				player_set_commands_allowed(false);
+				ws_hide_walker(_G(my_walker));
+				_807Crnk2Mach = series_play("807rp04", 256, 16, 20, 5, 0, 100, 0, 0, 0, -1);
+				player_update_info(_G(my_walker), &_G(player_info));
+				_safariShadowMach = series_place_sprite(*SAFARI_SHADOWS, 0, 476, 318, _G(player_info).scale, 257);
+				inv_move_object("CRANK", 807);
+
+				hotspot_set_active(_G(currentSceneDef).hotspots, "slot", false);
+				hotspot_set_active(_G(currentSceneDef).hotspots, "crank", true);
+
+				break;
+
+			case 20:
+				kernel_timing_trigger(20, 30, "rip places crank");
+				digi_play("807_s02", 2, 255, -1, -1);
+
+				break;
+
+			case 30:
+				terminateMachine(_807Crnk2Mach);
+				_807Crnk2Mach = series_play("807rp04", 256, 2, 40, 5, 0, 100, 0, 0, 0, -1);
+
+				break;
+
+			case 40:
+				player_set_commands_allowed(true);
+				terminateMachine(_safariShadowMach);
+				_807Crnk2Mach = series_show("807crnk2", 4095, 0, -1, -1, 9, 100, 0, 0);
+				ws_unhide_walker(_G(my_walker));
+				ws_demand_facing(_G(my_walker), 11);
+
+				break;
+
+			default:
+				break;
+			}
+		} else if (player_said("mei chen")) {
+			digi_play("807r24", 1, 255, -1, -1);
+		} else
+			_G(player).command_ready = true;
+
+		break;
+
 	case 9:
+		digi_play("com042", 1, 255, -1, 997);
+		break;
+
 	case 10:
+		switch (_G(kernel).trigger) {
+		case -1: {
+			const char *conv = conv_sound_to_play();
+			if (conv)
+				digi_play(conv, 1, 255, 10, -1);
+			else
+				conv_resume(conv_get_handle());
+
+			}
+
+			break;
+
+		case 10:
+			if (conv_current_node() != 0) {
+				conv_resume(conv_get_handle());
+			} else {
+				if (conv_current_entry() != 0) {
+					conv_resume(conv_get_handle());
+				} else if (conv_whos_talking() == 1) {
+					ws_walk(_mcTrekMach, 476, 318, nullptr, 20, 11, true);
+				}
+			}
+
+			break;
+
+		case 20:
+			ws_hide_walker(_mcTrekMach);
+			_807Mc01Mach = series_play("807mc01", 0, 16, -1, 5, 0, 100, 0, 0, 0, 5);
+			terminateMachine(_807Crnk2Mach);
+			series_play("807rp04", 256, 2, 25, 5, 0, 100, 0, 0, 0, -1);
+
+			break;
+
+		case 25:
+			terminateMachine(_safariShadowMach);
+			ws_unhide_walker(_G(my_walker));
+			ws_walk(_G(my_walker), 320, 294, nullptr, 30, 1, true);
+			terminateMachine(_807Mc01Mach);
+			_807Mc01Mach = series_play("807mc01", 0, 16, 27, 5, 0, 100, 0, 0, 6, 10);
+
+			break;
+
+		case 27:
+			terminateMachine(_807Mc01Mach);
+			_807Mc01Mach = series_play("807mc01", 0, 16, -1, 5, 0, 100, 0, 0, 11, 21);
+			conv_resume(conv_get_handle());
+
+			break;
+
+		case 30:
+			terminateMachine(_807Mc01Mach);
+			_807Mc01Mach = series_play("807mc01", 0, 16, -1, 5, 0, 100, 0, 0, 22, 41);
+			ws_hide_walker(_807Mc01Mach);
+			_G(kernel).trigger_mode = KT_DAEMON;
+			series_play("807rp03", 4095, 16, 11, 5, 0, 100, 0, 0, 0, -1);
+			_G(kernel).trigger_mode = KT_PARSE;
+			digi_play("807_s04", 2, 255, -1, -1);
+			conv_resume(conv_get_handle());
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
 	default:
 		if (player_said("mei chen"))
 			digi_play("com017", 1, 255, -1, 997);
@@ -446,8 +921,6 @@ void Room807::parser() {
 
 		break;
 	}
-
-	// TODO Not yet implemented
 }
 
 void Room807::daemon() {
@@ -650,7 +1123,7 @@ void Room807::daemon() {
 		}
 
 		setGlobals3(_mctd82aSeries, 1, 22);
-		subD7916(_mcTrekMach, 18);
+		sendWSMessage_3840000(_mcTrekMach, 18);
 		switch (_807newFacing) {
 		case 3:
 		case 9:
@@ -662,7 +1135,7 @@ void Room807::daemon() {
 			break;
 		}
 
-		subD7916(_G(my_walker), 17);
+		sendWSMessage_3840000(_G(my_walker), 17);
 
 		break;
 
@@ -706,13 +1179,13 @@ void Room807::daemon() {
 			break;
 		}
 
-		subD7916(_G(my_walker), 21);
+		sendWSMessage_3840000(_G(my_walker), 21);
 
 		break;
 
 	case 20:
 		setGlobals3(_mctd82aSeries, 22, 1);
-		subD7916(_mcTrekMach, 21);
+		sendWSMessage_3840000(_mcTrekMach, 21);
 
 		break;
 

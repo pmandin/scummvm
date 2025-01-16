@@ -502,7 +502,7 @@ bool Scene::runOps(const Common::Array<SceneOp> ops, int16 addMinuites /* = 0 */
 	// need to stop as pointers are no longer valid.
 	//
 	int16 endSceneNum = engine->getScene()->getNum();
-	return startSceneNum == endSceneNum;
+	return (startSceneNum == endSceneNum) && !sceneChanged;
 }
 
 
@@ -510,7 +510,7 @@ bool SDSScene::_dlgWithFlagLo8IsClosing = false;
 DialogFlags SDSScene::_sceneDialogFlags = kDlgFlagNone;
 
 SDSScene::SDSScene() : _num(-1), _dragItem(nullptr), _shouldClearDlg(false), _ignoreMouseUp(false),
-_field6_0x14(0), _rbuttonDown(false), _lbuttonDown(false), _isLookMode(false) {
+_field6_0x14(0), _rbuttonDown(false), _lbuttonDown(false), _lookMode(0) {
 }
 
 bool SDSScene::load(const Common::String &filename, ResourceManager *resourceManager, Decompressor *decompressor) {
@@ -578,6 +578,7 @@ bool SDSScene::parse(Common::SeekableReadStream *stream) {
 
 void SDSScene::unload() {
 	_num = 0;
+	_lookMode = 0;
 	_enterSceneOps.clear();
 	_leaveSceneOps.clear();
 	_preTickOps.clear();
@@ -591,7 +592,7 @@ void SDSScene::unload() {
 	_triggers.clear();
 	_talkData.clear();
 	_dynamicRects.clear();
-	_conversation.unload();
+	_conversation.unloadData();
 	_conditionalOps.clear();
 	_sceneDialogFlags = kDlgFlagNone;
 }
@@ -855,13 +856,16 @@ bool SDSScene::loadTalkData(uint16 num) {
 }
 
 
-void SDSScene::freeTalkData(uint16 num) {
+bool SDSScene::freeTalkData(uint16 num) {
+	bool result = false;
 	for (int i = 0; i < (int)_talkData.size(); i++) {
 		if (_talkData[i]._num == num) {
 			_talkData.remove_at(i);
 			i--;
+			result = true;
 		}
 	}
+	return result;
 }
 
 void SDSScene::updateVisibleTalkers() {
@@ -874,7 +878,10 @@ void SDSScene::drawVisibleHeads(Graphics::ManagedSurface *dst) {
 	for (const auto &tds : _talkData) {
 		tds.drawVisibleHeads(dst);
 	}
-	_conversation.runScript();
+
+	if (_conversation.isForDlg(getVisibleDialog())) {
+		_conversation.runScript();
+	}
 }
 
 bool SDSScene::hasVisibleHead() const {
@@ -886,8 +893,10 @@ bool SDSScene::hasVisibleHead() const {
 }
 
 
-void SDSScene::loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum) {
+bool SDSScene::loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum) {
 	updateVisibleTalkers();
+
+	_conversation._drawRect = DgdsRect();
 	if (loadTalkData(talknum)) {
 		for (auto &data : _talkData) {
 			if (data._num != talknum)
@@ -904,7 +913,9 @@ void SDSScene::loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum) {
 			}
 			break;
 		}
+		return true;
 	}
+	return false;
 }
 
 
@@ -963,11 +974,12 @@ void SDSScene::showDialog(uint16 fileNum, uint16 dlgNum) {
 			dialog.setFlag(kDlgFlagOpening);
 
 			// For beamish
+			bool haveHeadData = false;
 			if (dialog._talkDataHeadNum) {
-				loadTalkDataAndSetFlags(dialog._talkDataNum, dialog._talkDataHeadNum);
+				haveHeadData = loadTalkDataAndSetFlags(dialog._talkDataNum, dialog._talkDataHeadNum);
 			}
 
-			_conversation.loadData(fileNum, dlgNum, -1);
+			_conversation.loadData(fileNum, dlgNum, -1, haveHeadData);
 
 			// hide time gets set the first time it's drawn.
 			if (_dlgWithFlagLo8IsClosing && dialog.hasFlag(kDlgFlagLo8)) {
@@ -1007,6 +1019,13 @@ bool SDSScene::checkDialogActive() {
 		if ((dlg._state->_hideTime == 0) && dlg._action.size() < 2)
 			no_options = true;
 
+		// If voice acting in Willy Beamish is finished, clear the dialog
+		// unless we are waiting for a choice.
+		if (dlg._action.size() < 2 && (_conversation.isForDlg(&dlg) && _conversation.isFinished())) {
+			finished = true;
+			_conversation.clear();
+		}
+
 		if ((!finished && !no_options) || dlg.hasFlag(kDlgFlagHi20) || dlg.hasFlag(kDlgFlagHi40)) {
 			if (!finished && dlg._action.size() > 1 && !dlg.hasFlag(kDlgFlagHiFinished)) {
 				DialogAction *action = dlg.pickAction(false, clearDlgFlag);
@@ -1021,19 +1040,18 @@ bool SDSScene::checkDialogActive() {
 			_dlgWithFlagLo8IsClosing = dlg.hasFlag(kDlgFlagLo8);
 
 			// For Willy Beamish
+			bool haveHeadData = false;
 			if (dlg._talkDataNum) {
-				freeTalkData(dlg._talkDataNum);
+				haveHeadData = freeTalkData(dlg._talkDataNum);
 			}
 
 			DialogAction *action = dlg.pickAction(true, clearDlgFlag);
 			if (action || dlg._action.empty()) {
 				dlg.setFlag(kDlgFlagHiFinished);
 				if (action) {
-					// TODO: We can load selected item voice acting here, but it generally
-					// immediately starts another dialog or changes scene, so the sound
-					// doesn't end up playing.
-					// Need to work out how to correctly delay until the sound finishes?
-					_conversation.loadData(dlg._fileNum, dlg._num, action->num);
+					// Play the response voice acting script.
+					_conversation.loadData(dlg._fileNum, dlg._num, action->num, haveHeadData);
+					_conversation.runScript();
 
 					// Take a copy of the dialog because the actions might change the scene
 					Dialog dlgCopy = dlg;
@@ -1060,8 +1078,8 @@ bool SDSScene::checkDialogActive() {
 				dlg.setFlag(kDlgFlagHiFinished);
 				showDialog(dlg._nextDialogFileNum, dlg._nextDialogDlgNum);
 			} else {
-				// No next dialog clear CDS data
-				_conversation.unload();
+				// No next dialog .. clear CDS data?
+				//_conversation.unloadData();
 			}
 		}
 		if (dlg.hasFlag(kDlgFlagVisible)) {
@@ -1178,11 +1196,17 @@ void SDSScene::mouseMoved(const Common::Point &pt) {
 	const HotArea *area = findAreaUnderMouse(pt);
 	DgdsEngine *engine = DgdsEngine::getInstance();
 
-	int16 cursorNum = _isLookMode ? kDgdsMouseLook : kDgdsMouseGameDefault;
+	int16 cursorNum = kDgdsMouseGameDefault;
 	if (!dlg) {
+		// Update mouse cursor if no dialog visible.
+		// If lookMode is target (2) then activeItem will change it below.
+		if (_lookMode)
+			cursorNum = kDgdsMouseLook;
 		if (area)
-			cursorNum = _isLookMode ? area->_cursorNum2 : area->_cursorNum;
+			cursorNum = _lookMode ? area->_cursorNum2 : area->_cursorNum;
 	}
+
+	GameItem *activeItem = engine->getGDSScene()->getActiveItem();
 
 	if (_dragItem) {
 		if (area && area->_objInteractionRectNum == 1) {
@@ -1192,9 +1216,10 @@ void SDSScene::mouseMoved(const Common::Point &pt) {
 		}
 
 		cursorNum = _dragItem->_iconNum;
-	} else if (_rbuttonDown) {
-		GameItem *activeItem = engine->getGDSScene()->getActiveItem();
-		if (activeItem)
+	} else if (activeItem) {
+		// In HOC or Dragon you need to hold down right button to get the
+		// target cursor.  In Willy Beamish it is look mode 2 (target)
+		if (_rbuttonDown || _lookMode == 2)
 			cursorNum = activeItem->_altCursor;
 	}
 
@@ -1209,6 +1234,12 @@ void SDSScene::mouseLDown(const Common::Point &pt) {
 		_ignoreMouseUp = true;
 		return;
 	}
+
+	_ignoreMouseUp = false;
+
+	// Don't start drag in look/target mode.
+	if (_lookMode)
+		return;
 
 	HotArea *area = findAreaUnderMouse(pt);
 	if (!area)
@@ -1245,6 +1276,7 @@ static const ObjectInteraction *_findInteraction(const Common::Array<ObjectInter
 
 void SDSScene::mouseLUp(const Common::Point &pt) {
 	_lbuttonDown = false;
+	DgdsEngine *engine = DgdsEngine::getInstance();
 
 	if (_ignoreMouseUp) {
 		debug(9, "Ignoring mouseup at %d,%d as it was used to clear a dialog", pt.x, pt.y);
@@ -1257,7 +1289,7 @@ void SDSScene::mouseLUp(const Common::Point &pt) {
 		return;
 	}
 
-	if (_isLookMode) {
+	if (_lookMode == 1) {
 		rightButtonAction(pt);
 		return;
 	}
@@ -1269,7 +1301,6 @@ void SDSScene::mouseLUp(const Common::Point &pt) {
 	debug(9, "Mouse LUp on area %d (%d,%d,%d,%d) cursor %d cursor2 %d", area->_num, area->_rect.x, area->_rect.y,
 		  area->_rect.width, area->_rect.height, area->_cursorNum, area->_cursorNum2);
 
-	DgdsEngine *engine = DgdsEngine::getInstance();
 	if (!_rbuttonDown)
 		engine->setMouseCursor(area->_cursorNum);
 
@@ -1289,26 +1320,24 @@ void SDSScene::mouseLUp(const Common::Point &pt) {
 		if (haveInvBtn)
 			addInvButtonToHotAreaList();
 	} else {
-		if (_rbuttonDown) {
+		const GameItem *activeItem = engine->getGDSScene()->getActiveItem();
+		if (activeItem && (_rbuttonDown || _lookMode == 2)) {
 			debug(1, " --> exec both-button click ops for area %d", area->_num);
 			// A both-button-click event, find the interaction list.
-			const GameItem *activeItem = engine->getGDSScene()->getActiveItem();
-			if (activeItem) {
-				if (!runOps(activeItem->onBothButtonsOps))
-					return;
+			if (!runOps(activeItem->onBothButtonsOps))
+				return;
 
-				const GameItem *destItem = dynamic_cast<const GameItem *>(area);
-				const ObjectInteraction *i;
-				if (destItem) {
-					i =_findInteraction(gds->getObjInteractions2(), activeItem->_num, area->_num);
-				} else {
-					i = _findInteraction(_objInteractions2, activeItem->_num, area->_num);
-				}
-				if (i) {
-					debug(1, " --> exec %d both-click ops for item combo %d", i->opList.size(), activeItem->_num);
-					if (!runOps(i->opList, engine->getGameGlobals()->getGameMinsToAddOnObjInteraction()))
-						return;
-				}
+			const GameItem *destItem = dynamic_cast<const GameItem *>(area);
+			const ObjectInteraction *i;
+			if (destItem) {
+				i =_findInteraction(gds->getObjInteractions2(), activeItem->_num, area->_num);
+			} else {
+				i = _findInteraction(_objInteractions2, activeItem->_num, area->_num);
+			}
+			if (i) {
+				debug(1, " --> exec %d both-click ops for item combo %d", i->opList.size(), activeItem->_num);
+				if (!runOps(i->opList, engine->getGameGlobals()->getGameMinsToAddOnObjInteraction()))
+					return;
 			}
 		} else {
 			debug(1, " --> exec %d click ops for area %d", area->onLClickOps.size(), area->_num);
@@ -1330,9 +1359,12 @@ void SDSScene::onDragFinish(const Common::Point &pt) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	Globals *globals = engine->getGameGlobals();
 	GDSScene *gdsScene = engine->getGDSScene();
+	int16 dropSceneNum = _num;
 
 	if (engine->getGameId() == GID_WILLY) {
 		static_cast<WillyGlobals *>(globals)->setDroppedItemNum(dragItem->_num);
+		if (engine->getInventory()->isOpen())
+			dropSceneNum = 2;
 	}
 
 	runOps(dragItem->onDragFinishedOps, globals->getGameMinsToAddOnDragFinished());
@@ -1340,7 +1372,7 @@ void SDSScene::onDragFinish(const Common::Point &pt) {
 	// TODO: Both these loops are very similar.. there should be a cleaner way.
 
 	for (const auto &item : gdsScene->getGameItems()) {
-		if (item._inSceneNum == _num && _isInRect(pt, item._rect)) {
+		if (item._inSceneNum == dropSceneNum && _isInRect(pt, item._rect)) {
 			debug(1, "Dragged item %d onto item %d @ (%d, %d)", dragItem->_num, item._num, pt.x, pt.y);
 			const ObjectInteraction *i = _findInteraction(gdsScene->getObjInteractions1(), dragItem->_num, item._num);
 			if (i) {
@@ -1409,9 +1441,16 @@ void SDSScene::mouseRUp(const Common::Point &pt) {
 		return;
 	}
 
-	if (DgdsEngine::getInstance()->getGameId() == GID_WILLY) {
-		// Willy toggles between look/act mode on right click
-		_isLookMode = !_isLookMode;
+	DgdsEngine *engine = DgdsEngine::getInstance();
+	if (engine->getGameId() == GID_WILLY) {
+		// Willy toggles between look/act/target mode on right click
+		if (engine->getGDSScene()->getActiveItem()) {
+			_lookMode++;
+			if (_lookMode > 2)
+				_lookMode = 0;
+		} else {
+			_lookMode = !_lookMode;
+		}
 		mouseMoved(pt);
 	} else {
 		// Other games do right-button action straight away.

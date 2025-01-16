@@ -132,6 +132,8 @@ LBPage::~LBPage() {
 }
 
 MohawkEngine_LivingBooks::MohawkEngine_LivingBooks(OSystem *syst, const MohawkGameDescription *gamedesc) : MohawkEngine(syst, gamedesc) {
+	DebugMan.addDebugChannel(kDebugCode, "Code", "Track Script Execution");
+
 	_needsUpdate = false;
 	_needsRedraw = false;
 	_screenWidth = _screenHeight = 0;
@@ -3215,7 +3217,11 @@ void LBGroupItem::readData(uint16 type, uint16 size, Common::MemoryReadStreamEnd
 			// TODO: is type important for any game? at the moment, we ignore it
 			entry.entryType = stream->readUint16();
 			entry.entryId = stream->readUint16();
-			_groupEntries.push_back(entry);
+			// HACK: The Living Books v3 sampler includes the ID for the group as
+			// one of the entries in the Green Eggs and Ham section, which leads
+			// to infinite recursion when the group is loaded.
+			if (entry.entryId != getId())
+				_groupEntries.push_back(entry);
 			debug(3, "group entry: id %d, type %d", entry.entryId, entry.entryType);
 		}
 		}

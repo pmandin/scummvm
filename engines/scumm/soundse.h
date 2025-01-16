@@ -40,13 +40,51 @@ class ScummEngine;
 
 enum SoundSEType {
 	kSoundSETypeMusic,
+	kSoundSETypeCDAudio,
 	kSoundSETypeSpeech,
-	kSoundSETypeSFX
+	kSoundSETypeSFX,
+	kSoundSETypeAmbience,
+	kSoundSETypeCommentary,
+	kSoundSETypePatch
 };
 
 class SoundSE {
 
-protected:
+public:
+	SoundSE(ScummEngine *parent, Audio::Mixer *mixer);
+	~SoundSE() = default;
+
+	Audio::SeekableAudioStream *getAudioStreamFromIndex(int32 index, SoundSEType type);
+	Audio::SeekableAudioStream *getAudioStreamFromOffset(uint32 offset, SoundSEType type);
+
+	int32 handleMISESpeech(const char *msgString,
+								const char *speechFilenameSubstitution,
+								uint16 roomNumber,
+								uint16 actorTalking,
+								uint16 numWaits);
+
+	void setupMISEAudioParams(int32 scriptNum, int32 scriptOffset) {
+		_currentScriptSavedForSpeechMI = scriptNum;
+		_currentScriptOffsetSavedForSpeechMI = scriptOffset;
+	}
+
+private:
+	enum AudioCodec {
+		kXWBCodecPCM = 0,
+		kXWBCodecXMA = 1,
+		kXWBCodecADPCM = 2,
+		kXWBCodecWMA = 3,
+		kFSBCodecMP3 = 4
+	};
+
+	enum XWBSegmentType {
+		kXWBSegmentBankData = 0,
+		kXWBSegmentEntryMetaData = 1,
+		kXWBSegmentSeekTables = 2,
+		kXWBSegmentEntryNames = 3,
+		kXWBSegmentEntryWaveData = 4
+	};
+
 	// Used in MI1 + MI2
 	struct AudioEntryMI {
 		uint32 hash;
@@ -66,50 +104,6 @@ protected:
 		int32 hashFourCharString; // Hash calculated on a four char string, from disasm
 	};
 
-	ScummEngine *_vm;
-	Audio::Mixer *_mixer;
-
-public:
-	SoundSE(ScummEngine *parent, Audio::Mixer *mixer);
-	~SoundSE() = default;
-
-	Audio::SeekableAudioStream *getXWBTrack(int track);
-	Audio::AudioStream *getAudioStream(uint32 offset, SoundSEType type);
-	uint32 getAudioOffsetForMI(int32 room, int32 script, int32 localScriptOffset, int32 messageIndex);
-
-	int32 handleRemasteredSpeech(const char *msgString,
-								const char *speechFilenameSubstitution,
-								uint16 roomNumber,
-								uint16 actorTalking,
-								uint16 scriptNum,
-								uint16 scriptOffset,
-								uint16 numWaits);
-
-	AudioEntryMI *getAppropriateSpeechCue(const char *msgString,
-										  const char *speechFilenameSubstitution,
-										  uint16 roomNumber,
-										  uint16 actorTalking,
-										  uint16 scriptNum,
-										  uint16 scriptOffset,
-										  uint16 numWaits);
-
-private:
-	enum AudioCodec {
-		kXWBCodecPCM = 0,
-		kXWBCodecXMA = 1,
-		kXWBCodecADPCM = 2,
-		kXWBCodecWMA = 3,
-		kFSBCodecMP3 = 4
-	};
-
-	enum XWBSegmentType {
-		kXWBSegmentBankData = 0,
-		kXWBSegmentEntryMetaData = 1,
-		kXWBSegmentSeekTables = 2,
-		kXWBSegmentEntryNames = 3,
-		kXWBSegmentEntryWaveData = 4
-	};
-
 	struct AudioEntry {
 		uint64 offset;
 		uint32 length;
@@ -119,35 +113,62 @@ private:
 		uint16 align;
 		byte bits;
 		Common::String name;
+		bool isPatched;
 	};
 
-	Common::HashMap<Common::String, uint32> _audioNameToOriginalOffsetMap;
+	ScummEngine *_vm;
+	Audio::Mixer *_mixer;
 
 	typedef Common::Array<AudioEntry> AudioIndex;
 	typedef Common::HashMap<uint32, uint32> OffsetToIndexMap;
 	typedef Common::HashMap<Common::String, int32> NameToIndexMap;
+	typedef Common::HashMap<Common::String, uint32> NameToOffsetMap;
 
-	OffsetToIndexMap _offsetToIndex;
+	OffsetToIndexMap _offsetToIndexDOTTAndFT;
+	NameToOffsetMap _nameToOffsetDOTTAndFT;
 	NameToIndexMap _nameToIndex;
+	NameToIndexMap _nameToIndexPatched;
 
 	AudioIndex _musicEntries;
-	Common::String _musicFilename;
 	AudioIndex _speechEntries;
-	Common::String _speechFilename;
 	AudioIndex _sfxEntries;
-	Common::String _sfxFilename;
+	AudioIndex _ambienceEntries;
+	AudioIndex _commentaryEntries;
+	AudioIndex _patchEntries;
 
 	typedef Common::Array<AudioEntryMI> AudioIndexMI;
 	AudioIndexMI _audioEntriesMI;
 
+	/* MI SE injected speech */
+	int32 _currentScriptSavedForSpeechMI = 0;
+	int32 _currentScriptOffsetSavedForSpeechMI = 0;
+
 	int32 getSoundIndexFromOffset(uint32 offset);
+	int32 getAppropriateSpeechCue(const char *msgString,
+								  const char *speechFilenameSubstitution,
+								  uint16 roomNumber,
+								  uint16 actorTalking,
+								  uint16 scriptNum,
+								  uint16 scriptOffset,
+								  uint16 numWaits);
 
 	void initAudioMappingMI();
-	void initAudioMapping();
+	void initAudioMappingDOTTAndFT();
 	void initSoundFiles();
-	void indexXWBFile(const Common::String &filename, AudioIndex *audioIndex);
-	Audio::SeekableAudioStream *createSoundStream(Common::SeekableSubReadStream *stream, AudioEntry entry);
-	void indexFSBFile(const Common::String &filename, AudioIndex *audioIndex);
+
+	// Index XWB audio files and XSB cue files - used in MI1SE and MI2SE
+	void indexXWBFile(SoundSEType type);
+	void indexSpeechXSBFile();
+
+	// Index FSB audio files - used in DOTT and FT
+	void indexFSBFile(SoundSEType type);
+
+	Common::String getAudioFilename(SoundSEType type);
+	Common::SeekableReadStream *getAudioFile(const Common::String &filename);
+	Common::SeekableReadStream *getAudioFile(SoundSEType type);
+	AudioIndex *getAudioEntries(SoundSEType type);
+
+	Audio::SeekableAudioStream *createSoundStream(Common::SeekableSubReadStream *stream, AudioEntry entry, DisposeAfterUse::Flag disposeAfterUse = DisposeAfterUse::YES);
 };
 
 

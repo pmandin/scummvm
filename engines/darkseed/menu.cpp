@@ -23,15 +23,72 @@
 #include "common/config-manager.h"
 #include "darkseed/menu.h"
 #include "darkseed/darkseed.h"
+#include "darkseed/langtext.h"
 
 namespace Darkseed {
 
-void drawSoundMenuItem() {
-	g_engine->_screen->fillRect({{117, 136}, 55, 11}, 0);
+constexpr I18NTextWithPosition kMenu_load = {
+	{127, 62, "Load"},
+	{119, 62, "CARGAR"},
+	{118, 62, "CHARGER"},
+	{121, 62, "LADEN"}
+};
+
+constexpr I18NTextWithPosition kMenu_silent = {
+	{123, 136, "Silent"},
+	{115, 136, "SIN SON"},
+	{118, 136, "SILENCE"},
+	{129, 136, "RUHE"}
+};
+
+constexpr I18NTextWithPosition kMenu_sounds = {
+	{117, 136, "Sounds"},
+	{121, 136, "SONIDO"},
+	{126, 136, "SONS"},
+	{123, 136, "SOUND"}
+};
+
+constexpr I18NTextWithPosition kMenu_save = {
+	{127, 99, "Save"},
+	{119, 99, "GRABAR"},
+	{121, 99, "SAUVER"},
+	{115, 99, "SICHERN"}
+};
+
+constexpr I18NTextWithPosition kMenu_resume = {
+	{118, 173, "Resume"},
+	{122, 173, "SEQUIR"},
+	{124, 173, "JOUER"},
+	{118, 173, "WEITER"}
+};
+
+constexpr I18NTextWithPosition kMenu_quit = {
+	{129, 210, "Quit"},
+	{125, 210, "SALIR"},
+	{117, 210, "QUITTER"},
+	{129, 210, "ENDE"}
+};
+
+void drawMenuItem(const I18NTextWithPosition &menuText) {
+	const TextWithPosition &textWithPosition = getI18NTextWithPosition(menuText);
+	g_engine->_console->drawStringAt(textWithPosition.x, textWithPosition.y, textWithPosition.text);
+}
+
+void Menu::drawSoundMenuItem() {
+	g_engine->_screen->fillRect({{115, 136}, 62, 11}, 0);
 	if (g_engine->_sound->isMuted()) {
-		g_engine->_console->drawStringAt(123, 136, "Silent");
+		drawMenuItem(kMenu_silent);
 	} else {
-		g_engine->_console->drawStringAt(117, 136, "Sounds");
+		drawMenuItem(kMenu_sounds);
+	}
+}
+
+Common::KeyCode Menu::getLocalisedConfirmToQuitKeycode() {
+	switch (g_engine->getLanguage()) {
+	case Common::ES_ESP : return Common::KeyCode::KEYCODE_s;
+	case Common::FR_FRA : return Common::KeyCode::KEYCODE_o;
+	case Common::DE_DEU : return Common::KeyCode::KEYCODE_j;
+	default : return Common::KeyCode::KEYCODE_y;
 	}
 }
 
@@ -45,11 +102,11 @@ void Menu::loadMenu() {
 	g_engine->drawFullscreenPic();
 	g_engine->_console->draw(true);
 
-	g_engine->_console->drawStringAt(127, 62, "Load");
-	g_engine->_console->drawStringAt(127, 99, "Save");
+	drawMenuItem(kMenu_load);
+	drawMenuItem(kMenu_save);
 	drawSoundMenuItem();
-	g_engine->_console->drawStringAt(118, 173, "Resume");
-	g_engine->_console->drawStringAt(129, 210, "Quit");
+	drawMenuItem(kMenu_resume);
+	drawMenuItem(kMenu_quit);
 
 	g_engine->_screen->makeAllDirty();
 	g_engine->_screen->update();
@@ -115,7 +172,7 @@ void Menu::loadMenu() {
 			g_engine->_lastKeyPressed = Common::KeyCode::KEYCODE_INVALID;
 			while (!g_engine->shouldQuit()) {
 				g_engine->updateEvents();
-				if (g_engine->_lastKeyPressed == Common::KeyCode::KEYCODE_y || g_engine->_isLeftMouseClicked) {
+				if (g_engine->_lastKeyPressed == getLocalisedConfirmToQuitKeycode() || g_engine->_isLeftMouseClicked) {
 					g_engine->quitGame();
 					break;
 				}

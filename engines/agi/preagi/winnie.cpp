@@ -20,6 +20,7 @@
  */
 
 #include "agi/preagi/preagi.h"
+#include "agi/preagi/picture_mickey_winnie.h"
 #include "agi/preagi/winnie.h"
 #include "agi/graphics.h"
 
@@ -1468,13 +1469,17 @@ void WinnieEngine::debugCurRoom() {
 }
 
 WinnieEngine::WinnieEngine(OSystem *syst, const AGIGameDescription *gameDesc) : PreAgiEngine(syst, gameDesc) {
+	_picture = nullptr;
 	setDebugger(new WinnieConsole(this));
 }
 
 WinnieEngine::~WinnieEngine() {
+	delete _picture;
 }
 
 void WinnieEngine::init() {
+	_picture = new PictureMgr_Mickey_Winnie(this, _gfx);
+
 	// Initialize sound
 
 	switch (MidiDriver::getMusicType(MidiDriver::detectDevice(MDT_PCSPK | MDT_PCJR))) {
@@ -1516,17 +1521,6 @@ void WinnieEngine::init() {
 		_isBigEndian = false;
 		_roomOffset = IDI_WTP_OFS_ROOM;
 		_objOffset = IDI_WTP_OFS_OBJ;
-		break;
-	}
-
-	switch (getPlatform()) {
-	case  Common::kPlatformApple2:
-	case  Common::kPlatformC64:
-	case  Common::kPlatformCoCo:
-		_picture->setPictureVersion(AGIPIC_C64);
-		break;
-	default:
-		_picture->setPictureVersion(AGIPIC_PREAGI);
 		break;
 	}
 

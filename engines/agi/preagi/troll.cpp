@@ -20,6 +20,7 @@
  */
 
 #include "agi/preagi/preagi.h"
+#include "agi/preagi/picture_troll.h"
 #include "agi/preagi/troll.h"
 #include "agi/graphics.h"
 
@@ -31,9 +32,11 @@
 namespace Agi {
 
 TrollEngine::TrollEngine(OSystem *syst, const AGIGameDescription *gameDesc) : PreAgiEngine(syst, gameDesc) {
+	_picture = nullptr;
 }
 
 TrollEngine::~TrollEngine() {
+	delete _picture;
 }
 
 // User Interface
@@ -134,19 +137,13 @@ void TrollEngine::drawPic(int iPic, bool f3IsCont, bool clr, bool troll) {
 	}
 
 	// draw the frame picture
-	_picture->setPictureFlags(kPicFNone);
+	_picture->setStopOnF3(false);
+	_picture->setTrollMode(false);
 	_picture->decodePictureFromBuffer(_gameData + IDO_TRO_FRAMEPIC, 4096, clr, IDI_TRO_PIC_WIDTH, IDI_TRO_PIC_HEIGHT);
 
 	// draw the picture
-	int flags = 0;
-	if (!f3IsCont) {
-		// stop on opcode F3
-		flags |= kPicFf3Stop;
-	}
-	if (troll) {
-		flags |= kPicFTrollMode;
-	}
-	_picture->setPictureFlags(flags);
+	_picture->setStopOnF3(!f3IsCont);
+	_picture->setTrollMode(troll);
 	_picture->decodePictureFromBuffer(_gameData + _pictureOffsets[iPic], 4096, false, IDI_TRO_PIC_WIDTH, IDI_TRO_PIC_HEIGHT);
 
 	_picture->showPicture(0, 0, IDI_TRO_PIC_WIDTH, IDI_TRO_PIC_HEIGHT);
@@ -447,13 +444,15 @@ int TrollEngine::drawRoom(char *menu) {
 	int n = 0;
 	menu[0] = ' '; // leading space
 	menu[1] = '\0';
-	strncat(menu, (char *)_gameData + _locMessagesIdx[_currentRoom], 38);
+	strncat(menu, (char *)_gameData + _locMessagesIdx[_currentRoom], 39);
 
 	for (int i = 0; i < 3; i++) {
 		if (_roomDescs[_roomPicture - 1].options[i]) {
-			strncat(menu, Common::String::format("\n  %d.", i + 1).c_str(), 5);
+			strncat(menu, Common::String::format("  %d.", i + 1).c_str(), 4);
 
 			strncat(menu, (char *)_gameData + _options[_roomDescs[_roomPicture - 1].options[i] - 1], 35);
+			menu[(i + 2) * 40 - 1] = ' ';
+			menu[(i + 2) * 40] = '\0';
 
 			n = i + 1;
 		}
@@ -712,7 +711,7 @@ void TrollEngine::fillOffsets() {
 // Init
 
 void TrollEngine::init() {
-	_picture->setPictureVersion(AGIPIC_V15);
+	_picture = new PictureMgr_Troll(this, _gfx);
 	//SetScreenPar(320, 200, (char *)ibm_fontdata);
 
 	const int gaps[] = { 0x3A40,  0x4600,  0x4800,  0x5800,  0x5a00,  0x6a00,

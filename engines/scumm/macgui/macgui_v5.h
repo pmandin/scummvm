@@ -35,6 +35,8 @@ public:
 	MacV5Gui(ScummEngine *vm, const Common::Path &resourceFile);
 	~MacV5Gui() {}
 
+	bool initialize() override;
+
 	const Common::String name() const override { return _strsStrings[kMSIGameName]; }
 	int getNumColors() const override { return 256; }
 
@@ -50,6 +52,7 @@ public:
 protected:
 	bool getFontParams(FontId fontId, int &id, int &size, int &slant) const override;
 
+	void updateMenus() override;
 	bool handleMenu(int id, Common::String &name) override;
 
 	void runAboutDialog() override;

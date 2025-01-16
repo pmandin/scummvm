@@ -29,6 +29,7 @@
 #include "engines/metaengine.h"
 #include "engines/savestate.h"
 
+#include "graphics/color_quantizer.h"
 #include "graphics/palette.h"
 #include "graphics/paletteman.h"
 #include "graphics/macgui/macwindowmanager.h"
@@ -79,6 +80,31 @@ MacV6Gui::~MacV6Gui() {
 	delete[] _backupPalette;
 }
 
+bool MacV6Gui::initialize() {
+	if (!MacGuiImpl::initialize())
+		return false;
+
+	// We can't use the name of the menus here, because there are
+	// non-English versions. Let's hope the menu positions are always the
+	// same, at least!
+
+	Graphics::MacMenu *menu = _windowManager->getMenu();
+	Graphics::MacMenuItem *editMenu = menu->getMenuItem(2);
+	Graphics::MacMenuItem *videoMenu = menu->getMenuItem(3);
+
+	editMenu->enabled = false;
+
+	menu->getSubMenuItem(videoMenu, 0)->enabled = false; // Small
+	menu->getSubMenuItem(videoMenu, 1)->enabled = false; // Interlaced
+
+	if (_vm->_game.id == GID_MANIAC) {
+		Graphics::MacMenuItem *soundMenu = menu->getMenuItem(4);
+		soundMenu->enabled = false;
+	}
+
+	return true;
+}
+
 bool MacV6Gui::readStrings() {
 	_strsStrings.clear();
 	_strsStrings.reserve(128);
@@ -96,32 +122,74 @@ bool MacV6Gui::getFontParams(FontId fontId, int &id, int &size, int &slant) cons
 	return false;
 }
 
+void MacV6Gui::setupCursor(int &width, int &height, int &hotspotX, int &hotspotY, int &animate) {
+	if (_vm->_game.id != GID_MANIAC)
+		return;
+
+	byte invertedMacArrow[] = {
+		0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF,
+		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x0F, 0x0F, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x0F, 0x00, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF,
+		0x00, 0x00, 0xFF, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF,
+		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF
+	};
+
+	memcpy(_vm->_grabbedCursor, invertedMacArrow, sizeof(invertedMacArrow));
+
+	width = 11;
+	height = 16;
+	hotspotX = 1;
+	hotspotY = 1;
+}
+
+void MacV6Gui::updateMenus() {
+	MacGuiImpl::updateMenus();
+
+	Graphics::MacMenu *menu = _windowManager->getMenu();
+	Graphics::MacMenuItem *videoMenu = menu->getMenuItem(3);
+
+	menu->getSubMenuItem(videoMenu, 2)->checked = true;
+
+	if (_vm->_game.id != GID_MANIAC)
+		menu->getSubMenuItem(videoMenu, 3)->checked = _vm->_useMacGraphicsSmoothing;
+
+	Graphics::MacMenuItem *soundMenu = menu->getMenuItem(4);
+
+	menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_soundEnabled & 2); // Music
+	menu->getSubMenuItem(soundMenu, 1)->checked = (_vm->_soundEnabled & 1); // Effects
+	menu->getSubMenuItem(soundMenu, 5)->checked = false; // Text Only
+	menu->getSubMenuItem(soundMenu, 6)->checked = false; // Voice Only
+	menu->getSubMenuItem(soundMenu, 7)->checked = false; // Text & Voice
+
+	switch (_vm->_voiceMode) {
+	case 0:	// Voice Only
+		menu->getSubMenuItem(soundMenu, 6)->checked = true;
+		break;
+	case 1: // Voice and Text
+		menu->getSubMenuItem(soundMenu, 7)->checked = true;
+		break;
+	case 2:	// Text Only
+		menu->getSubMenuItem(soundMenu, 5)->checked = true;
+		break;
+	default:
+		warning("MacV6Gui::updateMenus(): Invalid voice mode %d", _vm->_voiceMode);
+		break;
+	}
+}
+
 bool MacV6Gui::handleMenu(int id, Common::String &name) {
 	// Don't call the original method. The menus are too different.
-	// TODO: Separate the common code into its own method?
-
-	// This menu item (e.g. a menu separator) has no action, so it's
-	// handled trivially.
-	if (id == 0)
-		return true;
-
-	// This is how we keep the menu bar visible.
-	Graphics::MacMenu *menu = _windowManager->getMenu();
-
-	// If the menu is opened through a shortcut key, force it to activate
-	// to avoid screen corruption. In that case, we also force the menu to
-	// close afterwards, or the game will stay paused. Which is
-	// particularly bad during a restart.
-
-	if (!menu->_active) {
-		_windowManager->activateMenu();
-		_forceMenuClosed = true;
-	}
-
-	menu->closeMenu();
-	menu->setActive(true);
-	menu->setVisible(true);
-	updateWindowManager();
 
 	int saveSlotToHandle = -1;
 	bool syncSoundSettings = false;
@@ -189,18 +257,21 @@ bool MacV6Gui::handleMenu(int id, Common::String &name) {
 		return true;
 
 	case 403:	// Graphics Smoothing
-		_vm->mac_toggleSmoothing();
+		if (_vm->_game.id != GID_MANIAC)
+			_vm->mac_toggleSmoothing();
 		return true;
 
 	case 500:	// Music
-		_vm->_soundEnabled ^= 2;
+		_vm->_soundEnabled = (_vm->_soundEnabled & ~8) ^ 2;
 		ConfMan.setBool("music_mute", !(_vm->_soundEnabled & 2));
+		ConfMan.setBool("mute", (_vm->_soundEnabled == 0 && _vm->_voiceMode == 2));
 		syncSoundSettings = true;
 		break;
 
 	case 501:	// Effects
-		_vm->_soundEnabled ^= 1;
+		_vm->_soundEnabled = (_vm->_soundEnabled & ~8) ^ 1;
 		ConfMan.setBool("sfx_mute", !(_vm->_soundEnabled & 1));
+		ConfMan.setBool("mute", (_vm->_soundEnabled == 0 && _vm->_voiceMode == 2));
 		syncSoundSettings = true;
 		break;
 
@@ -397,12 +468,21 @@ MacGuiImpl::MacImageSlider *MacV6Gui::addSlider(MacDialogWindow *window, int x, 
 }
 
 void MacV6Gui::runAboutDialog() {
+	// While there is a menu item for a Maniac Mansion credits screen, it
+	// doesn't do anything.
+	//
+	// "I was probably exhausted from hand-placing all the letters on the
+	// DOTT credits screen to make one for Maniac." -- Aaron Giles,
+	// December 30, 2024.
+	if (_vm->_game.id == GID_MANIAC)
+		return;
+
 	if (_vm->_game.features & GF_DEMO) {
 		// HACK: Use the largest bounds as default for unknown demos
 		// It would be nice if we could figure these out automatically
 		Common::Rect bounds(117, 5, 523, 384);
 
-		if (_vm->_game.id == GID_SAMNMAX) {
+		if (_vm->_game.id == GID_TENTACLE || _vm->_game.id == GID_SAMNMAX) {
 			bounds.left = 117;
 			bounds.top = 5;
 			bounds.right = 523;
@@ -554,7 +634,7 @@ void MacV6Gui::updateThumbnail(MacDialogWindow *window, Common::Rect drawArea, i
 	// use. Reduce the image to a smaller palette. We reserve 10 colors for
 	// the Mac GUI itself.
 
-	ColorQuantizer quantizer(245);
+	Graphics::ColorQuantizer quantizer(245);
 
 	for (int y = yMin; y < yMax; y++) {
 		for (int x = 0; x < thumbnail->w; x++) {

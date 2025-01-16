@@ -144,16 +144,15 @@ void Dialog::drawType2BackgroundChina(Graphics::ManagedSurface *dst, const Commo
 
 void Dialog::drawType2BackgroundBeamish(Graphics::ManagedSurface *dst, const Common::String &title) {
 	// TODO: This needs updating.
-	_state->_loc = DgdsRect(_rect.x + 12, _rect.y + 10, _rect.width - 24, _rect.height - 20);
+	_state->_loc = DgdsRect(_rect.x + 11, _rect.y + 10, _rect.width - 22, _rect.height - 20);
 	if (title.empty()) {
 		dst->fillRect(Common::Rect(Common::Point(_rect.x + 2, _rect.y + 2), _rect.width - 4, _rect.height - 4), 0);
 		RequestData::drawCorners(dst, 54, _rect.x, _rect.y, _rect.width, _rect.height);
 	} else {
 		dst->fillRect(Common::Rect(Common::Point(_rect.x + 2, _rect.y + 2), _rect.width - 4, _rect.height - 4), 0);
 		RequestData::drawCorners(dst, 46, _rect.x, _rect.y, _rect.width, _rect.height);
-		// TODO: Maybe should measure the font?
-		_state->_loc.y += 11;
-		_state->_loc.height -= 11;
+		_state->_loc.y += 15;
+		_state->_loc.height -= 15;
 		RequestData::drawHeader(dst, _rect.x, _rect.y + 5, _rect.width, 2, title, _fontColor, false, 0, 0);
 	}
 }
@@ -183,8 +182,12 @@ void Dialog::drawType2(Graphics::ManagedSurface *dst, DialogDrawStage stage) {
 		txt = _str;
 	}
 
-	// Special case for HoC to update the Shekel count in their description.
-	// This is how the original game does it too.
+	//
+	// Special case for HoC to update the Shekel count in their description
+	// and Willy Beamish update dollars
+	//
+	// This is how the original games do it too.
+	//
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	if (_fileNum == 0x5d && _num == 0x32 && engine->getGameId() == GID_HOC) {
 		int16 shekels = engine->getGDSScene()->getGlobal(44);
@@ -192,6 +195,12 @@ void Dialog::drawType2(Graphics::ManagedSurface *dst, DialogDrawStage stage) {
 		uint32 offset = txt.find("###");
 		if (offset != Common::String::npos)
 			txt.replace(offset, 3, numstr);
+	} else if (_fileNum == 67 && _num == 9 && engine->getGameId() == GID_WILLY) {
+		int16 cents = engine->getGDSScene()->getGlobal(3);
+		const Common::String numstr = Common::String::format("%3d.%02d", cents / 100, cents % 100);
+		uint32 offset = txt.find("###.##");
+		if (offset != Common::String::npos)
+			txt.replace(offset, 6, numstr);
 	}
 
 	if (stage == kDlgDrawStageBackground) {
@@ -246,8 +255,8 @@ void Dialog::drawType3(Graphics::ManagedSurface *dst, DialogDrawStage stage) {
 		}
 
 		xradius = (yradius * 5) / 4;
-		const int16 circlesAcross = usablex / xradius - 1;
-		const int16 circlesDown = usabley / yradius - 1;
+		const int16 circlesAcross = MAX(1, usablex / xradius - 1);
+		const int16 circlesDown = MAX(1, usabley / yradius - 1);
 
 		uint16 x = _rect.x + xradius;
 		uint16 y = _rect.y + yradius;
@@ -564,14 +573,18 @@ void Dialog::drawForeground(Graphics::ManagedSurface *dst, uint16 fontcol, const
 	}
 
 	for (uint i = 0; i < lines.size(); i++) {
+		// Draw every line unhighlighted then highlight bits as needed
 		font->drawString(dst, lines[i], x, ystart + i * h, xwidth, fontcol, align);
 		if (highlightStart < lineOffs[i + 1] && highlightEnd > lineOffs[i]) {
-			// highlight on this line
-			// TODO: What if it's only a partial line??
-			font->drawString(dst, lines[i], x, ystart + i * h, xwidth, _selectonFontCol, align);
+			// Highlight on this line. Redraw whatever part is highlighted.
+			int lineLen = (int)lines[i].size();
+			int lineHighlightStart = MAX(highlightStart - lineOffs[i], 0);
+			int lineHighlightEnd = MIN(highlightEnd - lineOffs[i], lineLen);
+			int highlightXOff = lineHighlightStart ? font->getStringWidth(lines[i].substr(0, lineHighlightStart)) : 0;
+			Common::String highlightString = lines[i].substr(lineHighlightStart, lineHighlightEnd - lineHighlightStart);
+			font->drawString(dst, highlightString, x + highlightXOff, ystart + i * h, xwidth, _selectonFontCol, align);
 		}
 	}
-
 }
 
 void Dialog::setFlag(DialogFlags flg) {
@@ -685,9 +698,11 @@ Common::String Dialog::dump(const Common::String &indent) const {
 			"%sDialog<num %d %s bgcol %d fcol %d selbgcol %d selfontcol %d fntsz %d flags 0x%02x frame %d delay %d next %d:%d talkdata %d:%d",
 			indent.c_str(), _num, _rect.dump("").c_str(), _bgColor, _fontColor, _selectionBgCol, _selectonFontCol, _fontSize,
 			_flags, _frameType, _time, _nextDialogFileNum, _nextDialogDlgNum, _talkDataNum, _talkDataHeadNum);
-	str += indent + "state=" + (_state ? _state->dump("") : "null");
-	str += "\n";
-	str += DebugUtil::dumpStructList(indent, "actions", _action);
+	str += indent + " state=" + (_state ? _state->dump("") : "null");
+	if (_action.size()) {
+		str += "\n";
+		str += DebugUtil::dumpStructList(indent, "actions", _action);
+	}
 	str += "\n";
 	str += indent + "  str='" + _str + "'>";
 	return str;

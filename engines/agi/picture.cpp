@@ -25,6 +25,24 @@
 #include "common/textconsole.h"
 
 namespace Agi {
+	
+// PictureMgr decodes and draws AGI picture resources.
+//
+// AGI pictures are vector-based, and contain the visual and priority screens.
+// Drawing instructions begin with an opcode byte within the range F0-FF.
+// Opcode parameters are each one byte, with the exception of AGIv3 nibble
+// compression. Some opcodes take a variable number of parameters. The end of
+// an instruction is detected by the next byte with a value in the opcode range.
+// If an instruction has extra bytes, or a picture contains an unknown opcode
+// byte, then these bytes ignored. Pictures end with opcode FF.
+//
+// AGIv3 introduced a compression scheme where two opcode parameters were
+// each reduced to one nibble; this is indicated by a flag in the picture's
+// resource directory entry.
+//
+// AGI's picture format evolved from variants used in earlier Sierra games.
+// We implement support for these formats as subclasses of PictureMgr.
+// In this way, we treat AGI as the baseline to be overridden as needed.
 
 PictureMgr::PictureMgr(AgiBase *agi, GfxMgr *gfx) {
 	_vm = agi;
@@ -45,26 +63,15 @@ PictureMgr::PictureMgr(AgiBase *agi, GfxMgr *gfx) {
 
 	_minCommand = 0xf0;
 
-	_pictureVersion = AGIPIC_V2;
 	_width = 0;
 	_height = 0;
-	_xOffset = 0;
-	_yOffset = 0;
-
-	_flags = 0;
-	_maxStep = 0;
 }
 
-void PictureMgr::putVirtPixel(int x, int y) {
-	if (x < 0 || y < 0 || x >= _width || y >= _height)
-		return;
-
-	x += _xOffset;
-	y += _yOffset;
-
-	// validate coordinate after applying preagi offset.
-	// winnie objects go past the bottom of the screen.
-	if (x >= SCRIPT_WIDTH || y >= SCRIPT_HEIGHT) {
+/**
+ * Draws a pixel to the visual and/or control screen.
+ */
+void PictureMgr::putVirtPixel(int16 x, int16 y) {
+	if (!getGraphicsCoordinates(x, y)) {
 		return;
 	}
 
@@ -77,6 +84,9 @@ void PictureMgr::putVirtPixel(int x, int y) {
 	_gfx->putPixel(x, y, drawMask, _scrColor, _priColor);
 }
 
+/**
+ * Gets the next byte in the picture data.
+ */
 byte PictureMgr::getNextByte() {
 	if (!_dataOffsetNibble) {
 		return _data[_dataOffset++];
@@ -86,6 +96,11 @@ byte PictureMgr::getNextByte() {
 	}
 }
 
+/**
+ * Gets the next byte in the current picture instruction.
+ * If the next byte in the picture data is an opcode, then this
+ * function returns false and the data offset is not advanced.
+ */
 bool PictureMgr::getNextParamByte(byte &b) {
 	byte value = getNextByte();
 	if (value >= _minCommand) {
@@ -96,6 +111,9 @@ bool PictureMgr::getNextParamByte(byte &b) {
 	return true;
 }
 
+/**
+ * Gets the next nibble in the picture data.
+ */
 byte PictureMgr::getNextNibble() {
 	if (!_dataOffsetNibble) {
 		_dataOffsetNibble = true;
@@ -106,43 +124,57 @@ byte PictureMgr::getNextNibble() {
 	}
 }
 
+/**
+ * Gets the next x coordinate in the current picture instruction.
+ *
+ * Subclasses override this to implement coordinate clipping.
+ */
 bool PictureMgr::getNextXCoordinate(byte &x) {
-	if (!(getNextParamByte(x))) {
-		return false;
-	}
-
-	if (_pictureVersion == AGIPIC_PREAGI) {
-		if (x >= _width) {
-			debugC(kDebugLevelPictures, "preagi: clipping x from %d to %d", x, _width - 1);
-			x = _width - 1; // 139
-		}
-	}
-	return true;
+	return getNextParamByte(x);
 }
 
+/**
+ * Gets the next y coordinate in the current picture instruction.
+ *
+ * Subclasses override this to implement coordinate clipping.
+ */
 bool PictureMgr::getNextYCoordinate(byte &y) {
-	if (!(getNextParamByte(y))) {
-		return false;
-	}
-
-	if (_pictureVersion == AGIPIC_PREAGI) {
-		if (y > _height) {
-			debugC(kDebugLevelPictures, "preagi: clipping y from %d to %d", y, _height);
-			y = _height; // 159
-		}
-	}
-	return true;
+	return getNextParamByte(y);
 }
 
+/**
+ * Gets the next x and y coordinates in the current picture instruction.
+ *
+ * Returns false if both coordinates are not present. If only an x coordinate is
+ * present, then the data offset is only advanced by one, and the x coordinate
+ * will be ignored.
+ */
 bool PictureMgr::getNextCoordinates(byte &x, byte &y) {
 	return getNextXCoordinate(x) && getNextYCoordinate(y);
 }
 
-/**************************************************************************
-** xCorner
-**
-** Draws an xCorner  (drawing action 0xF5)
-**************************************************************************/
+/**
+ * Validates picture coordinates and translates them to GfxMgr coordinates.
+ *
+ * Subclasses can override this to implement the PreAGI offset feature that
+ * allowed a picture to be drawn at an arbitrary point on the screen.
+ * Returns false if picture coordinates are out of bounds, or for subclasses,
+ * if the PreAGI offset would place the coordinate outside of GfxMgr's screen.
+ */
+bool PictureMgr::getGraphicsCoordinates(int16 &x, int16 &y) {
+	return (0 <= x && x < _width && 0 <= y && y < _height);
+}
+
+/**
+ * xCorner
+ *
+ * Draws a series of lines with right angles between them.
+ * The first two bytes are the start point, followed by alternating
+ * x and y coordinates for subsequent points.
+ *
+ * Set skipOtherCoords to ignore extra coordinates in Troll's pictures.
+ * Troll includes both the x and y coordinate of each point.
+ */
 void PictureMgr::xCorner(bool skipOtherCoords) {
 	byte x1, x2, y1, y2, dummy;
 
@@ -174,11 +206,16 @@ void PictureMgr::xCorner(bool skipOtherCoords) {
 	}
 }
 
-/**************************************************************************
-** yCorner
-**
-** Draws an yCorner  (drawing action 0xF4)
-**************************************************************************/
+/**
+ * yCorner
+ *
+ * Draws a series of lines with right angles between them.
+ * The first two bytes are the start point, followed by alternating
+ * y and x coordinates for subsequent points.
+ *
+ * Set skipOtherCoords to ignore extra coordinates in Troll's pictures.
+ * Troll includes both the x and y coordinate of each point.
+ */
 void PictureMgr::yCorner(bool skipOtherCoords) {
 	byte x1, x2, y1, y2, dummy;
 
@@ -209,13 +246,15 @@ void PictureMgr::yCorner(bool skipOtherCoords) {
 	}
 }
 
-/**************************************************************************
-** plotPattern
-**
-** Draws pixels, circles, squares, or splatter brush patterns depending
-** on the pattern code.
-**************************************************************************/
-void PictureMgr::plotPattern(int x, int y) {
+/**
+ * plotPattern
+ *
+ * Draws a circle or square. Size and optional splatter brush pattern
+ * are determined by the current pattern code.
+ *
+ * This routine is originally from NAGI.
+ */
+void PictureMgr::plotPattern(byte x, byte y) {
 	static const uint16 binary_list[] = {
 		0x8000, 0x4000, 0x2000, 0x1000, 0x800, 0x400, 0x200, 0x100,
 		0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1
@@ -313,11 +352,11 @@ void PictureMgr::plotPattern(int x, int y) {
 	}
 }
 
-/**************************************************************************
-** plotBrush
-**
-** Plots points and various brush patterns.
-**************************************************************************/
+/**
+ * plotBrush
+ *
+ * Plots the current brush pattern.
+ */
 void PictureMgr::plotBrush() {
 	for (;;) {
 		if (_patCode & 0x20) {
@@ -333,66 +372,12 @@ void PictureMgr::plotBrush() {
 	}
 }
 
-void PictureMgr::plotBrush_PreAGI() {
-	_patCode = getNextByte();
-	if (_patCode > 12) {
-		_patCode = 12;
-	}
-
-	for (;;) {
-		byte x, y;
-		if (!getNextCoordinates(x, y))
-			break;
-
-		plotPattern_PreAGI(x, y);
-	}
-}
-
-void PictureMgr::plotPattern_PreAGI(byte x, byte y) {
-	// PreAGI patterns are 13 solid circles
-	static const byte circleData[] = {
-		0x00,
-		0x01, 0x01,
-		0x01, 0x02, 0x02,
-		0x01, 0x02, 0x03, 0x03,
-		0x02, 0x03, 0x04, 0x04, 0x04,
-		0x02, 0x03, 0x04, 0x05, 0x05, 0x05,
-		0x02, 0x04, 0x05, 0x05, 0x06, 0x06, 0x06,
-		0x02, 0x04, 0x05, 0x06, 0x06, 0x07, 0x07, 0x07,
-		0x02, 0x04, 0x06, 0x06, 0x07, 0x07, 0x08, 0x08, 0x08,
-		0x03, 0x05, 0x06, 0x07, 0x08, 0x08, 0x08, 0x09, 0x09, 0x09,
-		0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x09, 0x0a, 0x0a, 0x0a, 0x0a,
-		0x03, 0x05, 0x07, 0x08, 0x09, 0x09, 0x0a, 0x0a, 0x0b, 0x0b, 0x0b, 0x0b,
-		0x03, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0a, 0x0b, 0x0b, 0x0c, 0x0c, 0x0c, 0x0c
-	};
-
-	int circleDataIndex = (_patCode * (_patCode + 1)) / 2;
-
-	// draw the circle by drawing its vertical lines two at a time, starting at the
-	// left and right edges and working inwards. circles have odd widths, so the
-	// final iteration draws the middle line twice.
-	for (int i = _patCode; i >= 0; i--) {
-		const byte height = circleData[circleDataIndex++];
-		int16 x1, y1, x2, y2;
-
-		// left vertical line
-		x1 = x - i;
-		x2 = x1;
-		y1 = y - height;
-		y2 = y + height;
-		draw_Line(x1, y1, x2, y2);
-
-		// right vertical line
-		x1 = x + i;
-		x2 = x1;
-		draw_Line(x1, y1, x2, y2);
-	}
-}
-
-/**************************************************************************
-** Draw AGI picture
-**************************************************************************/
+/**
+ * Draws the current picture to the visual and priority screens.
+ */
 void PictureMgr::drawPicture() {
+	debugC(kDebugLevelPictures, "Drawing picture %d", _resourceNr);
+
 	_dataOffset = 0;
 	_dataOffsetNibble = false;
 	_patCode = 0;
@@ -401,219 +386,6 @@ void PictureMgr::drawPicture() {
 	_scrOn = false;
 	_scrColor = 15;
 	_priColor = 4;
-
-	switch (_pictureVersion) {
-	case AGIPIC_C64:
-		drawPictureC64();
-		break;
-	case AGIPIC_V1:
-		drawPictureV1();
-		break;
-	case AGIPIC_V15:
-		drawPictureV15();
-		break;
-	case AGIPIC_PREAGI:
-		drawPicturePreAGI();
-		break;
-	case AGIPIC_V2:
-		drawPictureV2();
-		break;
-	default:
-		break;
-	}
-}
-
-void PictureMgr::drawPictureC64() {
-	debugC(kDebugLevelPictures, "Drawing Apple II / C64 / CoCo picture");
-
-	_scrColor = 0;
-
-	while (_dataOffset < _dataSize) {
-		byte curByte = getNextByte();
-
-		if ((curByte >= 0xF0) && (curByte <= 0xFE)) {
-			_scrColor = curByte & 0x0F;
-			continue;
-		}
-
-		switch (curByte) {
-		case 0xe0:  // x-corner
-			xCorner();
-			break;
-		case 0xe1:  // y-corner
-			yCorner();
-			break;
-		case 0xe2:  // dynamic draw lines
-			draw_LineShort();
-			break;
-		case 0xe3:  // absolute draw lines
-			draw_LineAbsolute();
-			break;
-		case 0xe4:  // fill
-			draw_SetColor();
-			draw_Fill();
-			break;
-		case 0xe5:  // enable screen drawing
-			_scrOn = true;
-			break;
-		case 0xe6:  // plot brush
-			plotBrush_PreAGI();
-			break;
-		case 0xff: // end of data
-			return;
-		default:
-			warning("Unknown picture opcode (%x) at (%x)", curByte, _dataOffset - 1);
-			break;
-		}
-	}
-}
-
-void PictureMgr::drawPictureV1() {
-	debugC(kDebugLevelPictures, "Drawing V1 picture");
-
-	while (_dataOffset < _dataSize) {
-		byte curByte = getNextByte();
-
-		switch (curByte) {
-		case 0xf1:
-			draw_SetColor();
-			_scrOn = true;
-			_priOn = false;
-			break;
-		case 0xf3:
-			draw_SetColor();
-			_scrOn = true;
-			draw_SetPriority();
-			_priOn = true;
-			break;
-		case 0xfa:
-			_scrOn = false;
-			_priOn = true;
-			draw_LineAbsolute();
-			_scrOn = true;
-			_priOn = false;
-			break;
-		case 0xfb:
-			draw_LineShort();
-			break;
-		case 0xfc:
-			draw_SetColor();
-			draw_SetPriority();
-			draw_Fill();
-			break;
-		case 0xff: // end of data
-			return;
-		default:
-			warning("Unknown picture opcode (%x) at (%x)", curByte, _dataOffset - 1);
-			break;
-		}
-	}
-}
-
-void PictureMgr::drawPictureV15() {
-	debugC(kDebugLevelPictures, "Drawing V1.5 picture");
-
-	while (_dataOffset < _dataSize) {
-		byte curByte = getNextByte();
-
-		switch (curByte) {
-		case 0xf0:
-			// happens in all Troll's Tale pictures
-			// TODO: figure out what it was meant for
-			break;
-		case 0xf1:
-			draw_SetColor();
-			_scrOn = true;
-			break;
-		case 0xf3:
-			if (_flags & kPicFf3Stop)
-				return;
-			break;
-		case 0xf8:
-			yCorner(true);
-			break;
-		case 0xf9:
-			xCorner(true);
-			break;
-		case 0xfa:
-			// TODO: is this really correct?
-			draw_LineAbsolute();
-			break;
-		case 0xfb:
-			// TODO: is this really correct?
-			draw_LineAbsolute();
-			break;
-		case 0xfe:
-			draw_SetColor();
-			_scrOn = true;
-			draw_Fill();
-			break;
-		case 0xff: // end of data
-			return;
-		default:
-			warning("Unknown picture opcode (%x) at (%x)", curByte, _dataOffset - 1);
-			break;
-		}
-	}
-}
-
-void PictureMgr::drawPicturePreAGI() {
-	debugC(kDebugLevelPictures, "Drawing PreAGI picture");
-
-	int step = 0;
-	while (_dataOffset < _dataSize) {
-		byte curByte = getNextByte();
-
-		switch (curByte) {
-		case 0xf0:
-			draw_SetColor();
-			_scrOn = true;
-			break;
-		case 0xf1:
-			_scrOn = false;
-			break;
-		case 0xf4:
-			yCorner();
-			break;
-		case 0xf5:
-			xCorner();
-			break;
-		case 0xf6:
-			draw_LineAbsolute();
-			break;
-		case 0xf7:
-			draw_LineShort();
-			break;
-		case 0xf8: {
-			// The screen-on flag does not prevent PreAGI flood fills.
-			// Winnie picture 7 (Roo) contains F1 before several fills.
-			byte prevScrOn = _scrOn;
-			_scrOn = true;
-			draw_Fill();
-			_scrOn = prevScrOn;
-			break;
-		}
-		case 0xf9:
-			plotBrush_PreAGI();
-			break;
-		case 0xff: // end of data
-			return;
-		default:
-			warning("Unknown picture opcode (%x) at (%x)", curByte, _dataOffset - 1);
-			break;
-		}
-
-		// Limit drawing to the optional maximum number of opcodes.
-		// Used by Mickey for crystal animation.
-		step++;
-		if (step == _maxStep) {
-			return;
-		}
-	}
-}
-
-void PictureMgr::drawPictureV2() {
-	debugC(kDebugLevelPictures, "Drawing V2/V3 picture");
 
 	// AGIv3 nibble parameters are indicated by a flag in the picture's directory entry
 	bool nibbleMode = (_vm->_game.dirPic[_resourceNr].flags & RES_PICTURE_V3_NIBBLE_PARM) != 0;
@@ -668,13 +440,16 @@ void PictureMgr::drawPictureV2() {
 		case 0xff: // end of data
 			return;
 		default:
-			warning("Unknown picture opcode (%x) at (%x)", curByte, _dataOffset - 1);
+			warning("Unknown picture opcode %02x at %04x", curByte, _dataOffset - 1);
 			break;
 		}
 	}
 }
 
-void PictureMgr::drawPictureAGI256() {
+/**
+ * Draws the current AGI256 picture to the visual screen.
+ */
+void PictureMgr::drawPicture_AGI256() {
 	const uint32 maxFlen = _width * _height;
 	int16 x = 0;
 	int16 y = 0;
@@ -713,6 +488,9 @@ void PictureMgr::drawPictureAGI256() {
 		warning("Oversized AGI256 picture resource %d, decoding only %ux%u part of it", _resourceNr, _width, _height);
 }
 
+/**
+ * Sets the visual screen color to the next byte in the picture data.
+ */
 void PictureMgr::draw_SetColor() {
 	_scrColor = getNextByte();
 
@@ -722,12 +500,18 @@ void PictureMgr::draw_SetColor() {
 	}
 }
 
+/**
+ * Sets the priority screen color to the next byte in the picture data.
+ */
 void PictureMgr::draw_SetPriority() {
 	_priColor = getNextByte();
 }
 
-// this gets a nibble instead of a full byte
-// used by some V3 games, special resource flag RES_PICTURE_V3_NIBBLE_PARM is set
+/**
+ * Sets the visual screen color to the next nibble in the picture data.
+ * Used in AGIv3 to compress the set-color instructions when the flag
+ * RES_PICTURE_V3_NIBBLE_PARM is set in the picture's directory entry.
+ */
 void PictureMgr::draw_SetNibbleColor() {
 	_scrColor = getNextNibble();
 
@@ -737,18 +521,22 @@ void PictureMgr::draw_SetNibbleColor() {
 	}
 }
 
+/**
+ * Sets the priority screen color to the next nibble in the picture data.
+ * Used in AGIv3 to compress the set-color instructions when the flag
+ * RES_PICTURE_V3_NIBBLE_PARM is set in the picture's directory entry.
+ */
 void PictureMgr::draw_SetNibblePriority() {
 	_priColor = getNextNibble();
 }
 
 /**
- * Draw an AGI line.
- * A line drawing routine sent by Joshua Neal, modified by Stuart George
- * (fixed >>2 to >>1 and some other bugs like x1 instead of y1, etc.)
- * @param x1  x coordinate of start point
- * @param y1  y coordinate of start point
- * @param x2  x coordinate of end point
- * @param y2  y coordinate of end point
+ * Draws a horizontal, vertical, or diagonal line.
+ *
+ * This routine is originally from Sarien. Original comment:
+ *
+ *   A line drawing routine sent by Joshua Neal, modified by Stuart George
+ *   (fixed >>2 to >>1 and some other bugs like x1 instead of y1, etc.)
  */
 void PictureMgr::draw_Line(int16 x1, int16 y1, int16 x2, int16 y2) {
 	x1 = CLIP<int16>(x1, 0, _width - 1);
@@ -830,8 +618,9 @@ void PictureMgr::draw_Line(int16 x1, int16 y1, int16 x2, int16 y2) {
 }
 
 /**
- * Draw a relative AGI line.
- * Draws short lines relative to last position. (drawing action 0xF7)
+ * draw_LineShort
+ *
+ * Draws short lines between positions in relative coordinates.
  */
 void PictureMgr::draw_LineShort() {
 	byte x1, y1, disp;
@@ -859,11 +648,11 @@ void PictureMgr::draw_LineShort() {
 	}
 }
 
-/**************************************************************************
-** absoluteLine
-**
-** Draws long lines to actual locations (cf. relative) (drawing action 0xF6)
-**************************************************************************/
+/**
+ * draw_LineAbsolute
+ *
+ * Draws lines between positions in absolute coordinates.
+ */
 void PictureMgr::draw_LineAbsolute() {
 	byte x1, y1, x2, y2;
 
@@ -882,28 +671,20 @@ void PictureMgr::draw_LineAbsolute() {
 	}
 }
 
-// flood fill
+/**
+ * Flood fills from a series of start positions.
+ */
 void PictureMgr::draw_Fill() {
 	byte x, y;
 
 	while (getNextCoordinates(x, y)) {
-		// PreAGI: getNextCoordinates clips to (139, 159), and then
-		// flood fill checks if y >= 159 and decrements to 158.
-		// The flood fill check is not in in Apple II/C64/CoCo
-		// versions of Winnie, as can be seen by the table edge
-		// being a different color than Winnie's shirt in the first
-		// room, but the same color in DOS/Amiga (picture 28).
-		if (_pictureVersion == AGIPIC_PREAGI) {
-			if (y >= _height) { // 159
-				debugC(kDebugLevelPictures, "preagi: fill clipping y from %d to %d", y, _height - 1);
-				y = _height - 1; // 158
-			}
-		}
-
 		draw_Fill(x, y);
 	}
 }
 
+/**
+ * Flood fills from a start position.
+ */
 void PictureMgr::draw_Fill(int16 x, int16 y) {
 	if (!_scrOn && !_priOn)
 		return;
@@ -916,19 +697,19 @@ void PictureMgr::draw_Fill(int16 x, int16 y) {
 	while (!stack.empty()) {
 		Common::Point p = stack.pop();
 
-		if (!draw_FillCheck(p.x, p.y))
+		if (!draw_FillCheck(p.x, p.y, false))
 			continue;
 
 		// Scan for left border
 		uint c;
-		for (c = p.x - 1; draw_FillCheck(c, p.y); c--)
+		for (c = p.x - 1; draw_FillCheck(c, p.y, true); c--)
 			;
 
 		bool newspanUp = true;
 		bool newspanDown = true;
-		for (c++; draw_FillCheck(c, p.y); c++) {
+		for (c++; draw_FillCheck(c, p.y, true); c++) {
 			putVirtPixel(c, p.y);
-			if (draw_FillCheck(c, p.y - 1)) {
+			if (draw_FillCheck(c, p.y - 1, false)) {
 				if (newspanUp) {
 					stack.push(Common::Point(c, p.y - 1));
 					newspanUp = false;
@@ -937,7 +718,7 @@ void PictureMgr::draw_Fill(int16 x, int16 y) {
 				newspanUp = true;
 			}
 
-			if (draw_FillCheck(c, p.y + 1)) {
+			if (draw_FillCheck(c, p.y + 1, false)) {
 				if (newspanDown) {
 					stack.push(Common::Point(c, p.y + 1));
 					newspanDown = false;
@@ -949,24 +730,20 @@ void PictureMgr::draw_Fill(int16 x, int16 y) {
 	}
 }
 
-bool PictureMgr::draw_FillCheck(int16 x, int16 y) {
-	if (x < 0 || x >= _width || y < 0 || y >= _height)
-		return false;
-
-	x += _xOffset;
-	y += _yOffset;
-
-	// validate coordinate after applying preagi offset.
-	// winnie objects go past the bottom of the screen.
-	if (x >= SCRIPT_WIDTH || y >= SCRIPT_HEIGHT) {
+/**
+ * Checks if flood fill is allowed at a position.
+ *
+ * horizontalCheck indicates if the flood fill algorithm is scanning the current
+ * line horizontally for a boundary. This is used by PictureMgr_Troll to handle
+ * Troll's Tale custom flood fill behavior when drawing the Troll over pictures.
+ */
+bool PictureMgr::draw_FillCheck(int16 x, int16 y, bool horizontalCheck) {
+	if (!getGraphicsCoordinates(x, y)) {
 		return false;
 	}
 
 	byte screenColor = _gfx->getColor(x, y);
 	byte screenPriority = _gfx->getPriority(x, y);
-
-	if (_flags & kPicFTrollMode)
-		return ((screenColor != 11) && (screenColor != _scrColor));
 
 	if (!_priOn && _scrOn && _scrColor != 15)
 		return (screenColor == 15);
@@ -978,13 +755,11 @@ bool PictureMgr::draw_FillCheck(int16 x, int16 y) {
 }
 
 /**
- * Decode an AGI picture resource. Used by regular AGI games.
- * This function decodes an AGI picture resource into the correct slot
- * and draws it on the AGI screen, optionally clearing the screen before
- * drawing.
- * @param n      AGI picture resource number
- * @param clear  clear AGI screen before drawing
- * @param agi256 load an AGI256 picture resource
+ * Draws a picture by resource number to the visual and control screens.
+ * This interface is used by AGI games and GAL (KQ1 early).
+ *
+ * The picture resource must already be loaded. This function sets the current
+ * picture and optionally clears the screens before drawing.
  */
 void PictureMgr::decodePicture(int16 resourceNr, bool clearScreen, bool agi256, int16 width, int16 height) {
 	_resourceNr = resourceNr;
@@ -994,13 +769,13 @@ void PictureMgr::decodePicture(int16 resourceNr, bool clearScreen, bool agi256, 
 	_height = height;
 
 	if (clearScreen) {
-		_gfx->clear(15, 4); // white, priority 4
+		_gfx->clear(15, getInitialPriorityColor()); // white, priority 4 or 1
 	}
 
 	if (!agi256) {
 		drawPicture();
 	} else {
-		drawPictureAGI256();
+		drawPicture_AGI256();
 	}
 
 	if (clearScreen) {
@@ -1010,13 +785,11 @@ void PictureMgr::decodePicture(int16 resourceNr, bool clearScreen, bool agi256, 
 }
 
 /**
- * Decode an AGI picture resource. Used by preAGI.
- * This function decodes an AGI picture resource into the correct slot
- * and draws it on the AGI screen, optionally clearing the screen before
- * drawing.
- * @param data   the AGI Picture data
- * @param length the size of the picture data buffer
- * @param clear  clear AGI screen before drawing
+ * Draws a picture from a buffer to the visual and control screens.
+ * This interface is used by PreAGI games.
+ *
+ * This function sets the current picture and optionally clears the screens
+ * before drawing.
  */
 void PictureMgr::decodePictureFromBuffer(byte *data, uint32 length, bool clearScreen, int16 width, int16 height) {
 	_data = data;
@@ -1025,18 +798,31 @@ void PictureMgr::decodePictureFromBuffer(byte *data, uint32 length, bool clearSc
 	_height = height;
 
 	if (clearScreen) {
-		_gfx->clear(15, 4); // white, priority 4
+		_gfx->clear(15, getInitialPriorityColor()); // white, priority 4 or 1
 	}
 
 	drawPicture();
 }
 
+/**
+ * Renders a drawn picture from the active screen to the display screen.
+ *
+ * The active screen is usually the visual screen, but this can be toggled
+ * to the priority screen in debug modes.
+ */
 void PictureMgr::showPicture(int16 x, int16 y, int16 width, int16 height) {
 	debugC(kDebugLevelPictures, "Show picture");
 
 	_gfx->render_Block(x, y, width, height);
 }
 
+/**
+ * Renders a drawn picture from the active screen to the display screen
+ * with transition effects. The effect is determined by the render mode.
+ *
+ * The active screen is usually the visual screen, but this can be toggled
+ * to the priority screen in debug modes.
+ */
 void PictureMgr::showPictureWithTransition() {
 	_width = SCRIPT_WIDTH;
 	_height = SCRIPT_HEIGHT;
@@ -1073,15 +859,6 @@ void PictureMgr::showPictureWithTransition() {
 	}
 
 	_gfx->render_Block(0, 0, SCRIPT_WIDTH, SCRIPT_HEIGHT);
-}
-
-void PictureMgr::setPictureVersion(AgiPictureVersion version) {
-	_pictureVersion = version;
-
-	if (version == AGIPIC_C64)
-		_minCommand = 0xe0;
-	else
-		_minCommand = 0xf0;
 }
 
 } // End of namespace Agi

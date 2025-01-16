@@ -78,6 +78,7 @@ public:
 protected:
 	bool getFontParams(FontId fontId, int &id, int &size, int &slant) const override;
 
+	void updateMenus() override;
 	bool handleMenu(int id, Common::String &name) override;
 
 	void runAboutDialog() override;
@@ -221,7 +222,7 @@ private:
 
 			bool handleEvent(Common::Event &event) override;
 			bool handleMouseHeld(Common::Point &pressed, Common::Point &held) override;
-			void timeOut();
+			void timeOut() override;
 
 			void draw() override;
 		};
@@ -245,7 +246,7 @@ private:
 			void reset() override;
 
 			bool handleEvent(Common::Event &event) override;
-			void timeOut();
+			void timeOut() override;
 
 			void draw() override;
 		};

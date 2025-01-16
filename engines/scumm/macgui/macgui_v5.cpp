@@ -46,6 +46,27 @@ namespace Scumm {
 MacV5Gui::MacV5Gui(ScummEngine *vm, const Common::Path &resourceFile) : MacGuiImpl(vm, resourceFile) {
 }
 
+bool MacV5Gui::initialize() {
+	if (!MacGuiImpl::initialize())
+		return false;
+
+	Graphics::MacMenu *menu = _windowManager->getMenu();
+
+	Graphics::MacMenuItem *gameMenu = menu->getMenuItem(1);
+
+	menu->getSubMenuItem(gameMenu, 5)->enabled = false; // Fix color map
+
+	Graphics::MacMenuItem *windowMenu = menu->getMenuItem(3);
+
+	menu->getSubMenuItem(windowMenu, 0)->enabled = false; // Hide Desktop
+	menu->getSubMenuItem(windowMenu, 1)->enabled = false; // Hide Menubar
+	menu->getSubMenuItem(windowMenu, 3)->enabled = false; // Tiny
+	menu->getSubMenuItem(windowMenu, 4)->enabled = false; // Medium
+	menu->getSubMenuItem(windowMenu, 5)->enabled = false; // Large
+
+	return true;
+}
+
 const Graphics::Font *MacV5Gui::getFontByScummId(int32 id) {
 	// V5 games do not use CharsetRendererMac
 	return nullptr;
@@ -122,6 +143,42 @@ void MacV5Gui::setupCursor(int &width, int &height, int &hotspotX, int &hotspotY
 		hotspotX = 1;
 		hotspotY = 3;
 		animate = 0;
+	}
+
+	delete curs;
+	resource.close();
+}
+
+void MacV5Gui::updateMenus() {
+	MacGuiImpl::updateMenus();
+
+	Graphics::MacMenu *menu = _windowManager->getMenu();
+	Graphics::MacMenuItem *windowMenu = menu->getMenuItem("Window");
+
+	if (menu->numberOfMenuItems(windowMenu) >= 8)
+		menu->getSubMenuItem(windowMenu, 7)->checked = _vm->_useMacGraphicsSmoothing;
+
+	Graphics::MacMenuItem *speechMenu = menu->getMenuItem("Speech");
+
+	if (speechMenu) {
+		menu->getSubMenuItem(speechMenu, 0)->checked = false; // Voice Only
+		menu->getSubMenuItem(speechMenu, 1)->checked = false; // Text Only
+		menu->getSubMenuItem(speechMenu, 2)->checked = false; // Voice and Text
+
+		switch (_vm->_voiceMode) {
+		case 0: // Voice Only
+			menu->getSubMenuItem(speechMenu, 0)->checked = true;
+			break;
+		case 1: // Voice and Text
+			menu->getSubMenuItem(speechMenu, 2)->checked = true;
+			break;
+		case 2: // Text Only
+			menu->getSubMenuItem(speechMenu, 1)->checked = true;
+			break;
+		default:
+			warning("MacV5Gui::updateMenus(): Invalid voice mode %d", _vm->_voiceMode);
+			break;
+		}
 	}
 }
 

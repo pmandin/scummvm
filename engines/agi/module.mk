@@ -26,6 +26,7 @@ MODULE_OBJS := \
 	op_dbg.o \
 	op_test.o \
 	picture.o \
+	picture_gal.o \
 	saveload.o \
 	sound.o \
 	sound_2gs.o \
@@ -41,6 +42,8 @@ MODULE_OBJS := \
 	words.o \
 	preagi/preagi.o \
 	preagi/mickey.o \
+	preagi/picture_mickey_winnie.o \
+	preagi/picture_troll.o \
 	preagi/troll.o \
 	preagi/winnie.o
 

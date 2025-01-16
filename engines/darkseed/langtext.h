@@ -31,7 +31,21 @@ struct I18nText {
 	const char *de;
 };
 
+struct TextWithPosition {
+	int x;
+	int y;
+	const char *text;
+};
+
+struct I18NTextWithPosition {
+	const TextWithPosition en;
+	const TextWithPosition es;
+	const TextWithPosition fr;
+	const TextWithPosition de;
+};
+
 const char *getI18NText(const I18nText &text);
+const TextWithPosition &getI18NTextWithPosition(const I18NTextWithPosition &i18nTextWithPosition);
 
 constexpr I18nText kI18N_CarKeysIgnitionText = {
 	"You see the car keys in the ignition.",
@@ -192,6 +206,132 @@ constexpr I18nText kI18N_YouHideTheObjectUnderThePillowText = {
 	"OCULTAS %s BAJO LA ALMOHADA.",
 	"VOUS CACHEZ %s SOUS L'OREILLER.",
 	"DU VERSTECKST %s UNTER DEM KISSEN."
+};
+
+constexpr I18nText kI18N_DontPutTheObjectInTheTrunkText = {
+	"Don't put the %s in the trunk, you'll forget it.",
+	"NO PONGAS %s EN EL BAUL, TE OLVIDARAS.",
+	"NE METTEZ PAS %s DANS LE COFFRE, VOUS L'OUBLIEREZ.",
+	"WENN DU %s IN DEN TRUHE LEGST, VERGISST DU ES." // TODO check this is correct.
+};
+
+constexpr I18nText kI18N_TheCarWontStartWithTheText = {
+	"The car won't start with the %s.",
+	"EL COCHE NO SE PONDRA EN MARCHA CON %s.",
+	"LA VOITURE NE DEMARRERA PAS AVEC %s.",
+	"DAS AUTO SPRINGT NICHT AN MIT %s."
+};
+
+constexpr I18nText kI18N_IfYouPutTheObjectInTheTrunkText = {
+	"If you put the %s in the trunk, you'll forget it.",
+	"SI PONES %s EN EL BAUL, TE OLVIDARAS.",
+	"SI VOUS METTEZ %s DANS LE COFFRE, VOUS L'OUBLIEREZ.",
+	"WENN DU %s IN DEN TRUHE LEGST, VERGISST DU ES."
+};
+
+constexpr I18nText kI18N_TheObjectIsYoursYouHaventLostItText = {
+	"The %s is yours, you haven't lost it.",
+	"%s ES TUYA, NO LA HASA PERDIDO.",
+	"%s EST A VOUS, VOUS NE L'AVEZ PAS PERDUE.",
+	"%s GEHOERT DIR, DU HAST ES NICHT VERLOREN."
+};
+
+constexpr I18nText kI18N_notAGoodPlaceToHideTheText = {
+	"Not a good place to hide the %s.",
+	"NO ES UN BUEN SITIO PARA OCULTAR %S.",
+	"VOUS NE POURREZ PAS CACHER %S.",
+	"KEIN GUTES VERSTECK FUER %S."
+};
+
+constexpr I18nText kI18N_youTryToPutTheObjectInsideButTheDoorWontOpenText = {
+	"You try to put the %s inside, but the door won't open",
+	"INTENTAS PONER %s DENTRO, PERO LA PUERTA NO SE ABRIRA.",
+	"VOUS ESSAYEZ DE METTRE %s A L'INTERIEUR, MAIS LA PORTE NE S'OUVRIRA PAS.",
+	"DU VERSUCHST, %s HINEINZUSTELLEN, ABER DIE TUER OEFFNET SICH NICHT."
+};
+
+constexpr I18nText kI18N_theKitchenIsNoPlaceToKeepTheText = {
+	"The kitchen is no place to keep the %s.",
+	"LA COCINA NO ES LUGAR PARA GUARDAR %s.",
+	"LA CUISINE NE CONVIENT PAS A %s.",
+	"DIE KUECHE IST KEIN PLATZ FUER %s."
+};
+
+constexpr I18nText kI18N_youllForgetTheObjectHereText = {
+	"You'll forget the %s here.",
+	"OLIVIDARAS %s AQUI.",
+	"VOUS OUBLIEREZ %s ICI.",
+	"DU WIRST NOCH %s HIER VERGESSEN."
+};
+
+constexpr I18nText kI18N_youdRatherHaveTheObjectWithYouText = {
+	"You'd rather have the %s with you.",
+	"SERIA MEJOR TENER %s CONTIGO.",
+	"IL VAUDRAIT MIEUX AVOIR %s SUR VOUS.",
+	"DU HAETTEST LIEBER %s BEI DIR."
+};
+
+constexpr I18nText kI18N_theObjectHasNoEffectText = {
+	"The %s has no effect.",
+	"%s NO TIENE EFECTO.",
+	"%s N'A AUCUN EFFET.",
+	"%s BEWIRKT NICHTS."
+};
+
+constexpr I18nText kI18N_thisIsNotAGoodPlaceForTheText = {
+	"This is not a good place for the %s.",
+	"NO ES UN BUEN SITIO PARA %s.",
+	"CE N'EST PAS UN BON ENDROIT POUR %s.",
+	"DAS IST KEIN GUTER PLATZ FUER %s."
+};
+
+constexpr I18nText kI18N_youSeeAReflectionOfTheText = {
+	"You see a reflection of the %s.",
+	"VES UN REFLEJO DE %s.",
+	"VOUS VOYEZ UN REFLET REPRESENTANT %s.",
+	"DU SIEHST EIN SPIEGELBILD VON %s."
+};
+
+constexpr I18nText kI18N_youDontWantToLeaveTheObjectUnderTheBedText = {
+	"You don't want to leave the %s under the bed.",
+	"NO QUIERES DEJAR %s DEBAJO DE LA CAMA.",
+	"POURQUOI LAISSERIEZ-VOUS %s SOUS LE LIT?",
+	"DU WILLST %s NICHT UNTER DEM BETT LASSEN."
+};
+
+constexpr I18nText kI18N_genResponse0_usingTheObjectOnTheObjectItMustBeYourHeadachesText = {
+	"Using the %s on the %s doesn't make any sense, it must be your headaches!",
+	"UTILIZAR %s EN %s NO TIENE SENTIDO, TE PRODUCIRA DOLOR DE CABEZA",
+	"POURQUOI UTILISER %s SUR %s PRENEZ DONC DE L'ASPIRINE!",
+	"GEBRAUCHEN VON %s AUF %s MACHT KEINEN SINN, DAS MUSS AN DEINEN KOPFSCHMERZEN LIEGEN!"
+};
+
+constexpr I18nText kI18N_genResponse1_theObjectWillDoNothingToTheText = {
+	"The %s will do nothing to the %s.",
+	"%s NO TIENE NADA QUE VER CON %s.",
+	"%s NE FERONT RIEN A %s.",
+	"%s HAT NICHTS ZU TUN MIT %s"
+};
+
+constexpr I18nText kI18N_genResponse2_theObjectDoesntHaveAnyEffectOnTheText = {
+	"The %s doesn't have any effect on the %s.",
+	"%s NO LE CAUSARA EFECTO A %s.",
+	"%s N'AURA AUCUN EFFET SUR %s.",
+	"%s BEWIRKT NICHTS MIT %s."
+};
+
+constexpr I18nText kI18N_genResponse3_theObjectHasNothingToDoWithTheText = {
+	"The %s has nothing to do with %s.",
+	"%s NO TIENE NADA QUE VER CON %s.",
+	"%s N'A AUCUN RAPPORT AVEC %s.",
+	"%s HAT NICHTS ZU TUN MIT %s."
+};
+
+constexpr I18nText kI18N_genResponse4_areYouFeelingAlrightText = {
+	"Are you feeling alright?",
+	"TE ENCUENTRAS BIEN?",
+	"VOUS ETES SUR QUE CA VA BIEN?",
+	"FUEHLST DU DICH GUT?"
 };
 
 constexpr I18nText kI18N_blankText = {

@@ -60,12 +60,35 @@ _permanentHelp(true), _musicOn(true) {
 
 	TeCore *core = g_engine->getCore();
 	core->_coreNotReady = true;
-	core->fileFlagSystemSetFlag("platform", "MacOSX");
+	const char *platform = "";
+	switch (g_engine->getGamePlatform()) {
+	case Common::Platform::kPlatformAndroid:
+		platform = "Android";
+		core->fileFlagSystemSetFlag("pad", "padDisabled");
+		break;
+	case Common::Platform::kPlatformMacintosh:
+		platform = "MacOSX";
+		break;
+	case Common::Platform::kPlatformIOS:
+		platform = "iPhone";
+		break;
+	case Common::Platform::kPlatformNintendoSwitch:
+		platform = "NX";
+		core->fileFlagSystemSetFlag("pad", "padDisabled");
+		break;
+	case Common::Platform::kPlatformPS3:
+		platform = "PS3";
+		break;
+	default:
+		error("Unsupported platform");
+	}
+	core->fileFlagSystemSetFlag("platform", platform);
 	//
 	// WORKAROUND: Syberia 2 A5_ValDomaine/54000/Logic54000.lua
 	// checks a typo of this flag..
 	//
-	core->fileFlagSystemSetFlag("plateform", "MacOSX");
+	core->fileFlagSystemSetFlag("plateform", platform);
+
 	core->fileFlagSystemSetFlag("part", "Full");
 	if (g_engine->isGameDemo())
 		core->fileFlagSystemSetFlag("distributor", "Freemium");
@@ -168,10 +191,10 @@ void Application::create() {
 
 	// Try alternate langs..
 	int i = 0;
-	Common::Path textFilePath;
+	TetraedgeFSNode textFileNode;
 	while (i < ARRAYSIZE(allLangs)) {
-		textFilePath = core->findFile(textsPath.join(core->language() + ".xml"));
-		if (Common::File::exists(textFilePath))
+		textFileNode = core->findFile(textsPath.join(core->language() + ".xml"));
+		if (textFileNode.exists())
 			break;
 		core->language(allLangs[i]);
 		i++;
@@ -180,7 +203,7 @@ void Application::create() {
 		error("Couldn't find texts/[lang].xml for any language.");
 	}
 
-	_loc.load(textFilePath);
+	_loc.load(textFileNode);
 	core->addLoc(&_loc);
 
 	if (!g_engine->gameIsAmerzone()) {
@@ -377,7 +400,7 @@ bool Application::run() {
 		if (_finishedGame) {
 			game->leave(false);
 			_mainMenu.enter();
-			if (Common::File::exists("finalURL.lua")) {
+			if (Common::File::exists("finalURL.lua") || Common::File::exists("finalURL.data")) {
 				TeLuaGUI finalGui;
 				finalGui.load("finalURL.lua");
 				/*TeVariant finalVal =*/ finalGui.value("finalURL");

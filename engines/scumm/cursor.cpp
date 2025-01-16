@@ -887,6 +887,15 @@ void ScummEngine_v2::setBuiltinCursor(int idx) {
 			*(hotspot - _cursor.width * (3 + i)) = color;
 			*(hotspot + _cursor.width * (3 + i)) = color;
 		}
+	} else if (_macGui) {
+		int width, height, hotspotX, hotspotY, animate;
+
+		_macGui->setupCursor(width, height, hotspotX, hotspotY, animate);
+
+		_cursor.width = width;
+		_cursor.height = height;
+		_cursor.hotspotX = hotspotX;
+		_cursor.hotspotY = hotspotY;
 	} else {
 		_cursor.width = 23;
 		_cursor.height = 21;
@@ -940,6 +949,11 @@ void ScummEngine_v2::setBuiltinCursor(int idx) {
 }
 
 void ScummEngine_v2::setSnailCursor() {
+	// When running Maniac Mansion as a Macintosh game, there is no snail
+	// cursor. Only the regular arrow cursor.
+	if (_macGui)
+		return;
+
 	byte color;
 	if (_game.platform == Common::kPlatformC64 || _game.platform == Common::kPlatformApple2GS)
 		color = default_v0_cursor_colors[1];
