@@ -32,16 +32,24 @@
 
 #include "audio/audiostream.h"
 
+#include "common/archive.h"
 #include "common/debug.h"
 #include "common/memstream.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "common/util.h"
 
+#include "common/compression/unzip.h"
+
+#include "graphics/cursorman.h"
+#include "image/icocur.h"
+
 // Video codecs
 #include "image/codecs/codec.h"
 
 namespace Video {
+
+static const char * const MACGUI_DATA_BUNDLE = "macgui.dat";
 
 ////////////////////////////////////////////
 // QuickTimeDecoder
@@ -85,10 +93,21 @@ void QuickTimeDecoder::close() {
 		delete _scaledSurface;
 		_scaledSurface = 0;
 	}
+
+	delete _dataBundle;
+	_dataBundle = nullptr;
+	cleanupCursors();
 }
 
 const Graphics::Surface *QuickTimeDecoder::decodeNextFrame() {
 	const Graphics::Surface *frame = VideoDecoder::decodeNextFrame();
+
+	if (isVR()) {
+		_panAngle = (float)getCurrentColumn() / (float)_nav.columns * 360.0;
+		_tiltAngle = ((_nav.rows - 1) / 2.0 - (float)getCurrentRow()) / (float)(_nav.rows - 1) * 180.0;
+
+		debugC(1, kDebugLevelMacGUI, "QTVR: row: %d col: %d  (%d x %d) pan: %f tilt: %f", getCurrentRow(), getCurrentColumn(), _nav.rows, _nav.columns, getPanAngle(), getTiltAngle());
+	}
 
 	// Update audio buffers too
 	// (needs to be done after we find the next track)
@@ -619,14 +638,19 @@ Common::String QuickTimeDecoder::getAliasPath() {
 }
 
 void QuickTimeDecoder::handleMouseMove(int16 x, int16 y) {
-	if (_qtvrType != QTVRType::OBJECT || !_isMouseButtonDown )
+	if (_qtvrType != QTVRType::OBJECT)
+		return;
+
+	updateQTVRCursor(x, y);
+
+	if (!_isMouseButtonDown)
 		return;
 
 	VideoTrackHandler *track = (VideoTrackHandler *)_nextVideoTrack;
 
 	// HACK: FIXME: Hard coded for now
 	const int sensitivity = 10;
-	const float speedFactor = 0.1f; 
+	const float speedFactor = 0.1f;
 
 	int16 mouseDeltaX = x - _prevMouseX;
 	int16 mouseDeltaY = y - _prevMouseY;
@@ -639,10 +663,10 @@ void QuickTimeDecoder::handleMouseMove(int16 x, int16 y) {
 	if (ABS(mouseDeltaY) >= sensitivity) {
 		int newFrame = track->getCurFrame() - round(speedY) * _nav.columns;
 
-		if (newFrame >= 0 && newFrame < track->getFrameCount())
+		if (newFrame >= 0 && newFrame < track->getFrameCount()) {
 			track->setCurFrame(newFrame);
-
-		changed = true;
+			changed = true;
+		}
 	}
 
 	if (ABS(mouseDeltaX) >= sensitivity) {
@@ -651,9 +675,10 @@ void QuickTimeDecoder::handleMouseMove(int16 x, int16 y) {
 
 		int newFrame = (track->getCurFrame() - (int)roundf(speedX) - currentRowStart) % _nav.columns + currentRowStart;
 
-		track->setCurFrame(newFrame);
-
-		changed = true;
+		if (newFrame >= 0 && newFrame < track->getFrameCount()) {
+			track->setCurFrame(newFrame);
+			changed = true;
+		}
 	}
 
 	if (changed) {
@@ -663,12 +688,25 @@ void QuickTimeDecoder::handleMouseMove(int16 x, int16 y) {
 }
 
 void QuickTimeDecoder::handleMouseButton(bool isDown, int16 x, int16 y) {
-	_isMouseButtonDown = isDown;
-
 	if (isDown) {
-		_prevMouseX = x;
-		_prevMouseY = y;
+		if (y < _curBbox.top) {
+			setCurrentRow(getCurrentRow() + 1);
+		} else if (y > _curBbox.bottom) {
+			setCurrentRow(getCurrentRow() - 1);
+		} else if (x < _curBbox.left) {
+			setCurrentColumn((getCurrentColumn() + 1) % _nav.columns);
+		} else if (x > _curBbox.right) {
+			setCurrentColumn((getCurrentColumn() - 1 + _nav.columns) % _nav.columns);
+		} else {
+			_prevMouseX = x;
+			_prevMouseY = y;
+			_isMouseButtonDown = isDown;
+		}
+	} else {
+		_isMouseButtonDown = isDown;
 	}
+
+	updateQTVRCursor(x, y);
 }
 
 void QuickTimeDecoder::setCurrentRow(int row) {
@@ -1227,6 +1265,102 @@ const Graphics::Surface *QuickTimeDecoder::VideoTrackHandler::forceDither(const 
 		ditherFrame<uint32>(frame, *_ditherFrame, _ditherTable);
 
 	return _ditherFrame;
+}
+
+enum {
+	kCurHand = 129,
+	kCurGrab = 130,
+	kCurObjUp = 131,
+	kCurObjDown = 132,
+	kCurObjLeft90 = 133,
+	kCurObjRight90 = 134,
+	kCurObjLeftM90 = 149,
+	kCurObjRightM90 = 150,
+	kCurObjUpLimit = 151,
+	kCurObjDownLimit = 152,
+	kCurLastCursor
+};
+
+void QuickTimeDecoder::updateQTVRCursor(int16 x, int16 y) {
+	if (_qtvrType == QTVRType::OBJECT) {
+		int tiltIdx = int((-_tiltAngle + 90.0) / 21) * 2;
+
+		if (y < _curBbox.top)
+			setCursor(tiltIdx == 16 ? kCurObjUpLimit : kCurObjUp);
+		else if (y > _curBbox.bottom)
+			setCursor(tiltIdx == 0 ? kCurObjDownLimit : kCurObjDown);
+		else if (x < _curBbox.left)
+			setCursor(kCurObjLeft90 + tiltIdx);
+		else if (x > _curBbox.right)
+			setCursor(kCurObjRight90 + tiltIdx);
+		else
+			setCursor(_isMouseButtonDown ? kCurGrab : kCurHand);
+	}
+}
+
+void QuickTimeDecoder::cleanupCursors() {
+	if (!_cursorCache)
+		return;
+
+	for (int i = 0; i < kCurLastCursor; i++)
+		delete _cursorCache[i];
+
+	free(_cursorCache);
+	_cursorCache = nullptr;
+}
+
+void QuickTimeDecoder::setCursor(int curId) {
+	if (_currentQTVRCursor == curId)
+		return;
+
+	_currentQTVRCursor = curId;
+
+	if (!_dataBundle) {
+		_dataBundle = Common::makeZipArchive(MACGUI_DATA_BUNDLE);
+
+		if (!_dataBundle) {
+			warning("QTVR: Couldn't load data bundle '%s'.", MACGUI_DATA_BUNDLE);
+		}
+	}
+
+	if (!_cursorCache) {
+		_cursorCache = (Graphics::Cursor **)calloc(kCurLastCursor, sizeof(Graphics::Cursor *));
+
+		computeInteractivityZones();
+	}
+
+	if (curId >= kCurLastCursor)
+		error("QTVR: Incorrect cursor ID: %d > %d", curId, kCurLastCursor);
+
+	if (!_cursorCache[curId]) {
+		Common::Path path(Common::String::format("qtvr/CURSOR%d_1.cur", curId));
+
+		Common::SeekableReadStream *stream = _dataBundle->createReadStreamForMember(path);
+
+		if (!stream) {
+			warning("QTVR: Cannot load cursor ID %d, file '%s' does not exist", curId, path.toString().c_str());
+			return;
+		}
+
+		Image::IcoCurDecoder decoder;
+		if (!decoder.open(*stream, DisposeAfterUse::YES)) {
+			warning("QTVR: Cannot load cursor ID %d, file '%s' bad format", curId, path.toString().c_str());
+			return;
+		}
+
+		_cursorCache[curId] = decoder.loadItemAsCursor(0);
+	}
+
+	CursorMan.replaceCursor(_cursorCache[curId]);
+	CursorMan.showMouse(true);
+}
+
+void QuickTimeDecoder::computeInteractivityZones() {
+	_curBbox.left = MIN(20, getWidth() / 10);
+	_curBbox.right = getWidth() - _curBbox.left;
+
+	_curBbox.top = MIN(20, getHeight() / 10);
+	_curBbox.bottom = getHeight() - _curBbox.top;
 }
 
 } // End of namespace Video

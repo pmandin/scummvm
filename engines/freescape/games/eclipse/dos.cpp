@@ -29,58 +29,12 @@
 namespace Freescape {
 
 extern byte kEGADefaultPalette[16][3];
-byte kEclipseCGAPaletteRedGreen[4][3] = {
-	{0x00, 0x00, 0x00},
-	{0x55, 0xff, 0x55},
-	{0xff, 0x55, 0x55},
-	{0xff, 0xff, 0x55},
-};
-
-byte kEclipseCGAPalettePinkBlue[4][3] = {
-	{0x00, 0x00, 0x00},
-	{0x55, 0xff, 0xff},
-	{0xff, 0x55, 0xff},
-	{0xff, 0xff, 0xff},
-};
-
-static const CGAPaletteEntry rawCGAPaletteByArea[] {
-	{1, (byte *)kEclipseCGAPalettePinkBlue},
-	{2, (byte *)kEclipseCGAPaletteRedGreen},
-	{3, (byte *)kEclipseCGAPaletteRedGreen},
-	{4, (byte *)kEclipseCGAPaletteRedGreen},
-	{5, (byte *)kEclipseCGAPaletteRedGreen},
-	{6, (byte *)kEclipseCGAPaletteRedGreen},
-	{7, (byte *)kEclipseCGAPaletteRedGreen},
-	{8, (byte *)kEclipseCGAPaletteRedGreen},
-	{9, (byte *)kEclipseCGAPaletteRedGreen},
-	{10, (byte *)kEclipseCGAPaletteRedGreen},
-	{11, (byte *)kEclipseCGAPaletteRedGreen},
-	{12, (byte *)kEclipseCGAPaletteRedGreen},
-	{13, (byte *)kEclipseCGAPaletteRedGreen},
-	{14, (byte *)kEclipseCGAPaletteRedGreen},
-	{15, (byte *)kEclipseCGAPaletteRedGreen},
-	{16, (byte *)kEclipseCGAPaletteRedGreen},
-	{17, (byte *)kEclipseCGAPaletteRedGreen},
-	{18, (byte *)kEclipseCGAPaletteRedGreen},
-	{19, (byte *)kEclipseCGAPaletteRedGreen},
-	{20, (byte *)kEclipseCGAPaletteRedGreen},
-	{21, (byte *)kEclipseCGAPaletteRedGreen},
-	{22, (byte *)kEclipseCGAPaletteRedGreen},
-	{23, (byte *)kEclipseCGAPaletteRedGreen},
-	{24, (byte *)kEclipseCGAPaletteRedGreen},
-	{25, (byte *)kEclipseCGAPaletteRedGreen},
-	{27, (byte *)kEclipseCGAPaletteRedGreen},
-	{28, (byte *)kEclipseCGAPaletteRedGreen},
-	{29, (byte *)kEclipseCGAPaletteRedGreen},
-	{30, (byte *)kEclipseCGAPaletteRedGreen},
-	{31, (byte *)kEclipseCGAPaletteRedGreen},
-	{32, (byte *)kEclipseCGAPaletteRedGreen},
-	{0, 0}   // This marks the end
-};
+extern byte kCGAPaletteRedGreen[4][3];
+extern byte kCGAPalettePinkBlue[4][3];
 
 void EclipseEngine::initDOS() {
 	_viewArea = Common::Rect(40, 33, 280, 133);
-	_rawCGAPaletteByArea = (const CGAPaletteEntry *)&rawCGAPaletteByArea;
+	_soundIndexShoot = 18;
 }
 
 void EclipseEngine::loadAssetsDOSFullGame() {
@@ -119,7 +73,7 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 		file.open("SCN1C.DAT");
 		if (file.isOpen()) {
 			_title = load8bitBinImage(&file, 0x0);
-			_title->setPalette((byte *)&kEclipseCGAPaletteRedGreen, 0, 4);
+			_title->setPalette((byte *)&kCGAPaletteRedGreen, 0, 4);
 		}
 		file.close();
 		file.open("TOTEC.EXE");
@@ -137,7 +91,7 @@ void EclipseEngine::loadAssetsDOSFullGame() {
 				it._value->addObjectFromArea(id, _areaMap[255]);
 		}
 		_border = load8bitBinImage(&file, 0x210);
-		_border->setPalette((byte *)&kEclipseCGAPaletteRedGreen, 0, 4);
+		_border->setPalette((byte *)&kCGAPaletteRedGreen, 0, 4);
 		swapPalette(_startArea);
 	} else
 		error("Invalid or unsupported render mode %s for Total Eclipse", Common::getRenderModeDescription(_renderMode));
@@ -167,7 +121,8 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 		drawStringInSurface(_currentArea->_name, 102, 135, black, yellow, surface);
 
 	Common::String scoreStr = Common::String::format("%07d", score);
-	drawStringInSurface(scoreStr, 136, 6, black, white, surface, 'Z' - '0' + 1);
+	Common::String encodedScoreStr = shiftStr(scoreStr, 'Z' - '0' + 1);
+	drawStringInSurface(encodedScoreStr, 136, 6, black, white, surface);
 
 	int x = 171;
 	if (shield < 10)
@@ -178,13 +133,13 @@ void EclipseEngine::drawDOSUI(Graphics::Surface *surface) {
 	Common::String shieldStr = Common::String::format("%d", shield);
 	drawStringInSurface(shieldStr, x, 162, black, redish, surface);
 
-	drawStringInSurface(Common::String('0' - _angleRotationIndex), 79, 135, black, yellow, surface, 'Z' - '$' + 1);
-	drawStringInSurface(Common::String('3' - _playerStepIndex), 63, 135, black, yellow, surface, 'Z' - '$' + 1);
-	drawStringInSurface(Common::String('7' - _playerHeightNumber), 240, 135, black, yellow, surface, 'Z' - '$' + 1);
+	drawStringInSurface(shiftStr("0", 'Z' - '$' + 1 - _angleRotationIndex), 79, 135, black, yellow, surface);
+	drawStringInSurface(shiftStr("3", 'Z' - '$' + 1 - _playerStepIndex), 63, 135, black, yellow, surface);
+	drawStringInSurface(shiftStr("7", 'Z' - '$' + 1 - _playerHeightNumber), 240, 135, black, yellow, surface);
 
 	if (_shootingFrames > 0) {
-		drawStringInSurface("4", 232, 135, black, yellow, surface, 'Z' - '$' + 1);
-		drawStringInSurface("<", 240, 135, black, yellow, surface, 'Z' - '$' + 1);
+		drawStringInSurface(shiftStr("4", 'Z' - '$' + 1), 232, 135, black, yellow, surface);
+		drawStringInSurface(shiftStr("<", 'Z' - '$' + 1), 240, 135, black, yellow, surface);
 	}
 	drawAnalogClock(surface, 90, 172, black, red, white);
 
@@ -250,7 +205,7 @@ void EclipseEngine::playSoundFx(int index, bool sync) {
 	byte *data = _soundsFx[index]->data;
 
 	Audio::SeekableAudioStream *stream = Audio::makeRawStream(data, size, 11025, Audio::FLAG_UNSIGNED, DisposeAfterUse::NO);
-	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundFxHandle, stream);
+	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundFxHandle, stream, -1, kFreescapeDefaultVolume / 10);
 }
 
 

@@ -46,21 +46,21 @@ void GameStatus::draw() {
 }
 
 void GameStatus::displayHealth(GfxSurface &s) {
-	int b = 59 + _G(thor)->health;
+	const int x = 59 + _G(thor)->_health;
 
-	s.fillRect(Common::Rect(59, 8, b, 12), 32);
-	s.fillRect(Common::Rect(b, 8, 209, 12), STAT_COLOR);
+	s.fillRect(Common::Rect(59, 8, x, 12), 32);
+	s.fillRect(Common::Rect(x, 8, 209, 12), STAT_COLOR);
 }
 
 void GameStatus::displayMagic(GfxSurface &s) {
-	int b = 59 + _G(thor_info).magic;
+	const int x = 59 + _G(thorInfo)._magic;
 
-	s.fillRect(Common::Rect(59, 20, b, 24), 96);
-	s.fillRect(Common::Rect(b, 20, 209, 24), STAT_COLOR);
+	s.fillRect(Common::Rect(59, 20, x, 24), 96);
+	s.fillRect(Common::Rect(x, 20, 209, 24), STAT_COLOR);
 }
 
 void GameStatus::displayJewels(GfxSurface &s) {
-	Common::String str = Common::String::format("%d", _G(thor_info).jewels);
+	const Common::String str = Common::String::format("%d", _G(thorInfo)._jewels);
 	int x;
 	if (str.size() == 1)
 		x = 70;
@@ -74,15 +74,15 @@ void GameStatus::displayJewels(GfxSurface &s) {
 }
 
 void GameStatus::displayScore(GfxSurface &s) {
-	Common::String str = Common::String::format("%ld", _G(thor_info).score);
-	int x = 276 - (str.size() * 8);
+	const Common::String str = Common::String::format("%ld", _G(thorInfo)._score);
+	const int x = 276 - (str.size() * 8);
 
 	s.fillRect(Common::Rect(223, 32, 279, 42), STAT_COLOR);
 	s.print(Common::Point(x, 32), str, 14);
 }
 
 void GameStatus::displayKeys(GfxSurface &s) {
-	Common::String str = Common::String::format("%d", _G(thor_info).keys);
+	const Common::String str = Common::String::format("%d", _G(thorInfo)._keys);
 
 	int x;
 	if (str.size() == 1)
@@ -99,12 +99,12 @@ void GameStatus::displayKeys(GfxSurface &s) {
 void GameStatus::displayItem(GfxSurface &s) {
 	s.fillRect(Common::Rect(280, 8, 296, 24), STAT_COLOR);
 
-	THOR_INFO thorInfo = _G(thor_info);
-	if (thorInfo.item) {
-		if (thorInfo.item == 7)
-			s.simpleBlitFrom(_G(objects[thorInfo.object + 10]), Common::Point(280, 8));
+	ThorInfo thorInfo = _G(thorInfo);
+	if (thorInfo._selectedItem) {
+		if (thorInfo._selectedItem == 7)
+			s.simpleBlitFrom(_G(objects[thorInfo._object + 10]), Common::Point(280, 8));
 		else
-			s.simpleBlitFrom(_G(objects[thorInfo.item + 25]), Common::Point(280, 8));
+			s.simpleBlitFrom(_G(objects[thorInfo._selectedItem + 25]), Common::Point(280, 8));
 	}
 }
 
@@ -122,8 +122,8 @@ bool GameStatus::msgGame(const GameMessage &msg) {
 bool GameStatus::tick() {
 	if (_scoreCountdown > 0) {
 		if ((_scoreCountdown % SCORE_INTERVAL) == 0) {
-			_G(sound).play_sound(WOOP, 1);
-			add_score(1000);
+			_G(sound).playSound(WOOP, 1);
+			addScore(1000);
 		}
 
 		if (--_scoreCountdown == 0) {

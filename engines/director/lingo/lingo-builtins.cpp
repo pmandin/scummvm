@@ -785,7 +785,7 @@ void LB::b_duplicateList(int nargs) {
 void LB::b_findPos(int nargs) {
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
-	Datum d(0);
+	Datum d(g_lingo->getVoid());
 	TYPECHECK(list, PARRAY);
 
 	int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
@@ -799,11 +799,16 @@ void LB::b_findPos(int nargs) {
 void LB::b_findPosNear(int nargs) {
 	Common::String prop = g_lingo->pop().asString();
 	Datum list = g_lingo->pop();
-	Datum res(0);
+	Datum res;
 	TYPECHECK(list, PARRAY);
 
 	// FIXME: Integrate with compareTo framework
 	prop.toLowercase();
+
+	// This requires more testing, but D4-D6 test show that it does not work as described.
+	// The example:
+	//   findPosNear([#Nile:2, #Pharaoh:4, #Raja:0], #Ni)  supposed to return 1, for #Nile, but it returns 4
+	res = Datum((int)list.u.parr->arr.size() + 1); // Set it to the end of array by default
 
 	for (uint i = 0; i < list.u.parr->arr.size(); i++) {
 		Datum p = list.u.parr->arr[i].p;

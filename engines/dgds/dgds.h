@@ -121,14 +121,15 @@ enum DragonArcadeKeyEvent {
 
 class DgdsEngine : public Engine {
 public:
-	Common::Platform _platform;
-	Common::Language _gameLang;
 	Sound *_soundPlayer;
 	Graphics::ManagedSurface _compositionBuffer;
 
 	static const byte HOC_CHAR_SWAP_ICONS[];
 
 private:
+	Common::Platform _platform;
+	Common::Language _gameLang;
+
 	Console *_console;
 
 	ResourceManager *_resource;
@@ -166,7 +167,8 @@ private:
 	int _difficulty;
 
 	bool _justChangedScene1;
-	bool _justChangedScene2;
+	// There is another flag in Rise of the Dragon, but it seems to never be used for anything?
+	//bool _justChangedScene2;
 
 	Common::RandomSource _random;
 	Common::Point _lastMouse; // originals start mouse at 0,0.
@@ -183,11 +185,11 @@ private:
 
 	bool _isDemo;
 	bool _isEGA;
+	bool _isAltDlgColors;
 	bool _flipMode;
-	bool _skipNextFrame;
 	uint32 _thisFrameMs;
 	int16 _lastGlobalFade; // Only used in Willy Beamish
-	uint _lastGlobalFadedPal;
+	uint _lastGlobalFadedPal;  // Only used in Willy Beamish
 
 	bool _debugShowHotAreas;
 
@@ -235,7 +237,6 @@ public:
 
 	void setShowClock(bool val);
 	bool justChangedScene1() const { return _justChangedScene1; }
-	bool justChangedScene2() const { return _justChangedScene2; }
 	Common::Point getLastMouse() const { return _lastMouse; }
 	Common::Point getLastMouseMinusHot() const;
 
@@ -269,13 +270,14 @@ public:
 	ChinaTrain *getChinaTrain() { return _chinaTrain; }
 	ChinaTank *getChinaTank() { return _chinaTank; }
 	DragonArcade *getDragonArcade() { return _dragonArcade; }
-	void setSkipNextFrame() { _skipNextFrame = true; }
 	uint32 getThisFrameMs() const { return _thisFrameMs; }
 
 	static DgdsEngine *getInstance() { return static_cast<DgdsEngine *>(g_engine); }
 	void setFlipMode(bool mode) { _flipMode = mode; }
 
 	bool isEGA() const { return _isEGA; }
+	bool isDemo() const { return _isDemo; }
+	bool isAltDlgColors() const { return _isAltDlgColors; }
 
 	void enableKeymapper();
 	void disableKeymapper();

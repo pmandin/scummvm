@@ -38,23 +38,11 @@ public:
 	Scripts();
 	~Scripts();
 
-	void execute_script(long index, const Gfx::Pics &speakerIcon,
-						ScriptEndFn endFn = nullptr);
-
-	void pause() {
-		_paused = SCRIPT_PAUSED;
-	}
-	void resume() {
-		_paused = SCRIPT_RESUMING;
-	}
-
+	void executeScript(long index, const Gfx::Pics &speakerIcon, ScriptEndFn endFn = nullptr);
+	void pause();
+	void resume();
 	void setAskResponse(int option);
-	void runIfResuming() {
-		if (_paused == SCRIPT_RESUMING) {
-			_paused = SCRIPT_READY;
-			scriptLoop();
-		}
-	}
+	void runIfResuming();
 
 private:
     ScriptEndFn _endFn = nullptr;
@@ -66,9 +54,9 @@ private:
     int   _numLabels = 0;          // number of labels
     char  *_gosubStack[32] = {};   // stack for GOSUB return addresses
     int   _gosubPtr = 0;           // GOSUB stack pointer
-    char  *_forStack[10] = {};     // FOR stack
-    long  _forVal[10] = {};        // current FOR value
-    int8  _forVar[10] = {};        // ending FOR value (target var)
+    char  *_forStack[11] = {};     // FOR stack
+    long  _forVal[11] = {};        // current FOR value
+    int8  _forVar[11] = {};        // ending FOR value (target var)
     int8  _forPtr = 0;	           // FOR stack pointer
     char  *_buffPtr = nullptr;     // pointer to current command
     char  *_buffEnd = nullptr;	   // pointer to end of buffer
@@ -82,35 +70,35 @@ private:
     int _askVar = -1;
 
 private:
-    int  read_script_file();
-    void script_error(int err_num);
-    int  get_command();
-    int  skip_colon();
-    int  calc_value();
-    int  get_next_val();
-    int  calc_string(int mode);
-    void get_str();
-    int  get_internal_variable();
-    int  exec_command(int num);
-    int get_line(char *src, char *dst);
-    void script_entry() {}
-    void script_exit();
+    int  readScriptFile();
+    void scriptError(int err_num);
+    int  getCommand();
+    int  skipColon();
+    int  calcValue();
+    int  getNextValue();
+    int  calcString(int mode);
+    void getStr();
+    int  getInternalVariable();
+    int  execCommand(int num);
+    int getLine(char *src, char *dst);
+    void scriptEntry() {}
+    void scriptExit();
 
     int cmd_goto();
     int cmd_if();
     int cmd_run();
-    int cmd_addjewels();
-    int cmd_addhealth();
-    int cmd_addmagic();
-    int cmd_addkeys();
-    int cmd_addscore();
+    int cmd_addJewels();
+    int cmd_addHealth();
+    int cmd_addMagic();
+    int cmd_addKeys();
+    int cmd_addScore();
     int cmd_say(int mode, int type);
     int cmd_ask();
     int cmd_sound();
-    int cmd_settile();
-    int cmd_itemgive();
-    int cmd_itemtake();
-    int cmd_setflag();
+    int cmd_setTile();
+    int cmd_itemGive();
+    int cmd_itemTake();
+    int cmd_setFlag();
     int cmd_ltoa();
     int cmd_pause();
     int cmd_visible();
@@ -131,7 +119,7 @@ private:
 
 };
 
-extern void execute_script(long index, const Gfx::Pics &speakerIcon,
+extern void executeScript(long index, const Gfx::Pics &speakerIcon,
                            ScriptEndFn endFn = nullptr);
 
 } // namespace Got

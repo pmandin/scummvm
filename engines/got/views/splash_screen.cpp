@@ -42,7 +42,7 @@ void SplashScreen::draw() {
 }
 
 bool SplashScreen::msgFocus(const FocusMessage &msg) {
-	Gfx::GraphicChunk chunk = _G(gfx[93]);
+	const Gfx::GraphicChunk chunk = _G(gfx[93]);
 	_frameCount = READ_LE_UINT16(chunk._data);
 	_chunkSize = chunk._data + 2;
 	_chunkPtr = chunk._data + 2 + _frameCount * 4;
@@ -53,11 +53,11 @@ bool SplashScreen::msgFocus(const FocusMessage &msg) {
 	// This is the first screen shown, so start with black, and fade it in
 	byte blackPal[PALETTE_SIZE];
 	Common::fill(blackPal, blackPal + PALETTE_SIZE, 0);
-	Gfx::xsetpal(blackPal);
+	Gfx::xSetPal(blackPal);
 
 	draw();
-	Gfx::Palette63 pal = _G(gfx[91]);
-	Gfx::fade_in(pal);
+	const Gfx::Palette63 pal = _G(gfx[91]);
+	Gfx::fadeIn(pal);
 
 	return true;
 }

@@ -27,8 +27,7 @@ namespace Got {
 /**
  * Handles in-game initialization the first time
  */
-extern void initialize_game();
-extern int setup_boss(int num);
+extern void initGame();
 
 } // namespace Got
 

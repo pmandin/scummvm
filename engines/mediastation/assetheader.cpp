@@ -30,7 +30,7 @@ AssetHeader::AssetHeader(Chunk &chunk) {
 	// but they are all pointers so it doesn't matter.
 	_fileNumber = Datum(chunk).u.i;
 	// TODO: Cast to an asset type.
-	_type = AssetType(Datum(chunk).u.i);
+	_type = static_cast<AssetType>(Datum(chunk).u.i);
 	_id = Datum(chunk).u.i;
 	debugC(4, kDebugLoading, "AssetHeader::AssetHeader(): _type = 0x%x, _id = 0x%x (@0x%llx)", static_cast<uint>(_type), _id, static_cast<long long int>(chunk.pos()));
 
@@ -45,12 +45,52 @@ AssetHeader::AssetHeader(Chunk &chunk) {
 
 AssetHeader::~AssetHeader() {
 	delete _boundingBox;
+	_boundingBox = nullptr;
+
+	for (Common::Point *point : _mouseActiveArea) {
+		delete point;
+	}
 	_mouseActiveArea.clear();
+
+	for (auto it = _eventHandlers.begin(); it != _eventHandlers.end(); ++it) {
+		delete it->_value;
+	}
+	_eventHandlers.clear();
+
+	for (EventHandler *timeHandler : _timeHandlers) {
+		delete timeHandler;
+	}
+	_timeHandlers.clear();
+
+	for (auto it = _keyDownHandlers.begin(); it != _keyDownHandlers.end(); ++it) {
+		delete it->_value;
+	}
+	_keyDownHandlers.clear();
+
+	for (EventHandler *inputHandler : _inputHandlers) {
+		delete inputHandler;
+	}
+	_inputHandlers.clear();
+
+	for (EventHandler *loadCompleteHandler : _loadCompleteHandlers) {
+		delete loadCompleteHandler;
+	}
+	_loadCompleteHandlers.clear();
+
 	delete _palette;
+	_palette = nullptr;
+
 	delete _name;
+	_name = nullptr;
+	
 	delete _startPoint;
+	_startPoint = nullptr;
+
 	delete _endPoint;
+	_endPoint = nullptr;
+
 	delete _text;
+	_text = nullptr;
 }
 
 void AssetHeader::readSection(AssetHeaderSectionType sectionType, Chunk& chunk) {
@@ -231,7 +271,7 @@ void AssetHeader::readSection(AssetHeaderSectionType sectionType, Chunk& chunk) 
 
 	case kAssetHeaderSoundEncoding1:
 	case kAssetHeaderSoundEncoding2: {
-		_soundEncoding = SoundEncoding(Datum(chunk).u.i);
+		_soundEncoding = static_cast<SoundEncoding>(Datum(chunk).u.i);
 		break;
 	}
 
@@ -251,7 +291,10 @@ void AssetHeader::readSection(AssetHeaderSectionType sectionType, Chunk& chunk) 
 	}
 
 	case kAssetHeaderStepRate: {
-		_stepRate = (uint32)(Datum(chunk, kDatumTypeFloat64_2).u.f);
+		double _stepRateFloat = Datum(chunk, kDatumTypeFloat64_2).u.f;
+		// This should always be an integer anyway,
+		// so we'll cast away any fractional part.
+		_stepRate = static_cast<uint32>(_stepRateFloat);
 		break;
 	}
 

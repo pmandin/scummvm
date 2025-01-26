@@ -75,7 +75,7 @@ ContextDeclaration::ContextDeclaration(Chunk &chunk) {
 			uint32 repeatedFileNumber = Datum(chunk).u.i;
 			if (repeatedFileNumber != _fileNumber) {
 				warning("ContextDeclaration(): Expected file numbers to match, but 0x%d != 0x%d", _fileNumber, repeatedFileNumber);
-			} 	
+			}
 		} else {
 			error("ContextDeclaration(): Expected section type FILE_NUMBER_2, got 0x%x", static_cast<uint>(sectionType));
 		}
@@ -444,10 +444,32 @@ Boot::~Boot() {
 	delete _versionInfo;
 	_versionInfo = nullptr;
 
+	delete _sourceString;
+	_sourceString = nullptr;
+
+	for (auto it = _contextDeclarations.begin(); it != _contextDeclarations.end(); ++it) {
+		delete it->_value;
+	}
 	_contextDeclarations.clear();
+
+	for (auto it = _subfileDeclarations.begin(); it != _subfileDeclarations.end(); ++it) {
+		delete it->_value;
+	}
 	_subfileDeclarations.clear();
+
+	for (auto it = _cursorDeclarations.begin(); it != _cursorDeclarations.end(); ++it) {
+		delete it->_value;
+	}
 	_cursorDeclarations.clear();
+
+	for (auto it = _engineResourceDeclarations.begin(); it != _engineResourceDeclarations.end(); ++it) {
+		delete it->_value;
+	}
 	_engineResourceDeclarations.clear();
+
+	for (auto unknownDeclaration : _unknownDeclarations) {
+		delete unknownDeclaration;
+	}
 	_unknownDeclarations.clear();
 }
 #pragma endregion

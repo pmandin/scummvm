@@ -40,7 +40,8 @@ void Operand::putInteger(int i) {
 	}
 
 	default: {
-		error("Operand::putInteger(): Attempt to put unsupported value into operand (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::putInteger(): Attempt to put integer into operand type %s (%d)", 
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -58,7 +59,8 @@ int Operand::getInteger() {
 	}
 
 	default: {
-		error("Operand::getInteger(): Attempt to get unsupported value from operand (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getInteger(): Attempt to get integer from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -78,7 +80,8 @@ void Operand::putDouble(double d) {
 	}
 
 	default: {
-		error("Operand::putDouble(): Attempt to put unsupported value in operand (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::putDouble(): Attempt to put double into operand type %s (%d)", 
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -96,7 +99,8 @@ double Operand::getDouble() {
 	}
 
 	default: {
-		error("Operand::getDouble(): Attempt to get unsupported value from operand (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getDouble(): Attempt to get double from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -115,7 +119,8 @@ void Operand::putString(Common::String *string) {
 	}
 
 	default: {
-		error("Operand::putString(): Attempt to put unsupported value into operand (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::putString(): Attempt to put string into operand type %s (%d)", 
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -132,7 +137,8 @@ Common::String *Operand::getString() {
 	}
 
 	default: {
-		error("Operand::getString(): Attempt to get unsupported value from operand (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getString(): Attempt to get string from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -145,7 +151,8 @@ void Operand::putVariable(Variable *variable) {
 	}
 
 	default: {
-		error("Operand::putVariable(): Attempt to put unsupported value into operand that is not a variable (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::putVariable(): Attempt to put variable into operand type %s (%d)", 
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -157,7 +164,8 @@ Variable *Operand::getVariable() {
 	}
 
 	default: {
-		error("Operand::getVariable(): Attempt to get unsupported value from operand that is not a variable (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getVariable(): Attempt to get variable from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -170,7 +178,8 @@ void Operand::putFunction(uint functionId) {
 	}
 
 	default: {
-		error("Operand::putFunction(): Attempt to put unsupported value into operand that is not a function (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::putFunction(): Attempt to put function ID into operand type %s (%d)", 
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -182,7 +191,8 @@ uint Operand::getFunctionId() {
 	}
 
 	default: {
-		error("Operand::getFunction(): Attempt to get unsupported value from operand that is not a function (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getFunction(): Attempt to get function ID from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -201,7 +211,8 @@ void Operand::putAsset(uint32 assetId) {
 	}
 
 	default: {
-		error("Operand::putAsset(): Attempt to put asset into operand that is not an asset (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::putAsset(): Attempt to put asset ID into operand type %s (%d)", 
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -222,7 +233,8 @@ Asset *Operand::getAsset() {
 	}
 
 	default: {
-		error("Operand::getAsset(): Attempt to get asset from operand that is not an asset (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getAsset(): Attempt to get asset from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
@@ -239,12 +251,13 @@ uint32 Operand::getAssetId() {
 	}
 
 	default: {
-		error("Operand::getAssetId(): Attempt to get asset ID from operand that is not an asset (type 0x%x)", static_cast<uint>(_type));
+		error("Operand::getAssetId(): Attempt to get asset ID from operand type %s (%d)",
+			operandTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
 
-Operand Operand::getLiteralValue() {
+Operand Operand::getLiteralValue() const {
 	// This function dereferences any variable to get the actual
 	// "direct" value (a literal asset ID or otherwise).
 	if (_type == kOperandTypeVariableDeclaration) {
@@ -254,9 +267,9 @@ Operand Operand::getLiteralValue() {
 	}
 }
 
-bool Operand::operator==(Operand &other) {
+bool Operand::operator==(const Operand &other) const {
 	Operand lhs = getLiteralValue();
-	Operand rhs = getLiteralValue();
+	Operand rhs = other.getLiteralValue();
 	// TODO: Maybe some better type checking here. If the types being compared end up being incompatible, the respective get
 	// method on the rhs will raise the error. But better might be checking
 	// both before we try getting values to report a more descriptive error.
@@ -272,14 +285,17 @@ bool Operand::operator==(Operand &other) {
 	case kOperandTypeString:
 		return *lhs.getString() == *rhs.getString();
 
+	case kOperandTypeAssetId:
+		return lhs.getAssetId() == rhs.getAssetId();
+
 	default:
 		error("Operand::operator==(): Unsupported operand types %d and %d", static_cast<uint>(lhs.getType()), static_cast<uint>(rhs.getType()));
 	}
 }
 
-bool Operand::operator>=(Operand &other) {
+bool Operand::operator>=(const Operand &other) const {
 	Operand lhs = getLiteralValue();
-	Operand rhs = getLiteralValue();
+	Operand rhs = other.getLiteralValue();
 	// If the types being compared end up being incompatible, the respective get
 	// method on the rhs will raise the error.
 	switch (lhs.getType()) {
@@ -296,6 +312,21 @@ bool Operand::operator>=(Operand &other) {
 	}
 }
 
+bool Operand::operator||(const Operand &other) const {
+	Operand lhs = getLiteralValue();
+	Operand rhs = other.getLiteralValue();
+	// If the types being compared end up being incompatible, the respective get
+	// method on the rhs will raise the error.
+	switch (lhs.getType()) {
+	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral2:
+		return lhs.getInteger() || rhs.getInteger();
+
+	default:
+		error("Operand::operator||(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	}
+}
+
 Operand Operand::operator-(const Operand &other) const {
 	Operand returnValue;
 	if (this->_type == kOperandTypeLiteral1 && other._type == kOperandTypeLiteral1) {
@@ -308,6 +339,27 @@ Operand Operand::operator-(const Operand &other) const {
 		error("Operand::operator-(): Unsupported operand types %d and %d", static_cast<uint>(this->_type), static_cast<uint>(other._type));
 	}
 	return returnValue;
+}
+
+Operand Operand::operator-() const {
+	Operand literalValue = getLiteralValue();
+	Operand returnValue(literalValue.getType());
+	// If the types being compared end up being incompatible, the respective get
+	// method on the rhs will raise the error.
+	switch (literalValue.getType()) {
+	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral2:
+		returnValue.putInteger(-literalValue.getInteger());
+		return returnValue;
+
+	case kOperandTypeFloat1:
+	case kOperandTypeFloat2:
+		returnValue.putDouble(-literalValue.getDouble());
+		return returnValue;
+
+	default:
+		error("Operand::operator-(): Unsupported operand type %d", static_cast<uint>(literalValue.getType()));
+	}
 }
 
 } // End of namespace MediaStation

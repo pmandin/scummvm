@@ -44,62 +44,57 @@ void Vars::load() {
 	_hampic.load();
 	_objects.load();
 	_odin.load();
-	_sd_data.load();
+	_sdData.load();
 	_sound.load();
 	_status.load();
 	_highScores.load();
 
-	_music_flag = !ConfMan.getBool("music_mute");
-	_sound_flag = _pcsound_flag = !ConfMan.getBool("sfx_mute");
+	_musicFlag = !ConfMan.getBool("music_mute");
+	_soundFlag = !ConfMan.getBool("sfx_mute");
 
 	if (g_engine->isDemo()) {
 		_demo = _cheat = true;
-		_rdemo = ConfMan.getBool("rdemo");
 	}
 
-	if (_current_level != 23)
-		_story_flag = false;
+	if (_currentLevel != 23)
+		_storyFlag = false;
 
-	_setup.music = _music_flag;
-	_setup.dig_sound = _sound_flag;
-	_setup.pc_sound = _pcsound_flag;
-	if (_sound_flag)
-		_setup.pc_sound = false;
-	_setup.scroll_flag = true;
-	_setup.speed = _slow_mode ? 1 : 0;
-	_setup.skill = 1;
+	_setup._musicEnabled = _musicFlag;
+	_setup._digitalSound = _soundFlag;
+	_setup._speakerSound = false;
+	_setup._scrollFlag = true;
+	_setup._slowMode = _slowMode;
+	_setup._difficultyLevel = 1;
 
-	_tmp_buff = new byte[TMP_SIZE];
+	_tmpBuff = new byte[TMP_SIZE];
 
-	res_read("RANDOM", _rnd_array);
-
-	Gfx::load_palette();
+	Gfx::loadPalette();
 }
 
 Vars::~Vars() {
 	g_vars = nullptr;
 
-	delete[] _tmp_buff;
+	delete[] _tmpBuff;
 }
 
 void Vars::setArea(int areaNum) {
 	if (areaNum != _area) {
 		_area = areaNum;
-		_setup.area = areaNum;
-		_sd_data.setArea(areaNum);
+		_setup._areaNum = areaNum;
+		_sdData.setArea(areaNum);
 		_bgPics.setArea(areaNum);
 
 		switch (areaNum) {
 		case 1:
-			_current_level = 23;
+			_currentLevel = 23;
 			break;
 
 		case 2:
-			_current_level = 51;
+			_currentLevel = 51;
 			break;
 
 		case 3:
-			_current_level = 33;
+			_currentLevel = 33;
 			break;
 
 		default:
@@ -109,16 +104,15 @@ void Vars::setArea(int areaNum) {
 }
 
 void Vars::clearKeyFlags() {
-	Common::fill(_key_flag, _key_flag + 100, 0);
+	Common::fill(_keyFlag, _keyFlag + 100, 0);
 }
 
-void Vars::resetEndgameFlags() {
+void Vars::resetEndGameFlags() {
 	_gameMode = MODE_NORMAL;
-	_auto_load = false;
-	_end_tile = false;
-	_boss_dead = false;
-	_game_over = false;
-	_boss_intro1 = _boss_intro2 = false;
+	_endTile = false;
+	_bossDead = false;
+	_gameOver = false;
+	_bossIntro1 = _bossIntro2 = false;
 }
 
 } // namespace Got

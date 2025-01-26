@@ -21,9 +21,9 @@
 
 #include "agi/agi.h"
 #include "agi/disk_image.h"
+#include "agi/loader.h"
 #include "agi/words.h"
 
-#include "common/config-manager.h"
 #include "common/formats/disk_image.h"
 #include "common/fs.h"
 #include "common/memstream.h"
@@ -58,8 +58,6 @@ namespace Agi {
 // AgiMetaEngineDetection also scans for usable disk images. It finds the LOGDIR
 // file inside disk one, hashes LOGDIR, and matches against the detection table.
 
-typedef Common::HashMap<Common::Path, Common::FSNode, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> FileMap;
-
 AgiLoader_A2::~AgiLoader_A2() {
 	for (uint d = 0; d < _disks.size(); d++) {
 		delete _disks[d];
@@ -67,30 +65,10 @@ AgiLoader_A2::~AgiLoader_A2() {
 }
 
 void AgiLoader_A2::init() {
-	// get all files in game directory
-	Common::FSList allFiles;
-	Common::FSNode dir(ConfMan.getPath("path"));
-	if (!dir.getChildren(allFiles, Common::FSNode::kListFilesOnly)) {
-		warning("AgiLoader_A2: invalid game path: %s", dir.getPath().toString(Common::Path::kNativeSeparator).c_str());
-		return;
-	}
-
-	// build array of files with a2 disk image extensions
+	// build sorted array of files with image extensions
 	Common::Array<Common::Path> imageFiles;
 	FileMap fileMap;
-	for (const Common::FSNode &file : allFiles) {
-		for (int i = 0; i < ARRAYSIZE(a2DiskImageExtensions); i++) {
-			if (file.getName().hasSuffixIgnoreCase(a2DiskImageExtensions[i])) {
-				Common::Path path = file.getPath();
-				imageFiles.push_back(path);
-				fileMap[path] = file;
-				break;
-			}
-		}
-	}
-
-	// sort potential image files by name
-	Common::sort(imageFiles.begin(), imageFiles.end());
+	getPotentialDiskImages(a2DiskImageExtensions, ARRAYSIZE(a2DiskImageExtensions), imageFiles, fileMap);
 
 	// find disk one by reading potential images until successful
 	int diskCount = 0;
@@ -354,7 +332,7 @@ int AgiLoader_A2::loadDirs() {
 	return success ? errOK : errBadResource;
 }
 
-A2DirVersion AgiLoader_A2::detectDirVersion(Common::SeekableReadStream &stream) {
+A2DirVersion AgiLoader_A2::detectDirVersion(Common::SeekableReadStream &stream) const {
 	// A2 DIR format:
 	//         old      new
 	// volume  4 bits   5 bits
@@ -366,7 +344,7 @@ A2DirVersion AgiLoader_A2::detectDirVersion(Common::SeekableReadStream &stream) 
 	// It must exist in the new format, but can't exist in the old.
 	// In the new format it's the first resource in volume 1.
 	// In the old format it would be track 128, which is invalid.
-	AgiDir *dirs[4] = { &_logDir, &_picDir, &_viewDir, &_soundDir };
+	const AgiDir *dirs[4] = { &_logDir, &_picDir, &_viewDir, &_soundDir };
 	for (int d = 0; d < 4; d++) {
 		stream.seek(dirs[d]->offset);
 		uint16 dirEntryCount = MIN<uint32>(dirs[d]->len / 3, MAX_DIRECTORY_ENTRIES);

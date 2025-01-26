@@ -85,16 +85,17 @@ DgdsEngine::DgdsEngine(OSystem *syst, const ADGameDescription *gameDesc)
 	: Engine(syst), _fontManager(nullptr), _console(nullptr), _inventory(nullptr),
 	_soundPlayer(nullptr), _decompressor(nullptr), _scene(nullptr), _shellGame(nullptr),
 	_hocIntro(nullptr), _gdsScene(nullptr), _resource(nullptr), _gamePals(nullptr), _gameGlobals(nullptr),
-	_detailLevel(kDgdsDetailHigh), _textSpeed(1), _justChangedScene1(false), _justChangedScene2(false),
+	_detailLevel(kDgdsDetailHigh), _textSpeed(1), _justChangedScene1(false),
 	_random("dgds"), _currentCursor(-1), _menuToTrigger(kMenuNone), _isLoading(true), _flipMode(false),
 	_rstFileName(nullptr), _difficulty(1), _menu(nullptr), _adsInterp(nullptr), _isDemo(false),
-	_dragonArcade(nullptr), _chinaTank(nullptr), _chinaTrain(nullptr), _skipNextFrame(false),
+	_dragonArcade(nullptr), _chinaTank(nullptr), _chinaTrain(nullptr), _isAltDlgColors(false),
 	_gameId(GID_INVALID), _thisFrameMs(0), _lastGlobalFade(-1), _lastGlobalFadedPal(0),
 	_debugShowHotAreas(false), _lastMouseEvent(Common::EVENT_INVALID) {
 
 	_platform = gameDesc->platform;
 	_gameLang = gameDesc->language;
 	_isEGA = (gameDesc->flags & ADGF_DGDS_EGA);
+	_isAltDlgColors = (gameDesc->flags & ADGF_DGDS_ALT_DIALOG_COLORS);
 
 	if (!strcmp(gameDesc->gameId, "rise")) {
 		_gameId = GID_DRAGON;
@@ -254,7 +255,6 @@ bool DgdsEngine::changeScene(int sceneNum) {
 	_scene->runEnterSceneOps();
 
 	_justChangedScene1 = true;
-	_justChangedScene2 = true;
 
 	return true;
 }
@@ -606,7 +606,7 @@ void DgdsEngine::dimPalForWillyDialog(bool force) {
 	static const int FADE_STARTCOL = 0x40;
 	static const int FADE_NUMCOLS = 0xC0;
 
-	if (force || _scene->hasVisibleHead() ) {
+	if (force || _scene->hasVisibleHead()) {
 		fade = 0x80;
 	} else {
 		fade = 0;
@@ -676,12 +676,17 @@ Common::Error DgdsEngine::run() {
 		} else {
 			debug(10, "****  Starting frame %d time %d ****", frameCount, _thisFrameMs);
 
-			_scene->checkForClearedDialogs();
+			bool clearedDlg = _scene->checkForClearedDialogs();
 
-			_gdsScene->runPreTickOps();
-			_scene->runPreTickOps();
+			// Willy pauses script execution when the palette is faded by an active
+			// talking head is active
+			bool shouldRunScripts = !(_lastGlobalFade > 0 && !clearedDlg);
 
-			_compositionBuffer.blitFrom(_backgroundBuffer);
+			if (shouldRunScripts) {
+				_gdsScene->runPreTickOps();
+				_scene->runPreTickOps();
+				_compositionBuffer.blitFrom(_backgroundBuffer);
+			}
 
 			if (_inventory->isOpen() && (_scene->getNum() == 2 || getGameId() == GID_WILLY)) {
 				int invCount = _gdsScene->countItemsInInventory();
@@ -689,7 +694,7 @@ Common::Error DgdsEngine::run() {
 			}
 
 			// Don't draw stored buffer over Willy Beamish inventory
-			if (!(_inventory->isOpen() && getGameId() == GID_WILLY))
+			if (shouldRunScripts && !(_inventory->isOpen() && getGameId() == GID_WILLY))
 				_compositionBuffer.transBlitFrom(_storedAreaBuffer);
 
 			//
@@ -703,7 +708,7 @@ Common::Error DgdsEngine::run() {
 
 			dumpFrame(_compositionBuffer, "comp-before-ads");
 
-			if (!_inventory->isOpen() || (_inventory->isZoomVisible() && getGameId() != GID_WILLY))
+			if (shouldRunScripts && (!_inventory->isOpen() || (_inventory->isZoomVisible() && getGameId() != GID_WILLY)))
 				_adsInterp->run();
 
 			if (_inventory->isOpen()) {
@@ -745,12 +750,15 @@ Common::Error DgdsEngine::run() {
 				}
 			}
 
-			// TODO: Hard-coded logic to match Rise of the Dragon, check others
-			if (getGameId() != GID_DRAGON || _scene->getNum() != 55)
-				_gdsScene->runPostTickOps();
+			if (shouldRunScripts) {
+				// This is hard-coded in Rise of the Dragon, others always run the ops if the game is active.
+				bool shouldRunPostTickOps = (getGameId() != GID_DRAGON || _scene->getNum() != 55);
+				if (shouldRunPostTickOps)
+					_gdsScene->runPostTickOps();
 
-			_scene->runPostTickOps();
-			_scene->checkTriggers();
+				_scene->runPostTickOps();
+				_scene->checkTriggers();
+			}
 
 			dumpFrame(_backgroundBuffer, "back");
 			dumpFrame(_storedAreaBuffer, "stor");
@@ -771,24 +779,23 @@ Common::Error DgdsEngine::run() {
 
 			if (getGameId() == GID_WILLY) {
 				if (!justChangedScene1())
-					_scene->drawVisibleHeads(&_compositionBuffer);
+					_scene->drawAndUpdateHeads(&_compositionBuffer);
 				_scene->drawAndUpdateDialogs(&_compositionBuffer);
 				_scene->updateHotAreasFromDynamicRects();
 			} else {
 				_scene->drawAndUpdateDialogs(&_compositionBuffer);
 				if (!justChangedScene1())
-					_scene->drawVisibleHeads(&_compositionBuffer);
+					_scene->drawAndUpdateHeads(&_compositionBuffer);
 			}
 
 			dumpFrame(_compositionBuffer, "comp-with-dlg");
 
-			bool gameRunning = (!haveActiveDialog && _gameGlobals->getGlobal(0x57) /* TODO: && _dragItem == nullptr*/);
-			_clock.update(gameRunning);
+			bool gameRunning = (!haveActiveDialog && _gameGlobals->getGlobal(0x57));
+			_clock.update(gameRunning && shouldRunScripts);
 
 			g_system->copyRectToScreen(_compositionBuffer.getPixels(), SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 			_justChangedScene1 = false;
-			_justChangedScene2 = false;
 		}
 
 		// Mouse event is now handled.
@@ -819,10 +826,6 @@ Common::Error DgdsEngine::run() {
 		static const int framesPerSecond = 15;
 
 		frameCount++;
-		if (_skipNextFrame) {
-			frameCount++;
-			_skipNextFrame = false;
-		}
 
 		uint32 thisFrameEndMillis = g_system->getMillis();
 		uint32 elapsedMillis = thisFrameEndMillis - startMillis;
@@ -920,14 +923,23 @@ Common::Error DgdsEngine::syncGame(Common::Serializer &s) {
 		if (!_resource->hasResource(sceneFile))
 			error("Game references non-existent scene %d", sceneNum);
 
+		// Reset scene and music etc.
+		setMouseCursor(kDgdsMouseGameDefault);
 		_soundPlayer->stopAllSfx();
+		_soundPlayer->stopMusic();
 		_scene->unload();
+		_scene->setDragItem(nullptr);
 		_adsInterp->unload();
 
 		// Clear arcade state completely.
 		if (getGameId() == GID_DRAGON) {
 			delete _dragonArcade;
 			_dragonArcade = new DragonArcade();
+		} else if (getGameId() == GID_HOC) {
+			delete _chinaTank;
+			delete _chinaTrain;
+			_chinaTank = new ChinaTank();
+			_chinaTrain = new ChinaTrain();
 		}
 
 		_scene->load(sceneFile, _resource, _decompressor);
@@ -962,7 +974,8 @@ Common::Error DgdsEngine::syncGame(Common::Serializer &s) {
 
 	s.syncAsSint16LE(_textSpeed);
 	s.syncAsByte(_justChangedScene1);
-	s.syncAsByte(_justChangedScene2);
+	byte dummy = 0;
+	s.syncAsByte(dummy); // this was originally _justChangedScene2, but it's never used.
 
 	// sync engine play time to ensure various events run correctly.
 	s.syncAsUint32LE(_thisFrameMs);

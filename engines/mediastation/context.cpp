@@ -73,8 +73,21 @@ Context::Context(const Common::Path &path) :
 Context::~Context() {
 	delete _palette;
 	_palette = nullptr;
+
 	delete _parameters;
 	_parameters = nullptr;
+
+	for (auto it = _assets.begin(); it != _assets.end(); ++it) {
+		delete it->_value;
+	}
+	_assets.clear();
+	// The same asset pointers are in here, so don't delete again.
+	_assetsByChunkReference.clear();
+
+	for (auto it = _functions.begin(); it != _functions.end(); ++it) {
+		delete it->_value;
+	}
+	_functions.clear();
 }
 
 Asset *Context::getAssetById(uint assetId) {
@@ -262,7 +275,7 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 			_screenAsset = header;
 			break;
 
-		case kAssetTypeFont: 
+		case kAssetTypeFont:
 			asset = new Font(header);
 			break;
 

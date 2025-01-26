@@ -98,6 +98,30 @@ static const char * const a2DiskImageExtensions[] = { ".do", ".dsk", ".img", ".n
 #define A2_BC_DISK_COUNT                 5
 #define A2_BC_VOLUME_COUNT               9
 
+// GAL disk image values and helpers for GalLoader and AgiMetaEngineDetection
+
+#define GAL_LOGIC_COUNT                  84
+#define GAL_PICTURE_COUNT                84
+#define GAL_VIEW_COUNT                   110
+#define GAL_SOUND_COUNT                  10
+
+#define GAL_DIR_POSITION_PCJR            0x0500
+#define GAL_DIR_POSITION_PC              0x1400
+#define GAL_DIR_SIZE                     948
+
+// GAL disk image values and helpers for GalLoader_A2 and AgiMetaEngineDetection
+
+#define GAL_A2_LOGIC_COUNT               81
+#define GAL_A2_PICTURE_COUNT             85
+#define GAL_A2_VIEW_COUNT                110
+
+#define GAL_A2_LOGDIR_POSITION           A2_DISK_POSITION(18, 7,  2)
+#define GAL_A2_PICDIR_POSITION           A2_DISK_POSITION(18, 6,  2)
+#define GAL_A2_VIEWDIR_POSITION          A2_DISK_POSITION(18, 8,  2)
+#define GAL_A2_WORDS_POSITION            A2_DISK_POSITION(17, 8,  0)
+#define GAL_A2_LOGDIR_SIZE               (GAL_A2_LOGIC_COUNT * 3)
+#define GAL_A2_DISK_COUNT                3
+
 Common::SeekableReadStream *openPCDiskImage(const Common::Path &path, const Common::FSNode &node);
 Common::SeekableReadStream *openA2DiskImage(const Common::Path &path, const Common::FSNode &node, bool loadAllTracks = true);
 

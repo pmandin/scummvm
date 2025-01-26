@@ -25,48 +25,45 @@
 
 namespace Got {
 
-void setup_load() {
-	_G(thor)->used = 1;
-	_G(new_level) = _G(thor_info).last_screen;
-	_G(thor)->x = (_G(thor_info).last_icon % 20) * 16;
-	_G(thor)->y = ((_G(thor_info).last_icon / 20) * 16) - 1;
-	if (_G(thor)->x < 1)
-		_G(thor)->x = 1;
-	if (_G(thor)->y < 0)
-		_G(thor)->y = 0;
-	_G(thor)->last_x[0] = _G(thor)->x;
-	_G(thor)->last_x[1] = _G(thor)->x;
-	_G(thor)->last_y[0] = _G(thor)->y;
-	_G(thor)->last_y[1] = _G(thor)->y;
-	_G(thor)->dir = _G(thor_info).last_dir;
-	_G(thor)->last_dir = _G(thor_info).last_dir;
-	_G(thor)->health = _G(thor_info).last_health;
-	_G(thor_info).magic = _G(thor_info).last_magic;
-	_G(thor_info).jewels = _G(thor_info).last_jewels;
-	_G(thor_info).keys = _G(thor_info).last_keys;
-	_G(thor_info).score = _G(thor_info).last_score;
-	_G(thor_info).item = _G(thor_info).last_item;
-	_G(thor_info).inventory = _G(thor_info).last_inventory;
-	_G(thor_info).object = _G(thor_info).last_object;
-	_G(thor_info).object_name = _G(thor_info).last_object_name;
-	_G(thor)->num_moves = 1;
-	_G(thor)->vunerable = 60;
-	_G(thor)->show = 60;
-	_G(hourglass_flag) = 0;
-	_G(apple_flag) = false;
-	_G(bomb_flag) = false;
-	_G(thunder_flag) = 0;
-	_G(lightning_used) = false;
-	_G(tornado_used) = false;
-	_G(shield_on) = false;
-	_G(actor[1]).used = 0;
-	_G(actor[2]).used = 0;
-	_G(thor)->speed_count = 6;
+void setupLoad() {
+	_G(thor)->_active = true;
+	_G(newLevel) = _G(thorInfo)._lastScreen;
+	_G(thor)->_x = (_G(thorInfo)._lastIcon % 20) * 16;
+	_G(thor)->_y = ((_G(thorInfo)._lastIcon / 20) * 16) - 1;
+	if (_G(thor)->_x < 1)
+		_G(thor)->_x = 1;
+	if (_G(thor)->_y < 0)
+		_G(thor)->_y = 0;
+	_G(thor)->_lastX[0] = _G(thor)->_x;
+	_G(thor)->_lastX[1] = _G(thor)->_x;
+	_G(thor)->_lastY[0] = _G(thor)->_y;
+	_G(thor)->_lastY[1] = _G(thor)->_y;
+	_G(thor)->_dir = _G(thorInfo)._lastDir;
+	_G(thor)->_lastDir = _G(thorInfo)._lastDir;
+	_G(thor)->_health = _G(thorInfo)._lastHealth;
+	_G(thorInfo)._magic = _G(thorInfo)._lastMagic;
+	_G(thorInfo)._jewels = _G(thorInfo)._lastJewels;
+	_G(thorInfo)._keys = _G(thorInfo)._lastKeys;
+	_G(thorInfo)._score = _G(thorInfo)._lastScore;
+	_G(thorInfo)._selectedItem = _G(thorInfo)._lastItem;
+	_G(thorInfo)._inventory = _G(thorInfo)._lastInventory;
+	_G(thorInfo)._object = _G(thorInfo)._lastObject;
+	_G(thorInfo)._objectName = _G(thorInfo)._lastObjectName;
+	_G(thor)->_numMoves = 1;
+	_G(thor)->_vulnerableCountdown = 60;
+	_G(thor)->_show = 60;
+	_G(appleFlag) = false;
+	_G(thunderSnakeCounter) = 0;
+	_G(tornadoUsed) = false;
+	_G(shieldOn) = false;
+	_G(actor[1])._active = false;
+	_G(actor[2])._active = false;
+	_G(thor)->_moveCountdown = 6;
 
-	_G(scrn).load(_G(new_level));
+	_G(scrn).load(_G(newLevel));
 
-	_G(current_level) = _G(new_level);
-	show_level(_G(new_level));
+	_G(currentLevel) = _G(newLevel);
+	showLevel(_G(newLevel));
 }
 
 void pause(int delay) {

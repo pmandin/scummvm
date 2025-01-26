@@ -31,13 +31,14 @@ namespace Views {
 #define MAX_Y 236
 
 bool Story::msgFocus(const FocusMessage &msg) {
-	res_read(Common::String::format("STORY%d", _G(area)), _G(tmp_buff));
+	resourceRead(Common::String::format("STORY%d", _G(area)), _G(tmpBuff));
 
-	res_read("STORYPAL", _G(pbuff));
+	byte paletteBuffer[PALETTE_SIZE] = {};
+	resourceRead("STORYPAL", paletteBuffer);
 
 	for (int i = 0; i < PALETTE_SIZE; ++i)
-		_G(pbuff[i]) = ((int)_G(pbuff[i]) * 255 + 31) / 63;
-	Gfx::set_palette(_G(pbuff));
+		paletteBuffer[i] = ((int)paletteBuffer[i] * 255 + 31) / 63;
+	Gfx::setPalette(paletteBuffer);
 
 	// Create story image and load in it's fragments
 	_surface.create(320, 240 * 2);
@@ -55,7 +56,7 @@ bool Story::msgFocus(const FocusMessage &msg) {
 	byte color = 72;
 	char s[21];
 
-	const char *p = (const char *)_G(tmp_buff);
+	const char *p = (const char *)_G(tmpBuff);
 
 	while (i < 46) {
 		if (*p == '\n') {
@@ -101,7 +102,7 @@ bool Story::msgFocus(const FocusMessage &msg) {
 	}
 
 	// Play the opening music
-	music_play("OPENSONG", 1);
+	musicPlay("OPENSONG", 1);
 
 	_yp = 0;
 	_scrolling = false;
@@ -111,7 +112,7 @@ bool Story::msgFocus(const FocusMessage &msg) {
 
 bool Story::msgUnfocus(const UnfocusMessage &msg) {
 	_surface.clear();
-	music_pause();
+	musicPause();
 
 	return true;
 }
@@ -156,10 +157,10 @@ bool Story::tick() {
 }
 
 void Story::done() {
-	music_stop();
+	musicStop();
 
 	fadeOut();
-	Gfx::load_palette();
+	Gfx::loadPalette();
 	replaceView("PartTitle");
 	fadeIn();
 }

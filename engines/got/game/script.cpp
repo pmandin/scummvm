@@ -82,13 +82,13 @@ Scripts::ScrFunction Scripts::scr_func[5] = {
 	&Scripts::scr_func2,
 	&Scripts::scr_func3,
 	&Scripts::scr_func4,
-	&Scripts::scr_func5,
+	&Scripts::scr_func5
 };
 
 Scripts *g_scripts;
 
-void execute_script(long index, const Gfx::Pics &speakerIcon, ScriptEndFn endFn) {
-	g_scripts->execute_script(index, speakerIcon, endFn);
+void executeScript(long index, const Gfx::Pics &speakerIcon, ScriptEndFn endFn) {
+	g_scripts->executeScript(index, speakerIcon, endFn);
 }
 
 Scripts::Scripts() {
@@ -99,10 +99,10 @@ Scripts::~Scripts() {
 	g_scripts = nullptr;
 }
 
-void Scripts::execute_script(long index, const Gfx::Pics &speakerIcon, ScriptEndFn endFn) {
+void Scripts::executeScript(long index, const Gfx::Pics &speakerIcon, ScriptEndFn endFn) {
 	// Firstly disable any on-screen actors
 	for (int i = 0; i < MAX_ACTORS; i++)
-		_G(actor[i]).show = 0;
+		_G(actor[i])._show = 0;
 
 	_endFn = endFn;
 	_scrIndex = index;
@@ -120,20 +120,20 @@ void Scripts::runScript(bool firstTime) {
 	Common::fill(_gosubStack, _gosubStack + 32, (char *)nullptr);
 	_gosubPtr = 0;
 
-	Common::fill(_forVar, _forVar + 10, 0);
-	Common::fill(_forVal, _forVal + 10, 0);
-	Common::fill(_forStack, _forStack + 10, (char *)nullptr);
+	Common::fill(_forVar, _forVar + 11, 0);
+	Common::fill(_forVal, _forVal + 11, 0);
+	Common::fill(_forStack, _forStack + 11, (char *)nullptr);
 	_forPtr = 0;
 
-	int i = read_script_file();
+	int i = readScriptFile();
 	if (i != 0) {
-		script_error(i);
-		script_exit();
+		scriptError(i);
+		scriptExit();
 		return;
 	}
 
 	if (firstTime)
-		script_entry();
+		scriptEntry();
 
 	_buffPtr = _buffer;
 	scriptLoop();
@@ -141,20 +141,20 @@ void Scripts::runScript(bool firstTime) {
 
 void Scripts::scriptLoop() {
 	while (_paused == SCRIPT_READY) {
-		if (_G(cheat) && _G(key_flag[_B]))
+		if (_G(cheat) && _G(keyFlag[_B]))
 			break;
 
-		int ret = get_command();
+		int ret = getCommand();
 		if (ret == -1)
 			break; // Ignore NO END error
 
 		if (ret == -2) {
-			script_error(5); // Syntax error
+			scriptError(5); // Syntax error
 			break;
 		}
 
 		if (ret > 0) {
-			ret = exec_command(ret);
+			ret = execCommand(ret);
 			if (ret == -100) { // RUN command
 				if (_buffer)
 					free(_buffer);
@@ -168,10 +168,10 @@ void Scripts::scriptLoop() {
 	}
 
 	if (_paused == SCRIPT_READY)
-		script_exit();
+		scriptExit();
 }
 
-void Scripts::script_exit() {
+void Scripts::scriptExit() {
 	if (_buffer) {
 		free(_buffer);
 		_buffer = nullptr;
@@ -181,7 +181,7 @@ void Scripts::script_exit() {
 		_endFn();
 }
 
-int Scripts::skip_colon() {
+int Scripts::skipColon() {
 	while (*_buffPtr == 0 || *_buffPtr == ':') {
 		_buffPtr++;
 		if (_buffPtr > _buffEnd)
@@ -191,12 +191,12 @@ int Scripts::skip_colon() {
 	return 1;
 }
 
-int Scripts::get_command() {
-	if (!skip_colon())
+int Scripts::getCommand() {
+	if (!skipColon())
 		return -1;
 
 	int i = 0;
-	while (1) {
+	while (true) {
 		if (!SCR_COMMAND[i])
 			break; // Lookup command
 
@@ -214,7 +214,7 @@ int Scripts::get_command() {
 		if (*(_buffPtr + 1) == '=') { // Num var assignment
 			i = (*_buffPtr) - 65;
 			_buffPtr += 2;
-			ret = calc_value();
+			ret = calcValue();
 			if (!ret)
 				return -2;
 
@@ -225,7 +225,7 @@ int Scripts::get_command() {
 		if (*(_buffPtr + 1) == '$' && *(_buffPtr + 2) == '=') {
 			i = (*_buffPtr) - 65;
 			_buffPtr += 3;
-			ret = calc_string(0); // String var assignment
+			ret = calcString(0); // String var assignment
 			if (ret == 0)
 				return -2;
 
@@ -243,28 +243,28 @@ int Scripts::get_command() {
 	return -2;
 }
 
-int Scripts::calc_string(int mode) {
+int Scripts::calcString(int mode) {
 	// if mode==1 stop at comma
-	char varstr[255];
-	uint varnum;
+	char varString[255];
+	uint varNumber;
 
-	Common::strcpy_s(varstr, "");
+	Common::strcpy_s(varString, "");
 
-	if (!skip_colon())
+	if (!skipColon())
 		return 0;
 
 strloop:
 	if (*_buffPtr == '"') {
-		get_str();
-		if (strlen(varstr) + strlen(_tempS) < 255)
-			Common::strcat_s(varstr, _tempS);
+		getStr();
+		if (strlen(varString) + strlen(_tempS) < 255)
+			Common::strcat_s(varString, _tempS);
 		goto nextstr;
 	}
 	if (Common::isAlpha(*_buffPtr)) {
 		if (*(_buffPtr + 1) == '$') {
-			varnum = (*_buffPtr) - 65;
-			if (strlen(varstr) + strlen(_strVar[varnum]) < 255)
-				Common::strcat_s(varstr, _strVar[varnum]);
+			varNumber = (*_buffPtr) - 65;
+			if (strlen(varString) + strlen(_strVar[varNumber]) < 255)
+				Common::strcat_s(varString, _strVar[varNumber]);
 			_buffPtr += 2;
 			goto nextstr;
 		}
@@ -287,15 +287,15 @@ nextstr:
 
 strdone:
 
-	Common::strcpy_s(_tempS, (char *)varstr);
+	Common::strcpy_s(_tempS, (char *)varString);
 	return 1;
 }
 
-void Scripts::get_str() {
+void Scripts::getStr() {
 	_buffPtr++;
 	int t = 0;
 
-	while (1) {
+	while (true) {
 		if (*_buffPtr == '"' || *_buffPtr == 0) {
 			_tempS[t] = 0;
 			if (*_buffPtr == '"')
@@ -308,45 +308,52 @@ void Scripts::get_str() {
 	}
 }
 
-int Scripts::calc_value() {
-	long tmpval2 = 0;
-	char exptype = 1;
+int Scripts::calcValue() {
+	long tmpVal2 = 0;
+	char expType = 1;
 
-	while (1) {
-		if (!get_next_val())
+	while (true) {
+		if (!getNextValue())
 			return 0;
-		switch (exptype) {
+
+		switch (expType) {
 		case 0:
-			tmpval2 = tmpval2 * _lTemp;
+			tmpVal2 = tmpVal2 * _lTemp;
 			break;
+			
 		case 1:
-			tmpval2 = tmpval2 + _lTemp;
+			tmpVal2 = tmpVal2 + _lTemp;
 			break;
+			
 		case 2:
-			tmpval2 = tmpval2 - _lTemp;
+			tmpVal2 = tmpVal2 - _lTemp;
 			break;
+			
 		case 3:
 			if (_lTemp != 0)
-				tmpval2 = tmpval2 / _lTemp;
+				tmpVal2 = tmpVal2 / _lTemp;
+			break;
+			
+		default:
 			break;
 		}
 
-		char ch = *_buffPtr;
+		const char ch = *_buffPtr;
 		switch (ch) {
 		case 42:
-			exptype = 0; /* multiply */
+			expType = 0; /* multiply */
 			break;
 		case 43:
-			exptype = 1; /* add */
+			expType = 1; /* add */
 			break;
 		case 45:
-			exptype = 2; /* minus */
+			expType = 2; /* minus */
 			break;
 		case 47:
-			exptype = 3; /* divide */
+			expType = 3; /* divide */
 			break;
 		default:
-			_lValue = tmpval2;
+			_lValue = tmpVal2;
 			return 1;
 		}
 
@@ -354,12 +361,12 @@ int Scripts::calc_value() {
 	}
 }
 
-int Scripts::get_next_val() {
-	char ch = *_buffPtr;
+int Scripts::getNextValue() {
+	const char ch = *_buffPtr;
 	if (ch == 0 || ch == ':')
 		return 0;
 	if (ch == 64)
-		return get_internal_variable();
+		return getInternalVariable();
 
 	if (Common::isAlpha(ch)) {
 		_buffPtr++;
@@ -368,29 +375,29 @@ int Scripts::get_next_val() {
 	}
 
 	if (strchr("0123456789-", ch)) {
-		char tmpstr[25];
-		int t = 0;
-		tmpstr[t] = ch;
+		char tmpString[25];
+		int tmpIndex = 0;
+		tmpString[tmpIndex] = ch;
 		_buffPtr++;
-		t++;
+		tmpIndex++;
 		while (strchr("0123456789", *_buffPtr) && *_buffPtr != 0) {
-			tmpstr[t] = *_buffPtr;
+			tmpString[tmpIndex] = *_buffPtr;
 			_buffPtr++;
-			t++;
+			tmpIndex++;
 		}
-		tmpstr[t] = 0;
-		if (t > 10)
+		tmpString[tmpIndex] = 0;
+		if (tmpIndex > 10)
 			return 0;
-		_lTemp = atol(tmpstr);
+		_lTemp = atol(tmpString);
 		return 1;
 	}
 
 	return 0;
 }
 
-int Scripts::get_internal_variable() {
+int Scripts::getInternalVariable() {
 	int i = 0;
-	while (1) {
+	while (true) {
 		if (!INTERNAL_VARIABLE[i])
 			return 0; // Lookup internal variable
 		int len = strlen(INTERNAL_VARIABLE[i]);
@@ -402,22 +409,22 @@ int Scripts::get_internal_variable() {
 	}
 	switch (i) {
 	case 0:
-		_lTemp = _G(thor_info).jewels;
+		_lTemp = _G(thorInfo)._jewels;
 		break;
 	case 1:
-		_lTemp = _G(thor)->health;
+		_lTemp = _G(thor)->_health;
 		break;
 	case 2:
-		_lTemp = _G(thor_info).magic;
+		_lTemp = _G(thorInfo)._magic;
 		break;
 	case 3:
-		_lTemp = _G(thor_info).score;
+		_lTemp = _G(thorInfo)._score;
 		break;
 	case 4:
-		_lTemp = _G(current_level);
+		_lTemp = _G(currentLevel);
 		break;
 	case 5:
-		_lTemp = _G(thor_info).keys;
+		_lTemp = _G(thorInfo)._keys;
 		break;
 	case 6:
 	case 7:
@@ -438,7 +445,7 @@ int Scripts::get_internal_variable() {
 		_lTemp = (long)(i - 5l);
 		break;
 	case 22:
-		if (!calc_value())
+		if (!calcValue())
 			return 0;
 		i = (int)_lValue;
 		if (i < 1 || i > 64)
@@ -447,16 +454,16 @@ int Scripts::get_internal_variable() {
 		_lTemp = _G(setup)._flags[i - 1] ? 1 : 0;
 		break;
 	case 23:
-		if (_G(thor_info).inventory & 64)
-			_lTemp = _G(thor_info).object;
+		if (_G(thorInfo)._inventory & 64)
+			_lTemp = _G(thorInfo)._object;
 		else
 			_lTemp = 0;
 		break;
 	case 24:
-		_lTemp = _G(scrn).icon[(_G(thor)->y + 8) / 16][(_G(thor)->x + 7) / 16];
+		_lTemp = _G(scrn)._iconGrid[(_G(thor)->_y + 8) / 16][(_G(thor)->_x + 7) / 16];
 		break;
 	case 25:
-		_lTemp = (((_G(thor)->y + 8) / 16) * 20) + ((_G(thor)->x + 7) / 16);
+		_lTemp = (((_G(thor)->_y + 8) / 16) * 20) + ((_G(thor)->_x + 7) / 16);
 		break;
 	default:
 		return 0;
@@ -465,7 +472,7 @@ int Scripts::get_internal_variable() {
 	return 1;
 }
 
-int Scripts::get_line(char *src, char *dst) {
+int Scripts::getLine(char *src, char *dst) {
 	int cnt = 0;
 	if (!src)
 		return cnt;
@@ -485,9 +492,9 @@ int Scripts::get_line(char *src, char *dst) {
 	return cnt;
 }
 
-int Scripts::read_script_file() {
-	char temp_buff[255];
-	char quote_flag;
+int Scripts::readScriptFile() {
+	char tmpBuffer[255];
+	char quoteFlag;
 	int len, p, ret, cnt;
 	Common::String str;
 	char tmps[255];
@@ -510,27 +517,27 @@ int Scripts::read_script_file() {
 	};
 
 	str = Common::String::format("SPEAK%d", _G(area));
-	if (res_read(str.c_str(), sb) < 0) {
+	if (resourceRead(str.c_str(), sb) < 0) {
 		ret = 6;
 		goto done;
 	}
 
 	str = Common::String::format("|%ld", _scrIndex);
-	Common::strcpy_s(temp_buff, str.c_str());
+	Common::strcpy_s(tmpBuffer, str.c_str());
 
-	while (1) {
-		cnt = get_line(sb, (char *)tmps);
+	while (true) {
+		cnt = getLine(sb, (char *)tmps);
 		sb += cnt;
 		if (!strcmp(tmps, "|EOF")) {
 			ret = 2;
 			goto done;
 		}
-		if (!strcmp(tmps, temp_buff))
+		if (!strcmp(tmps, tmpBuffer))
 			break;
 	}
 	_numLabels = 0;
-	while (1) {
-		cnt = get_line(sb, (char *)tmps);
+	while (true) {
+		cnt = getLine(sb, (char *)tmps);
 		if (!strcmp(tmps, "|STOP")) {
 			if (_buffPtr != _buffer) {
 				_buffEnd = _buffPtr;
@@ -547,32 +554,35 @@ int Scripts::read_script_file() {
 			_buffPtr++;
 			continue;
 		}
-		quote_flag = 0;
+		quoteFlag = 0;
 		p = 0;
 		for (int i = 0; i < len; i++) {
 			char ch = tmps[i];
 			if (ch == 34)
-				quote_flag ^= 1;
+				quoteFlag ^= 1;
 			else if (ch == 13 || ch == 10) { // Check for CR
-				temp_buff[p] = 0;
-				break;
-			} else if ((ch == 39 || ch == 96) && !quote_flag) {
-				temp_buff[p] = 0;
+				tmpBuffer[p] = 0;
 				break;
 			}
-			if (!quote_flag)
+
+			if ((ch == 39 || ch == 96) && !quoteFlag) {
+				tmpBuffer[p] = 0;
+				break;
+			}
+			if (!quoteFlag)
 				ch = toupper(ch);
-			if (quote_flag || ch > 32) {
-				temp_buff[p++] = ch;
+			
+			if (quoteFlag || ch > 32) {
+				tmpBuffer[p++] = ch;
 			}
 		}
-		temp_buff[p] = 0;
+		tmpBuffer[p] = 0;
 
-		len = strlen(temp_buff);
-		if (len > 0 && len < 10 && temp_buff[len - 1] == ':') { //line label
-			temp_buff[len - 1] = 0;
+		len = strlen(tmpBuffer);
+		if (len > 0 && len < 10 && tmpBuffer[len - 1] == ':') { //line label
+			tmpBuffer[len - 1] = 0;
 			_linePtr[_numLabels] = _buffPtr;
-			Common::strcpy_s(_lineLabel[_numLabels++], (char *)temp_buff);
+			Common::strcpy_s(_lineLabel[_numLabels++], (char *)tmpBuffer);
 			if (_numLabels > 31) {
 				ret = 3;
 				goto done;
@@ -582,8 +592,8 @@ int Scripts::read_script_file() {
 			continue;
 		}
 
-		Common::strcpy_s(_buffPtr, SCR_BUFF_SIZE, temp_buff);
-		_buffPtr += strlen(temp_buff);
+		Common::strcpy_s(_buffPtr, SCR_BUFF_SIZE, tmpBuffer);
+		_buffPtr += strlen(tmpBuffer);
 		*_buffPtr = 0;
 		_buffPtr++;
 	}
@@ -595,13 +605,13 @@ done:
 	return ret;
 }
 
-void Scripts::script_error(int err_num) {
-	int line_num = 1;
+void Scripts::scriptError(int err_num) {
+	int lineNum = 1;
 	char *tb = _buffer;
 
 	while (1) {
 		if (*tb == 0)
-			line_num++;
+			lineNum++;
 		if (tb >= _buffPtr)
 			break;
 		tb++;
@@ -610,7 +620,7 @@ void Scripts::script_error(int err_num) {
 	if (err_num > ERROR_MAX)
 		err_num = 5; // Unknown=syntax
 
-	warning("%s in Line #%d", SCR_ERROR[err_num], line_num);
+	warning("%s in Line #%d", SCR_ERROR[err_num], lineNum);
 }
 
 int Scripts::cmd_goto() {
@@ -635,50 +645,50 @@ int Scripts::cmd_goto() {
 }
 
 int Scripts::cmd_if() {
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
-	
-	long tmpval1 = _lValue;
-	char exptype = *_buffPtr;
+
+	const long tmpVal1 = _lValue;
+	char expType = *_buffPtr;
 	_buffPtr++;
 
-	char ch = *_buffPtr;
+	const char ch = *_buffPtr;
 	if (ch == 60 || ch == 61 || ch == 62) {
-		if (exptype == *_buffPtr)
+		if (expType == *_buffPtr)
 			return 5;
 		
-		exptype += *_buffPtr;
+		expType += *_buffPtr;
 		_buffPtr++;
 	}
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 
-	long tmpval2 = _lValue;
+	const long tmpVal2 = _lValue;
 	_buffPtr += 4;
 
-	switch (exptype) {
+	switch (expType) {
 	case 60: /* less than */
-		if (tmpval1 < tmpval2)
+		if (tmpVal1 < tmpVal2)
 			goto iftrue;
 		goto iffalse;
 	case 61: /* equal */
-		if (tmpval1 == tmpval2)
+		if (tmpVal1 == tmpVal2)
 			goto iftrue;
 		goto iffalse;
 	case 62: /* greater than */
-		if (tmpval1 > tmpval2)
+		if (tmpVal1 > tmpVal2)
 			goto iftrue;
 		goto iffalse;
 	case 121: /* less than or equal */
-		if (tmpval1 <= tmpval2)
+		if (tmpVal1 <= tmpVal2)
 			goto iftrue;
 		goto iffalse;
 	case 122: /* less or greater (not equal) */
-		if (tmpval1 != tmpval2)
+		if (tmpVal1 != tmpVal2)
 			goto iftrue;
 		goto iffalse;
 	case 123: /* greater than or equal */
-		if (tmpval1 >= tmpval2)
+		if (tmpVal1 >= tmpVal2)
 			goto iftrue;
 		goto iffalse;
 	default:
@@ -699,7 +709,7 @@ iftrue:
 }
 
 int Scripts::cmd_run() {
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
@@ -707,49 +717,49 @@ int Scripts::cmd_run() {
 	return -100;
 }
 
-int Scripts::cmd_addjewels() {
-	if (!calc_value())
+int Scripts::cmd_addJewels() {
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
 
-	add_jewels(_lValue);
+	addJewels(_lValue);
 	return 0;
 }
 
-int Scripts::cmd_addhealth() {
-	if (!calc_value())
+int Scripts::cmd_addHealth() {
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
-	add_health((int)_lValue);
+	addHealth((int)_lValue);
 	return 0;
 }
 
-int Scripts::cmd_addmagic() {
-	if (!calc_value())
+int Scripts::cmd_addMagic() {
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
-	add_magic((int)_lValue);
+	addMagic((int)_lValue);
 	return 0;
 }
 
-int Scripts::cmd_addkeys() {
-	if (!calc_value())
+int Scripts::cmd_addKeys() {
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
-	add_keys((int)_lValue);
+	addKeys((int)_lValue);
 	return 0;
 }
 
-int Scripts::cmd_addscore() {
-	if (!calc_value())
+int Scripts::cmd_addScore() {
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
-	add_score((int)_lValue);
+	addScore((int)_lValue);
 	return 0;
 }
 
@@ -757,7 +767,7 @@ int Scripts::cmd_say(int mode, int type) {
 	int obj = 0;
 
 	if (mode) {
-		if (!calc_value())
+		if (!calcValue())
 			return 5;
 		_buffPtr++;
 		obj = (int)_lValue;
@@ -768,10 +778,10 @@ int Scripts::cmd_say(int mode, int type) {
 			obj += 10;
 	}
 	
-	Common::fill(_G(tmp_buff), _G(tmp_buff) + TMP_SIZE, 0);
-	char *p = (char *)_G(tmp_buff);
+	Common::fill(_G(tmpBuff), _G(tmpBuff) + TMP_SIZE, 0);
+	char *p = (char *)_G(tmpBuff);
 
-	while (calc_string(0)) {
+	while (calcString(0)) {
 		Common::strcpy_s(p, TMP_SIZE, _tempS);
 		p += strlen(_tempS);
 		*(p) = 10;
@@ -790,9 +800,9 @@ int Scripts::cmd_ask() {
 	char title[41], opt[41];
 	Common::StringArray opts;
 
-	memset(_G(tmp_buff), 0, TMP_SIZE);
+	memset(_G(tmpBuff), 0, TMP_SIZE);
 
-	if (!skip_colon())
+	if (!skipColon())
 		return 5;
 
 	if (Common::isAlpha(*_buffPtr)) {
@@ -806,7 +816,7 @@ int Scripts::cmd_ask() {
 		return 5;
 	}
 
-	if (!calc_string(1))
+	if (!calcString(1))
 		return 5;
 
 	strncpy(title, _tempS, 41);
@@ -814,7 +824,7 @@ int Scripts::cmd_ask() {
 
 	if (*_buffPtr == ',') {
 		_buffPtr++;
-		if (!calc_value())
+		if (!calcValue())
 			return 5;
 
 		_buffPtr++;
@@ -824,7 +834,7 @@ int Scripts::cmd_ask() {
 
 	_askVar = v;
 
-	while (calc_string(0)) {
+	while (calcString(0)) {
 		Common::strcpy_s(opt, _tempS);
 		opts.push_back(opt);
 
@@ -839,38 +849,53 @@ int Scripts::cmd_ask() {
 	return 0;
 }
 
+void Scripts::pause() {
+	_paused = SCRIPT_PAUSED;
+}
+
+void Scripts::resume() {
+	_paused = SCRIPT_RESUMING;
+}
+
 void Scripts::setAskResponse(int option) {
 	_numVar[_askVar] = option;
 	resume();
 }
 
+void Scripts::runIfResuming() {
+	if (_paused == SCRIPT_RESUMING) {
+		_paused = SCRIPT_READY;
+		scriptLoop();
+	}
+}
+
 int Scripts::cmd_sound() {
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
 	if (_lValue < 1 || _lValue > 16)
 		return 6;
 	
-	play_sound((int)_lValue - 1, true);
+	playSound((int)_lValue - 1, true);
 	return 0;
 }
 
-int Scripts::cmd_settile() {
-	if (!calc_value())
+int Scripts::cmd_setTile() {
+	if (!calcValue())
 		return 5;
 	
 	_buffPtr++;
-	int screen = (int)_lValue;
-	if (!calc_value())
+	const int screen = (int)_lValue;
+	if (!calcValue())
 		return 5;
 	
 	_buffPtr++;
-	int pos = (int)_lValue;
-	if (!calc_value())
+	const int pos = (int)_lValue;
+	if (!calcValue())
 		return 5;
-	
-	int tile = (int)_lValue;
+
+	const int tile = (int)_lValue;
 
 	if (screen < 0 || screen > 119)
 		return 6;
@@ -881,19 +906,19 @@ int Scripts::cmd_settile() {
 	if (tile < 0 || tile > 230)
 		return 6;
 
-	if (screen == _G(current_level)) {
-		place_tile(pos % 20, pos / 20, tile);
+	if (screen == _G(currentLevel)) {
+		placeTile(pos % 20, pos / 20, tile);
 	} else {
-		LEVEL tmp;
+		Level tmp;
 		tmp.load(screen);
-		tmp.icon[pos / 20][pos % 20] = tile;
+		tmp._iconGrid[pos / 20][pos % 20] = tile;
 		tmp.save(screen);
 	}
 	return 0;
 }
 
-int Scripts::cmd_itemgive() {
-	if (!calc_value())
+int Scripts::cmd_itemGive() {
+	if (!calcValue())
 		return 5;
 
 	_buffPtr++;
@@ -901,21 +926,21 @@ int Scripts::cmd_itemgive() {
 	if (i < 1 || i > 15)
 		return 6;
 
-	_G(thor_info).inventory |= 64;
-	_G(thor_info).item = 7;
-	_G(thor_info).object = i;
-	_G(thor_info).object_name = OBJECT_NAMES[_G(thor_info).object - 1];
+	_G(thorInfo)._inventory |= 64;
+	_G(thorInfo)._selectedItem = 7;
+	_G(thorInfo)._object = i;
+	_G(thorInfo)._objectName = OBJECT_NAMES[_G(thorInfo)._object - 1];
 
 	return 0;
 }
 
-int Scripts::cmd_itemtake() {
-	delete_object();
+int Scripts::cmd_itemTake() {
+	deleteObject();
 	return 0;
 }
 
-int Scripts::cmd_setflag() {
-	if (!calc_value())
+int Scripts::cmd_setFlag() {
+	if (!calcValue())
 		return 5;
 
 	int i = (int)_lValue;
@@ -930,7 +955,7 @@ int Scripts::cmd_setflag() {
 int Scripts::cmd_ltoa() {
 	int sv;
 
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 	_buffPtr++;
 
@@ -951,7 +976,7 @@ int Scripts::cmd_ltoa() {
 }
 
 int Scripts::cmd_pause() {
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 	
 	_buffPtr++;
@@ -963,14 +988,14 @@ int Scripts::cmd_pause() {
 }
 
 int Scripts::cmd_visible() {
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 	
 	_buffPtr++;
 	if (_lValue < 1 || _lValue > 16)
 		return 6;
 
-	actor_visible((int)_lValue);
+	actorVisible((int)_lValue);
 	return 0;
 }
 
@@ -988,7 +1013,7 @@ int Scripts::cmd_random() {
 		return 5;
 	}
 
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 	_buffPtr++;
 	int r = (int)_lValue;
@@ -1000,18 +1025,18 @@ int Scripts::cmd_random() {
 }
 
 void Scripts::scr_func1() {
-	play_sound(FALL, true);
+	playSound(FALL, true);
 
-	_G(new_level) = 109;
-	_G(new_level_tile) = 215;
-	_G(thor)->x = (_G(new_level_tile) % 20) * 16;
-	_G(thor)->y = ((_G(new_level_tile) / 20) * 16) - 2;
+	_G(newLevel) = 109;
+	_G(newLevelTile) = 215;
+	_G(thor)->_x = (_G(newLevelTile) % 20) * 16;
+	_G(thor)->_y = ((_G(newLevelTile) / 20) * 16) - 2;
 
-	_G(thor)->last_x[0] = _G(thor)->x;
-	_G(thor)->last_x[1] = _G(thor)->x;
-	_G(thor)->last_y[0] = _G(thor)->y;
-	_G(thor)->last_y[1] = _G(thor)->y;
-	_G(thor)->show = 2;
+	_G(thor)->_lastX[0] = _G(thor)->_x;
+	_G(thor)->_lastX[1] = _G(thor)->_x;
+	_G(thor)->_lastY[0] = _G(thor)->_y;
+	_G(thor)->_lastY[1] = _G(thor)->_y;
+	_G(thor)->_show = 2;
 }
 
 void Scripts::scr_func2() {
@@ -1021,73 +1046,73 @@ void Scripts::scr_func2() {
 }
 
 void Scripts::scr_func3() {
-	int p = (((_G(thor)->y + 8) / 16) * 20) + ((_G(thor)->x + 7) / 16);
+	int p = (((_G(thor)->_y + 8) / 16) * 20) + ((_G(thor)->_x + 7) / 16);
 	int y = p / 20;
 	int x = p % 20;
 
 	if (y < 0 || x < 0 || y > 11) {
-		play_sound(BRAAPP, true);
-		_G(key_flag[key_magic]) = false;
+		playSound(BRAAPP, true);
+		_G(keyFlag[key_magic]) = false;
 		return;
 	}
-	if (_G(scrn).icon[y][x] < 174 || _G(scrn).icon[y][x] > 178) {
-		play_sound(BRAAPP, true);
-		_G(key_flag[key_magic]) = false;
+	if (_G(scrn)._iconGrid[y][x] < 174 || _G(scrn)._iconGrid[y][x] > 178) {
+		playSound(BRAAPP, true);
+		_G(keyFlag[key_magic]) = false;
 		return;
 	}
 
 	_numVar[0] = 1;
-	play_sound(WOOP, true);
-	if (_G(current_level) == 106 && p == 69) {
-		place_tile(x, y, 220);
-		_G(key_flag[key_magic]) = false;
+	playSound(WOOP, true);
+	if (_G(currentLevel) == 106 && p == 69) {
+		placeTile(x, y, 220);
+		_G(keyFlag[key_magic]) = false;
 		return;
 	}
 
-	_G(key_flag[key_magic]) = false;
-	place_tile(x, y, 191);
+	_G(keyFlag[key_magic]) = false;
+	placeTile(x, y, 191);
 
 	if ((g_events->getRandomNumber(99)) < 25 ||
-		(_G(current_level) == 13 && p == 150 && !_G(setup).f26 && _G(setup).f28)) {
-		if (!_G(object_map[p]) && _G(scrn).icon[y][x] >= 140) { // nothing there and solid
+		(_G(currentLevel) == 13 && p == 150 && !_G(setup).f26 && _G(setup).f28)) {
+		if (!_G(objectMap[p]) && _G(scrn)._iconGrid[y][x] >= 140) { // nothing there and solid
 			int o = g_events->getRandomNumber(1, 5);
-			if (_G(current_level) == 13 && p == 150 && !_G(setup).f26 && _G(setup).f28)
+			if (_G(currentLevel) == 13 && p == 150 && !_G(setup).f26 && _G(setup).f28)
 				o = 20;
 
-			_G(object_map[p]) = o;
-			_G(object_index[p]) = 31; // actor is 3-15
+			_G(objectMap[p]) = o;
+			_G(objectIndex[p]) = 31; // actor is 3-15
 		}
 	}
 }
 
 void Scripts::scr_func4() {
-	_G(thunder_flag) = 60;
+	_G(thunderSnakeCounter) = 60;
 }
 
 void Scripts::scr_func5() {
-	_G(scrn).actor_loc[0] -= 2;
-	_G(scrn).actor_loc[1] -= 2;
-	_G(scrn).actor_loc[2] -= 2;
-	_G(scrn).actor_loc[3] -= 2;
-	_G(actor[3]).i1 = 16;
+	_G(scrn)._actorLoc[0] -= 2;
+	_G(scrn)._actorLoc[1] -= 2;
+	_G(scrn)._actorLoc[2] -= 2;
+	_G(scrn)._actorLoc[3] -= 2;
+	_G(actor[3])._i1 = 16;
 }
 
 int Scripts::cmd_exec() {
-	if (!calc_value())
+	if (!calcValue())
 		return 5;
 	_buffPtr++;
 	if (_lValue < 1 || _lValue > 10)
 		return 6;
 
 	if (_lValue > 5) {
-		error("cmd_exec - unhandled lValue %d", _lValue);
+		error("cmd_exec - unhandled lValue %ld", _lValue);
 	}
 	
 	(this->*scr_func[_lValue - 1])();
 	return 0;
 }
 
-int Scripts::exec_command(int num) {
+int Scripts::execCommand(int num) {
 	char ch;
 
 	int ret = 0;
@@ -1132,13 +1157,13 @@ int Scripts::exec_command(int num) {
 		ch -= 65;
 		_forVar[_forPtr] = ch;
 		_buffPtr += 2;
-		if (!calc_value()) {
+		if (!calcValue()) {
 			ret = 5;
 			break;
 		}
 		_numVar[_forVar[_forPtr]] = _lValue;
 		_buffPtr += 2;
-		if (!calc_value()) {
+		if (!calcValue()) {
 			ret = 5;
 			break;
 		}
@@ -1169,19 +1194,19 @@ int Scripts::exec_command(int num) {
 			return -100;
 		break;
 	case 10: // addjewels
-		ret = cmd_addjewels();
+		ret = cmd_addJewels();
 		break;
 	case 11: // addhealth
-		ret = cmd_addhealth();
+		ret = cmd_addHealth();
 		break;
 	case 12: // addmagic
-		ret = cmd_addmagic();
+		ret = cmd_addMagic();
 		break;
 	case 13: // addkeys
-		ret = cmd_addkeys();
+		ret = cmd_addKeys();
 		break;
 	case 14: // addscore
-		ret = cmd_addscore();
+		ret = cmd_addScore();
 		break;
 	case 15: // say
 		ret = cmd_say(0, 1);
@@ -1193,19 +1218,19 @@ int Scripts::exec_command(int num) {
 		ret = cmd_sound();
 		break;
 	case 18: // settile
-		ret = cmd_settile();
+		ret = cmd_setTile();
 		break;
 	case 19: // itemgive
-		ret = cmd_itemgive();
+		ret = cmd_itemGive();
 		break;
 	case 20: // itemtake
-		ret = cmd_itemtake();
+		ret = cmd_itemTake();
 		break;
 	case 21: // itemsay
 		ret = cmd_say(1, 1);
 		break;
 	case 22: // setflag
-		ret = cmd_setflag();
+		ret = cmd_setFlag();
 		break;
 	case 23: // ltoa
 		ret = cmd_ltoa();
@@ -1230,7 +1255,7 @@ int Scripts::exec_command(int num) {
 	}
 
 	if (ret > 0) {
-		script_error(ret);
+		scriptError(ret);
 		return 0;
 	}
 

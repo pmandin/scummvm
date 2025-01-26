@@ -53,13 +53,21 @@ MovieFrameFooter::MovieFrameFooter(Chunk &chunk) {
 		_left = Datum(chunk).u.i;
 		_top = Datum(chunk).u.i;
 		_zIndex = Datum(chunk).u.i;
-		_unk6 = Datum(chunk).u.i;
-		_unk7 = Datum(chunk).u.i;
+		// This represents the difference between the left coordinate of the
+		// keyframe (if applicable) and the left coordinate of this frame. Zero
+		// if there is no keyframe.
+		_diffBetweenKeyframeAndFrameX = Datum(chunk).u.i;
+		// This represents the difference between the top coordinate of the
+		// keyframe (if applicable) and the top coordinate of this frame. Zero
+		// if there is no keyframe.
+		_diffBetweenKeyframeAndFrameY = Datum(chunk).u.i;
 		_index = Datum(chunk).u.i;
-		_unk8 = Datum(chunk).u.i;
+		_keyframeIndex = Datum(chunk).u.i;
 		_unk9 = Datum(chunk).u.i;
-		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _startInMilliseconds = 0x%x, _endInMilliseconds = 0x%x, _left = 0x%x, _top = 0x%x, _index = 0x%x (@0x%llx)", _startInMilliseconds, _endInMilliseconds, _left, _top, _index, static_cast<long long int>(chunk.pos()));
-		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _unk4 = 0x%x, _unk5 = 0x%x, _unk6 = 0x%x, _unk7 = 0x%x, _unk8 = 0x%x, _unk9 = 0x%x", _unk4, _zIndex, _unk6, _unk7, _unk8, _unk9);
+		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _startInMilliseconds = %d, _endInMilliseconds = %d, _left = %d, _top = %d, _index = %d, _keyframeIndex = %d (@0x%llx)", 
+			_startInMilliseconds, _endInMilliseconds, _left, _top, _index, _keyframeIndex, static_cast<long long int>(chunk.pos()));
+		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _zIndex = %d, _diffBetweenKeyframeAndFrameX = %d, _diffBetweenKeyframeAndFrameY = %d, _unk4 = %d, _unk9 = %d",
+			_zIndex, _diffBetweenKeyframeAndFrameX, _diffBetweenKeyframeAndFrameY, _unk4,_unk9);
 	}
 }
 
@@ -110,11 +118,7 @@ Common::Rect MovieFrame::boundingBox() {
 }
 
 uint32 MovieFrame::index() {
-	if (_footer != nullptr) {
-		return _footer->_index;
-	} else {
-		error("MovieFrame::index(): Cannot get the index of a keyframe");
-	}
+	return _bitmapHeader->_index;
 }
 
 uint32 MovieFrame::startInMilliseconds() {
@@ -146,22 +150,28 @@ uint32 MovieFrame::keyframeEndInMilliseconds() {
 }
 
 MovieFrame::~MovieFrame() {
-	// The base class destructor takes care of deleting the bitmap header, so 
+	// The base class destructor takes care of deleting the bitmap header, so
 	// we don't need to delete that here.
-	delete _footer;
+	// The movie will delete the footer.
 	_footer = nullptr;
 }
 
 Movie::~Movie() {
-	for (MovieFrame *frame : _stills) {
-		delete frame;
-	}
-	_stills.clear();
 	for (MovieFrame *frame : _frames) {
 		delete frame;
 	}
 	_frames.clear();
+
+	for (MovieFrame *still : _stills) {
+		delete still;
+	}
+	_stills.clear();
+
+	for (Audio::SeekableAudioStream *stream : _audioStreams) {
+		delete stream;
+	}
 	_audioStreams.clear();
+
 	for (MovieFrameFooter *footer : _footers) {
 		delete footer;
 	}
@@ -210,7 +220,7 @@ void Movie::timePlay() {
 	if (!_audioStreams.empty()) {
 		Audio::QueuingAudioStream *audio = Audio::makeQueuingAudioStream(22050, false);
 		for (Audio::SeekableAudioStream *stream : _audioStreams) {
-			audio->queueAudioStream(stream);
+			audio->queueAudioStream(stream, DisposeAfterUse::NO);
 		}
 		// Then play the audio!
 		Audio::SoundHandle handle;
@@ -258,7 +268,7 @@ bool Movie::drawNextFrame() {
 	// TODO: We'll need to support persistent frames in movies too. Do movies
 	// have the same distinction between spatialShow and timePlay that sprites
 	// do?
-	
+
 	uint currentTime = g_system->getMillis();
 	uint movieTime = currentTime - _startTime;
 	debugC(5, kDebugGraphics, "GRAPHICS (Movie %d): Starting blitting (movie time: %d)", _header->_id, movieTime);
@@ -352,33 +362,20 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 		if (!isAnimationChunk) {
 			warning("Movie::readSubfile(): (Frameset %d of %d) No animation chunks found (@0x%llx)", i, chunkCount, static_cast<long long int>(chunk.pos()));
 		}
-		MovieFrameHeader *header = nullptr;
-		MovieFrame *frame = nullptr;
 		while (isAnimationChunk) {
 			uint sectionType = Datum(chunk).u.i;
 			debugC(5, kDebugLoading, "Movie::readSubfile(): sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
 			switch (MovieSectionType(sectionType)) {
 			case kMovieFrameSection: {
-				header = new MovieFrameHeader(chunk);
-				frame = new MovieFrame(chunk, header);
+				MovieFrameHeader *header = new MovieFrameHeader(chunk);
+				MovieFrame *frame = new MovieFrame(chunk, header);
 				_frames.push_back(frame);
 				break;
 			}
 
 			case kMovieFooterSection: {
 				MovieFrameFooter *footer = new MovieFrameFooter(chunk);
-				// _footers.push_back(footer);
-				// TODO: This does NOT handle the case where there are
-				// keyframes. We need to match the footer to an arbitrary
-				// frame, since some keyframes don't have footers, sigh.
-				if (header == nullptr) {
-					error("Movie::readSubfile(): No frame to match footer to");
-				}
-				if (header->_index == footer->_index) {
-					frame->setFooter(footer);
-				} else {
-					error("Movie::readSubfile(): Footer index does not match frame index: %d != %d", header->_index, footer->_index);
-				}
+				_footers.push_back(footer);
 				break;
 			}
 
@@ -401,7 +398,7 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 			Audio::SeekableAudioStream *stream = nullptr;
 			switch (_header->_soundEncoding) {
 			case SoundEncoding::PCM_S16LE_MONO_22050:
-				stream = Audio::makeRawStream(buffer, chunk._length, 22050, Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN, DisposeAfterUse::YES);
+				stream = Audio::makeRawStream(buffer, chunk._length, 22050, Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN, DisposeAfterUse::NO);
 				break;
 
 			case SoundEncoding::IMA_ADPCM_S16LE_MONO_22050:
@@ -414,7 +411,7 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 				break;
 
 			default:
-				error("Sound::readChunk(): Unknown audio encoding 0x%x", (uint)_header->_soundEncoding);
+				error("Movie::readSubfile(): Unknown audio encoding 0x%x", static_cast<uint>(_header->_soundEncoding));
 			}
 			_audioStreams.push_back(stream);
 			chunk = subfile.nextChunk();
@@ -436,7 +433,13 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 	}
 
 	// SET THE MOVIE FRAME FOOTERS.
-	// TODO: We donʻt do anything with this yet!
+	for (MovieFrame *frame : _frames) {
+		for (MovieFrameFooter *footer : _footers) {
+			if (frame->index() == footer->_index) {
+				frame->setFooter(footer);
+			}
+		}
+	}
 }
 
 } // End of namespace MediaStation

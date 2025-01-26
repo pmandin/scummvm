@@ -30,6 +30,18 @@ namespace Got {
 
 static const byte SOUND_PRIORITY[] = {1, 2, 3, 3, 3, 1, 4, 4, 4, 5, 4, 3, 1, 2, 2, 5, 1, 3, 1};
 
+Sound::Sound() {
+	for (int i = 0; i < 3; i++)
+		_bossSounds[i] = nullptr;
+}
+
+Sound::~Sound() {
+	delete[] _soundData;
+	for (int i = 0; i < 3; i++) {
+		delete(_bossSounds[i]);
+	}
+}
+
 void Sound::load() {
 	File f("DIGSOUND");
 
@@ -42,29 +54,59 @@ void Sound::load() {
 	f.read(_soundData, f.size() - 16 * 8);
 }
 
-void Sound::play_sound(int index, bool priority_override) {
+void Sound::setupBoss(const int num) {
+	if (_currentBossLoaded == num)
+		// Boss sounds are already loaded
+		return;
+
+	if (_currentBossLoaded) {
+		// Boss sounds have already been loaded. Delete them to avoid memory leak
+		for (int i = 0; i < 3; i++)
+			delete(_bossSounds[i]);
+	}
+
+	// Information concerning boss sounds is stored in _digiSounds 16 to 18, but the data is stored in _bossSounds
+	for (int i = 0; i < 3; ++i) {
+		Common::String resourceName = Common::String::format("BOSSV%d%d", num, i + 1);
+		File f(resourceName);
+		const int size = f.size();
+		_bossSounds[i] = new byte[size];
+		_digiSounds[16 + i]._length = size;
+		_digiSounds[16 + i]._offset = 0;
+		f.read(_bossSounds[i], size);
+		f.close();
+	}
+
+	_currentBossLoaded = num;
+}
+
+void Sound::playSound(const int index, const bool override) {
 	if (index >= NUM_SOUNDS)
 		return;
 
 	// If a sound is playing, stop it unless there is a priority override
-	if (sound_playing()) {
-		if (!priority_override && _currentPriority < SOUND_PRIORITY[index])
+	if (soundPlaying()) {
+		if (!override && _currentPriority < SOUND_PRIORITY[index])
 			return;
 
 		g_engine->_mixer->stopHandle(_soundHandle);
 	}
 
+	Common::MemoryReadStream *stream;
+	if (index >= 16) {
+		// Boss sounds are not stored in the normal sound data, it's in 3 buffers in _bossSounds.
+		stream = new Common::MemoryReadStream(_bossSounds[index - 16], _digiSounds[index]._length);
+	} else {
+		// Normal digital sound
+		stream = new Common::MemoryReadStream(_soundData + _digiSounds[index]._offset, _digiSounds[index]._length);
+	}
 	// Play the new sound
-	Common::MemoryReadStream *stream = new Common::MemoryReadStream(
-		_soundData + _digiSounds[index].offset, _digiSounds[index].length);
-	Audio::AudioStream *audioStream = Audio::makeVOCStream(stream, Audio::FLAG_UNSIGNED,
-														   DisposeAfterUse::YES);
-	g_engine->_mixer->playStream(Audio::Mixer::kSFXSoundType,
-								 &_soundHandle, audioStream);
+	Audio::AudioStream *audioStream = Audio::makeVOCStream(stream, Audio::FLAG_UNSIGNED, DisposeAfterUse::YES);
+	g_engine->_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle, audioStream);
 }
 
-void Sound::play_sound(const Gfx::GraphicChunk &src) {
-	if (sound_playing())
+void Sound::playSound(const Gfx::GraphicChunk &src) {
+	if (soundPlaying())
 		g_engine->_mixer->stopHandle(_soundHandle);
 
 	// Play the new sound
@@ -72,15 +114,14 @@ void Sound::play_sound(const Gfx::GraphicChunk &src) {
 		src._data, src._uncompressedSize);
 	Audio::AudioStream *audioStream = Audio::makeVOCStream(stream, Audio::FLAG_UNSIGNED,
 														   DisposeAfterUse::YES);
-	g_engine->_mixer->playStream(Audio::Mixer::kSFXSoundType,
-								 &_soundHandle, audioStream);
+	g_engine->_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle, audioStream);
 }
 
-bool Sound::sound_playing() const {
+bool Sound::soundPlaying() const {
 	return g_engine->_mixer->isSoundHandleActive(_soundHandle);
 }
 
-void Sound::music_play(const char *name, bool override) {
+void Sound::musicPlay(const char *name, bool override) {
 	if (name != _currentMusic || override) {
 		g_engine->_mixer->stopHandle(_musicHandle);
 		_currentMusic = name;
@@ -98,6 +139,17 @@ void Sound::music_play(const char *name, bool override) {
 #else
 		warning("TODO: play_music %s", name);
 
+#if 0
+		Common::DumpFile *outFile = new Common::DumpFile();
+		const Common::String outName = Common::String::format("%s.dump", name);
+		outFile->open(Common::Path(outName));
+		byte *buffer = new byte[file.size()];
+		file.read(buffer, file.size());
+		outFile->write(buffer, file.size());
+		outFile->finalize();
+		outFile->close();
+#endif
+		
 		// The following is a dump of the music data in the hopes
 		// it will help someone write a decoder for ScummVM based on it.
 		// After an unknown header that doesn't seem to be used, the
@@ -143,7 +195,7 @@ void Sound::music_play(const char *name, bool override) {
         MU_playNote     endp
         */
 
-		int hdrCount = file.readUint16LE();
+		const int hdrCount = file.readUint16LE();
 		file.skip((hdrCount - 1) * 2);
 
 		while (!file.eos()) {
@@ -151,8 +203,8 @@ void Sound::music_play(const char *name, bool override) {
 			if (pause & 0x80)
 				pause = ((pause & 0x7f) << 8) | file.readByte();
 
-			int freq = file.readByte();
-			int duration = file.readByte();
+			const int freq = file.readByte();
+			const int duration = file.readByte();
 			if (freq == 0 && duration == 0) {
 				debug(1, "End of song");
 				break;
@@ -164,24 +216,24 @@ void Sound::music_play(const char *name, bool override) {
 	}
 }
 
-void Sound::music_pause() {
+void Sound::musicPause() {
 	g_engine->_mixer->pauseHandle(_musicHandle, true);
 }
 
-void Sound::music_resume() {
+void Sound::musicResume() {
 	g_engine->_mixer->pauseHandle(_musicHandle, false);
 }
 
-void Sound::music_stop() {
-	music_pause();
+void Sound::musicStop() {
+	musicPause();
 	_currentMusic = nullptr;
 }
 
-bool Sound::music_is_on() const {
+bool Sound::musicIsOn() const {
 	return g_engine->_mixer->isSoundHandleActive(_musicHandle);
 }
 
-const char *Sound::getMusicName(int num) const {
+const char *Sound::getMusicName(const int num) const {
 	const char *name = nullptr;
 
 	switch (_G(area)) {
@@ -282,32 +334,36 @@ const char *Sound::getMusicName(int num) const {
 	return name;
 }
 
-void play_sound(int index, bool priority_override) {
-	_G(sound).play_sound(index, priority_override);
+void playSound(const int index, const bool override) {
+	_G(sound).playSound(index, override);
 }
 
-void play_sound(const Gfx::GraphicChunk &src) {
-	_G(sound).play_sound(src);
+void playSound(const Gfx::GraphicChunk &src) {
+	_G(sound).playSound(src);
 }
 
-bool sound_playing() {
-	return _G(sound).sound_playing();
+bool soundPlaying() {
+	return _G(sound).soundPlaying();
 }
 
-void music_play(int num, bool override) {
-	_G(sound).music_play(num, override);
+void musicPlay(const int num, const bool override) {
+	_G(sound).musicPlay(num, override);
 }
 
-void music_play(const char *name, bool override) {
-	_G(sound).music_play(name, override);
+void musicPlay(const char *name, const bool override) {
+	_G(sound).musicPlay(name, override);
 }
 
-void music_pause() {
-	_G(sound).music_pause();
+void musicPause() {
+	_G(sound).musicPause();
 }
 
-void music_resume() {
-	_G(sound).music_resume();
+void musicResume() {
+	_G(sound).musicResume();
+}
+
+void setupBoss(int num) {
+	_G(sound).setupBoss(num);
 }
 
 } // namespace Got

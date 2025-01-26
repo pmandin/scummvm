@@ -40,167 +40,164 @@ static void createSurface(Graphics::ManagedSurface &s, const byte *src) {
 	s.setTransparentColor(0);
 }
 
-void setup_actor(ACTOR *actr, char num, char dir, int x, int y) {
-	actr->next = 0; // Next frame to be shown
-	actr->frame_count = actr->frame_speed;
-	actr->dir = dir;      // Direction of travel
-	actr->last_dir = dir; // Last direction of travel
-	if (actr->directions == 1)
-		actr->dir = 0;
-	if (actr->directions == 2)
-		actr->dir &= 1;
-	if (actr->directions == 4 && actr->frames == 1) {
-		actr->dir = 0;
-		actr->next = dir;
+void setupActor(Actor *actor, const char num, const char dir, const int x, const int y) {
+	actor->_nextFrame = 0; // Next frame to be shown
+	actor->_frameCount = actor->_frameSpeed;
+	actor->_dir = dir;      // Direction of travel
+	actor->_lastDir = dir; // Last direction of travel
+	if (actor->_directions == 1)
+		actor->_dir = 0;
+	if (actor->_directions == 2)
+		actor->_dir &= 1;
+	if (actor->_directions == 4 && actor->_framesPerDirection == 1) {
+		actor->_dir = 0;
+		actor->_nextFrame = dir;
 	}
 
-	actr->x = x;         // Actual X coor
-	actr->y = y;         // Actual Y coor
-	actr->width = 16;    // Actual X coor
-	actr->height = 16;   // Actual Y coor
-	actr->center = 0;    // Center of object
-	actr->last_x[0] = x; // Last X coor on each page
-	actr->last_x[1] = x;
-	actr->last_y[0] = y; // Last Y coor on each page
-	actr->last_y[1] = y;
-	actr->used = 1;            // 1=active, 0=not active
-	actr->speed_count = 8;     // Count down to movement
-	actr->vunerable = STAMINA; // Count down to vulnerability
-	actr->shot_cnt = 20;       // Count down to another shot
-	actr->num_shots = 0;       // # of shots currently on screen
-	actr->creator = 0;         // which actor # created this actor
-	actr->pause = 0;           // Pause must be 0 to move
-	actr->show = 0;
-	actr->actor_num = num;
-	actr->counter = 0;
-	actr->move_counter = 0;
-	actr->edge_counter = 20;
-	actr->hit_thor = 0;
-	actr->rand = g_engine->getRandomNumber(99);
-	actr->temp1 = 0;
-	actr->init_health = actr->health;
+	actor->_x = x;                         // Actual X coordinates
+	actor->_y = y;                         // Actual Y coordinates
+	actor->_width = 16;                    // Actual X coordinates
+	actor->_height = 16;                   // Actual Y coordinates
+	actor->_center = 0;                    // Center of object
+	actor->_lastX[0] = x;                  // Last X coordinates on each page
+	actor->_lastX[1] = x;
+	actor->_lastY[0] = y;                  // Last Y coordinates on each page
+	actor->_lastY[1] = y;
+	actor->_active = true;                 // true=active, false=not active
+	actor->_moveCountdown = 8;             // Count down to movement
+	actor->_vulnerableCountdown = STAMINA; // Count down to vulnerability
+	actor->_shotCountdown = 20;            // Count down to another shot
+	actor->_currNumShots = 0;              // # of shots currently on screen
+	actor->_creator = 0;                   // which actor # created this actor
+	actor->_unpauseCountdown = 0;          // Pause must be 0 to move
+	actor->_show = 0;
+	actor->_actorNum = num;
+	actor->_counter = 0;
+	actor->_moveCounter = 0;
+	actor->_edgeCounter = 20;
+	actor->_hitThor = false;
+	actor->_rand = g_engine->getRandomNumber(99);
+	actor->_temp1 = 0;
+	actor->_initHealth = actor->_health;
 }
 
-void make_actor_surface(ACTOR *actr) {
-	assert(actr->directions <= 4 && actr->frames <= 4);
-	for (int d = 0; d < actr->directions; d++) {
-		for (int f = 0; f < actr->frames; f++) {
-			Graphics::ManagedSurface &s = actr->pic[d][f];
-			const byte *src = &_G(tmp_buff[256 * ((d * 4) + f)]);
+void make_actor_surface(Actor *actor) {
+	assert(actor->_directions <= 4 && actor->_framesPerDirection <= 4);
+	for (int d = 0; d < actor->_directions; d++) {
+		for (int f = 0; f < actor->_framesPerDirection; f++) {
+			Graphics::ManagedSurface &s = actor->pic[d][f];
+			const byte *src = &_G(tmpBuff[256 * ((d * 4) + f)]);
 			createSurface(s, src);
 		}
 	}
 }
 
-int load_standard_actors() {
-	load_actor(0, 100 + _G(thor_info).armor); // Load Thor
-	_G(actor[0]).loadFixed(_G(tmp_buff) + 5120);
-	setup_actor(&_G(actor[0]), 0, 0, 100, 100);
+int loadStandardActors() {
+	loadActor(0, 100 + _G(thorInfo)._armor); // Load Thor
+	_G(actor[0]).loadFixed(_G(tmpBuff) + 5120);
+	setupActor(&_G(actor[0]), 0, 0, 100, 100);
 	_G(thor) = &_G(actor[0]);
 
 	make_actor_surface(&_G(actor[0]));
 
-	_G(thor_x1) = _G(thor)->x + 2;
-	_G(thor_y1) = _G(thor)->y + 2;
-	_G(thor_x2) = _G(thor)->x + 14;
-	_G(thor_y2) = _G(thor)->y + 14;
+	_G(thorX1) = _G(thor)->_x + 2;
+	_G(thorY1) = _G(thor)->_y + 2;
+	_G(thorX2) = _G(thor)->_x + 14;
+	_G(thorY2) = _G(thor)->_y + 14;
 
-	load_actor(0, 103 + _G(thor_info).armor); // Load hammer
-	_G(actor[1]).loadFixed(_G(tmp_buff) + 5120);
-	setup_actor(&_G(actor[1]), 1, 0, 100, 100);
-	_G(actor[1]).used = 0;
+	loadActor(0, 103 + _G(thorInfo)._armor); // Load hammer
+	_G(actor[1]).loadFixed(_G(tmpBuff) + 5120);
+	setupActor(&_G(actor[1]), 1, 0, 100, 100);
+	_G(actor[1])._active = false;
 	_G(hammer) = &_G(actor[1]);
 
 	make_actor_surface(&_G(actor[1]));
 
 	// Load sparkle
-	load_actor(0, 106);
-	_G(sparkle).loadFixed(_G(tmp_buff) + 5120);
-	setup_actor(&_G(sparkle), 20, 0, 100, 100);
-	_G(sparkle).used = 0;
+	loadActor(0, 106);
+	_G(sparkle).loadFixed(_G(tmpBuff) + 5120);
+	setupActor(&_G(sparkle), 20, 0, 100, 100);
+	_G(sparkle)._active = false;
 	make_actor_surface(&_G(sparkle));
 
 	// Load explosion
-	load_actor(0, 107);
-	_G(explosion).loadFixed(_G(tmp_buff) + 5120);
-	setup_actor(&_G(explosion), 21, 0, 100, 100);
-	_G(explosion).used = 0;
+	loadActor(0, 107);
+	_G(explosion).loadFixed(_G(tmpBuff) + 5120);
+	setupActor(&_G(explosion), 21, 0, 100, 100);
+	_G(explosion)._active = false;
 	make_actor_surface(&_G(explosion));
 
 	// Load tornado
-	load_actor(0, 108);
-	_G(magic_item[0]).loadFixed((const byte *)_G(tmp_buff) + 5120);
-	Common::copy(_G(tmp_buff), _G(tmp_buff) + 1024, _G(magic_pic[0]));
+	loadActor(0, 108);
+	_G(magicItem[0]).loadFixed((const byte *)_G(tmpBuff) + 5120);
+	Common::copy(_G(tmpBuff), _G(tmpBuff) + 1024, _G(magicPic[0]));
 
-	setup_actor(&_G(magic_item[0]), 20, 0, 0, 0);
-	_G(magic_item[0]).used = 0;
+	setupActor(&_G(magicItem[0]), 20, 0, 0, 0);
+	_G(magicItem[0])._active = false;
 
 	// Load shield
-	load_actor(0, 109);
-	_G(magic_item[1]).loadFixed((const byte *)_G(tmp_buff) + 5120);
-	Common::copy(_G(tmp_buff), _G(tmp_buff) + 1024, _G(magic_pic[1]));
+	loadActor(0, 109);
+	_G(magicItem[1]).loadFixed((const byte *)_G(tmpBuff) + 5120);
+	Common::copy(_G(tmpBuff), _G(tmpBuff) + 1024, _G(magicPic[1]));
 
-	setup_actor(&_G(magic_item[1]), 20, 0, 0, 0);
-	_G(magic_item[1]).used = 0;
+	setupActor(&_G(magicItem[1]), 20, 0, 0, 0);
+	_G(magicItem[1])._active = false;
 
-	_G(actor[2]).used = 0;
+	_G(actor[2])._active = false;
 
-	make_actor_surface(&_G(magic_item[0]));
+	make_actor_surface(&_G(magicItem[0]));
 
 	return 1;
 }
 
-void show_enemies() {
-	int i, d, r;
+void showEnemies() {
+	for (int i = 3; i < MAX_ACTORS; i++)
+		_G(actor[i])._active = false;
 
-	for (i = 3; i < MAX_ACTORS; i++)
-		_G(actor[i]).used = 0;
-	for (i = 0; i < MAX_ENEMIES; i++)
-		_G(enemy_type[i]) = 0;
+	for (int i = 0; i < MAX_ENEMIES; i++)
+		_G(enemyType[i]) = 0;
 
-	for (i = 0; i < MAX_ENEMIES; i++) {
-		if (_G(scrn).actor_type[i] > 0) {
-			r = load_enemy(_G(scrn).actor_type[i]);
-			if (r >= 0) {
-				_G(actor[i + 3]) = _G(enemy[r]);
+	for (int i = 0; i < MAX_ENEMIES; i++) {
+		if (_G(scrn)._actorType[i] > 0) {
+			const int id = loadEnemy(_G(scrn)._actorType[i]);
+			if (id >= 0) {
+				_G(actor[i + 3]) = _G(enemy[id]);
 
-				d = _G(scrn).actor_dir[i];
+				const int d = _G(scrn)._actorDir[i];
 
-				setup_actor(&_G(actor[i + 3]), i + 3, d, (_G(scrn).actor_loc[i] % 20) * 16,
-							(_G(scrn).actor_loc[i] / 20) * 16);
-				_G(actor[i + 3]).init_dir = _G(scrn).actor_dir[i];
-				_G(actor[i + 3]).pass_value = _G(scrn).actor_value[i];
+				setupActor(&_G(actor[i + 3]), i + 3, d, (_G(scrn)._actorLoc[i] % 20) * 16,
+							(_G(scrn)._actorLoc[i] / 20) * 16);
+				_G(actor[i + 3])._initDir = _G(scrn)._actorDir[i];
+				_G(actor[i + 3])._passValue = _G(scrn)._actorValue[i];
 
-				if (_G(actor[i + 3]).move == 23) {
+				if (_G(actor[i + 3])._moveType == 23) {
 					// Spinball
-					if (_G(actor[i + 3]).pass_value & 1)
-						_G(actor[i + 3]).move = 24;
+					if (_G(actor[i + 3])._passValue & 1)
+						_G(actor[i + 3])._moveType = 24;
 				}
 
-				if (_G(scrn).actor_invis[i])
-					_G(actor[i + 3]).used = 0;
+				if (_G(scrn)._actorInvis[i])
+					_G(actor[i + 3])._active = false;
 			}
 
-			_G(etype[i]) = r;
+			_G(etype[i]) = id;
 		}
 	}
 }
 
-int load_enemy(int type) {
-	int i, e;
-
-	for (i = 0; i < MAX_ENEMIES; i++) {
-		if (_G(enemy_type[i]) == type)
+int loadEnemy(const int type) {
+	for (int i = 0; i < MAX_ENEMIES; i++) {
+		if (_G(enemyType[i]) == type)
 			return i;
 	}
 
-	if (!load_actor(1, type)) {
+	if (!loadActor(1, type)) {
 		return -1;
 	}
 
-	e = -1;
-	for (i = 0; i < MAX_ENEMIES; i++) {
-		if (!_G(enemy_type[i])) {
+	int e = -1;
+	for (int i = 0; i < MAX_ENEMIES; i++) {
+		if (!_G(enemyType[i])) {
 			e = i;
 			break;
 		}
@@ -208,29 +205,29 @@ int load_enemy(int type) {
 	if (e == -1)
 		return -1;
 
-	Common::MemoryReadStream inf(_G(tmp_buff) + 5120, 40);
+	Common::MemoryReadStream inf(_G(tmpBuff) + 5120, 40);
 	_G(enemy[e]).loadFixed(&inf);
 
 	make_actor_surface(&_G(enemy[e]));
-	_G(enemy_type[e]) = type;
-	_G(enemy[e]).shot_type = 0;
+	_G(enemyType[e]) = type;
+	_G(enemy[e])._shotType = 0;
 
-	if (_G(enemy[e]).shots_allowed) {
-		_G(enemy[e]).shot_type = e + 1;
+	if (_G(enemy[e])._numShotsAllowed) {
+		_G(enemy[e])._shotType = e + 1;
 
 		// Set up shot info
-		_G(shot[e]).loadFixed(_G(tmp_buff) + 5160);
+		_G(shot[e]).loadFixed(_G(tmpBuff) + 5160);
 
 		// Loop to set up graphics
-		for (int d = 0; d < _G(shot[e]).directions; d++) {
-			for (int f = 0; f < _G(shot[e]).frames; f++) {
-				if (_G(shot[e]).directions < _G(shot[e]).frames) {
+		for (int d = 0; d < _G(shot[e])._directions; d++) {
+			for (int f = 0; f < _G(shot[e])._framesPerDirection; f++) {
+				if (_G(shot[e])._directions < _G(shot[e])._framesPerDirection) {
 					Graphics::ManagedSurface &s = _G(shot[e]).pic[d][f];
-					const byte *src = &_G(tmp_buff[4096 + (256 * ((d * 4) + f))]);
+					const byte *src = &_G(tmpBuff[4096 + (256 * ((d * 4) + f))]);
 					createSurface(s, src);
 				} else {
 					Graphics::ManagedSurface &s = _G(shot[e]).pic[f][d];
-					const byte *src = &_G(tmp_buff[4096 + (256 * ((f * 4) + d))]);
+					const byte *src = &_G(tmpBuff[4096 + (256 * ((f * 4) + d))]);
 					createSurface(s, src);
 				}
 			}
@@ -240,18 +237,18 @@ int load_enemy(int type) {
 	return e;
 }
 
-int actor_visible(int invis_num) {
+int actorVisible(const int invisNum) {
 	for (int i = 0; i < MAX_ENEMIES; i++) {
-		if (_G(scrn).actor_invis[i] == invis_num) {
-			int etype = _G(etype[i]);
-			if (etype >= 0 && !_G(actor[i + 3]).used) {
+		if (_G(scrn)._actorInvis[i] == invisNum) {
+			const int etype = _G(etype[i]);
+			if (etype >= 0 && !_G(actor[i + 3])._active) {
 				_G(actor[i + 3]) = _G(enemy[etype]);
 
-				int d = _G(scrn).actor_dir[i];
-				setup_actor(&_G(actor[i + 3]), i + 3, d, (_G(scrn).actor_loc[i] % 20) * 16,
-							(_G(scrn).actor_loc[i] / 20) * 16);
-				_G(actor[i + 3]).init_dir = _G(scrn).actor_dir[i];
-				_G(actor[i + 3]).pass_value = _G(scrn).actor_value[i];
+				int d = _G(scrn)._actorDir[i];
+				setupActor(&_G(actor[i + 3]), i + 3, d, (_G(scrn)._actorLoc[i] % 20) * 16,
+							(_G(scrn)._actorLoc[i] / 20) * 16);
+				_G(actor[i + 3])._initDir = _G(scrn)._actorDir[i];
+				_G(actor[i + 3])._passValue = _G(scrn)._actorValue[i];
 				return i;
 			}
 
@@ -261,14 +258,14 @@ int actor_visible(int invis_num) {
 	return -1;
 }
 
-void setup_magic_item(int item) {
+void setupMagicItem(const int item) {
 	for (int i = 0; i < 4; i++) {
-		createSurface(_G(magic_item[item]).pic[i / 4][i % 4], &_G(magic_pic[item][256 * i]));
+		createSurface(_G(magicItem[item]).pic[i / 4][i % 4], &_G(magicPic[item][256 * i]));
 	}
 }
 
-void load_new_thor() {
-	load_actor(0, 100 + _G(thor_info).armor); // Load Thor
+void loadNewThor() {
+	loadActor(0, 100 + _G(thorInfo)._armor); // Load Thor
 
 	make_actor_surface(&_G(actor[0]));
 }

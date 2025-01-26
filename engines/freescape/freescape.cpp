@@ -174,7 +174,6 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_viewArea = _fullscreenViewArea;
 	_rnd = new Common::RandomSource("freescape");
 	_gfx = nullptr;
-	_rawCGAPaletteByArea = nullptr;
 	_speaker = nullptr;
 	_savedScreen = nullptr;
 
@@ -771,6 +770,7 @@ Common::Error FreescapeEngine::run() {
 				executeObjectConditions(_delayedShootObject, true, rockTravel, false);
 				executeLocalGlobalConditions(true, false, false); // Only execute "on shot" room/global conditions
 				_delayedShootObject = nullptr;
+				drawFrame(); // Redraw the frame, in case the script execution took too long
 			}
 		}
 

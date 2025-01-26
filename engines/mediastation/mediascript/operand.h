@@ -24,7 +24,7 @@
 
 #include "common/str.h"
 
-#include "mediastation/mediascript/builtins.h"
+#include "mediastation/mediascript/scriptconstants.h"
 #include "mediastation/mediascript/variable.h"
 
 namespace MediaStation {
@@ -59,11 +59,14 @@ public:
 	Asset *getAsset();
 	uint32 getAssetId();
 
-	Operand getLiteralValue();
+	Operand getLiteralValue() const;
 
-	bool operator==(Operand &other);
-	bool operator>=(Operand &other);
+	bool operator==(const Operand &other) const;
+	bool operator>=(const Operand &other) const;
+	bool operator||(const Operand &other) const;
+
 	Operand operator-(const Operand &other) const;
+	Operand operator-() const;
 
 private:
 	OperandType _type = kOperandTypeEmpty;

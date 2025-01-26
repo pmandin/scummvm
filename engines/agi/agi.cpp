@@ -42,6 +42,7 @@
 #include "agi/font.h"
 #include "agi/graphics.h"
 #include "agi/inv.h"
+#include "agi/loader.h"
 #include "agi/sprite.h"
 #include "agi/text.h"
 #include "agi/keyboard.h"
@@ -167,6 +168,13 @@ int AgiEngine::agiInit() {
 	inGameTimerReset();
 
 	applyVolumeToMixer();
+
+	// Error on Game Adaptation Language, because it is not implemented yet.
+	// This allows testing the GAL components that have been developed, such
+	// as the resource loader, with our debug console.
+	if (getGameType() == GType_GAL) {
+		error("Game Adaptation Language not implemented yet");
+	}
 
 	return ec;
 }
@@ -520,7 +528,13 @@ void AgiEngine::initialize() {
 
 	_text->charAttrib_Set(15, 0);
 
-	if (getPlatform() == Common::kPlatformApple2) {
+	if (getGameType() == GType_GAL) {
+		if (getPlatform() == Common::kPlatformApple2) {
+			_loader = new GalLoader_A2(this);
+		} else {
+			_loader = new GalLoader(this);
+		}
+	} else if (getPlatform() == Common::kPlatformApple2) {
 		_loader = new AgiLoader_A2(this);
 	} else if (getVersion() <= 0x2001) {
 		_loader = new AgiLoader_v1(this);

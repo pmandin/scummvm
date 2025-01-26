@@ -71,6 +71,11 @@ public:
 };
 
 
+enum GameItemState {
+	kItemStateDragging = 1,
+	kItemStateWasInInv = 0x10000,
+};
+
 class GameItem : public HotArea {
 public:
 	Common::Array<SceneOp> onDragFinishedOps;
@@ -80,7 +85,7 @@ public:
 
 	// mutable values
 	uint16 _inSceneNum;
-	uint16 _flags;
+	uint32 _flags;
 	uint16 _quality;
 
 	Common::String dump(const Common::String &indent) const override;
@@ -310,13 +315,13 @@ public:
 	void onDragFinish(const Common::Point &pt);
 	void enableTrigger(uint16 sceneNum, uint16 num, bool enable = true);
 
-	Dialog *loadDialogData(uint16 num);
+	void loadDialogData(uint16 num);
 	void freeDialogData(uint16 num);
 	bool loadTalkData(uint16 num);
 	bool freeTalkData(uint16 num);
-	void updateVisibleTalkers();
+	void clearVisibleTalkers();
 	bool loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum);
-	void drawVisibleHeads(Graphics::ManagedSurface *dst);
+	void drawAndUpdateHeads(Graphics::ManagedSurface *dst);
 	bool hasVisibleHead() const;
 
 	// dragon-specific scene ops
@@ -371,6 +376,7 @@ private:
 	bool _ignoreMouseUp;
 	bool _lbuttonDown;
 	bool _rbuttonDown;
+	bool _lbuttonDownWithDrag;
 
 	/// Only changes in beamish - toggle between use (0), look (1) and target (2)
 	int16 _lookMode;

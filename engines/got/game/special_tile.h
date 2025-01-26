@@ -26,8 +26,8 @@
 
 namespace Got {
 
-extern int special_tile_thor(int x, int y, int icon);
-extern int special_tile(ACTOR *actr, int x, int y, int icon);
+extern int specialTileThor(int x, int y, int icon);
+extern int specialTile(const Actor *actor, int x, int y, int icon);
 
 } // namespace Got
 

@@ -80,44 +80,44 @@ bool View::msgMouseUp(const MouseUpMessage &msg) {
 	return child ? child->send(msg) : false;
 }
 
-void View::play_sound(int index, bool priority_override) {
-	_G(sound).play_sound(index, priority_override);
+void View::playSound(int index, bool priority_override) {
+	_G(sound).playSound(index, priority_override);
 }
 
-void View::play_sound(const Gfx::GraphicChunk &src) {
-	_G(sound).play_sound(src);
+void View::playSound(const Gfx::GraphicChunk &src) {
+	_G(sound).playSound(src);
 }
 
-void View::music_play(int num, bool override) {
-	_G(sound).music_play(num, override);
+void View::musicPlay(int num, bool override) {
+	_G(sound).musicPlay(num, override);
 }
 
-void View::music_play(const char *name, bool override) {
-	_G(sound).music_play(name, override);
+void View::musicPlay(const char *name, bool override) {
+	_G(sound).musicPlay(name, override);
 }
 
-void View::music_pause() {
-	_G(sound).music_pause();
+void View::musicPause() {
+	_G(sound).musicPause();
 }
 
-void View::music_resume() {
-	_G(sound).music_resume();
+void View::musicResume() {
+	_G(sound).musicResume();
 }
 
-void View::music_stop() {
-	_G(sound).music_stop();
+void View::musicStop() {
+	_G(sound).musicStop();
 }
 
-bool View::music_is_on() const {
-	return _G(sound).music_is_on();
+bool View::musicIsOn() const {
+	return _G(sound).musicIsOn();
 }
 
 void View::fadeOut() {
-	Gfx::fade_out();
+	Gfx::fadeOut();
 }
 
 void View::fadeIn(const byte *pal) {
-	Gfx::fade_in(pal);
+	Gfx::fadeIn(pal);
 }
 
 } // namespace Views

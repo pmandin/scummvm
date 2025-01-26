@@ -27,7 +27,7 @@
 
 #include "mediastation/chunk.h"
 #include "mediastation/datum.h"
-#include "mediastation/mediascript/builtins.h"
+#include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
@@ -38,7 +38,6 @@ public:
 	uint32 _id = 0;
 	VariableType _type = kVariableTypeEmpty;
 	union {
-		Datum *datum = nullptr;
 		Common::String *string;
 		Common::Array<Variable *> *collection;
 		bool b;
@@ -51,6 +50,7 @@ public:
 	Variable(Chunk &chunk, bool readId = true);
 
 	Operand getValue();
+	void putValue(Operand value);
 	Operand callMethod(BuiltInMethod method, Common::Array<Operand> &args);
 	~Variable();
 };

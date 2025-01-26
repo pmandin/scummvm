@@ -25,11 +25,11 @@
 #include "common/events.h"
 #include "common/queue.h"
 #include "got/data/defines.h"
-#include "got/data/high_scores.h"
+#include "got/data/highscores.h"
 #include "got/data/level.h"
 #include "got/data/sd_data.h"
 #include "got/data/setup.h"
-#include "got/data/thor_info.h"
+#include "got/data/thorinfo.h"
 #include "got/game/script.h"
 #include "got/gfx/font.h"
 #include "got/gfx/gfx_chunks.h"
@@ -80,9 +80,9 @@ enum TransitionDir {
 };
 
 struct Cheats {
-	bool freezeHealth = false;
-	bool freezeMagic = false;
-	bool freezeJewels = false;
+	bool _freezeHealth = false;
+	bool _freezeMagic = false;
+	bool _freezeJewels = false;
 };
 
 class Vars {
@@ -93,7 +93,7 @@ public:
 	void load();
 	void setArea(int areaNum);
 	void clearKeyFlags();
-	void resetEndgameFlags();
+	void resetEndGameFlags();
 
 	Common::String _playerName = "ScummVM";
 	Gfx::GfxChunks _gfx;
@@ -104,7 +104,7 @@ public:
 	Gfx::Pics _odin;
 	Gfx::Pics _status;
 	HighScores _highScores;
-	SdData _sd_data;
+	SdData _sdData;
 	Sound _sound;
 	Scripts _scripts;
 	GameMode _gameMode = MODE_NORMAL;
@@ -112,108 +112,97 @@ public:
 	Cheats _cheats;
 	Common::Queue<byte> _demoKeys;
 	bool _useItemFlag = false;
-	bool _slip_flag = false;
+	bool _slipFlag = false;
 	bool _slipping = false;
-	int _slip_cnt = 0;
-	bool _boss_intro1 = false, _boss_intro2 = false;
+	int _slipCount = 0;
+	bool _bossIntro1 = false;
+	bool _bossIntro2 = false;
 
 	int8 _pge = 0;
-	int _exit_flag = 0;
+	int _exitFlag = 0;
 
-	byte _key_flag[100] = {};
+	byte _keyFlag[100] = {};
 	int8 _diag = 0;
-	bool _diag_flag = false;
-	bool _slow_mode = false, _startup = true;
-	bool _shot_ok = false;
-	int _thor_x1 = 0, _thor_y1 = 0, _thor_x2 = 0, _thor_y2 = 0, _thor_real_y1 = 0;
-	int _thor_pos = 0;
-	int _max_shot = 0;
+	bool _diagFlag = false;
+	bool _slowMode = false;
+	bool _startup = true;
+	bool _shotOk = false;
+	int _thorX1 = 0;
+	int _thorY1 = 0;
+	int _thorX2 = 0;
+	int _thorY2 = 0;
+	int _thorRealY1 = 0;
+	int _thorPos = 0;
 
-	uint _timer_cnt = 0, _vbl_cnt = 0, _magic_cnt = 0, _extra_cnt = 0;
+	uint _magicCounter = 0;
 
-	int _ox = 0, _oy = 0, _of = 0;
-	byte _object_map[TILES_COUNT] = {};
-	byte _object_index[TILES_COUNT] = {};
-	int8 _thor_icon1 = 0, _thor_icon2 = 0, _thor_icon3 = 0, _thor_icon4 = 0;
-	int8 _level_type = 0;
-	int8 _music_current = -1;
-	int8 _boss_loaded = 0;
-	int8 _apple_drop = 0;
+	byte _objectMap[TILES_COUNT] = {};
+	byte _objectIndex[TILES_COUNT] = {};
+	int8 _thorIcon1 = 0;
+	int8 _thorIcon2 = 0;
+	int8 _thorIcon3 = 0;
+	int8 _thorIcon4 = 0;
+	int8 _levelMusic = 0;
+	int8 _currentMusic = -1;
+	int8 _appleDropCounter = 0;
 	bool _cheat = false;
 	int8 _area = 1;
 
-	LEVEL _scrn;
+	Level _scrn;
 
-	SETUP _setup;
-	SETUP _last_setup;
-	byte *_tmp_buff = nullptr;
+	Setup _setup;
+	Setup _lastSetup;
+	byte *_tmpBuff = nullptr;
 
-	ACTOR _actor[MAX_ACTORS] = {};  //current actors
-	ACTOR _enemy[MAX_ENEMIES] = {}; //current enemies
-	ACTOR _shot[MAX_ENEMIES] = {};  //current shots
-	int8 _enemy_type[MAX_ENEMIES] = {};
+	Actor _actor[MAX_ACTORS] = {};  //current actors
+	Actor _enemy[MAX_ENEMIES] = {}; //current enemies
+	Actor _shot[MAX_ENEMIES] = {};  //current shots
+	int8 _enemyType[MAX_ENEMIES] = {};
 	int _etype[MAX_ENEMIES] = {};
 
-	ACTOR _magic_item[2] = {};
-	byte _magic_pic[2][1024] = {};
-	bool _warp_scroll = false;
+	Actor _magicItem[2] = {};
+	byte _magicPic[2][1024] = {};
+	bool _warpScroll = false;
 
-	ACTOR *_thor = nullptr;
-	ACTOR *_hammer = nullptr;
-	ACTOR _explosion;
-	ACTOR _sparkle;
-	THOR_INFO _thor_info;
-	bool _boss_dead = false;
-	byte _endgame = 0;
+	Actor *_thor = nullptr;
+	Actor *_hammer = nullptr;
+	Actor _explosion;
+	Actor _sparkle;
+	ThorInfo _thorInfo;
+	bool _bossDead = false;
+	byte _endGame = 0;
 
-	bool _warp_flag = false;
+	bool _warpFlag = false;
 
-	int8 *_std_sound_start = nullptr;
-	int8 *_pcstd_sound_start = nullptr;
-	int8 *_std_sound = nullptr;
-	int8 *_pcstd_sounds = nullptr;
-	byte *_boss_sound[3] = {};
-	byte *_boss_pcsound[3] = {};
-	long _pcsound_length[NUM_SOUNDS] = {};
-	int _rand1 = 0, _rand2 = 0;
-	int _hourglass_flag = 0, _thunder_flag = 0;
-	bool _lightning_used = false, _tornado_used = false;
-	bool _shield_on = false;
-	bool _apple_flag = false;
-	bool _bomb_flag = false;
-	int _switch_flag = 0;
+	int _rand1 = 0;
+	int _rand2 = 0;
+	int _thunderSnakeCounter = 0;
+	bool _tornadoUsed = false;
+	bool _shieldOn = false;
+	bool _appleFlag = false;
+	int _switchUsed = 0;
 
-	byte _res_file[16] = {};
-	bool _music_flag = false, _sound_flag = false, _pcsound_flag = false;
-	bool _cash1_inform = false;
-	bool _cash2_inform = false;
-	bool _door_inform = false;
-	bool _magic_inform = false;
-	bool _carry_inform = false;
-	bool _killgg_inform = false;
+	bool _musicFlag = false;
+	bool _soundFlag = false;
+	bool _cashDoor1Inform = false;
+	bool _cashDoor2Inform = false;
+	bool _keyDoorInform = false;
+	bool _magicMissingInform = false;
+	bool _cantCarryInform = false;
+	bool _killGoodGuyInform = false;
 
-	byte *_pc_sound[NUM_SOUNDS] = {};
-	byte *_dig_sound[NUM_SOUNDS] = {};
-	bool _boss_active = false;
-	bool _story_flag = true;
+	bool _bossActive = false;
+	bool _storyFlag = true;
 	int8 *_scr = nullptr;
 	bool _demo = false;
-	int _rnd_index = 0;
-	int _rnd_array[100] = {};
-	bool _rdemo = false;
-	int8 _test_sdf[80] = {};
-	bool _game_over = false;
-	char _tempstr[80] = {};
-	bool _auto_load = false;
-	bool _end_tile = false;
-	byte _pbuff[PALETTE_SIZE] = {};
-	int _current_level = 23;
-	int _new_level = 0;
-	int _new_level_tile = 0, _current_area = 0;
-	char _sd_header[128] = {};
-	char _play_speed = 0;
-	bool _thor_special_flag = false;
-	byte _exprow = 0;
+	bool _gameOver = false;
+	bool _endTile = false;
+	int _currentLevel = 23;
+	int _newLevel = 0;
+	int _newLevelTile = 0;
+	int _currentArea = 0;
+	bool _thorSpecialFlag = false;
+	byte _explosionRow = 0;
 };
 
 #define _G(X) (g_vars->_##X)

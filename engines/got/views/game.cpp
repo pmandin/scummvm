@@ -39,7 +39,7 @@ Game::Game() : View("Game") {
 }
 
 bool Game::msgFocus(const FocusMessage &msg) {
-	Gfx::load_palette();
+	Gfx::loadPalette();
 	return View::msgFocus(msg);
 }
 
@@ -49,25 +49,25 @@ bool Game::msgKeypress(const KeypressMessage &msg) {
 
 	switch (msg.keycode) {
 	case Common::KEYCODE_F1:
-		odin_speaks(2008, -1);
+		odinSpeaks(2008, -1);
 		return true;
 
 	case Common::KEYCODE_f:
 		if (gDebugLevel > 0) {
 			// Hack used for testing end-game sequence
-			if (GAME1 && _G(current_level) == BOSS_LEVEL1)
-				closing_sequence1();
-			else if (GAME2 && _G(current_level) == BOSS_LEVEL2)
-				closing_sequence2();
-			else if (GAME3 && _G(current_level) == BOSS_LEVEL3)
-				closing_sequence3();
+			if (GAME1 && _G(currentLevel) == BOSS_LEVEL1)
+				boss1ClosingSequence1();
+			else if (GAME2 && _G(currentLevel) == BOSS_LEVEL2)
+				boss2ClosingSequence1();
+			else if (GAME3 && _G(currentLevel) == BOSS_LEVEL3)
+				boss3ClosingSequence1();
 		}
 		break;
 
 	case Common::KEYCODE_e:
 		if (gDebugLevel > 0 && GAME3)
 			// Launch endgame screen
-			closing_sequence3_3();
+			boss3ClosingSequence3();
 		break;
 
 	case Common::KEYCODE_s:
@@ -91,11 +91,11 @@ bool Game::msgAction(const ActionMessage &msg) {
 
 	switch (msg._action) {
 	case KEYBIND_FIRE:
-		thor_shoots();
+		thorShoots();
 		break;
 
 	case KEYBIND_SELECT:
-		select_item();
+		selectItem();
 		return true;
 
 	case KEYBIND_THOR_DIES:

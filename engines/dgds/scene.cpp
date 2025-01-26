@@ -59,7 +59,7 @@ Common::String GameItem::dump(const Common::String &indent) const {
 	Common::String super = HotArea::dump(indent + "  ");
 
 	Common::String str = Common::String::format(
-			"%sGameItem<\n%s\n%saltCursor %d icon %d sceneNum %d flags %d quality %d",
+			"%sGameItem<\n%s\n%saltCursor %d icon %d sceneNum %d flags 0x%x quality %d",
 			indent.c_str(), super.c_str(), indent.c_str(), _altCursor,
 			_iconNum, _inSceneNum, _flags, _quality);
 	str += DebugUtil::dumpStructList(indent, "onDragFinishedOps", onDragFinishedOps);
@@ -411,6 +411,8 @@ void Scene::setDragItemOp(const Common::Array<uint16> &args) {
 
 		bool inScene = (item._inSceneNum == engine->getScene()->getNum());
 		engine->getScene()->setDragItem(&item);
+		if (item._inSceneNum == 2)
+			item._flags |= kItemStateWasInInv;
 		if (!inScene)
 			item._inSceneNum = engine->getScene()->getNum(); // else do some redraw??
 
@@ -510,7 +512,7 @@ bool SDSScene::_dlgWithFlagLo8IsClosing = false;
 DialogFlags SDSScene::_sceneDialogFlags = kDlgFlagNone;
 
 SDSScene::SDSScene() : _num(-1), _dragItem(nullptr), _shouldClearDlg(false), _ignoreMouseUp(false),
-_field6_0x14(0), _rbuttonDown(false), _lbuttonDown(false), _lookMode(0) {
+_field6_0x14(0), _rbuttonDown(false), _lbuttonDown(false), _lookMode(0), _lbuttonDownWithDrag(false) {
 }
 
 bool SDSScene::load(const Common::String &filename, ResourceManager *resourceManager, Decompressor *decompressor) {
@@ -667,15 +669,16 @@ void SDSScene::checkTriggers() {
 }
 
 
-Dialog *SDSScene::loadDialogData(uint16 num) {
-	if (num == 0)
-		return &_dialogs.front();
+void SDSScene::loadDialogData(uint16 fileNum) {
+	if (fileNum == 0)
+		return;
 
 	for (auto &dlg: _dialogs)
-		if (dlg._fileNum == num)
-			return &dlg;
+		if (dlg._fileNum == fileNum)
+			// already loaded
+			return;
 
-	const Common::String filename = Common::String::format("D%d.DDS", num);
+	const Common::String filename = Common::String::format("D%d.DDS", fileNum);
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	ResourceManager *resourceManager = engine->getResourceManager();
 	Common::SeekableReadStream *dlgFile = resourceManager->getResource(filename);
@@ -686,7 +689,7 @@ Dialog *SDSScene::loadDialogData(uint16 num) {
 		// version.
 		//
 		warning("Dialog file %s not found", filename.c_str());
-		return nullptr;
+		return;
 	}
 
 	DgdsChunkReader chunk(dlgFile);
@@ -696,6 +699,8 @@ Dialog *SDSScene::loadDialogData(uint16 num) {
 
 	uint prevSize = _dialogs.size();
 
+	Common::String fileVersion;
+	Common::String fileId;
 	while (chunk.readNextHeader(EX_DDS, filename)) {
 		if (chunk.isContainer()) {
 			continue;
@@ -708,12 +713,12 @@ Dialog *SDSScene::loadDialogData(uint16 num) {
 			uint32 magic = stream->readUint32LE();
 			if (magic != _magic)
 				error("Dialog file magic mismatch %08x vs scene %08x", magic, _magic);
-			Common::String fileVersion = stream->readString();
-			Common::String fileId = stream->readString();
+			fileVersion = stream->readString();
+			fileId = stream->readString();
 			// slight hack, set file version while loading
 			Common::String oldVer = _version;
 			_version = fileVersion;
-			result = readDialogList(stream, _dialogs, num);
+			result = readDialogList(stream, _dialogs, fileNum);
 			_version = oldVer;
 		}
 	}
@@ -721,30 +726,28 @@ Dialog *SDSScene::loadDialogData(uint16 num) {
 	delete dlgFile;
 
 	if (_dialogs.size() != prevSize) {
-		debug(10, "Read %d dialogs from DDS %s:", _dialogs.size() - prevSize, filename.c_str());
+		debug(10, "Read %d dialogs from DDS %s (ver %s id '%s'):", _dialogs.size() - prevSize,
+			filename.c_str(), fileVersion.c_str(), fileId.c_str());
 		for (uint i = prevSize; i < _dialogs.size(); i++)
 			debug(10, "%s", _dialogs[i].dump("").c_str());
 	}
 
 	if (!result)
-		return nullptr;
+		return;
 
 	for (auto &dlg : _dialogs) {
 		if (dlg._nextDialogDlgNum && !dlg._nextDialogFileNum) {
-			dlg._nextDialogFileNum = num;
+			dlg._nextDialogFileNum = fileNum;
 		}
 	}
-
-	// TODO: Maybe not this?
-	return &_dialogs.front();
 }
 
-void SDSScene::freeDialogData(uint16 num) {
-	if (!num)
+void SDSScene::freeDialogData(uint16 fileNum) {
+	if (!fileNum)
 		return;
 
 	for (int i = 0; i < (int)_dialogs.size(); i++) {
-		if (_dialogs[i]._num == num) {
+		if (_dialogs[i]._fileNum == fileNum) {
 			_dialogs.remove_at(i);
 			i--;
 		}
@@ -868,15 +871,15 @@ bool SDSScene::freeTalkData(uint16 num) {
 	return result;
 }
 
-void SDSScene::updateVisibleTalkers() {
+void SDSScene::clearVisibleTalkers() {
 	for (auto &data : _talkData) {
-		data.updateVisibleHeads();
+		data.clearVisibleHeads();
 	}
 }
 
-void SDSScene::drawVisibleHeads(Graphics::ManagedSurface *dst) {
-	for (const auto &tds : _talkData) {
-		tds.drawVisibleHeads(dst);
+void SDSScene::drawAndUpdateHeads(Graphics::ManagedSurface *dst) {
+	for (auto &tds : _talkData) {
+		tds.drawAndUpdateVisibleHeads(dst);
 	}
 
 	if (_conversation.isForDlg(getVisibleDialog())) {
@@ -894,7 +897,7 @@ bool SDSScene::hasVisibleHead() const {
 
 
 bool SDSScene::loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum) {
-	updateVisibleTalkers();
+	clearVisibleTalkers();
 
 	_conversation._drawRect = DgdsRect();
 	if (loadTalkData(talknum)) {
@@ -907,8 +910,8 @@ bool SDSScene::loadTalkDataAndSetFlags(uint16 talknum, uint16 headnum) {
 					continue;
 
 				_conversation._drawRect = head._rect;
-				head._flags = static_cast<HeadFlags>(head._flags & ~(kHeadFlag1 | kHeadFlag10));
-				head._flags = static_cast<HeadFlags>(head._flags | (kHeadFlag8 | kHeadFlagVisible));
+				head._flags = static_cast<HeadFlags>(head._flags & ~(kHeadFlagFinished | kHeadFlag10));
+				head._flags = static_cast<HeadFlags>(head._flags | (kHeadFlag8 | kHeadFlagVisible | kHeadFlagOpening));
 				break;
 			}
 			break;
@@ -1209,7 +1212,7 @@ void SDSScene::mouseMoved(const Common::Point &pt) {
 	GameItem *activeItem = engine->getGDSScene()->getActiveItem();
 
 	if (_dragItem) {
-		if (area && area->_objInteractionRectNum == 1) {
+		if (area && area->_objInteractionRectNum == 1 && !(_dragItem->_flags & kItemStateWasInInv)) {
 			// drag over Willy Beamish
 			engine->getInventory()->open();
 			return;
@@ -1233,8 +1236,13 @@ void SDSScene::mouseLDown(const Common::Point &pt) {
 		_shouldClearDlg = true;
 		_ignoreMouseUp = true;
 		return;
+	} else if (_dragItem) {
+		// Nothing to do if we have a drag item, will be handled on mouseup.
+		_lbuttonDownWithDrag = true;
+		return;
 	}
 
+	_lbuttonDownWithDrag = false;
 	_ignoreMouseUp = false;
 
 	// Don't start drag in look/target mode.
@@ -1255,6 +1263,8 @@ void SDSScene::mouseLDown(const Common::Point &pt) {
 	GameItem *item = dynamic_cast<GameItem *>(area);
 	if (item) {
 		_dragItem = item;
+		if (item->_inSceneNum == 2)
+			item->_flags |= kItemStateWasInInv;
 		if (item->_iconNum)
 			engine->setMouseCursor(item->_iconNum);
 	}
@@ -1284,8 +1294,16 @@ void SDSScene::mouseLUp(const Common::Point &pt) {
 		return;
 	}
 
+	//
+	// HoC and Dragon drop as soon as the mouse is released.
+	// Willy keeps dragging the item until another click.
+	//
 	if (_dragItem) {
-		onDragFinish(pt);
+		if (engine->getGameId() != GID_WILLY || _lbuttonDownWithDrag) {
+			_dragItem->_flags &= ~kItemStateWasInInv;
+			onDragFinish(pt);
+			_lbuttonDownWithDrag = false;
+		}
 		return;
 	}
 
@@ -1340,7 +1358,7 @@ void SDSScene::mouseLUp(const Common::Point &pt) {
 					return;
 			}
 		} else {
-			debug(1, " --> exec %d click ops for area %d", area->onLClickOps.size(), area->_num);
+			debug(1, " --> exec %d L click ops for area %d", area->onLClickOps.size(), area->_num);
 			int16 addmins = engine->getGameGlobals()->getGameMinsToAddOnLClick();
 			runOps(area->onLClickOps, addmins);
 		}
@@ -1369,8 +1387,7 @@ void SDSScene::onDragFinish(const Common::Point &pt) {
 
 	runOps(dragItem->onDragFinishedOps, globals->getGameMinsToAddOnDragFinished());
 
-	// TODO: Both these loops are very similar.. there should be a cleaner way.
-
+	// Check for dropping on an object
 	for (const auto &item : gdsScene->getGameItems()) {
 		if (item._inSceneNum == dropSceneNum && _isInRect(pt, item._rect)) {
 			debug(1, "Dragged item %d onto item %d @ (%d, %d)", dragItem->_num, item._num, pt.x, pt.y);
@@ -1383,6 +1400,7 @@ void SDSScene::onDragFinish(const Common::Point &pt) {
 		}
 	}
 
+	// Check for dropping on an area
 	const SDSScene *scene = engine->getScene();
 	for (const auto &area : _hotAreaList) {
 		if (!_isInRect(pt, area._rect))
@@ -1428,18 +1446,20 @@ void SDSScene::onDragFinish(const Common::Point &pt) {
 }
 
 void SDSScene::mouseRDown(const Common::Point &pt) {
+	Dialog *dlg = getVisibleDialog();
+	if (dlg) {
+		// also allow right-click to clear dialogs
+		_shouldClearDlg = true;
+		return;
+	}
 	_rbuttonDown = true;
 }
 
 void SDSScene::mouseRUp(const Common::Point &pt) {
-	_rbuttonDown = false;
-	Dialog *dlg = getVisibleDialog();
-	if (dlg) {
-		// HACK: Check for dialog action selection! for now, just close
-		// it here to make game playable.
-		dlg->clear();
+	if (!_rbuttonDown)
 		return;
-	}
+
+	_rbuttonDown = false;
 
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	if (engine->getGameId() == GID_WILLY) {
@@ -2029,7 +2049,7 @@ void GDSScene::drawItems(Graphics::ManagedSurface &surf) {
 	const int maxx = SCREEN_WIDTH - (icons->width(2) + 10);
 	for (auto &item : _gameItems) {
 		if (item._inSceneNum == currentScene && &item != engine->getScene()->getDragItem()) {
-			if (!(item._flags & 1)) {
+			if (!(item._flags & kItemStateDragging)) {
 				// Dropped item.
 				// Update the rect for the icon - Note: original doesn't do this,
 				// but then the napent icon is offset??

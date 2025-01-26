@@ -22,7 +22,6 @@
 #include "got/game/boss3.h"
 #include "got/events.h"
 #include "got/game/back.h"
-#include "got/game/init.h"
 #include "got/game/move.h"
 #include "got/game/move_patterns.h"
 #include "got/game/status.h"
@@ -33,619 +32,627 @@ namespace Got {
 
 #define LFC 10
 
-static int boss_mode;
-static int num_pods1;
-static byte pod_speed;
 static const byte EXPLOSION[4][8] = {
 	{126, 127, 128, 129, 130, 131, 132, 133},
 	{146, 147, 148, 149, 150, 151, 152, 153},
 	{166, 167, 168, 169, 170, 171, 172, 173},
-	{186, 187, 188, 189, 190, 191, 192, 193}};
+	{186, 187, 188, 189, 190, 191, 192, 193}
+};
 
-static bool expf[4][8];
-static byte expcnt;
+static int bossMode;
+static int numPods1;
+static byte podSpeed;
+static bool explosionFlag[4][8];
+static byte explosionCounter;
 
-static int boss_die();
-static void check_boss_hit();
-static void boss_change_mode();
+static int bossDie();
+static void boss3CheckHit();
+static void bossChangeMode();
 
-static void set_boss(ACTOR *actr) {
-	_G(actor[4]).next = actr->next;
-	_G(actor[5]).next = actr->next;
-	_G(actor[6]).next = actr->next;
+static void setBoss(Actor *actor) {
+	_G(actor[4])._nextFrame = actor->_nextFrame;
+	_G(actor[5])._nextFrame = actor->_nextFrame;
+	_G(actor[6])._nextFrame = actor->_nextFrame;
 
-	_G(actor[4]).last_dir = actr->dir;
-	_G(actor[5]).last_dir = actr->dir;
-	_G(actor[6]).last_dir = actr->dir;
-	_G(actor[4]).dir = actr->dir;
-	_G(actor[5]).dir = actr->dir;
-	_G(actor[6]).dir = actr->dir;
+	_G(actor[4])._lastDir = actor->_dir;
+	_G(actor[5])._lastDir = actor->_dir;
+	_G(actor[6])._lastDir = actor->_dir;
+	_G(actor[4])._dir = actor->_dir;
+	_G(actor[5])._dir = actor->_dir;
+	_G(actor[6])._dir = actor->_dir;
 
-	_G(actor[4]).x = actr->x + 16;
-	_G(actor[4]).y = actr->y;
-	_G(actor[5]).x = actr->x;
-	_G(actor[5]).y = actr->y + 16;
-	_G(actor[6]).x = actr->x + 16;
-	_G(actor[6]).y = actr->y + 16;
+	_G(actor[4])._x = actor->_x + 16;
+	_G(actor[4])._y = actor->_y;
+	_G(actor[5])._x = actor->_x;
+	_G(actor[5])._y = actor->_y + 16;
+	_G(actor[6])._x = actor->_x + 16;
+	_G(actor[6])._y = actor->_y + 16;
 }
 
 // Boss - Loki-2
-static int boss_movement_one(ACTOR *actr) {
+static int boss3Movement1(Actor *actor) {
 	int rx, ry, i, numPods = 0;
 	int fcount;
 	
-	actr->num_moves = 2;
-	pod_speed = 2;
+	actor->_numMoves = 2;
+	podSpeed = 2;
 
-	switch (_G(setup).skill) {
+	switch (_G(setup)._difficultyLevel) {
 	case 0:
 		numPods = 3;
 		break;
+
 	case 1:
 		numPods = 5;
 		break;
+
 	case 2:
 		numPods = 8;
 		break;
+
+	default:
+		break;
 	}
 
-	if (!actr->temp1) {
+	if (!actor->_temp1) {
 		// Disappear
-		actr->dir = 1;
-		actr->frame_count = LFC;
-		actr->next = 0;
-		actr->temp1 = 1;
-		actr->i6 = 1;
-		actr->solid |= 128;
-		_G(actor[4]).solid |= 128;
-		_G(actor[5]).solid |= 128;
-		_G(actor[6]).solid |= 128;
-		play_sound(EXPLODE, true);
+		actor->_dir = 1;
+		actor->_frameCount = LFC;
+		actor->_nextFrame = 0;
+		actor->_temp1 = 1;
+		actor->_i6 = 1;
+		actor->_solid |= 128;
+		_G(actor[4])._solid |= 128;
+		_G(actor[5])._solid |= 128;
+		_G(actor[6])._solid |= 128;
+		playSound(EXPLODE, true);
 		goto done;
 	}
-	if (actr->i6) {
+	if (actor->_i6) {
 		// Fade out
-		fcount = actr->frame_count - 1;
+		fcount = actor->_frameCount - 1;
 		if (fcount <= 0) {
-			actr->next++;
-			if (actr->next > 2) {
-				actr->i6 = 0;
-				actr->temp3 = 160;
+			actor->_nextFrame++;
+			if (actor->_nextFrame > 2) {
+				actor->_i6 = 0;
+				actor->_temp3 = 160;
 			}
-			actr->frame_count = 3;
+			actor->_frameCount = 3;
 		} else
-			actr->frame_count = fcount;
+			actor->_frameCount = fcount;
 		
 		goto done1;
 	}
-	if (actr->temp3 > 1) {
-		actr->temp3--;
+	if (actor->_temp3 > 1) {
+		actor->_temp3--;
 		goto done1;
 	}
 
-	if (actr->temp3) {
-		for (i = 0; i < num_pods1; i++)
-			if (_G(actor[19 + i]).used)
+	if (actor->_temp3) {
+		for (i = 0; i < numPods1; i++)
+			if (_G(actor[19 + i])._active)
 				goto done1;
 
-		while (1) {
+		while (true) {
 			rx = g_events->getRandomNumber(255) + 16;
 			ry = g_events->getRandomNumber(143);
-			if (!overlap(rx, ry, rx + 32, ry + 32, _G(thor_x1), _G(thor_y1),
-						 _G(thor_x2), _G(thor_y2)))
+			if (!overlap(rx, ry, rx + 32, ry + 32, _G(thorX1), _G(thorY1), _G(thorX2), _G(thorY2)))
 				break;
 		}
 
-		actr->x = rx;
-		actr->y = ry;
-		actr->frame_count = LFC;
-		actr->temp4 = 40;
-		actr->temp3 = 0;
-		play_sound(EXPLODE, true);
+		actor->_x = rx;
+		actor->_y = ry;
+		actor->_frameCount = LFC;
+		actor->_temp4 = 40;
+		actor->_temp3 = 0;
+		playSound(EXPLODE, true);
 		goto done1;
 	}
 
-	if (actr->temp4) {
+	if (actor->_temp4) {
 		// Fade in
-		fcount = actr->frame_count - 1;
+		fcount = actor->_frameCount - 1;
 		if (fcount <= 0) {
-			actr->next--;
-			if (actr->next > 254) {
-				actr->next = 0;
-				actr->dir = 0;
-				actr->temp4 = 0;
-				actr->temp5 = 80;
-				actr->solid &= 0x7f;
-				_G(actor[4]).solid &= 0x7f;
-				_G(actor[5]).solid &= 0x7f;
-				_G(actor[6]).solid &= 0x7f;
+			actor->_nextFrame--;
+			if (actor->_nextFrame > 254) {
+				actor->_nextFrame = 0;
+				actor->_dir = 0;
+				actor->_temp4 = 0;
+				actor->_temp5 = 80;
+				actor->_solid &= 0x7f;
+				_G(actor[4])._solid &= 0x7f;
+				_G(actor[5])._solid &= 0x7f;
+				_G(actor[6])._solid &= 0x7f;
 			}
 
-			actr->frame_count = 3;
+			actor->_frameCount = 3;
 		} else
-			actr->frame_count = fcount;
+			actor->_frameCount = fcount;
 		
 		goto done1;
 	}
 
-	if (actr->temp5) {
+	if (actor->_temp5) {
 		// Shoot
-		actr->temp5--;
-		if (actr->temp5 == 20) {
-			actr->next = 3;
+		actor->_temp5--;
+		if (actor->_temp5 == 20) {
+			actor->_nextFrame = 3;
 			goto done1;
 		}
 		
-		if (!actr->temp5) {
-			if (_G(actor[4]).num_shots < _G(actor[4]).shots_allowed) {
-				actor_always_shoots(&_G(actor[4]), 0);
-				const byte shot_actor = _G(actor[4]).shot_actor;
-				_G(actor[shot_actor]).num_moves = pod_speed;
-				_G(actor[shot_actor]).x = actr->x + 8;
-				_G(actor[shot_actor]).y = actr->y + 16;
-				_G(actor[shot_actor]).temp5 = 0;
+		if (!actor->_temp5) {
+			if (_G(actor[4])._currNumShots < _G(actor[4])._numShotsAllowed) {
+				actorAlwaysShoots(&_G(actor[4]), 0);
+				const byte shot_actor = _G(actor[4])._shotActor;
+				_G(actor[shot_actor])._numMoves = podSpeed;
+				_G(actor[shot_actor])._x = actor->_x + 8;
+				_G(actor[shot_actor])._y = actor->_y + 16;
+				_G(actor[shot_actor])._temp5 = 0;
 				for (i = 0; i < numPods; i++)
 					_G(actor[20 + i]) = _G(actor[19]);
 
-				num_pods1 = numPods;
-				actr->temp1 = 0;
+				numPods1 = numPods;
+				actor->_temp1 = 0;
 			}
 		}
 
-		if (actr->temp5 < 31)
+		if (actor->_temp5 < 31)
 			goto done1;
 	}
 
 done:
-	fcount = actr->frame_count - 1;
+	fcount = actor->_frameCount - 1;
 	if (fcount <= 0) {
-		actr->next++;
-		if (actr->next > 2)
-			actr->next = 0;
-		actr->frame_count = LFC;
+		actor->_nextFrame++;
+		if (actor->_nextFrame > 2)
+			actor->_nextFrame = 0;
+		actor->_frameCount = LFC;
 	} else
-		actr->frame_count = fcount;
+		actor->_frameCount = fcount;
 	
 done1:
-	set_boss(actr);
-	return actr->dir;
+	setBoss(actor);
+	return actor->_dir;
 }
 
 // Boss - Loki-1
-int boss3_movement(ACTOR *actr) {
+int boss3Movement(Actor *actor) {
 	int x1, y1, ox, oy;
 	int fcount;
 
 
-	if (actr->temp2)
-		actr->temp2--;
-	if (_G(boss_dead))
-		return boss_die();
-	check_boss_hit();
+	if (actor->_temp2)
+		actor->_temp2--;
+	if (_G(bossDead))
+		return bossDie();
+	boss3CheckHit();
 
-	if (!boss_mode)
-		return boss_movement_one(actr);
-	num_pods1 = 10;
-	switch (_G(setup).skill) {
+	if (!bossMode)
+		return boss3Movement1(actor);
+	numPods1 = 10;
+	switch (_G(setup)._difficultyLevel) {
 	case 0:
-		actr->num_moves = 3;
-		actr->speed = 2;
+		actor->_numMoves = 3;
+		actor->_speed = 2;
 		break;
 	case 1:
-		actr->num_moves = 2;
-		actr->speed = 1;
+		actor->_numMoves = 2;
+		actor->_speed = 1;
 		break;
 	case 2:
-		actr->num_moves = 5;
-		actr->speed = 2;
+		actor->_numMoves = 5;
+		actor->_speed = 2;
+		break;
+	default:
 		break;
 	}
 
-	int d = actr->last_dir;
-	actr->temp3++;
+	int d = actor->_lastDir;
+	actor->_temp3++;
 
 	int f = 0;
-	if (actr->temp4) {
-		actr->temp4--;
-		if (!actr->temp4) {
-			actr->temp3 = 0;
-			_G(actor[3]).frame_speed = 4;
-			_G(actor[3]).dir = 0;
-			_G(actor[3]).last_dir = 0;
-			_G(actor[3]).next = 3;
-			_G(actor[4]).dir = 0;
-			_G(actor[4]).last_dir = 0;
-			_G(actor[4]).next = 3;
+	if (actor->_temp4) {
+		actor->_temp4--;
+		if (!actor->_temp4) {
+			actor->_temp3 = 0;
+			_G(actor[3])._frameSpeed = 4;
+			_G(actor[3])._dir = 0;
+			_G(actor[3])._lastDir = 0;
+			_G(actor[3])._nextFrame = 3;
+			_G(actor[4])._dir = 0;
+			_G(actor[4])._lastDir = 0;
+			_G(actor[4])._nextFrame = 3;
 		}
 		goto skip_move;
 	}
 
-	if (actr->edge_counter)
-		actr->edge_counter--;
+	if (actor->_edgeCounter)
+		actor->_edgeCounter--;
 	else
 		goto new_dir;
 
-	if (overlap(actr->x + 2, actr->y + 8, actr->x + 30, actr->y + 30, _G(thor)->x, _G(thor)->y + 4, _G(thor)->x + 15, _G(thor)->y + 15))
-		thor_damaged(actr);
+	if (overlap(actor->_x + 2, actor->_y + 8, actor->_x + 30, actor->_y + 30, _G(thor)->_x, _G(thor)->_y + 4, _G(thor)->_x + 15, _G(thor)->_y + 15))
+		thorDamaged(actor);
 
-	ox = actr->x;
-	oy = actr->y;
-	switch (actr->temp5) {
+	ox = actor->_x;
+	oy = actor->_y;
+	switch (actor->_temp5) {
 	case 0:
-		x1 = _G(actor[3]).x;
-		y1 = _G(actor[3]).y - 2;
-		if (!check_move2(x1, y1, &_G(actor[3]))) {
+		x1 = _G(actor[3])._x;
+		y1 = _G(actor[3])._y - 2;
+		if (!checkMove2(x1, y1, &_G(actor[3]))) {
 			f = 1;
 			break;
 		}
-		if (!check_move2(x1 + 16, y1, &_G(actor[4])))
+		if (!checkMove2(x1 + 16, y1, &_G(actor[4])))
 			f = 1;
-		actr->y = oy - 2;
+		actor->_y = oy - 2;
 		break;
 	case 1:
-		x1 = _G(actor[5]).x;
-		y1 = _G(actor[5]).y + 2;
-		if (!check_move2(x1, y1, &_G(actor[5]))) {
+		x1 = _G(actor[5])._x;
+		y1 = _G(actor[5])._y + 2;
+		if (!checkMove2(x1, y1, &_G(actor[5]))) {
 			f = 1;
 			break;
 		}
-		if (!check_move2(x1 + 16, y1, &_G(actor[6])))
+		if (!checkMove2(x1 + 16, y1, &_G(actor[6])))
 			f = 1;
-		actr->y = oy + 2;
+		actor->_y = oy + 2;
 		break;
 	case 2:
-		x1 = _G(actor[3]).x - 2;
-		y1 = _G(actor[3]).y;
-		if (!check_move2(x1, y1, &_G(actor[3]))) {
+		x1 = _G(actor[3])._x - 2;
+		y1 = _G(actor[3])._y;
+		if (!checkMove2(x1, y1, &_G(actor[3]))) {
 			f = 1;
 			break;
 		}
-		if (!check_move2(x1, y1 + 16, &_G(actor[5])))
+		if (!checkMove2(x1, y1 + 16, &_G(actor[5])))
 			f = 1;
-		actr->x = ox - 2;
+		actor->_x = ox - 2;
 		break;
 	case 3:
-		x1 = _G(actor[4]).x + 2;
-		y1 = _G(actor[4]).y;
-		if (!check_move2(x1, y1, &_G(actor[4]))) {
+		x1 = _G(actor[4])._x + 2;
+		y1 = _G(actor[4])._y;
+		if (!checkMove2(x1, y1, &_G(actor[4]))) {
 			f = 1;
 			break;
 		}
-		if (!check_move2(x1, y1 + 16, &_G(actor[6])))
+		if (!checkMove2(x1, y1 + 16, &_G(actor[6])))
 			f = 1;
-		actr->x = ox + 2;
+		actor->_x = ox + 2;
 		break;
 	case 4: //ul
-		x1 = _G(actor[3]).x - 2;
-		y1 = _G(actor[3]).y - 2;
-		if (!check_move2(x1, y1, &_G(actor[3]))) {
+		x1 = _G(actor[3])._x - 2;
+		y1 = _G(actor[3])._y - 2;
+		if (!checkMove2(x1, y1, &_G(actor[3]))) {
 			f = 1;
 			break;
 		}
-		actr->x = ox - 2;
-		actr->y = oy - 2;
+		actor->_x = ox - 2;
+		actor->_y = oy - 2;
 		break;
 	case 5:
-		x1 = _G(actor[4]).x + 2;
-		y1 = _G(actor[4]).y - 2;
-		if (!check_move2(x1, y1, &_G(actor[4]))) {
+		x1 = _G(actor[4])._x + 2;
+		y1 = _G(actor[4])._y - 2;
+		if (!checkMove2(x1, y1, &_G(actor[4]))) {
 			f = 1;
 			break;
 		}
-		actr->x = ox + 2;
-		actr->y = oy - 2;
+		actor->_x = ox + 2;
+		actor->_y = oy - 2;
 		break;
 	case 6:
-		x1 = _G(actor[6]).x + 2;
-		y1 = _G(actor[6]).y + 2;
-		if (!check_move2(x1, y1, &_G(actor[6]))) {
+		x1 = _G(actor[6])._x + 2;
+		y1 = _G(actor[6])._y + 2;
+		if (!checkMove2(x1, y1, &_G(actor[6]))) {
 			f = 1;
 			break;
 		}
-		actr->x = ox + 2;
-		actr->y = oy + 2;
+		actor->_x = ox + 2;
+		actor->_y = oy + 2;
 		break;
 	case 7:
-		x1 = _G(actor[5]).x - 2;
-		y1 = _G(actor[5]).y + 2;
-		if (!check_move2(x1, y1, &_G(actor[5]))) {
+		x1 = _G(actor[5])._x - 2;
+		y1 = _G(actor[5])._y + 2;
+		if (!checkMove2(x1, y1, &_G(actor[5]))) {
 			f = 1;
 			break;
 		}
-		actr->x = ox - 2;
-		actr->y = oy + 2;
+		actor->_x = ox - 2;
+		actor->_y = oy + 2;
+		break;
+
+	default:
 		break;
 	}
-	fcount = actr->frame_count - 1;
+	
+	fcount = actor->_frameCount - 1;
 	if (fcount) {
-		actr->next++;
-		if (actr->next > 2)
-			actr->next = 0;
-		actr->frame_count = 30;
+		actor->_nextFrame++;
+		if (actor->_nextFrame > 2)
+			actor->_nextFrame = 0;
+		actor->_frameCount = 30;
 	} else
-		actr->frame_count = fcount;
+		actor->_frameCount = fcount;
 
 skip_move:
 
-	set_boss(actr);
+	setBoss(actor);
 	if (!f)
 		goto done;
 
 new_dir:
-	if (actr->temp3 < 120)
+	if (actor->_temp3 < 120)
 		goto new_dir1;
 	
-	_G(actor[3]).frame_speed = 8;
-	_G(actor[3]).next = 3;
-	_G(actor[4]).next = 3;
-	actr->temp4 = 120;
-	actor_always_shoots(actr, 0);
-	_G(actor[actr->shot_actor]).x = actr->x + 8;
-	_G(actor[actr->shot_actor]).y = actr->y - 8;
-	_G(actor[actr->shot_actor]).temp1 = g_events->getRandomNumber(90, 189);
-	_G(actor[actr->shot_actor]).temp5 = 30;
-	_G(actor[actr->shot_actor]).speed = 2;
-	play_sound(BOSS12, true);
+	_G(actor[3])._frameSpeed = 8;
+	_G(actor[3])._nextFrame = 3;
+	_G(actor[4])._nextFrame = 3;
+	actor->_temp4 = 120;
+	actorAlwaysShoots(actor, 0);
+	_G(actor[actor->_shotActor])._x = actor->_x + 8;
+	_G(actor[actor->_shotActor])._y = actor->_y - 8;
+	_G(actor[actor->_shotActor])._temp1 = g_events->getRandomNumber(90, 189);
+	_G(actor[actor->_shotActor])._temp5 = 30;
+	_G(actor[actor->_shotActor])._speed = 2;
+	playSound(BOSS12, true);
 
 new_dir1:
-	actr->temp5 = _G(rand1) % 8;
-	actr->edge_counter = _G(rand2) + 60;
+	actor->_temp5 = _G(rand1) % 8;
+	actor->_edgeCounter = _G(rand2) + 60;
 
 done:
-	if (actr->directions == 1)
+	if (actor->_directions == 1)
 		return 0;
 	return d;
 }
 
-static void check_boss_hit() {
-	int rep;
-
-	if (_G(actor[3]).solid & 128) {
-		for (rep = 3; rep < 7; rep++)
-			_G(actor[rep]).magic_hit = 0;
+static void boss3CheckHit() {
+	if (_G(actor[3])._solid & 128) {
+		for (int rep = 3; rep < 7; rep++)
+			_G(actor[rep])._magicHit = 0;
 
 		return;
 	}
-	if (_G(actor[3]).magic_hit || _G(actor[4]).magic_hit || _G(actor[5]).magic_hit || _G(actor[6]).magic_hit) {
-		if (!_G(actor[3]).temp2) {
-			actor_damaged(&_G(actor[3]), 10);
+	if (_G(actor[3])._magicHit || _G(actor[4])._magicHit || _G(actor[5])._magicHit || _G(actor[6])._magicHit) {
+		if (!_G(actor[3])._temp2) {
+			actorDamaged(&_G(actor[3]), 10);
 
-			if (_G(cheat) && _G(key_flag[_Z]))
-				_G(actor[3]).health -= 50;
+			if (_G(cheat) && _G(keyFlag[_Z]))
+				_G(actor[3])._health -= 50;
 			else
-				_G(actor[3]).health -= 10;
+				_G(actor[3])._health -= 10;
 			
-			_G(actor[3]).speed_count = 50;
+			_G(actor[3])._moveCountdown = 50;
 
-			_G(actor[3]).vunerable = 50;
-			play_sound(BOSS13, true);
+			_G(actor[3])._vulnerableCountdown = 50;
+			playSound(BOSS13, true);
 
-			for (rep = 4; rep < 7; rep++) {
-				_G(actor[rep]).magic_hit = 0;
-				_G(actor[rep]).next = 1;
-				_G(actor[rep]).speed_count = 50;
+			for (int rep = 4; rep < 7; rep++) {
+				_G(actor[rep])._magicHit = 0;
+				_G(actor[rep])._nextFrame = 1;
+				_G(actor[rep])._moveCountdown = 50;
 			}
 
-			if (_G(actor[3]).health == 0) {
-				_G(boss_dead) = true;
-				for (rep = 7; rep < MAX_ACTORS; rep++) {
-					if (_G(actor[rep]).used)
-						actor_destroyed(&_G(actor[rep]));
+			if (_G(actor[3])._health == 0) {
+				_G(bossDead) = true;
+				for (int rep = 7; rep < MAX_ACTORS; rep++) {
+					if (_G(actor[rep])._active)
+						actorDestroyed(&_G(actor[rep]));
 				}
 			}
 
-			if (_G(actor[3]).health == 50) {
-				boss_change_mode();
-				_G(actor[3]).temp1 = 0;
-				_G(actor[3]).temp2 = 0;
-				_G(actor[3]).temp3 = 0;
-				_G(actor[3]).temp4 = 0;
-				_G(actor[3]).temp5 = 0;
-				_G(actor[3]).i6 = 0;
-				_G(actor[3]).speed_count = 2;
+			if (_G(actor[3])._health == 50) {
+				bossChangeMode();
+				_G(actor[3])._temp1 = 0;
+				_G(actor[3])._temp2 = 0;
+				_G(actor[3])._temp3 = 0;
+				_G(actor[3])._temp4 = 0;
+				_G(actor[3])._temp5 = 0;
+				_G(actor[3])._i6 = 0;
+				_G(actor[3])._moveCountdown = 2;
 			} else {
-				_G(actor[3]).temp2 = 40;
+				_G(actor[3])._temp2 = 40;
 			}
 		}
-		for (rep = 3; rep < 7; rep++)
-			_G(actor[rep]).magic_hit = 0;
+		for (int rep = 3; rep < 7; rep++)
+			_G(actor[rep])._magicHit = 0;
 	}
 }
 
-static void boss_change_mode() {
-	if (!_G(boss_intro2)) {
+static void bossChangeMode() {
+	if (!_G(bossIntro2)) {
 		Gfx::Pics loki("FACE18", 262);
-		execute_script(1003, loki);
-		_G(boss_intro2) = true;
+		executeScript(1003, loki);
+		_G(bossIntro2) = true;
 	}
-	boss_mode = 0;
+	
+	bossMode = 0;
 }
 
-void boss_level3() {
-	setup_boss(3);
-	_G(boss_active) = true;
-	music_pause();
-	play_sound(BOSS11, true);
-	_G(timer_cnt) = 0;
+void boss3SetupLevel() {
+	setupBoss(3);
+	_G(bossActive) = true;
+	musicPause();
+	playSound(BOSS11, true);
 
 	g_events->send("Game", GameMessage("PAUSE", 40));
 
-	if (!_G(boss_intro1)) {
+	if (!_G(bossIntro1)) {
 		Gfx::Pics loki("FACE18", 262);
-		execute_script(1002, loki);
-		_G(boss_intro1) = true;
+		executeScript(1002, loki);
+		_G(bossIntro1) = true;
 	}
 
-	music_play(7, true);
-	_G(apple_drop) = 0;
-	boss_mode = 1;
+	musicPlay(7, true);
+	_G(appleDropCounter) = 0;
+	bossMode = 1;
 }
 
-static int boss_die() {
-	if (_G(boss_dead)) {
+static int bossDie() {
+	if (_G(bossDead)) {
 		for (int rep = 0; rep < 4; rep++) {
-			int x1 = _G(actor[3 + rep]).last_x[_G(pge)];
-			int y1 = _G(actor[3 + rep]).last_y[_G(pge)];
-			int x = _G(actor[3 + rep]).x;
-			int y = _G(actor[3 + rep]).y;
-			int n = _G(actor[3 + rep]).actor_num;
-			int r = _G(actor[3 + rep]).rating;
+			const int x1 = _G(actor[3 + rep])._lastX[_G(pge)];
+			const int y1 = _G(actor[3 + rep])._lastY[_G(pge)];
+			const int x = _G(actor[3 + rep])._x;
+			const int y = _G(actor[3 + rep])._y;
+			const int n = _G(actor[3 + rep])._actorNum;
+			const int r = _G(actor[3 + rep])._dropRating;
 
 			_G(actor[3 + rep]) = _G(explosion);
 
-			_G(actor[3 + rep]).actor_num = n;
-			_G(actor[3 + rep]).rating = r;
-			_G(actor[3 + rep]).x = x;
-			_G(actor[3 + rep]).y = y;
-			_G(actor[3 + rep]).last_x[_G(pge)] = x1;
-			_G(actor[3 + rep]).last_x[_G(pge) ^ 1] = x;
-			_G(actor[3 + rep]).last_y[_G(pge)] = y1;
-			_G(actor[3 + rep]).last_y[_G(pge) ^ 1] = y;
-			_G(actor[3 + rep]).used = 1;
-			_G(actor[3 + rep]).vunerable = 255;
-			_G(actor[3 + rep]).move = 6;
-			_G(actor[3 + rep]).next = rep;
-			_G(actor[3 + rep]).speed = g_events->getRandomNumber(6, 8);
-			_G(actor[3 + rep]).num_shots = (10 - _G(actor[3 + rep]).speed) * 10;
-			_G(actor[3 + rep]).speed_count = _G(actor[3 + rep]).speed;
+			_G(actor[3 + rep])._actorNum = n;
+			_G(actor[3 + rep])._dropRating = r;
+			_G(actor[3 + rep])._x = x;
+			_G(actor[3 + rep])._y = y;
+			_G(actor[3 + rep])._lastX[_G(pge)] = x1;
+			_G(actor[3 + rep])._lastX[_G(pge) ^ 1] = x;
+			_G(actor[3 + rep])._lastY[_G(pge)] = y1;
+			_G(actor[3 + rep])._lastY[_G(pge) ^ 1] = y;
+			_G(actor[3 + rep])._active = true;
+			_G(actor[3 + rep])._vulnerableCountdown = 255;
+			_G(actor[3 + rep])._moveType = 6;
+			_G(actor[3 + rep])._nextFrame = rep;
+			_G(actor[3 + rep])._speed = g_events->getRandomNumber(6, 8);
+			_G(actor[3 + rep])._currNumShots = (10 - _G(actor[3 + rep])._speed) * 10;
+			_G(actor[3 + rep])._moveCountdown = _G(actor[3 + rep])._speed;
 		}
 
-		play_sound(EXPLODE, true);
-		_G(boss_dead) = true;
+		playSound(EXPLODE, true);
+		_G(bossDead) = true;
 	}
 
-	return _G(actor[3]).last_dir;
+	return _G(actor[3])._lastDir;
 }
 
-void closing_sequence3() {
-	music_play(6, true);
-	odin_speaks(1001, 0, "CLOSING");
+void boss3ClosingSequence1() {
+	musicPlay(6, true);
+	odinSpeaks(1001, 0, "CLOSING");
 }
 
-void closing_sequence3_2() {
-	fill_score(20, "CLOSING");
+void boss3ClosingSequence2() {
+	fillScore(20, "CLOSING");
 }
 
-void closing_sequence3_3() {
-	fill_health();
-	fill_magic();
+void boss3ClosingSequence3() {
+	fillHealth();
+	fillMagic();
 
 	for (int rep = 0; rep < 16; rep++)
-		_G(scrn).actor_type[rep] = 0;
+		_G(scrn)._actorType[rep] = 0;
 
-	_G(boss_dead) = false;
-	_G(setup).boss_dead[2] = 1;
-	_G(game_over) = true;
-	_G(boss_active) = false;
-	_G(scrn).type = 6;
-	show_level(BOSS_LEVEL3);
+	_G(bossDead) = false;
+	_G(setup)._bossDead[2] = true;
+	_G(gameOver) = true;
+	_G(bossActive) = false;
+	_G(scrn)._music = 6;
+	showLevel(BOSS_LEVEL3);
 
-	_G(exit_flag) = 0;
-	music_pause();
+	_G(exitFlag) = 0;
+	musicPause();
 
-	_G(new_level) = ENDING_SCREEN;
-	_G(thor)->x = 152;
-	_G(thor)->y = 160;
-	_G(thor)->dir = 1;
+	_G(newLevel) = ENDING_SCREEN;
+	_G(thor)->_x = 152;
+	_G(thor)->_y = 160;
+	_G(thor)->_dir = 1;
 }
 
-void ending_screen() {
+void endingScreen() {
 	for (int i = 3; i < MAX_ACTORS; i++)
-		_G(actor[i]).move = 1;
+		_G(actor[i])._moveType = 1;
 	
-	music_play(6, true);
-	_G(timer_cnt) = 0;
+	musicPlay(6, true);
 
-	memset(expf, 0, 4 * 8);
-	_G(endgame) = 1;
+	memset(explosionFlag, 0, 4 * 8);
+	_G(endGame) = 1;
 
-	_G(exprow) = 0;
-	expcnt = 0;
+	_G(explosionRow) = 0;
+	explosionCounter = 0;
 
 	_G(actor[34]) = _G(explosion);
-	_G(actor[34]).used = 0;
-	_G(actor[34]).speed = 2;
-	_G(actor[34]).speed_count = _G(actor[34]).speed;
-	_G(actor[34]).num_shots = 3; // Used to reverse explosion
-	_G(actor[34]).vunerable = 255;
-	_G(actor[34]).i2 = 6;
+	_G(actor[34])._active = false;
+	_G(actor[34])._speed = 2;
+	_G(actor[34])._moveCountdown = _G(actor[34])._speed;
+	_G(actor[34])._currNumShots = 3; // Used to reverse explosion
+	_G(actor[34])._vulnerableCountdown = 255;
+	_G(actor[34])._i2 = 6;
 }
 
 // Explode
 int endgame_one() {
-	if (_G(actor[34]).i2) {
-		_G(actor[34]).i2--;
+	if (_G(actor[34])._i2) {
+		_G(actor[34])._i2--;
 		return 0;
 	}
 
-	_G(actor[34]).i2 = 6;
-	play_sound(EXPLODE, true);
+	_G(actor[34])._i2 = 6;
+	playSound(EXPLODE, true);
 
 	int r = _G(rand1) % 32;
-	while (expf[r / 8][r % 8]) {
+	while (explosionFlag[r / 8][r % 8]) {
 		r++;
 		if (r > 31)
 			r = 0;
 	}
-	expf[r / 8][r % 8] = 1;
+	explosionFlag[r / 8][r % 8] = true;
 	int x = (EXPLOSION[r / 8][r % 8] % 20) * 16;
 	int y = (EXPLOSION[r / 8][r % 8] / 20) * 16;
-	_G(actor[34]).x = x;
-	_G(actor[34]).y = y;
-	_G(actor[34]).used = 1;
-	_G(actor[34]).next = 0;
-	_G(actor[34]).num_shots = 3;
+	_G(actor[34])._x = x;
+	_G(actor[34])._y = y;
+	_G(actor[34])._active = true;
+	_G(actor[34])._nextFrame = 0;
+	_G(actor[34])._currNumShots = 3;
 
-	_G(scrn).icon[y / 16][x / 16] = _G(scrn).bg_color;
+	_G(scrn)._iconGrid[y / 16][x / 16] = _G(scrn)._backgroundColor;
 
-	_G(endgame++);
-	if (_G(endgame) > 32) {
-		_G(actor[34]).used = 0;
-		_G(endgame) = 0;
+	_G(endGame++);
+	if (_G(endGame) > 32) {
+		_G(actor[34])._active = false;
+		_G(endGame) = 0;
 	}
 	return 1;
 }
 
 // Explode
-int endgame_movement() {
-	if (!_G(endgame))
+int endGameMovement() {
+	if (!_G(endGame))
 		return 0;
-	if (expcnt > 3) {
+	if (explosionCounter > 3) {
 		endgame_one();
 		return 0;
 	}
-	if (_G(actor[34]).i2) {
-		_G(actor[34]).i2--;
+	if (_G(actor[34])._i2) {
+		_G(actor[34])._i2--;
 		return 0;
 	}
-	_G(actor[34]).i2 = 6;
-	play_sound(EXPLODE, true);
+	_G(actor[34])._i2 = 6;
+	playSound(EXPLODE, true);
 
 	int r = _G(rand1) % 8;
-	while (expf[_G(exprow)][r]) {
+	while (explosionFlag[_G(explosionRow)][r]) {
 		r++;
 		if (r > 7)
 			r = 0;
 	}
-	expf[_G(exprow)][r] = 1;
-	int x = (EXPLOSION[_G(exprow)][r] % 20) * 16;
-	int y = (EXPLOSION[_G(exprow)][r] / 20) * 16;
-	_G(actor[34]).x = x;
-	_G(actor[34]).y = y;
-	_G(actor[34]).used = 1;
-	_G(actor[34]).next = 0;
-	_G(actor[34]).num_shots = 3;
+	explosionFlag[_G(explosionRow)][r] = true;
+	const int x = (EXPLOSION[_G(explosionRow)][r] % 20) * 16;
+	const int y = (EXPLOSION[_G(explosionRow)][r] / 20) * 16;
+	_G(actor[34])._x = x;
+	_G(actor[34])._y = y;
+	_G(actor[34])._active = true;
+	_G(actor[34])._nextFrame = 0;
+	_G(actor[34])._currNumShots = 3;
 
-	_G(scrn).icon[y / 16][x / 16] = _G(scrn).bg_color;
-	_G(scrn).icon[(y / 16) - 4][x / 16] = _G(scrn).bg_color;
+	_G(scrn)._iconGrid[y / 16][x / 16] = _G(scrn)._backgroundColor;
+	_G(scrn)._iconGrid[(y / 16) - 4][x / 16] = _G(scrn)._backgroundColor;
 
-	_G(endgame++);
-	if (_G(endgame) > 8) {
-		_G(endgame) = 1;
-		_G(exprow++);
-		expcnt++;
-		if (expcnt > 3) {
-			memset(expf, 0, 32);
+	_G(endGame++);
+	if (_G(endGame) > 8) {
+		_G(endGame) = 1;
+		_G(explosionRow++);
+		explosionCounter++;
+		if (explosionCounter > 3) {
+			memset(explosionFlag, 0, 32);
 		}
 	}
 

@@ -19,14 +19,8 @@
  *
  */
 
-#include "graphics/framelimiter.h"
-#include "common/scummsys.h"
 #include "common/config-manager.h"
-#include "common/debug-channels.h"
-#include "common/events.h"
-#include "common/system.h"
 #include "engines/util.h"
-#include "graphics/paletteman.h"
 
 #include "mediastation/mediastation.h"
 #include "mediastation/debugchannels.h"
@@ -35,7 +29,7 @@
 #include "mediastation/context.h"
 #include "mediastation/asset.h"
 #include "mediastation/assets/movie.h"
-#include "mediastation/mediascript/builtins.h"
+#include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
@@ -256,11 +250,28 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 		warning("MediaStationEngine::loadContext(): Couldn't find file declaration with ID 0x%x", fileId);
 		return nullptr;
 	}
-	Common::String *fileName = fileDeclaration->_name;
+	Common::Path entryCxtFilepath(*fileDeclaration->_name);
 
-	// LOAD THE CONTEXT.
-	Common::Path entryCxtFilepath = Common::Path(*fileName);
+	// Load any child contexts before we actually load this one. The child
+	// contexts must be unloaded explicitly later.
+	ContextDeclaration *contextDeclaration = _boot->_contextDeclarations.getValOrDefault(contextId);
+	for (uint32 childContextId : contextDeclaration->_fileReferences) {
+		// The root context is referred to by an ID of 0, regardless of what its
+		// actual ID is. The root context is already always loaded.
+		if (childContextId != 0) {
+			debugC(5, kDebugLoading, "MediaStationEngine::loadContext(): Loading child context %d", childContextId);
+			loadContext(childContextId);
+		}
+	}
 	Context *context = new Context(entryCxtFilepath);
+
+	// Some contexts have a built-in palette that becomes active when the
+	// context is loaded, and some rely on scripts to set
+	// the palette later.
+	if (context->_palette != nullptr) {
+		_screen->setPalette(*context->_palette);
+	}
+
 	_loadedContexts.setVal(contextId, context);
 	return context;
 }
@@ -292,24 +303,29 @@ void MediaStationEngine::addPlayingAsset(Asset *assetToAdd) {
 
 Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) {
 	switch (methodId) {
-		case kBranchToScreenMethod: {
-			assert(args.size() == 1);
-			uint32 contextId = args[0].getAssetId();
-			branchToScreen(contextId);
-			return Operand();
-		}
+	case kBranchToScreenMethod: {
+		assert(args.size() == 1);
+		uint32 contextId = args[0].getAssetId();
+		branchToScreen(contextId);
+		return Operand();
+	}
 
-		default: {
-			error("MediaStationEngine::callMethod(): Got unimplemented method ID %d", static_cast<uint>(methodId));
-		}
+	case kReleaseContextMethod: {
+		assert(args.size() == 1);
+		uint32 contextId = args[0].getAssetId();
+		releaseContext(contextId);
+		return Operand();
+	}
+
+	default: {
+		error("MediaStationEngine::callMethod(): Got unimplemented method ID %d", static_cast<uint>(methodId));
+	}
 	}
 }
 
 void MediaStationEngine::branchToScreen(uint32 contextId) {
 	Context *context = loadContext(contextId);
 	if (context->_screenAsset != nullptr) {
-		setPaletteFromHeader(context->_screenAsset);
-		
 		// TODO: Make the screen an asset just like everything else so we can
 		// run event handlers with runEventHandlerIfExists.
 		EventHandler *entryEvent = context->_screenAsset->_eventHandlers.getValOrDefault(MediaStation::kEntryEvent);
@@ -320,6 +336,29 @@ void MediaStationEngine::branchToScreen(uint32 contextId) {
 			debugC(5, kDebugScript, "No context entry event handler");
 		}
 	}
+}
+
+void MediaStationEngine::releaseContext(uint32 contextId) {
+	debugC(5, kDebugScript, "MediaStationEngine::releaseContext(): Releasing context %d", contextId);
+	Context *context = _loadedContexts.getValOrDefault(contextId);
+	if (context == nullptr) {
+		error("MediaStationEngine::releaseContext(): Attempted to unload context %d that is not currently loaded", contextId);
+	}
+
+	// Unload any assets currently playing from this context. They should have
+	// already been stopped by scripts, but this is a last check.
+	for (auto it = _assetsPlaying.begin(); it != _assetsPlaying.end();) {
+		uint assetId = (*it)->getHeader()->_id;
+		Asset *asset = context->getAssetById(assetId);
+		if (asset != nullptr) {
+			it = _assetsPlaying.erase(it);
+		} else {
+			++it;
+		}
+	}
+
+	delete context;
+	_loadedContexts.erase(contextId);
 }
 
 Asset *MediaStationEngine::findAssetToAcceptMouseEvents(Common::Point point) {
@@ -350,6 +389,28 @@ Asset *MediaStationEngine::findAssetToAcceptMouseEvents(Common::Point point) {
 		}
 	}
 	return intersectingAsset;
+}
+
+Operand MediaStationEngine::callBuiltInFunction(BuiltInFunction function, Common::Array<Operand> &args) {
+	switch (function) {
+	case kEffectTransitionFunction:
+	case kEffectTransitionOnSyncFunction: {
+		// TODO: effectTransitionOnSync should be split out into its own function.
+		effectTransition(args);
+		return Operand();
+	}
+
+	case kDrawingFunction: {
+		// Not entirely sure what this function does, but it seems like a way to
+		// call into some drawing functions built into the IBM/Crayola executable.
+		warning("MediaStationEngine::callBuiltInFunction(): Built-in drawing function not implemented");
+		return Operand();
+	}
+
+	default: {
+		error("MediaStationEngine::callBuiltInFunction(): Got unknown built-in function %s (%d)", builtInFunctionToStr(function), function);
+	}
+	}
 }
 
 } // End of namespace MediaStation

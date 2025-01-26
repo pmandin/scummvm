@@ -32,14 +32,15 @@ Variable::Variable(Chunk &chunk, bool readId) {
 	if (readId) {
 		_id = Datum(chunk).u.i;
 	}
-	_type = VariableType(Datum(chunk).u.i);
-	debugC(5, kDebugLoading, "Variable::Variable(): id = 0x%x, type 0x%x (@0x%llx)", _id, static_cast<uint>(_type), static_cast<long long int>(chunk.pos()));
+	_type = static_cast<VariableType>(Datum(chunk).u.i);
+	debugC(5, kDebugLoading, "Variable::Variable(): id = 0x%x, type %s (%d) (@0x%llx)", 
+		_id, variableTypeToStr(_type), static_cast<uint>(_type), static_cast<long long int>(chunk.pos()));
 	switch ((VariableType)_type) {
 	case kVariableTypeCollection: {
 		uint totalItems = Datum(chunk).u.i;
 		_value.collection = new Common::Array<Variable *>;
 		for (uint i = 0; i < totalItems; i++) {
-			debugC(7, kDebugLoading, "Variable::Variable(): COLLECTION: Value %d of %d", i, totalItems);
+			debugC(7, kDebugLoading, "Variable::Variable(): %s: Value %d of %d", variableTypeToStr(_type), i, totalItems);
 			Variable *variableDeclaration = new Variable(chunk, readId = false);
 			_value.collection->push_back(variableDeclaration);
 		}
@@ -54,52 +55,51 @@ Variable::Variable(Chunk &chunk, bool readId) {
 		buffer[size] = '\0';
 		_value.string = new Common::String(buffer);
 		delete[] buffer;
-		debugC(7, kDebugLoading, "Variable::Variable(): STRING: %s", _value.string->c_str());
+		debugC(7, kDebugLoading, "Variable::Variable(): %s: %s", variableTypeToStr(_type), _value.string->c_str());
 		break;
 	}
 
 	case kVariableTypeAssetId: {
 		_value.assetId = Datum(chunk, kDatumTypeUint16_1).u.i;
-		debugC(7, kDebugLoading, "Variable::Variable(): ASSET ID: %d", _value.assetId);
+		debugC(7, kDebugLoading, "Variable::Variable(): %s: %d", variableTypeToStr(_type), _value.assetId);
 		break;
 	}
 
 	case kVariableTypeBoolean: {
 		uint rawValue = Datum(chunk, kDatumTypeUint8).u.i;
-		debugC(7, kDebugLoading, " Variable::Variable(): BOOL: %d", rawValue);
+		debugC(7, kDebugLoading, " Variable::Variable(): %s: %d", variableTypeToStr(_type), rawValue);
 		_value.b = (rawValue == 1);
 		break;
 	}
 
-	case kVariableTypeLiteral: {
-		// Client code can worry about extracting the value.
-		_value.datum = new Datum(chunk);
-		debugC(7, kDebugLoading, "Variable::Variable(): LITERAL");
+	case kVariableTypeFloat: {
+		Datum datum = Datum(chunk);
+		if ((datum.t != kDatumTypeFloat64_1) && (datum.t != kDatumTypeFloat64_2)) {
+			error("Variable::Variable(): Got a non-float datum type 0x%x to put into a float variable", datum.t);
+		}
+		_value.d = datum.u.f;
+		debugC(7, kDebugLoading, "Variable::Variable(): %s: %f", variableTypeToStr(_type), _value.d);
 		break;
 	}
 
-	case kVariableTypeUnk1: {
+	case kVariableTypeInt: {
 		_value.i = Datum(chunk).u.i;
-		debugC(7, kDebugLoading, "Variable::Variable(): UNK1: %d", _value.i);
-		warning("Variable::Variable(): Got unknown variable value type 0x%x (0x%llx)", static_cast<uint>(_type), static_cast<long long int>(chunk.pos()));
+		debugC(7, kDebugLoading, "Variable::Variable(): %s: %d", variableTypeToStr(_type), _value.i);
 		break;
 	}
 
 	default: {
-		error("Variable::Variable(): Got unknown variable value type 0x%x", static_cast<uint>(_type));
-		_value.datum = new Datum(chunk);
+		error("Variable::Variable(): Got unknown variable value type %s (%d)", variableTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }
 
 Variable::~Variable() {
 	switch (_type) {
-	case kVariableTypeAssetId:
-	case kVariableTypeBoolean: {
-		break;
-	}
-
 	case kVariableTypeCollection: {
+		for (Variable *variable : *(_value.collection)) {
+			delete variable;
+		}
 		delete _value.collection;
 		break;
 	}
@@ -109,13 +109,7 @@ Variable::~Variable() {
 		break;
 	}
 
-	case kVariableTypeLiteral: {
-		delete _value.datum;
-		break;
-	}
-
 	default: {
-		delete _value.datum;
 		break;
 	}
 	}
@@ -153,26 +147,75 @@ Operand Variable::getValue() {
 		return returnValue;
 	}
 
-	case kVariableTypeLiteral: {
+	case kVariableTypeInt: {
+		// TODO: Is this value type correct?
 		// Shouldn't matter too much, though, since it's still an integer type.
 		Operand returnValue(kOperandTypeLiteral1);
-		returnValue.putInteger(_value.datum->u.i);
+		returnValue.putInteger(_value.i);
+		return returnValue;
+	}
+
+	case kVariableTypeFloat: {
+		// TODO: Is this value type correct?
+		// Shouldn't matter too much, though, since it's still a floating-point type.
+		Operand returnValue(kOperandTypeFloat1);
+		returnValue.putDouble(_value.d);
 		return returnValue;
 	}
 
 	default: {
-		error("Variable::getValue(): Attempt to get value from unknown variable type 0x%x", static_cast<uint>(_type));
+		error("Variable::getValue(): Attempt to get value from unknown variable type %s (%d)", variableTypeToStr(_type), static_cast<uint>(_type));
+	}
+	}
+}
+
+void Variable::putValue(Operand value) {
+	switch (value.getType()) {
+	case kOperandTypeEmpty: {
+		error("Variable::putValue(): Assigning an empty operand to a variable not supported");
+	}
+
+	case kOperandTypeLiteral1:
+	case kOperandTypeLiteral2:
+	case kOperandTypeDollarSignVariable: {
+		_type = kVariableTypeInt;
+		_value.i = value.getInteger();
+		break;
+	}
+
+	case kOperandTypeFloat1:
+	case kOperandTypeFloat2: {
+		_type = kVariableTypeFloat;
+		_value.d = value.getDouble();
+		break;
+	}
+
+	case kOperandTypeString: {
+		_type = kVariableTypeString;
+		_value.string = value.getString();
+		break;
+	}
+
+	case kOperandTypeAssetId: {
+		_type = kVariableTypeAssetId;
+		_value.assetId = value.getAssetId();
+		break;
+	}
+
+	case kOperandTypeVariableDeclaration: {
+		putValue(value.getLiteralValue());
+		break;
+	}
+
+	default: {
+		error("Variable::putValue(): Assigning an unknown operand type %s (%d) to a variable not supported",
+			operandTypeToStr(value.getType()), static_cast<uint>(value.getType()));
 	}
 	}
 }
 
 Operand Variable::callMethod(BuiltInMethod method, Common::Array<Operand> &args) {
 	switch (_type) {
-	case kVariableTypeAssetId: {
-		error("Variable::callMethod(): Calling method on an asset in a variable not implemented yet");
-		break;
-	}
-
 	case kVariableTypeCollection: {
 		// TODO: This is just a warning for now so we can get past the
 		// IBM/Crayola opening screen.
@@ -182,7 +225,7 @@ Operand Variable::callMethod(BuiltInMethod method, Common::Array<Operand> &args)
 	}
 
 	default: {
-		error("Variable::callMethod(): Calling method on unknown variable type 0x%x", static_cast<uint>(_type));
+		error("Variable::callMethod(): Calling method on unknown variable type %s (%d)", variableTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }

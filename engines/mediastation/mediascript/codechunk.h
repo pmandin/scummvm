@@ -27,7 +27,7 @@
 
 #include "mediastation/mediascript/variable.h"
 #include "mediastation/mediascript/operand.h"
-#include "mediastation/mediascript/builtins.h"
+#include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
@@ -40,7 +40,6 @@ public:
 
 private:
 	Operand executeNextStatement();
-	Operand callBuiltInFunction(BuiltInFunction id, Common::Array<Operand> &args);
 	Operand callBuiltInMethod(BuiltInMethod method, Operand self, Common::Array<Operand> &args);
 	Operand getVariable(uint32 id, VariableScope scope);
 	void putVariable(uint32 id, VariableScope scope, Operand value);

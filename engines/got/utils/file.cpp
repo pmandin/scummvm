@@ -31,22 +31,22 @@ bool File::open(const Common::Path &filename) {
 	return true;
 }
 
-bool load_actor(int /*file*/, int num) {
+bool loadActor(int /*file*/, int num) {
 	Common::String fname = Common::String::format("ACTOR%d", num);
 
-	if (res_read(fname, _G(tmp_buff), true) < 0)
+	if (resourceRead(fname, _G(tmpBuff), true) < 0)
 		return false;
 
 	return true;
 }
 
-bool load_speech(int index) {
+bool loadSpeech(int index) {
 	char tmps[5];
 
 	Common::String fname = Common::String::format("SPEAK%d", _G(area));
 	char *sp = new char[30000];
 
-	if (res_read(fname, sp) < 0) {
+	if (resourceRead(fname, sp) < 0) {
 		delete[] sp;
 		return false;
 	}
@@ -98,15 +98,15 @@ bool load_speech(int index) {
 		*(p - 1) = 0;
 	*p = 0;
 
-	Common::copy(pm, pm + cnt, _G(tmp_buff));
-	_G(tmp_buff)
+	Common::copy(pm, pm + cnt, _G(tmpBuff));
+	_G(tmpBuff)
 	[cnt] = 0;
 
 	delete[] sp;
 	return true;
 }
 
-long res_read(const Common::String &name, void *buff, bool failAllowed) {
+long resourceRead(const Common::String &name, void *buff, bool failAllowed) {
 	Common::File f;
 	if (f.open(Common::Path(name))) {
 		return f.read(buff, f.size());
@@ -118,7 +118,7 @@ long res_read(const Common::String &name, void *buff, bool failAllowed) {
 	return -1;
 }
 
-void *res_falloc_read(const Common::String &name) {
+void *resourceAllocRead(const Common::String &name) {
 	Common::File f;
 	if (f.open(Common::Path(name))) {
 		byte *result = (byte *)malloc(f.size());

@@ -40,9 +40,9 @@ void Say::show(int item, const Gfx::Pics &speakerIcon, int type) {
 
 bool Say::msgFocus(const FocusMessage &msg) {
 	if (!_type)
-		play_sound(WOOP, 1);
+		playSound(WOOP, true);
 
-	_content = (const char *)_G(tmp_buff);
+	_content = (const char *)_G(tmpBuff);
 	_contentLength = 0;
 	_waitForResponse = WAIT_NONE;
 	_woopCtr = 0;
@@ -160,7 +160,7 @@ bool Say::tick() {
 		}
 
 		if (_type) {
-			play_sound(WOOP, 1);
+			playSound(WOOP, true);
 			_woopCtr = 0;
 		}
 

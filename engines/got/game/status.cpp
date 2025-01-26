@@ -25,38 +25,38 @@
 
 namespace Got {
 
-void add_jewels(int num) {
-	_G(thor_info).jewels = CLIP(_G(thor_info).jewels + num, 0, 999);
+void addJewels(int num) {
+	_G(thorInfo)._jewels = CLIP(_G(thorInfo)._jewels + num, 0, 999);
 }
 
-void add_score(int num) {
-	_G(thor_info).score = CLIP(_G(thor_info).score + num, 0l, 999999l);
+void addScore(int num) {
+	_G(thorInfo)._score = CLIP(_G(thorInfo)._score + num, 0l, 999999l);
 }
 
-void add_magic(int num) {
-	_G(thor_info).magic = CLIP(_G(thor_info).magic + num, 0, 150);
+void addMagic(int num) {
+	_G(thorInfo)._magic = CLIP(_G(thorInfo)._magic + num, 0, 150);
 }
 
-void add_health(int num) {
-	_G(thor)->health = CLIP(_G(thor)->health + num, 0, 150);
+void addHealth(int num) {
+	_G(thor)->_health = CLIP(_G(thor)->_health + num, 0, 150);
 
-	if (_G(thor)->health < 1)
+	if (_G(thor)->_health < 1)
 		g_events->send(GameMessage("THOR_DIES"));
 }
 
-void add_keys(int num) {
-	_G(thor_info).keys = CLIP(_G(thor_info).keys + num, 0, 99);
+void addKeys(int num) {
+	_G(thorInfo)._keys = CLIP(_G(thorInfo)._keys + num, 0, 99);
 }
 
-void fill_health() {
-	add_health(150);
+void fillHealth() {
+	addHealth(150);
 }
 
-void fill_magic() {
-	add_magic(150);
+void fillMagic() {
+	addMagic(150);
 }
 
-void fill_score(int num, const char *endMessage) {
+void fillScore(int num, const char *endMessage) {
 	GameMessage msg("FILL_SCORE");
 	if (endMessage)
 		msg._stringValue = endMessage;

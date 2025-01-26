@@ -25,67 +25,73 @@
 
 namespace Got {
 
-int shot_pattern_none(ACTOR *actr);
-int shot_pattern_one(ACTOR *actr);
-int shot_pattern_two(ACTOR *actr);
-int shot_pattern_three(ACTOR *actr);
-int shot_pattern_four(ACTOR *actr);
-int shot_pattern_five(ACTOR *actr);
-int shot_pattern_six(ACTOR *actr);
-int shot_pattern_seven(ACTOR *actr);
-int shot_pattern_eight(ACTOR *actr);
+int shotPatternNone(Actor *actor);
+int shotPatternOne(Actor *actor);
+int shotPatternTwo(Actor *actor);
+int shotPatternThree(Actor *actor);
+int shotPatternFour(Actor *actor);
+int shotPatternFive(Actor *actor);
+int shotPatternSix(Actor *actor);
+int shotPatternSeven(Actor *actor);
+int shotPatternEight(Actor *actor);
 
-int (*const shot_pattern_func[])(ACTOR *actr) = {
-	shot_pattern_none,
-	shot_pattern_one,
-	shot_pattern_two,
-	shot_pattern_three,
-	shot_pattern_four,
-	shot_pattern_five,
-	shot_pattern_six,
-	shot_pattern_seven,
-	shot_pattern_eight,
+int (*const shotPatternFunc[])(Actor *actor) = {
+	shotPatternNone,
+	shotPatternOne,
+	shotPatternTwo,
+	shotPatternThree,
+	shotPatternFour,
+	shotPatternFive,
+	shotPatternSix,
+	shotPatternSeven,
+	shotPatternEight,
 };
 
 // No shooting
-int shot_pattern_none(ACTOR *actr) {
+int shotPatternNone(Actor *actor) {
 	return 0;
 }
 
 // Uni-directional seek
-int shot_pattern_one(ACTOR *actr) {
-	switch (actr->last_dir) {
+int shotPatternOne(Actor *actor) {
+	switch (actor->_lastDir) {
 	case 0:
-		if (ABS(_G(thor_x1) - actr->x) < 8) {
-			if (actr->y > _G(thor_real_y1)) { //r
-				if (actor_shoots(actr, 0))
+		if (ABS(_G(thorX1) - actor->_x) < 8) {
+			if (actor->_y > _G(thorRealY1)) { //r
+				if (actorShoots(actor, 0))
 					return 1;
 			}
 		}
 		break;
+		
 	case 1:
-		if (ABS(_G(thor_x1) - actr->x) < 8) {
-			if (actr->y < _G(thor_real_y1)) { //r
-				if (actor_shoots(actr, 1))
+		if (ABS(_G(thorX1) - actor->_x) < 8) {
+			if (actor->_y < _G(thorRealY1)) { //r
+				if (actorShoots(actor, 1))
 					return 1;
 			}
 		}
 		break;
+		
 	case 2:
-		if (ABS(_G(thor_real_y1) - actr->y) < 8) { //r
-			if (actr->x > _G(thor_x1)) {
-				if (actor_shoots(actr, 2))
+		if (ABS(_G(thorRealY1) - actor->_y) < 8) { //r
+			if (actor->_x > _G(thorX1)) {
+				if (actorShoots(actor, 2))
 					return 1;
 			}
 		}
 		break;
+		
 	case 3:
-		if (ABS(_G(thor_real_y1) - actr->y) < 8) { //r
-			if (actr->x < _G(thor_x1)) {
-				if (actor_shoots(actr, 3))
+		if (ABS(_G(thorRealY1) - actor->_y) < 8) { //r
+			if (actor->_x < _G(thorX1)) {
+				if (actorShoots(actor, 3))
 					return 1;
 			}
 		}
+		break;
+
+	default:
 		break;
 	}
 
@@ -93,19 +99,19 @@ int shot_pattern_one(ACTOR *actr) {
 }
 
 // Omni directional
-int shot_pattern_two(ACTOR *actr) {
-	if (ABS(_G(thor)->x - actr->x) < 8) {
-		if (_G(thor)->y > actr->y)
-			actor_shoots(actr, 1);
-		else if (_G(thor)->y < actr->y)
-			actor_shoots(actr, 0);
+int shotPatternTwo(Actor *actor) {
+	if (ABS(_G(thor)->_x - actor->_x) < 8) {
+		if (_G(thor)->_y > actor->_y)
+			actorShoots(actor, 1);
+		else if (_G(thor)->_y < actor->_y)
+			actorShoots(actor, 0);
 		else
 			return 0;
-	} else if (ABS(_G(thor)->y - actr->y) < 8) {
-		if (_G(thor)->x > actr->x)
-			actor_shoots(actr, 3);
-		else if (_G(thor)->x < actr->x)
-			actor_shoots(actr, 2);
+	} else if (ABS(_G(thor)->_y - actor->_y) < 8) {
+		if (_G(thor)->_x > actor->_x)
+			actorShoots(actor, 3);
+		else if (_G(thor)->_x < actor->_x)
+			actorShoots(actor, 2);
 	} else {
 		return 0;
 	}
@@ -114,34 +120,34 @@ int shot_pattern_two(ACTOR *actr) {
 }
 
 // Uni directional (backwards)
-int shot_pattern_three(ACTOR *actr) {
-	int ld = actr->last_dir;
-	if (shot_pattern_one(actr)) {
-		actr->last_dir = reverse_direction(actr);
+int shotPatternThree(Actor *actor) {
+	const int oldDir = actor->_lastDir;
+	if (shotPatternOne(actor)) {
+		actor->_lastDir = reverseDirection(actor);
 		return 1;
 	}
 
-	actr->last_dir = reverse_direction(actr);
-	shot_pattern_one(actr);
-	actr->last_dir = ld;
+	actor->_lastDir = reverseDirection(actor);
+	shotPatternOne(actor);
+	actor->_lastDir = oldDir;
 
 	return 1;
 }
 
 // Omni-directional not solid shot
-int shot_pattern_four(ACTOR *actr) {
-	if (ABS(_G(thor)->x - actr->x) < 8) {
-		if (_G(thor)->y > actr->y)
-			actor_always_shoots(actr, 1);
-		else if (_G(thor)->y < actr->y)
-			actor_always_shoots(actr, 0);
+int shotPatternFour(Actor *actor) {
+	if (ABS(_G(thor)->_x - actor->_x) < 8) {
+		if (_G(thor)->_y > actor->_y)
+			actorAlwaysShoots(actor, 1);
+		else if (_G(thor)->_y < actor->_y)
+			actorAlwaysShoots(actor, 0);
 		else
 			return 0;
-	} else if (ABS(_G(thor)->y - actr->y) < 8) {
-		if (_G(thor)->x > actr->x)
-			actor_always_shoots(actr, 3);
-		else if (_G(thor)->x < actr->x)
-			actor_always_shoots(actr, 2);
+	} else if (ABS(_G(thor)->_y - actor->_y) < 8) {
+		if (_G(thor)->_x > actor->_x)
+			actorAlwaysShoots(actor, 3);
+		else if (_G(thor)->_x < actor->_x)
+			actorAlwaysShoots(actor, 2);
 	} else {
 		return 0;
 	}
@@ -150,19 +156,19 @@ int shot_pattern_four(ACTOR *actr) {
 }
 
 // Boss - snake
-int shot_pattern_five(ACTOR *actr) {
-	if (_G(rand1) < 15 && (actr->temp1 == 0) && (actr->temp2 == 0)) {
-		actr->y += 16;
-		actr->shots_allowed = 3 + _G(setup).skill;
-		actor_shoots(actr, 2);
-		play_sound(BOSS12, false);
+int shotPatternFive(Actor *actor) {
+	if (_G(rand1) < 15 && (actor->_temp1 == 0) && (actor->_temp2 == 0)) {
+		actor->_y += 16;
+		actor->_numShotsAllowed = 3 + _G(setup)._difficultyLevel;
+		actorShoots(actor, 2);
+		playSound(BOSS12, false);
 
-		int num = actr->shot_actor;
-		actr->shot_cnt = 50;
-		_G(actor[num]).temp3 = 120;
-		_G(actor[num]).temp4 = 5 + (_G(rand2) % 17);
-		_G(actor[num]).temp5 = _G(actor[num]).temp4;
-		actr->y -= 16;
+		const int num = actor->_shotActor;
+		actor->_shotCountdown = 50;
+		_G(actor[num])._temp3 = 120;
+		_G(actor[num])._temp4 = 5 + (_G(rand2) % 17);
+		_G(actor[num])._temp5 = _G(actor[num])._temp4;
+		actor->_y -= 16;
 		return 1;
 	}
 
@@ -170,43 +176,43 @@ int shot_pattern_five(ACTOR *actr) {
 }
 
 // 4 surrounding squares
-int shot_pattern_six(ACTOR *actr) {
-	int pos = ((actr->x) / 16) + (((actr->y) / 16) * 20);
+int shotPatternSix(Actor *actor) {
+	const int pos = ((actor->_x) / 16) + (((actor->_y) / 16) * 20);
 
-	if (_G(thor_pos) == pos - 20)
-		actor_shoots(actr, 0);
-	else if (_G(thor_pos) == pos + 20)
-		actor_shoots(actr, 1);
-	else if (_G(thor_pos) == pos - 1)
-		actor_shoots(actr, 2);
-	else if (_G(thor_pos) == pos + 1)
-		actor_shoots(actr, 3);
+	if (_G(thorPos) == pos - 20)
+		actorShoots(actor, 0);
+	else if (_G(thorPos) == pos + 20)
+		actorShoots(actor, 1);
+	else if (_G(thorPos) == pos - 1)
+		actorShoots(actor, 2);
+	else if (_G(thorPos) == pos + 1)
+		actorShoots(actor, 3);
 	else
 		return 0;
 
-	actr->frame_sequence[3] = 3;
-	actr->next = 3;
+	actor->_frameSequence[3] = 3;
+	actor->_nextFrame = 3;
 	return 1;
 }
 
 // none
-int shot_pattern_seven(ACTOR *actr) {
+int shotPatternSeven(Actor *actor) {
 	return 0;
 }
 
 // random
-int shot_pattern_eight(ACTOR *actr) {
-	if (!actr->i2) {
-		actr->i1 = actr->func_pass;
-		actr->i2 = 1;
+int shotPatternEight(Actor *actor) {
+	if (!actor->_i2) {
+		actor->_i1 = actor->_funcPass;
+		actor->_i2 = 1;
 	}
 
-	if (actr->i1) {
-		actr->i1--;
+	if (actor->_i1) {
+		actor->_i1--;
 	} else if (_G(rand1) < 10) {
-		actr->i1 = actr->func_pass;
-		actr->i2 = _G(thor_real_y1);
-		actor_shoots(actr, 0);
+		actor->_i1 = actor->_funcPass;
+		actor->_i2 = _G(thorRealY1);
+		actorShoots(actor, 0);
 		return 1;
 	}
 

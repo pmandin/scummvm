@@ -21,8 +21,6 @@
 
 #include "got/got.h"
 #include "common/config-manager.h"
-#include "common/debug-channels.h"
-#include "common/events.h"
 #include "common/scummsys.h"
 #include "common/system.h"
 #include "common/translation.h"
@@ -77,7 +75,7 @@ Common::Error GotEngine::run() {
 
 	// General initialization
 	if (_G(demo))
-		initialize_game();
+		initGame();
 	syncSoundSettings();
 
 	runGame();
@@ -118,17 +116,17 @@ Common::Error GotEngine::syncGame(Common::Serializer &s) {
 		// For savegames loaded directly from the ScummVM launcher,
 		// take care of initializing game defaults before rest of loading
 		if (!firstView() || firstView()->getName() != "Game")
-			initialize_game();
+			initGame();
 
-		int area = _G(setup).area;
+		int area = _G(setup)._areaNum;
 		if (area == 0)
 			area = 1;
 
 		g_vars->setArea(area);
 	}
 
-	_G(thor_info).sync(s);
-	_G(sd_data).sync(s);
+	_G(thorInfo).sync(s);
+	_G(sdData).sync(s);
 
 	if (s.isLoading())
 		savegameLoaded();
@@ -137,46 +135,45 @@ Common::Error GotEngine::syncGame(Common::Serializer &s) {
 }
 
 void GotEngine::savegameLoaded() {
-	_G(current_area) = _G(thor_info).last_screen;
+	_G(currentArea) = _G(thorInfo)._lastScreen;
 
-	_G(thor)->x = (_G(thor_info).last_icon % 20) * 16;
-	_G(thor)->y = ((_G(thor_info).last_icon / 20) * 16) - 1;
-	if (_G(thor)->x < 1)
-		_G(thor)->x = 1;
-	if (_G(thor)->y < 0)
-		_G(thor)->y = 0;
-	_G(thor)->dir = _G(thor_info).last_dir;
-	_G(thor)->last_dir = _G(thor_info).last_dir;
-	_G(thor)->health = _G(thor_info).last_health;
-	_G(thor)->num_moves = 1;
-	_G(thor)->vunerable = 60;
-	_G(thor)->show = 60;
-	_G(thor)->speed_count = 6;
-	load_new_thor();
+	_G(thor)->_x = (_G(thorInfo)._lastIcon % 20) * 16;
+	_G(thor)->_y = ((_G(thorInfo)._lastIcon / 20) * 16) - 1;
+	if (_G(thor)->_x < 1)
+		_G(thor)->_x = 1;
+	if (_G(thor)->_y < 0)
+		_G(thor)->_y = 0;
+	_G(thor)->_dir = _G(thorInfo)._lastDir;
+	_G(thor)->_lastDir = _G(thorInfo)._lastDir;
+	_G(thor)->_health = _G(thorInfo)._lastHealth;
+	_G(thor)->_numMoves = 1;
+	_G(thor)->_vulnerableCountdown = 60;
+	_G(thor)->_show = 60;
+	_G(thor)->_moveCountdown = 6;
+	loadNewThor();
 
-	g_vars->resetEndgameFlags();
+	g_vars->resetEndGameFlags();
 
-	if (!_G(music_flag))
-		_G(setup).music = 0;
-	if (!_G(sound_flag))
-		_G(setup).dig_sound = 0;
-	if (_G(setup).music == 1) {
-		if (GAME1 && _G(current_area) == 59) {
-			music_play(5, true);
+	_G(setup)._musicEnabled = _G(musicFlag);
+	_G(setup)._digitalSound = _G(soundFlag);
+
+	if (_G(setup)._musicEnabled) {
+		if (GAME1 && _G(currentArea) == 59) {
+			musicPlay(5, true);
 		} else {
-			music_play(_G(level_type), true);
+			musicPlay(_G(levelMusic), true);
 		}
 	} else {
-		_G(setup).music = 1;
-		music_pause();
-		_G(setup).music = 0;
+		_G(setup)._musicEnabled = true;
+		musicPause();
+		_G(setup)._musicEnabled = false;
 	}
 
-	_G(game_over) = _G(setup).game_over != 0;
-	_G(slow_mode) = _G(setup).speed != 0;
+	_G(gameOver) = _G(setup)._gameOver != 0;
+	_G(slowMode) = _G(setup)._slowMode;
 
 	g_events->replaceView("Game", true);
-	setup_load();
+	setupLoad();
 }
 
 bool GotEngine::canLoadGameStateCurrently(Common::U32String *msg) {
@@ -196,7 +193,7 @@ bool GotEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 	}
 
 	// Don't allowing saving when not in-game
-	if (!firstView() || firstView()->getName() != "Game" || _G(game_over))
+	if (!firstView() || firstView()->getName() != "Game" || _G(gameOver))
 		return false;
 
 	// Only allow if not in the middle of area transition, dying, etc.
@@ -206,12 +203,10 @@ bool GotEngine::canSaveGameStateCurrently(Common::U32String *msg) {
 void GotEngine::syncSoundSettings() {
 	Engine::syncSoundSettings();
 
-	bool allSoundIsMuted = ConfMan.getBool("mute");
+	const bool allSoundIsMuted = ConfMan.getBool("mute");
 
-	_mixer->muteSoundType(Audio::Mixer::kSFXSoundType,
-						  ConfMan.getBool("sfx_mute") || allSoundIsMuted);
-	_mixer->muteSoundType(Audio::Mixer::kMusicSoundType,
-						  ConfMan.getBool("music_mute") || allSoundIsMuted);
+	_mixer->muteSoundType(Audio::Mixer::kSFXSoundType, ConfMan.getBool("sfx_mute") || allSoundIsMuted);
+	_mixer->muteSoundType(Audio::Mixer::kMusicSoundType, ConfMan.getBool("music_mute") || allSoundIsMuted);
 }
 
 void GotEngine::pauseEngineIntern(bool pause) {
@@ -219,20 +214,18 @@ void GotEngine::pauseEngineIntern(bool pause) {
 	if (_G(gameMode) == MODE_LIGHTNING)
 		_G(gameMode) = MODE_NORMAL;
 
-	if (_G(tornado_used)) {
-		_G(tornado_used) = false;
-		actor_destroyed(&_G(actor[2]));
+	if (_G(tornadoUsed)) {
+		_G(tornadoUsed) = false;
+		actorDestroyed(&_G(actor[2]));
 	}
 
-	if (_G(shield_on)) {
-		_G(actor[2]).dead = 2;
-		_G(actor[2]).used = 0;
-		_G(shield_on) = false;
+	if (_G(shieldOn)) {
+		_G(actor[2])._dead = 2;
+		_G(actor[2])._active = false;
+		_G(shieldOn) = false;
 	}
 
-	_G(lightning_used) = false;
-	_G(thunder_flag) = 0;
-	_G(hourglass_flag) = 0;
+	_G(thunderSnakeCounter) = 0;
 
 	Engine::pauseEngineIntern(pause);
 }

@@ -112,6 +112,10 @@ enum {
 	kFreescapeDebugGroup = 1 << 5,
 };
 
+enum {
+	kFreescapeDefaultVolume = 192,
+};
+
 enum GameStateControl {
 	kFreescapeGameStateStart,
 	kFreescapeGameStatePlaying,
@@ -124,6 +128,8 @@ struct CGAPaletteEntry {
 	int areaId;
 	byte *palette;
 };
+
+extern Common::String shiftStr(const Common::String &str, int shift);
 
 class EventManagerWrapper {
 public:
@@ -251,7 +257,6 @@ public:
 	byte *loadPalette(Common::SeekableReadStream *file);
 	void swapPalette(uint16 areaID);
 	virtual byte *findCGAPalette(uint16 levelID);
-	const CGAPaletteEntry *_rawCGAPaletteByArea;
 	Common::HashMap<uint16, byte *> _paletteByArea;
 	void loadColorPalette();
 

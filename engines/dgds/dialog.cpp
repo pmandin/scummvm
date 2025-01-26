@@ -27,7 +27,6 @@
 #include "common/system.h"
 
 #include "graphics/surface.h"
-#include "graphics/primitives.h"
 
 #include "dgds/dgds.h"
 #include "dgds/includes.h"
@@ -143,13 +142,17 @@ void Dialog::drawType2BackgroundChina(Graphics::ManagedSurface *dst, const Commo
 }
 
 void Dialog::drawType2BackgroundBeamish(Graphics::ManagedSurface *dst, const Common::String &title) {
-	// TODO: This needs updating.
+	byte fillCol = 0;
+	if (DgdsEngine::getInstance()->isAltDlgColors())
+		fillCol = 20;
+
 	_state->_loc = DgdsRect(_rect.x + 11, _rect.y + 10, _rect.width - 22, _rect.height - 20);
 	if (title.empty()) {
-		dst->fillRect(Common::Rect(Common::Point(_rect.x + 2, _rect.y + 2), _rect.width - 4, _rect.height - 4), 0);
-		RequestData::drawCorners(dst, 54, _rect.x, _rect.y, _rect.width, _rect.height);
+		dst->fillRect(Common::Rect(Common::Point(_rect.x + 2, _rect.y + 2), _rect.width - 4, _rect.height - 4), fillCol);
+		uint16 cornerOffset = DgdsEngine::getInstance()->isAltDlgColors() ? 46 : 54;
+		RequestData::drawCorners(dst, cornerOffset, _rect.x, _rect.y, _rect.width, _rect.height);
 	} else {
-		dst->fillRect(Common::Rect(Common::Point(_rect.x + 2, _rect.y + 2), _rect.width - 4, _rect.height - 4), 0);
+		dst->fillRect(Common::Rect(Common::Point(_rect.x + 2, _rect.y + 2), _rect.width - 4, _rect.height - 4), fillCol);
 		RequestData::drawCorners(dst, 46, _rect.x, _rect.y, _rect.width, _rect.height);
 		_state->_loc.y += 15;
 		_state->_loc.height -= 15;
@@ -349,8 +352,8 @@ void Dialog::drawType4(Graphics::ManagedSurface *dst, DialogDrawStage stage) {
 		// This is not exactly the same as the original - might need some work to get pixel-perfect
 		if (DgdsEngine::getInstance()->getGameId() != GID_HOC) {
 			Common::Rect drawRect(x, y, x + w, y + h);
-			Graphics::drawRoundRect(drawRect, midy, fillbgcolor, true, Drawing::drawPixel, dst);
-			Graphics::drawRoundRect(drawRect, midy, fillcolor, false, Drawing::drawPixel, dst);
+			dst->drawRoundRect(drawRect, midy, fillbgcolor, true);
+			dst->drawRoundRect(drawRect, midy, fillcolor, false);
 		}
 	} else if (stage == kDlgDrawFindSelectionPointXY) {
 		drawFindSelectionXY();
