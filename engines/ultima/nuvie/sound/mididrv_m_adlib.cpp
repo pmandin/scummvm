@@ -244,7 +244,8 @@ void MidiDriver_M_AdLib::metaEvent(int8 source, byte type, byte* data, uint16 le
 
 		byte instrumentNumber = data[0];
 		assert(instrumentNumber < 16);
-		OplInstrumentDefinition *instrument = &_instrumentBank[instrumentNumber];
+		// This was allocated in the constructor so it's not really const
+		OplInstrumentDefinition *instrument = const_cast<OplInstrumentDefinition *>(&_instrumentBank[instrumentNumber]);
 
 		instrument->fourOperator = false;
 		instrument->rhythmType = RHYTHM_TYPE_UNDEFINED;
@@ -309,7 +310,7 @@ uint16 MidiDriver_M_AdLib::calculateFrequency(uint8 channel, uint8 source, uint8
 	return oplFrequency | (block << 10);
 }
 
-uint8 MidiDriver_M_AdLib::calculateUnscaledVolume(uint8 channel, uint8 source, uint8 velocity, OplInstrumentDefinition& instrumentDef, uint8 operatorNum) {
+uint8 MidiDriver_M_AdLib::calculateUnscaledVolume(uint8 channel, uint8 source, uint8 velocity, const OplInstrumentDefinition& instrumentDef, uint8 operatorNum) {
 	// M directy uses OPL level values, so no calculation is necessary.
 	return _controlData[source][channel].volume & OPL_MASK_LEVEL;
 }

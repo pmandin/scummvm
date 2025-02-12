@@ -73,8 +73,7 @@ MovieFrameFooter::MovieFrameFooter(Chunk &chunk) {
 
 MovieFrame::MovieFrame(Chunk &chunk, MovieFrameHeader *header) :
 	Bitmap(chunk, header),
-	_footer(nullptr),
-	_showing(false) {
+	_footer(nullptr) {
 	_bitmapHeader = header;
 }
 
@@ -156,7 +155,16 @@ MovieFrame::~MovieFrame() {
 	_footer = nullptr;
 }
 
+Movie::Movie(AssetHeader *header) : Asset(header) {
+	if (header->_startup == kAssetStartupActive) {
+		setActive();
+		_showByDefault = true;
+	}
+}
+
 Movie::~Movie() {
+	g_engine->_mixer->stopHandle(_soundHandle);
+
 	for (MovieFrame *frame : _frames) {
 		delete frame;
 	}
@@ -186,33 +194,89 @@ Operand Movie::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) 
 		return Operand();
 	}
 
+	case kSpatialShowMethod: {
+		assert(args.empty());
+		spatialShow();
+		return Operand();
+	}
+
+	case kTimeStopMethod: {
+		assert(args.empty());
+		timeStop();
+		return Operand();
+	}
+
+	case kSpatialHideMethod: {
+		assert(args.empty());
+		spatialHide();
+		return Operand();
+	}
+
+	case kIsPlayingMethod: {
+		assert(args.empty());
+		Operand returnValue(kOperandTypeLiteral1);
+		returnValue.putInteger(_isPlaying);
+		return returnValue;
+	}
+
 	default: {
-		error("Got unimplemented method ID %d", methodId);
+		error("Movie::callMethod(): Got unimplemented method ID %d", methodId);
 	}
 	}
 }
 
-void Movie::timePlay() {
-	debugC(5, kDebugScript, "Called Movie::timePlay()");
-	// TODO: Play movies one chunk at a time, which more directly approximates
-	// the original's reading from the CD one chunk at a time.
-	if (_isActive) {
-		error("Movie::play(): Attempted to play a movie that is already playing");
+void Movie::spatialShow() {
+	if (_isPlaying) {
+		warning("Movie::spatialShow(): (%d) Attempted to spatialShow movie that is already showing", _header->_id);
+		return;
+	} else if (_isShowing) {
+		warning("Movie::spatialShow(): (%d) Attempted to spatialShow movie that is already showing", _header->_id);
+		return;
+	} else if (_stills.empty()) {
+		warning("Movie::spatialShow(): (%d) No still frame to show", _header->_id);
 		return;
 	}
 
-	// SET ANIMATION VARIABLES.
-	_isActive = true;
-	_startTime = g_system->getMillis();
-	_lastProcessedTime = 0;
-	g_engine->addPlayingAsset(this);
+	// TODO: For movies with keyframes, there is more than one still and they
+	// must be composited. All other movies should have just one still.)
+	_framesNotYetShown.clear();
+	_framesOnScreen.clear();
+	for (MovieFrame *still : _stills) {
+		_framesOnScreen.push_back(still);
+		g_engine->_dirtyRects.push_back(getFrameBoundingBox(still));
+	}
 
-	// GET THE DURATION OF THE MOVIE.
-	_duration = 0;
-	for (MovieFrame *frame : _frames) {
-		if (frame->endInMilliseconds() > _duration) {
-			_duration = frame->endInMilliseconds();
-		}
+	setActive();
+	_isShowing = true;
+	_isPlaying = false;
+}
+
+void Movie::spatialHide() {
+	if (_isPlaying) {
+		warning("Movie::spatialShow(): (%d) Attempted to spatialHide movie that is playing", _header->_id);
+		return;
+	} else if (!_isShowing) {
+		warning("Movie::spatialHide(): (%d) Attempted to spatialHide movie that is not showing", _header->_id);
+		return;
+	}
+
+	for (MovieFrame *frame : _framesOnScreen) {
+		g_engine->_dirtyRects.push_back(getFrameBoundingBox(frame));
+	}
+	_framesOnScreen.clear();
+	_framesNotYetShown.clear();
+
+	_isShowing = false;
+	_isPlaying = false;
+	setInactive();
+}
+
+void Movie::timePlay() {
+	// TODO: Play movies one chunk at a time, which more directly approximates
+	// the original's reading from the CD one chunk at a time.
+	if (_isPlaying) {
+		warning("Movie::timePlay(): (%d) Attempted to play a movie that is already playing", _header->_id);
+		return;
 	}
 
 	// START PLAYING SOUND.
@@ -220,90 +284,149 @@ void Movie::timePlay() {
 	if (!_audioStreams.empty()) {
 		Audio::QueuingAudioStream *audio = Audio::makeQueuingAudioStream(22050, false);
 		for (Audio::SeekableAudioStream *stream : _audioStreams) {
+			stream->rewind();
 			audio->queueAudioStream(stream, DisposeAfterUse::NO);
 		}
 		// Then play the audio!
-		Audio::SoundHandle handle;
-		g_engine->_mixer->playStream(Audio::Mixer::kPlainSoundType, &handle, audio, -1, Audio::Mixer::kMaxChannelVolume);
+		g_engine->_mixer->playStream(Audio::Mixer::kPlainSoundType, &_soundHandle, audio, -1, Audio::Mixer::kMaxChannelVolume);
+		audio->finish();
 	}
 
+	_framesNotYetShown = _frames;
+	_isShowing = true;
+	_isPlaying = true;
+	setActive();
 	runEventHandlerIfExists(kMovieBeginEvent);
 }
 
 void Movie::timeStop() {
-	// RESET ANIMATION VARIABLES.
-	_isActive = false;
-	_startTime = 0;
-	_lastProcessedTime = 0;
+	if (!_isShowing) {
+		warning("Movie::timeStop(): (%d) Attempted to stop a movie that isn't showing", _header->_id);
+		return;
+	} else if (!_isPlaying) {
+		warning("Movie::timePlay(): (%d) Attempted to stop a movie that isn't playing", _header->_id);
+		return;
+	}
+
+	for (MovieFrame *frame : _framesOnScreen) {
+		g_engine->_dirtyRects.push_back(getFrameBoundingBox(frame));
+	}
+	_framesOnScreen.clear();
+	_framesNotYetShown.clear();
+
+	g_engine->_mixer->stopHandle(_soundHandle);
+	_soundHandle = Audio::SoundHandle();
+
+	// Show the persistent frames.
+	_isPlaying = false;
+	if (!_stills.empty()) {
+		for (MovieFrame *still : _stills) {
+			_framesOnScreen.push_back(still);
+			g_engine->_dirtyRects.push_back(getFrameBoundingBox(still));
+		}
+	} else {
+		setInactive();
+	}
 
 	runEventHandlerIfExists(kMovieStoppedEvent);
 }
 
 void Movie::process() {
 	processTimeEventHandlers();
-	drawNextFrame();
+	updateFrameState();
 }
 
-void Movie::processTimeEventHandlers() {
-	if (!_isActive) {
-		warning("Movie::processTimeEventHandlers(): Attempted to process time event handlers while movie is not playing");
+void Movie::updateFrameState() {
+	if (_showByDefault) {
+		spatialShow();
+		_showByDefault = false;
+	}
+
+	if (!_isPlaying) {
+		debugC(6, kDebugGraphics, "Movie::updateFrameState (%d): Not playing", _header->_id);
+		for (MovieFrame *frame : _framesOnScreen) {
+			debugC(6, kDebugGraphics, "   PERSIST: Frame %d (%d x %d) @ (%d, %d); start: %d ms, end: %d ms, keyframeEnd: %d ms, zIndex = %d", 
+				frame->index(), frame->width(), frame->height(), frame->left(), frame->top(), frame->startInMilliseconds(), frame->endInMilliseconds(), frame->keyframeEndInMilliseconds(), frame->zCoordinate());
+		}
 		return;
 	}
 
 	uint currentTime = g_system->getMillis();
-	for (EventHandler *timeEvent : _header->_timeHandlers) {
-		double timeEventInFractionalSeconds = timeEvent->_argumentValue.u.f;
-		uint timeEventInMilliseconds = timeEventInFractionalSeconds * 1000;
-		bool timeEventAlreadyProcessed = timeEventInMilliseconds < _lastProcessedTime;
-		bool timeEventNeedsToBeProcessed = timeEventInMilliseconds <= currentTime - _startTime;
-		if (!timeEventAlreadyProcessed && timeEventNeedsToBeProcessed) {
-			debugC(5, kDebugScript, "Movie::processTimeEventHandlers(): Running On Time handler for movie time %d ms (real movie time: %d ms)", timeEventInMilliseconds, currentTime - _startTime);
-			timeEvent->execute(_header->_id);
+	uint movieTime = currentTime - _startTime;
+	debugC(5, kDebugGraphics, "Movie::updateFrameState (%d): Starting update (movie time: %d)", _header->_id, movieTime);
+	if (_framesNotYetShown.empty()) {
+		_isPlaying = false;
+		setInactive();
+		_framesOnScreen.clear();
+		runEventHandlerIfExists(kMovieEndEvent);
+		return;
+	}
+	
+	// This complexity is necessary becuase movies can have more than one frame
+	// showing at the same time - for instance, a movie background and an
+	// animation on that background are a part of the saem movie and are on
+	// screen at the same time, it's just the starting and ending times of one
+	// can be different from the starting and ending times of another.
+	//
+	// We can rely on the frames being ordered in order of their start. First,
+	// see if there are any new frames to show.
+	for (auto it = _framesNotYetShown.begin(); it != _framesNotYetShown.end();) {
+		MovieFrame *frame = *it;
+		bool isAfterStart = movieTime >= frame->startInMilliseconds();
+		if (isAfterStart) {
+			_framesOnScreen.push_back(frame);
+			g_engine->_dirtyRects.push_back(getFrameBoundingBox(frame));
+
+			// We don't need ++it because we will either have another frame
+			// that needs to be drawn, or we have reached the end of the new
+			// frames.
+			it = _framesNotYetShown.erase(it);
+		} else {
+			// We've hit a frame that shouldn't yet be shown.
+			// Rely on the ordering to not bother with any further frames.
+			break;
 		}
 	}
-	_lastProcessedTime = currentTime - _startTime;
+
+	// Now see if there are any old frames that no longer need to be shown.
+	for (auto it = _framesOnScreen.begin(); it != _framesOnScreen.end();) {
+		MovieFrame *frame = *it;
+		bool isAfterEnd = movieTime >= frame->endInMilliseconds();
+		if (isAfterEnd) {
+			g_engine->_dirtyRects.push_back(getFrameBoundingBox(frame));
+			it = _framesOnScreen.erase(it);
+		} else {
+			++it;
+		}
+	}
+
+	// Show the frames that are currently active, for debugging purposes.
+	for (MovieFrame *frame : _framesOnScreen) {
+		debugC(5, kDebugGraphics, "   (time: %d ms) Frame %d (%d x %d) @ (%d, %d); start: %d ms, end: %d ms, keyframeEnd: %d ms, zIndex = %d", movieTime, frame->index(), frame->width(), frame->height(), frame->left(), frame->top(), frame->startInMilliseconds(), frame->endInMilliseconds(), frame->keyframeEndInMilliseconds(), frame->zCoordinate());
+	}
 }
 
-bool Movie::drawNextFrame() {
-	// TODO: We'll need to support persistent frames in movies too. Do movies
-	// have the same distinction between spatialShow and timePlay that sprites
-	// do?
-
-	uint currentTime = g_system->getMillis();
-	uint movieTime = currentTime - _startTime;
-	debugC(5, kDebugGraphics, "GRAPHICS (Movie %d): Starting blitting (movie time: %d)", _header->_id, movieTime);
-	bool donePlaying = movieTime > _duration;
-	if (donePlaying) {
-		_isActive = false;
-		_startTime = 0;
-		_lastProcessedTime = 0;
-
-		runEventHandlerIfExists(kMovieEndEvent);
-		return false;
-	}
-
-	Common::Array<MovieFrame *> framesToDraw;
-	for (MovieFrame *frame : _frames) {
-		bool isAfterStart = _startTime + frame->startInMilliseconds() <= currentTime;
-		bool isBeforeEnd = _startTime + frame->endInMilliseconds() >= currentTime;
-		if (!isAfterStart || (isAfterStart && !isBeforeEnd)) {
-			continue;
-		}
-		debugC(5, kDebugGraphics, "    (time: %d ms) Must re-draw frame %d (%d x %d) @ (%d, %d); start: %d ms, end: %d ms, keyframeEnd: %d ms, zIndex = %d", movieTime, frame->index(), frame->width(), frame->height(), frame->left(), frame->top(), frame->startInMilliseconds(), frame->endInMilliseconds(), frame->keyframeEndInMilliseconds(), frame->zCoordinate());
-		framesToDraw.push_back(frame);
-	}
-
-	Common::sort(framesToDraw.begin(), framesToDraw.end(), [](MovieFrame * a, MovieFrame * b) {
+void Movie::redraw(Common::Rect &rect) {
+	// Make sure the frames are ordered properly before we attempt to draw them.
+	Common::sort(_framesOnScreen.begin(), _framesOnScreen.end(), [](MovieFrame * a, MovieFrame * b) {
 		return a->zCoordinate() > b->zCoordinate();
 	});
-	for (MovieFrame *frame : framesToDraw) {
-		g_engine->_screen->simpleBlitFrom(frame->_surface, Common::Point(frame->left(), frame->top()));
-	}
 
-	uint blitEnd = g_system->getMillis() - _startTime;
-	uint elapsedTime = blitEnd - movieTime;
-	debugC(5, kDebugGraphics, "GRAPHICS (Movie %d): Finished blitting in %d ms (movie time: %d ms)", _header->_id, elapsedTime, blitEnd);
-	return true;
+	for (MovieFrame *frame : _framesOnScreen) {
+		Common::Rect bbox = getFrameBoundingBox(frame);
+		Common::Rect areaToRedraw = bbox.findIntersectingRect(rect);
+		if (!areaToRedraw.isEmpty()) {
+			Common::Point originOnScreen(areaToRedraw.left, areaToRedraw.top);
+			areaToRedraw.translate(-frame->left() - _header->_boundingBox->left, -frame->top() - _header->_boundingBox->top);
+			g_engine->_screen->simpleBlitFrom(frame->_surface, areaToRedraw, originOnScreen);
+		}
+	}
+}
+
+Common::Rect Movie::getFrameBoundingBox(MovieFrame *frame) {
+	Common::Rect bbox = frame->boundingBox();
+	bbox.translate(_header->_boundingBox->left, _header->_boundingBox->top);
+	return bbox;
 }
 
 void Movie::readChunk(Chunk &chunk) {
@@ -391,7 +514,7 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 
 		// READ THE AUDIO.
 		debugC(5, kDebugLoading, "Movie::readSubfile(): (Frameset %d of %d) Reading audio chunk... (@0x%llx)", i, chunkCount, static_cast<long long int>(chunk.pos()));
-		bool isAudioChunk = (chunk._id = _header->_audioChunkReference);
+		bool isAudioChunk = (chunk._id == _header->_audioChunkReference);
 		if (isAudioChunk) {
 			byte *buffer = (byte *)malloc(chunk._length);
 			chunk.read((void *)buffer, chunk._length);
@@ -402,12 +525,7 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 				break;
 
 			case SoundEncoding::IMA_ADPCM_S16LE_MONO_22050:
-				// TODO: The interface here is different. We can't pass in the
-				// buffers directly. We have to make a stream first.
-				// stream = Audio::makeADPCMStream(buffer, chunk.length,
-				// DisposeAfterUse::NO, Audio::ADPCMType::kADPCMMSIma, 22050, 1,
-				// 4);
-				error("Movie::readSubfile(): ADPCM decoding not implemented yet");
+				error("Movie::readSubfile(): ADPCM decoding not supported for movies");
 				break;
 
 			default:
@@ -433,6 +551,14 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 	}
 
 	// SET THE MOVIE FRAME FOOTERS.
+	for (MovieFrame *frame : _stills) {
+		for (MovieFrameFooter *footer : _footers) {
+			if (frame->index() == footer->_index) {
+				frame->setFooter(footer);
+			}
+		}
+	}
+
 	for (MovieFrame *frame : _frames) {
 		for (MovieFrameFooter *footer : _footers) {
 			if (frame->index() == footer->_index) {

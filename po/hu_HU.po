@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.3.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-01-24 06:23+0000\n"
-"PO-Revision-Date: 2025-01-24 20:18+0000\n"
+"POT-Creation-Date: 2025-02-12 14:51+0000\n"
+"PO-Revision-Date: 2025-02-12 14:18+0000\n"
 "Last-Translator: mdv <gahex68379@lofiey.com>\n"
 "Language-Team: Hungarian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/hu/>\n"
@@ -119,7 +119,7 @@ msgstr "Fentebb lépés"
 #: engines/scumm/dialog-createsession.cpp:47
 #: engines/scumm/dialog-sessionselector.cpp:67
 #: engines/scumm/he/moonbase/dialog-mapgenerator.cpp:138
-#: engines/sword1/control.cpp:2813 engines/wintermute/wintermute.cpp:184
+#: engines/sword1/control.cpp:2816 engines/wintermute/wintermute.cpp:184
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -317,7 +317,7 @@ msgstr "Egy másik tároló jelenleg már működik. Meg akarja szakítani?"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:143
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4180
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
 #: engines/toon/toon.cpp:1543
 msgid "Yes"
 msgstr "Igen"
@@ -330,7 +330,7 @@ msgstr "Igen"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:149
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4180
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
 #: engines/toon/toon.cpp:1543
 msgid "No"
 msgstr "Nem"
@@ -354,16 +354,16 @@ msgstr "A JSON kód tartalma hibás."
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2035
+#: engines/director/lingo/lingo-builtins.cpp:2089
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:76
 #: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1342
-#: engines/scumm/scumm.cpp:1749 engines/scumm/scumm.cpp:2239
-#: engines/scumm/scumm.cpp:2255 engines/sky/compact.cpp:140
+#: engines/scumm/scumm.cpp:1759 engines/scumm/scumm.cpp:2249
+#: engines/scumm/scumm.cpp:2265 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:532 engines/sword1/animation.cpp:563
-#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2813
+#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2816
 #: engines/sword1/logic.cpp:1732 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
@@ -1016,7 +1016,7 @@ msgstr "Interakció"
 #: engines/dragons/metaengine.cpp:159 engines/freescape/movement.cpp:35
 #: engines/got/metaengine.cpp:55 engines/griffon/metaengine.cpp:121
 #: engines/grim/grim.cpp:481 engines/grim/grim.cpp:562 engines/icb/icb.cpp:68
-#: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:950
+#: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:968
 #: engines/twine/metaengine.cpp:430 engines/twine/metaengine.cpp:497
 #: engines/twp/metaengine.cpp:154 engines/wintermute/keymapper_tables.h:1290
 #: engines/wintermute/keymapper_tables.h:1373
@@ -1031,7 +1031,7 @@ msgstr "Fel"
 #: engines/dragons/metaengine.cpp:165 engines/freescape/movement.cpp:42
 #: engines/got/metaengine.cpp:56 engines/griffon/metaengine.cpp:127
 #: engines/grim/grim.cpp:486 engines/grim/grim.cpp:567 engines/icb/icb.cpp:73
-#: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:917
+#: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:935
 #: engines/twine/metaengine.cpp:437 engines/twine/metaengine.cpp:505
 #: engines/twp/metaengine.cpp:155 engines/wintermute/keymapper_tables.h:1296
 #: engines/wintermute/keymapper_tables.h:1379
@@ -1046,7 +1046,7 @@ msgstr "Le"
 #: engines/dragons/metaengine.cpp:171 engines/got/metaengine.cpp:57
 #: engines/griffon/metaengine.cpp:133 engines/grim/grim.cpp:491
 #: engines/grim/grim.cpp:572 engines/icb/icb.cpp:78 engines/icb/icb.cpp:162
-#: engines/scumm/metaengine.cpp:930 engines/twine/metaengine.cpp:452
+#: engines/scumm/metaengine.cpp:948 engines/twine/metaengine.cpp:452
 #: engines/twine/metaengine.cpp:520 engines/twp/metaengine.cpp:152
 #: engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1302
@@ -1062,7 +1062,7 @@ msgstr "Bal"
 #: engines/dragons/metaengine.cpp:177 engines/got/metaengine.cpp:58
 #: engines/griffon/metaengine.cpp:139 engines/grim/grim.cpp:496
 #: engines/grim/grim.cpp:577 engines/icb/icb.cpp:83 engines/icb/icb.cpp:167
-#: engines/scumm/metaengine.cpp:937 engines/twine/metaengine.cpp:444
+#: engines/scumm/metaengine.cpp:955 engines/twine/metaengine.cpp:444
 #: engines/twine/metaengine.cpp:513 engines/twp/metaengine.cpp:153
 #: engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1308
@@ -2990,7 +2990,7 @@ msgstr ""
 "Ismételje meg mind a hat lépést az összes játéknál."
 
 #: base/main.cpp:652 base/main.cpp:677
-#: engines/director/lingo/lingo-builtins.cpp:1389
+#: engines/director/lingo/lingo-builtins.cpp:1415
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -4110,13 +4110,13 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "Érintőképernyő 'Tapi mód' - Lebegő (DPad kattintás)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:695
-#: backends/fs/android/android-saf-fs.cpp:699
+#: backends/fs/android/android-saf-fs.cpp:802
+#: backends/fs/android/android-saf-fs.cpp:806
 msgid "Add a new folder"
 msgstr "Új mappa"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:811
+#: backends/fs/android/android-saf-fs.cpp:918
 msgid "Choose a new folder"
 msgstr "Új mappa kiválasztása"
 
@@ -5071,11 +5071,11 @@ msgstr ""
 "1. Válassza a **Játék hozzáadása...** gombot az indítóban. \n"
 "\n"
 "2. A ScummVM fájlkezelőn belül válassza a **Fel** lehetőséget egészen addig, "
-"amíg nem jut el a gyökérhez ahol már csak az **<Új mappa>** opció érhető el. "
+"amíg nem jut el a gyökérhez ahol már csak az **<Új mappa>** opció érhető "
+"el. \n"
 "\n"
-"\n"
-"  ![ScummVM fájlkezelő gyökér](browser-root.png \"ScummVM fájlkezelő gyökér\""
-"){w=70%}\n"
+"  ![ScummVM fájlkezelő gyökér](browser-root.png \"ScummVM fájlkezelő "
+"gyökér\"){w=70%}\n"
 "\n"
 "3. Nyomjon duplán az **<Új mappa>** opcióra. Az eszközén navigáljon el ahhoz "
 "a könyvtárhoz, ami tartalmazza az összes játék könyvtárat. Például: ** SD "
@@ -5083,8 +5083,8 @@ msgstr ""
 "\n"
 "4. Válassza a **Ezen könyvtár használata** opciót. \n"
 "\n"
-"  ![OS választható könyvtár](fs-folder.png \"OS választható könyvtár\""
-"){w=70%}\n"
+"  ![OS választható könyvtár](fs-folder.png \"OS választható könyvtár\")"
+"{w=70%}\n"
 "\n"
 "5. Válassza az **ENGEDÉLYEZÉS** opciót, hogy hozzáférést biztosítson a "
 "könyvtárhoz a ScummVM számára. \n"
@@ -5096,8 +5096,8 @@ msgstr ""
 "Hozzáadhat egy játékot egy játék fájlokat tartalmazó alkönyvtár "
 "kiválasztásával, majd a **Kiválaszt** gomb megnyomásával.. \n"
 "\n"
-"  ![SAF mappa hozzáadva](browser-folder-in-list.png \"SAF mappa hozzáadva\""
-"){w=70%}\n"
+"  ![SAF mappa hozzáadva](browser-folder-in-list.png \"SAF mappa hozzáadva\")"
+"{w=70%}\n"
 "\n"
 "A 2-es és 3-as pontokat csak egyszer kell elvégezni. További játékok "
 "hozzáadásához ismételje meg az 1--es és 6-os pontot. \n"
@@ -5271,18 +5271,17 @@ msgstr ""
 "\n"
 "Szüksége van még további segítségre? Tanulmányozza az [online iOS "
 "dokumentációnkat](https://docs.scummvm.org/en/latest/other_platforms/ios."
-"html). Kérdése van? Nézzen be a [támogatói fórumunkra](https://forums.scummvm"
-".org/viewforum.php?f=15) vagy nézzen fel a [Discord "
-"szerverünkre](https://discord.gg/4cDsMNtcpG), ahol található egy dedikált ["
-"iOS támogatói alcsatorna](https://discord.com/channels/581224060529148060/"
-"1149456560922316911).\n"
+"html). Kérdése van? Nézzen be a [támogatói fórumunkra](https://forums."
+"scummvm.org/viewforum.php?f=15) vagy nézzen fel a [Discord szerverünkre]"
+"(https://discord.gg/4cDsMNtcpG), ahol található egy dedikált [iOS támogatói "
+"alcsatorna](https://discord.com/"
+"channels/581224060529148060/1149456560922316911).\n"
 "\n"
 "Azonban maguk a támogatott játékok szándékosan furmányosak, néma már majdnem "
 "észveszejtő szinten. Ha végleg el van akadva egy játékban, érdemes "
 "megtekinteni egy végigjátszást. Sok sikert!\n"
 
 #: backends/platform/ios7/ios7_osys_misc.mm:264
-#, fuzzy
 msgid ""
 "## Touch control modes\n"
 "The touch control mode can be changed by tapping or clicking on the "
@@ -5385,52 +5384,52 @@ msgstr ""
 "| `Egyujjas érintés`  | Bal egér gomb  \n"
 "| `Kétujjas érintés` | Right mouse click \n"
 "| `Kétujjas dupla érintés` | ESC \n"
-"| `Egyujjas érintés & lenyomva tartás >0.5mp` | Left mouse button hold and "
-"drag, such as for selection from action wheel in Curse of Monkey Island \n"
-"| `Two fingers press & hold for >0.5s` | Right mouse button hold and drag, "
-"such as for selection from action wheel in Tony Tough \n"
-"| `Two fingers swipe (left to right)` | Toggles between the touch modes \n"
-"| `Two fingers swipe (right to left)` | Toggles virtual controller (>iOS 15) "
+"| `Egyujjas érintés & lenyomva tartás >0.5mp-en keresztül` | Bal egérgombos "
+"tartás és áthelyezés, mint ahogy a Curse of Monkey Island választó kerekénél "
+"használható \n"
+"| `Egyujjas érintés & lenyomva tartás >0.5mp-en keresztül` | Jobb egérgombos "
+"tartás és áthelyezés, mint a Tony Tough műveleti kerekénél \n"
+"| `Kétujjas félrehúzás (balról jobbra)` | Érintő módok közötti váltás \n"
+"| `Kétujjas félrehúzás (jobbról balra)` | Virtuális kontroller bekapcsolása "
+"(>iOS 15) \n"
+"| `Kétujjas félrehúzás (fentről lefelé)` | Átfogó FŐmenü elérése a "
+"játékokban \n"
+"| `Csípés (nagyítás be/ki)` | Billentyűzet ki/be kapcsolása \n"
 "\n"
-"| `Two fingers swipe (top to bottom)` | Access Global Main Menu in games \n"
-"| `Pinch (zoom in/out)` | Enables/disables keyboard \n"
+"### Virtuális Gamepad \n"
 "\n"
-"### Virtual Gamepad \n"
+"A legalább iOS 15-el rendelkező eszközök képesek csatlakozni a virtuális "
+"gamepadhoz ha két újjal jobbról balra félrehúzza a képernyőt, vagy a "
+"**Átfogó Opciók > Backend** opción keresztül. Az iránygombok használhatóak "
+"joy karként vagy irányválasztóként.\n"
+"**Jegyzet** Amíg a virtuális kontroller csatlakoztatva van, nem lehet "
+"egérgomb lenyomást eszközölni érintéssel egészen addig amíg a kontroller "
+"látható. Bal egérgomb lenyomást az A gombbal végezhetünk. Az érintő gesztus "
+"akkor aktiválódik újra, ha a virtuális kontrollert lecsatlakoztatja.\n"
 "\n"
-"Devices running iOS 15 or later can connect virtual gamepad controller by "
-"swiping two fingers from right to left or through **Global Options > "
-"Backend**. The directional button can be configured to either a thumbstick "
-"or a dpad.\n"
-"**Note** While the virtual controller is connected it is not possible to "
-"perform mouse clicks using tap gestures since they are disabled as long as "
-"the virtual controller is visible. Left mouse clicks are performed by "
-"pressing the A button. Tap gestures are enabled again when virtual "
-"controller is disconnected.\n"
+"### Átfogó Fő Menü\n"
 "\n"
-"### Global Main Menu\n"
+"Az átfogó Fő Menü megnyitásához nyomjon a menü ikonra a jobb felső sarokban, "
+"vagy húzza fentről lefelé a képernyőt két ujjal.\n"
 "\n"
-"To open the Global Main Menu, tap on the menu icon at the top right of the "
-"screen or swipe two fingers downwards.\n"
+"  ![Menü ikon](menu.png \"Menü ikon\"){w=10em}\n"
 "\n"
-"  ![Menu icon](menu.png \"Menu icon\"){w=10em}\n"
+"## Virtuális billentyűzet\n"
 "\n"
-"## Virtual keyboard\n"
-"\n"
-"To open the virtual keyboard, long press on the controller icon at the top "
-"right of the screen, perform a pinch gesture (zoom out) or tap on any "
-"editable text field. To hide the virtual keyboard, tap the controller icon "
-"again, do an opposite pinch gesture (zoom in) or tap outside the text field."
+"A virtuális billentyűzet megnyitásához nyomja hosszan a kontroller ikon a "
+"képernyő jobb felső sarkában, majd egy csípész gesztust (kinagyítás), vagy "
+"nyomjon bármely szerkeszthető szövegdobozra. A virtuális billentyűzet "
+"elrejtéséhez érintse meg újra a kontroller ikont, majd az előzővel "
+"ellentétes csípés gesztus hajtson végre, vagy csak érintse meg a képet a "
+"szövegdobozon kívül.\n"
 "\n"
 "\n"
-"\n"
-"  ![Keyboard icon](keyboard.png \"Keyboard icon\"){w=10em}\n"
+"  ![Billentyűzet ikon](keyboard.png \"Billentyűzet ikon\"){w=10em}\n"
 "\n"
 
 #: backends/platform/ios7/ios7_osys_misc.mm:314
-#, fuzzy
-#| msgid "Toggle virtual keyboard"
 msgid "External keyboard"
-msgstr "Virtuális billentyűzet váltása"
+msgstr "Külső billentyűzet"
 
 #: backends/platform/ios7/ios7_osys_misc.mm:317
 msgid ""
@@ -5456,6 +5455,27 @@ msgid ""
 "| `CMD + RIGHT`     | END               \n"
 "\n"
 msgstr ""
+"## Billentyűzet használata\n"
+"Az iOS 13.4 óta támogatottak a külső billentyűzetek, a legtöbb speciális "
+"gomb mint a funkció gombok, Home, End, már mind előre map-pelve vannak. \n"
+"A speciális gomb nélküli külső billentyűzetek esetében, pl: az Ipad-ekhez "
+"járó Apple Magic Keyboard a speciális gombok a következő kombinációkkal "
+"érhetőek el: \n"
+"\n"
+"\n"
+"| Gomb kombinációk   | Művelet            \n"
+"| ------------------|-------------------\n"
+"| `CMD + 1`         | F1                \n"
+"| `CMD + 2`         | F2                \n"
+"| `...`             | ...               \n"
+"| `CMD + 0`         | F10               \n"
+"| `CMD + SHIFT + 1` | F11               \n"
+"| `CMD + SHIFT + 2` | F12               \n"
+"| `CMD + FEL`        | PAGE UP           \n"
+"| `CMD + LE`      | PAGE DOWN         \n"
+"| `CMD + BAL`      | HOME              \n"
+"| `CMD + JOBB`     | END               \n"
+"\n"
 
 #: backends/platform/ios7/ios7_osys_misc.mm:339
 msgid ""
@@ -5477,6 +5497,24 @@ msgid ""
 "See our [iOS documentation](https://docs.scummvm.org/en/latest/"
 "other_platforms/ios.html) for more information.\n"
 msgstr ""
+"## Játékok hozzáadása \n"
+"\n"
+"1. Másolja a szükséges fájlokat a ScummVM applikációba. Erre többféle "
+"lehetőség is van, tekintse meg erről szóló [Játék fájlok másolása "
+"dokumentációnkat](https://docs.scummvm.org/en/latest/other_platforms/ios."
+"html#transferring-game-files) a további információkért.\n"
+"\n"
+"2. Válassza a **Játék hozzáadása...** gombot az indítóból. \n"
+"\n"
+"3. A ScummVM fájl böngészőben dupla érintéssel keresse ki a hozzáadott "
+"könyvtárját. A játékot hozzá tudja adni szimplán a játékfájlokat tartalmazó "
+"alkönyvtár kiválasztásával, amit ki tud választani a **Kiválaszt** "
+"gombbal. \n"
+"\n"
+"További játékok hozzáadásához ismételje meg a fenti lépéseket. \n"
+"\n"
+"Tekintse meg az [iOS dokumentációnkat](https://docs.scummvm.org/en/latest/"
+"other_platforms/ios.html) a további információkért.\n"
 
 #: backends/platform/ios7/ios7_osys_misc.mm:360
 msgid ""
@@ -5499,6 +5537,24 @@ msgid ""
 "the virtual keyboard, press the Back/Menu button.\n"
 "\n"
 msgstr ""
+"## Érintési műveletek \n"
+"\n"
+"### Nyomja meg az Érintési területet \n"
+"\n"
+"Nyomja meg az érintési területet a bal egér gombnyomáshoz\n"
+"### Lejátszás/Szünet\n"
+"\n"
+"Nyomja meg a Lejátszás/Szünet-et a jobb egér gombnyomáshoz\n"
+"\n"
+"### Átfogó Fő Menü\n"
+"\n"
+"Az Átfogó Fő Menü megnyitásához nyomja meg a Vissza/Menü gombot.\n"
+"\n"
+"## Virtuális billentyűzet\n"
+"\n"
+"A virtuális billentyűzet megnyitásához nyomja meg és tartsa lenyomva a "
+"Lejátszás/Szünet gombot. Elrejtéséhez nyomja meg a Vissza/Menü gombot.\n"
+"\n"
 
 #: backends/platform/ios7/ios7_osys_misc.mm:383
 msgid ""
@@ -5520,90 +5576,88 @@ msgid ""
 "See our [tvOS documentation](https://docs.scummvm.org/en/latest/"
 "other_platforms/tvos.html) for more information.\n"
 msgstr ""
+"## Játékok hozzáadása \n"
+"\n"
+"1. Másolja a szükséges fájlokat a ScummVM applikációba. Erre többféle "
+"lehetőség is van, tekintse meg erről szóló [Játék fájlok másolása "
+"dokumentációnkat](https://docs.scummvm.org/en/latest/other_platforms/tvos."
+"html#transferring-game-files) a további információkért.\n"
+"\n"
+"2. Válassza a **Játék hozzáadása...** gombot az indítóból. \n"
+"\n"
+"3. A ScummVM fájl böngészőben dupla érintéssel keresse ki a hozzáadott "
+"könyvtárját. A játékot hozzá tudja adni szimplán a játékfájlokat tartalmazó "
+"alkönyvtár kiválasztásával, amit ki tud választani a **Kiválaszt** "
+"gombbal. \n"
+"\n"
+"További játékok hozzáadásához ismételje meg a fenti lépéseket. \n"
+"\n"
+"Tekintse meg az [tvOS dokumentációnkat](https://docs.scummvm.org/en/latest/"
+"other_platforms/tvos.html) a további információkért.\n"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:46
 msgid "LIBRETRO PLAYLIST GENERATOR"
-msgstr ""
+msgstr "LIBRETRO JÁTÉKLISTA GENERÁTOR"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:47
 msgid "(check '? > Libretro playlist' for detailed info)"
-msgstr ""
+msgstr "(check '? > Libretro játéklista' további információkért)"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:48
-#, fuzzy
-#| msgid "Plugins Path:"
 msgid "Playlists Path"
-msgstr "Plugin Mappa:"
+msgstr "Játéklista Elérési út"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:49
-#, fuzzy
-#| msgid "Specifies where your saved games are put"
 msgid "Specifies where your playlist will be saved."
-msgstr "Játékmentések helyének meghatározása"
+msgstr "Játéklisták elérési útjának meghatározása."
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:52
-#, fuzzy
-#| msgid "Platform:"
 msgid "Playlist format:"
-msgstr "Platform:"
+msgstr "Játéklista formátum:"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:57
-#, fuzzy
-#| msgid "Goto location"
 msgid "Hooks location:"
-msgstr "Ugrás a helyre"
+msgstr "Hook helye:"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:59
-#, fuzzy
-#| msgid "Add a new folder"
 msgid "All in save folder"
-msgstr "Új mappa hozzáadása"
+msgstr "Minden a mentési könyvtárban"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:60
 msgid "One in each game folder"
-msgstr ""
+msgstr "Mappánként egy"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:62
 msgid "Clear existing hooks"
-msgstr ""
+msgstr "Már meglevő Hook-ok törlése"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:64
 msgid "Generate playlist"
-msgstr ""
+msgstr "Játéklista generálása"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:66
-#, fuzzy
-#| msgid "Status:"
 msgid "Status: "
-msgstr "Státusz:"
+msgstr "Státusz: "
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:148
-#, fuzzy
-#| msgid "Failed to save game to file."
 msgid "Failed, can't access playlist file"
-msgstr "Nem sikerült a játékállás mentése fájlba."
+msgstr "Sikertelen, a játéklista nem elérhető"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:224
-#, fuzzy
-#| msgid "Reading data failed"
 msgid "cleaning failed"
-msgstr "A Beolvasott adat hibás"
+msgstr "sikertelen tisztítás"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:226
-#, fuzzy
-#| msgid "Failed to read the file!"
 msgid "Failed, can't create hook files"
-msgstr "Nem sikerült elolvasni a fájlt!"
+msgstr "Sikertelen, hook fájl nem hozható létre"
 
 #: backends/platform/libretro/src/libretro-options-widget.cpp:236
-#, fuzzy
-#| msgid "Select additional game directory"
 msgid "Select Playlist directory"
-msgstr "Válassz mappát a játék kiegészítõkhöz"
+msgstr "Játéklista mappa kiválasztása"
 
 #: backends/platform/libretro/src/libretro-os-utils.cpp:233
 msgid "Libretro playlist"
-msgstr ""
+msgstr "Libretro játéklista"
 
 #: backends/platform/libretro/src/libretro-os-utils.cpp:236
 msgid ""
@@ -5620,6 +5674,17 @@ msgid ""
 "\n"
 "The core also supports dedicated per game **hook** plain text files with **."
 msgstr ""
+"## Libretro játéklista ScummVM maghoz\n"
+"A Libretro frontend-ekben (pl: Retroarch) használatos játéklisták egyszerű "
+"szöveg lista, amit a játékok közvetlen indítására használnak egy specifikus "
+"maggal a kezelői felületről. Ezen fájlok felépítése úgy van kialakítva, hogy "
+"a maghoz eljuttassák a megfelelő fájlokat (pl: ROM).\n"
+"\n"
+"A ScummVM el tudja fogadni a játékok könyvtárait tartalomként, a felismerő "
+"rendszer megpróbálja automatikusan felismerni a játékot a tőkönyvtárból, és "
+"elindítja a játékot az alapértelmezett ScummVM opciókkal.\n"
+"\n"
+"A mag támogat még játék orientált **hook** egyszerű szöveg formában **-val."
 
 #: backends/platform/maemo/maemo.cpp:157
 msgid "Click Mode"
@@ -5627,7 +5692,7 @@ msgstr "Kattintás Mód"
 
 #: backends/platform/sdl/sdl.cpp:1054
 msgid "Keyboard"
-msgstr "Billentyûzet"
+msgstr "Billentyűzet"
 
 #: backends/platform/sdl/sdl.cpp:1057
 msgid ""
@@ -5646,22 +5711,37 @@ msgid ""
 "| --------------|------------------\n"
 "| `Ctrl+F5` | Displays the Global Main Menu\n"
 msgstr ""
+"## Billentyű kombinációk\n"
+"\n"
+"A ScummVM különféle játékon belüli billentyű és egér kombinációkat támogat, "
+"a 2.2.0-s verzió óta beállíthatóak a **Gombkiosztás fülön**, vagy a "
+"**konfigurációs fájlban**.\n"
+"\n"
+"A játék specifikus kiosztáshoz keresse fel [wiki bejegyzésünket](https://"
+"wiki.scummvm.org/index.php?title=Category:Supported_Games), és tekintse meg "
+"a kívánt játékot.\n"
+"\n"
+"Alapértelmezett kombinációk láthatóak a táblában.\n"
+"\n"
+"| Kombináció      | Leírás      \n"
+"| --------------|------------------\n"
+"| `Ctrl+F5` | Az átfogó Fő Menü megjelenítése\n"
 
 #: backends/platform/sdl/sdl.cpp:1069
 msgid "| `Cmd+q`    | Quit (macOS)\n"
-msgstr ""
+msgstr "| `Cmd+q`    | Kilépés (macOS)\n"
 
 #: backends/platform/sdl/sdl.cpp:1071
 msgid "| `Alt+F4`  | Quit (Windows)\n"
-msgstr ""
+msgstr "| `Alt+F4`  | Kilépés (Windows)\n"
 
 #: backends/platform/sdl/sdl.cpp:1073
 msgid "| `Ctrl+q`  | Quit (Linux/Unix)\n"
-msgstr ""
+msgstr "| `Ctrl+q`  | Kilépés (Linux/Unix)\n"
 
 #: backends/platform/sdl/sdl.cpp:1074
 msgid "| `Ctrl+z`  | Quit (other platforms)\n"
-msgstr ""
+msgstr "| `Ctrl+z`  | Kilépés (más platformok)\n"
 
 #: backends/platform/sdl/sdl.cpp:1077
 msgid ""
@@ -5680,6 +5760,19 @@ msgid ""
 "opened with a long press of the middle mouse button or wheel.\n"
 "| `Ctrl+Alt+d` | Opens the ScummVM debugger\n"
 msgstr ""
+"| `Ctrl+u`  | Minden hang némítása\n"
+"| `Ctrl+m`  | Egér felvétel ki/be kapcsolása\n"
+"| `Ctrl+Alt` és `9` vagy `0` | Grafikus filterek közötti váltás\n"
+"| `Ctrl+Alt` és `+` vagy `-` | Növeli/Csökkenti a méretezési tényezőt\n"
+"| `Ctrl+Alt+a` | Képarány korrekció ki/be kapcsolása\n"
+"| `Ctrl+Alt+f` | Közeli szomszédos pixel és bilineáris interpoláció közötti "
+"váltás (grafikus filterezés be/ki)\n"
+"| `Ctrl+Alt+s` | Végigvált az összes széthúzási módon\n"
+"| `Alt+Enter`   | Teljes/Ablakos mód közötti váltás\n"
+"| `Alt+s`          | Képernyőkép készítése\n"
+"| `Ctrl+F7`       | Virtuális billentyű megnyitása (ha be van kapcsolva). Ez "
+"megnyitható a középső egérgomb hosszú nyomásával.\n"
+"| `Ctrl+Alt+d` | A ScummVM debugger megnyitása\n"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:298
 msgid "Hide ScummVM"
@@ -5691,7 +5784,7 @@ msgstr "Többi elrejtése"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:300
 msgid "Show All"
-msgstr "Mutasd mind"
+msgstr "Mind mutatása"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:305
 msgid "Window"
@@ -5713,7 +5806,7 @@ msgstr "Súgó"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:317
 msgid "User Manual"
-msgstr "Használati utasítás"
+msgstr "Felhasználói útmutató"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:319
 msgid "General Information"
@@ -5725,7 +5818,7 @@ msgstr "A ScummVM újdonságai"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:322
 msgid "Credits"
-msgstr "Stáblista"
+msgstr "Közreműködők"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:323
 msgid "GPL License"
@@ -5748,64 +5841,44 @@ msgid "BSD License"
 msgstr "BSD Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:329
-#, fuzzy
-#| msgid "GPL License"
 msgid "Apache License"
-msgstr "GPL Licensz"
+msgstr "Apache Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:330
-#, fuzzy
-#| msgid "BSD License"
 msgid "BSL License"
-msgstr "BSD Licensz"
+msgstr "BSL Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:331
-#, fuzzy
-#| msgid "GPL License"
 msgid "GLAD License"
-msgstr "GPL Licensz"
+msgstr "GLAD Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:332
-#, fuzzy
-#| msgid "BSD License"
 msgid "ISC License"
-msgstr "BSD Licensz"
+msgstr "ISC Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:333
-#, fuzzy
-#| msgid "GPL License"
 msgid "Lua License"
-msgstr "GPL Licensz"
+msgstr "Lua Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:334
-#, fuzzy
-#| msgid "GPL License"
 msgid "MIT License"
-msgstr "GPL Licensz"
+msgstr "MIT Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:335
-#, fuzzy
-#| msgid "GPL License"
 msgid "MKV License"
-msgstr "GPL Licensz"
+msgstr "MKV Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:336
-#, fuzzy
-#| msgid "GPL License"
 msgid "MPL License"
-msgstr "GPL Licensz"
+msgstr "MPL Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:337
-#, fuzzy
-#| msgid "GPL License"
 msgid "TinyGL License"
-msgstr "GPL Licensz"
+msgstr "TinyGL Licensz"
 
 #: backends/platform/sdl/macosx/appmenu_osx.mm:338
-#, fuzzy
-#| msgid "Freefont License"
 msgid "Catharon License"
-msgstr "Freefont Licensz"
+msgstr "Catharon Licensz"
 
 #. I18N: Hardware key
 #: backends/platform/sdl/miyoo/miyoo.cpp:79
@@ -5873,7 +5946,7 @@ msgstr "R1"
 
 #: backends/platform/sdl/switch/switch.cpp:41
 msgid "Minus"
-msgstr "Minusz"
+msgstr "Mínusz"
 
 #: backends/platform/sdl/switch/switch.cpp:42
 #: backends/platform/sdl/switch/switch.cpp:43
@@ -5890,19 +5963,19 @@ msgstr "Jelenlegi videómód:"
 
 #: backends/platform/wii/options.cpp:55
 msgid "Double-strike"
-msgstr "Dupla érintés"
+msgstr "Dupla-csapás"
 
 #: backends/platform/wii/options.cpp:59
 msgid "Horizontal underscan:"
-msgstr "Vízszintes eltolás:"
+msgstr "Vízszintes alul-pásztázás:"
 
 #: backends/platform/wii/options.cpp:65
 msgid "Vertical underscan:"
-msgstr "Függõleges eltolás:"
+msgstr "Függőleges alul-pásztázás:"
 
 #: backends/platform/wii/options.cpp:70
 msgid "Input"
-msgstr "Bemenet"
+msgstr "Bemeneti jel"
 
 #: backends/platform/wii/options.cpp:73
 msgid "GC Pad sensitivity:"
@@ -5910,7 +5983,7 @@ msgstr "GC Pad érzékenység:"
 
 #: backends/platform/wii/options.cpp:79
 msgid "GC Pad acceleration:"
-msgstr "GC Pad felbontás:"
+msgstr "GC Pad gyorsulás:"
 
 #: backends/platform/wii/options.cpp:85
 msgid "DVD"
@@ -5926,11 +5999,11 @@ msgstr "Ismeretlen"
 
 #: backends/platform/wii/options.cpp:92
 msgid "Mount DVD"
-msgstr "DVD csatolás"
+msgstr "DVD mountolása"
 
 #: backends/platform/wii/options.cpp:93
 msgid "Unmount DVD"
-msgstr "DVD kiadás"
+msgstr "DVD ki-mountolása"
 
 #: backends/platform/wii/options.cpp:97
 msgid "SMB"
@@ -5942,7 +6015,7 @@ msgstr "Szerver:"
 
 #: backends/platform/wii/options.cpp:109
 msgid "Share:"
-msgstr "Megoszt:"
+msgstr "Megosztás:"
 
 #: backends/platform/wii/options.cpp:117
 msgid "Password:"
@@ -5954,39 +6027,39 @@ msgstr "Hálózat inicializálás"
 
 #: backends/platform/wii/options.cpp:122
 msgid "Mount SMB"
-msgstr "SMB csatolás"
+msgstr "SMB mountolása"
 
 #: backends/platform/wii/options.cpp:123
 msgid "Unmount SMB"
-msgstr "SMB kiadás"
+msgstr "SMB ki-mountolása"
 
 #: backends/platform/wii/options.cpp:142
 msgid "DVD Mounted successfully"
-msgstr "DVD csatlakoztatva"
+msgstr "DVD sikeresen mountolva"
 
 #: backends/platform/wii/options.cpp:145
 msgid "Error while mounting the DVD"
-msgstr "Hiba a DVD csatlakoztatásakor"
+msgstr "Hiba a DVD mountolásakor"
 
 #: backends/platform/wii/options.cpp:147
 msgid "DVD not mounted"
-msgstr "DVD nincs csatolva"
+msgstr "DVD nem mountolva"
 
 #: backends/platform/wii/options.cpp:160
 msgid "Network up, share mounted"
-msgstr "Hálózat és megosztás csatlakozva"
+msgstr "Hálózat működik, mountolt megosztása"
 
 #: backends/platform/wii/options.cpp:162
 msgid "Network up"
-msgstr "Hálózat csatlakozva"
+msgstr "Hálózat működik"
 
 #: backends/platform/wii/options.cpp:165
 msgid ", error while mounting the share"
-msgstr ", hiba a megosztás csatolásakor"
+msgstr ", hiba a megosztás mountolásakor"
 
 #: backends/platform/wii/options.cpp:167
 msgid ", share not mounted"
-msgstr ", megosztás nincs csatolva"
+msgstr ", megosztás nincs mountolva"
 
 #: backends/platform/wii/options.cpp:173
 msgid "Network down"
@@ -5998,12 +6071,12 @@ msgstr "Hálózat inicializálása"
 
 #: backends/platform/wii/options.cpp:181
 msgid "Timeout while initializing network"
-msgstr "Idõtúllépés a hálózat inicializálásakor"
+msgstr "Időtúllépés a hálózat inicializálásakor"
 
 #: backends/platform/wii/options.cpp:185
 #, c-format
 msgid "Network not initialized (%d)"
-msgstr "(%d) Hálózat nincs inicializálva"
+msgstr "Hálózat nincs inicializálva (%d)"
 
 #: backends/presence/discord/discord.cpp:46
 msgid "Launcher"
@@ -6021,7 +6094,7 @@ msgstr "Frissítések keresése..."
 #: engines/ultima/ultima8/ultima8.cpp:187
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
-msgstr "Nem található a(z) '%s' motorhoz adat fájl."
+msgstr "Nem található a(z) '%s' motor adat fájlja."
 
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:956
 #: engines/hugo/hugo.cpp:439 engines/lure/lure.cpp:66
@@ -6029,7 +6102,7 @@ msgstr "Nem található a(z) '%s' motorhoz adat fájl."
 #: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5431
 #, c-format
 msgid "The '%s' engine data file is corrupt."
-msgstr "A(z) '%s' motor adatfájl korrupt."
+msgstr "A(z) '%s' motor adatfájlja hibás."
 
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:967
 #: engines/hugo/hugo.cpp:449 engines/lure/lure.cpp:69
@@ -6040,8 +6113,8 @@ msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d.%d but got "
 "%d.%d."
 msgstr ""
-"Hibás verziójú '%s' motor adatfájlt találtam. Elvárt %d.%d helyett ez van %d."
-"%d."
+"A '%s' motor adat hibás verziója található. Az elvárt %d.%d helyett %d.%d "
+"verziószámú."
 
 #: engines/adl/metaengine.cpp:44
 msgid "TV emulation"
@@ -6049,46 +6122,44 @@ msgstr "TV emuláció"
 
 #: engines/adl/metaengine.cpp:45
 msgid "Emulate composite output to an NTSC TV"
-msgstr "Emulálja a kompozit kimenetet egy NTSC TV-n"
+msgstr "Kompozit kimenet emulációja NTSC TV-n"
 
 #: engines/adl/metaengine.cpp:56 engines/adl/metaengine.cpp:68
 msgid "Color graphics"
-msgstr "Szines grafika"
+msgstr "Színes grafikák"
 
 #: engines/adl/metaengine.cpp:57 engines/adl/metaengine.cpp:69
 msgid "Use color graphics instead of monochrome"
-msgstr "Használjon színes grafikát a monokróm helyett"
+msgstr "Színes grafika használata monokróm helyett"
 
 #: engines/adl/metaengine.cpp:80
 msgid "Show scanlines"
-msgstr "Pászta megjelenítés"
+msgstr "Pásztázó vonalak megjelenítés"
 
 #: engines/adl/metaengine.cpp:81
 msgid "Darken every other scanline to mimic the look of a CRT"
-msgstr "Sötétít minden letapogatási vonalat a CRT kinézet utánzására"
+msgstr "Minden második pásztázó vonal sötétítése a CRT stílus eléréséhez"
 
 #: engines/adl/metaengine.cpp:92
 msgid "Always use sharp monochrome text"
-msgstr "Mindig éles monokróm szöveget használjon"
+msgstr "Mindig éles monokróm szöveg használata"
 
 #: engines/adl/metaengine.cpp:93
 msgid "Do not emulate NTSC artifacts for text"
 msgstr "Ne emulálja az NTSC torzítást a szöveghez"
 
 #: engines/adl/metaengine.cpp:104
-#, fuzzy
-#| msgid "Use silver cursors"
 msgid "Use checkered cursor"
-msgstr "Ezüst kurzor használata"
+msgstr "kockás kurzor használata"
 
 #: engines/adl/metaengine.cpp:105
 msgid "Use the checkered cursor from later Apple II models"
-msgstr ""
+msgstr "A későbbi Apple II modelles kockás kurzor használata"
 
 #: engines/agi/detection_tables.h:262
 msgid "Early AGI games for Tandy Color Computer are not yet supported."
 msgstr ""
-"A Tandy Color Computerhez készült korai AGI játékok még nem támogatottak."
+"A Tandy Color számítógéphez készült korai AGI játékok még nem támogatottak."
 
 #: engines/agi/font.cpp:680
 msgid ""
@@ -6097,8 +6168,8 @@ msgid ""
 "game directory"
 msgstr ""
 "Nem sikerült megnyitni/használni a 'hgc_font' fájlt, a Hercules "
-"betûtípushoz.\n"
-"Ha van ilyen fájl más AGI (Sierra) játékban, akkor átmásolhatod a játék "
+"betűtípushoz.\n"
+"Ha van ilyen fájl más AGI (Sierra) játékban, akkor átmásolhatja a játék "
 "könyvtárába"
 
 #: engines/agi/metaengine.cpp:111 engines/bagel/metaengine.cpp:50
@@ -6111,7 +6182,7 @@ msgstr ""
 #: engines/toltecs/metaengine.cpp:40 engines/trecision/metaengine.cpp:41
 #: engines/ultima/metaengine.cpp:52 engines/zvision/metaengine.cpp:46
 msgid "Use original save/load screens"
-msgstr "Eredeti ment/tölt képernyõk használata"
+msgstr "Eredeti mentés/töltés képernyők használata"
 
 #: engines/agi/metaengine.cpp:112 engines/bagel/metaengine.cpp:51
 #: engines/chewy/metaengine.cpp:37 engines/cine/metaengine.cpp:47
@@ -6123,19 +6194,19 @@ msgstr "Eredeti ment/tölt képernyõk használata"
 #: engines/toltecs/metaengine.cpp:41 engines/trecision/metaengine.cpp:42
 #: engines/ultima/metaengine.cpp:53 engines/zvision/metaengine.cpp:47
 msgid "Use the original save/load screens instead of the ScummVM ones"
-msgstr "Használd az eredeti mentés/betöltés képernyõt a ScummVM féle helyett"
+msgstr "Az Eredeti mentés/betöltés képernyő használata a ScummVM helyett"
 
 #: engines/agi/metaengine.cpp:123
 msgid "Use an alternative palette"
-msgstr "Alternatív paletta használat"
+msgstr "Alternatív paletta használata"
 
 #: engines/agi/metaengine.cpp:124
 msgid ""
 "Use an alternative palette, common for all Amiga games. This was the old "
 "behavior"
 msgstr ""
-"Alternatív paletta használat, közös minden Amiga játéknál. Ez egy régi "
-"megoldás"
+"Alternatív paletta használata, népszerű volt az Amiga játékoknál. Ez volt a "
+"régi működési mód"
 
 #: engines/agi/metaengine.cpp:135
 msgid "Mouse support"
@@ -6145,14 +6216,12 @@ msgstr "Egér támogatás"
 msgid ""
 "Enables mouse support. Allows to use mouse for movement and in game menus."
 msgstr ""
-"Egérmód engélyezve. Lehetõvé teszi az egérrel mozgatást játékban és "
-"játékmenükben."
+"Egérmód engedélyezése. Lehetővé teszi az egérrel való mozgatást játékban és "
+"a játékmenükben."
 
 #: engines/agi/metaengine.cpp:147
-#, fuzzy
-#| msgid "Predictive input dialog"
 msgid "Predictive Input Dialog on mouse click"
-msgstr "Prediktív beviteli párbeszédpanel"
+msgstr "Prediktív beviteli párbeszédpanel egér kattintásnál"
 
 #: engines/agi/metaengine.cpp:148
 msgid ""
@@ -6161,14 +6230,18 @@ msgid ""
 "The Predictive Input Dialog can still be activated on demand if there's a "
 "specified key mapping for it"
 msgstr ""
+"Kifejezetten a szövegdobozra való kattintáskor kapcsolja be a kisegítő "
+"Prediktív Beviteli Párbeszédpanelt.\n"
+"A Prediktív Beviteli Párbeszédpanel külön is bekapcsolható ha van beállítva "
+"hozzá billentyű kombináció"
 
 #: engines/agi/metaengine.cpp:159
 msgid "Use Hercules hires font"
-msgstr "Hercules hires font használata"
+msgstr "Hercules magas felbontású font használata"
 
 #: engines/agi/metaengine.cpp:160
 msgid "Uses Hercules hires font, when font file is available."
-msgstr "Hercules hires font használata, ha a font fájl elérhetõ."
+msgstr "Hercules nagy felbontású font használata, ha a font fájl elérhető."
 
 #: engines/agi/metaengine.cpp:171
 msgid "Pause when entering commands"
@@ -6179,8 +6252,8 @@ msgid ""
 "Shows a command prompt window and pauses the game (like in SCI) instead of a "
 "real-time prompt."
 msgstr ""
-"Parancssor ablak megjelenítése és játék szüneteltetése (mint a SCI) valós "
-"idejü parancs helyett."
+"Megjelenít egy parancssort és szünetelteti a játékot (hasonlóan az SCI-hez) "
+"a valós idejű parancssor helyett."
 
 #: engines/agi/metaengine.cpp:183
 msgid "Add speed menu"
@@ -6195,10 +6268,8 @@ msgstr "Játéksebesség-menü hozzáadása (hasonlóan a PC verzióhoz)"
 #: engines/lure/metaengine.cpp:41 engines/mads/metaengine.cpp:51
 #: engines/mm/metaengine.cpp:46 engines/saga/metaengine.cpp:52
 #: engines/scumm/dialogs.cpp:1195 engines/scumm/metaengine.cpp:785
-#, fuzzy
-#| msgid "Enable Discord integration"
 msgid "Enable copy protection"
-msgstr "Engedélyezze a Discord integrációt"
+msgstr "Másolásvédelem engedélyezése"
 
 #: engines/agi/metaengine.cpp:196 engines/agos/metaengine.cpp:45
 #: engines/dreamweb/metaengine.cpp:37 engines/gob/metaengine.cpp:43
@@ -6207,22 +6278,20 @@ msgstr "Engedélyezze a Discord integrációt"
 #: engines/scumm/dialogs.cpp:1196 engines/scumm/metaengine.cpp:786
 msgid "Enable any copy protection that would otherwise be bypassed by default."
 msgstr ""
+"Bármilyen másolásvédelem engedélyezése, ami máskülönben átugrásra került "
+"volna."
 
 #: engines/agi/metaengine.cpp:421 engines/asylum/asylum.cpp:655
 #: engines/buried/saveload.cpp:53 engines/mohawk/riven.cpp:759
 #: engines/petka/saveload.cpp:121
-#, fuzzy
-#| msgid "This game is not supported."
 msgid "This game does not support loading"
-msgstr "Ez a játék nem támogatott."
+msgstr "Ez a játék nem támogatja a betöltést"
 
 #: engines/agi/metaengine.cpp:444 engines/asylum/asylum.cpp:666
 #: engines/buried/saveload.cpp:64 engines/mohawk/riven.cpp:774
 #: engines/petka/saveload.cpp:101
-#, fuzzy
-#| msgid "This game is not supported."
 msgid "This game does not support saving"
-msgstr "Ez a játék nem támogatott."
+msgstr "Ez a játék nem támogatja a mentést"
 
 #: engines/agi/saveload.cpp:779 engines/avalanche/parser.cpp:1906
 #: engines/cine/various.cpp:360 engines/dm/dm.cpp:271
@@ -6267,43 +6336,43 @@ msgstr "Visszaállítás"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "A játék gyors töltése vagy mentése nem támogatott ezen a helyen"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3135
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3145
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
 "\n"
 "%s"
 msgstr ""
-"Nem sikerült a mentett állás betöltése:\n"
+"Sikertelen a mentás betöltése:\n"
 "\n"
-"%s fájlból"
+"%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3122
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3132
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
 "\n"
 "%s"
 msgstr ""
-"Nem sikerült a játék mentése:\n"
+"Sikertelen a játékmenet mentése:\n"
 "\n"
-"%s fájlba"
+"%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3155
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3165
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
 "\n"
 "%s"
 msgstr ""
-"Sikerült a játékállás mentése:\n"
+"Sikeres játék mentés a következő fájlba:\n"
 "\n"
-"%s fájlba"
+"%s"
 
 #: engines/agos/animation.cpp:576
 #, c-format
 msgid "Cutscene file '%s' not found!"
-msgstr "'%s' átvezetõ fájl nem található!"
+msgstr "'%s' átvezető fájl nem található!"
 
 #: engines/agos/metaengine.cpp:55
 msgid "AdLib OPL3 mode"
@@ -6316,8 +6385,8 @@ msgid ""
 "stereo."
 msgstr ""
 "Ha az AdLib van kiválasztva, az OPL3 funkcióit használja a rendszer. A "
-"játéktól függően ez megakadályozza a hangok levágását, további hangjegyeket "
-"vagy hangszereket és/vagy sztereót ad hozzá."
+"játéktól függően ez megakadályozza a hangok levágását, további hangjegy vagy "
+"hangszereket lejátszását, és/vagy sztereó effektet."
 
 #: engines/agos/metaengine.cpp:66 engines/agos/metaengine.cpp:77
 msgid "Use DOS version music tempos"
@@ -6330,24 +6399,24 @@ msgid ""
 "will be used."
 msgstr ""
 "Ha ezt az opciót választja, akkor a zene a játék DOS-os verziója által "
-"használt tempóval fog lejátszani. Ellenkező esetben a Windows-verzió "
-"gyorsabb tempói lesznek használatban."
+"diktált tempóval fog lejátszódni. Ellenkező esetben a Windows-verzió "
+"gyorsabb tempója kerül felhasználásra."
 
 #: engines/agos/metaengine.cpp:88 engines/sci/detection_options.h:95
 msgid "Prefer digital sound effects"
-msgstr "Digitális hangeffektusok elõnyben"
+msgstr "Digitális hangeffektusok preferálása"
 
 #: engines/agos/metaengine.cpp:89 engines/sci/detection_options.h:96
 msgid "Prefer digital sound effects instead of synthesized ones"
-msgstr "Digitális hanghatások elõnyben a szintetizáltakkal szemben"
+msgstr "Digitális hanghatások előnyben részesítése a szintetizáltakkal szemben"
 
 #: engines/agos/metaengine.cpp:99
 msgid "Disable fade-out effects"
-msgstr "A fade-out effektusok letiltása"
+msgstr "Az elhalkuló effektek tiltása"
 
 #: engines/agos/metaengine.cpp:100
 msgid "Don't fade every screen to black when leaving a room."
-msgstr "Ne halványítson el minden képernyőt feketére, mikor elhagyja a szobát."
+msgstr "Ne sötétítse el a képet a szoba elhagyásakor."
 
 #: engines/agos/metaengine.cpp:179
 msgid "AGOS 2 support is not compiled in"
@@ -6357,7 +6426,7 @@ msgstr "AGOS 2 támogatás nincs lefordítva"
 #. It is never disabled and it is not game specific
 #: engines/agos/metaengine.cpp:227
 msgid "AGOS main"
-msgstr ""
+msgstr "Fő AGOS"
 
 #: engines/agos/metaengine.cpp:228 engines/bbvs/metaengine.cpp:93
 #: engines/cine/metaengine.cpp:259 engines/cruise/metaengine.cpp:143
@@ -6369,62 +6438,44 @@ msgstr ""
 #: engines/toon/metaengine.cpp:82 engines/touche/metaengine.cpp:119
 #: engines/trecision/metaengine.cpp:121 engines/tsage/metaengine.cpp:170
 #: engines/tucker/metaengine.cpp:168
-#, fuzzy
-#| msgid "Game Options"
 msgid "Game keymappings"
-msgstr "Játék Opciók"
+msgstr "Játék gombkiosztások"
 
 #: engines/agos/metaengine.cpp:229
-#, fuzzy
-#| msgid "Game Options"
 msgid "Yes/No keymapping"
-msgstr "Játék Opciók"
+msgstr "Igen/Nem gombkiosztás"
 
 #: engines/agos/metaengine.cpp:244
-#, fuzzy
-#| msgid "Skip cutscene"
 msgid "Exit cutscene"
-msgstr "Bevezetõ átugrása"
+msgstr "Bevezető átugrása"
 
 #: engines/agos/metaengine.cpp:257 engines/vcruise/metaengine.cpp:211
-#, fuzzy
-#| msgid "Music volume up / down"
 msgid "Music volume down"
-msgstr "Zene hangerõ fel / le"
+msgstr "Zene hangerő le"
 
 #: engines/agos/metaengine.cpp:262 engines/vcruise/metaengine.cpp:216
-#, fuzzy
-#| msgid "Music volume: "
 msgid "Music volume up"
-msgstr "Zene hangereje: "
+msgstr "Zene hangerő fel"
 
 #: engines/agos/metaengine.cpp:268 engines/vcruise/metaengine.cpp:201
-#, fuzzy
-#| msgid "Toggle fullscreen"
 msgid "Toggle music on/off"
-msgstr "Teljesképernyõ kapcsoló"
+msgstr "Zene be/ki kapcsolása"
 
 #: engines/agos/metaengine.cpp:273 engines/vcruise/metaengine.cpp:206
-#, fuzzy
-#| msgid "Special sound effects volume"
 msgid "Toggle sound effects on/off"
-msgstr "Speciális hangeffektusok hangereje"
+msgstr "Hangeffektusok be/ki kapcsolása"
 
 #: engines/agos/metaengine.cpp:278 engines/sky/metaengine.cpp:131
-#, fuzzy
-#| msgid "Toggle fast mode"
 msgid "Toggle fast mode on/off"
-msgstr "Váltás a gyors módra"
+msgstr "Gyors mód be/ki kapcsolás"
 
 #: engines/agos/metaengine.cpp:290
 msgid "Walk forward"
-msgstr "Sétálj elõre"
+msgstr "Előre séta"
 
 #: engines/agos/metaengine.cpp:296
-#, fuzzy
-#| msgid "Run backward"
 msgid "Turn backward"
-msgstr "Futás hátra"
+msgstr "Hátrafordulás"
 
 #: engines/agos/metaengine.cpp:302 engines/mohawk/riven.cpp:901
 #: engines/wintermute/keymapper_tables.h:161
@@ -6432,7 +6483,7 @@ msgstr "Futás hátra"
 #: engines/wintermute/keymapper_tables.h:2122
 #: engines/wintermute/keymapper_tables.h:2223
 msgid "Turn left"
-msgstr "Fordulj balra"
+msgstr "Balra fordulás"
 
 #: engines/agos/metaengine.cpp:308 engines/mohawk/riven.cpp:907
 #: engines/wintermute/keymapper_tables.h:167
@@ -6440,71 +6491,57 @@ msgstr "Fordulj balra"
 #: engines/wintermute/keymapper_tables.h:2128
 #: engines/wintermute/keymapper_tables.h:2230
 msgid "Turn right"
-msgstr "Fordulj jobbra"
+msgstr "Jobbra fordulás"
 
 #: engines/agos/metaengine.cpp:316
-#, fuzzy
-#| msgid "Text speed slower / faster"
 msgid "Text speed - Fast"
-msgstr "Szövegsebesség gyors / lassú"
+msgstr "Szöveg sebesség - Gyors"
 
 #: engines/agos/metaengine.cpp:321
-#, fuzzy
-#| msgid "Walking speed: Medium"
 msgid "Text speed - Medium"
-msgstr "Séta sebesség: Közepes"
+msgstr "Szöveg sebesség - Közepes"
 
 #: engines/agos/metaengine.cpp:326
-#, fuzzy
-#| msgid "Text speed slower / faster"
 msgid "Text speed - Slow"
-msgstr "Szövegsebesség gyors / lassú"
+msgstr "Szöveg sebesség - Lassú"
 
 #: engines/agos/metaengine.cpp:331
-#, fuzzy
-#| msgid "Show Object Line"
 msgid "Show objects to interact"
-msgstr "Tárgynév sor látható"
+msgstr "Interaktív tárgyak megjelenítése"
 
 #: engines/agos/metaengine.cpp:338
-#, fuzzy
-#| msgid "Special sound effects volume"
 msgid "Toggle background sounds on/off"
-msgstr "Speciális hangeffektusok hangereje"
+msgstr "Háttérhangok be/ki kapcsolása"
 
 #. I18N: Characters are game actors
 #: engines/agos/metaengine.cpp:347
-#, fuzzy
-#| msgid "Switching characters:"
 msgid "Switch characters"
-msgstr "Karakterek cseréje:"
+msgstr "Karakterek cseréje"
 
 #: engines/agos/metaengine.cpp:353
-#, fuzzy
-#| msgid "Toggle fullscreen"
 msgid "Toggle hitbox names on/off"
-msgstr "Teljesképernyõ kapcsoló"
+msgstr "Hitbox nevek be/ki kapcsolása"
 
 #: engines/agos/metaengine.cpp:360
 msgid "Switches between speech only and combined speech and subtitles"
-msgstr ""
+msgstr "Csak beszéd valamint beszéd és felirat mód közötti váltás"
 
 #: engines/agos/metaengine.cpp:366
 msgid "Switches between subtitles only and combined speech and subtitles"
-msgstr ""
+msgstr "Csak felirat valamint beszéd és felirat mód közötti váltás"
 
 #: engines/agos/metaengine.cpp:376
 msgid "High speed mode on/off in Swampy Adventures"
-msgstr ""
+msgstr "Gyors sebességű mód be/ki a Swampy Adentures-ben"
 
 #: engines/agos/metaengine.cpp:382 engines/lure/metaengine.cpp:295
 #: engines/trecision/metaengine.cpp:181
 msgid "Press \"Yes\" key"
-msgstr ""
+msgstr "Noymja meg az \"Igen\" gombot"
 
 #: engines/agos/metaengine.cpp:387 engines/lure/metaengine.cpp:310
 msgid "Press \"No\" key"
-msgstr ""
+msgstr "Nyomja meg a \"Nem\" gombot"
 
 #: engines/agos/midi.cpp:187 engines/kyra/sound/sound_pc_midi.cpp:76
 msgid ""
@@ -6514,72 +6551,60 @@ msgid ""
 "General MIDI ones. It is still possible that\n"
 "some tracks sound incorrect."
 msgstr ""
-"Úgy tûnik, egy General MIDI eszközt használsz,\n"
+"Úgy tűnik, egy General MIDI eszközt használ,\n"
 "de a játék csak Roland MT32 MIDI eszközt támogat.\n"
-"Megpróbáljuk lecserélni a Roland MT32 hangszereket\n"
-"General MIDIre. Továbbra is lehetséges hogy\n"
-"néhány hangsáv helytelenül hangzik."
+"Megpróbáljuk helyettesíteni a Roland MT32 hangszereket\n"
+"General MIDI-vel. Továbbra is lehetséges hogy\n"
+"néhány hangsáv helytelenül kerül lejátszásra."
 
 #: engines/agos/midi.cpp:316
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s. Without this file,\n"
 "the music will not sound the same as the original game."
 msgstr ""
-"Nem található AdLib hangszerdefiníciós fájl\n"
-"%s és %s. Ezen fájlok nélkül,\n"
-"a zene nem ugyanaz, mint az eredeti játékban."
+"Nem található AdLib hangszerdefiníciós \n"
+"%s fájl. A fájl nélkül,\n"
+"a zene nem olyan, mint az eredeti játékban."
 
 #: engines/agos/midi.cpp:374
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s. Without this file,\n"
 "the sound effects will not sound the same as the original game."
 msgstr ""
-"Nem található AdLib hangszerdefiníciós fájl\n"
-"%s és %s. Ezen fájlok nélkül,\n"
-"a zene nem ugyanaz, mint az eredeti játékban."
+"Nem található AdLib hangszerdefiníciós \n"
+"%s fájl. A fájl nélkül,\n"
+"a hangeffektek nem olyanok, mint az eredeti játékban."
 
 #: engines/agos/midi.cpp:453
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s or %s. Without one of these files,\n"
 "the music will not sound the same as the original game."
 msgstr ""
-"Nem található AdLib hangszerdefiníciós fájl\n"
-"%s és %s. Ezen fájlok nélkül,\n"
-"a zene nem ugyanaz, mint az eredeti játékban."
+"Nem található egyik AdLib %s vagy %s\n"
+"hangszerdefiníciós fájl sem. A fájlok nélkül,\n"
+"a zene nem olyan, mint az eredeti játékban."
 
 #: engines/ags/ags.cpp:152
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
 "supported."
 msgstr ""
-"A választott játék az AGS motor 2.5-ös előtti verzióját használja, amely nem "
-"támogatott."
+"A választott játék az AGS motor 2.5-ös előtti verzióját használja, amely már "
+"nem támogatott."
 
 #: engines/ags/ags.cpp:160
 msgid ""
 "The selected game has a data file greater than 2Gb, which isn't supported by "
 "your version of ScummVM yet."
 msgstr ""
-"A választott játék 2 Gb -nál nagyobb adatfájlt tartalmaz, amelyet a ScummVM "
-"verziója még nem támogat."
+"A kiválasztott játék 2 Gb -nál nagyobb adatfájlt tartalmaz, amelyet a "
+"ScummVM verziója még nem támogat."
 
 #: engines/ags/ags.cpp:338
 msgid ""
@@ -6587,6 +6612,9 @@ msgid ""
 "game interface.\n"
 "You can, however, override this setting in Game Options."
 msgstr ""
+"Az eredeti élmény érdekében a mentést az eredeti felületen belül érdemes "
+"betölteni.\n"
+"Habár ezt felülírhatja a Játék opciókban."
 
 #: engines/ags/ags.cpp:353
 msgid ""
@@ -6594,6 +6622,9 @@ msgid ""
 "game interface.\n"
 "You can, however, override this setting in Game Options."
 msgstr ""
+"Az eredeti élmény érdekében a mentést az eredeti felületen belül érdemes "
+"lementeni.\n"
+"Habár ezt felülírhatja a Játék opciókban."
 
 #: engines/ags/dialogs.cpp:61
 msgid "Game language:"
@@ -6605,17 +6636,19 @@ msgstr "A többnyelvű játékokhoz használt nyelv"
 
 #: engines/ags/dialogs.cpp:77
 msgid "Enable ScummVM save management"
-msgstr ""
+msgstr "A ScummVM mentés kezelés bekapcsolása"
 
 #: engines/ags/dialogs.cpp:77
 msgid ""
 "Never disable ScummVM save management and autosaves.\n"
 "NOTE: This could cause save duplication and other oddities"
 msgstr ""
+"Soha nem kapcsolja ki a ScummVM mentés kezelőt és az automatamentést.\n"
+"MEGJEGYZÉS: Ez mentés duplázáshoz és más fura dologhoz vezethet"
 
 #: engines/ags/dialogs.cpp:82
 msgid "Force antialiased text"
-msgstr "Erőltetett élsimított szöveg"
+msgstr "Élsimított szöveg erőltetése"
 
 #: engines/ags/dialogs.cpp:82
 msgid "Use antialiasing to draw text even if the game does not ask for it"
@@ -6625,11 +6658,11 @@ msgstr ""
 #: engines/ags/dialogs.cpp:85 engines/grim/metaengine.cpp:48
 #: engines/zvision/metaengine.cpp:221
 msgid "Show FPS"
-msgstr "FPS látszik"
+msgstr "FPS mutatása"
 
 #: engines/ags/dialogs.cpp:85 engines/grim/metaengine.cpp:49
 msgid "Show the current FPS-rate, while you play."
-msgstr "Mutassa az aktuális FPS-sebességet játék közben."
+msgstr "Mutassa az aktuális FPS-t játék közben."
 
 #: engines/ags/engine/ac/listbox.cpp:78
 msgid ""
@@ -6639,6 +6672,11 @@ msgid ""
 "or\n"
 "2. Any .sav file inside the QfG2 Remake game directory"
 msgstr ""
+"A játék kilistázza azon kiexportált karaktereket, amiket importálni is "
+"lehet:\n"
+"1. Mentse a fájlokat qfg1*.sav vagy qfg1vga*.sav néven a ScummVM mentés "
+"könyvtáron belül, vagy\n"
+"2. Bármely .sav fájl a QfG2 Remake játék könyvtáron belül"
 
 #: engines/asylum/metaengine.cpp:115
 msgid "Show version"
@@ -6666,11 +6704,11 @@ msgstr "Átvált Olmec-re"
 
 #: engines/asylum/metaengine.cpp:145
 msgid "Bring up the In-Game Menu"
-msgstr "Előhívja az In-Game Menüt"
+msgstr "Játékon belüli menü előhívása"
 
 #: engines/asylum/metaengine.cpp:152
 msgid "Open character inventory"
-msgstr "Karakterleltár megnyitása"
+msgstr "Karakter-felszerelés megnyitása"
 
 #. I18N: Move Actor to upwards direction
 #: engines/asylum/metaengine.cpp:171 engines/asylum/metaengine.cpp:198
@@ -6705,40 +6743,36 @@ msgid "Move right"
 msgstr "Mozgás jobbra"
 
 #: engines/asylum/metaengine.cpp:226
-#, fuzzy
-#| msgid "Toggle fullscreen"
 msgid "Toggle animation on/off"
-msgstr "Teljesképernyõ kapcsoló"
+msgstr "Animációk be/ki kapcsolása"
 
 #: engines/asylum/metaengine.cpp:232
-#, fuzzy
-#| msgid "In 2D games"
 msgid "Return to gameplay"
-msgstr "2D játékokban"
+msgstr "Visszatérés a játékmenetbe"
 
-#: engines/asylum/metaengine.cpp:238
+#. I18N: Switch to previous image in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:239
 #, fuzzy
 #| msgid "Previous page"
 msgid "Previous resource"
 msgstr "Elõzõ oldal"
 
-#: engines/asylum/metaengine.cpp:245
+#. I18N: Switch to next image in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:247
 #, fuzzy
 #| msgid "[ Resources ]"
 msgid "Next resource"
 msgstr "[ Források ]"
 
-#: engines/asylum/metaengine.cpp:252
-#, fuzzy
-#| msgid "Previous page"
+#. I18N: Switch to previous palette in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:255
 msgid "Previous palette"
-msgstr "Elõzõ oldal"
+msgstr "Előző paletta"
 
-#: engines/asylum/metaengine.cpp:259
-#, fuzzy
-#| msgid "Next page"
+#. I18N: Switch to next palette in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:263
 msgid "Next palette"
-msgstr "Következõ oldal"
+msgstr "Következő paletta"
 
 #. I18N: Warn user about loading potentially incompatible saved game
 #: engines/asylum/asylum.cpp:203
@@ -6992,7 +7026,7 @@ msgstr "Harc Váltása"
 
 #. I18N: This keymap allows skipping video cutscenes
 #: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
-#: engines/scumm/metaengine.cpp:976 engines/twp/metaengine.cpp:162
+#: engines/scumm/metaengine.cpp:994 engines/twp/metaengine.cpp:162
 #: engines/zvision/metaengine.cpp:284
 msgid "Skip cutscene"
 msgstr "Bevezetõ átugrása"
@@ -7050,7 +7084,7 @@ msgstr "Clue Adatvédelem Váltás"
 #. SAVE GAME
 #: engines/bladerunner/metaengine.cpp:330 engines/dgds/metaengine.cpp:74
 #: engines/freescape/games/castle/castle.cpp:246
-#: engines/freescape/games/dark/dark.cpp:184
+#: engines/freescape/games/dark/dark.cpp:186
 #: engines/freescape/games/driller/driller.cpp:132
 #: engines/freescape/games/eclipse/eclipse.cpp:204
 #: engines/pegasus/pegasus.cpp:2825
@@ -7063,7 +7097,7 @@ msgstr "Játék mentés"
 #. LOAD GAME
 #: engines/bladerunner/metaengine.cpp:339 engines/dgds/metaengine.cpp:73
 #: engines/freescape/games/castle/castle.cpp:251
-#: engines/freescape/games/dark/dark.cpp:189
+#: engines/freescape/games/dark/dark.cpp:191
 #: engines/freescape/games/driller/driller.cpp:137
 #: engines/freescape/games/eclipse/eclipse.cpp:209
 #: engines/pegasus/pegasus.cpp:2831
@@ -7101,7 +7135,7 @@ msgstr "Nyomok Adatbázis"
 #: engines/bladerunner/metaengine.cpp:375 engines/darkseed/metaengine.cpp:82
 #: engines/dragons/metaengine.cpp:224
 #: engines/freescape/games/castle/castle.cpp:259
-#: engines/freescape/games/dark/dark.cpp:194
+#: engines/freescape/games/dark/dark.cpp:196
 #: engines/freescape/games/driller/driller.cpp:142
 #: engines/freescape/games/eclipse/eclipse.cpp:214
 #: engines/sword1/metaengine.cpp:295
@@ -7488,7 +7522,7 @@ msgstr "Interakció"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/crab/input/input.cpp:125 engines/griffon/metaengine.cpp:145
-#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:963
+#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:981
 msgid "Attack"
 msgstr "Támadás"
 
@@ -7934,7 +7968,7 @@ msgid "Select Princess"
 msgstr "Válassz Shadert"
 
 #: engines/freescape/games/castle/castle.cpp:268
-#: engines/freescape/games/dark/dark.cpp:204
+#: engines/freescape/games/dark/dark.cpp:206
 #: engines/freescape/games/driller/driller.cpp:150
 #: engines/freescape/games/eclipse/eclipse.cpp:222
 #, fuzzy
@@ -7943,7 +7977,7 @@ msgid "Toggle Sound"
 msgstr "Váltás némításra"
 
 #: engines/freescape/games/castle/castle.cpp:273
-#: engines/freescape/games/dark/dark.cpp:210
+#: engines/freescape/games/dark/dark.cpp:212
 #: engines/freescape/games/driller/driller.cpp:156
 #: engines/freescape/games/eclipse/eclipse.cpp:227
 #, fuzzy
@@ -7952,7 +7986,7 @@ msgid "Rotate Left"
 msgstr "Ágyútűz Balra"
 
 #: engines/freescape/games/castle/castle.cpp:278
-#: engines/freescape/games/dark/dark.cpp:215
+#: engines/freescape/games/dark/dark.cpp:217
 #: engines/freescape/games/driller/driller.cpp:161
 #: engines/freescape/games/eclipse/eclipse.cpp:232
 #, fuzzy
@@ -7979,7 +8013,7 @@ msgid "Face Forward"
 msgstr "Mozgás elõre"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/dark/dark.cpp:221
+#: engines/freescape/games/dark/dark.cpp:223
 #: engines/freescape/games/driller/driller.cpp:167
 #, fuzzy
 #| msgid "Increase the scale factor"
@@ -7987,26 +8021,26 @@ msgid "Increase Step Size"
 msgstr "Skála tényezõ növelése"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/dark/dark.cpp:227
+#: engines/freescape/games/dark/dark.cpp:229
 #: engines/freescape/games/driller/driller.cpp:173
 #, fuzzy
 #| msgid "Decrease the scale factor"
 msgid "Decrease Step Size"
 msgstr "Skála tényezõ csökkentése"
 
-#: engines/freescape/games/dark/dark.cpp:232
+#: engines/freescape/games/dark/dark.cpp:234
 #: engines/freescape/games/driller/driller.cpp:178
 msgid "Rise/Fly up"
 msgstr ""
 
-#: engines/freescape/games/dark/dark.cpp:238
+#: engines/freescape/games/dark/dark.cpp:240
 #: engines/freescape/games/driller/driller.cpp:184
 #, fuzzy
 #| msgid "Fly down"
 msgid "Lower/Fly down"
 msgstr "Repülés le"
 
-#: engines/freescape/games/dark/dark.cpp:244
+#: engines/freescape/games/dark/dark.cpp:246
 msgid "Enable/Disable Jetpack"
 msgstr ""
 
@@ -10517,17 +10551,17 @@ msgstr "Casio MT-540"
 msgid "Casio CT-460 / CSM-1"
 msgstr "Casio CT-460 / CSM-1"
 
-#: engines/sci/detection_tables.h:1428 engines/sci/detection_tables.h:1439
+#: engines/sci/detection_tables.h:1447 engines/sci/detection_tables.h:1458
 #, fuzzy
 #| msgid "Failed to initialize resources"
 msgid "Game does not contain menu resources"
 msgstr "Nem sikerült inicializálni az erõforrásokat"
 
-#: engines/sci/detection_tables.h:4758
+#: engines/sci/detection_tables.h:4777
 msgid "This demo uses an unimplemented version of Robot videos"
 msgstr "Ez a demó Robot videók implementálatlan verzióját használja"
 
-#: engines/sci/detection_tables.h:4813
+#: engines/sci/detection_tables.h:4832
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "Hiányos játék észlelve. Adatokat kell másolnia az összes CD-ről."
 
@@ -10753,7 +10787,7 @@ msgid "Your Name:"
 msgstr "A Neved:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4186
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4196
 msgid "Host"
 msgstr "Gazda"
 
@@ -10763,7 +10797,7 @@ msgid "Querying games..."
 msgstr "Játékok lekérdezése..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4186
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4196
 msgid "Join"
 msgstr "Csatlakozás"
 
@@ -11528,19 +11562,19 @@ msgstr "Jobbra repülés"
 msgid "Fly to lower right"
 msgstr "Jobbra le repülés"
 
-#: engines/scumm/input.cpp:1392
+#: engines/scumm/input.cpp:1393
 msgid "Snap scroll on"
 msgstr "Finomgörgetés be"
 
-#: engines/scumm/input.cpp:1394
+#: engines/scumm/input.cpp:1395
 msgid "Snap scroll off"
 msgstr "Finomgörgetés ki"
 
-#: engines/scumm/input.cpp:1407
+#: engines/scumm/input.cpp:1408
 msgid "Music volume: "
 msgstr "Zene hangereje: "
 
-#: engines/scumm/input.cpp:1424
+#: engines/scumm/input.cpp:1425
 msgid "Subtitle speed: "
 msgstr "Felirat sebesség: "
 
@@ -11697,28 +11731,40 @@ msgstr "CD audió használata"
 msgid "Use the remastered speech and sound effects."
 msgstr ""
 
-#: engines/scumm/metaengine.cpp:911
+#: engines/scumm/metaengine.cpp:816
+#, fuzzy
+#| msgid "Enable sound"
+msgid "Enable ambience sounds"
+msgstr "Hang engedélyezve"
+
+#: engines/scumm/metaengine.cpp:817
+#, fuzzy
+#| msgid "Enable sound"
+msgid "Enable ambience sounds."
+msgstr "Hang engedélyezve"
+
+#: engines/scumm/metaengine.cpp:929
 msgid "Down Left"
 msgstr "Le Balra"
 
-#: engines/scumm/metaengine.cpp:924
+#: engines/scumm/metaengine.cpp:942
 msgid "Down Right"
 msgstr "Le Jobbra"
 
-#: engines/scumm/metaengine.cpp:944
+#: engines/scumm/metaengine.cpp:962
 msgid "Up Left"
 msgstr "Fel Balra"
 
-#: engines/scumm/metaengine.cpp:957
+#: engines/scumm/metaengine.cpp:975
 msgid "Up Right"
 msgstr "Fel Jobbra"
 
-#: engines/scumm/metaengine.cpp:969
+#: engines/scumm/metaengine.cpp:987
 msgid "Switch weapon"
 msgstr "Fegyver váltása"
 
 #. I18N: Lets one skip the bike/car fight sequences in Full Throttle
-#: engines/scumm/metaengine.cpp:983
+#: engines/scumm/metaengine.cpp:1001
 msgid "Win the bike fight cheat"
 msgstr "Nyerd meg a kerékpáros harci csalást"
 
@@ -11789,7 +11835,16 @@ msgstr ""
 msgid "Could not find resource fork in Macintosh resource file %s"
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1746
+#: engines/scumm/scumm.cpp:1373
+#, c-format
+msgid ""
+"'%s' appears to be the wrong Dig executable. It may be the launcher one "
+"found in the CD root, which does not contain any of the necessary menu and "
+"dialog definitions. Look for a 'The Dig f' folder on your CD. Any one from "
+"its sub-folders should be what you need."
+msgstr ""
+
+#: engines/scumm/scumm.cpp:1756
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -11799,7 +11854,7 @@ msgstr ""
 "a tömörítés már nem támogatott ebben a játékban, a hang le lesz tiltva.\n"
 "Kérlek, másold a játékot tömörítés nélkül az eredeti adathordozóról."
 
-#: engines/scumm/scumm.cpp:2237
+#: engines/scumm/scumm.cpp:2247
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -11808,7 +11863,7 @@ msgstr ""
 "Native MIDI támogatáshoz kell a Roland Upgrade a LucasArts-tól,\n"
 "a %s hiányzik. AdLib-ot használok helyette."
 
-#: engines/scumm/scumm.cpp:2253
+#: engines/scumm/scumm.cpp:2263
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -11816,7 +11871,7 @@ msgstr ""
 "A Monkey Island 1 e bizonyos verziójáról ismert, hogy hiányzik néhány\n"
 "szükséges erőforrás az MT-32-höz. AdLib használata helyette."
 
-#: engines/scumm/scumm.cpp:4074
+#: engines/scumm/scumm.cpp:4084
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -11826,7 +11881,7 @@ msgstr ""
 "fájljainak, a 'Maniac' mappában kell lenni a Tentacle játékmappáján belül, "
 "és a játékot így adja hozzá a ScummVM a listához."
 
-#: engines/scumm/scumm.cpp:4186
+#: engines/scumm/scumm.cpp:4196
 msgid "Would you like to host or join a network play session?"
 msgstr "Szeretnél hálózati játékmenetet szervezni vagy csatlakozni?"
 
@@ -12298,7 +12353,7 @@ msgstr ""
 msgid "Cutscene '%s' not found"
 msgstr "'%s' átvezetõ nem található"
 
-#: engines/sword1/control.cpp:2811
+#: engines/sword1/control.cpp:2814
 msgid ""
 "ScummVM found that you have old saved games for Broken Sword 1 that should "
 "be converted.\n"
@@ -12316,7 +12371,7 @@ msgstr ""
 "Nyomj OK-t az átalakításhoz, vagy rákérdezzek ha legközelebb elindítod a "
 "játékot.\n"
 
-#: engines/sword1/control.cpp:2997
+#: engines/sword1/control.cpp:3000
 #, c-format
 msgid ""
 "Target new saved game already exists!\n"
@@ -12325,11 +12380,11 @@ msgstr ""
 "A választott játékmentés már létezik!\n"
 "Megtartod a régi játékmentést (%s) vagy kicseréled az újra (%s)?\n"
 
-#: engines/sword1/control.cpp:3000
+#: engines/sword1/control.cpp:3003
 msgid "Keep the old one"
 msgstr "A régit megtartom"
 
-#: engines/sword1/control.cpp:3000
+#: engines/sword1/control.cpp:3003
 msgid "Keep the new one"
 msgstr "Az újat megtartom"
 
@@ -14035,16 +14090,25 @@ msgstr "Érme kivonás"
 msgid "Preferences"
 msgstr "Preferenciák"
 
-#: engines/zvision/zvision.cpp:309
+#: engines/zvision/zvision.cpp:302
+#, fuzzy
+#| msgid ""
+#| "Before playing this game, you'll need to copy the required fonts into "
+#| "ScummVM's extras directory, or into the game directory. On Windows, "
+#| "you'll need the following font files from the Windows font directory: "
+#| "Times New Roman, Century Schoolbook, Garamond, Courier New and Arial. "
+#| "Alternatively, you can download the Liberation Fonts or the GNU FreeFont "
+#| "package. You'll need all the fonts from the font package you choose, i."
+#| "e., LiberationMono, LiberationSans and LiberationSerif, or FreeMono, "
+#| "FreeSans and FreeSerif respectively."
 msgid ""
 "Before playing this game, you'll need to copy the required fonts into "
 "ScummVM's extras directory, or into the game directory. On Windows, you'll "
 "need the following font files from the Windows font directory: Times New "
 "Roman, Century Schoolbook, Garamond, Courier New and Arial. Alternatively, "
-"you can download the Liberation Fonts or the GNU FreeFont package. You'll "
-"need all the fonts from the font package you choose, i.e., LiberationMono, "
-"LiberationSans and LiberationSerif, or FreeMono, FreeSans and FreeSerif "
-"respectively."
+"you can download the Liberation Fonts package. You'll need all the fonts "
+"from the font package you choose, i.e., LiberationMono, LiberationSans and "
+"LiberationSerif."
 msgstr ""
 "A játék megkezdése előtt át kell másolnod a szükséges betűtípusokat a "
 "ScummVM extrák könyvtárába, vagy a játék könyvtárába. Windows rendszeren a "

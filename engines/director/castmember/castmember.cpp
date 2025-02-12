@@ -152,8 +152,12 @@ Datum CastMember::getField(int field) {
 		break;
 	case kTheCastType:
 	case kTheType:
+		d = Common::String(castType2str(_type));
+		if (g_director->getVersion() >= 500 && _type == kCastText) {
+			// D5 changes this from "text" to "field"
+			d = Common::String("field");
+		}
 		d.type = SYMBOL;
-		d.u.s = new Common::String(castType2str(_type));
 		break;
 	case kTheFileName:
 		if (castInfo)
@@ -176,8 +180,14 @@ Datum CastMember::getField(int field) {
 			d = Datum(castInfo->name);
 		break;
 	case kTheMemberNum:
-	case kTheNumber:
 		d = _castId;
+		break;
+	case kTheNumber:
+		if (g_director->getVersion() >= 500) {
+			d = CastMemberID(_castId, _cast->_castLibID).toMultiplex();
+		} else {
+			d = _castId;
+		}
 		break;
 	case kTheRect:
 		// not sure get the initial rect would be fine to castmember

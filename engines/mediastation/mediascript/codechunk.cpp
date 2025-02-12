@@ -143,21 +143,26 @@ Operand CodeChunk::executeNextStatement() {
 			return returnValue;
 		}
 
-		case kOpcodeSubtract: {
-			debugCN(5, kDebugScript, "\n    lhs: ");
+		case kOpcodeNot: {
+			debugCN(5, kDebugScript, "\n    value: ");
+			Operand value = executeNextStatement();
+
+			Operand returnValue(kOperandTypeLiteral1);
+			bool logicalNot = !(static_cast<bool>(value.getInteger()));
+			returnValue.putInteger(static_cast<uint>(logicalNot));
+			return returnValue;
+		}
+
+		case kOpcodeAnd: {
+			debugCN(5, kDebugScript, "\n    value: ");
 			Operand value1 = executeNextStatement();
 			debugCN(5, kDebugScript, "    rhs: ");
 			Operand value2 = executeNextStatement();
 
-			Operand returnValue = value1 - value2;
+			Operand returnValue(kOperandTypeLiteral1);
+			bool logicalAnd = (value1 && value2);
+			returnValue.putInteger(static_cast<uint>(logicalAnd));
 			return returnValue;
-		}
-
-		case kOpcodeNegate: {
-			Operand value = executeNextStatement();
-			debugCN(5, kDebugScript, "    value: ");
-
-			return -value;
 		}
 
 		case kOpcodeIfElse: {
@@ -193,6 +198,58 @@ Operand CodeChunk::executeNextStatement() {
 			return returnValue;
 		}
 
+		case kOpcodeNotEquals: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			// TODO: Confirm this is the correct value type?
+			Operand returnValue(kOperandTypeLiteral1);
+			bool notEqual = !(value1 == value2);
+			returnValue.putInteger(static_cast<uint>(notEqual));
+			return returnValue;
+		}
+
+		case kOpcodeLessThan: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			// TODO: Confirm this is the correct value type?
+			Operand returnValue(kOperandTypeLiteral1);
+			bool lessThan = (value1 < value2);
+			returnValue.putInteger(static_cast<uint>(lessThan));
+			return returnValue;
+		}
+
+		case kOpcodeGreaterThan: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			// TODO: Confirm this is the correct value type?
+			Operand returnValue(kOperandTypeLiteral1);
+			bool greaterThan = (value1 > value2);
+			returnValue.putInteger(static_cast<uint>(greaterThan));
+			return returnValue;
+		}
+
+		case kOpcodeLessThanOrEqualTo: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			// TODO: Confirm this is the correct value type?
+			Operand returnValue(kOperandTypeLiteral1);
+			bool lessThanOrEqualTo = (value1 < value2) || (value1 == value2);
+			returnValue.putInteger(static_cast<uint>(lessThanOrEqualTo));
+			return returnValue;
+		}
+
 		case kOpcodeGreaterThanOrEqualTo: {
 			debugCN(5, kDebugScript, "\n    lhs: ");
 			Operand value1 = executeNextStatement();
@@ -201,9 +258,66 @@ Operand CodeChunk::executeNextStatement() {
 
 			// TODO: Confirm this is the correct value type?
 			Operand returnValue(kOperandTypeLiteral1);
-			bool greaterThanOrEqualTo = value1 >= value2;
+			bool greaterThanOrEqualTo = (value1 > value2) || (value1 == value2);
 			returnValue.putInteger(static_cast<uint>(greaterThanOrEqualTo));
 			return returnValue;
+		}
+
+		case kOpcodeAdd: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			Operand returnValue = value1 + value2;
+			return returnValue;
+		}
+
+		case kOpcodeSubtract: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			Operand returnValue = value1 - value2;
+			return returnValue;
+		}
+
+		case kOpcodeMultiply: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			Operand returnValue = value1 * value2;
+			return returnValue;
+		}
+
+		case kOpcodeDivide: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			Operand returnValue = value1 / value2;
+			return returnValue;
+		}
+
+		case kOpcodeModulo: {
+			debugCN(5, kDebugScript, "\n    lhs: ");
+			Operand value1 = executeNextStatement();
+			debugCN(5, kDebugScript, "    rhs: ");
+			Operand value2 = executeNextStatement();
+
+			Operand returnValue = value1 % value2;
+			return returnValue;
+		}
+
+		case kOpcodeNegate: {
+			Operand value = executeNextStatement();
+			debugCN(5, kDebugScript, "    value: ");
+
+			return -value;
 		}
 
 		default: {
@@ -370,6 +484,12 @@ Operand CodeChunk::callBuiltInMethod(BuiltInMethod method, Operand self, Common:
 			Operand returnValue = selfAsset->callMethod(method, args);
 			return returnValue;
 		}
+	}
+
+	case kOperandTypeCollection: {
+		Collection *collection = literalSelf.getCollection();
+		Operand returnValue = collection->callMethod(method, args);
+		return returnValue;
 	}
 
 	default:

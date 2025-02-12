@@ -47,11 +47,13 @@ namespace Director {
 
 class Sprite;
 
-const TheEntity entities[] = {
-	{ kTheActorList,		"actorList",		false, 400, false },	//			D4 property
+TheEntity entities[] = {					//	hasId  ver.	isFunction
+	{ kTheActiveWindow,		"activeWindow",		false, 500, false },	//				D5 property
+	{ kTheActorList,		"actorList",		false, 400, false },	//			D4 p
 	{ kTheBeepOn,			"beepOn",			false, 200, false },	// D2 p
 	{ kTheButtonStyle,		"buttonStyle",		false, 200, false },	// D2 p
 	{ kTheCast,				"cast",				true,  200, false },	// D2
+	{ kTheCastLibs,			"castLibs",			false, 500, false },	//				D5 p
 	{ kTheCastMembers,		"castmembers",		false, 300, false },	//		 D3
 	{ kTheCenterStage,		"centerStage",		false, 200, false },	// D2 p
 	{ kTheCheckBoxAccess,	"checkBoxAccess",	false, 200, false },	// D2 p
@@ -64,25 +66,35 @@ const TheEntity entities[] = {
 	{ kTheCommandDown,		"commandDown",		false, 200, true },	// D2 f
 	{ kTheControlDown,		"controlDown",		false, 200, true },	// D2 f
 	{ kTheDate,				"date",				false, 300, true },	//		D3 f
-	{ kTheDeskTopRectList,	"deskTopRectList",	false, 500, true },	// D5 p
+	{ kTheDeskTopRectList,	"deskTopRectList",	false, 500, true },	//					D5 p
+	{ kTheDigitalVideoTimeScale,"digitalVideoTimeScale",false, 500, false },//			D5 p
 	{ kTheDoubleClick,		"doubleClick",		false, 200, true },	// D2 f
+	{ kTheEmulateMultiButtonMouse,"emulateMultiButtonMouse",false, 500, false },//		D5 p
 	{ kTheExitLock,			"exitLock",			false, 200, false },	// D2 p
 	{ kTheField,			"field",			true,  300, false },	//		D3
 	{ kTheFixStageSize,		"fixStageSize",		false, 200, false },	// D2 p
 	{ kTheFloatPrecision,	"floatPrecision",	false, 300, false },	//		D3 p
 	{ kTheFrame,			"frame",			false, 200, true },	// D2 f
 	{ kTheFrameLabel,		"frameLabel",		false, 400, false },	//			D4 p
-	{ kTheFrameScript,		"frameScript",		false, 400, false },	//			D4 p
 	{ kTheFramePalette,		"framePalette",		false, 400, false },	//			D4 p
-	{ kTheFrameTempo,		"frameTempo",		false, 400, true },	//			D4 f
+	{ kTheFrameScript,		"frameScript",		false, 400, false },	//			D4 p
+	{ kTheFrameSound1,		"frameSound1",		false, 500, false },	//				D5 p
+	{ kTheFrameSound2,		"frameSound2",		false, 500, false },	//				D5 p
+	{ kTheFrameTempo,		"frameTempo",		false, 400, false },	//			D4 p
+	{ kTheFrameTransition,	"frameTransition",	false, 500, false },	//				D5 p
 	{ kTheFreeBlock,		"freeBlock",		false, 200, true },	// D2 f
 	{ kTheFreeBytes,		"freeBytes",		false, 200, true },	// D2 f
+	{ kTheFrontWindow,		"frontWindow",		false, 500, false },//					D5 p
 	{ kTheFullColorPermit,	"fullColorPermit",	false, 200, false },	// D2 p
+	{ kTheIdleLoadMode,		"idleLoadMode",		false, 500, false },//					D5 p
+	{ kTheIdleLoadPeriod,	"idleLoadPeriod",	false, 500, false },//					D5 p
+	{ kTheIdleLoadTag,		"idleLoadTag",		false, 500, false },//					D5 p
 	{ kTheImageDirect,		"imageDirect",		false, 200, false },	// D2 p
 	{ kTheItemDelimiter,	"itemDelimiter",	false, 400, false },	//			D4 p
 	{ kTheKey,				"key",				false, 200, true },	// D2 f
 	{ kTheKeyCode,			"keyCode",			false, 200, true },	// D2 f
 	{ kTheKeyDownScript,	"keyDownScript",	false, 200, false },	// D2 p
+	{ kTheKeyPressed,		"keyPressed",		false, 500, false },//					D5 p
 	{ kTheKeyUpScript,		"keyUpScript",		false, 400, false },	//			D4 p
 	{ kTheLabelList,		"labelList",		false, 300, true },	//		D3 f
 	{ kTheLastClick,		"lastClick",		false, 200, true },	// D2 f
@@ -120,6 +132,7 @@ const TheEntity entities[] = {
 	{ kThePerFrameHook,		"perFrameHook",		false, 200, false },	// D2 p
 	{ kThePreloadEventAbort,"preloadEventAbort",false, 400, false },	//			D4 p
 	{ kThePreLoadRAM,		"preLoadRAM",		false, 400, false },	//			D4 p
+	{ kThePlatform,			"platform",			false, 500, false },	//				D5 p
 	{ kThePi,				"pi",				false, 400, true },	//			D4 f
 	{ kTheQuickTimePresent,	"quickTimePresent",	false, 300, true },	//		D3.1 f
 	{ kTheRandomSeed,		"randomSeed",		false, 400, false },	//			D4 p
@@ -129,9 +142,11 @@ const TheEntity entities[] = {
 	{ kTheRollOver,			"rollOver",			false, 500, true },	//					D5 f, undocumented
 	{ kTheRomanLingo,		"romanLingo",		false, 300, false },	//		D3.1 p
 	{ kTheRunMode, 			"runMode",			false, 500, false },//					D5 f, documented in D6
+	{ kTheScore,			"score",			false, 500, false },	//				D5 p
 	{ kTheScummvmVersion,	"scummvmVersion",	false, 200, true }, // 					ScummVM only
 	{ kTheSearchCurrentFolder,"searchCurrentFolder",false,400, true },//			D4 f
 	{ kTheSearchPath,		"searchPath",		false, 400, true },	//			D4 f
+	{ kTheSearchPaths,		"searchPaths",		false, 500, false },	//				D5 p
 	{ kTheSelection,		"selection",		false, 200, true },	// D2 f
 	{ kTheSelEnd,			"selEnd",			false, 200, false },	// D2 p
 	{ kTheSelStart,			"selStart",			false, 200, false },	// D2 p
@@ -173,6 +188,7 @@ const TheEntityField fields[] = {
 	{ kTheSprite,	"blend",		kTheBlend,		400 },//				D4 p
 	{ kTheSprite,	"bottom",		kTheBottom,		200 },// D2 p
 	{ kTheSprite,	"castNum",		kTheCastNum,	200 },// D2 p
+	{ kTheSprite,	"castLibNum",	kTheCastLibNum,	500 },//					D5 p
 	{ kTheSprite,	"constraint",	kTheConstraint, 200 },// D2 p
 	{ kTheSprite,	"cursor",		kTheCursor,		200 },// D2 p
 	{ kTheSprite,	"editableText", kTheEditableText,400 },//				D4 p
@@ -201,6 +217,13 @@ const TheEntityField fields[] = {
 	{ kTheSprite,	"visible",		kTheVisible,	400 },//				D4 p
 	{ kTheSprite,	"width",		kTheWidth,		200 },// D2 p
 
+	// Cast library fields
+	{ kTheCastLib,	"fileName",		kTheFileName,	500 },//					D5 p
+	{ kTheCastLib,	"name",			kTheName,		500 },//					D5 p
+	{ kTheCastLib,	"number",		kTheNumber,		500 },//					D5 p
+	{ kTheCastLib,	"preLoadMode",	kThePreLoadMode,500 },//					D5 p
+	{ kTheCastLib,	"selection",	kTheSelectionField,500 },//					D5 p
+
 	// Common cast fields
 	{ kTheCast,		"backColor",	kTheBackColor,	400 },//				D4 p
 	{ kTheCast,		"castLibNum",	kTheCastLibNum,	500 },// 					D5 p
@@ -208,9 +231,11 @@ const TheEntityField fields[] = {
 	{ kTheCast,		"filename",		kTheFileName,	400 },//				D4 p
 	{ kTheCast,		"foreColor",	kTheForeColor,	400 },//				D4 p
 	{ kTheCast,		"height",		kTheHeight,		400 },//				D4 p
+	{ kTheCast,		"idleReadChunkSize",kTheIdleReadChunkSize,500 },//			D5 p
 	{ kTheCast,		"loaded",		kTheLoaded,		400 },//				D4 p
-	{ kTheCast,		"modified",		kTheModified,	400 },//				D4 p
+	{ kTheCast,		"media",		kTheMedia,		500 },//					D5 p
 	{ kTheCast,		"memberNum",	kTheMemberNum,	500 },//					D5 p
+	{ kTheCast,		"modified",		kTheModified,	400 },//				D4 p
 	{ kTheCast,		"name",			kTheName,		300 },//		D3 p
 	{ kTheCast,		"number",		kTheNumber,		300 },//		D3 p
 	{ kTheCast,		"rect",			kTheRect,		400 },//				D4 p
@@ -224,6 +249,7 @@ const TheEntityField fields[] = {
 	{ kTheCast,		"center",		kTheCenter,		400 },//				D4 p
 	{ kTheCast,		"controller",	kTheController,	300 },//		D3.1 p
 	{ kTheCast,		"crop",			kTheCrop,		400 },//				D4 p
+	{ kTheCast,		"digitalVideoType",kTheDigitalVideoType,500 },//			D5 p
 	{ kTheCast,		"directToStage",kTheDirectToStage,300 },//		D3.1 p
 	{ kTheCast,		"duration",		kTheDuration,	300 },//		D3.1 p
 	{ kTheCast,		"frameRate",	kTheFrameRate,	400 },//				D4 p
@@ -235,17 +261,46 @@ const TheEntityField fields[] = {
 	{ kTheCast,		"sound",		kTheSound,		300 },//		D3.1 p // 0-1 off-on
 	{ kTheSprite,	"startTime",	kTheStartTime,	300 },//		D3.1 p
 	{ kTheSprite,	"stopTime",		kTheStopTime,	300 },//		D3.1 p
+	{ kTheCast,		"timeScale",	kTheTimeScale,	500 },//						D5 p
+	{ kTheSprite,	"trackEnabled",	kTheTrackEnabled, 500 },//						D5 p
+	{ kTheSprite,	"trackNextKeyTime",	kTheTrackNextKeyTime, 500 },//				D5 p
+	{ kTheSprite,	"trackNextSampleTime",	kTheTrackNextSampleTime, 500 },//		D5 p
+	{ kTheSprite,	"trackPreviousKeyTime",	kTheTrackPreviousKeyTime, 500 },//		D5 p
+	{ kTheSprite,	"trackPreviousSampleTime",	kTheTrackPreviousKeyTime, 500 },//	D5 p
+	{ kTheSprite,	"trackText",	kTheTrackText, 500 },//							D5 p
 	{ kTheCast,		"video",		kTheVideo,		400 },//				D4 p
 	{ kTheSprite,	"volume",		kTheVolume,		300 },//		D3.1 p
+
+	// Movie fields
+	{ kTheCast,		"idleHandlerPeriod",kTheIdleHandlerPeriod, 500 },//				D5 p
+	{ kTheCast,		"paletteMapping",	kThePaletteMapping,	500 },//				D5 p
+	{ kTheCast,		"scriptsEnabled",	kTheScriptsEnabled,	500 },//				D5 p
+	{ kTheCast,		"scoreSelection",	kTheScoreSelection,	500 },//				D5 p
+	{ kTheCast,		"updateLock",		kTheUpdateLock,		500 },//				D5 p
 
 	// Bitmap fields
 	{ kTheCast,		"depth",		kTheDepth,		400 },//				D4 p
 	{ kTheCast,		"regPoint",		kTheRegPoint,	400 },//				D4 p
 	{ kTheCast,		"palette",		kThePalette,	400 },//				D4 p
+	{ kTheCast,		"paletteRef",	kThePaletteRef,	500 },//				D4 p
 	{ kTheCast,		"picture",		kThePicture,	300 },//		D3 p
 
 	// TextCastMember fields
+	{ kTheCast,		"alignment",	kTheTextAlign,	500 },//						D5 p
+	{ kTheCast,		"autoTab",		kTheAutoTab,	500 },//						D5 p
+	{ kTheCast,		"border",		kTheBorder,		500 },//						D5 p
+	{ kTheCast,		"boxDropShadow",kTheBoxDropShadow,	500 },//					D5 p
+	{ kTheCast,		"boxType",		kTheBoxType,	500 },//						D5 p
+	{ kTheCast,		"dropShadow",	kTheDropShadow,	500 },//						D5 p
+	{ kTheCast,		"editable",		kTheEditable,	500 },//						D5 p
+	{ kTheCast,		"font",			kTheTextFont,	500 },//						D5 p
+	{ kTheCast,		"fontSize",		kTheTextSize,	500 },//						D5 p
+	{ kTheCast,		"fontStyle",	kTheTextStyle,	500 },//						D5 p
+	{ kTheCast,		"lineCount",	kTheLineCount,	500 },//						D5 p
+	{ kTheCast,		"lineHeight",	kTheTextHeight,	500 },//						D5 p
 	{ kTheCast,		"hilite",		kTheHilite,		200 },// D2 p
+	{ kTheCast,		"margin",		kTheMargin,		500 },//						D5 p
+	{ kTheCast,		"pageHeight",	kThePageHeight,	500 },//						D5 p
 	{ kTheCast,		"text",			kTheText,		200 },// D2 p
 	{ kTheCast,		"textAlign",	kTheTextAlign,	300 },//		D3 p
 	{ kTheCast,		"textFont",		kTheTextFont,	300 },//		D3 p
@@ -253,11 +308,38 @@ const TheEntityField fields[] = {
 	{ kTheCast,		"textSize",		kTheTextSize,	300 },//		D3 p
 	{ kTheCast,		"textStyle",	kTheTextStyle,	300 },//		D3 p
 	{ kTheCast,		"scrollTop",	kTheScrollTop,  500 },//						D5 p
+	{ kTheCast,		"wordWrap",		kTheWordWrap,	500 },//						D5 p
 
+	// ButtonCastMember fields
+	{ kTheCast,		"buttonType",	kTheButtonType,	500 },//						D5 p
+
+	// ScriptCastMember fields
+	{ kTheCast,		"scriptType",	kTheScriptType,	500 },//						D5 p
+
+	// ShapeCastMember fields
+	{ kTheCast,		"filled",		kTheFilled,		500 },//						D5 p
+	{ kTheCast,		"lineSize",		kTheLineSize,	500 },//						D5 p
+	{ kTheCast,		"pattern",		kThePattern,	500 },//						D5 p
+	{ kTheCast,		"shapeType",	kTheShapeType,	500 },//						D5 p
+
+	// SoundCastMember fields
+	{ kTheCast,		"channelCount",	kTheChannelCount,500 },//						D5 p
+	{ kTheCast,		"sampleRate",	kTheSampleRate,	500 },//						D5 p
+	{ kTheCast,		"sampleSize",	kTheSampleSize,	500 },//						D5 p
+
+	// TransitionCastMember fields
+	{ kTheCast,		"changeArea",	kTheChangeArea,	500 },//						D5 p
+	{ kTheCast,		"chunkSize",	kTheChunkSize,	500 },//						D5 p
+	{ kTheCast,		"transitionType",kTheTransitionType,500 },//					D5 p
 
 	// Field fields
+	{ kTheField,	"alignment",	kTheTextAlign,	500 },//						D5 p
+	{ kTheField,	"font",			kTheTextFont,	500 },//						D5 p
+	{ kTheField,	"fontSize",		kTheTextSize,	500 },//						D5 p
+	{ kTheField,	"fontStyle",	kTheTextStyle,	500 },//						D5 p
 	{ kTheField,	"foreColor",	kTheForeColor,	400 },//				D4 p
 	{ kTheField,	"hilite",		kTheHilite,		200 },// D2 p
+	{ kTheField,	"lineHeight",	kTheTextHeight,	500 },//						D5 p
 	{ kTheField,	"name",			kTheName,		300 },//		D3 p
 	{ kTheField,	"text",			kTheText,		200 },// D2 p
 	{ kTheField,	"textAlign",	kTheTextAlign,	300 },//		D3 p
@@ -265,10 +347,13 @@ const TheEntityField fields[] = {
 	{ kTheField,	"textHeight",	kTheTextHeight,	300 },//		D3 p
 	{ kTheField,	"textSize",		kTheTextSize,	300 },//		D3 p
 	{ kTheField,	"textStyle",	kTheTextStyle,	300 },//		D3 p
-	{ kTheField,	"scrollTop",	kTheScrollTop,  500 },//						D5 p
 
 	// Chunk fields
+	{ kTheChunk,	"font",			kTheTextFont,	500 },//						D5 p
+	{ kTheChunk,	"fontSize",		kTheTextSize,	500 },//						D5 p
+	{ kTheChunk,	"fontStyle",	kTheTextStyle,	500 },//						D5 p
 	{ kTheChunk,	"foreColor",	kTheForeColor,	400 },//				D4 p
+	{ kTheChunk,	"lineHeight",	kTheTextHeight,	500 },//						D5 p
 	{ kTheChunk,	"textFont",		kTheTextFont,	300 },//		D3 p
 	{ kTheChunk,	"textHeight",	kTheTextHeight,	300 },//		D3 p
 	{ kTheChunk,	"textSize",		kTheTextSize,	300 },//		D3 p
@@ -293,6 +378,8 @@ const TheEntityField fields[] = {
 	{ kTheMenu,		"name",			kTheName,		300 },//		D3 p
 
 	{ kTheCastMembers,	"number",	kTheNumber,		300 },// 		D3 p
+
+	{ kTheCastLibs,		"number",	kTheNumber,		500 },//						D5 p
 
 	{ kTheDate,		"short",		kTheShort,		300 },//		D3 f
 	{ kTheDate,		"long",			kTheLong,		300 },//		D3 f
@@ -408,7 +495,14 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = getCastLibsNum();
 		break;
 	case kTheCastMembers:
-		d = getMembersNum();
+		{
+			uint16 castLibID = 0;
+			if (g_director->getVersion() >= 500) {
+				LB::b_castLib(1);
+				castLibID = (uint16)g_lingo->pop().u.i;
+			}
+			d = getMembersNum(castLibID);
+		}
 		break;
 	case kTheCenterStage:
 		d = g_director->_centerStage;
@@ -479,14 +573,23 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d.type = STRING;
 		d.u.s = score->getFrameLabel(score->getCurrentFrameNum());
 		break;
-	case kTheFrameScript:
-		d = score->_currentFrame->_mainChannels.actionId.member;
-		break;
 	case kTheFramePalette:
-		d = score->getCurrentPalette();
+		d = score->getCurrentPalette().toMultiplex();
+		break;
+	case kTheFrameScript:
+		d = score->_currentFrame->_mainChannels.actionId.toMultiplex();
+		break;
+	case kTheFrameSound1:
+		d = score->_currentFrame->_mainChannels.sound1.toMultiplex();
+		break;
+	case kTheFrameSound2:
+		d = score->_currentFrame->_mainChannels.sound2.toMultiplex();
 		break;
 	case kTheFrameTempo:
 		d = score->_currentFrameRate;
+		break;
+	case kTheFrameTransition:
+		d = score->_currentFrame->_mainChannels.trans.toMultiplex();
 		break;
 	case kTheFreeBlock:
 	case kTheFreeBytes:
@@ -761,6 +864,25 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 	case kThePerFrameHook:
 		d = _perFrameHook;
 		break;
+	case kThePlatform:  // D5
+		// ScummVM doesn't track different OS versions;
+		// for now let's assume every game from D5 onwards was
+		// x86-32 or PowerPC.
+		if (g_director->getPlatform() == Common::kPlatformWindows) {
+			if (g_director->getVersion() >= 500) {
+				d = Datum("Windows,32");
+			} else {
+				d = Datum("Windows,16");
+			}
+		} else {
+			// Macintosh or pippin
+			if (g_director->getVersion() >= 500) {
+				d = Datum("Macintosh,PowerPC");
+			} else {
+				d = Datum("Macintosh,68k");
+			}
+		}
+		break;
 	case kThePreloadEventAbort:
 		d = g_lingo->_preLoadEventAbort;
 		break;
@@ -809,6 +931,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = 1;
 		break;
 	case kTheSearchPath:
+	case kTheSearchPaths:
 		d = g_lingo->_searchPath;
 		break;
 	case kTheSelection:
@@ -1013,16 +1136,26 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		_floatPrecisionFormat = Common::String::format("%%.%df", _floatPrecision);
 		break;
 	case kTheFrameLabel:
+		// TODO: All of these frame properties are settable during a score recording session in D5+
 		setTheEntityReadOnly(kTheFrameLabel);
-		break;
-	case kTheFrameScript:
-		setTheEntityReadOnly(kTheFrameScript);
 		break;
 	case kTheFramePalette:
 		setTheEntityReadOnly(kTheFramePalette);
 		break;
+	case kTheFrameScript:
+		setTheEntityReadOnly(kTheFrameScript);
+		break;
+	case kTheFrameSound1:
+		setTheEntityReadOnly(kTheFrameSound1);
+		break;
+	case kTheFrameSound2:
+		setTheEntityReadOnly(kTheFrameSound2);
+		break;
 	case kTheFrameTempo:
-		setTheEntityReadOnly(kTheFramePalette);
+		setTheEntityReadOnly(kTheFrameTempo);
+		break;
+	case kTheFrameTransition:
+		setTheEntityReadOnly(kTheFrameTransition);
 		break;
 	case kTheFullColorPermit:
 		// No op in ScummVM. We always allow it
@@ -1105,6 +1238,9 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 	case kThePerFrameHook:
 		_perFrameHook = d;
 		break;
+	case kThePlatform:
+		setTheEntityReadOnly(kThePlatform);
+		break;
 	case kThePreloadEventAbort:
 		g_lingo->_preLoadEventAbort = bool(d.asInt());
 		break;
@@ -1131,6 +1267,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		warning("BUILDBOT: Trying to set SearchCurrentFolder lingo property");
 		break;
 	case kTheSearchPath:
+	case kTheSearchPaths:
 		g_lingo->_searchPath = d;
 		break;
 	case kTheSelEnd:
@@ -1194,7 +1331,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 	case kTheTimeoutLapsed:
 		// timeOutLapsed can be set in D4, but can't in D3. see D3.1 interactivity manual p312 and D4 dictionary p296.
 		if (g_director->getVersion() >= 400 && (d.type == INT || d.type == FLOAT)) {
-			g_director->_tickBaseline = g_director->getMacTicks() - d.asInt();
+			g_director->_tickBaseline = (int)g_director->getMacTicks() - d.asInt();
 		}
 		if (d.type != INT) {
 			warning("Lingo::setTheEntity() : Wrong DatumType %d for setting of Lingo Property timeOutLapsed", d.type);
@@ -1272,10 +1409,13 @@ int Lingo::getCastLibsNum() {
 	return _vm->getCurrentMovie()->getCasts()->size();
 }
 
-int Lingo::getMembersNum() {
-	// FIXME: deal with D5 castlibs
+int Lingo::getMembersNum(uint16 castLibID) {
 	Movie *movie = _vm->getCurrentMovie();
-	return (MAX(movie->getCast()->getCastMaxID(), (movie->_sharedCast ? movie->_sharedCast->getCastMaxID() : 0)));
+	Cast *cast = movie->getCast(CastMemberID(0, castLibID));
+	if (cast) {
+		return MAX(cast->getCastMaxID(), (movie->_sharedCast ? movie->_sharedCast->getCastMaxID() : 0));
+	}
+	return 0;
 }
 
 int Lingo::getXtrasNum() {
@@ -1313,7 +1453,7 @@ Datum Lingo::getTheSprite(Datum &id1, int field) {
 		return d;
 	}
 
-	if (id1.type == INT) {
+	if ((id1.type == SPRITEREF) || (id1.type == INT)) {
 		id = id1.u.i;
 	} else {
 		warning("Lingo::getTheSprite(): Unknown the sprite id type: %s", id1.type2str());
@@ -1344,11 +1484,19 @@ Datum Lingo::getTheSprite(Datum &id1, int field) {
 		d = sprite->_castId;
 		break;
 	case kTheCastNum:
-	case kTheMemberNum:
-		d = sprite->_castId.member;
+		if (g_director->getVersion() >= 500) {
+			// For the castNum, D5 will multiplex the castLib ID into the result.
+			// the memberNum will just give you the member ID.
+			d = sprite->_castId.toMultiplex();
+		} else {
+			d = sprite->_castId.member;
+		}
 		break;
 	case kTheCastLibNum:
 		d = sprite->_castId.castLib;
+		break;
+	case kTheMemberNum:
+		d = sprite->_castId.member;
 		break;
 	case kTheConstraint:
 		d = (int)channel->_constraint;
@@ -1469,12 +1617,19 @@ Datum Lingo::getTheSprite(Datum &id1, int field) {
 }
 
 void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
-	int id = id1.asInt();
 	Movie *movie = _vm->getCurrentMovie();
 	Score *score = movie->getScore();
+	int id = 0;
 
 	if (!score) {
 		warning("Lingo::setTheSprite(): The sprite %d field \"%s\" setting over non-active score", id, field2str(field));
+		return;
+	}
+
+	if ((id1.type == SPRITEREF) || (id1.type == INT)) {
+		id = id1.u.i;
+	} else {
+		warning("Lingo::setTheSprite(): Unknown the sprite id type: %s", id1.type2str());
 		return;
 	}
 
@@ -1521,8 +1676,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 
 			if (targetMember != sprite->_castId) {
 				movie->getWindow()->addDirtyRect(channel->getBbox());
-				movie->duplicateCastMember(targetMember, sprite->_castId);
-				channel->_sprite->setCast(sprite->_castId);
+				channel->setCast(targetMember);
 				// Ensure the new sprite, whether larger or smaller, appears correctly on the screen
 				movie->getWindow()->addDirtyRect(channel->getBbox());
 				channel->_dirty = true;
@@ -1530,12 +1684,16 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		}
 		break;
 	case kTheCastNum:
+	case kTheCastLibNum:
 	case kTheMemberNum:
 		{
 			CastMemberID castId = d.asMemberID();
-			// Setting the cast ID as a number will preserve whatever is in castLib
-			if (d.isNumeric() && (sprite->_castId.castLib != 0)) {
-				castId = CastMemberID(d.asInt(), sprite->_castId.castLib);
+			if (field == kTheMemberNum) {
+				// Setting the cast ID as a number will preserve whatever is in castLib
+				// The member part will be demultiplexed if required, and the castLib portion ignored.
+				castId = CastMemberID(castId.member, sprite->_castId.castLib);
+			} else if (field == kTheCastLibNum) {
+				castId = CastMemberID(sprite->_castId.member, d.asInt());
 			}
 			CastMember *castMember = movie->getCastMember(castId);
 
@@ -1791,7 +1949,7 @@ Datum Lingo::getTheCast(Datum &id1, int field) {
 			d = 0;
 		} else if (field == kTheNumber) {
 			d = -1;
-		} else if (id.member <= getMembersNum()) {
+		} else if (id.member <= getMembersNum(id.castLib)) {
 			// If a cast member with the ID doesn't exist,
 			// but the ID isn't greater than the biggest cast member ID,
 			// Lingo will not crash, and instead return a VOID.
@@ -1834,6 +1992,90 @@ void Lingo::setTheCast(Datum &id1, int field, Datum &d) {
 
 	member->setField(field, d);
 }
+
+Datum Lingo::getTheCastLib(Datum &id1, int field) {
+	Datum d;
+	if (id1.type != CASTLIBREF) {
+		warning("Lingo::getTheCastLib(): Expected CASTLIBREF, not %s", id1.type2str());
+		return d;
+	}
+
+	Movie *movie = _vm->getCurrentMovie();
+	if (!movie) {
+		warning("Lingo::getTheCast(): No movie loaded");
+		return d;
+	}
+	Cast *cast = movie->getCast(CastMemberID(0, id1.u.i));
+	if (!cast) {
+		g_lingo->lingoError("Lingo::getTheCastLib(): Cast lib %s not found", id1.asString().c_str());
+		return d;
+	}
+
+	switch (field) {
+	case kTheFileName:
+		d = cast->getArchive()->getPathName().toString(g_director->_dirSeparator);
+		break;
+	case kTheName:
+		d = cast->getCastName();
+		break;
+	case kTheNumber:
+		d = cast->_castLibID;
+		break;
+	case kThePreLoadMode:
+		warning("STUB: Lingo::getTheCastLib(): preLoadMode not implemented");
+		break;
+	case kTheSelectionField:
+		warning("STUB: Lingo::getTheCastLib(): selection not implemented");
+		d.type = ARRAY;
+		d.u.farr = new FArray();
+		d.u.farr->arr.push_back(1);
+		d.u.farr->arr.push_back(1);
+		break;
+	default:
+		break;
+	}
+
+	return d;
+}
+
+void Lingo::setTheCastLib(Datum &id1, int field, Datum &d) {
+	if (id1.type != CASTLIBREF) {
+		warning("Lingo::setTheCastLib(): Expected CASTLIBREF, not %s", id1.type2str());
+		return;
+	}
+	Movie *movie = _vm->getCurrentMovie();
+	if (!movie) {
+		warning("Lingo::setTheCastLib(): No movie loaded");
+		return;
+	}
+	Cast *cast = movie->getCast(CastMemberID(0, id1.u.i));
+	if (!cast) {
+		g_lingo->lingoError("Lingo::setTheCastLib(): Cast lib %s not found", id1.asString().c_str());
+		return;
+	}
+
+	switch (field) {
+	case kTheFileName:
+		warning("STUB: Lingo::setTheCastLib(): fileName not implemented");
+		break;
+	case kTheName:
+		warning("STUB: Lingo::setTheCastLib(): name not implemented");
+		break;
+	case kTheNumber:
+		warning("Lingo::setTheCastLib(): number is read-only");
+		break;
+	case kThePreLoadMode:
+		warning("STUB: Lingo::setTheCastLib(): preLoadMode not implemented");
+		break;
+	case kTheSelectionField:
+		warning("STUB: Lingo::setTheCastLib(): selection not implemented");
+		break;
+	default:
+		warning("STUB: Lingo::setTheCastLib(): unknown property %d", field);
+		break;
+	}
+}
+
 
 Datum Lingo::getTheField(Datum &id1, int field) {
 	Datum d;
@@ -2002,8 +2244,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		g_lingo->push(d);
 		g_debugger->propReadHook(propName);
 		return;
-	}
-	if (obj.type == PARRAY) {
+	} else if (obj.type == PARRAY) {
 		int index = LC::compareArrays(LC::eqData, obj, propName, true).u.i;
 		if (index > 0) {
 			d = obj.u.parr->arr[index - 1].v;
@@ -2011,8 +2252,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		g_lingo->push(d);
 		g_debugger->propReadHook(propName);
 		return;
-	}
-	if (obj.type == POINT) {
+	} else if (obj.type == POINT) {
 		if (propName.equalsIgnoreCase("locH")) {
 			d = obj.u.farr->arr[0];
 		} else if (propName.equalsIgnoreCase("locV")) {
@@ -2023,8 +2263,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		g_lingo->push(d);
 		g_debugger->propReadHook(propName);
 		return;
-	}
-	if (obj.type == RECT) {
+	} else if (obj.type == RECT) {
 		if (propName.equalsIgnoreCase("left")) {
 			d = obj.u.farr->arr[0];
 		} else if (propName.equalsIgnoreCase("top")) {
@@ -2039,8 +2278,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		g_lingo->push(d);
 		g_debugger->propReadHook(propName);
 		return;
-	}
-	if (obj.type == CASTREF) {
+	} else if (obj.type == CASTREF) {
 		Movie *movie = _vm->getCurrentMovie();
 		if (!movie) {
 			g_lingo->lingoError("Lingo::getObjectProp(): No movie loaded");
@@ -2092,7 +2330,11 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 					d = Datum(Common::Point(0, 0));
 					break;
 				case kTheNumber:
-					d = Datum(id.member);
+					if (g_director->getVersion() >= 500) {
+						d = Datum(id.toMultiplex());
+					} else {
+						d = Datum(id.member);
+					}
 					break;
 				default:
 					emptyAllowed = false;
@@ -2100,7 +2342,7 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 				}
 			}
 
-			if (id.member <= getMembersNum()) {
+			if (id.member <= getMembersNum(id.castLib)) {
 				// Cast member ID is within range (i.e. less than max)
 				// In real Director, accessing -any- of the properties will
 				// be allowed, but return garbage.
@@ -2121,7 +2363,22 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		}
 		g_lingo->push(d);
 		return;
+	} else if (obj.type == CASTLIBREF) {
+		Common::String key = Common::String::format("%d%s", kTheCastLib, propName.c_str());
+		if (_theEntityFields.contains(key)) {
+			d = getTheCastLib(obj, _theEntityFields[key]->field);
+		}
+		g_lingo->push(d);
+		return;
+	} else if (obj.type == SPRITEREF) {
+		Common::String key = Common::String::format("%d%s", kTheSprite, propName.c_str());
+		if (_theEntityFields.contains(key)) {
+			d = getTheSprite(obj, _theEntityFields[key]->field);
+		}
+		g_lingo->push(d);
+		return;
 	}
+
 	if (_builtinFuncs.contains(propName) && _builtinFuncs[propName].nargs == 1) {
 		push(obj);
 		LC::call(_builtinFuncs[propName], 1, true);
@@ -2190,6 +2447,16 @@ void Lingo::setObjectProp(Datum &obj, Common::String &propName, Datum &val) {
 			member->setProp(propName, val);
 		} else {
 			g_lingo->lingoError("Lingo::setObjectProp(): %s has no property '%s'", id.asString().c_str(), propName.c_str());
+		}
+	} else if (obj.type == CASTLIBREF) {
+		Common::String key = Common::String::format("%d%s", kTheCastLib, propName.c_str());
+		if (_theEntityFields.contains(key)) {
+			setTheCastLib(obj, _theEntityFields[key]->field, val);
+		}
+	} else if (obj.type == SPRITEREF) {
+		Common::String key = Common::String::format("%d%s", kTheSprite, propName.c_str());
+		if (_theEntityFields.contains(key)) {
+			setTheSprite(obj, _theEntityFields[key]->field, val);
 		}
 	} else {
 		g_lingo->lingoError("Lingo::setObjectProp: Invalid object: %s", obj.asString(true).c_str());

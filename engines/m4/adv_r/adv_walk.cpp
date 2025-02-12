@@ -261,14 +261,12 @@ void ws_demand_facing(machine *myWalker, int32 facing) {
 }
 
 void ws_demand_location(machine *myWalker, int32 x, int32 y, int facing) {
-	frac16 s;
-
 	if (!myWalker || !myWalker->myAnim8) {
 		term_message("demand locn, no walker");
 		return;
 	}
 
-	s = _G(globals)[GLB_MIN_SCALE] + FixedMul((y << 16) - _G(globals)[GLB_MIN_Y], _G(globals)[GLB_SCALER]);
+	frac16 s = _G(globals)[GLB_MIN_SCALE] + FixedMul((y << 16) - _G(globals)[GLB_MIN_Y], _G(globals)[GLB_SCALER]);
 
 	_G(globals)[GLB_TEMP_1] = x << 16;
 	_G(globals)[GLB_TEMP_2] = y << 16;
@@ -281,14 +279,12 @@ void ws_demand_location(machine *myWalker, int32 x, int32 y, int facing) {
 }
 
 static void ws_demand_location_and_facing(machine *myWalker, int32 x, int32 y, int32 facing) {
-	frac16 s;
-
 	if ((!myWalker) || (!myWalker->myAnim8)) {
 		term_message("demand f & l, no walker");
 		return;
 	}
 
-	s = _G(globals)[GLB_MIN_SCALE] + FixedMul((y << 16) - _G(globals)[GLB_MIN_Y], _G(globals)[GLB_SCALER]);
+	frac16 s = _G(globals)[GLB_MIN_SCALE] + FixedMul((y << 16) - _G(globals)[GLB_MIN_Y], _G(globals)[GLB_SCALER]);
 
 	_G(globals)[GLB_TEMP_1] = x << 16;
 	_G(globals)[GLB_TEMP_2] = y << 16;
@@ -488,6 +484,11 @@ void adv_get_walker_destination(machine *my_walker, int32 *x, int32 *y, int32 *f
 
 	// Get final facing from l.v.6 = myRegs[6 + IDX_COUNT]
 	face = my_walker->myAnim8->myRegs[6 + IDX_COUNT] >> 16;
+
+	// FIXME: Riddle room 608 Twelvetrees cutscene has face -1. Not sure if happens in original
+	if (face == -1)
+		face = 0;
+
 	*final_facing = directions[face];
 }
 

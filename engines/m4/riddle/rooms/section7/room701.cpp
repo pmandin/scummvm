@@ -34,8 +34,8 @@ void Room701::preload() {
 }
 
 void Room701::init() {
-	if (_G(flags[V286]))
-		_G(flags[V224]) = 1;
+	if (_G(flags)[V286])
+		_G(flags)[V224] = 1;
 
 	_itemDigiName = nullptr;
 	_field8C_unusedFl = false;
@@ -71,7 +71,7 @@ void Room701::init() {
 		_agentPoshExpressMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 1792, false, triggerMachineByHashCallback, "agent posh express");
 		sendWSMessage_10000(1, _agentPoshExpressMach, _agentTalkLoopTjSeries, 13, 13, -1, _agentTalkLoopTjSeries, 13, 13, 0);
 
-		++_G(flags[V006]);
+		++_G(flags)[V006];
 		if (setItemsPlacedFlags()) {
 			_field88 = true;
 			_itemDigiName = getItemsPlacedDigi();
@@ -113,9 +113,9 @@ void Room701::parser() {
 		if (_G(kernel).trigger == 1) {
 			int32 who = conv_whos_talking();
 			if (who == 1)
-				_field98_should = 1103;
+				_ripleyShould = 1103;
 			else if (who <= 0)
-				_field6C_should = 2102;
+				_agentShould = 2102;
 
 			conv_resume(conv_get_handle());
 		} else {
@@ -127,14 +127,14 @@ void Room701::parser() {
 		player_set_commands_allowed(false);
 		_field88 = true;
 		_field72_triggerNum = -1;
-		_field94_mode = 1000;
-		_field98_should = 1100;
+		_ripleyMode = 1000;
+		_ripleyShould = 1100;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 102, nullptr);
 		_G(kernel).trigger_mode = KT_PARSE;
 	} else if (lookFl && player_said("COAT RACK")) {
 		digi_play("com130", 1, 255, -1, -1);
-	} else if (lookFl && player_said("Skin") && !_G(flags[V226])) {
+	} else if (lookFl && player_said("Skin") && !_G(flags)[V226]) {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -173,7 +173,7 @@ void Room701::parser() {
 
 		case 25:
 			sendWSMessage_150000(_G(my_walker), -1);
-			_G(flags[V226]) = 1;
+			_G(flags)[V226] = 1;
 			player_set_commands_allowed(true);
 
 			break;
@@ -181,14 +181,14 @@ void Room701::parser() {
 		default:
 			break;
 		}
-	} // ecx && player_said("Skin") && !_G(flags[V226])
+	} // ecx && player_said("Skin") && !_G(flags)[V226]
 
-	else if (lookFl && player_said("Skin") && _G(flags[V226])) {
+	else if (lookFl && player_said("Skin") && _G(flags)[V226]) {
 		player_set_commands_allowed(false);
 		digi_play("701R13", 1, 255, -1, -1);
 		player_set_commands_allowed(true);
 
-	} // ecx && player_said("Skin") && _G(flags[V226])
+	} // ecx && player_said("Skin") && _G(flags)[V226]
 
 	else if (lookFl && player_said("Window"))
 		digi_play("701R17", 1, 255, -1, -1);
@@ -294,7 +294,7 @@ void Room701::parser() {
 		||   (player_said("SIKKIMESE RUPEE", "Agent") && inv_player_has("SIKKIMESE RUPEE"))) {
 		digi_play("com012", 1, 255, -1, 997);
 	} else if (player_said("journal", "skin")) {
-		digi_play(_G(flags[V226]) ? "701R35" : "701R36", 1, 255, -1, -1);
+		digi_play(_G(flags)[V226] ? "701R35" : "701R36", 1, 255, -1, -1);
 	} else if (player_said("rm702")) {
 		if (_field88) {
 			switch (_G(kernel).trigger) {
@@ -590,10 +590,10 @@ void Room701::daemon() {
 		break;
 
 	case 82:
-		if (_G(flags[V286]) != 1 || _G(flags[V362]) || _G(flags[V372]) || _G(flags[V225])) {
+		if (_G(flags)[V286] != 1 || _G(flags)[V362] || _G(flags)[V372] || _G(flags)[V225]) {
 			kernel_timing_trigger(1, 75, nullptr);
 		} else {
-			_G(flags[V225]) = 1;
+			_G(flags)[V225] = 1;
 			kernel_timing_trigger(1, 83, nullptr);
 		}
 
@@ -672,8 +672,8 @@ void Room701::daemon() {
 		break;
 
 	case 95:
-		if (_G(flags[V286]) == 1 && !_G(flags[V362]))
-			_G(flags[V372]) = 1;
+		if (_G(flags)[V286] == 1 && !_G(flags)[V362])
+			_G(flags)[V372] = 1;
 
 		terminateMachine(_safariShadow3Mach);
 		player_set_commands_allowed(true);
@@ -696,8 +696,8 @@ void Room701::daemon() {
 		break;
 
 	case 101:
-		_field94_mode = 1000;
-		_field98_should = 1105;
+		_ripleyMode = 1000;
+		_ripleyShould = 1105;
 
 		break;
 
@@ -711,25 +711,25 @@ void Room701::daemon() {
 		break;
 
 	case 103:
-		switch (_field94_mode) {
+		switch (_ripleyMode) {
 		case 1000:
-			switch (_field98_should) {
+			switch (_ripleyShould) {
 			case 1100:
 				player_set_commands_allowed(false);
-				_field68_mode = 2000;
-				_field6C_should = 2100;
+				_agentMode = 2000;
+				_agentShould = 2100;
 				kernel_timing_trigger(1, 110, nullptr);
 				player_update_info(_G(my_walker), &_G(player_info));
 				_safariShadow3Mach = series_place_sprite("SAFARI SHADOW 3", 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 3840);
 				ws_hide_walker(_G(my_walker));
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 256, false, triggerMachineByHashCallback, "rip talks agent");
-				_field98_should = 1103;
+				_ripleyShould = 1103;
 				sendWSMessage_10000(1, _ripTalksAgentMach, _ripTrekTalkerPos3Series, 5, 5, 102, _ripTrekTalkerPos3Series, 5, 5, 1);
 				conv_load("conv701a", 10, 10, 101);
 				_lastInventoryCheck = inventoryCheck();
 				_fieldBC_unusedFl = true;
 
-				conv_export_value_curr((_G(flags[V088]) < 3) ? 0 : 1, 0);
+				conv_export_value_curr((_G(flags)[V088] < 3) ? 0 : 1, 0);
 				conv_export_pointer_curr(&_lastInventoryCheck, 1);
 
 				_hasCrystalSkull = inv_player_has("CRYSTAL SKULL") ? 1 : 0;
@@ -784,7 +784,7 @@ void Room701::daemon() {
 				terminateMachine(_ripTalksAgentMach);
 				terminateMachine(_safariShadow3Mach);
 				ws_unhide_walker(_G(my_walker));
-				_field6C_should = 2103;
+				_agentShould = 2103;
 				kernel_timing_trigger(1, 2700, nullptr);
 
 				break;
@@ -796,65 +796,59 @@ void Room701::daemon() {
 			break;
 
 		case 3000:
-			switch (_field98_should) {
+			switch (_ripleyShould) {
 			case 3100:
 				player_set_commands_allowed(false);
-				_field98_should = 3101;
+				_ripleyShould = 3101;
+				kernel_timing_trigger(10, 102);
 				break;
 
 			case 3101:
 				terminateMachine(_agentPoshExpressMach02);
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentGetTelegramSeries, 1, 60, 102, _agentGetTelegramSeries, 60, 60, 0);
-				_field98_should = 3102;
-
+				_ripleyShould = 3102;
 				break;
 
 			case 3102:
 				digi_play("950_S06", 2, 255, 102, 950);
 				inv_give_to_player("MESSAGE LOG");
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentGetTelegramSeries, 69, 69, -1, _agentGetTelegramSeries, 69, 69, 0);
-				kernel_timing_trigger(1, 2204, nullptr);
-				_field98_should = 3103;
-
+				kernel_timing_trigger(1, 2201);
+				_ripleyShould = 3103;
 				break;
 
 			case 3103:
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentGetTelegramSeries, 71, 71, -1, _agentGetTelegramSeries, 71, 71, 0);
-				_field98_should = 3103;
-
+				_ripleyShould = 3103;
 				break;
 
 			case 3105:
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentGetTelegramSeries, 71, 86, 102, _agentGetTelegramSeries, 86, 86, 0);
-				_field98_should = 3107;
-
+				_ripleyShould = 3107;
 				break;
 
 			case 3106:
 				digi_play("950_S06", 2, 255, -1, 950);
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentGetTelegramSeries, 70, 71, -1, _agentGetTelegramSeries, 71, 71, 0);
-				_field98_should = 3103;
-
+				_ripleyShould = 3103;
 				break;
 
 			case 3107:
 				if (_field130) {
-					kernel_timing_trigger(1, 2501, nullptr);
+					kernel_timing_trigger(1, 2501);
 					_field130 = false;
 				} else {
-					_field98_should = 3108;
+					_ripleyShould = 3108;
 					_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
 					sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 11, 1, 102, _701rp01Series, 1, 1, 0);
 					sendWSMessage_10000(1, _agentPoshExpressMach, _agentTalkLoopTjSeries, 1, 1, -1, _agentTalkLoopTjSeries, 1, 1, 0);
 				}
-
 				break;
 
 			case 3108:
 				terminateMachine(_agentPoshExpressMach02);
-				kernel_timing_trigger(1, _alreadyBeenHereFl ? 45 : 95, nullptr);
+				kernel_timing_trigger(1, _alreadyBeenHereFl ? 45 : 95);
 				ws_unhide_walker(_G(my_walker));
-
 				break;
 
 			default:
@@ -863,11 +857,11 @@ void Room701::daemon() {
 			break;
 
 		case 3500:
-			switch (_field98_should) {
+			switch (_ripleyShould) {
 			case 3501:
 				_agentSignsForMoneySeries = series_load("AGENT  SIGNS FOR MONEY", -1, nullptr);
-				_field98_should = 3502;
-				_field6C_should = 2101;
+				_ripleyShould = 3502;
+				_agentShould = 2101;
 
 				terminateMachine(_ripTalksAgentMach);
 				player_set_commands_allowed(false);
@@ -878,15 +872,15 @@ void Room701::daemon() {
 				break;
 
 			case 3502:
-				_field6C_should = 2103;
+				_agentShould = 2103;
 				kernel_timing_trigger(1, 103, nullptr);
-				_field98_should = 3504;
+				_ripleyShould = 3504;
 
 				break;
 
 			case 3503:
 				terminateMachine(_agentPoshExpressMach02);
-				_field98_should = 3504;
+				_ripleyShould = 3504;
 				_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
 				sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 1, 11, 102, _701rp01Series, 11, 11, 0);
 
@@ -895,7 +889,7 @@ void Room701::daemon() {
 			case 3504:
 				terminateMachine(_agentPoshExpressMach);
 				terminateMachine(_agentPoshExpressMach02);
-				_field98_should = 3505;
+				_ripleyShould = 3505;
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 256, false, triggerMachineByHashCallback, "rip talks agent");
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentSignsForMoneySeries, 1, 70, 102, _agentSignsForMoneySeries, 70, 70, 0);
 
@@ -903,28 +897,28 @@ void Room701::daemon() {
 
 			case 3505:
 				digi_play("950_S06", 2, 255, -1, 950);
-				_field98_should = 3506;
+				_ripleyShould = 3506;
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentSignsForMoneySeries, 70, 94, 102, _agentSignsForMoneySeries, 94, 94, 0);
 
 				break;
 
 			case 3506:
 				terminateMachine(_ripTalksAgentMach);
-				_field98_should = 3507;
+				_ripleyShould = 3507;
 				_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
 				sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 11, 1, 102, _701rp01Series, 1, 1, 0);
 				_agentPoshExpressMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 1792, false, triggerMachineByHashCallback, "agent posh express");
-				_field68_mode = 2000;
-				_field6C_should = 2102;
+				_agentMode = 2000;
+				_agentShould = 2102;
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentTalkLoopTjSeries, 13, 13, 110, _agentTalkLoopTjSeries, 13, 13, 0);
 
 				break;
 
 			case 3507:
-				_field94_mode = 1000;
+				_ripleyMode = 1000;
 				inv_give_to_player("US DOLLARS");
 				terminateMachine(_agentPoshExpressMach02);
-				_field98_should = 1103;
+				_ripleyShould = 1103;
 				player_update_info(_G(my_walker), &_G(player_info));
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 256, false, triggerMachineByHashCallback, "rip talks agent");
 				sendWSMessage_10000(1, _ripTalksAgentMach, _ripTrekTalkerPos3Series, 5, 5, 102, _ripTrekTalkerPos3Series, 5, 5, 0);
@@ -939,17 +933,17 @@ void Room701::daemon() {
 
 			break;
 		case 3600:
-			switch (_field98_should) {
+			switch (_ripleyShould) {
 			case 3601:
 				_agentExchangeMoneySeries = series_load("AGENT  EXCHANGE MONEY", -1, nullptr);
 				sendWSMessage_10000(1, _ripTalksAgentMach, _ripTrekTalkerPos3Series, 1, 5, -1, _ripTrekHandTalkPos3Series, 1, 5, 1);
-				_field98_should = 3602;
+				_ripleyShould = 3602;
 				digi_play_loop(_convDigiName_2.c_str(), 1, 255, 103, -1);
 
 				break;
 
 			case 3602:
-				_field98_should = 3604;
+				_ripleyShould = 3604;
 				sendWSMessage_10000(1, _ripTalksAgentMach, _ripTrekTalkerPos3Series, 5, 5, 103, _ripTrekTalkerPos3Series, 5, 5, 1);
 
 				break;
@@ -957,7 +951,7 @@ void Room701::daemon() {
 			case 3603:
 				terminateMachine(_agentPoshExpressMach);
 				terminateMachine(_agentPoshExpressMach02);
-				_field98_should = 3605;
+				_ripleyShould = 3605;
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 256, false, triggerMachineByHashCallback, "rip talks agent");
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentExchangeMoneySeries, 1, 52, 102, _agentExchangeMoneySeries, 52, 52, 0);
 
@@ -966,20 +960,20 @@ void Room701::daemon() {
 			case 3604:
 				terminateMachine(_ripTalksAgentMach);
 				_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
-				_field98_should = 3603;
+				_ripleyShould = 3603;
 				sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 1, 11, 102, _701rp01Series, 11, 11, 0);
 
 				break;
 
 			case 3605:
 				digi_play("950_S06", 2, 255, -1, 959);
-				_field98_should = 33605;
+				_ripleyShould = 33605;
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentExchangeMoneySeries, 52, 19, 102, _agentExchangeMoneySeries, 19, 19, 0);
 
 				break;
 
 			case 3606:
-				_field98_should = 3607;
+				_ripleyShould = 3607;
 				terminateMachine(_ripTalksAgentMach);
 				_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
 				sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 11, 1, 102, _701rp01Series, 1, 1, 0);
@@ -992,8 +986,8 @@ void Room701::daemon() {
 				inv_give_to_player("SIKKIMESE RUPEE");
 				terminateMachine(_agentPoshExpressMach02);
 
-				_field94_mode = 1000;
-				_field98_should = 1103;
+				_ripleyMode = 1000;
+				_ripleyShould = 1103;
 
 				player_update_info(_G(my_walker), &_G(player_info));
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 256, false, triggerMachineByHashCallback, "rip talks agent");
@@ -1005,7 +999,7 @@ void Room701::daemon() {
 
 			case 33605:
 				digi_play("950_S06", 2, 255, -1, 950);
-				_field98_should = 3606;
+				_ripleyShould = 3606;
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentExchangeMoneySeries, 19, 1, 102, _agentExchangeMoneySeries, 1, 1, 0);
 
 				break;
@@ -1016,11 +1010,11 @@ void Room701::daemon() {
 
 			break;
 		case 3700:
-			switch (_field98_should) {
+			switch (_ripleyShould) {
 			case 3701:
 				player_set_commands_allowed(false);
 				terminateMachine(_ripTalksAgentMach);
-				_field98_should = 3702;
+				_ripleyShould = 3702;
 				_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
 				sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 1, 11, 102, _701rp01Series, 11, 11, 0);
 
@@ -1029,7 +1023,7 @@ void Room701::daemon() {
 			case 3702:
 				terminateMachine(_agentPoshExpressMach);
 				terminateMachine(_agentPoshExpressMach02);
-				_field98_should = 3709;
+				_ripleyShould = 3709;
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 256, false, triggerMachineByHashCallback, "rip talks agent");
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentGiveParcelSeries, 1, 33, 102, _agentGiveParcelSeries, 33, 33, 0);
 
@@ -1091,9 +1085,9 @@ void Room701::daemon() {
 				}
 
 				_agentPoshExpressMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 1792, false, triggerMachineByHashCallback, "agent posh express");
-				_field6C_should = 2102;
-				_field68_mode = 2000;
-				_field98_should = 3705;
+				_agentShould = 2102;
+				_agentMode = 2000;
+				_ripleyShould = 3705;
 
 				kernel_timing_trigger(1, 102, nullptr);
 				sendWSMessage_10000(1, _agentPoshExpressMach, _agentTalkLoopTjSeries, 13, 13, 110, _agentTalkLoopTjSeries, 13, 13, 0);
@@ -1101,7 +1095,7 @@ void Room701::daemon() {
 				break;
 
 			case 3705:
-				_field98_should = 3706;
+				_ripleyShould = 3706;
 				terminateMachine(_ripTalksAgentMach);
 				_agentPoshExpressMach02 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "agent posh express");
 				sendWSMessage_10000(1, _agentPoshExpressMach02, _701rp01Series, 11, 1, 102, _701rp01Series, 1, 1, 0);
@@ -1110,8 +1104,8 @@ void Room701::daemon() {
 
 			case 3706:
 				terminateMachine(_agentPoshExpressMach02);
-				_field94_mode = 1000;
-				_field98_should = 98;
+				_ripleyMode = 1000;
+				_ripleyShould = 1103;
 				player_update_info(_G(my_walker), &_G(player_info));
 				_ripTalksAgentMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 256, false, triggerMachineByHashCallback, "rip talks agent");
 				sendWSMessage_10000(1, _ripTalksAgentMach, _ripTrekTalkerPos3Series, 5, 5, 102, _ripTrekTalkerPos3Series, 5, 5, 0);
@@ -1120,7 +1114,7 @@ void Room701::daemon() {
 				break;
 
 			case 3709:
-				_field98_should = 3704;
+				_ripleyShould = 3704;
 				sendWSMessage_10000(1, _ripTalksAgentMach, _agentGiveParcelSeries, 34, 51, 102, _agentGiveParcelSeries, 51, 51, 0);
 				digi_play("950_S09", 2, 255, -1, 950);
 
@@ -1148,13 +1142,13 @@ void Room701::daemon() {
 		break;
 
 	case 111:
-		if (_field68_mode != 2000)
+		if (_agentMode != 2000)
 			return;
 
-		switch (_field6C_should) {
+		switch (_agentShould) {
 		case 2100:
 			sendWSMessage_10000(1, _agentPoshExpressMach, _agentTalkLoopTjSeries, 14, 14, 110, _agentTalkLoopTjSeries, 14, 14, 0);
-			_field6C_should = 2102;
+			_agentShould = 2102;
 
 			break;
 
@@ -1219,14 +1213,14 @@ void Room701::daemon() {
 		break;
 
 	case 2200:
-		_field98_should = 3100;
-		_field94_mode = 3000;
+		_ripleyShould = 3100;
+		_ripleyMode = 3000;
 		sendWSMessage_10000(1, _agentPoshExpressMach, _agentTalkLoopTjSeries, 13, 13, 102, _agentTalkLoopTjSeries, 13, 13, 0);
 
 		break;
 
 	case 2201:
-		_field98_should = 3103;
+		_ripleyShould = 3103;
 		kernel_timing_trigger(60, 2300, nullptr);
 
 		break;
@@ -1245,32 +1239,39 @@ void Room701::daemon() {
 		if (_itemDigiName) {
 			_field58_digiName = _itemDigiName;
 			_itemDigiName = nullptr;
-		} else if (_G(flags[V364]) == 1) {
+		} else if (_G(flags)[V364] == 1) {
 			_field58_digiName = "201R26";
-		} else if (_G(flags[V365]) == 1) {
+			_G(flags)[V364] = 0;
+		} else if (_G(flags)[V365] == 1) {
 			_field58_digiName = "201R61";
-		} else if (_G(flags[V366]) == 1) {
+			_G(flags)[V365] = 0;
+		} else if (_G(flags)[V366] == 1) {
 			_field58_digiName = "401R31";
-		} else if (_G(flags[V373]) == 1) {
+			_G(flags)[V366] = 0;
+		} else if (_G(flags)[V373] == 1) {
 			_field58_digiName = "401R36";
-		} else if (_G(flags[V370]) == 1) {
+			_G(flags)[V373] = 0;
+		} else if (_G(flags)[V370] == 1) {
 			_field58_digiName = "501R02";
-		} else if (_G(flags[V371]) == 1) {
+			_G(flags)[V370] = 0;
+		} else if (_G(flags)[V371] == 1) {
 			_field58_digiName = "501R03";
-		} else if (_G(flags[V372]) == 1) {
+			_G(flags)[V371] = 0;
+		} else if (_G(flags)[V372] == 1) {
 			_field58_digiName = "701R39";
 			_field5C_digiName = "701R39A";
-		} else if (_G(flags[V367]) == 1) {
+			_G(flags)[V372] = 0;
+		} else if (_G(flags)[V367] == 1) {
 			_field58_digiName = "401R37";
-			_G(flags[V367]) = 0;
+			_G(flags)[V367] = 0;
 			_field130 = true;
-		} else if (_G(flags[V368]) == 1) {
+		} else if (_G(flags)[V368] == 1) {
 			_field58_digiName = "401R38";
-			_G(flags[V368]) = 0;
+			_G(flags)[V368] = 0;
 			_field130 = true;
-		} else if (_G(flags[V369]) == 1) {
+		} else if (_G(flags)[V369] == 1) {
 			_field58_digiName = "401R39";
-			_G(flags[V369]) = 0;
+			_G(flags)[V369] = 0;
 			_field130 = true;
 		}
 
@@ -1278,7 +1279,7 @@ void Room701::daemon() {
 		break;
 
 	case 2301:
-		_field98_should = 3106;
+		_ripleyShould = 3106;
 		kernel_timing_trigger(1, 2302, nullptr);
 
 		break;
@@ -1317,25 +1318,23 @@ void Room701::daemon() {
 
 	case 2306:
 		if (_field130) {
-			_field94_mode = 3000;
-			_field98_should = 3105;
+			_ripleyMode = 3000;
+			_ripleyShould = 3105;
 			kernel_timing_trigger(1, 102, nullptr);
 		} else {
 			--_field50_counter;
 			if (_field50_counter <= 0) {
-				_field98_should = 3106;
-				kernel_timing_trigger(1, 2300, nullptr);
+				kernel_timing_trigger(1, 2307);
 			} else {
-				kernel_timing_trigger(1, 2307, nullptr);
+				_ripleyShould = 3106;
+				kernel_timing_trigger(1, 2300);
 			}
 		}
-
 		break;
 
 	case 2307:
-		_field98_should = 3105;
+		_ripleyShould = 3105;
 		kernel_timing_trigger(10, 102, nullptr);
-
 		break;
 
 	case 2501:
@@ -1380,19 +1379,19 @@ void Room701::daemon() {
 	case 2601:
 		switch (_travelDest) {
 		case 1:
-			_G(flags[kTravelDest]) = 1;
+			_G(flags)[kTravelDest] = 1;
 			break;
 
 		case 2:
-			_G(flags[kTravelDest]) = 0;
+			_G(flags)[kTravelDest] = 0;
 			break;
 
 		case 3:
-			_G(flags[kTravelDest]) = 4;
+			_G(flags)[kTravelDest] = 4;
 			break;
 
 		case 4:
-			_G(flags[kTravelDest]) = 2;
+			_G(flags)[kTravelDest] = 2;
 			break;
 
 		default:
@@ -1439,12 +1438,12 @@ void Room701::conv701a() {
 	if (who <= 0) {
 		if (_conv701aNode == 3 && entry == 0) {
 			_convDigiName_1 = Common::String(digiName);
-			_field94_mode = 3500;
-			_field98_should = 3501;
+			_ripleyMode = 3500;
+			_ripleyShould = 3501;
 			return;
 		}
 
-		_field6C_should = 2101;
+		_agentShould = 2101;
 
 	} else if (who == 1) {
 		if (_conv701aNode == 1 && entry == 1) {
@@ -1463,33 +1462,33 @@ void Room701::conv701a() {
 		case 1:
 			if (entry == 3) {
 				_convDigiName_2 = Common::String(digiName);
-				_field94_mode = 3600;
-				_field98_should = 3601;
+				_ripleyMode = 3600;
+				_ripleyShould = 3601;
 
 				return;
 			}
 
-			_field98_should = 1102;
+			_ripleyShould = 1102;
 
 			break;
 
 		case 6:
 			if (entry == 0) {
-				_field98_should = 1102;
+				_ripleyShould = 1102;
 				digi_play(digiName, 1, 255, 1, -1);
 				_field90 = true;
 
 				return;
 			}
 
-			_field98_should = 1102;
+			_ripleyShould = 1102;
 
 			break;
 
 		case 11:
 			if (entry != 12) {
-				_field94_mode = 3700;
-				_field98_should = 3701;
+				_ripleyMode = 3700;
+				_ripleyShould = 3701;
 
 				return;
 			}
@@ -1497,7 +1496,7 @@ void Room701::conv701a() {
 			break;
 
 		default:
-			_field98_should = 1102;
+			_ripleyShould = 1102;
 			break;
 		}
 	}
@@ -1506,23 +1505,23 @@ void Room701::conv701a() {
 }
 
 void Room701::updateCounter() {
-	if (_G(flags[V364]) == 1) {
+	if (_G(flags)[V364] == 1) {
 		++_field50_counter;
-		switch (_G(flags[V005])) {
+		switch (_G(flags)[V005]) {
 		case 1:
-			_G(flags[V351]) = 1;
+			_G(flags)[V351] = 1;
 			break;
 
 		case 2:
-			_G(flags[V352]) = 1;
+			_G(flags)[V352] = 1;
 			break;
 
 		case 3:
-			_G(flags[V353]) = 1;
+			_G(flags)[V353] = 1;
 			break;
 
 		case 4:
-			_G(flags[V354]) = 1;
+			_G(flags)[V354] = 1;
 			break;
 
 		default:
@@ -1530,48 +1529,48 @@ void Room701::updateCounter() {
 		}
 	}
 
-	if (_G(flags[V365]) == 1) {
-		_G(flags[V355]) = 1;
+	if (_G(flags)[V365] == 1) {
+		_G(flags)[V355] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V366]) == 1) {
-		_G(flags[V356]) = 1;
+	if (_G(flags)[V366] == 1) {
+		_G(flags)[V356] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V367]) == 1) {
-		_G(flags[V357]) = 1;
+	if (_G(flags)[V367] == 1) {
+		_G(flags)[V357] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V368]) == 1) {
-		_G(flags[V358]) = 1;
+	if (_G(flags)[V368] == 1) {
+		_G(flags)[V358] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V369]) == 1) {
-		_G(flags[V359]) = 1;
+	if (_G(flags)[V369] == 1) {
+		_G(flags)[V359] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V370]) == 1) {
-		_G(flags[V360]) = 1;
+	if (_G(flags)[V370] == 1) {
+		_G(flags)[V360] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V371]) == 1) {
-		_G(flags[V361]) = 1;
+	if (_G(flags)[V371] == 1) {
+		_G(flags)[V361] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V372]) == 1) {
-		_G(flags[V362]) = 1;
+	if (_G(flags)[V372] == 1) {
+		_G(flags)[V362] = 1;
 		++_field50_counter;
 	}
 
-	if (_G(flags[V373]) == 1) {
-		_G(flags[V363]) = 1;
+	if (_G(flags)[V373] == 1) {
+		_G(flags)[V363] = 1;
 		++_field50_counter;
 	}
 }
@@ -1619,6 +1618,10 @@ int32 Room701::inventoryCheck() {
 		_inventoryCheckArray[_inventoryCheckCounter++] = 12;
 
 	return _inventoryCheckCounter > 0 ? 1 : 0;
+}
+
+void Room701::syncGame(Common::Serializer &s) {
+	s.syncAsByte(_field88);
 }
 
 } // namespace Rooms

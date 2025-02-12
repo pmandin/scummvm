@@ -123,7 +123,7 @@ public:
 	LingoArchive *getMainLingoArch();
 	LingoArchive *getSharedLingoArch();
 	ScriptContext *getScriptContext(ScriptType type, CastMemberID id);
-	Symbol getHandler(const Common::String &name);
+	Symbol getHandler(const Common::String &name, uint16 castLibHint = 0);
 
 	// events.cpp
 	bool processEvent(Common::Event &event);
@@ -182,8 +182,8 @@ public:
 
 	uint16 _currentHiliteChannelId;
 
-	uint _lastTimeOut;
-	uint _timeOutLength;
+	int _lastTimeOut;
+	int _timeOutLength;
 	bool _timeOutKeyDown;
 	bool _timeOutMouse;
 	bool _timeOutPlay;

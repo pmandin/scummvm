@@ -23,6 +23,7 @@
 #define SCUMM_SOUNDSE_H
 
 #include "common/scummsys.h"
+#include "audio/audiostream.h"
 #include "audio/mixer.h"
 #include "scumm/file.h"
 
@@ -31,7 +32,7 @@ class SeekableSubReadStream;
 }
 
 namespace Audio {
-class SeekableAudioStream;
+class WMACodec;
 }
 
 namespace Scumm {
@@ -46,6 +47,26 @@ enum SoundSEType {
 	kSoundSETypeAmbience,
 	kSoundSETypeCommentary,
 	kSoundSETypePatch
+};
+
+enum AudioCodec {
+	kXWBCodecPCM = 0,
+	kXWBCodecXMA = 1,
+	kXWBCodecADPCM = 2,
+	kXWBCodecWMA = 3,
+	kFSBCodecMP3 = 4
+};
+
+struct AudioEntry {
+	uint64 offset;
+	uint32 length;
+	AudioCodec codec;
+	byte channels;
+	uint16 rate;
+	uint16 align;
+	byte bits;
+	Common::String name;
+	bool isPatched;
 };
 
 class SoundSE {
@@ -68,15 +89,10 @@ public:
 		_currentScriptOffsetSavedForSpeechMI = scriptOffset;
 	}
 
-private:
-	enum AudioCodec {
-		kXWBCodecPCM = 0,
-		kXWBCodecXMA = 1,
-		kXWBCodecADPCM = 2,
-		kXWBCodecWMA = 3,
-		kFSBCodecMP3 = 4
-	};
+	void startAmbience(int32 musicTrack);
+	void stopAmbience();
 
+private:
 	enum XWBSegmentType {
 		kXWBSegmentBankData = 0,
 		kXWBSegmentEntryMetaData = 1,
@@ -104,18 +120,6 @@ private:
 		int32 hashFourCharString; // Hash calculated on a four char string, from disasm
 	};
 
-	struct AudioEntry {
-		uint64 offset;
-		uint32 length;
-		AudioCodec codec;
-		byte channels;
-		uint16 rate;
-		uint16 align;
-		byte bits;
-		Common::String name;
-		bool isPatched;
-	};
-
 	ScummEngine *_vm;
 	Audio::Mixer *_mixer;
 
@@ -126,8 +130,8 @@ private:
 
 	OffsetToIndexMap _offsetToIndexDOTTAndFT;
 	NameToOffsetMap _nameToOffsetDOTTAndFT;
-	NameToIndexMap _nameToIndex;
-	NameToIndexMap _nameToIndexPatched;
+	NameToIndexMap _nameToIndexMISpeech;
+	NameToIndexMap _nameToIndexMISpeechPatched;
 
 	AudioIndex _musicEntries;
 	AudioIndex _speechEntries;
@@ -142,6 +146,8 @@ private:
 	/* MI SE injected speech */
 	int32 _currentScriptSavedForSpeechMI = 0;
 	int32 _currentScriptOffsetSavedForSpeechMI = 0;
+
+	Audio::SoundHandle _ambienceHandle;
 
 	int32 getSoundIndexFromOffset(uint32 offset);
 	int32 getAppropriateSpeechCue(const char *msgString,
@@ -167,10 +173,40 @@ private:
 	Common::SeekableReadStream *getAudioFile(const Common::String &filename);
 	Common::SeekableReadStream *getAudioFile(SoundSEType type);
 	AudioIndex *getAudioEntries(SoundSEType type);
+	int32 getAmbienceTrack(int32 musicTrack);
 
 	Audio::SeekableAudioStream *createSoundStream(Common::SeekableSubReadStream *stream, AudioEntry entry, DisposeAfterUse::Flag disposeAfterUse = DisposeAfterUse::YES);
 };
 
+#if 0
+/**
+ * A special headerless WMA stream, used in MI1:SE and MI2:SE
+ */
+class HeaderlessWMAStream : public Audio::SeekableAudioStream {
+public:
+	HeaderlessWMAStream(Common::SeekableReadStream *stream,
+						AudioEntry entry,
+						DisposeAfterUse::Flag disposeAfterUse);
+	~HeaderlessWMAStream() override;
+
+	int readBuffer(int16 *buffer, const int numSamples) override;
+
+	bool endOfData() const override { return _stream->eos(); }
+	bool isStereo() const override { return _entry.channels == 2; }
+	int getRate() const override { return _entry.rate; }
+	Audio::Timestamp getLength() const override {
+		return Audio::Timestamp(_entry.length / 10000, _entry.rate);
+	}
+	bool seek(const Audio::Timestamp &where) override;
+
+private:
+	Common::SeekableReadStream *_stream = nullptr;
+	AudioStream *_audioStream = nullptr;
+	AudioEntry _entry;
+	DisposeAfterUse::Flag _disposeAfterUse;
+	Audio::WMACodec *_wmaCodec = nullptr;
+};
+#endif
 
 } // End of namespace Scumm
 

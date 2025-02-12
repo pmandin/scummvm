@@ -23,6 +23,8 @@
 #include "common/tokenizer.h"
 
 #include "director/director.h"
+#include "director/images.h"
+#include "director/window.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-utils.h"
@@ -162,71 +164,71 @@ const XlibFileDesc QtvrxtraXtra::fileNames[] = {
 };
 
 static const MethodProto xlibMethods[] = {
-	{ "new",				QtvrxtraXtra::m_new,		 0, 0,	500 },
-	{ "forget",				QtvrxtraXtra::m_forget,		 0, 0,	500 },
-	{ "QTVREnter",			QtvrxtraXtra::m_QTVREnter,	 0, 0,	500 },
-	{ "QTVRExit",			QtvrxtraXtra::m_QTVRExit,	 0, 0,	500 },
-	{ "QTVROpen",				QtvrxtraXtra::m_QTVROpen,		 3, 3,	500 },
-	{ "QTVRClose",				QtvrxtraXtra::m_QTVRClose,		 0, 0,	500 },
-	{ "QTVRUpdate",				QtvrxtraXtra::m_QTVRUpdate,		 0, 0,	500 },
+	{ "new",							QtvrxtraXtra::m_new,		 0, 0,	500 },
+	{ "forget",							QtvrxtraXtra::m_forget,		 0, 0,	500 },
+	{ "QTVREnter",						QtvrxtraXtra::m_QTVREnter,	 0, 0,	500 },
+	{ "QTVRExit",						QtvrxtraXtra::m_QTVRExit,	 0, 0,	500 },
+	{ "QTVROpen",						QtvrxtraXtra::m_QTVROpen,		 3, 3,	500 },
+	{ "QTVRClose",						QtvrxtraXtra::m_QTVRClose,		 0, 0,	500 },
+	{ "QTVRUpdate",						QtvrxtraXtra::m_QTVRUpdate,		 0, 0,	500 },
 	{ "QTVRGetQTVRType",				QtvrxtraXtra::m_QTVRGetQTVRType,		 0, 0,	500 },
-	{ "QTVRIdle",				QtvrxtraXtra::m_QTVRIdle,		 0, 0,	500 },
-	{ "QTVRMouseDown",				QtvrxtraXtra::m_QTVRMouseDown,		 0, 0,	500 },
-	{ "QTVRMouseOver",				QtvrxtraXtra::m_QTVRMouseOver,		 0, 0,	500 },
+	{ "QTVRIdle",						QtvrxtraXtra::m_QTVRIdle,		 0, 0,	500 },
+	{ "QTVRMouseDown",					QtvrxtraXtra::m_QTVRMouseDown,		 0, 0,	500 },
+	{ "QTVRMouseOver",					QtvrxtraXtra::m_QTVRMouseOver,		 0, 0,	500 },
 	{ "QTVRGetPanAngle",				QtvrxtraXtra::m_QTVRGetPanAngle,		 0, 0,	500 },
 	{ "QTVRSetPanAngle",				QtvrxtraXtra::m_QTVRSetPanAngle,		 1, 1,	500 },
 	{ "QTVRGetTiltAngle",				QtvrxtraXtra::m_QTVRGetTiltAngle,		 0, 0,	500 },
 	{ "QTVRSetTiltAngle",				QtvrxtraXtra::m_QTVRSetTiltAngle,		 1, 1,	500 },
-	{ "QTVRGetFOV",				QtvrxtraXtra::m_QTVRGetFOV,		 0, 0,	500 },
-	{ "QTVRSetFOV",				QtvrxtraXtra::m_QTVRSetFOV,		 1, 1,	500 },
+	{ "QTVRGetFOV",						QtvrxtraXtra::m_QTVRGetFOV,		 0, 0,	500 },
+	{ "QTVRSetFOV",						QtvrxtraXtra::m_QTVRSetFOV,		 1, 1,	500 },
 	{ "QTVRGetClickLoc",				QtvrxtraXtra::m_QTVRGetClickLoc,		 0, 0,	500 },
 	{ "QTVRSetClickLoc",				QtvrxtraXtra::m_QTVRSetClickLoc,		 1, 0,	500 },
-	{ "QTVRGetClickPanAngles",				QtvrxtraXtra::m_QTVRGetClickPanAngles,		 0, 0,	500 },
+	{ "QTVRGetClickPanAngles",			QtvrxtraXtra::m_QTVRGetClickPanAngles,		 0, 0,	500 },
 	{ "QTVRGetClickPanLoc",				QtvrxtraXtra::m_QTVRGetClickPanLoc,		 0, 0,	500 },
 	{ "QTVRGetHotSpotID",				QtvrxtraXtra::m_QTVRGetHotSpotID,		 0, 0,	500 },
 	{ "QTVRSetHotSpotID",				QtvrxtraXtra::m_QTVRSetHotSpotID,		 1, 0,	500 },
 	{ "QTVRGetHotSpotName",				QtvrxtraXtra::m_QTVRGetHotSpotName,		 0, 0,	500 },
 	{ "QTVRGetHotSpotType",				QtvrxtraXtra::m_QTVRGetHotSpotType,		 0, 0,	500 },
-	{ "QTVRGetHotSpotViewAngles",				QtvrxtraXtra::m_QTVRGetHotSpotViewAngles,		 0, 0,	500 },
-	{ "QTVRGetObjectViewAngles",				QtvrxtraXtra::m_QTVRGetObjectViewAngles,		 0, 0,	500 },
-	{ "QTVRGetObjectZoomRect",				QtvrxtraXtra::m_QTVRGetObjectZoomRect,		 0, 0,	500 },
-	{ "QTVRGetNodeID",				QtvrxtraXtra::m_QTVRGetNodeID,		 0, 0,	500 },
-	{ "QTVRSetNodeID",				QtvrxtraXtra::m_QTVRSetNodeID,		 1, 1,	500 },
+	{ "QTVRGetHotSpotViewAngles",		QtvrxtraXtra::m_QTVRGetHotSpotViewAngles,		 0, 0,	500 },
+	{ "QTVRGetObjectViewAngles",		QtvrxtraXtra::m_QTVRGetObjectViewAngles,		 0, 0,	500 },
+	{ "QTVRGetObjectZoomRect",			QtvrxtraXtra::m_QTVRGetObjectZoomRect,		 0, 0,	500 },
+	{ "QTVRGetNodeID",					QtvrxtraXtra::m_QTVRGetNodeID,		 0, 0,	500 },
+	{ "QTVRSetNodeID",					QtvrxtraXtra::m_QTVRSetNodeID,		 1, 1,	500 },
 	{ "QTVRGetNodeName",				QtvrxtraXtra::m_QTVRGetNodeName,		 0, 0,	500 },
-	{ "QTVRGetQuality",				QtvrxtraXtra::m_QTVRGetQuality,		 0, 0,	500 },
-	{ "QTVRSetQuality",				QtvrxtraXtra::m_QTVRSetQuality,		 1, 1,	500 },
-	{ "QTVRGetTransitionMode",				QtvrxtraXtra::m_QTVRGetTransitionMode,		 0, 0,	500 },
-	{ "QTVRSetTransitionMode",				QtvrxtraXtra::m_QTVRSetTransitionMode,		 1, 1,	500 },
-	{ "QTVRGetTransitionSpeed",				QtvrxtraXtra::m_QTVRGetTransitionSpeed,		 0, 0,	500 },
-	{ "QTVRSetTransitionSpeed",				QtvrxtraXtra::m_QTVRSetTransitionSpeed,		 1, 1,	500 },
+	{ "QTVRGetQuality",					QtvrxtraXtra::m_QTVRGetQuality,		 0, 0,	500 },
+	{ "QTVRSetQuality",					QtvrxtraXtra::m_QTVRSetQuality,		 1, 1,	500 },
+	{ "QTVRGetTransitionMode",			QtvrxtraXtra::m_QTVRGetTransitionMode,		 0, 0,	500 },
+	{ "QTVRSetTransitionMode",			QtvrxtraXtra::m_QTVRSetTransitionMode,		 1, 1,	500 },
+	{ "QTVRGetTransitionSpeed",			QtvrxtraXtra::m_QTVRGetTransitionSpeed,		 0, 0,	500 },
+	{ "QTVRSetTransitionSpeed",			QtvrxtraXtra::m_QTVRSetTransitionSpeed,		 1, 1,	500 },
 	{ "QTVRGetUpdateMode",				QtvrxtraXtra::m_QTVRGetUpdateMode,		 0, 0,	500 },
 	{ "QTVRSetUpdateMode",				QtvrxtraXtra::m_QTVRSetUpdateMode,		 1, 1,	500 },
-	{ "QTVRGetVisible",				QtvrxtraXtra::m_QTVRGetVisible,		 0, 0,	500 },
-	{ "QTVRSetVisible",				QtvrxtraXtra::m_QTVRSetVisible,		 1, 1,	500 },
+	{ "QTVRGetVisible",					QtvrxtraXtra::m_QTVRGetVisible,		 0, 0,	500 },
+	{ "QTVRSetVisible",					QtvrxtraXtra::m_QTVRSetVisible,		 1, 1,	500 },
 	{ "QTVRGetWarpMode",				QtvrxtraXtra::m_QTVRGetWarpMode,		 0, 0,	500 },
 	{ "QTVRSetWarpMode",				QtvrxtraXtra::m_QTVRSetWarpMode,		 1, 0,	500 },
-	{ "QTVRCollapseToHotSpotRgn",				QtvrxtraXtra::m_QTVRCollapseToHotSpotRgn,		 0, 0,	500 },
+	{ "QTVRCollapseToHotSpotRgn",		QtvrxtraXtra::m_QTVRCollapseToHotSpotRgn,		 0, 0,	500 },
 	{ "QTVRZoomOutEffect",				QtvrxtraXtra::m_QTVRZoomOutEffect,		 3, 0,	500 },
-	{ "QTVRGetColumn",				QtvrxtraXtra::m_QTVRGetColumn,		 0, 0,	500 },
-	{ "QTVRSetColumn",				QtvrxtraXtra::m_QTVRSetColumn,		 1, 1,	500 },
-	{ "QTVRGetRow",				QtvrxtraXtra::m_QTVRGetRow,		 0, 0,	500 },
-	{ "QTVRSetRow",				QtvrxtraXtra::m_QTVRSetRow,		 1, 1,	500 },
-	{ "QTVRNudge",				QtvrxtraXtra::m_QTVRNudge,		 1, 1,	500 },
-	{ "QTVRGetMouseDownHandler",				QtvrxtraXtra::m_QTVRGetMouseDownHandler,		 0, 0,	500 },
-	{ "QTVRSetMouseDownHandler",				QtvrxtraXtra::m_QTVRSetMouseDownHandler,		 1, 0,	500 },
-	{ "QTVRGetMouseOverHandler",				QtvrxtraXtra::m_QTVRGetMouseOverHandler,		 0, 0,	500 },
-	{ "QTVRSetMouseOverHandler",				QtvrxtraXtra::m_QTVRSetMouseOverHandler,		 1, 0,	500 },
-	{ "QTVRGetMouseStillDownHandler",				QtvrxtraXtra::m_QTVRGetMouseStillDownHandler,		 0, 0,	500 },
-	{ "QTVRSetMouseStillDownHandler",				QtvrxtraXtra::m_QTVRSetMouseStillDownHandler,		 1, 0,	500 },
-	{ "QTVRGetNodeLeaveHandler",				QtvrxtraXtra::m_QTVRGetNodeLeaveHandler,		 0, 0,	500 },
-	{ "QTVRSetNodeLeaveHandler",				QtvrxtraXtra::m_QTVRSetNodeLeaveHandler,		 1, 0,	500 },
-	{ "QTVRGetPanZoomStartHandler",				QtvrxtraXtra::m_QTVRGetPanZoomStartHandler,		 0, 0,	500 },
-	{ "QTVRSetPanZoomStartHandler",				QtvrxtraXtra::m_QTVRSetPanZoomStartHandler,		 1, 0,	500 },
-	{ "QTVRGetRolloverHotSpotHandler",				QtvrxtraXtra::m_QTVRGetRolloverHotSpotHandler,		 0, 0,	500 },
-	{ "QTVRSetRolloverHotSpotHandler",				QtvrxtraXtra::m_QTVRSetRolloverHotSpotHandler,		 1, 0,	500 },
+	{ "QTVRGetColumn",					QtvrxtraXtra::m_QTVRGetColumn,		 0, 0,	500 },
+	{ "QTVRSetColumn",					QtvrxtraXtra::m_QTVRSetColumn,		 1, 1,	500 },
+	{ "QTVRGetRow",						QtvrxtraXtra::m_QTVRGetRow,		 0, 0,	500 },
+	{ "QTVRSetRow",						QtvrxtraXtra::m_QTVRSetRow,		 1, 1,	500 },
+	{ "QTVRNudge",						QtvrxtraXtra::m_QTVRNudge,		 1, 1,	500 },
+	{ "QTVRGetMouseDownHandler",		QtvrxtraXtra::m_QTVRGetMouseDownHandler,		 0, 0,	500 },
+	{ "QTVRSetMouseDownHandler",		QtvrxtraXtra::m_QTVRSetMouseDownHandler,		 1, 0,	500 },
+	{ "QTVRGetMouseOverHandler",		QtvrxtraXtra::m_QTVRGetMouseOverHandler,		 0, 0,	500 },
+	{ "QTVRSetMouseOverHandler",		QtvrxtraXtra::m_QTVRSetMouseOverHandler,		 1, 0,	500 },
+	{ "QTVRGetMouseStillDownHandler",	QtvrxtraXtra::m_QTVRGetMouseStillDownHandler,		 0, 0,	500 },
+	{ "QTVRSetMouseStillDownHandler",	QtvrxtraXtra::m_QTVRSetMouseStillDownHandler,		 1, 0,	500 },
+	{ "QTVRGetNodeLeaveHandler",		QtvrxtraXtra::m_QTVRGetNodeLeaveHandler,		 0, 0,	500 },
+	{ "QTVRSetNodeLeaveHandler",		QtvrxtraXtra::m_QTVRSetNodeLeaveHandler,		 1, 0,	500 },
+	{ "QTVRGetPanZoomStartHandler",		QtvrxtraXtra::m_QTVRGetPanZoomStartHandler,		 0, 0,	500 },
+	{ "QTVRSetPanZoomStartHandler",		QtvrxtraXtra::m_QTVRSetPanZoomStartHandler,		 1, 0,	500 },
+	{ "QTVRGetRolloverHotSpotHandler",	QtvrxtraXtra::m_QTVRGetRolloverHotSpotHandler,		 0, 0,	500 },
+	{ "QTVRSetRolloverHotSpotHandler",	QtvrxtraXtra::m_QTVRSetRolloverHotSpotHandler,		 1, 0,	500 },
 	{ "QTVRExitMouseOver",				QtvrxtraXtra::m_QTVRExitMouseOver,		 0, 0,	500 },
 	{ "QTVRPassMouseDown",				QtvrxtraXtra::m_QTVRPassMouseDown,		 0, 0,	500 },
-	{ "IsQTVRMovie",				QtvrxtraXtra::m_IsQTVRMovie,		 0, 0,	500 },
+	{ "IsQTVRMovie",					QtvrxtraXtra::m_IsQTVRMovie,		 0, 0,	500 },
 	{ nullptr, nullptr, 0, 0, 0 }
 };
 
@@ -247,6 +249,8 @@ QtvrxtraXtraObject::QtvrxtraXtraObject(ObjectType ObjectType) :Object<QtvrxtraXt
 	_transitionSpeed = 1.0f;
 
 	_updateMode = "normal";
+
+	_widget = nullptr;
 }
 
 bool QtvrxtraXtraObject::hasProp(const Common::String &propName) {
@@ -359,11 +363,16 @@ void QtvrxtraXtra::m_QTVROpen(int nargs) {
 		return;
 	}
 
+	me->_video->setTargetSize(me->_rect.width(), me->_rect.height());
+
+	me->_widget = new QtvrxtraWidget(me, g_director->getCurrentWindow(),
+			me->_rect.left, me->_rect.top, me->_rect.width(), me->_rect.height(),
+			g_director->getMacWindowManager());
+
 	g_lingo->push(Common::String());
 }
 
 void QtvrxtraXtra::m_QTVRClose(int nargs) {
-	g_lingo->printArgs("QtvrxtraXtra::m_QTVRClose", nargs);
 	ARGNUMCHECK(0);
 
 	QtvrxtraXtraObject *me = (QtvrxtraXtraObject *)g_lingo->_state->me.u.obj;
@@ -372,13 +381,14 @@ void QtvrxtraXtra::m_QTVRClose(int nargs) {
 		me->_video->close();
 		delete me->_video;
 		me->_video = nullptr;
+
+		delete me->_widget;
 	}
 }
 
 XOBJSTUB(QtvrxtraXtra::m_QTVRUpdate, 0)
 
 void QtvrxtraXtra::m_QTVRGetQTVRType(int nargs) {
-	g_lingo->printArgs("QtvrxtraXtra::m_QTVRGetQTVRType", nargs);
 	ARGNUMCHECK(0);
 
 	QtvrxtraXtraObject *me = (QtvrxtraXtraObject *)g_lingo->_state->me.u.obj;
@@ -398,69 +408,16 @@ void QtvrxtraXtra::m_QTVRGetQTVRType(int nargs) {
 }
 
 void QtvrxtraXtra::m_QTVRIdle(int nargs) {
-	g_lingo->printArgs("QtvrxtraXtra::m_QTVRGetQTVRType", nargs);
 	ARGNUMCHECK(0);
 
 	QtvrxtraXtraObject *me = (QtvrxtraXtraObject *)g_lingo->_state->me.u.obj;
-
 	Graphics::Surface const *frame = me->_video->decodeNextFrame();
+
 	Graphics::Surface *dither = frame->convertTo(g_director->_wm->_pixelformat, me->_video->getPalette(), 256, g_director->getPalette(), 256, Graphics::kDitherNaive);
 
-	g_system->copyRectToScreen(dither->getPixels(), dither->pitch, me->_rect.left, me->_rect.top, dither->w, dither->h);
-}
-
-bool QtvrxtraXtraObject::processEvent(Common::Event &event) {
-	// FIXME: This class needs to inherit from MacWidget and override this function
-
-	if (!(_capEventsMouseOver && _capEventsMouseDown))
-		return false;
-
-	switch (event.type) {
-	case Common::EVENT_LBUTTONDOWN:
-		if (_mouseDownHandler.empty()) {
-			_video->handleMouseButton(true, event.mouse.x, event.mouse.y);
-		} else {
-			_passMouseDown = false;
-
-			g_lingo->executeHandler(_mouseDownHandler);
-
-			if (_passMouseDown) {
-				_video->handleMouseButton(true, event.mouse.x, event.mouse.y);
-				_passMouseDown = false;
-			}
-		}
-		return true;
-	case Common::EVENT_LBUTTONUP:
-		_video->handleMouseButton(false);
-		if (_capEventsMouseDown)
-			_capEventsMouseDown = false;
-		return true;
-	case Common::EVENT_MOUSEMOVE:
-		_video->handleMouseMove(event.mouse.x, event.mouse.y);
-		if (!_rect.contains(event.mouse))
-			_capEventsMouseOver = false;
-		return true;
-	case Common::EVENT_KEYDOWN:
-		switch (event.kbd.keycode) {
-		case Common::KEYCODE_LEFT:
-			_video->nudge("left");
-			break;
-		case Common::KEYCODE_RIGHT:
-			_video->nudge("right");
-			break;
-		case Common::KEYCODE_UP:
-			_video->nudge("top");
-			break;
-		case Common::KEYCODE_DOWN:
-			_video->nudge("bottom");
-			break;
-		default:
-			break;
-		}
-		return true;
-	default:
-		return false;
-	}
+	g_director->getCurrentWindow()->getSurface()->copyRectToSurface(
+		dither->getPixels(), dither->pitch, me->_rect.left, me->_rect.top, dither->w, dither->h
+	);
 }
 
 void QtvrxtraXtra::m_QTVRMouseDown(int nargs) {
@@ -741,7 +698,7 @@ void QtvrxtraXtra::m_QTVRNudge(int nargs) {
 	Common::String direction = g_lingo->pop().asString();
 
 	if (!(direction.equalsIgnoreCase("left") || direction.equalsIgnoreCase("right") ||
-		  direction.equalsIgnoreCase("top") || direction.equalsIgnoreCase("bottom"))) {
+		  direction.equalsIgnoreCase("up") || direction.equalsIgnoreCase("down"))) {
 		error("QtvrxtraXtra::m_QTVRNudge(): Invald direction: ('%s')!", direction.c_str());
 		return;
 	}
@@ -797,12 +754,75 @@ void QtvrxtraXtra::m_QTVRPassMouseDown(int nargs) {
 }
 
 void QtvrxtraXtra::m_IsQTVRMovie(int nargs) {
-	g_lingo->printArgs("QtvrxtraXtra::m_IsQTVRMovie", nargs);
 	ARGNUMCHECK(0);
 
 	QtvrxtraXtraObject *me = (QtvrxtraXtraObject *)g_lingo->_state->me.u.obj;
 
-	g_lingo->push((int)(me->_video && me->_video->isVideoLoaded()));
+	g_lingo->push((int)(me->_video && me->_video->isVideoLoaded() && me->_video->isVR()));
+}
+
+///////////////
+// Widget
+///////////////
+
+QtvrxtraWidget::QtvrxtraWidget(QtvrxtraXtraObject *xtra, Graphics::MacWidget *parent, int x, int y, int w, int h, Graphics::MacWindowManager *wm) :
+	Graphics::MacWidget(parent, x, y, w, h, wm, true), _xtra(xtra) {
+
+	_priority = 10000; // We stay on top of everything
+}
+
+bool QtvrxtraWidget::processEvent(Common::Event &event) {
+	// FIXME: This class needs to inherit from MacWidget and override this function
+
+	//if (!(parent->_capEventsMouseOver && _capEventsMouseDown))
+	//	return false;
+
+	switch (event.type) {
+	case Common::EVENT_LBUTTONDOWN:
+		if (_xtra->_mouseDownHandler.empty()) {
+			_xtra->_video->handleMouseButton(true, event.mouse.x - _xtra->_rect.left, event.mouse.y - _xtra->_rect.top);
+		} else {
+			_xtra->_passMouseDown = false;
+
+			g_lingo->executeHandler(_xtra->_mouseDownHandler);
+
+			if (_xtra->_passMouseDown) {
+				_xtra->_video->handleMouseButton(true, event.mouse.x - _xtra->_rect.left, event.mouse.y - _xtra->_rect.top);
+				_xtra->_passMouseDown = false;
+			}
+		}
+		return true;
+	case Common::EVENT_LBUTTONUP:
+		_xtra->_video->handleMouseButton(false);
+		if (_xtra->_capEventsMouseDown)
+			_xtra->_capEventsMouseDown = false;
+		return true;
+	case Common::EVENT_MOUSEMOVE:
+		_xtra->_video->handleMouseMove(event.mouse.x - _xtra->_rect.left, event.mouse.y - _xtra->_rect.top);
+		if (!_xtra->_rect.contains(event.mouse))
+			_xtra->_capEventsMouseOver = false;
+		return true;
+	case Common::EVENT_KEYDOWN:
+		switch (event.kbd.keycode) {
+		case Common::KEYCODE_LEFT:
+			_xtra->_video->nudge("left");
+			break;
+		case Common::KEYCODE_RIGHT:
+			_xtra->_video->nudge("right");
+			break;
+		case Common::KEYCODE_UP:
+			_xtra->_video->nudge("top");
+			break;
+		case Common::KEYCODE_DOWN:
+			_xtra->_video->nudge("bottom");
+			break;
+		default:
+			break;
+		}
+		return true;
+	default:
+		return false;
+	}
 }
 
 }

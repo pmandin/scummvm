@@ -58,30 +58,38 @@ private:
 	SpriteFrameHeader *_bitmapHeader = nullptr;
 };
 
+// Sprites are somewhat like movies, but they strictly show one frame at a time
+// and don't have sound. They are intended for background/recurrent animations.
 class Sprite : public Asset {
 public:
-	Sprite(AssetHeader *header) : Asset(header) {};
+	Sprite(AssetHeader *header);
 	~Sprite();
 
 	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
 	virtual void process() override;
+	virtual void redraw(Common::Rect &rect) override;
 
 	virtual void readChunk(Chunk &chunk) override;
 
 private:
 	Common::Array<SpriteFrame *> _frames;
-	SpriteFrame *_persistFrame = nullptr;
+	SpriteFrame *_activeFrame = nullptr;
+	bool _isShowing = false;
+	bool _isPlaying = false;
 	uint _currentFrameIndex = 0;
 	uint _nextFrameTime = 0;
 
 	// Method implementations.
 	void spatialShow();
+	void spatialHide();
 	void timePlay();
+	void timeStop();
 	void movieReset();
+	void setCurrentClip();
 
-	// Helper functions.
-	void drawNextFrame();
-	void drawFrame(SpriteFrame *frame);
+	void updateFrameState();
+	void showFrame(SpriteFrame *frame);
+	Common::Rect getActiveFrameBoundingBox();
 };
 
 } // End of namespace MediaStation

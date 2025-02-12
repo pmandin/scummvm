@@ -117,12 +117,15 @@ void Interface::cancel_sentence() {
 }
 
 void Interface::freshen_sentence() {
-	_textField->set_string(" ");
-	_G(player).need_to_walk = false;
-	_G(player).ready_to_walk = _G(player).need_to_walk;
-	_G(player).command_ready = _G(player).ready_to_walk;
-	_prepText[0] = '\0';
+	Common::strcpy_s(_verbText, _nounText);
 	_nounText[0] = '\0';
+
+	_textField->set_string(" ");
+	_iconSelected = true;
+	_G(player).waiting_for_walk = false;
+	_G(player).ready_to_walk = false;
+	_G(player).need_to_walk = false;
+	_G(player).command_ready = false;
 
 	track_hotspots_refresh();
 }
@@ -293,12 +296,14 @@ ControlStatus Interface::trackHotspots(int event, int x, int y) {
 			Common::strlcpy(_verbText, hotspot->verb, 40);
 		}
 
-		Common::String tmp = (g_engine->getLanguage() == Common::EN_ANY) ?
-			hotspot->vocab : hotspot->prep;
+		Common::String vocab(hotspot->vocab ? hotspot->vocab : "");
+		Common::String prep(hotspot->prep ? hotspot->prep : "");
+
+		Common::String tmp = (g_engine->getLanguage() == Common::EN_ANY) ? vocab : prep;
 		tmp.toUppercase();
 		_textField->set_string(tmp.c_str());
 
-		tmp = hotspot->vocab;
+		tmp = vocab;
 		tmp.toUppercase();
 		Common::strlcpy(_nounText, tmp.c_str(), 40);
 

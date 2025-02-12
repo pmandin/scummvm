@@ -57,8 +57,8 @@ void Room408::init() {
 		_edger = series_place_sprite("Edger gone", 0, 0, -53, 100, 0xf00);
 		hotspot_set_active("EDGER", true);
 		inv_move_object("EDGER", 408);
-		ws_demand_location(234, 319, 3);
-		ws_walk(438, 325, nullptr, 400, 1);
+		ws_demand_location(_G(my_walker), 234, 319, 3);
+		ws_walk(_G(my_walker), 438, 325, nullptr, 400, 1);
 		
 	} else if (_G(flags)[V139] == 3) {
 		_G(flags)[V139] = 0;
@@ -68,18 +68,18 @@ void Room408::init() {
 			hotspot_set_active("PLANK", true);
 		}
 
-		ws_demand_location(-20, 345, 3);
-		ws_walk(234, 319, nullptr, 420, 1);
+		ws_demand_location(_G(my_walker), -20, 345, 3);
+		ws_walk(_G(my_walker), 234, 319, nullptr, 420, 1);
 
 	} else {
 		if (inv_player_has("TURTLE") && !inv_player_has("EDGER") &&
-				!_G(flags)[V018]) {
+				!_G(flags)[kWolfFled]) {
 			_edger = series_place_sprite("Edger gone", 0, 0, -53, 100, 0xf00);
 			hotspot_set_active("EDGER", true);
 		}
 
 		if (inv_player_has("TURTLE") && !inv_player_has("PLANK") &&
-				!_G(flags)[V018] && inv_object_is_here("PLANK")) {
+				!_G(flags)[kWolfFled] && inv_object_is_here("PLANK")) {
 			_plank = series_place_sprite("Plank gone", 0, 0, 0, 100, 0xf00);
 			hotspot_set_active("PLANK", true);
 		}
@@ -88,7 +88,7 @@ void Room408::init() {
 		case KERNEL_RESTORING_GAME:
 			digi_preload("950_s22");
 
-			if (_G(flags)[V131] == 408) {
+			if (_G(flags)[kWolfLocation] == 408) {
 				hotspot_set_active("WOLF", true);
 				_wolfMode = 2001;
 				_wolfShould = 2200;
@@ -108,7 +108,7 @@ void Room408::init() {
 				ws_walk_load_walker_series(S4_NORMAL_DIRS, S4_NORMAL_NAMES);
 				kernel_timing_trigger(1, 300);
 			} else {
-				if (_G(flags)[V131] == 408) {
+				if (_G(flags)[kWolfLocation] == 408) {
 					hotspot_set_active("WOLF", true);
 					_wolf = series_load("WOLF CLPNG LOOP LOOKS TO SIDE");
 					_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0xd00, 0,
@@ -118,8 +118,8 @@ void Room408::init() {
 					_wolfShould = 2200;
 				}
 
-				ws_demand_location(-20, 345, 3);
-				ws_walk(35, 345, nullptr, 20, 3);
+				ws_demand_location(_G(my_walker), -20, 345, 3);
+				ws_walk(_G(my_walker), 35, 345, nullptr, 20, 3);
 			}
 			break;
 
@@ -127,19 +127,19 @@ void Room408::init() {
 			digi_preload("950_s22");
 			terminateMachineAndNull(_exit);
 
-			if (_G(flags)[V018]) {
-				_G(flags)[V131] = 999;
+			if (_G(flags)[kWolfFled]) {
+				_G(flags)[kWolfLocation] = 999;
 			} else if (inv_player_has("TURTLE")) {
-				_G(flags)[V131] = 402;
+				_G(flags)[kWolfLocation] = 402;
 				_G(flags)[V117] = 1;
 			} else if (_G(flags)[V124]) {
-				_G(flags)[V131] = 402;
+				_G(flags)[kWolfLocation] = 402;
 			} else {
-				_G(flags)[V131] = 403;
+				_G(flags)[kWolfLocation] = 403;
 			}
 
 			_ripExits = series_load("RIP EXITS 407");
-			ws_demand_location(201, 287, 4);
+			ws_demand_location(_G(my_walker), 201, 287, 4);
 			ws_hide_walker();
 
 			_exit = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0, 0,
@@ -152,13 +152,13 @@ void Room408::init() {
 			digi_preload("950_s22");
 
 			if (_G(flags)[V117] && _G(flags)[V125] == 3 &&
-				!_G(flags)[V018] && !inv_player_has("EDGER") &&
+				!_G(flags)[kWolfFled] && !inv_player_has("EDGER") &&
 				!inv_player_has("PLANK")) {
-				_G(flags)[V131] = 408;
+				_G(flags)[kWolfLocation] = 408;
 				_G(flags)[V117] = 0;
 			}
 
-			if (_G(flags)[V131] == 408) {
+			if (_G(flags)[kWolfLocation] == 408) {
 				hotspot_set_active("WOLF", true);
 				_wolf = series_load("WOLF CLPNG LOOP LOOKS TO SIDE");
 				_wolfie = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, -53, 100, 0xd00, 0,
@@ -168,13 +168,13 @@ void Room408::init() {
 				_wolfShould = 2200;
 			}
 
-			ws_demand_location(660, 345, 9);
+			ws_demand_location(_G(my_walker), 660, 345, 9);
 
 			if (_G(flags)[V125] == 3) {
 				series_simple_play("408 turtle popup", 0, true);
-				ws_walk(438, 325, nullptr, 350, 1);
+				ws_walk(_G(my_walker), 438, 325, nullptr, 350, 1);
 			} else {
-				ws_walk(615, 345, nullptr, 30, 9);
+				ws_walk(_G(my_walker), 615, 345, nullptr, 30, 9);
 			}
 			break;
 		}
@@ -200,7 +200,7 @@ void Room408::daemon() {
 	case 42:
 		ws_unhide_walker();
 		DisposePath(_G(my_walker)->walkPath);
-		_G(my_walker)->walkPath = CreateCustomPath(250, 235, -1);
+		_G(my_walker)->walkPath = CreateCustomPath(250, 335, -1);
 		ws_custom_walk(_G(my_walker), 4, -1);
 		sendWSMessage_10000(1, _exit, _ripExits, 31, 1, 44, _ripExits, 1, 1, 0);
 		digi_play("408r31", 1);
@@ -467,12 +467,12 @@ void Room408::daemon() {
 		break;
 
 	case 322:
-		ws_walk(414, 336, nullptr, -1, 9);
+		ws_walk(_G(my_walker), 414, 336, nullptr, -1, 9);
 		break;
 
 	case 323:
 		hotspot_set_active("WOLF", false);
-		_G(flags)[V131] = 402;
+		_G(flags)[kWolfLocation] = 402;
 		player_set_commands_allowed(true);
 		break;
 
@@ -495,7 +495,7 @@ void Room408::daemon() {
 
 	case 354:
 		series_unload(_ripLowReacher);
-		ws_walk(234, 319, nullptr, 355, 1);
+		ws_walk(_G(my_walker), 234, 319, nullptr, 355, 1);
 		_ripLowReacher = series_load("RIP TREK MED REACH HAND POS1");
 		break;
 
@@ -517,7 +517,7 @@ void Room408::daemon() {
 
 	case 358:
 		series_unload(_ripLowReacher);
-		ws_walk(-20, 345, nullptr, -1, 9);
+		ws_walk(_G(my_walker), -20, 345, nullptr, -1, 9);
 		kernel_timing_trigger(60, 359);
 		break;
 
@@ -667,7 +667,7 @@ void Room408::parser() {
 	} else if (player_said("PLANK", "TOPIARY")) {
 		switch (_G(kernel).trigger) {
 		case -1:
-			if (_G(flags)[V131] != 408) {
+			if (_G(flags)[kWolfLocation] != 408) {
 				player_set_commands_allowed(false);
 				_ripLowReacher = series_load("RIP TREK LOW REACHER POS1");
 				setGlobals1(_ripLowReacher, 1, 7, 7, 7, 0, 7, 1, 1, 1);
@@ -702,7 +702,7 @@ void Room408::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			ws_walk(-20, 345, nullptr, 1, 9);
+			ws_walk(_G(my_walker), -20, 345, nullptr, 1, 9);
 			break;
 		case 1:
 			disable_player_commands_and_fade_init(2);
@@ -719,7 +719,7 @@ void Room408::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			ws_walk(660, 345, nullptr, 1, 3);
+			ws_walk(_G(my_walker), 660, 345, nullptr, 1, 3);
 			break;
 		case 1:
 			disable_player_commands_and_fade_init(2);
@@ -773,7 +773,7 @@ bool Room408::takePlank() {
 		if (!inv_player_has("PLANK")) {
 			player_set_commands_allowed(false);
 
-			if (_G(flags)[V131] == 408) {
+			if (_G(flags)[kWolfLocation] == 408) {
 				digi_play("408r29", 1, 255, 5);
 			} else {
 				_ripLowReacher = series_load("RIP TREK LOW REACHER POS1");
@@ -822,7 +822,7 @@ bool Room408::takeEdger() {
 		if (!inv_player_has("EDGER")) {
 			player_set_commands_allowed(false);
 
-			if (_G(flags)[V131] == 408) {
+			if (_G(flags)[kWolfLocation] == 408) {
 				digi_play("408r30", 1, 255, 5);
 			} else {
 				_ripLowReacher = series_load("RIP TREK MED REACH HAND POS1");

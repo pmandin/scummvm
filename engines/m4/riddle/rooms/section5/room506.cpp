@@ -39,7 +39,7 @@ void Room506::preload() {
 }
 
 void Room506::init() {
-	_flag2 = _flag3 = _flag4 = false;
+	_flag2 = _flag3 = _towerFlag = false;
 
 	if (_G(game).previous_room != KERNEL_RESTORING_GAME)
 		_flag1 = true;
@@ -69,14 +69,14 @@ void Room506::init() {
 		MoveScreenDelta(-640, 0);
 		player_set_commands_allowed(false);
 		series_play("506 RIP UP STEPS", 0x700, 0, 503, 5);
-		ws_demand_location(1054, 346, 12);
+		ws_demand_location(_G(my_walker), 1054, 346, 12);
 		ws_hide_walker();
 		break;
 
 	case 507:
 		digi_unload("507_s02");
-		ws_demand_location(346, 214, 4);
-		ws_walk(420, 234, nullptr, 502, 4);
+		ws_demand_location(_G(my_walker), 346, 214, 4);
+		ws_walk(_G(my_walker), 420, 234, nullptr, 502, 4);
 		player_set_commands_allowed(false);
 		break;
 
@@ -84,7 +84,7 @@ void Room506::init() {
 		player_set_commands_allowed(false);
 
 		if (_G(flags)[V158]) {
-			ws_demand_location(100, 100);
+			ws_demand_location(_G(my_walker), 100, 100);
 			ws_hide_walker();
 			digi_preload("506_s02");
 			digi_unload("508_s01");
@@ -92,15 +92,15 @@ void Room506::init() {
 			series_stream_break_on_frame(_domeRotation, 45, 500);
 			digi_play("506_S02", 1);
 		} else {
-			ws_demand_location(346, 214, 4);
-			ws_walk(420, 234, nullptr, 502, 4);
+			ws_demand_location(_G(my_walker), 346, 214, 4);
+			ws_walk(_G(my_walker), 420, 234, nullptr, 502, 4);
 		}
 		break;
 
 	default:
 		MoveScreenDelta(-432, 0);
-		ws_demand_location(754, 242, 8);
-		ws_walk(697, 247, nullptr, 502, 8);
+		ws_demand_location(_G(my_walker), 754, 242, 8);
+		ws_walk(_G(my_walker), 697, 247, nullptr, 502, 8);
 		break;
 	}
 
@@ -150,26 +150,28 @@ void Room506::daemon() {
 void Room506::pre_parser() {
 	switch (_G(kernel).trigger) {
 	case 1000:
-		_G(i_just_hyperwalked) = true;
+		if (_G(i_just_hyperwalked))
+			_G(please_hyperwalk) = true;
 
-		if (_flag4) {
-			ws_walk(_destX, _destY, nullptr, 1002, _destFacing);
+		if (_towerFlag) {
+			ws_walk(_G(my_walker), _destX, _destY, nullptr, 1002, _destFacing);
 			Common::strcpy_s(_G(player).verb, "IN TOWER");
 		} else {
-			ws_walk(_destX, _destY, nullptr, -1, _destFacing);
+			ws_walk(_G(my_walker), _destX, _destY, nullptr, -1, _destFacing);
 		}
 
 		restorePalette();
 		break;
 
 	case 1001:
-		_G(i_just_hyperwalked) = true;
+		if (_G(i_just_hyperwalked))
+			_G(please_hyperwalk) = true;
 
-		if (_flag4) {
-			ws_walk(_destX, _destY, nullptr, 1002, _destFacing);
+		if (_towerFlag) {
+			ws_walk(_G(my_walker), _destX, _destY, nullptr, 1002, _destFacing);
 			Common::strcpy_s(_G(player).verb, "IN TOWER");
 		} else {
-			ws_walk(_destX, _destY, nullptr, -1, _destFacing);
+			ws_walk(_G(my_walker), _destX, _destY, nullptr, -1, _destFacing);
 		}
 		break;
 
@@ -187,16 +189,16 @@ void Room506::pre_parser() {
 	}
 
 	if (_G(player).need_to_walk || _G(player).ready_to_walk || _G(player).waiting_for_walk) {
-		_flag4 = !scumm_strnicmp(_G(player).verb, "IN TOWER", 8);
+		_towerFlag = !scumm_strnicmp(_G(player).verb, "IN TOWER", 8);
 
-		if (_G(player).walk_x > 900 && _flag2 && !player_said("   ") && !player_said("    ")) {
+		if (_G(player).walk_x < 900 && _flag2 && !player_said("   ") && !player_said("    ")) {
 			saveWalk();
-			ws_walk(717, 144, nullptr, 1000, 1);
+			ws_walk(_G(my_walker), 717, 144, nullptr, 1000, 1);
 		}
 
 		if (_G(player).walk_x > 900 && _flag3 && !player_said("   ") && !player_said("    ")) {
 			saveWalk();
-			ws_walk(995, 308, nullptr, 1001, 1);
+			ws_walk(_G(my_walker), 995, 308, nullptr, 1001, 1);
 		}
 	}
 }
@@ -383,17 +385,17 @@ void Room506::parser() {
 	} else {
 		if (player_said("   ")) {
 			restorePalette();
-			ws_walk(662, 143, nullptr, -1, 8);
+			ws_walk(_G(my_walker), 662, 143, nullptr, -1, 8);
 
-			if (_flag4)
+			if (_towerFlag)
 				Common::strcpy_s(_G(player).verb, "IN TOWER");
 		}
 
 		if (player_said("    ")) {
 			setupPalette();
-			ws_walk(1039, 328, nullptr, -1, 4);
+			ws_walk(_G(my_walker), 1039, 328, nullptr, -1, 4);
 
-			if (_flag4)
+			if (_towerFlag)
 				Common::strcpy_s(_G(player).verb, "IN TOWER");
 		}
 

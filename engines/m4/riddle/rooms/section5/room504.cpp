@@ -55,7 +55,7 @@ void Room504::init() {
 	digi_preload("504_S01");
 	_volume = 1;
 	kernel_timing_trigger(1, 501);
-	digi_play("504_501", 3, _volume);
+	digi_play("504_S01", 3, _volume);
 	kernel_timing_trigger(828, 754);
 
 	switch (_G(game).previous_room) {
@@ -64,10 +64,10 @@ void Room504::init() {
 
 	case 506:
 		player_set_commands_allowed(false);
-		ws_demand_location(1384, 205, 9);
+		ws_demand_location(_G(my_walker), 1384, 205, 9);
 		ws_hide_walker();
 		MoveScreenDelta(_G(game_buff_ptr), -1280, 0);
-		_flag1 = true;
+		_isOnRight = true;
 
 		_downSteps = series_load("504 down steps");
 		player_update_info();
@@ -79,22 +79,22 @@ void Room504::init() {
 
 	default:
 		player_set_commands_allowed(false);
-		ws_demand_location(50, 226, 3);
+		ws_demand_location(_G(my_walker), 50, 226, 3);
 		midi_play("MOCAMO", 200, 0, -1, 949);
 
 		if (player_been_here(504)) {
 			inv_give_to_player("ROPE");
 			_G(flags)[V154] = 3;
-			ws_walk(183, 207, nullptr, 762, 3);
+			ws_walk(_G(my_walker), 183, 207, nullptr, 762, 3);
 		} else {
 			_G(flags)[V152] = 6;
 			_G(flags)[V153] = 6;
 			_G(flags)[V154] = 2;
 			_G(flags)[V171] = 3;
-			ws_walk(183, 207, nullptr, 655, 3);
+			ws_walk(_G(my_walker), 183, 207, nullptr, 655, 3);
 		}
 
-		_flag1 = false;
+		_isOnRight = false;
 		break;
 	}
 
@@ -126,8 +126,8 @@ void Room504::daemon() {
 		break;
 
 	case 502:
-		_val2 = 1;
-		_convState1 = 1;
+		_menendezMode = 1;
+		_menendezShould = 1;
 		_trigger2 = -1;
 		_trigger3 = -1;
 		_mzDigs = series_load("504 MZ DIGS");
@@ -138,27 +138,27 @@ void Room504::daemon() {
 		break;
 
 	case 503:
-		if (_trigger2 != -1 && _convState1 == 2 && _val2 == 2) {
+		if (_trigger2 != -1 && _menendezShould == 2 && _menendezMode == 2) {
 			kernel_trigger_dispatchx(_trigger2);
 			_trigger2 = -1;
 		}
 
-		if (_trigger3 != -1 && _convState1 == 1 && _val2 == 1) {
+		if (_trigger3 != -1 && _menendezShould == 1 && _menendezMode == 1) {
 			kernel_trigger_dispatchx(_trigger3);
 			_trigger3 = -1;
 		}
 
-		if (_trigger3 != -1 && _convState1 == 5 && _val2 == 5) {
+		if (_trigger3 != -1 && _menendezShould == 5 && _menendezMode == 5) {
 			kernel_trigger_dispatchx(_trigger3);
 			_trigger3 = -1;
 		}
 
-		if (_trigger3 != -1 && _convState1 == 9 && _val2 == 9) {
+		if (_trigger3 != -1 && _menendezShould == 9 && _menendezMode == 9) {
 			kernel_trigger_dispatchx(_trigger3);
 			_trigger3 = -1;
 		}
 
-		if (_trigger3 != -1 && _convState1 == 15 && _val2 == 15) {
+		if (_trigger3 != -1 && _menendezShould == 15 && _menendezMode == 15) {
 			kernel_trigger_dispatchx(_trigger3);
 			_trigger3 = -1;
 		}
@@ -167,14 +167,14 @@ void Room504::daemon() {
 		break;
 
 	case 504:
-		switch (_val2) {
+		switch (_menendezMode) {
 		case 1:
-			switch (_convState1) {
+			switch (_menendezShould) {
 			case 1:
 				sendWSMessage_10000(1, _mzMachine, _mzDigs, 1, 23, 503,
 					_mzDigs, 23, 23, 0);
 
-				if (_flag1) {
+				if (_isOnRight) {
 					player_update_info();
 					_volume2 = 1;
 
@@ -189,6 +189,7 @@ void Room504::daemon() {
 						digi_play("504_s02b", 2, _volume2);
 						break;
 					case 4:
+					default:
 						digi_play("504_s02c", 2, _volume2);
 						break;
 					}
@@ -208,7 +209,7 @@ void Room504::daemon() {
 			case 2:
 				sendWSMessage_10000(1, _mzMachine, _mzStandsTalks, 1, 11, 503,
 					_mzStandsTalks, 11, 11, 0);
-				_val2 = 2;
+				_menendezMode = 2;
 				break;
 
 			default:
@@ -217,11 +218,11 @@ void Room504::daemon() {
 			break;
 
 		case 2:
-			switch (_convState1) {
+			switch (_menendezShould) {
 			case 1:
 				sendWSMessage_10000(1, _mzMachine, _mzStandsTalks, 11, 1, 503,
 					_mzStandsTalks, 1, 1, 0);
-				_val2 = 1;
+				_menendezMode = 1;
 				break;
 
 			case 2:
@@ -239,7 +240,7 @@ void Room504::daemon() {
 				_mzTakesMoney = series_load("504 MZ TAKES MONEY");
 				sendWSMessage_10000(1, _mzMachine, _mzTakesMoney, 1, 11, 503,
 					_mzTakesMoney, 11, 11, 0);
-				_val2 = 5;
+				_menendezMode = 5;
 				break;
 
 			case 6:
@@ -252,7 +253,7 @@ void Room504::daemon() {
 				_mzGivesHead = series_load("504 MZ GIVES HEAD");
 				sendWSMessage_10000(1, _mzMachine, _mzGivesHead, 1, 27, 503,
 					_mzGivesHead, 28, 28, 0);
-				_val2 = 9;
+				_menendezMode = 9;
 				break;
 
 			case 10:
@@ -260,22 +261,23 @@ void Room504::daemon() {
 				digi_play(conv_sound_to_play(), 1);
 				sendWSMessage_10000(1, _mzMachine, _mzGivesHead, 1, 27, 503,
 					_mzGivesHead, 28, 28, 0);
-				_convState1 = 11;
+				_menendezShould = 11;
 				break;
 
 			case 11:
 				kernel_timing_trigger(60, 503);
-				_convState1 = 12;
+				_menendezShould = 12;
 				break;
 
 			case 12:
 				sendWSMessage_10000(1, _mzMachine, _mzGivesHead, 27, 1, 503,
 					_mzGivesHead, 1, 1, 0);
+				_menendezShould = 13;
 				break;
 
 			case 13:
 				conv_resume();
-				_convState1 = 2;
+				_menendezShould = 2;
 				kernel_timing_trigger(1, 503);
 				break;
 
@@ -287,15 +289,15 @@ void Room504::daemon() {
 				sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 1, 21, 503,
 					_mzMenancesClimbs, 21, 21, 0);
 				sendWSMessage_190000(3);
-				_convState1 = 15;
-				_val2 = 15;
+				_menendezShould = 15;
+				_menendezMode = 15;
 				break;
 
 			case 16:
 				_mzMenancesClimbs = series_load("504 MZ MENACES CLIMBS");
 				_ripLeansBack = series_load("504 rip leans back");
-				digi_preload("504_502D");
-				digi_play("504_502D", 1);
+				digi_preload("504_S02D");
+				digi_play("504_S02D", 1);
 				sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 1, 21, 524,
 					_mzMenancesClimbs, 21, 21, 0);
 				sendWSMessage_190000(_mzMachine, 3);
@@ -309,18 +311,18 @@ void Room504::daemon() {
 			break;
 
 		case 5:
-			switch (_convState1) {
+			switch (_menendezShould) {
 			case 2:
 				sendWSMessage_10000(1, _mzMachine, _mzTakesMoney, 12, 32, 503,
 					_mzTakesMoney, 32, 32, 0);
-				_convState1 = 3;
+				_menendezShould = 3;
 				break;
 
 			case 3:
 				sendWSMessage_10000(1, _mzMachine, _mzStandsTalks, 11, 11, 503,
 					_mzStandsTalks, 11, 11, 0);
-				_convState1 = 2;
-				_val2 = 2;
+				_menendezShould = 2;
+				_menendezMode = 2;
 				series_unload(_mzTakesMoney);
 				break;
 
@@ -335,24 +337,24 @@ void Room504::daemon() {
 			break;
 
 		case 9:
-			switch (_convState1) {
+			switch (_menendezShould) {
 			case 2:
 				sendWSMessage_10000(1, _mzMachine, _mzGivesHead, 30, 43, 503,
 					_mzGivesHead, 43, 43, 0);
-				_convState1 = 3;
+				_menendezShould = 3;
 				break;
 
 			case 3:
 				sendWSMessage_10000(1, _mzMachine, _mzStandsTalks, 11, 11, 503,
 					_mzStandsTalks, 11, 11, 0);
-				_convState1 = 2;
-				_val2 = 2;
+				_menendezShould = 2;
+				_menendezMode = 2;
 				series_unload(_mzGivesHead);
 				break;
 
 			case 9:
-				sendWSMessage_10000(1, _mzMachine, _mzStandsTalks, 28, 28, 503,
-					_mzStandsTalks, 28, 28, 0);
+				sendWSMessage_10000(1, _mzMachine, _mzGivesHead, 28, 28, 503,
+					_mzGivesHead, 28, 28, 0);
 				break;
 
 			default:
@@ -361,18 +363,18 @@ void Room504::daemon() {
 			break;
 
 		case 15:
-			switch (_convState1) {
+			switch (_menendezShould) {
 			case 2:
 				sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 21, 1, 503,
 					_mzMenancesClimbs, 1, 1, 0);
-				_convState1 = 3;
+				_menendezShould = 3;
 				break;
 
 			case 3:
 				sendWSMessage_10000(1, _mzMachine, _mzStandsTalks, 11, 11, 503,
 					_mzStandsTalks, 11, 11, 0);
-				_convState1 = 2;
-				_val2 = 2;
+				_menendezShould = 2;
+				_menendezMode = 2;
 				series_unload(_mzMenancesClimbs);
 				digi_unload("504_S02D");
 				break;
@@ -401,36 +403,36 @@ void Room504::daemon() {
 		_ripKneels = series_load("504 rip kneels talks");
 		ws_hide_walker();
 		sendWSMessage_10000(1, _ripley, _ripKneels, 1, 17, 506, _ripKneels, 17, 17, 0);
-		_convState2 = 1;
-		_convState3 = 1;
+		_ripleyShould = 1;
+		_ripleyMode = 1;
 		break;
 
 	case 506:
-		if (_trigger1 != -1 && _convState3 == 1 && _convState2 == 1) {
+		if (_trigger1 != -1 && _ripleyMode == 1 && _ripleyShould == 1) {
 			kernel_trigger_dispatchx(_trigger1);
 			_trigger1 = -1;
 		}
-		if (_trigger4 != -1 && _convState3 == 4 && _convState2 == 4) {
+		if (_trigger4 != -1 && _ripleyMode == 4 && _ripleyShould == 4) {
 			kernel_trigger_dispatchx(_trigger4);
 			_trigger4 = -1;
 		}
-		if (_trigger4 != -1 && _convState3 == 5 && _convState2 == 5) {
+		if (_trigger4 != -1 && _ripleyMode == 5 && _ripleyShould == 5) {
 			kernel_trigger_dispatchx(_trigger4);
 			_trigger4 = -1;
 		}
-		if (_trigger4 != -1 && _convState3 == 7 && _convState2 == 7) {
+		if (_trigger4 != -1 && _ripleyMode == 7 && _ripleyShould == 7) {
 			kernel_trigger_dispatchx(_trigger4);
 			_trigger4 = -1;
 		}
-		if (_trigger4 != -1 && _convState3 == 11 && _convState2 == 11) {
+		if (_trigger4 != -1 && _ripleyMode == 11 && _ripleyShould == 11) {
 			kernel_trigger_dispatchx(_trigger4);
 			_trigger4 = -1;
 		}
-		if (_trigger4 != -1 && _convState3 == 13 && _convState2 == 13) {
+		if (_trigger4 != -1 && _ripleyMode == 13 && _ripleyShould == 13) {
 			kernel_trigger_dispatchx(_trigger4);
 			_trigger4 = -1;
 		}
-		if (_trigger4 != -1 && _convState3 == 8 && _convState2 == 8) {
+		if (_trigger4 != -1 && _ripleyMode == 8 && _ripleyShould == 8) {
 			kernel_trigger_dispatchx(_trigger4);
 			_trigger4 = -1;
 		}
@@ -439,9 +441,9 @@ void Room504::daemon() {
 		break;
 
 	case 507:
-		switch (_convState3) {
+		switch (_ripleyMode) {
 		case 1:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 1:
 				sendWSMessage_10000(1, _ripley, _ripKneels, 17, 17, 506,
 					_ripKneels, 17, 17, 0);
@@ -457,14 +459,14 @@ void Room504::daemon() {
 				_ripShrunkenHead = series_load("504 rip gets shrunken head");
 				sendWSMessage_10000(1, _ripley, _ripShrunkenHead, 1, 6, 506,
 					_ripShrunkenHead, 6, 6, 0);
-				_convState3 = 4;
+				_ripleyMode = 4;
 				break;
 
 			case 5:
 				_ripGivesMoneyEmerald = series_load("504 rip gives money emerald");
 				sendWSMessage_10000(1, _ripley, _ripGivesMoneyEmerald, 1, 11, 506,
 					_ripGivesMoneyEmerald, 11, 11, 0);
-				_convState3 = 5;
+				_ripleyMode = 5;
 				break;
 
 			case 7:
@@ -474,13 +476,13 @@ void Room504::daemon() {
 					_ripGetsUp, 46, 46, 0);
 				sendWSMessage_190000(_ripley, 5);
 				series_unload(_ripKneels);
-				_convState3 = 7;
+				_ripleyMode = 7;
 				break;
 
 			case 8:
 				sendWSMessage_10000(1, _ripley, _ripLeansBack, 1, 11, 506,
 					_ripLeansBack, 12, 12, 0);
-				_convState3 = 8;
+				_ripleyMode = 8;
 				break;
 
 			default:
@@ -489,19 +491,19 @@ void Room504::daemon() {
 			break;
 
 		case 4:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 1:
 				sendWSMessage_10000(1, _ripley, _ripShrunkenHead, 7, 28, 506,
 					_ripShrunkenHead, 28, 28, 0);
-				_convState2 = 2;
+				_ripleyShould = 2;
 				break;
 
 			case 2:
 				sendWSMessage_10000(1, _ripley, _ripKneels, 17, 17, 506,
 					_ripKneels, 17, 17, 0);
 				series_unload(_ripShrunkenHead);
-				_convState2 = 1;
-				_convState3 = 1;
+				_ripleyShould = 1;
+				_ripleyMode = 1;
 				break;
 
 			case 4:
@@ -515,18 +517,18 @@ void Room504::daemon() {
 			break;
 
 		case 5:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 1:
 				sendWSMessage_10000(1, _ripley, _ripGivesMoneyEmerald, 12, 20, 506,
 					_ripKneels, 17, 17, 0);
-				_convState2 = 2;
+				_ripleyShould = 2;
 				break;
 
 			case 2:
 				sendWSMessage_10000(1, _ripley, _ripKneels, 17, 17, 506, _ripKneels, 17, 17, 0);
 				series_unload(_ripGivesMoneyEmerald);
-				_convState2 = 1;
-				_convState3 = 1;
+				_ripleyShould = 1;
+				_ripleyMode = 1;
 				break;
 
 			case 5:
@@ -546,7 +548,7 @@ void Room504::daemon() {
 			break;
 
 		case 7:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 7:
 				sendWSMessage_10000(1, _ripley, _ripGetsUp, 46, 46, 506, _ripGetsUp, 46, 46, 0);
 				break;
@@ -561,7 +563,7 @@ void Room504::daemon() {
 			case 11:
 				sendWSMessage_10000(1, _ripley, _ripGetsUp, 69, 83, 506,
 					_ripGetsUp, 83, 83, 0);
-				_convState3 = 11;
+				_ripleyMode = 11;
 				break;
 
 			default:
@@ -570,18 +572,18 @@ void Room504::daemon() {
 			break;
 
 		case 8:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 1:
 				sendWSMessage_10000(1, _ripley, _ripLeansBack, 12, 24, 506,
 					_ripKneels, 17, 17, 0);
-				_convState2 = 2;
+				_ripleyShould = 2;
 				break;
 
 			case 2:
 				sendWSMessage_10000(1, _ripley, _ripKneels, 13, 25, 506,
 					_ripKneels, 17, 17, 0);
-				_convState2 = 1;
-				_convState3 = 1;
+				_ripleyShould = 1;
+				_ripleyMode = 1;
 				series_unload(_ripLeansBack);
 				break;
 
@@ -596,11 +598,11 @@ void Room504::daemon() {
 			break;
 
 		case 11:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 7:
 				sendWSMessage_10000(1, _ripley, _ripGetsUp, 83, 69, 506, _ripGetsUp, 46, 46, 0);
-				_convState2 = 7;
-				_convState3 = 7;
+				_ripleyShould = 7;
+				_ripleyMode = 7;
 				break;
 
 			case 11:
@@ -610,7 +612,7 @@ void Room504::daemon() {
 			case 13:
 				_ripYells = series_load("504 rip yells ");
 				sendWSMessage_10000(1, _ripley, _ripYells, 1, 9, 506, _ripYells, 9, 9, 0);
-				_convState3 = 13;
+				_ripleyMode = 13;
 				break;
 
 			default:
@@ -619,7 +621,7 @@ void Room504::daemon() {
 			break;
 
 		case 13:
-			switch (_convState2) {
+			switch (_ripleyShould) {
 			case 10:
 				frame = imath_ranged_rand(10, 12);
 				sendWSMessage_10000(1, _ripley, _ripYells, frame, frame, 506,
@@ -628,17 +630,18 @@ void Room504::daemon() {
 			case 11:
 				sendWSMessage_10000(1, _ripley, _ripYells, 9, 1, 506,
 					_ripGetsUp, 83, 83, 0);
-				_convState2 = 12;
+				_ripleyShould = 12;
 				break;
 			case 12:
-				sendWSMessage_10000(1, _ripley, _ripYells, 9, 9, 506,
-					_ripYells, 9, 9, 0);
-				break;
-			case 13:
 				sendWSMessage_10000(1, _ripley, _ripGetsUp, 83, 83, 506,
 					_ripGetsUp, 83, 83, 0);
-				_convState2 = 11;
-				_convState3 = 11;
+				_ripleyShould = 11;
+				_ripleyMode = 11;
+				series_unload(_ripYells);
+				break;
+			case 13:
+				sendWSMessage_10000(1, _ripley, _ripYells, 9, 9, 506,
+					_ripYells, 9, 9, 0);
 				break;
 			default:
 				break;
@@ -652,20 +655,20 @@ void Room504::daemon() {
 
 	case 508:
 		_G(kernel).trigger_mode = KT_PARSE;
-		conv_load("con504a", 10, 10, 747);
-		_val3 = inv_player_has("PERUVIAN INTI") ? 1 : 0;
-		conv_export_pointer_curr(&_val3, 0);
+		conv_load("conv504a", 10, 10, 747);
+		_hasInti = inv_player_has("PERUVIAN INTI") ? 1 : 0;
+		conv_export_pointer_curr(&_hasInti, 0);
 		conv_play();
 		break;
 
 	case 509:
-		_convState1 = 2;
+		_menendezShould = 2;
 		_trigger2 = kernel_trigger_create(510);
 		break;
 
 	case 510:
-		_convState1 = 1;
-		_convState2 = 9;
+		_menendezShould = 1;
+		_ripleyShould = 9;
 
 		if (!_G(flags)[V040]) {
 			_G(flags)[V040] = 1;
@@ -681,34 +684,34 @@ void Room504::daemon() {
 		break;
 
 	case 512:
-		_convState2 = 3;
+		_ripleyShould = 3;
 		digi_play("504R51", 1, 255, 513);
 		break;
 
 	case 513:
-		_convState2 = 1;
-		_convState1 = 2;
+		_ripleyShould = 1;
+		_menendezShould = 2;
 		_trigger2 = kernel_trigger_create(514);
 		break;
 
 	case 514:
-		_convState2 = 5;
+		_ripleyShould = 5;
 		_trigger4 = kernel_trigger_create(515);
 		break;
 
 	case 515:
-		_convState2 = 6;
+		_ripleyShould = 6;
 		digi_play("504R13", 1, 255, 516);
 		break;
 
 	case 516:
-		_convState2 = 5;
-		_convState1 = 6;
+		_ripleyShould = 5;
+		_menendezShould = 6;
 		break;
 
 	case 517:
 		inv_move_object("ROMANOV EMERALD", 504);
-		_convState2 = 1;
+		_ripleyShould = 1;
 		sendWSMessage_10000(1, _mzMachine, _mzTakesEmerald, 13, 20, 518,
 			_mzTakesEmerald, 20, 20, 0);
 		break;
@@ -720,34 +723,34 @@ void Room504::daemon() {
 		break;
 
 	case 519:
-		_convState2 = 3;
+		_ripleyShould = 3;
 		digi_play("504R14", 1, 255, 520);
 		break;
 
 	case 520:
-		_convState2 = 1;
+		_ripleyShould = 1;
 		sendWSMessage_10000(1, _mzMachine, _mzTakesEmerald, 21, 29, 503,
 			_mzStandsTalks, 11, 11, 4);
-		_convState1 = 2;
-		_val2 = 2;
+		_menendezShould = 2;
+		_menendezMode = 2;
 		_trigger2 = kernel_trigger_create(521);
 		break;
 
 	case 521:
 		series_unload(_mzTakesEmerald);
-		_convState1 = 4;
+		_menendezShould = 4;
 		digi_play("504Z15", 1, 255, 522);
 		break;
 
 	case 522:
-		_convState1 = 2;
-		_convState2 = 5;
+		_menendezShould = 2;
+		_ripleyShould = 5;
 		digi_play("504R15", 1, 255, 523);
 		break;
 
 	case 523:
-		_convState2 = 1;
-		_convState1 = 16;
+		_ripleyShould = 1;
+		_menendezShould = 16;
 		break;
 
 	case 524:
@@ -755,7 +758,7 @@ void Room504::daemon() {
 		break;
 
 	case 525:
-		_convState2 = 8;
+		_ripleyShould = 8;
 		_trigger4 = kernel_trigger_create(526);
 		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 21, 23, -1,
 			_mzMenancesClimbs, 21, 23, 4);
@@ -763,9 +766,9 @@ void Room504::daemon() {
 		break;
 
 	case 526:
-		_convState2 = 1;
+		_ripleyShould = 1;
 		digi_preload("504_S06");
-		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 22, 52, 527, \
+		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 22, 52, 527,
 			_mzMenancesClimbs, 52, 52, 0);
 		break;
 
@@ -775,33 +778,33 @@ void Room504::daemon() {
 
 	case 528:
 		digi_unload("504_S06");
-		_convState2 = 1;
+		_ripleyShould = 1;
 		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 52, 59, -1,
 			_mzMenancesClimbs, 58, 59, 4);
 		digi_play("504Z16", 1, 255, 529);
 		break;
 
 	case 529:
-		_convState2 = 3;
+		_ripleyShould = 3;
 		digi_play("504R16", 1, 255, 530);
 		break;
 
 	case 530:
-		_convState2 = 1;
+		_ripleyShould = 1;
 		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 60, 61, -1,
 			_mzMenancesClimbs, 60, 62, 4);
 		digi_play("504Z17", 1, 255, 531);
 		break;
 
 	case 531:
-		_convState2 = 7;
+		_ripleyShould = 7;
 		digi_preload("504_S07");
 		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 62, 76, 532,
 			_mzMenancesClimbs, 77, 77, 0);
 		break;
 
 	case 532:
-		_convState2 = 11;
+		_ripleyShould = 11;
 		digi_preload("504_S07");
 		sendWSMessage_10000(1, _mzMachine, _mzMenancesClimbs, 78, 140, 533,
 			_mzMenancesClimbs, 140, 140, 0);
@@ -829,27 +832,27 @@ void Room504::daemon() {
 
 	case 535:
 	case 539:
-		_convState2 = 13;
+		_ripleyShould = 13;
 		break;
 
 	case 536:
-		_convState2 = 10;
+		_ripleyShould = 10;
 		digi_play("504R17", 1, 255, 537);
 		break;
 
 	case 537:
-		_convState2 = 13;
+		_ripleyShould = 13;
 		digi_play("504Z18", 1, 255, 538);
 		break;
 
 	case 538:
-		_convState2 = 10;
+		_ripleyShould = 10;
 		digi_play("504R18", 1, 255, 540);
 		kernel_timing_trigger(150, 539);
 		break;
 
 	case 540:
-		_convState2 = 10;
+		_ripleyShould = 10;
 		digi_play("504R18A", 1, 255, 541);
 		break;
 
@@ -858,7 +861,7 @@ void Room504::daemon() {
 		break;
 
 	case 542:
-		_convState2 = 11;
+		_ripleyShould = 11;
 		_trigger4 = kernel_trigger_create(543);
 		break;
 
@@ -867,7 +870,7 @@ void Room504::daemon() {
 		break;
 
 	case 544:
-		_convState2 = 7;
+		_ripleyShould = 7;
 		_trigger4 = kernel_trigger_create(545);
 		break;
 
@@ -876,7 +879,7 @@ void Room504::daemon() {
 		kernel_timing_trigger(5, 745);
 		_G(flags)[V141] = 1;
 		setMiscItems();
-		_convState2 = 9;
+		_ripleyShould = 9;
 		break;
 
 	case 548:
@@ -886,33 +889,33 @@ void Room504::daemon() {
 		break;
 
 	case 549:
-		_convState2 = 3;
+		_ripleyShould = 3;
 		digi_play("504R51", 1, 255, 550);
 		break;
 
 	case 550:
-		_convState2 = 1;
-		_convState1 = 2;
+		_ripleyShould = 1;
+		_menendezShould = 2;
 		_trigger2 = kernel_trigger_create(551);
 		break;
 
 	case 551:
-		_convState2 = 5;
+		_ripleyShould = 5;
 		_trigger4 = kernel_trigger_create(552);
 		break;
 
 	case 552:
-		_convState2 = 6;
+		_ripleyShould = 6;
 		digi_play("504R13", 1, 255, 553);
 		break;
 
 	case 553:
-		_convState2 = 5;
-		_convState1 = 4;
+		_ripleyShould = 5;
+		_menendezShould = 4;
 
 		if (_flag4) {
 			_flag4 = false;
-			_convState1 = 5;
+			_menendezShould = 5;
 			_trigger3 = kernel_trigger_create(554);
 		} else {
 			switch (imath_ranged_rand(1, 3)) {
@@ -934,28 +937,28 @@ void Room504::daemon() {
 		break;
 
 	case 554:
-		_convState1 = 2;
+		_menendezShould = 2;
 		_trigger2 = kernel_trigger_create(555);
 		break;
 
 	case 555:
-		_convState2 = 1;
+		_ripleyShould = 1;
 		digi_play("504Z12", 1, 255, 556);
 		break;
 
 	case 556:
-		_convState1 = 1;
+		_menendezShould = 1;
 		_trigger1 = kernel_trigger_create(557);
 		break;
 
 	case 557:
-		_convState2 = 9;
+		_ripleyShould = 9;
 		break;
 
 	case 558:
 		player_set_commands_allowed(false);
 		digi_preload("504_S05");
-		_flag1 = false;
+		_isOnRight = false;
 		_ripStep = series_stream("RIP STEP UP TO R PLATFORM", 5, 0, 560);
 		series_stream_break_on_frame(_ripStep, 1, 559);
 		break;
@@ -992,14 +995,14 @@ void Room504::daemon() {
 
 	case 565:
 		ws_unhide_walker();
-		ws_demand_location(170, 145, 1);
-		_flag1 = false;
+		ws_demand_location(_G(my_walker), 170, 145, 1);
+		_isOnRight = false;
 		kernel_timing_trigger(5, 566);
 		break;
 
 	case 566:
 		player_update_info();
-		ws_walk(_G(player_info).x + 10, _G(player_info).y, nullptr, 567, 3);
+		ws_walk(_G(my_walker), _G(player_info).x + 10, _G(player_info).y, nullptr, 567, 3);
 		break;
 
 	case 567:
@@ -1068,8 +1071,8 @@ void Room504::daemon() {
 
 	case 578:
 		ws_unhide_walker();
-		ws_demand_location(532, 165, 3);
-		_flag1 = true;
+		ws_demand_location(_G(my_walker), 532, 165, 3);
+		_isOnRight = true;
 		digi_unload("504_S05");
 		player_set_commands_allowed(true);
 		break;
@@ -1089,7 +1092,7 @@ void Room504::daemon() {
 		break;
 
 	case 582:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			inv_move_object("ROPE", 504);
 			break;
@@ -1153,7 +1156,7 @@ void Room504::daemon() {
 		break;
 
 	case 591:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			inv_give_to_player("ROPE");
 			kernel_examine_inventory_object("PING ROPE", 5, 1, 449, 90, 592);
@@ -1207,7 +1210,7 @@ void Room504::daemon() {
 		break;
 
 	case 596:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1241,7 +1244,7 @@ void Room504::daemon() {
 		break;
 
 	case 599:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 4;
 			break;
@@ -1264,7 +1267,7 @@ void Room504::daemon() {
 		break;
 
 	case 600:
-		ws_demand_location(528, 168, 8);
+		ws_demand_location(_G(my_walker), 528, 168, 8);
 		ws_unhide_walker();
 		terminateMachineAndNull(_ripley);
 		setVinesRope();
@@ -1306,7 +1309,7 @@ void Room504::daemon() {
 		break;
 
 	case 607:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			inv_give_to_player("ROPE");
 			kernel_examine_inventory_object("PING ROPE",
@@ -1352,7 +1355,7 @@ void Room504::daemon() {
 		_ripHiReach2Handed = series_load("RIP TREK HI REACH 2HND");
 		_rightVineTie = series_load("504 R VINE TIE TO L SIDE");
 
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1379,7 +1382,7 @@ void Room504::daemon() {
 		break;
 
 	case 612:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 2;
 			break;
@@ -1390,13 +1393,14 @@ void Room504::daemon() {
 			_G(flags)[V153] = 2;
 			break;
 		case 4:
-			_G(flags)[V171] = 2;
+			_G(flags)[V152] = 2;
+			_G(flags)[V153] = 0;
 			break;
 		default:
 			break;
 		}
 
-		if (_val1 == 4) {
+		if (_vineThrowType == 4) {
 			kernel_timing_trigger(1, 613);
 		} else {
 			setVines();
@@ -1446,7 +1450,7 @@ void Room504::daemon() {
 		break;
 
 	case 622:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1463,8 +1467,8 @@ void Room504::daemon() {
 			break;
 		}
 
-		sendWSMessage_10000(1, _ripley, _ripThrowFromRight, 1, 34, 623,
-			_ripThrowFromRight, 34, 34, 0);
+		sendWSMessage_10000(1, _ripley, _ripThrowFromLeft, 1, 34, 623,
+			_ripThrowFromLeft, 34, 34, 0);
 		break;
 
 	case 623:
@@ -1480,7 +1484,7 @@ void Room504::daemon() {
 		break;
 
 	case 625:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 5;
 			break;
@@ -1504,7 +1508,7 @@ void Room504::daemon() {
 
 	case 626:
 		ws_unhide_walker();
-		ws_demand_location(200, 153, 3);
+		ws_demand_location(_G(my_walker), 200, 153, 3);
 		terminateMachineAndNull(_ripley);
 		series_unload(_ripStepUpLeft);
 		series_unload(_ripThrowFromLeft);
@@ -1530,7 +1534,7 @@ void Room504::daemon() {
 		break;
 
 	case 633:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 0;
 			inv_move_object("ROPE", 504);
@@ -1577,7 +1581,7 @@ void Room504::daemon() {
 		break;
 
 	case 639:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1601,7 +1605,7 @@ void Room504::daemon() {
 		break;
 
 	case 640:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 2;
 			break;
@@ -1618,7 +1622,7 @@ void Room504::daemon() {
 			break;
 		}
 
-		if (_val1 == 4) {
+		if (_vineThrowType == 4) {
 			kernel_timing_trigger(1, 641);
 		} else {
 			setVines();
@@ -1664,29 +1668,29 @@ void Room504::daemon() {
 		break;
 
 	case 657:
-		_convState2 = 5;
+		_ripleyShould = 5;
 		_trigger4 = kernel_trigger_create(658);
 		break;
 
 	case 658:
-		_convState2 = 6;
-		digi_play(conv_sound_to_play(), 1, 255, 549);
+		_ripleyShould = 6;
+		digi_play(conv_sound_to_play(), 1, 255, 659);
 		break;
 
 	case 659:
-		_convState2 = 5;
-		_convState1 = 5;
-		_trigger3 = kernel_trigger_create(659);
+		_ripleyShould = 5;
+		_menendezShould = 5;
+		_trigger3 = kernel_trigger_create(660);
 		break;
 
 	case 660:
-		_convState2 = 1;
-		_convState1 = 2;
+		_ripleyShould = 1;
+		_menendezShould = 2;
 		_trigger2 = kernel_trigger_create(661);
 		break;
 
 	case 661:
-		_convState1 = 9;
+		_menendezShould = 9;
 		_trigger3 = kernel_trigger_create(662);
 		break;
 
@@ -1696,7 +1700,7 @@ void Room504::daemon() {
 
 	case 663:
 		inv_give_to_player("SHRUNKEN HEAD");
-		_convState2 = 4;
+		_ripleyShould = 4;
 		_trigger4 = kernel_trigger_create(664);
 		break;
 
@@ -1706,8 +1710,8 @@ void Room504::daemon() {
 		break;
 
 	case 665:
-		_convState1 = 2;
-		_convState2 = 1;
+		_menendezShould = 2;
+		_ripleyShould = 1;
 		_trigger2 = kernel_trigger_create(666);
 		break;
 
@@ -1721,12 +1725,12 @@ void Room504::daemon() {
 		break;
 
 	case 669:
-		_convState1 = 15;
+		_menendezShould = 15;
 		_trigger3 = kernel_trigger_create(670);
 		break;
 
 	case 670:
-		_convState2 = 8;
+		_ripleyShould = 8;
 		_trigger4 = kernel_trigger_create(671);
 		break;
 
@@ -1735,8 +1739,8 @@ void Room504::daemon() {
 		break;
 
 	case 672:
-		_convState1 = 2;
-		_convState2 = 1;
+		_menendezShould = 2;
+		_ripleyShould = 1;
 		_trigger1 = kernel_trigger_create(673);
 		break;
 
@@ -1751,7 +1755,7 @@ void Room504::daemon() {
 		setGlobals1(_ripLowReach, 1, 10, 10, 10);
 		sendWSMessage_110000(676);
 
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1780,7 +1784,7 @@ void Room504::daemon() {
 		break;
 
 	case 677:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 5;
 			break;
@@ -1819,7 +1823,7 @@ void Room504::daemon() {
 	case 685:
 		sendWSMessage_120000(687);
 
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1845,7 +1849,7 @@ void Room504::daemon() {
 
 
 	case 686:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 4;
 			break;
@@ -1887,7 +1891,7 @@ void Room504::daemon() {
 		break;
 
 	case 694:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1919,7 +1923,7 @@ void Room504::daemon() {
 		break;
 
 	case 696:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			inv_give_to_player("ROPE");
 			kernel_examine_inventory_object("PING ROPE",
@@ -1964,7 +1968,7 @@ void Room504::daemon() {
 		break;
 
 	case 701:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			_G(flags)[V154] = 3;
 			break;
@@ -1996,7 +2000,7 @@ void Room504::daemon() {
 		break;
 
 	case 703:
-		switch (_val1) {
+		switch (_vineThrowType) {
 		case 1:
 			inv_give_to_player("ROPE");
 			kernel_examine_inventory_object("PING ROPE",
@@ -2032,7 +2036,7 @@ void Room504::daemon() {
 		break;
 
 	case 708:
-		ws_walk(173, 198, nullptr, 709, 11);
+		ws_walk(_G(my_walker), 173, 198, nullptr, 709, 11);
 		break;
 
 	case 709:
@@ -2055,7 +2059,7 @@ void Room504::daemon() {
 
 	case 711:
 		series_unload(_ripLowReach);
-		ws_walk(200, 153, nullptr, _flag2 ? 570 : 714, 3);
+		ws_walk(_G(my_walker), 200, 153, nullptr, _flag2 ? 570 : 714, 3);
 		break;
 
 	case 714:
@@ -2114,7 +2118,7 @@ void Room504::daemon() {
 		break;
 
 	case 726:
-		ws_walk(530, 161, nullptr, 727, 11);
+		ws_walk(_G(my_walker), 530, 161, nullptr, 727, 11);
 		break;
 
 	case 727:
@@ -2158,7 +2162,7 @@ void Room504::daemon() {
 		if (inv_player_has("SHOVEL")) {
 			kernel_timing_trigger(1, 756);
 		} else {
-			ws_walk(528, 168, nullptr, _flag2 ? 558 : 734, 8);
+			ws_walk(_G(my_walker), 528, 168, nullptr, _flag2 ? 558 : 734, 8);
 		}
 		break;
 
@@ -2167,7 +2171,7 @@ void Room504::daemon() {
 		digi_preload("504_s09");
 		digi_preload("504_s03");
 		digi_preload("504_s05");
-		_flag1 = false;
+		_isOnRight = false;
 		_ripStep = series_stream("RIP STEP UP TO R PLATFORM", 5, 0, 736);
 		series_stream_break_on_frame(_ripStep, 1, 735);
 		break;
@@ -2217,12 +2221,12 @@ void Room504::daemon() {
 
 	case 746:
 		player_set_commands_allowed(false);
-		ws_walk(50, 226, nullptr, 747, 9);
+		ws_walk(_G(my_walker), 50, 226, nullptr, 747, 9);
 		break;
 
 	case 747:
 		disable_player_commands_and_fade_init(748);
-		ws_walk(0, 226, nullptr, -1, 9);
+		ws_walk(_G(my_walker), 0, 226, nullptr, -1, 9);
 		break;
 
 	case 748:
@@ -2232,11 +2236,11 @@ void Room504::daemon() {
 
 	case 749:
 		player_set_commands_allowed(false);
-		ws_walk(50, 226, nullptr, 750, 9);
+		ws_walk(_G(my_walker), 50, 226, nullptr, 750, 9);
 		break;
 
 	case 750:
-		ws_walk(183, 207, nullptr, 751, 3);
+		ws_walk(_G(my_walker), 183, 207, nullptr, 751, 3);
 		break;
 
 	case 751:
@@ -2255,7 +2259,7 @@ void Room504::daemon() {
 
 	case 756:
 		player_set_commands_allowed(false);
-		ws_walk(546, 143, nullptr, 757, 11);
+		ws_walk(_G(my_walker), 546, 143, nullptr, 757, 11);
 		break;
 
 	case 757:
@@ -2273,7 +2277,7 @@ void Room504::daemon() {
 
 	case 759:
 		series_unload(_ripLowReach);
-		ws_walk(528, 168, nullptr, _flag2 ? 558 : 734, 8);
+		ws_walk(_G(my_walker), 528, 168, nullptr, _flag2 ? 558 : 734, 8);
 		break;
 
 	default:
@@ -2283,8 +2287,8 @@ void Room504::daemon() {
 
 void Room504::pre_parser() {
 	bool useFlag = player_said("gear");
-	bool useFlag1 = useFlag && _flag1;
-	bool useFlag0 = useFlag && !_flag1;
+	bool useFlag1 = useFlag && _isOnRight;
+	bool useFlag0 = useFlag && !_isOnRight;
 
 	if (useFlag1 && player_said("ROPE COIL "))
 		intr_freshen_sentence(62);
@@ -2343,7 +2347,7 @@ void Room504::parser() {
 	bool menendezFlag = player_said_any("PERSON IN HOLE", "MENENDEZ");
 
 	player_update_info();
-	_flag1 = _G(player_info).x > 300;
+	_isOnRight = _G(player_info).x > 300;
 
 	if (player_said("GREEN VINE", "BROWN VINE") && inv_player_has("GREEN VINE") &&
 			inv_player_has("BROWN VINE")) {
@@ -2352,8 +2356,8 @@ void Room504::parser() {
 		inv_give_to_player("VINES");
 		_G(player).command_ready = false;
 		return;
-	} else if (((!_flag1 && _G(player).click_x > 300) ||
-			(_flag1 && _G(player).click_x <= 300)) &&
+	} else if (((!_isOnRight && _G(player).click_x > 300) ||
+			(_isOnRight && _G(player).click_x <= 300)) &&
 			!lookFlag && !takeFlag && !useFlag &&
 			checkVinesDistance()) {
 		_G(player).command_ready = false;
@@ -2391,12 +2395,12 @@ void Room504::parser() {
 			}
 			break;
 		case 2:
-			_convState2 = 3;
+			_ripleyShould = 3;
 			digi_play("504R51", 1, 255, 3);
 			break;
 		case 3:
-			_convState2 = 1;
-			_convState1 = 2;
+			_ripleyShould = 1;
+			_menendezShould = 2;
 			_trigger2 = kernel_trigger_create(4);
 			break;
 		case 4:
@@ -2430,7 +2434,7 @@ void Room504::parser() {
 			kernel_timing_trigger(60, 2);
 			break;
 		case 2:
-			disable_player_commands_and_fade_init(2);
+			disable_player_commands_and_fade_init(3);
 			break;
 		case 3:
 			_G(game).setRoom(506);
@@ -2438,13 +2442,13 @@ void Room504::parser() {
 		default:
 			break;
 		}
-	} else if (player_said("EXIT") && !_flag1) {
+	} else if (player_said("EXIT") && !_isOnRight) {
 		if (inv_player_has("ROPE")) {
 			switch (_G(kernel).trigger) {
 			case -1:
 				player_set_commands_allowed(false);
 				player_update_info();
-				ws_walk(_G(player_info).x, _G(player_info).y, nullptr, -1, 9);
+				ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, -1, 9);
 				disable_player_commands_and_fade_init(2);
 				break;
 			case 2:
@@ -2458,7 +2462,7 @@ void Room504::parser() {
 			switch (_G(kernel).trigger) {
 			case -1:
 				player_set_commands_allowed(false);
-				ws_walk(183, 207, nullptr, 2, 3);
+				ws_walk(_G(my_walker), 183, 207, nullptr, 2, 3);
 				break;
 			case 2:
 				digi_play("504R44", 1, 255, 3);
@@ -2502,7 +2506,7 @@ void Room504::parser() {
 			player_said_any("ROPE ", "ROPE  ", "ROPE   ") ||
 			player_said_any("GREEN VINE   ", "BROWN VINE   ")) &&
 			lookVines()) {
-		// No implementation
+		// No implementation: lookVines contains digi_play calls which return true
 	} else if (lookFlag && player_said(" ")) {
 		if (_G(flags)[V150]) {
 			digi_play("504R02", 1);
@@ -2573,356 +2577,356 @@ void Room504::parser() {
 	} else if (useFlag && player_said("HOLE ")) {
 		digi_play("504R21", 1);
 	} else if (vineStatueFlag && player_said("ROPE") &&
-			_flag1 && inv_player_has("ROPE")) {
+			_isOnRight && inv_player_has("ROPE")) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 1;
 		hotspot_set_active("ROPE", true);
 		hotspot_set_active("ROPE COIL", true);
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 580);
 	} else if (vineStatueFlag && player_said("GREEN VINE") &&
-			_flag1 && inv_player_has("GREEN VINE")) {
+			_isOnRight && inv_player_has("GREEN VINE")) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 1;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 580);
 	} else if (vineStatueFlag && player_said("BROWN VINE") &&
-		_flag1 && inv_player_has("BROWN VINE")) {
+		_isOnRight && inv_player_has("BROWN VINE")) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 1;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 580);
 	} else if (vineStatueFlag && player_said("VINES") &&
-		_flag1 && inv_player_has("VINES")) {
+		_isOnRight && inv_player_has("VINES")) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 1;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 580);
 	}
 
 	else if (takeFlag && player_said_any("ROPE ", "ROPE COIL ") &&
-			_G(flags)[V154] == 1 && _flag1) {
+			_G(flags)[V154] == 1 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(491, 166, nullptr, 586, 11);
+		ws_walk(_G(my_walker), 491, 166, nullptr, 586, 11);
 	} else if (takeFlag && player_said_any("ROPE ") &&
-		_G(flags)[V154] == 4 && _flag1) {
+		_G(flags)[V154] == 4 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 3;
 		kernel_timing_trigger(1, 603);
 	} else if (takeFlag && player_said_any("GREEN VINE ", "GREEN VINE COIL ") &&
-			_G(flags)[V152] == 1 && _flag1) {
+			_G(flags)[V152] == 1 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(491, 166, nullptr, 586, 11);
+		ws_walk(_G(my_walker), 491, 166, nullptr, 586, 11);
 	} else if (takeFlag && player_said("GREEN VINE ") &&
-			_G(flags)[V152] == 4 && _flag1) {
+			_G(flags)[V152] == 4 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 603);
 	} else if (takeFlag && player_said_any(
-			"BROWN VINE ", "BROWN VINE COIL ") && _flag1) {
+			"BROWN VINE ", "BROWN VINE COIL ") && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V153] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(491, 166, nullptr, 586, 11);
+		ws_walk(_G(my_walker), 491, 166, nullptr, 586, 11);
 	} else if (takeFlag && player_said("BROWN VINE ") &&
-			_G(flags)[V153] == 4 && _flag1) {
+			_G(flags)[V153] == 4 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 603);
-	} else if (takeFlag && player_said("VINES ", "COIL OF VINES ") &&
-			_G(flags)[V171] == 1 && _flag1) {
+	} else if (takeFlag && player_said_any("VINES ", "COIL OF VINES ") &&
+			_G(flags)[V171] == 1 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(491, 166, nullptr, 586, 11);
+		ws_walk(_G(my_walker), 491, 166, nullptr, 586, 11);
 	} else if (takeFlag && player_said("VINES ") &&
-			_G(flags)[V171] == 4 && _flag1) {
+			_G(flags)[V171] == 4 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 603);
-	} else if (takeFlag && !_flag1 && player_said_any("ROPE ", "ROPE COIL ") &&
+	} else if (takeFlag && !_isOnRight && player_said_any("ROPE ", "ROPE COIL ") &&
 			_G(flags)[V154] == 4) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && !_flag1 && player_said_any("GREEN VINE ", "GREEN VINE COIL ") &&
+	} else if (takeFlag && !_isOnRight && player_said_any("GREEN VINE ", "GREEN VINE COIL ") &&
 			_G(flags)[V154] == 4) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && !_flag1 && player_said_any("BROWN VINE ", "BROWN VINE COIL ") &&
+	} else if (takeFlag && !_isOnRight && player_said_any("BROWN VINE ", "BROWN VINE COIL ") &&
 			_G(flags)[V153] == 4) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && !_flag1 && player_said_any("VINES ", "COIL OF VINES  ") &&
+	} else if (takeFlag && !_isOnRight && player_said_any("VINES ", "COIL OF VINES  ") &&
 			_G(flags)[V171] == 4) {
 		digi_play("COM126", 1, 255, -1, 997);
 
-	} else if (_flag1 && _G(player).click_x <= 300 &&
+	} else if (_isOnRight && _G(player).click_x <= 300 &&
 			player_said("ROPE COIL ") && _G(flags)[V154] == 1) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(528, 168, nullptr, 595, 8);
-	} else if (_flag1 && _G(player).click_x <= 300 &&
+		ws_walk(_G(my_walker), 528, 168, nullptr, 595, 8);
+	} else if (_isOnRight && _G(player).click_x <= 300 &&
 			player_said("GREEN VINE COIL ") && _G(flags)[V152] == 1) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(528, 168, nullptr, 595, 8);
-	} else if (_flag1 && _G(player).click_x <= 300 &&
+		ws_walk(_G(my_walker), 528, 168, nullptr, 595, 8);
+	} else if (_isOnRight && _G(player).click_x <= 300 &&
 			player_said("BROWN VINE COIL ") && _G(flags)[V153] == 1) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(528, 168, nullptr, 595, 8);
-	} else if (_flag1 && _G(player).click_x <= 300 &&
+		ws_walk(_G(my_walker), 528, 168, nullptr, 595, 8);
+	} else if (_isOnRight && _G(player).click_x <= 300 &&
 			player_said("COIL OF VINES ") && _G(flags)[V171] == 1) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(528, 168, nullptr, 595, 8);
+		ws_walk(_G(my_walker), 528, 168, nullptr, 595, 8);
 
-	} else if (!_flag1 && player_said("TREE", "ROPE COIL  ")) {
+	} else if (!_isOnRight && player_said("TREE", "ROPE COIL  ")) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 611, 11);
-	} else if (!_flag1 && player_said("TREE", "GREEN VINE COIL  ")) {
+		ws_walk(_G(my_walker), 135, 146, nullptr, 611, 11);
+	} else if (!_isOnRight && player_said("TREE", "GREEN VINE COIL  ")) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 611, 11);
-	} else if (!_flag1 && player_said("TREE", "COIL OF VINES  ")) {
+		ws_walk(_G(my_walker), 135, 146, nullptr, 611, 11);
+	} else if (!_isOnRight && player_said("TREE", "COIL OF VINES  ")) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 611, 11);
-	} else if (!_flag1 && player_said("TREE", "BROWN VINE COIL  ")) {
+		ws_walk(_G(my_walker), 135, 146, nullptr, 611, 11);
+	} else if (!_isOnRight && player_said("TREE", "BROWN VINE COIL  ")) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 611, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 611, 11);
 
-	} else if (!_flag1 && _G(player).click_x > 300 && player_said("ROPE COIL   ")) {
+	} else if (!_isOnRight && _G(player).click_x > 300 && player_said("ROPE COIL   ")) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(200, 153, nullptr, 620, 3);
-	} else if (!_flag1 && _G(player).click_x > 300 && player_said("GREEN VINE COIL   ")) {
+		ws_walk(_G(my_walker), 200, 153, nullptr, 620, 3);
+	} else if (!_isOnRight && _G(player).click_x > 300 && player_said("GREEN VINE COIL   ")) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(200, 153, nullptr, 620, 3);
-	} else if (!_flag1 && _G(player).click_x > 300 && player_said("COIL OF VINES   ")) {
+		ws_walk(_G(my_walker), 200, 153, nullptr, 620, 3);
+	} else if (!_isOnRight && _G(player).click_x > 300 && player_said("BROWN VINE COIL   ")) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(200, 153, nullptr, 620, 3);
-	} else if (!_flag1 && _G(player).click_x > 300 && player_said("BROWN VINE COIL   ")) {
+		ws_walk(_G(my_walker), 200, 153, nullptr, 620, 3);
+	} else if (!_isOnRight && _G(player).click_x > 300 && player_said("COIL OF VINES   ")) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(200, 153, nullptr, 620, 3);
+		ws_walk(_G(my_walker), 200, 153, nullptr, 620, 3);
 
 	} else if (player_said("TREE") && player_said("ROPE") &&
-			!_flag1 && inv_player_has("ROPE")) {
+			!_isOnRight && inv_player_has("ROPE")) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 0;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 630, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 630, 11);
 	} else if (player_said("TREE") && player_said("GREEN VINE") &&
-			!_flag1 && inv_player_has("GREEN VINE")) {
+			!_isOnRight && inv_player_has("GREEN VINE")) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 0;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 630, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 630, 11);
 	} else if (player_said("TREE") && player_said("VINES") &&
-			!_flag1 && inv_player_has("VINES")) {
+			!_isOnRight && inv_player_has("VINES")) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 0;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 630, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 630, 11);
 	} else if (player_said("TREE") && player_said("BROWN VINE") &&
-			!_flag1 && inv_player_has("BROWN VINE")) {
+			!_isOnRight && inv_player_has("BROWN VINE")) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 0;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 630, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 630, 11);
 
-	} else if (_flag1 && vineStatueFlag && player_said("ROPE COIL    ")) {
+	} else if (_isOnRight && vineStatueFlag && player_said("ROPE COIL    ")) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 638);
-	} else if (_flag1 && vineStatueFlag && player_said("GREEN VINE COIL    ")) {
+	} else if (_isOnRight && vineStatueFlag && player_said("GREEN VINE COIL    ")) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 638);
-	} else if (_flag1 && vineStatueFlag && player_said("BROWN VINE COIL    ")) {
+	} else if (_isOnRight && vineStatueFlag && player_said("BROWN VINE COIL    ")) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 638);
-	} else if (_flag1 && vineStatueFlag && player_said("COIL OF VINES    ")) {
+	} else if (_isOnRight && vineStatueFlag && player_said("COIL OF VINES    ")) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 2;
 		_G(kernel).trigger_mode = KT_DAEMON;
 		kernel_timing_trigger(1, 638);
 
 	} else if (useFlag && player_said_any("ROPE ", "ROPE   ") &&
-			_G(flags)[V154] == 2 && _flag1) {
+			_G(flags)[V154] == 2 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 5;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(485, 166, nullptr, 675, 11);
+		ws_walk(_G(my_walker), 485, 166, nullptr, 675, 11);
 	} else if (useFlag && player_said_any("GREEN VINE ", "GREEN VINE   ") &&
-			_G(flags)[V152] == 2 && _flag1) {
+			_G(flags)[V152] == 2 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 5;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(485, 166, nullptr, 675, 11);
+		ws_walk(_G(my_walker), 485, 166, nullptr, 675, 11);
 	} else if (useFlag && player_said_any("BROWN VINE ", "BROWN VINE   ") &&
-			_G(flags)[V153] == 2 && _flag1) {
+			_G(flags)[V153] == 2 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 5;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(485, 166, nullptr, 675, 11);
+		ws_walk(_G(my_walker), 485, 166, nullptr, 675, 11);
 	} else if (useFlag && player_said("VINES ") &&
-			_G(flags)[V171] == 2 && _flag1) {
+			_G(flags)[V171] == 2 && _isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 5;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(485, 166, nullptr, 675, 11);
+		ws_walk(_G(my_walker), 485, 166, nullptr, 675, 11);
 
 	} else if (useFlag && player_said_any("ROPE  ", "ROPE   ") &&
-			_G(flags)[V154] == 2 && !_flag1) {
+			_G(flags)[V154] == 2 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 4;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 684, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 684, 11);
 	} else if (useFlag && player_said_any("GREEN VINE  ", "GREEN VINE   ") &&
-			_G(flags)[V152] == 2 && !_flag1) {
+			_G(flags)[V152] == 2 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 4;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 684, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 684, 11);
 	} else if (useFlag && player_said_any("BROWN VINE  ", "BROWN VINE   ") &&
-			_G(flags)[V154] == 2 && !_flag1) {
+			_G(flags)[V154] == 2 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 4;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 684, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 684, 11);
 	} else if (useFlag && player_said("VINES  ") &&
-			_G(flags)[V171] == 2 && !_flag1) {
+			_G(flags)[V171] == 2 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V171] = 4;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 684, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 684, 11);
 
 	} else if (takeFlag && player_said("ROPE  ") &&
-			_G(flags)[V154] == 0 && !_flag1) {
+			_G(flags)[V154] == 0 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 693, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 693, 11);
 	} else if (takeFlag && player_said_any("GREEN VINE  ", "GREEN VINE COIL   ") &&
-			_G(flags)[V152] == 0 && !_flag1) {
+			_G(flags)[V152] == 0 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 693, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 693, 11);
 	} else if (takeFlag && player_said_any("BROWN VINE  ", "BROWN VINE COIL   ") &&
-			_G(flags)[V153] == 0 && !_flag1) {
+			_G(flags)[V153] == 0 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 693, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 693, 11);
 	} else if (takeFlag && player_said_any("VINES  ", "COIL OF VINES   ") &&
-			_G(flags)[V171] == 0 && !_flag1) {
+			_G(flags)[V171] == 0 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 693, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 693, 11);
 
 	} else if (takeFlag && player_said("ROPE  ") &&
-			_G(flags)[V154] == 5 && !_flag1) {
+			_G(flags)[V154] == 5 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 1;
+		_vineThrowType = 1;
 		_G(flags)[V154] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 700, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 700, 11);
 	} else if (takeFlag && player_said_any("GREEN VINE  ", "GREEN VINE COIL   ") &&
-			_G(flags)[V153] == 5 && !_flag1) {
+			_G(flags)[V153] == 5 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 3;
+		_vineThrowType = 3;
 		_G(flags)[V153] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 700, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 700, 11);
 	} else if (takeFlag && player_said_any("BROWN VINE  ", "BROWN VINE COIL   ") &&
-			_G(flags)[V152] == 5 && !_flag1) {
+			_G(flags)[V152] == 5 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 2;
+		_vineThrowType = 2;
 		_G(flags)[V152] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 700, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 700, 11);
 	} else if (takeFlag && player_said_any("VINES  ", "COIL OF VINES   ") &&
-			_G(flags)[V171] == 5 && !_flag1) {
+			_G(flags)[V171] == 5 && !_isOnRight) {
 		player_set_commands_allowed(false);
-		_val1 = 4;
+		_vineThrowType = 4;
 		_G(flags)[V171] = 3;
 		_G(kernel).trigger_mode = KT_DAEMON;
-		ws_walk(135, 146, nullptr, 700, 11);
+		ws_walk(_G(my_walker), 135, 146, nullptr, 700, 11);
 
-	} else if (takeFlag && _flag1 && player_said_any("ROPE  ", "ROPE COIL    ") &&
+	} else if (takeFlag && _isOnRight && player_said_any("ROPE  ", "ROPE COIL    ") &&
 			_G(flags)[V154] == 5) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && _flag1 && player_said_any("GREEN VINE  ", "GREEN VINE COIL    ") &&
+	} else if (takeFlag && _isOnRight && player_said_any("GREEN VINE  ", "GREEN VINE COIL    ") &&
 			_G(flags)[V152] == 5) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && _flag1 && player_said_any("BROWN VINE  ", "BROWN VINE COIL    ") &&
+	} else if (takeFlag && _isOnRight && player_said_any("BROWN VINE  ", "BROWN VINE COIL    ") &&
 			_G(flags)[V153] == 5) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && _flag1 && player_said_any("VINES  ", "COIL OF VINES    ") &&
+	} else if (takeFlag && _isOnRight && player_said_any("VINES  ", "COIL OF VINES    ") &&
 			_G(flags)[V171] == 5) {
 		digi_play("COM126", 1, 255, -1, 997);
 
@@ -2976,7 +2980,7 @@ void Room504::parser() {
 	} else if (_G(flags)[V149] == 1 && player_said("JOURNAL", "STELE")) {
 		Common::strcpy_s(_G(player).noun, " ");
 		return;
-	} else if (takeFlag && ITEM("WHEELED TOY") && _flag1) {
+	} else if (takeFlag && ITEM("WHEELED TOY") && _isOnRight) {
 		if (_G(flags)[V141] == 1) {
 			switch (_G(kernel).trigger) {
 			case -1:
@@ -3003,7 +3007,7 @@ void Room504::parser() {
 				break;
 			case 4:
 				series_unload(_ripLowReach);
-				inv_give_to_player("WHELED TOY");
+				inv_give_to_player("WHEELED TOY");
 				setMiscItems();
 				player_set_commands_allowed(true);
 				break;
@@ -3015,7 +3019,7 @@ void Room504::parser() {
 		}
 	} else if (takeFlag && player_said("WOODEN LADDER ") &&
 			inv_object_is_here("WOODEN LADDER") &&
-			_G(flags)[V155] == 1 && _flag1) {
+			_G(flags)[V155] == 1 && _isOnRight) {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -3052,7 +3056,7 @@ void Room504::parser() {
 			_G(flags)[V141] == 0) {
 		digi_play("504R48", 1);
 	} else if (takeFlag && ITEM("WOODEN LADDER") &&
-			_G(flags)[V155] == 0 && _flag1 && _G(flags)[V141] == 1) {
+			_G(flags)[V155] == 0 && _isOnRight && _G(flags)[V141] == 1) {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -3077,6 +3081,7 @@ void Room504::parser() {
 			sendWSMessage_140000(4);
 			break;
 		case 4:
+			_G(flags)[V155] = 1;
 			inv_give_to_player("WOODEN LADDER");
 			setMiscItems();
 			series_unload(_ripLowReach);
@@ -3085,7 +3090,7 @@ void Room504::parser() {
 		default:
 			break;
 		}
-	} else if (takeFlag && ITEM("DRIFTWOOD STUMP") && !_flag1) {
+	} else if (takeFlag && ITEM("DRIFTWOOD STUMP") && !_isOnRight) {
 		switch(_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -3119,7 +3124,7 @@ void Room504::parser() {
 	} else if (takeFlag && player_said_any("ROPE ", "ROPE  ", "ROPE   ") &&
 			_G(flags)[V154] == 2) {
 		digi_play("COM126", 1, 255, -1, 997);
-	} else if (takeFlag && ITEM("POLE") && !_flag1) {
+	} else if (takeFlag && ITEM("POLE") && !_isOnRight) {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -3144,7 +3149,7 @@ void Room504::parser() {
 		default:
 			break;
 		}
-	} else if (takeFlag && ITEM("SHOVEL") && _flag1) {
+	} else if (takeFlag && ITEM("SHOVEL") && _isOnRight) {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -3179,7 +3184,7 @@ void Room504::parser() {
 			break;
 		}
 	} else if (takeFlag && player_said("SHOVEL ") &&
-			inv_object_is_here("SHOVEL") && _flag1) {
+			inv_object_is_here("SHOVEL") && _isOnRight) {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
@@ -3227,7 +3232,7 @@ void Room504::parser() {
 			!ropeCoilFlag && !greenVineFlag && !brownVineFlag &&
 			!vineCoilFlag && _G(flags)[V154] != 2 &&
 			_G(flags)[V152] != 2 && _G(flags)[V153] != 2) {
-		if (_flag1) {
+		if (_isOnRight) {
 			if (_G(player).click_x <= 300)
 				digi_play("504R05A", 1);
 		} else {
@@ -3449,7 +3454,7 @@ void Room504::setMiscItems() {
 void Room504::disableVinesRope() {
 	static const char *HOTSPOTS[] = {
 		"ROPE ", "GREEN VINE ", "BROWN VINE ", "VINES ",
-		"ROPE  ", "GREEN VINE  ", "BROWN VINE  "
+		"ROPE  ", "GREEN VINE  ", "BROWN VINE  ",
 		"VINES  ", "ROPE COIL ", "GREEN VINE COIL ",
 		"BROWN VINE COIL ", "COIL OF VINES ",
 		"ROPE COIL  ", "GREEN VINE COIL  ",
@@ -3546,16 +3551,16 @@ bool Room504::checkVinesDistance() {
 }
 
 bool Room504::parser1() {
-	if (!_flag1 && _G(player).click_x > 300) {
+	if (!_isOnRight && _G(player).click_x > 300) {
 		_G(kernel).trigger_mode = KT_DAEMON;
 		if (inv_player_has("DRIFTWOOD STUMP") || inv_player_has("POLE")) {
 			kernel_timing_trigger(1, 707);
 		} else if (!_flag2) {
-			ws_walk(200, 153, nullptr, 714, 3);
+			ws_walk(_G(my_walker), 200, 153, nullptr, 714, 3);
 		} else {
-			ws_walk(200, 153, nullptr, 570, 3);
+			ws_walk(_G(my_walker), 200, 153, nullptr, 570, 3);
 		}
-	} else if (_flag1 && _G(player).click_x <= 300) {
+	} else if (_isOnRight && _G(player).click_x <= 300) {
 		_flag3 = player_said("EXIT") && _flag2;
 		_G(kernel).trigger_mode = KT_DAEMON;
 
@@ -3569,9 +3574,9 @@ bool Room504::parser1() {
 		} else if (inv_player_has("SHOVEL")) {
 			kernel_timing_trigger(1, 755);
 		} else if (_flag2) {
-			ws_walk(528, 168, nullptr, 558, 8);
+			ws_walk(_G(my_walker), 528, 168, nullptr, 558, 8);
 		} else {
-			ws_walk(528, 168, nullptr, 734, 8);
+			ws_walk(_G(my_walker), 528, 168, nullptr, 734, 8);
 		}
 	} else {
 		return false;
@@ -3588,20 +3593,20 @@ void Room504::conv504a() {
 
 	if (_G(kernel).trigger == 1) {
 		if (who <= 0)
-			_convState1 = 2;
+			_menendezShould = 2;
 		else if (who == 1)
-			_convState2 = 1;
+			_ripleyShould = 1;
 
 		conv_resume();
 	} else {
 		if (who <= 0) {
 			if (node == 8 && entry == 3) {
-				_convState1 = 10;
+				_menendezShould = 10;
 			} else if (node == 19 && entry == 2) {
 				_G(kernel).trigger_mode = KT_DAEMON;
 				kernel_timing_trigger(1, 669);
 			} else {
-				_convState1 = 4;
+				_menendezShould = 4;
 
 				if (sound)
 					digi_play(sound, 1, 255, 1);
@@ -3613,7 +3618,7 @@ void Room504::conv504a() {
 				_G(kernel).trigger_mode = KT_DAEMON;
 				kernel_timing_trigger(1, 657);
 			} else {
-				_convState2 = 3;
+				_ripleyShould = 3;
 
 				if (sound)
 					digi_play(sound, 1, 255, 1);
@@ -3625,8 +3630,7 @@ void Room504::conv504a() {
 }
 
 bool Room504::lookVines() {
-	if (_G(flags)[V152] == 2 && _G(flags)[V153] == 2 &&
-		_G(flags)[V154] == 2) {
+	if (_G(flags)[V152] == 2 && _G(flags)[V153] == 2 && _G(flags)[V154] == 2) {
 		digi_play("504R38", 1);
 	} else if (_G(flags)[V154] == 2 && _G(flags)[V152] == 2) {
 		digi_play("504R37", 1);

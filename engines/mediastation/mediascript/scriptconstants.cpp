@@ -46,6 +46,8 @@ const char *opcodeToStr(Opcode opcode) {
 		return "AssignVariable";
 	case kOpcodeOr:
 		return "Or";
+	case kOpcodeNot:
+		return "Not";
 	case kOpcodeAnd:
 		return "And";
 	case kOpcodeEquals:
@@ -159,6 +161,8 @@ const char *builtInMethodToStr(BuiltInMethod method) {
 		return "IsVisible";
 	case kMovieResetMethod:
 		return "MovieReset";
+	case kSetCurrentClipMethod:
+		return "SetCurrentClip";
 	case kSetWorldSpaceExtentMethod:
 		return "SetWorldSpaceExtent";
 	case kSetBoundsMethod:
@@ -209,6 +213,10 @@ const char *builtInMethodToStr(BuiltInMethod method) {
 		return "Sort";
 	case kDeleteAtMethod:
 		return "DeleteAt";
+	case kJumbleMethod: 
+		return "Jumble";
+	case kDeleteFirstMethod:
+		return "DeleteFirst";
 	case kOpenLensMethod:
 		return "OpenLens";
 	case kCloseLensMethod:
@@ -318,6 +326,8 @@ const char *operandTypeToStr(OperandType type) {
 		return "AssetId";
 	case kOperandTypeVariableDeclaration:
 		return "VariableDeclaration";
+	case kOperandTypeCollection:
+		return "Collection";
 	case kOperandTypeFunction:
 		return "Function";
 	default:

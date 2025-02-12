@@ -216,7 +216,7 @@ _pandoc=no
 _curl=yes
 _lld=no
 _mold=no
-_gold=yes
+_gold=auto
 # Default vkeybd/eventrec options
 _vkeybd=no
 _eventrec=no
@@ -2552,6 +2552,19 @@ else
 	define_in_config_if_yes yes 'NO_CXX11_ALIGNAS'
 fi
 
+# The Gold linker had known issues on at least i386 and ppc32, in some cases.
+# Since this linker is not very maintained anymore, and since alternatives exist,
+# avoid using it on non-mainstream archs, unless --enable-gold was explicitly given.
+if test "$_gold" = auto; then
+	case $_host_cpu in
+		aarch64 | x86_64 | amd64)
+			;;
+		*)
+			_gold=no
+			;;
+	esac
+fi
+
 #
 # Determine extra build flags for debug and/or release builds
 #
@@ -2587,7 +2600,7 @@ if test "$_debug_build" != no; then
 			append_var LDFLAGS "-fuse-ld=mold"
 			append_var LDFLAGS "-Wl,--gdb-index"
 			echo_n -- " + Mold"
-		elif test "$_gold" = yes && cc_check_no_clean $debug_mode -gsplit-dwarf -fuse-ld=gold -Wl,--gdb-index; then
+		elif test "$_gold" != no && cc_check_no_clean $debug_mode -gsplit-dwarf -fuse-ld=gold -Wl,--gdb-index; then
 			append_var LDFLAGS "-fuse-ld=gold"
 			append_var LDFLAGS "-Wl,--gdb-index"
 			echo_n -- " + Gold"
@@ -2889,12 +2902,16 @@ case $_host_os in
 	android)
 		case $_host in
 			android-arm-v7a | android-armeabi-v7a)
-				# Disable NEON for older devices (like with Tegra 2)
-				append_var CXXFLAGS "-mfpu=vfp"
+				# Enable NEON by default
+				# For older devices (like Tegra 2), pass --disable-ext-neon
+				if test "$_ext_neon" = no ; then
+					append_var CXXFLAGS "-mfpu=vfp"
+				else
+					append_var CXXFLAGS "-mfpu=neon"
+					_ext_neon=yes
+				fi
 				# This is really old CPU but might be still used with android 4.1, it slightly increases code size and decreases performance.
 				append_var LDFLAGS "-Wl,--fix-cortex-a8"
-				# Allow NEON optimized code after runtime detection
-				_ext_neon=yes
 				ABI="armeabi-v7a"
 				;;
 			android-arm64-v8a)
@@ -7136,8 +7153,8 @@ case $_host_cpu in
 		fi
 		_ext_neon=no
 		# SSE2 is always available on x86_64
-		if ! (test "$have_clang" = yes && (test $_clang_major -gt 5 || (test $_clang_major -eq 5 && test $_clang_minor -gt 0))) &&
-		   ! (test "$have_gcc"   = yes && (test $_cxx_major   -gt 4 || (test $_cxx_major   -eq 4 && test $_cxx_minor   -gt 9))); then
+		if ! (test "$have_clang" = yes && (test $_clang_major -gt 5 || (test $_clang_major -eq 5 && test $_clang_minor -ge 0))) &&
+		   ! (test "$have_gcc"   = yes && (test $_cxx_major   -gt 4 || (test $_cxx_major   -eq 4 && test $_cxx_minor   -ge 9))); then
 			# Need GCC 4.9+ or Clang 5.0+ for target pragma
 			_ext_avx2=no
 		fi
@@ -7150,8 +7167,8 @@ case $_host_cpu in
 			_ext_avx2=no
 		fi
 		_ext_neon=no
-		if ! (test "$have_clang" = yes && (test $_clang_major -gt 5 || (test $_clang_major -eq 5 && test $_clang_minor -gt 0))) &&
-		   ! (test "$have_gcc"   = yes && (test $_cxx_major   -gt 4 || (test $_cxx_major   -eq 4 && test $_cxx_minor   -gt 9))); then
+		if ! (test "$have_clang" = yes && (test $_clang_major -gt 5 || (test $_clang_major -eq 5 && test $_clang_minor -ge 0))) &&
+		   ! (test "$have_gcc"   = yes && (test $_cxx_major   -gt 4 || (test $_cxx_major   -eq 4 && test $_cxx_minor   -ge 9))); then
 			# Need GCC 4.9+ or Clang 5.0+ for target pragma
 			_ext_sse2=no
 			_ext_avx2=no
@@ -7171,9 +7188,13 @@ case $_host_cpu in
 		fi
 		_ext_sse2=no
 		_ext_avx2=no
-		if ! (test "$have_clang" = yes && (test $_clang_major -gt 19 || (test $_clang_major -eq 19 && test $_clang_minor -gt 1))) &&
-		   ! (test "$have_gcc"   = yes && (test $_cxx_major   -gt  4 || (test $_cxx_major   -eq  4 && test $_cxx_minor   -gt 9))); then
-			# Need GCC 4.9+ or Clang 19.1+ for target pragma
+
+		if ! (test "$_ext_neon" = no) &&
+		   ! (cc_check_define __ARM_NEON) &&
+		   ! (test "$have_clang" = yes && (test $_clang_major -gt 19 || (test $_clang_major -eq 19 && test $_clang_minor -ge 1))) &&
+		   ! (test "$have_gcc"   = yes && (test $_cxx_major   -gt  6 || (test $_cxx_major   -eq  6 && test $_cxx_minor   -ge 1))); then
+			# Need GCC 6.1+ or Clang 19.1+ for target pragma
+			# Don't disable if NEON is already enabled in the compiler
 			_ext_neon=no
 		fi
 		;;

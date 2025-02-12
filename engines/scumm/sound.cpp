@@ -87,11 +87,14 @@ Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioT
 	// Initialize the SE sound engine for all doublefine packed games,
 	// except for Maniac Mansion (within DOTT), which doesn't have
 	// associated SE resources in the PAK file.
-	if (_vm->_game.features & GF_DOUBLEFINE_PAK && _vm->_game.id != GID_MANIAC)
+	if (_vm->_game.features & GF_DOUBLEFINE_PAK && _vm->_game.id != GID_MANIAC) {
 		_soundSE = new SoundSE(_vm, _mixer);
-	_soundCD = new SoundCD(_vm, _mixer, _soundSE, useReplacementAudioTracks);
+		_useRemasteredAudio = ConfMan.getBool("use_remastered_audio");
+		if (_vm->_game.id == GID_MONKEY || _vm->_game.id == GID_MONKEY2)
+			_enableAmbienceSounds = ConfMan.getBool("enable_ambience_sounds");
+	}
 
-	_useRemasteredAudio = ConfMan.getBool("use_remastered_audio");
+	_soundCD = new SoundCD(_vm, _mixer, _soundSE, useReplacementAudioTracks);
 
 	// This timer targets every talkie game, except for LOOM CD
 	// which is handled differently, and except for COMI which
@@ -102,6 +105,9 @@ Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioT
 }
 
 Sound::~Sound() {
+	if (_enableAmbienceSounds)
+		_soundSE->stopAmbience();
+
 	free(_offsetTable);
 	delete _talkChannelHandle;
 	delete _soundSE;
@@ -310,24 +316,14 @@ void Sound::triggerSound(int soundID) {
 
 		if (type == 2) {
 			// CD track resource
-			ptr += 0x16;
 			if (soundID == _soundCD->_currentCDSound && _soundCD->pollCD() == 1)
 				return;
 
-			int track = ptr[0];
-			int loops = ptr[1];
-			int start = (ptr[2] * 60 + ptr[3]) * 75 + ptr[4];
-			int end = (ptr[5] * 60 + ptr[6]) * 75 + ptr[7];
+			int track = _soundCD->playCDTrackFromSoundID(soundID);
 
-			// Add the user-specified adjustments.
-			if (_vm->_game.id == GID_MONKEY && track == 17) {
-				int adjustment = ConfMan.getInt(start == 0 ? "mi1_intro_adjustment" : "mi1_outlook_adjustment");
-
-				start += ((75 * adjustment) / 100);
+			if (_vm->_game.id == GID_MONKEY && _enableAmbienceSounds) {
+				_soundSE->startAmbience(track);
 			}
-
-			_soundCD->playCDTrack(track, loops == 0xff ? -1 : loops, start, end <= start ? 0 : end - start);
-			_soundCD->_currentCDSound = soundID;
 		} else {
 			// All other sound types are ignored
 			warning("Scumm::Sound::triggerSound: encountered audio resource with chunk type 'SOUN' and sound type %d", type);
@@ -941,6 +937,8 @@ void Sound::stopSound(int sound) {
 	int i;
 
 	_soundCD->stopCDSound(sound);
+	if (_enableAmbienceSounds)
+		_soundSE->stopAmbience();
 
 	if (_vm->_game.version < 7)
 		_mixer->stopID(sound);
@@ -963,6 +961,8 @@ void Sound::stopSound(int sound) {
 
 void Sound::stopAllSounds() {
 	_soundCD->stopAllCDSounds();
+	if (_enableAmbienceSounds)
+		_soundSE->stopAmbience();
 
 	// Clear the (secondary) sound queue
 	_lastSound = 0;
@@ -1233,7 +1233,9 @@ void Sound::saveLoadWithSerializer(Common::Serializer &s) {
 }
 
 void Sound::restoreAfterLoad() {
-	_soundCD->restoreAfterLoad();
+	int track = _soundCD->restoreAfterLoad();
+	if (_enableAmbienceSounds && track >= 0)
+		_soundSE->startAmbience(track);
 }
 
 bool Sound::isAudioDisabled() {

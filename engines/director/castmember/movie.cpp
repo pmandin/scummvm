@@ -22,6 +22,7 @@
 #include "director/director.h"
 #include "director/movie.h"
 #include "director/castmember/movie.h"
+#include "director/lingo/lingo-the.h"
 
 namespace Director {
 
@@ -61,6 +62,85 @@ MovieCastMember::MovieCastMember(Cast *cast, uint16 castId, MovieCastMember &sou
 	_enableSound = source._enableSound;
 	_crop = source._crop;
 	_center = source._center;
+}
+
+bool MovieCastMember::hasField(int field) {
+	switch (field) {
+	case kTheCenter:
+	case kTheIdleHandlerPeriod:
+	case kThePaletteMapping:
+	case kTheScoreSelection:
+	case kTheScriptsEnabled:
+	case kTheSound:
+	case kTheUpdateLock:
+		return true;
+	default:
+		break;
+	}
+	return CastMember::hasField(field);
+}
+
+Datum MovieCastMember::getField(int field) {
+	Datum d;
+
+	switch (field) {
+	case kTheCenter:
+		d = Datum((int)_center);
+		break;
+	case kTheIdleHandlerPeriod:
+		warning("STUB: MovieCastMember::getField(): idleHandlerPeriod not implemented");
+		break;
+	case kThePaletteMapping:
+		warning("STUB: MovieCastMember::getField(): paletteMapping not implemented");
+		break;
+	case kTheScoreSelection:
+		warning("STUB: MovieCastMember::getField(): scoreSelection not implemented");
+		break;
+	case kTheScriptsEnabled:
+		d = Datum(_enableScripts);
+		break;
+	case kTheSound:
+		d = Datum(_enableSound);
+		break;
+	case kTheUpdateLock:
+		warning("STUB: MovieCastMember::getField(): updateLock not implemented");
+		break;
+	default:
+		d = CastMember::getField(field);
+		break;
+	}
+
+	return d;
+}
+
+bool MovieCastMember::setField(int field, const Datum &d) {
+	switch (field) {
+	case kTheCenter:
+		_center = (bool)d.asInt();
+		return true;
+	case kTheIdleHandlerPeriod:
+		warning("STUB: MovieCastMember::setField(): idleHandlerPeriod not implemented");
+		return false;
+	case kThePaletteMapping:
+		warning("STUB: MovieCastMember::setField(): paletteMapping not implemented");
+		return false;
+	case kTheScoreSelection:
+		warning("STUB: MovieCastMember::setField(): scoreSelection not implemented");
+		return false;
+	case kTheScriptsEnabled:
+		_enableScripts = (bool)d.asInt();
+		return true;
+	case kTheSound:
+		_enableSound = (bool)d.asInt();
+		return true;
+	case kTheUpdateLock:
+		warning("STUB: MovieCastMember::setField(): updateLock not implemented");
+		return false;
+	default:
+		break;
+	}
+
+	return CastMember::setField(field, d);
 }
 
 Common::String MovieCastMember::formatInfo() {

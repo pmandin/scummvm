@@ -212,8 +212,13 @@ static const LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x06, 0x21, kTheSprite,			kTheLoc,			true, kTEAItemId },
 	{ 0x06, 0x22, kTheSprite,			kTheRect,			true, kTEAItemId },
 	{ 0x06, 0x23, kTheSprite,			kTheMemberNum,		true, kTEAItemId }, // D5
-	{ 0x06, 0x24, kTheSprite, 			kTheCastLibNum, 	true, kTEAItemId },
-	{ 0x06, 0x25, kTheSprite,			kTheMember,			true, kTEAItemId },
+	{ 0x06, 0x24, kTheSprite, 			kTheCastLibNum, 	true, kTEAItemId }, // D5
+	{ 0x06, 0x25, kTheSprite,			kTheMember,			true, kTEAItemId }, // D5
+	// scriptInstanceList
+	// currentTime
+	// mostRecentCuePoint
+	// tweened
+	// name
 
 	{ 0x07, 0x01, kTheBeepOn,			kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x02, kTheButtonStyle,		kTheNOField,		true, kTEANOArgs },
@@ -250,6 +255,11 @@ static const LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x07, 0x21, kTheTimeoutPlay,		kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x22, kTheTimer,			kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x23, kThePreLoadRAM,		kTheNOField,		true, kTEANOArgs },
+	{ 0x07, 0x24, kTheVideoForWindowsPresent, kTheNOField,	true, kTEANOArgs }, // D5
+	// netPresent
+	// safePlayer
+	// soundKeepDevice
+	// soundMixMedia
 
 	{ 0x08, 0x01, kThePerFrameHook,		kTheNOField,		true, kTEANOArgs },
 	{ 0x08, 0x02, kTheCastMembers,		kTheNumber,			false, kTEANOArgs },
@@ -270,6 +280,7 @@ static const LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x09, 0x0b, kTheCast,				kTheSize,			true, kTEAItemId },
 	{ 0x09, 0x11, kTheCast,				kTheForeColor,		true, kTEAItemId },
 	{ 0x09, 0x12, kTheCast,				kTheBackColor,		true, kTEAItemId },
+	{ 0x09, 0x13, kTheCast,				kTheType,			true, kTEAItemId }, // D5
 
 	// the chunk of cast
 	{ 0x0a, 0x03, kTheChunk,			kTheTextStyle,		true, kTEAChunk },
@@ -380,8 +391,8 @@ Datum Lingo::findVarV4(int varType, const Datum &id) {
 		if (g_director->getVersion() < 500) {
 			res = id.asMemberID();
 		} else {
-			Datum castName = g_lingo->pop();
-			res = castName.asMemberID(kCastTypeAny, id.asInt());
+			Datum member = g_lingo->pop();
+			res = g_lingo->toCastMemberID(member, id);
 		}
 		res.type = FIELDREF;
 		break;
@@ -462,7 +473,7 @@ void LC::cb_objectcall() {
 	}
 
 	if (nargs.u.i > 0) {
-		Datum &firstArg = g_lingo->_stack[g_lingo->_stack.size() - nargs.u.i];
+		Datum &firstArg = g_lingo->_state->stack[g_lingo->_state->stack.size() - nargs.u.i];
 		// The first arg could be either a method name or a variable name
 		if (firstArg.type == SYMBOL) {
 			firstArg.type = VARREF;
@@ -634,6 +645,12 @@ void LC::cb_thepush() {
 			return;
 		}
 
+		if (name.equals("me")) {
+			g_lingo->push(g_lingo->_state->me);
+			g_debugger->propReadHook(name);
+			return;
+		}
+
 		warning("cb_thepush: me object has no property '%s', type: %d", name.c_str(), g_lingo->_state->me.type);
 	} else {
 		debugC(1, kDebugLingoExec, "cb_thepush: attempted to access property '%s' with no me object, returning VOID", name.c_str());
@@ -736,10 +753,11 @@ void LC::cb_v4theentitypush() {
 		case kTEAItemId:
 			{
 				Datum id = g_lingo->pop();
-				if (entity == kTheCast && g_director->getVersion() >= 500) {
+				if ((entity == kTheCast || entity == kTheField) && g_director->getVersion() >= 500) {
 					// For "the member", D5 and above have a lib ID followed by a member ID
 					// Pre-resolve them here.
-					CastMemberID resolved = g_lingo->resolveCastMember(g_lingo->pop(), id, kCastTypeAny);
+					Datum member = g_lingo->pop();
+					CastMemberID resolved = g_lingo->toCastMemberID(member, id);
 					id = Datum(resolved);
 				}
 				debugC(3, kDebugLingoExec, "cb_v4theentitypush: calling getTheEntity(%s, %s, %s)", g_lingo->entity2str(entity), id.asString(true).c_str(), g_lingo->field2str(field));
@@ -896,6 +914,13 @@ void LC::cb_v4theentityassign() {
 	case kTEAItemId:
 		{
 			Datum id = g_lingo->pop();
+			if ((entity == kTheCast || entity == kTheField) && g_director->getVersion() >= 500) {
+				// For "the member", D5 and above have a lib ID followed by a member ID
+				// Pre-resolve them here.
+				Datum member = g_lingo->pop();
+				CastMemberID resolved = g_lingo->toCastMemberID(member, id);
+				id = Datum(resolved);
+			}
 			debugC(3, kDebugLingoExec, "cb_v4theentityassign: calling setTheEntity(%s, %s, %s, %s)", g_lingo->entity2str(entity), id.asString(true).c_str(), g_lingo->field2str(field), value.asString(true).c_str());
 			g_lingo->setTheEntity(entity, id, field, value);
 		}
@@ -1094,7 +1119,7 @@ ScriptContext *LingoCompiler::compileLingoV4(Common::SeekableReadStreamEndian &s
 	} else {
 		debugC(1, kDebugCompile, "Add V4 script %d: %s %d", scriptId, scriptType2str(scriptType), _assemblyId);
 
-		sc = _assemblyContext = new ScriptContext(!castName.empty() ? castName : Common::String::format("%d", _assemblyId), scriptType, _assemblyId);
+		sc = _assemblyContext = new ScriptContext(!castName.empty() ? castName : Common::String::format("%d", _assemblyId), scriptType, _assemblyId, archive->cast->_castLibID);
 	}
 
 	// initialise each property

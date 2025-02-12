@@ -28,6 +28,7 @@
 #include "mediastation/boot.h"
 #include "mediastation/context.h"
 #include "mediastation/asset.h"
+#include "mediastation/assets/hotspot.h"
 #include "mediastation/assets/movie.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
@@ -50,8 +51,6 @@ MediaStationEngine::MediaStationEngine(OSystem *syst, const ADGameDescription *g
 }
 
 MediaStationEngine::~MediaStationEngine() {
-	_mixer = nullptr;
-
 	delete _screen;
 	_screen = nullptr;
 
@@ -144,17 +143,7 @@ Common::Error MediaStationEngine::run() {
 			break;
 		}
 
-		// PROCESS ANY ASSETS CURRENTLY PLAYING.
-		// TODO: Implement a dirty-rect based rendering system rather than
-		// redrawing the screen each time. This will require keeping track of
-		// all the images on screen at any given time, rather than just letting
-		// the movies handle their own drawing.
-		//
-		// First, they all need to be sorted by z-coordinate.
-		debugC(5, kDebugGraphics, "***** START RENDERING ***");
-		Common::sort(_assetsPlaying.begin(), _assetsPlaying.end(), [](Asset * a, Asset * b) {
-			return a->zIndex() > b->zIndex();
-		});
+		debugC(5, kDebugGraphics, "***** START SCREEN UPDATE ***");
 		for (auto it = _assetsPlaying.begin(); it != _assetsPlaying.end();) {
 			(*it)->process();
 			if (!(*it)->isActive()) {
@@ -163,10 +152,10 @@ Common::Error MediaStationEngine::run() {
 				++it;
 			}
 		}
-		debugC(5, kDebugGraphics, "***** END RENDERING ***");
+		redraw();
+		debugC(5, kDebugGraphics, "***** END SCREEN UPDATE ***");
 
-		// UPDATE THE SCREEN.
-		g_engine->_screen->update();
+		_screen->update();
 		g_system->delayMillis(10);
 	}
 
@@ -186,9 +175,35 @@ void MediaStationEngine::processEvents() {
 			return;
 		}
 
+		case Common::EVENT_MOUSEMOVE: {
+			Asset *hotspot = findAssetToAcceptMouseEvents(e.mouse);
+			if (hotspot != nullptr) {
+				if (_currentHotspot == nullptr) {
+					_currentHotspot = hotspot;
+					debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Entered hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+					hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
+				} else if (_currentHotspot == hotspot) {
+					// We are still in the same hotspot.
+				} else {
+					_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
+					_currentHotspot = hotspot;
+					debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+					hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
+				}
+				debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Sent to hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+				hotspot->runEventHandlerIfExists(kMouseMovedEvent);
+			} else {
+				if (_currentHotspot != nullptr) {
+					_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
+					debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", e.mouse.x, e.mouse.y, _currentHotspot->getHeader()->_id);
+					_currentHotspot = nullptr;
+				}
+			}
+			break;
+		}
+
 		case Common::EVENT_KEYDOWN: {
-			// TODO: Reading the current mouse position for hotspots might not
-			// be right, need to verify.
+			// Even though this is a keydown event, we need to look at the mouse position.
 			Common::Point mousePos = g_system->getEventManager()->getMousePos();
 			Asset *hotspot = findAssetToAcceptMouseEvents(mousePos);
 			if (hotspot != nullptr) {
@@ -219,6 +234,30 @@ void MediaStationEngine::processEvents() {
 		}
 		}
 	}
+}
+
+void MediaStationEngine::redraw() {
+	if (_dirtyRects.empty()) {
+		return;
+	}
+
+	Common::sort(_assetsPlaying.begin(), _assetsPlaying.end(), [](Asset * a, Asset * b) {
+		return a->zIndex() > b->zIndex();
+	});
+
+	for (Common::Rect dirtyRect : _dirtyRects) {
+		for (Asset *asset : _assetsPlaying) {
+			Common::Rect *bbox = asset->getBbox();
+			if (bbox != nullptr) {
+				if (dirtyRect.intersects(*bbox)) {
+					asset->redraw(dirtyRect);
+				}
+			}
+		}
+	}
+
+	_screen->update();
+	_dirtyRects.clear();
 }
 
 Context *MediaStationEngine::loadContext(uint32 contextId) {
@@ -272,6 +311,7 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 		_screen->setPalette(*context->_palette);
 	}
 
+	context->registerActiveAssets();
 	_loadedContexts.setVal(contextId, context);
 	return context;
 }
@@ -324,7 +364,21 @@ Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Ope
 }
 
 void MediaStationEngine::branchToScreen(uint32 contextId) {
+	if (_currentContext != nullptr) {
+		EventHandler *exitEvent = _currentContext->_screenAsset->_eventHandlers.getValOrDefault(kExitEvent);
+		if (exitEvent != nullptr) {
+			debugC(5, kDebugScript, "Executing context exit event handler");
+			exitEvent->execute(_currentContext->_screenAsset->_id);
+		} else {
+			debugC(5, kDebugScript, "No context exit event handler");
+		}
+	}
+
 	Context *context = loadContext(contextId);
+	_currentContext = context;
+	_dirtyRects.push_back(Common::Rect(SCREEN_WIDTH, SCREEN_HEIGHT));
+	_currentHotspot = nullptr;
+
 	if (context->_screenAsset != nullptr) {
 		// TODO: Make the screen an asset just like everything else so we can
 		// run event handlers with runEventHandlerIfExists.
@@ -368,19 +422,8 @@ Asset *MediaStationEngine::findAssetToAcceptMouseEvents(Common::Point point) {
 	int lowestZIndex = INT_MAX;
 
 	for (Asset *asset : _assetsPlaying) {
-		// TODO: Currently only hotspots are found, but other asset types can
-		// likely get mouse events too.
 		if (asset->type() == kAssetTypeHotspot) {
-			Common::Rect *boundingBox = asset->getHeader()->_boundingBox;
-			if (boundingBox == nullptr) {
-				error("Hotspot %d has no bounding box", asset->getHeader()->_id);
-			}
-
-			if (!asset->isActive()) {
-				continue;
-			}
-
-			if (boundingBox->contains(point)) {
+			if (asset->isActive() && static_cast<Hotspot *>(asset)->isInside(point)) {
 				if (asset->zIndex() < lowestZIndex) {
 					lowestZIndex = asset->zIndex();
 					intersectingAsset = asset;

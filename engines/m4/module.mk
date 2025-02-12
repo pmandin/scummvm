@@ -52,6 +52,7 @@ MODULE_OBJS = \
 	gui/gui_cheapo.o \
 	gui/gui_dialog.o \
 	gui/gui_item.o \
+	gui/gui_menu.o \
 	gui/gui_mouse.o \
 	gui/gui_sys.o \
 	gui/gui_vmng_core.o \
@@ -297,6 +298,7 @@ MODULE_OBJS = \
 	riddle/rooms/section8/room834.o \
 	riddle/rooms/section8/room844.o \
 	riddle/rooms/section8/room850.o \
+	riddle/rooms/section8/room852.o \
 	riddle/rooms/section8/room860.o \
 	riddle/rooms/section8/room861.o \
 	riddle/rooms/section9/section9.o \

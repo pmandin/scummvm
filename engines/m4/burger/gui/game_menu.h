@@ -26,99 +26,18 @@
 #include "graphics/surface.h"
 #include "m4/m4_types.h"
 #include "m4/graphics/gr_buff.h"
+#include "m4/gui/gui_menu.h"
 #include "m4/gui/gui_univ.h"
 
 namespace M4 {
 namespace Burger {
 namespace GUI {
 
-typedef bool (*ItemHandlerFunction)(void *theItem, int32 eventType, int32 event, int32 x, int32 y, void **currItem);
-typedef void (*DrawFunction)(void *source, void *dest, int32 x1, int32 y1, int32 x2, int32 y2);
-typedef void (*DestroyFunction)(void *theItem);
-typedef M4CALLBACK CALLBACK;
-
-typedef M4sprite Sprite;
-//struct Sprite {};
-
-struct menuItem {
-	menuItem *next;
-	menuItem *prev;
-
-	void *myMenu;
-	int32 tag;
-
-	int32 x1, y1, x2, y2;
-
-	bool transparent;
-	GrBuff *background;
-
-	void *itemInfo;
-
-	CALLBACK callback;
-	DrawFunction redraw;
-	DestroyFunction destroy;
-	ItemHandlerFunction	itemEventHandler;
-};
-
-struct menuItemMsg {
-	int32 itemFlags;
-};
-
-struct menuItemButton {
-	int32 itemFlags;
-	int32 buttonType;
-	const char *prompt;
-	menuItem *assocItem;
-	int32 specialTag;
-};
-
-struct menuItemHSlider {
-	int32 itemFlags;
-
-	int32 thumbW, thumbH;
-	int32 thumbX, maxThumbX;
-
-	int32 percent;
-};
-
-struct menuItemVSlider {
-	int32 itemFlags;
-
-	int32 thumbW, thumbH;
-	int32 thumbY, minThumbY, maxThumbY;
-
-	int32 percent;
-};
-
-struct menuItemTextField {
-	int32 itemFlags;
-
-	int32 specialTag;
-	int32 pixWidth;
-
-	char prompt[80];
-	char *promptEnd;
-
-	char *cursor;
-};
-
-struct guiMenu {
-	GrBuff *menuBuffer;
-	menuItem *itemList;
-	CALLBACK cb_return;
-	CALLBACK cb_esc;
-	EventHandler menuEventHandler;
-};
-
-// GENERAL MENU FUNCTIONS
-bool menu_Initialize(RGB8 *myPalette);
-guiMenu *menu_Create(Sprite *backgroundSprite, int32 x1, int32 y1, int32 scrnFlags);
-void menu_Destroy(guiMenu *myMenu);
-void menu_Configure(guiMenu *myMenu, CALLBACK cb_return, CALLBACK cb_esc);
-GrBuff *menu_CopyBackground(guiMenu *myMenu, int32 x, int32 y, int32 w, int32 h);
-menuItem *menu_GetItem(int32 tag, guiMenu *myMenu);
-void menu_ItemDelete(menuItem *myItem, int32 tag, guiMenu *myMenu);
-void menu_ItemRefresh(menuItem *myItem, int32 tag, guiMenu *myMenu);
+using M4::GUI::guiMenu;
+using M4::GUI::menuItem;
+using M4::GUI::Sprite;
+using M4::GUI::CALLBACK;
+using M4::GUI::ItemHandlerFunction;
 
 // SPECIFIC ITEM FUNCTIONS
 
@@ -165,10 +84,6 @@ void CreateGameMenuFromMain(RGB8 *myPalette);
 //
 //		gamemenu module defines
 //
-#define MEMORY_NEEDED		0	// bytes needed for menus to work
-#define MENU_DEPTH 			9 	// video depth for menu popup boxes
-#define MAX_SLOTS				99	// number of save games you can have
-#define MAX_SLOTS_SHOWN 	8	// number of slots in the scrolling field
 
 // 128 very light green
 // 129 light green
@@ -205,21 +120,6 @@ void CreateGameMenuFromMain(RGB8 *myPalette);
 //
 //		Game menu enums and defines
 //
-#define GAME_MENU_X		190
-#define GAME_MENU_Y		100
-#define GAME_MENU_W		260
-#define GAME_MENU_H		198
-
-enum game_menu_sprites {
-	GM_DIALOG_BOX,
-
-	GM_BUTTON_GREY,
-	GM_BUTTON_NORM,
-	GM_BUTTON_OVER,
-	GM_BUTTON_PRESS,
-
-	GM_TOTAL_SPRITES
-};
 
 enum game_menu_button_tags {
 	GM_TAG_QUIT = 1,
@@ -229,36 +129,6 @@ enum game_menu_button_tags {
 	GM_TAG_LOAD = 5,
 	GM_TAG_MAIN = 6
 };
-
-#define GM_MAIN_X			 45
-#define GM_MAIN_Y			 53
-#define GM_MAIN_W			 24
-#define GM_MAIN_H			 24
-
-#define GM_OPTIONS_X		 45
-#define GM_OPTIONS_Y		 94
-#define GM_OPTIONS_W		 24
-#define GM_OPTIONS_H		 24
-
-#define GM_RESUME_X		 45
-#define GM_RESUME_Y		135
-#define GM_RESUME_W		 24
-#define GM_RESUME_H		 24
-
-#define GM_QUIT_X			141
-#define GM_QUIT_Y			135
-#define GM_QUIT_W			 24
-#define GM_QUIT_H		    24
-
-#define GM_SAVE_X			141
-#define GM_SAVE_Y			 53
-#define GM_SAVE_W			 24
-#define GM_SAVE_H		    24
-
-#define GM_LOAD_X			141
-#define GM_LOAD_Y			 94
-#define GM_LOAD_W			 24
-#define GM_LOAD_H			 24
 
 //======================================
 //
@@ -460,59 +330,6 @@ enum error_menu_tags {
 #define EM_RETURN_W	  15
 #define EM_RETURN_H	  15
 
-
-struct MenuGlobals {
-	//GLOBAL VARS
-	bool menuSystemInitialized = false;
-	bool interfaceWasVisible = false;
-	RGB8 *menuPalette = nullptr;
-	bool dumpedCodes = false;
-	bool dumpedBackground = false;
-
-	menuItem *menuCurrItem = nullptr;
-
-	guiMenu *gameMenu = nullptr;
-	guiMenu *opMenu = nullptr;
-	guiMenu *slMenu = nullptr;
-	guiMenu *errMenu = nullptr;
-
-	//menu sprite series vars
-	char *menuSeriesResource = nullptr;
-	MemHandle menuSeriesHandle = nullptr;
-	int32 menuSeriesOffset = 0;
-	int32 menuSeriesPalOffset = 0;
-
-	Font *menuFont = nullptr;
-
-	// menu sprites array (used to hold all the sprites for the current menu, spriteCount is set tot he number of sprites in the series)
-	int32 spriteCount = 0;
-	Sprite **menuSprites = nullptr;
-
-	// VARS SPECIFIC TO THE GAME MENUS SYSTEM
-	// An array of slot titles used by the save/load menus
-	char **slotTitles = nullptr;
-	bool *slotInUse = nullptr;
-	int32 firstSlotIndex = 0;	// Slot at the top of the list on menu
-	int32 slotSelected = -1;	// Slot currently selected 
-	bool deleteSaveDesc = false;
-
-	Sprite **thumbNails = nullptr;
-	Sprite *saveLoadThumbNail = nullptr;	// Original used for menu display
-	Graphics::Surface _thumbnail;			// ScummVM version used for savegame
-	int32 sizeofThumbData = -1;
-	int32 thumbIndex = 0;
-
-	bool currMenuIsSave = true;			// Used to determine load or save menu
-	bool saveLoadFromHotkey = false;	// Come from hotkey, not through game menu
-	bool gameMenuFromMain = false;		// Come from main menu, not through escape
-
-	int32 remember_digi_volume = 0;		// For cancelling out of the options menu
-	int32 remember_digestability = 0;	// For cancelling out of the options menu
-
-	~MenuGlobals() {
-		_thumbnail.free();
-	}
-};
 
 void CreateGameMenuMain(RGB8 *myPalette);
 

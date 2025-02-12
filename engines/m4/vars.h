@@ -47,6 +47,7 @@
 #include "m4/graphics/rend.h"
 #include "m4/gui/gui_dialog.h"
 #include "m4/gui/gui_item.h"
+#include "m4/gui/gui_menu.h"
 #include "m4/gui/gui_mouse.h"
 #include "m4/gui/gui_univ.h"
 #include "m4/gui/hotkeys.h"
@@ -116,6 +117,8 @@ public:
 	ADVScale_Globals _scale;
 	ConvDisplayData _cdd;
 	Rend_Globals _rend;
+	GUI::MenuGlobals _menu;
+	bool _menuSystemInitialized = false;
 
 	const bool _cheating_enabled = true;
 
@@ -142,6 +145,7 @@ public:
 	int _global_sound_room = 0;
 	CursorChange _toggle_cursor = CURSCHANGE_NONE;
 	bool _i_just_hyperwalked = false;
+	bool _please_hyperwalk = false;
 	void (*_custom_ascii_converter)(char *string) = nullptr;
 	bool _vmng_Initted = false;
 	ScreenContext *_frontScreen = nullptr;

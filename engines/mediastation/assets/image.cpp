@@ -21,8 +21,15 @@
 
 #include "mediastation/mediastation.h"
 #include "mediastation/assets/image.h"
+#include "mediastation/debugchannels.h"
 
 namespace MediaStation {
+
+Image::Image(AssetHeader *header) : Asset(header) {
+	if (header->_startup == kAssetStartupActive) {
+		_isActive = true;
+	}
+}
 
 Image::~Image() {
 	delete _bitmap;
@@ -33,23 +40,61 @@ Operand Image::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) 
 	switch (methodId) {
 	case kSpatialShowMethod: {
 		assert(args.empty());
-		_isActive = true;
-		g_engine->addPlayingAsset(this);
+		spatialShow();
 		return Operand();
 		break;
 	}
 
 	case kSpatialHideMethod: {
 		assert(args.empty());
-		_isActive = false;
+		spatialHide();
 		return Operand();
 		break;
 	}
+
+	case kSetDissolveFactorMethod: {
+		assert(args.size() == 1);
+		warning("Image::callMethod(): setDissolveFactor not implemented yet");
+		return Operand();
+	}
+
 
 	default: {
 		error("Image::callMethod(): Got unimplemented method ID %d", methodId);
 	}
 	}
+}
+
+void Image::redraw(Common::Rect &rect) {
+	if (!_isActive) {
+		return;
+	}
+
+	Common::Point leftTop = getLeftTop();
+	Common::Rect bbox(leftTop, _bitmap->width(), _bitmap->height());
+	Common::Rect areaToRedraw = bbox.findIntersectingRect(rect);
+	if (!areaToRedraw.isEmpty()) {
+		Common::Point originOnScreen(areaToRedraw.left, areaToRedraw.top);
+		areaToRedraw.translate(-leftTop.x, -leftTop.y);
+		g_engine->_screen->simpleBlitFrom(_bitmap->_surface, areaToRedraw, originOnScreen);
+	}
+}
+
+void Image::spatialShow() {
+	_isActive = true;
+	g_engine->addPlayingAsset(this);
+	Common::Rect bbox(getLeftTop(), _bitmap->width(), _bitmap->height());
+	g_engine->_dirtyRects.push_back(bbox);
+}
+
+void Image::spatialHide() {
+	_isActive = false;
+	Common::Rect bbox(getLeftTop(), _bitmap->width(), _bitmap->height());
+	g_engine->_dirtyRects.push_back(bbox);
+}
+
+Common::Point Image::getLeftTop() {
+	return Common::Point(_header->_x + _header->_boundingBox->left, _header->_y + _header->_boundingBox->top);
 }
 
 void Image::readChunk(Chunk &chunk) {

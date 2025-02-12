@@ -33,15 +33,23 @@ namespace MediaStation {
 
 class Image : public Asset {
 public:
-	Image(AssetHeader *header) : Asset(header) {};
+	Image(AssetHeader *header);
 	virtual ~Image() override;
 
 	virtual void readChunk(Chunk &chunk) override;
+
+	virtual void redraw(Common::Rect &rect) override;
 
 	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
 
 private:
 	Bitmap *_bitmap = nullptr;
+
+	// Script method implementations.
+	void spatialShow();
+	void spatialHide();
+
+	Common::Point getLeftTop();
 };
 
 } // End of namespace MediaStation

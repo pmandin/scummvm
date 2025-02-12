@@ -36,9 +36,9 @@ private:
 	int _downSteps = 0;
 	int _volume = 0;
 	int _volume2 = 0;
-	int _convState1 = 0;
-	int _convState2 = 0;
-	int _convState3 = 0;
+	int _menendezShould = 0;
+	int _ripleyShould = 0;
+	int _ripleyMode = 0;
 	int _ripSketching = 0;
 	int _ripLowReach = 0;
 	int _ripMedReach = 0;
@@ -83,7 +83,7 @@ private:
 	machine *_vineMachine2 = nullptr;
 	machine *_ripStep = nullptr;
 	machine *_vine = nullptr;
-	bool _flag1 = false;
+	bool _isOnRight = false;
 	bool _flag2 = false;
 	bool _flag3 = false;
 	bool _flag4 = false;
@@ -92,9 +92,9 @@ private:
 	int _trigger2 = 0;
 	int _trigger3 = 0;
 	int _trigger4 = 0;
-	int _val1 = 0;
-	int _val2 = 0;
-	int32 _val3 = 0;
+	int _vineThrowType = 0;
+	int _menendezMode = 0;
+	int32 _hasInti = 0;
 
 	void setVines();
 	void freeVines();

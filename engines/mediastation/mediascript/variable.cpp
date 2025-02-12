@@ -28,21 +28,49 @@
 
 namespace MediaStation {
 
+Operand Collection::callMethod(BuiltInMethod method, Common::Array<Operand> &args) {
+	switch (method) {
+	case kIsEmptyMethod: {
+		// This is a built-in method that checks if a collection is empty.
+		// We can just check the size of the collection.
+		Operand returnValue(kOperandTypeLiteral1);
+		returnValue.putInteger(empty());
+		return returnValue;
+	}
+
+	case kAppendMethod: {
+		for (Operand arg : args) {
+			push_back(arg);
+		}
+		return Operand();
+	}
+
+	case kDeleteFirstMethod: {
+		Operand returnValue = remove_at(0);
+		return returnValue;
+	}
+
+	default: {
+		error("Collection::callMethod(): Attempt to call unimplemented method %s (%d)", builtInMethodToStr(method), method);
+	}
+	}
+}
+
 Variable::Variable(Chunk &chunk, bool readId) {
 	if (readId) {
 		_id = Datum(chunk).u.i;
 	}
 	_type = static_cast<VariableType>(Datum(chunk).u.i);
-	debugC(5, kDebugLoading, "Variable::Variable(): id = 0x%x, type %s (%d) (@0x%llx)", 
+	debugC(1, kDebugLoading, "Variable::Variable(): id = %d, type %s (%d) (@0x%llx)", 
 		_id, variableTypeToStr(_type), static_cast<uint>(_type), static_cast<long long int>(chunk.pos()));
 	switch ((VariableType)_type) {
 	case kVariableTypeCollection: {
 		uint totalItems = Datum(chunk).u.i;
-		_value.collection = new Common::Array<Variable *>;
+		_value.collection = new Collection;
 		for (uint i = 0; i < totalItems; i++) {
 			debugC(7, kDebugLoading, "Variable::Variable(): %s: Value %d of %d", variableTypeToStr(_type), i, totalItems);
-			Variable *variableDeclaration = new Variable(chunk, readId = false);
-			_value.collection->push_back(variableDeclaration);
+			Variable variable = Variable(chunk, readId = false);
+			_value.collection->push_back(variable.getValue());
 		}
 		break;
 	}
@@ -68,7 +96,7 @@ Variable::Variable(Chunk &chunk, bool readId) {
 	case kVariableTypeBoolean: {
 		uint rawValue = Datum(chunk, kDatumTypeUint8).u.i;
 		debugC(7, kDebugLoading, " Variable::Variable(): %s: %d", variableTypeToStr(_type), rawValue);
-		_value.b = (rawValue == 1);
+		_value.i = static_cast<int>(rawValue == 1);
 		break;
 	}
 
@@ -97,9 +125,7 @@ Variable::Variable(Chunk &chunk, bool readId) {
 Variable::~Variable() {
 	switch (_type) {
 	case kVariableTypeCollection: {
-		for (Variable *variable : *(_value.collection)) {
-			delete variable;
-		}
+		_value.collection->clear();
 		delete _value.collection;
 		break;
 	}
@@ -122,9 +148,9 @@ Operand Variable::getValue() {
 	}
 
 	case kVariableTypeCollection: {
-		// TODO: Determine if any scripts actually try to do this.
-		error("Variable::getValue(): Returning a collection is not implemented");
-		break;
+		Operand returnValue(kOperandTypeCollection);
+		returnValue.putCollection(_value.collection);
+		return returnValue;
 	}
 
 	case kVariableTypeString: {
@@ -143,7 +169,7 @@ Operand Variable::getValue() {
 		// TODO: Is this value type correct?
 		// Shouldn't matter too much, though, since it's still an integer type.
 		Operand returnValue(kOperandTypeLiteral1);
-		returnValue.putInteger(_value.b);
+		returnValue.putInteger(_value.i);
 		return returnValue;
 	}
 
@@ -210,22 +236,6 @@ void Variable::putValue(Operand value) {
 	default: {
 		error("Variable::putValue(): Assigning an unknown operand type %s (%d) to a variable not supported",
 			operandTypeToStr(value.getType()), static_cast<uint>(value.getType()));
-	}
-	}
-}
-
-Operand Variable::callMethod(BuiltInMethod method, Common::Array<Operand> &args) {
-	switch (_type) {
-	case kVariableTypeCollection: {
-		// TODO: This is just a warning for now so we can get past the
-		// IBM/Crayola opening screen.
-		warning("Variable::callMethod(): Calling method on a collection not implemented yet");
-		return Operand();
-		break;
-	}
-
-	default: {
-		error("Variable::callMethod(): Calling method on unknown variable type %s (%d)", variableTypeToStr(_type), static_cast<uint>(_type));
 	}
 	}
 }

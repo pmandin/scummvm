@@ -104,6 +104,15 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
+		"driller", // Tape re-releae
+		"",
+		AD_ENTRY1s("DRILLER.C64.DATA", "606bc969e5442634c8ab057bfde9d9d2", 64750),
+		Common::EN_ANY,
+		Common::kPlatformC64,
+		ADGF_UNSTABLE,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
 		"driller",
 		"",
 		{
@@ -502,6 +511,15 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::kPlatformAmstradCPC,
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOMIDI, GUIO_RENDERCPC)
+	},
+	{
+		"darkside", // Tape relese
+		"",
+		AD_ENTRY1s("DARKSIDE.C64.DATA", "c0d271d86cf4434ef7c3d823a32c0df5", 61290),
+		Common::EN_ANY,
+		Common::kPlatformC64,
+		ADGF_UNSTABLE,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	// Total Eclipse
 	{

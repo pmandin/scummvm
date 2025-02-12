@@ -135,15 +135,6 @@ enum TextFlag {
 	kTextFlagDoNotWrap	= (1 << 2)
 };
 
-enum SizeType {
-	kSizeNone,
-	kSizeSmallest,
-	kSizeSmall,
-	kSizeMedium,
-	kSizeLarge,
-	kSizeLargest
-};
-
 enum ButtonType {
 	kTypeButton,
 	kTypeCheckBox,
@@ -201,17 +192,18 @@ enum InkType {
 	kInkTypeDark
 };
 
+// ID matches up to the fake cast member ID used by EventScript
 enum LEvent {
-	kEventPrepareMovie,
+	kEventPrepareMovie, // 0
 	kEventStartMovie,
 	kEventStepMovie,
 	kEventStopMovie,
 
-	kEventNew,
+	kEventNew, // 4
 	kEventBeginSprite,
 	kEventEndSprite,
 
-	kEventNone,
+	kEventNone, // 7
 	kEventGeneric,
 	kEventEnterFrame,
 	kEventPrepareFrame,
@@ -220,14 +212,15 @@ enum LEvent {
 	kEventExitFrame,
 	kEventTimeout,
 
-	kEventActivateWindow,
+	kEventActivateWindow, // 15
 	kEventDeactivateWindow,
 	kEventMoveWindow,
 	kEventResizeWindow,
 	kEventOpenWindow,
 	kEventCloseWindow,
+	kEventZoomWindow,
 
-	kEventKeyUp,
+	kEventKeyUp, // 22
 	kEventKeyDown,
 	kEventMouseUp,
 	kEventMouseDown,
@@ -238,9 +231,9 @@ enum LEvent {
 	kEventMouseUpOutSide,
 	kEventMouseWithin,
 
-	kEventStartUp,
+	kEventStartUp, // 32
 
-	kEventMenuCallback
+	kEventMenuCallback // 33
 };
 
 enum TransitionType {
@@ -389,6 +382,7 @@ enum DatumType {
 	POINT,
 	PROPREF,
 	RECT,
+	SPRITEREF,
 	STRING,
 	SYMBOL,
 	VARREF,
@@ -431,6 +425,18 @@ struct CastMemberID {
 	Common::String asString() const;
 
 	uint hash() const { return ((castLib & 0xffff) << 16) + (member & 0xffff); }
+
+	CastMemberID fromMultiplex(int multiplexID) {
+		if (multiplexID < 0)
+			return CastMemberID(multiplexID, -1);
+		return CastMemberID(multiplexID % 0x20000, 1 + (multiplexID >> 17));
+	}
+
+	int toMultiplex() {
+		if (castLib < 0)
+			return member;
+		return (member % 0x20000) + ((castLib - 1) << 17);
+	}
 };
 
 enum CompareResult {

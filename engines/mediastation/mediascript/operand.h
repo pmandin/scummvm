@@ -59,13 +59,24 @@ public:
 	Asset *getAsset();
 	uint32 getAssetId();
 
+	void putCollection(Collection *collection);
+	Collection *getCollection();
+
 	Operand getLiteralValue() const;
 
 	bool operator==(const Operand &other) const;
-	bool operator>=(const Operand &other) const;
-	bool operator||(const Operand &other) const;
+	bool operator<(const Operand &other) const;
+	bool operator>(const Operand &other) const;
 
+	bool operator||(const Operand &other) const;
+	bool operator!() const;
+	bool operator&&(const Operand &other) const;
+
+	Operand operator+(const Operand &other) const;
 	Operand operator-(const Operand &other) const;
+	Operand operator*(const Operand &other) const;
+	Operand operator/(const Operand &other) const;
+	Operand operator%(const Operand &other) const;
 	Operand operator-() const;
 
 private:
@@ -77,6 +88,7 @@ private:
 		Variable *variable;
 		int i;
 		double d;
+		Collection *collection;
 	} _u;
 };
 

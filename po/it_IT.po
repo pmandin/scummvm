@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.3.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-01-24 06:23+0000\n"
-"PO-Revision-Date: 2025-01-25 17:18+0000\n"
+"POT-Creation-Date: 2025-02-12 14:51+0000\n"
+"PO-Revision-Date: 2025-02-07 17:53+0000\n"
 "Last-Translator: Walter Agazzi <walter.agazzi@protonmail.com>\n"
 "Language-Team: Italian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/it/>\n"
@@ -119,7 +119,7 @@ msgstr "Su"
 #: engines/scumm/dialog-createsession.cpp:47
 #: engines/scumm/dialog-sessionselector.cpp:67
 #: engines/scumm/he/moonbase/dialog-mapgenerator.cpp:138
-#: engines/sword1/control.cpp:2813 engines/wintermute/wintermute.cpp:184
+#: engines/sword1/control.cpp:2816 engines/wintermute/wintermute.cpp:184
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -316,7 +316,7 @@ msgstr "Un altro servizio di archiviazione è attivo. Vuoi interromperlo?"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:143
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4180
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
 #: engines/toon/toon.cpp:1543
 msgid "Yes"
 msgstr "Sì"
@@ -329,7 +329,7 @@ msgstr "Sì"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:149
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4180
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
 #: engines/toon/toon.cpp:1543
 msgid "No"
 msgstr "No"
@@ -353,16 +353,16 @@ msgstr "Il codice JSON non è valido."
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2035
+#: engines/director/lingo/lingo-builtins.cpp:2089
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:76
 #: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1342
-#: engines/scumm/scumm.cpp:1749 engines/scumm/scumm.cpp:2239
-#: engines/scumm/scumm.cpp:2255 engines/sky/compact.cpp:140
+#: engines/scumm/scumm.cpp:1759 engines/scumm/scumm.cpp:2249
+#: engines/scumm/scumm.cpp:2265 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:532 engines/sword1/animation.cpp:563
-#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2813
+#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2816
 #: engines/sword1/logic.cpp:1732 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
@@ -1018,7 +1018,7 @@ msgstr "Interazione"
 #: engines/dragons/metaengine.cpp:159 engines/freescape/movement.cpp:35
 #: engines/got/metaengine.cpp:55 engines/griffon/metaengine.cpp:121
 #: engines/grim/grim.cpp:481 engines/grim/grim.cpp:562 engines/icb/icb.cpp:68
-#: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:950
+#: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:968
 #: engines/twine/metaengine.cpp:430 engines/twine/metaengine.cpp:497
 #: engines/twp/metaengine.cpp:154 engines/wintermute/keymapper_tables.h:1290
 #: engines/wintermute/keymapper_tables.h:1373
@@ -1033,7 +1033,7 @@ msgstr "Su"
 #: engines/dragons/metaengine.cpp:165 engines/freescape/movement.cpp:42
 #: engines/got/metaengine.cpp:56 engines/griffon/metaengine.cpp:127
 #: engines/grim/grim.cpp:486 engines/grim/grim.cpp:567 engines/icb/icb.cpp:73
-#: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:917
+#: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:935
 #: engines/twine/metaengine.cpp:437 engines/twine/metaengine.cpp:505
 #: engines/twp/metaengine.cpp:155 engines/wintermute/keymapper_tables.h:1296
 #: engines/wintermute/keymapper_tables.h:1379
@@ -1048,7 +1048,7 @@ msgstr "Giù"
 #: engines/dragons/metaengine.cpp:171 engines/got/metaengine.cpp:57
 #: engines/griffon/metaengine.cpp:133 engines/grim/grim.cpp:491
 #: engines/grim/grim.cpp:572 engines/icb/icb.cpp:78 engines/icb/icb.cpp:162
-#: engines/scumm/metaengine.cpp:930 engines/twine/metaengine.cpp:452
+#: engines/scumm/metaengine.cpp:948 engines/twine/metaengine.cpp:452
 #: engines/twine/metaengine.cpp:520 engines/twp/metaengine.cpp:152
 #: engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1302
@@ -1064,7 +1064,7 @@ msgstr "Sinistra"
 #: engines/dragons/metaengine.cpp:177 engines/got/metaengine.cpp:58
 #: engines/griffon/metaengine.cpp:139 engines/grim/grim.cpp:496
 #: engines/grim/grim.cpp:577 engines/icb/icb.cpp:83 engines/icb/icb.cpp:167
-#: engines/scumm/metaengine.cpp:937 engines/twine/metaengine.cpp:444
+#: engines/scumm/metaengine.cpp:955 engines/twine/metaengine.cpp:444
 #: engines/twine/metaengine.cpp:513 engines/twp/metaengine.cpp:153
 #: engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1308
@@ -3009,7 +3009,7 @@ msgstr ""
 "Ripeti i punti 1 e 6 per ciascun gioco."
 
 #: base/main.cpp:652 base/main.cpp:677
-#: engines/director/lingo/lingo-builtins.cpp:1389
+#: engines/director/lingo/lingo-builtins.cpp:1415
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -4135,13 +4135,13 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "Touchscreen 'Tap Mode' - Passaggio del cursore (clic DPad)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:695
-#: backends/fs/android/android-saf-fs.cpp:699
+#: backends/fs/android/android-saf-fs.cpp:802
+#: backends/fs/android/android-saf-fs.cpp:806
 msgid "Add a new folder"
 msgstr "Aggiungi cartella"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:811
+#: backends/fs/android/android-saf-fs.cpp:918
 msgid "Choose a new folder"
 msgstr "Seleziona cartella"
 
@@ -6379,7 +6379,7 @@ msgid "Quick load or save game isn't supported in this location"
 msgstr ""
 "Il salvataggio/caricamento rapido non è disponibile in questa locazione"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3135
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3145
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -6390,7 +6390,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3122
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3132
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -6401,7 +6401,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3155
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3165
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -6798,19 +6798,23 @@ msgstr "Attiva/disattiva le animazioni"
 msgid "Return to gameplay"
 msgstr "Ritorna al gioco"
 
-#: engines/asylum/metaengine.cpp:238
+#. I18N: Switch to previous image in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:239
 msgid "Previous resource"
 msgstr "Risorsa precedente"
 
-#: engines/asylum/metaengine.cpp:245
+#. I18N: Switch to next image in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:247
 msgid "Next resource"
 msgstr "Risorsa seguente"
 
-#: engines/asylum/metaengine.cpp:252
+#. I18N: Switch to previous palette in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:255
 msgid "Previous palette"
 msgstr "Palette precedente"
 
-#: engines/asylum/metaengine.cpp:259
+#. I18N: Switch to next palette in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:263
 msgid "Next palette"
 msgstr "Palette seguente"
 
@@ -7062,7 +7066,7 @@ msgstr "Attiva / Disattiva modalità combattimento"
 
 #. I18N: This keymap allows skipping video cutscenes
 #: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
-#: engines/scumm/metaengine.cpp:976 engines/twp/metaengine.cpp:162
+#: engines/scumm/metaengine.cpp:994 engines/twp/metaengine.cpp:162
 #: engines/zvision/metaengine.cpp:284
 msgid "Skip cutscene"
 msgstr "Salta scena di intermezzo"
@@ -7120,7 +7124,7 @@ msgstr "Imposta indizio privato/pubblico"
 #. SAVE GAME
 #: engines/bladerunner/metaengine.cpp:330 engines/dgds/metaengine.cpp:74
 #: engines/freescape/games/castle/castle.cpp:246
-#: engines/freescape/games/dark/dark.cpp:184
+#: engines/freescape/games/dark/dark.cpp:186
 #: engines/freescape/games/driller/driller.cpp:132
 #: engines/freescape/games/eclipse/eclipse.cpp:204
 #: engines/pegasus/pegasus.cpp:2825
@@ -7133,7 +7137,7 @@ msgstr "Salva Partita"
 #. LOAD GAME
 #: engines/bladerunner/metaengine.cpp:339 engines/dgds/metaengine.cpp:73
 #: engines/freescape/games/castle/castle.cpp:251
-#: engines/freescape/games/dark/dark.cpp:189
+#: engines/freescape/games/dark/dark.cpp:191
 #: engines/freescape/games/driller/driller.cpp:137
 #: engines/freescape/games/eclipse/eclipse.cpp:209
 #: engines/pegasus/pegasus.cpp:2831
@@ -7171,7 +7175,7 @@ msgstr "Database indizi"
 #: engines/bladerunner/metaengine.cpp:375 engines/darkseed/metaengine.cpp:82
 #: engines/dragons/metaengine.cpp:224
 #: engines/freescape/games/castle/castle.cpp:259
-#: engines/freescape/games/dark/dark.cpp:194
+#: engines/freescape/games/dark/dark.cpp:196
 #: engines/freescape/games/driller/driller.cpp:142
 #: engines/freescape/games/eclipse/eclipse.cpp:214
 #: engines/sword1/metaengine.cpp:295
@@ -7514,7 +7518,7 @@ msgstr "Parlare/Interazione"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/crab/input/input.cpp:125 engines/griffon/metaengine.cpp:145
-#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:963
+#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:981
 msgid "Attack"
 msgstr "Attacco"
 
@@ -7894,21 +7898,21 @@ msgid "Select Princess"
 msgstr "Seleziona la Principessa"
 
 #: engines/freescape/games/castle/castle.cpp:268
-#: engines/freescape/games/dark/dark.cpp:204
+#: engines/freescape/games/dark/dark.cpp:206
 #: engines/freescape/games/driller/driller.cpp:150
 #: engines/freescape/games/eclipse/eclipse.cpp:222
 msgid "Toggle Sound"
 msgstr "Attiva/disattiva sonoro"
 
 #: engines/freescape/games/castle/castle.cpp:273
-#: engines/freescape/games/dark/dark.cpp:210
+#: engines/freescape/games/dark/dark.cpp:212
 #: engines/freescape/games/driller/driller.cpp:156
 #: engines/freescape/games/eclipse/eclipse.cpp:227
 msgid "Rotate Left"
 msgstr "Ruota verso sinistra"
 
 #: engines/freescape/games/castle/castle.cpp:278
-#: engines/freescape/games/dark/dark.cpp:215
+#: engines/freescape/games/dark/dark.cpp:217
 #: engines/freescape/games/driller/driller.cpp:161
 #: engines/freescape/games/eclipse/eclipse.cpp:232
 msgid "Rotate Right"
@@ -7931,28 +7935,28 @@ msgid "Face Forward"
 msgstr "Guarda in avanti"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/dark/dark.cpp:221
+#: engines/freescape/games/dark/dark.cpp:223
 #: engines/freescape/games/driller/driller.cpp:167
 msgid "Increase Step Size"
 msgstr "Aumenta lunghezza dei passi"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/dark/dark.cpp:227
+#: engines/freescape/games/dark/dark.cpp:229
 #: engines/freescape/games/driller/driller.cpp:173
 msgid "Decrease Step Size"
 msgstr "Riduci lunghezza dei passi"
 
-#: engines/freescape/games/dark/dark.cpp:232
+#: engines/freescape/games/dark/dark.cpp:234
 #: engines/freescape/games/driller/driller.cpp:178
 msgid "Rise/Fly up"
 msgstr "Ascendi/Vola verso l'alto"
 
-#: engines/freescape/games/dark/dark.cpp:238
+#: engines/freescape/games/dark/dark.cpp:240
 #: engines/freescape/games/driller/driller.cpp:184
 msgid "Lower/Fly down"
 msgstr "Atterra/Vola verso il basso"
 
-#: engines/freescape/games/dark/dark.cpp:244
+#: engines/freescape/games/dark/dark.cpp:246
 msgid "Enable/Disable Jetpack"
 msgstr "Attiva/disattiva jetpack"
 
@@ -10357,17 +10361,17 @@ msgstr "Casio MT-540"
 msgid "Casio CT-460 / CSM-1"
 msgstr "Casio CT-460 / CSM-1"
 
-#: engines/sci/detection_tables.h:1428 engines/sci/detection_tables.h:1439
+#: engines/sci/detection_tables.h:1447 engines/sci/detection_tables.h:1458
 msgid "Game does not contain menu resources"
 msgstr "Questo gioco non include le risorse dei menù"
 
-#: engines/sci/detection_tables.h:4758
+#: engines/sci/detection_tables.h:4777
 msgid "This demo uses an unimplemented version of Robot videos"
 msgstr ""
 "Questa versione dimostrativa utilizza una versione non supportata del "
 "formato video Robot"
 
-#: engines/sci/detection_tables.h:4813
+#: engines/sci/detection_tables.h:4832
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
 "Rilevato gioco incompleto. Assicurati di avere copiato i dati da tutti i CD."
@@ -10584,7 +10588,7 @@ msgid "Your Name:"
 msgstr "Tuo Nome:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4186
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4196
 msgid "Host"
 msgstr "Ospita"
 
@@ -10594,7 +10598,7 @@ msgid "Querying games..."
 msgstr "Ricerca partite..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4186
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4196
 msgid "Join"
 msgstr "Unisciti"
 
@@ -11360,19 +11364,19 @@ msgstr "Vola a destra"
 msgid "Fly to lower right"
 msgstr "Vola in basso a destra"
 
-#: engines/scumm/input.cpp:1392
+#: engines/scumm/input.cpp:1393
 msgid "Snap scroll on"
 msgstr "Scrolling a scatti"
 
-#: engines/scumm/input.cpp:1394
+#: engines/scumm/input.cpp:1395
 msgid "Snap scroll off"
 msgstr "Scrolling normale"
 
-#: engines/scumm/input.cpp:1407
+#: engines/scumm/input.cpp:1408
 msgid "Music volume: "
 msgstr "Volume musica: "
 
-#: engines/scumm/input.cpp:1424
+#: engines/scumm/input.cpp:1425
 msgid "Subtitle speed: "
 msgstr "Velocità testo: "
 
@@ -11518,28 +11522,36 @@ msgstr "Usa audio rimasterizzato"
 msgid "Use the remastered speech and sound effects."
 msgstr "Usa il parlato e gli effetti sonori rimasterizzati."
 
-#: engines/scumm/metaengine.cpp:911
+#: engines/scumm/metaengine.cpp:816
+msgid "Enable ambience sounds"
+msgstr "Abilita sonoro ambientale"
+
+#: engines/scumm/metaengine.cpp:817
+msgid "Enable ambience sounds."
+msgstr "Abilita gli effetti sonori ambientali."
+
+#: engines/scumm/metaengine.cpp:929
 msgid "Down Left"
 msgstr "Giù Sinistra"
 
-#: engines/scumm/metaengine.cpp:924
+#: engines/scumm/metaengine.cpp:942
 msgid "Down Right"
 msgstr "Giù Destra"
 
-#: engines/scumm/metaengine.cpp:944
+#: engines/scumm/metaengine.cpp:962
 msgid "Up Left"
 msgstr "Su Sinistra"
 
-#: engines/scumm/metaengine.cpp:957
+#: engines/scumm/metaengine.cpp:975
 msgid "Up Right"
 msgstr "Su Destra"
 
-#: engines/scumm/metaengine.cpp:969
+#: engines/scumm/metaengine.cpp:987
 msgid "Switch weapon"
 msgstr "Cambia arma"
 
 #. I18N: Lets one skip the bike/car fight sequences in Full Throttle
-#: engines/scumm/metaengine.cpp:983
+#: engines/scumm/metaengine.cpp:1001
 msgid "Win the bike fight cheat"
 msgstr "Cheat: Vinci combattimento in moto"
 
@@ -11622,7 +11634,20 @@ msgid "Could not find resource fork in Macintosh resource file %s"
 msgstr ""
 "Non è stato possibile trovare la resource fork nel file risorsa Macintosh %s"
 
-#: engines/scumm/scumm.cpp:1746
+#: engines/scumm/scumm.cpp:1373
+#, c-format
+msgid ""
+"'%s' appears to be the wrong Dig executable. It may be the launcher one "
+"found in the CD root, which does not contain any of the necessary menu and "
+"dialog definitions. Look for a 'The Dig f' folder on your CD. Any one from "
+"its sub-folders should be what you need."
+msgstr ""
+"'%s' non sembra essere l'eseguibile corretto di The Dig. Probabilmente è "
+"stato trovato l'eseguibile presente nella root del CD, che non contiene le "
+"definizioni per i menu e le finestre. Prova a cercare una cartella 'The Dig "
+"f' nel CD, e quindi seleziona una sua sottodirectory qualsiasi."
+
+#: engines/scumm/scumm.cpp:1756
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -11634,7 +11659,7 @@ msgstr ""
 "disabilitato.\n"
 "Per favore, copia tali files dai supporti originali senza comprimerli."
 
-#: engines/scumm/scumm.cpp:2237
+#: engines/scumm/scumm.cpp:2247
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -11643,7 +11668,7 @@ msgstr ""
 "Il supporto nativo MIDI richiede il Roland Upgrade della LucasArts,\n"
 "ma %s non è presente. Verrà usato AdLib."
 
-#: engines/scumm/scumm.cpp:2253
+#: engines/scumm/scumm.cpp:2263
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -11651,7 +11676,7 @@ msgstr ""
 "Questa specifica versione di Monkey Island 1 è priva di alcune\n"
 "risorse necessarie per il sonoro MT-32. Verrà utilizzato AdLib."
 
-#: engines/scumm/scumm.cpp:4074
+#: engines/scumm/scumm.cpp:4084
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -11662,7 +11687,7 @@ msgstr ""
 "sottocartella \"MANIAC\" all'interno della cartella principale di Day Of The "
 "Tentacle. Il gioco deve inoltre essere aggiunto a ScummVM."
 
-#: engines/scumm/scumm.cpp:4186
+#: engines/scumm/scumm.cpp:4196
 msgid "Would you like to host or join a network play session?"
 msgstr "Desideri ospitare o collegarti ad una sessione di gioco in rete?"
 
@@ -12112,7 +12137,7 @@ msgstr ""
 msgid "Cutscene '%s' not found"
 msgstr "Scena di intermezzo '%s' non trovata"
 
-#: engines/sword1/control.cpp:2811
+#: engines/sword1/control.cpp:2814
 msgid ""
 "ScummVM found that you have old saved games for Broken Sword 1 that should "
 "be converted.\n"
@@ -12130,7 +12155,7 @@ msgstr ""
 "Premi OK per convertirli adesso, altrimenti ti verrà richiesto al prossimo "
 "avvio del gioco.\n"
 
-#: engines/sword1/control.cpp:2997
+#: engines/sword1/control.cpp:3000
 #, c-format
 msgid ""
 "Target new saved game already exists!\n"
@@ -12139,11 +12164,11 @@ msgstr ""
 "La destinazione del nuovo salvataggio già esiste!\n"
 "Vuoi mantenere il vecchio salvataggio (%s) o quello nuovo (%s)?\n"
 
-#: engines/sword1/control.cpp:3000
+#: engines/sword1/control.cpp:3003
 msgid "Keep the old one"
 msgstr "Mantieni quello vecchio"
 
-#: engines/sword1/control.cpp:3000
+#: engines/sword1/control.cpp:3003
 msgid "Keep the new one"
 msgstr "Mantieni quello nuovo"
 
@@ -13754,25 +13779,23 @@ msgstr "Estrai moneta"
 msgid "Preferences"
 msgstr "Preferenze"
 
-#: engines/zvision/zvision.cpp:309
+#: engines/zvision/zvision.cpp:302
 msgid ""
 "Before playing this game, you'll need to copy the required fonts into "
 "ScummVM's extras directory, or into the game directory. On Windows, you'll "
 "need the following font files from the Windows font directory: Times New "
 "Roman, Century Schoolbook, Garamond, Courier New and Arial. Alternatively, "
-"you can download the Liberation Fonts or the GNU FreeFont package. You'll "
-"need all the fonts from the font package you choose, i.e., LiberationMono, "
-"LiberationSans and LiberationSerif, or FreeMono, FreeSans and FreeSerif "
-"respectively."
+"you can download the Liberation Fonts package. You'll need all the fonts "
+"from the font package you choose, i.e., LiberationMono, LiberationSans and "
+"LiberationSerif."
 msgstr ""
 "Prima di avviare questo gioco, devi copiare i font necessari nella cartella "
 "'extra' di ScummVM, oppure direttamente nella cartella del gioco. Avrai "
 "bisogno dei seguenti font presenti nella sottocartella Fonts di Windows: "
 "Times New Roman, Century Schoolbook, Garamond, Courier New e Arial. In "
-"alternativa puoi scaricare le Liberation Fonts o il pacchetto FreeFont della "
-"GNU. Ti serviranno tutti i font presenti nel pacchetto di tua preferenza, "
-"precisamente: LiberationMono, LiberationSans e LiberationSerif; oppure "
-"FreeMono, FreeSans e FreeSerif."
+"alternativa puoi scaricare il pacchetto delle Liberation Fonts. Ti "
+"serviranno tutti i font presenti nel pacchetto di tua preferenza, "
+"precisamente: LiberationMono, LiberationSans e LiberationSerif."
 
 #~ msgid ""
 #~ "Could not find the 'Fate of Atlantis' Macintosh executable.\n"

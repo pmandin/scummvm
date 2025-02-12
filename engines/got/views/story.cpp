@@ -31,7 +31,9 @@ namespace Views {
 #define MAX_Y 236
 
 bool Story::msgFocus(const FocusMessage &msg) {
-	resourceRead(Common::String::format("STORY%d", _G(area)), _G(tmpBuff));
+	Common::String storyName = g_events->isDemo() ? "STORY" :
+		Common::String::format("STORY%d", _G(area));
+	resourceRead(storyName, _G(tmpBuff));
 
 	byte paletteBuffer[PALETTE_SIZE] = {};
 	resourceRead("STORYPAL", paletteBuffer);
@@ -102,7 +104,7 @@ bool Story::msgFocus(const FocusMessage &msg) {
 	}
 
 	// Play the opening music
-	musicPlay("OPENSONG", 1);
+	musicPlay("OPENSONG", true);
 
 	_yp = 0;
 	_scrolling = false;

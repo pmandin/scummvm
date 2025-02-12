@@ -22,6 +22,7 @@
 #include "director/director.h"
 #include "director/movie.h"
 #include "director/castmember/shape.h"
+#include "director/lingo/lingo-the.h"
 
 namespace Director {
 
@@ -106,6 +107,96 @@ void ShapeCastMember::setForeColor(uint32 fgCol) {
 	_fgCol = fgCol;
 	_modified = true;
 }
+
+bool ShapeCastMember::hasField(int field) {
+	switch (field) {
+	case kTheFilled:
+	case kTheLineSize:
+	case kThePattern:
+	case kTheShapeType:
+		return true;
+	default:
+		break;
+	}
+	return CastMember::hasField(field);
+}
+
+Datum ShapeCastMember::getField(int field) {
+	Datum d;
+
+	switch (field) {
+	case kTheFilled:
+		d = Datum((bool)_fillType);
+		break;
+	case kTheLineSize:
+		d = Datum(_lineThickness);
+		break;
+	case kThePattern:
+		d = Datum(_pattern);
+		break;
+	case kTheShapeType:
+		switch (_shapeType) {
+		case kShapeRectangle:
+			d = Datum("rect");
+			d.type = SYMBOL;
+			break;
+		case kShapeRoundRect:
+			d = Datum("roundRect");
+			d.type = SYMBOL;
+			break;
+		case kShapeOval:
+			d = Datum("oval");
+			d.type = SYMBOL;
+			break;
+		case kShapeLine:
+			d = Datum("line");
+			d.type = SYMBOL;
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		d = CastMember::getField(field);
+		break;
+	}
+
+	return d;
+}
+
+bool ShapeCastMember::setField(int field, const Datum &d) {
+	switch (field) {
+	case kTheFilled:
+		_fillType = d.asInt() ? 1 : 0;
+		return true;
+	case kTheLineSize:
+		_lineThickness = d.asInt();
+		return true;
+	case kThePattern:
+		_pattern = d.asInt();
+		return true;
+	case kTheShapeType:
+		if (d.type == SYMBOL) {
+			Common::String name = *d.u.s;
+			if (name.equalsIgnoreCase("rect")) {
+				_shapeType = kShapeRectangle;
+			} else if (name.equalsIgnoreCase("roundRect")) {
+				_shapeType = kShapeRoundRect;
+			} else if (name.equalsIgnoreCase("oval")) {
+				_shapeType = kShapeOval;
+			} else if (name.equalsIgnoreCase("line")) {
+				_shapeType = kShapeLine;
+			}
+			return true;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return CastMember::setField(field, d);
+}
+
 
 Common::String ShapeCastMember::formatInfo() {
 	return Common::String::format(

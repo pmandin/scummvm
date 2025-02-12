@@ -220,7 +220,7 @@ Lingo::Lingo(DirectorEngine *vm) : _vm(vm) {
 	initMethods();
 	initXLibs();
 
-	warning("Lingo Inited");
+	debugC(1, kDebugLingoExec, "Lingo inited");
 }
 
 Lingo::~Lingo() {
@@ -234,7 +234,7 @@ Lingo::~Lingo() {
 }
 
 void Lingo::reloadBuiltIns() {
-	debug("Reloading builtins");
+	debugC(1, kDebugLingoExec, "Reloading builtins");
 	cleanupBuiltIns();
 	cleanUpTheEntities();
 	cleanupMethods();
@@ -289,7 +289,7 @@ ScriptContext *LingoArchive::findScriptContext(uint16 id) {
 Common::String LingoArchive::getName(uint16 id) {
 	Common::String result;
 	if (id >= names.size()) {
-		warning("Name id %d not in list", id);
+		warning("LingoArchive::getName: Name id %d not in list", id);
 		return result;
 	}
 	result = names[id];
@@ -338,7 +338,7 @@ Symbol Lingo::getHandler(const Common::String &name) {
 	if (_state->context && _state->context->_functionHandlers.contains(name))
 		return _state->context->_functionHandlers[name];
 
-	sym = g_director->getCurrentMovie()->getHandler(name);
+	sym = g_director->getCurrentMovie()->getHandler(name, _state->context->_castLibHint);
 	if (sym.type != VOIDSYM)
 		return sym;
 
@@ -349,7 +349,7 @@ Symbol Lingo::getHandler(const Common::String &name) {
 
 
 void LingoArchive::patchCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName, uint32 preprocFlags) {
-	debugC(1, kDebugCompile, "Patching code for type %s(%d) with id %d in '%s%s'\n"
+	debugC(1, kDebugCompile, "LingoArchive::patchCode: Patching code for type %s(%d) with id %d in '%s%s'\n"
 			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), formatStringForDump(code.encode()).c_str());
 	if (!getScriptContext(type, id)) {
 		// If there's no existing script context, don't try and patch it.
@@ -375,7 +375,7 @@ void LingoArchive::patchCode(const Common::U32String &code, ScriptType type, uin
 
 
 void LingoArchive::addCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName, uint32 preprocFlags) {
-	debugC(1, kDebugCompile, "Add code for type %s(%d) with id %d in '%s%s'\n"
+	debugC(1, kDebugCompile, "LingoArchive::addCode: Add code for type %s(%d) with id %d in '%s%s'\n"
 			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), formatStringForDump(code.encode()).c_str());
 
 	if (getScriptContext(type, id)) {
@@ -416,8 +416,8 @@ void LingoArchive::replaceCode(const Common::U32String &code, ScriptType type, u
 Common::String Lingo::formatStack() {
 	Common::String stack;
 
-	for (uint i = 0; i < _stack.size(); i++) {
-		Datum d = _stack[i];
+	for (uint i = 0; i < _state->stack.size(); i++) {
+		Datum d = _state->stack[i];
 		stack += Common::String::format("<%s> ", d.asString(true).c_str());
 	}
 	return stack;
@@ -713,19 +713,19 @@ bool Lingo::execute() {
 void Lingo::executeScript(ScriptType type, CastMemberID id) {
 	Movie *movie = _vm->getCurrentMovie();
 	if (!movie) {
-		warning("Request to execute script with no movie");
+		warning("Lingo::executeScript: Request to execute script with no movie");
 		return;
 	}
 
 	ScriptContext *sc = movie->getScriptContext(type, id);
 
 	if (!sc) {
-		debugC(3, kDebugLingoExec, "Request to execute non-existent script type %d id %d of castLib %d", type, id.member, id.castLib);
+		debugC(3, kDebugLingoExec, "Lingo::executeScript: Request to execute non-existent script type %d id %d of castLib %d", type, id.member, id.castLib);
 		return;
 	}
 
 	if (!sc->_eventHandlers.contains(kEventGeneric)) {
-		debugC(3, kDebugLingoExec, "Request to execute script type %d id %d of castLib %d with no scopeless lingo", type, id.member, id.castLib);
+		debugC(3, kDebugLingoExec, "Lingo::executeScript: Request to execute script type %d id %d of castLib %d with no scopeless lingo", type, id.member, id.castLib);
 		return;
 	}
 
@@ -1177,6 +1177,9 @@ Common::String Datum::asString(bool printonly) const {
 	case FIELDREF:
 		s = Common::String::format("field %d of castLib %d", u.cast->member, u.cast->castLib);
 		break;
+	case SPRITEREF:
+		s = Common::String::format("sprite %d", u.i);
+		break;
 	case CHUNKREF:
 		{
 			Common::String chunkType;
@@ -1568,11 +1571,13 @@ void Lingo::executePerFrameHook(int frame, int subframe) {
 			for (uint i = 0; i < _actorList.u.farr->arr.size(); i++) {
 				Datum actor = _actorList.u.farr->arr[i];
 				Symbol method = actor.u.obj->getMethod("stepFrame");
-				debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>, frame %d, subframe %d", actor.asString(true).c_str(), frame, subframe);
-				if (method.nargs == 1)
-					push(actor);
-				LC::call(method, method.nargs, false);
-				execute();
+				if (method.type != VOIDSYM) {
+					debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>, frame %d, subframe %d", actor.asString(true).c_str(), frame, subframe);
+					if (method.nargs == 1)
+						push(actor);
+					LC::call(method, method.nargs, false);
+					execute();
+				}
 			}
 		}
 	}
@@ -1896,6 +1901,10 @@ CastMemberID Lingo::resolveCastMember(const Datum &memberID, const Datum &castLi
 		break;
 	case INT:
 	case FLOAT:
+		if (g_director->getVersion() >= 500 && memberID.asInt() > 0x20000) {
+			// Composite ID
+			return CastMemberID().fromMultiplex(memberID.asInt());
+		}
 		if (castLib.asInt() == 0) {
 			// When specifying 0 as the castlib, D5 will assume this
 			// means the default (i.e. first) cast library. It will not
@@ -1913,6 +1922,45 @@ CastMemberID Lingo::resolveCastMember(const Datum &memberID, const Datum &castLi
 	}
 
 	return CastMemberID(-1, castLib.asInt());
+}
+
+CastMemberID Lingo::toCastMemberID(const Datum &member, const Datum &castLib) {
+	// Used specifically for unpacking CastMemberIDs when provided by the bytecode
+	// as two Datums. Multiplex IDs are supported, but auto-truncated.
+	Movie *movie = g_director->getCurrentMovie();
+	if (!movie) {
+		warning("Lingo::toCastMemberID: No movie set");
+		return CastMemberID(-1, 0);
+	}
+	CastMemberID res;
+	if (castLib.type == VOID) {
+		if (member.isCastRef()) {
+			res = member.asMemberID();
+		} else if (member.isNumeric()) {
+			res = movie->getCastMemberIDByMember(member.asInt());
+		} else {
+			res = movie->getCastMemberIDByName(member.asString());
+		}
+	} else {
+		int libId = -1;
+		if (castLib.type == CASTLIBREF) {
+			libId = castLib.u.i;
+		} else if (castLib.isNumeric()) {
+			libId = castLib.asInt();
+		} else {
+			libId = movie->getCastLibIDByName(castLib.asString());
+		}
+		if (member.isCastRef()) {
+			res = member.asMemberID();
+		} else if (member.isNumeric()) {
+			res = CastMemberID().fromMultiplex(member.asInt());
+			if (libId != 0)
+				res.castLib = libId;
+		} else {
+			res = movie->getCastMemberIDByNameAndType(member.asString(), libId, kCastTypeAny);
+		}
+	}
+	return res;
 }
 
 void Lingo::exposeXObject(const char *name, Datum obj) {

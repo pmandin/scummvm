@@ -65,6 +65,11 @@ Room201::Room201() : Section2Room() {
 	Common::fill(_itemFlags, _itemFlags + 12, 0);
 }
 
+void Room201::preload() {
+	Section2Room::preload();
+	_G(player).walker_in_this_scene = !keyCheck();
+}
+
 void Room201::init() {
 	if (keyCheck()) {
 		_flag1 = true;
@@ -137,7 +142,7 @@ void Room201::init() {
 			}
 		} else {
 			player_set_commands_allowed(false);
-			ws_demand_location(79, 257, 3);
+			ws_demand_location(_G(my_walker), 79, 257, 3);
 
 			if (_G(flags)[V053] == 2 && _G(game).previous_room != KERNEL_RESTORING_GAME) {
 				++_G(flags)[V006];

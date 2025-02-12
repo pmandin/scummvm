@@ -145,7 +145,7 @@ bool QuickTimeParser::parsePanoramaAtoms() {
 		sizes = { _panoTrack->sampleSize };
 	} else {
 		sizes.resize(_panoTrack->sampleCount);
-		for (uint32 i = 0; i < _panoTrack->sampleCount; i++) 
+		for (uint32 i = 0; i < _panoTrack->sampleCount; i++)
 			sizes[i] = _panoTrack->sampleSizes[i];
 	}
 
@@ -287,7 +287,7 @@ int QuickTimeParser::readDefault(Atom atom) {
 			debug(0, "Skipping junk found at the end of the QuickTime file");
 			return 0;
 		} else if (_parseTable[i].type == 0) { // skip leaf atom data
-			debug(0, ">>> Skipped [%s]", tag2str(a.type));
+			debug(0, ">>> Skipped [%s] (%08x) at %d (0x%x)", tag2str(a.type), a.type, (uint32)_fd->pos(), (uint32)_fd->pos());
 
 			_fd->seek(a.size, SEEK_CUR);
 		} else {
@@ -613,9 +613,9 @@ int QuickTimeParser::readSTSD(Atom atom) {
 		_fd->readUint16BE(); // reserved
 		_fd->readUint16BE(); // index
 
-		track->sampleDescs.push_back(readSampleDesc(track, format, size - 16));
+		debug(0, "sampledesc %d: size=%d 4CC= %s codec_type=%d", i, size, tag2str(format), track->codecType);
 
-		debug(0, "size=%d 4CC= %s codec_type=%d", size, tag2str(format), track->codecType);
+		track->sampleDescs.push_back(readSampleDesc(track, format, size - 16));
 
 		if (!track->sampleDescs[i]) {
 			// other codec type, just skip (rtp, mp4s, tmcd ...)
@@ -1079,12 +1079,28 @@ int QuickTimeParser::readPHOT(Atom atom) {
 		uint32 type = _fd->readUint32BE();
 
 		switch (type) {
+		case MKTAG('a', 'n', 'i', 'm'):
+			pHotSpotTable.hotSpots[i].type = HotSpotType::anim;
+			break;
+
+		case MKTAG('c', 'n', 'o', 'd'):
+			pHotSpotTable.hotSpots[i].type = HotSpotType::cnod;
+			break;
+
 		case MKTAG('l', 'i', 'n', 'k'):
 			pHotSpotTable.hotSpots[i].type = HotSpotType::link;
 			break;
 
 		case MKTAG('n', 'a', 'v', 'g'):
 			pHotSpotTable.hotSpots[i].type = HotSpotType::navg;
+			break;
+
+		case MKTAG('s', 'o', 'u', 'n'):
+			pHotSpotTable.hotSpots[i].type = HotSpotType::soun;
+			break;
+
+		case MKTAG('u', 'n', 'd', 'f'):
+			pHotSpotTable.hotSpots[i].type = HotSpotType::undefined;
 			break;
 
 		default:
@@ -1280,6 +1296,7 @@ QuickTimeParser::Track::Track() {
 	graphicsMode = GraphicsMode::COPY;
 	opcolor[0] = opcolor[1] = opcolor[2] = 0;
 	soundBalance = 0;
+	targetTrack = 0;
 }
 
 String QuickTimeParser::PanoStringTable::getString(int32 offset) const {

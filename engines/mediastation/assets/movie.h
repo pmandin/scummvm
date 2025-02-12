@@ -79,8 +79,6 @@ public:
 	// that could be confusing.
 	uint32 zCoordinate();
 
-	bool _showing = false;
-
 private:
 	MovieFrameHeader *_bitmapHeader = nullptr;
 	MovieFrameFooter *_footer = nullptr;
@@ -94,7 +92,7 @@ enum MovieSectionType {
 
 class Movie : public Asset {
 public:
-	Movie(AssetHeader *header) : Asset(header) {};
+	Movie(AssetHeader *header);
 	virtual ~Movie() override;
 
 	virtual void readChunk(Chunk &chunk) override;
@@ -103,19 +101,31 @@ public:
 	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
 	virtual void process() override;
 
+	virtual void redraw(Common::Rect &rect) override;
+
 private:
+	bool _showByDefault = false;
+	bool _isShowing = false;
+	bool _isPlaying = false;
+
 	Common::Array<MovieFrame *> _frames;
 	Common::Array<MovieFrame *> _stills;
 	Common::Array<MovieFrameFooter *> _footers;
 	Common::Array<Audio::SeekableAudioStream *> _audioStreams;
+	Audio::SoundHandle _soundHandle;
 
-	// Method implementations. These should be called from callMethod.
+	Common::Array<MovieFrame *> _framesNotYetShown;
+	Common::Array<MovieFrame *> _framesOnScreen;
+
+	// Script method implementations.
 	void timePlay();
 	void timeStop();
+	void spatialShow();
+	void spatialHide();
 
-	// Internal helper functions.
-	bool drawNextFrame();
-	void processTimeEventHandlers();
+	void updateFrameState();
+
+	Common::Rect getFrameBoundingBox(MovieFrame *frame);
 };
 
 } // End of namespace MediaStation

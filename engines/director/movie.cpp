@@ -181,6 +181,7 @@ void Movie::loadCastLibMapping(Common::SeekableReadStreamEndian &stream) {
 			cast = _casts.getVal(libId);
 		} else {
 			cast = new Cast(this, libId, false, isExternal, libResourceId);
+			cast->setCastName(name);
 			_casts.setVal(libId, cast);
 		}
 		_castNames[name] = libId;
@@ -488,6 +489,9 @@ bool Movie::duplicateCastMember(CastMemberID source, CastMemberID target) {
 		warning("Movie::duplicateCastMember(): couldn't find source cast member %s", source.asString().c_str());
 	} else if (!targetCast) {
 		warning("Movie::duplicateCastMember(): couldn't find destination castLib %d", target.castLib);
+	} else if (source == target) {
+		warning("Movie::duplicateCastMember(): trying to duplicate cast member %s over itself", source.asString().c_str());
+		return false;
 	} else {
 		CastMember *sourceMember = sourceCast->getCastMember(source.member);
 		CastMemberInfo *sourceInfo = sourceCast->getCastMemberInfo(source.member);
@@ -621,7 +625,13 @@ ScriptContext *Movie::getScriptContext(ScriptType type, CastMemberID id) {
 	return result;
 }
 
-Symbol Movie::getHandler(const Common::String &name) {
+Symbol Movie::getHandler(const Common::String &name, uint16 castLibHint) {
+	// Always check the current cast library for a match first
+	if (castLibHint && _casts.contains(castLibHint)) {
+		Cast *cast = _casts.getVal(castLibHint);
+		if (cast->_lingoArchive->functionHandlers.contains(name))
+			return cast->_lingoArchive->functionHandlers[name];
+	}
 	for (auto &it : _casts) {
 		if (it._value->_lingoArchive->functionHandlers.contains(name))
 			return it._value->_lingoArchive->functionHandlers[name];

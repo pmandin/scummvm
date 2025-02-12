@@ -245,6 +245,7 @@ void Movements::update() {
 void Movements::processBehaviourExecution(int actorIdx) {
 	switch (_engine->_actor->_heroBehaviour) {
 	case HeroBehaviourType::kNormal:
+		_actionNormal = true;
 		break;
 	case HeroBehaviourType::kAthletic:
 		_engine->_animations->initAnim(AnimationTypes::kJump, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
@@ -273,13 +274,10 @@ void Movements::processBehaviourExecution(int actorIdx) {
 		} else {
 			if (_engine->_input->isActionActive(TwinEActionType::TurnLeft)) {
 				_engine->_animations->initAnim(AnimationTypes::kLeftPunch, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
-				_lastJoyFlag = true;
 			} else if (_engine->_input->isActionActive(TwinEActionType::TurnRight)) {
 				_engine->_animations->initAnim(AnimationTypes::kRightPunch, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
-				_lastJoyFlag = true;
 			} else if (_engine->_input->isActionActive(TwinEActionType::MoveForward)) {
 				_engine->_animations->initAnim(AnimationTypes::kKick, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
-				_lastJoyFlag = true;
 			}
 		}
 		break;
@@ -294,13 +292,14 @@ void Movements::processBehaviourExecution(int actorIdx) {
 
 bool Movements::processAttackExecution(int actorIdx) {
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
-	if (!_engine->_gameState->_usingSabre) {
+	if (!_engine->_gameState->_weapon) {
 		// Use Magic Ball
 		if (_engine->_gameState->hasItem(InventoryItems::kiMagicBall)) {
 			if (_engine->_gameState->_magicBall == -1) {
 				_engine->_animations->initAnim(AnimationTypes::kThrowBall, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
 			}
 
+			_lastJoyFlag = true;
 			actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
 			return true;
 		}
@@ -311,6 +310,7 @@ bool Movements::processAttackExecution(int actorIdx) {
 
 		_engine->_animations->initAnim(AnimationTypes::kSabreAttack, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
 
+		_lastJoyFlag = true;
 		actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
 		return true;
 	}
@@ -399,11 +399,9 @@ void Movements::processManualAction(int actorIdx) {
 		} else if (_engine->_input->toggleActionIfActive(TwinEActionType::SpecialAction)) {
 			_actionNormal = true;
 		}
-	}
-
-	if (_engine->_input->isActionActive(TwinEActionType::ThrowMagicBall) && !_engine->_gameState->inventoryDisabled()) {
-		if (processAttackExecution(actorIdx)) {
-			_lastJoyFlag = true;
+		// MyFire & F_ALT
+		if (_engine->_input->isActionActive(TwinEActionType::ThrowMagicBall) && !_engine->_gameState->inventoryDisabled()) {
+			processAttackExecution(actorIdx);
 		}
 	}
 

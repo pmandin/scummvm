@@ -401,6 +401,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "pingu2",				"Pingu and Friends" },
 	{ "pippi",				"Astrid Lindgren's Pippi" },
 	{ "planetarizona",		"Escape from Planet Arizona" },
+	{ "plates",				"Plates are People Too!" },
 	{ "playroom",			"The Playroom" },
 	{ "plbible",			"The Play & Learn Children's Bible On CD-ROM" },
 	{ "poohac",				"Winnie the Pooh Activity Center" },
@@ -5540,6 +5541,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINDEMO2("planetearth", "Demo", "PLANETE.EXE",	"t:1ab2d4f204eb42c9a8ff5257f7cef149", 690069,
 									"INTRO.DIR",	"f:44456604551f5670f801fc69cbbe5833", 10175740, 404),
 
+	MACGAME1("plates", "", "xn--        Plates        -/Plates Are People Too!", "r:bcd068aaac1177eab7125ea39f66e86f", 483518, 400),
+
 	// Found on the Play-Doh Creations CD
 	MACGAME1("playskool", "", "goHIGmem PPC", "r:a6043fbba9186296faf8a2b82e5e4182",    64250, 404),
 	WINGAME2("playskool", "", "SAMPLER.EXE",  "t:4de224099dd6f16d5c9892f94c975f2a",   696951,
@@ -5959,9 +5962,10 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME1("ubt", "", "BTDEMO.EXE", "dbe72b7dc91c72db5b4597857aecf5c6", 696813, 404),
 
 	// YOBI.EXE is a projector for lower performance systems
-	WINGAME1_l("ukiuki1", "",	  "TENNGU.EXE", "f0bbb9938a7cb899b6fc93ef7f3e8150", 747145, Common::JA_JPN, 404),
+	WINGAME1_l("ukiuki1", "",	  "TENNGU.EXE", "t:2bfc6908e01ec3e743189daa7578d30a", 747145, Common::JA_JPN, 404),
 	WINDEMO2_l("ukiuki1", "Demo", "S.EXE",		"09430e02b3540e623d0b400792958901", 747145,
 								  "LOGO.DIR",	"b6d341c63fbea25898fc310981413c28", 1053528, Common::JA_JPN, 404),
+	MACGAME1_l("ukiuki1", "",     "xn--u9j393jyrduwqoth", "r:bcd3c718db258701496b3c5bcb827ef2", 488662, Common::JA_JPN, 404),
 	WINGAME1("ukiukibgv", "",	  "BGV",		"4dc07ac998272bb4027a9979f5b6c3b6", 1097649, 404),
 	{
 		{
@@ -7697,6 +7701,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1("wine", "", "double-click me!", "231d3041df162be4a0ddd36a74eb03b6", 719289, 501),
 	WINGAME2("wine", "", "WIN95.EXE",		 "1a7acbba10a7246ba58c1d53fc7203f5", 1411337,
 						 "160MAIN.DXR",		 "23dbb4744121b077d331b01123709519", 592640, 501),
+
+	WINGAME1_l("winniewitch", "", "ZILLY.EXE", "t:f302a23d9172f018edcd4c46345c40c1", 935225, Common::DE_DEU, 501),
 
 	// Created by Human Code, Inc.
 	// Doesn't require installation

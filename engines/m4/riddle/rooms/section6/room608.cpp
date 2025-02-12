@@ -135,8 +135,8 @@ void Room608::init() {
 
 		player_set_commands_allowed(false);
 		_G(player).disable_hyperwalk = true;
-		ws_demand_location(-30, 345, 1);
-		ws_walk(43, 345, nullptr, 18, 3);
+		ws_demand_location(_G(my_walker), -30, 345, 1);
+		ws_walk(_G(my_walker), 43, 345, nullptr, 18, 3);
 	
 		ws_walk_load_walker_series(TT_NORMAL_DIRS, TT_NORMAL_NAMES);
 		ws_walk_load_shadow_series(TT_SHADOW_DIRS, TT_SHADOW_NAMES);
@@ -145,7 +145,7 @@ void Room608::init() {
 			-30, 324, 3, triggerMachineByHashCallback3000, "tt walker");
 		sendWSMessage_10000(_tt, 105, 324, 5, 20, 1);
 	} else if (_G(flags)[V203] == 6) {
-		_tt02 = series_load("606TT02");
+		_tt02 = series_load("608TT02");
 		_tt03 = series_load("608TT03");
 		_tt05 = series_load("608TT05");
 		_ripHandChin = series_load("RIP TREK HAND CHIN POS3");
@@ -156,7 +156,7 @@ void Room608::init() {
 
 		player_set_commands_allowed(false);
 		_G(player).disable_hyperwalk = true;
-		ws_demand_location(-30, 345, 1);
+		ws_demand_location(_G(my_walker), -30, 345, 1);
 		kernel_timing_trigger(1, 698);
 
 		ws_walk_load_walker_series(TT_NORMAL_DIRS, TT_NORMAL_NAMES);
@@ -185,8 +185,8 @@ void Room608::init() {
 
 		if (_G(flags)[V203] != 2) {
 			player_set_commands_allowed(false);
-			ws_demand_location(-30, 345, 3);
-			ws_walk(43, 345, nullptr, 1, 3);
+			ws_demand_location(_G(my_walker), -30, 345, 3);
+			ws_walk(_G(my_walker), 43, 345, nullptr, 1, 3);
 		}
 		break;
 
@@ -876,7 +876,7 @@ void Room608::daemon() {
 		break;
 
 	case 501:
-		ws_walk(465, 284, nullptr, 503, 1);
+		ws_walk(_G(my_walker), 465, 284, nullptr, 503, 1);
 		break;
 
 	case 503:
@@ -1008,7 +1008,7 @@ void Room608::daemon() {
 		_ripHandTalk3 = series_load("RIP TREK HAND TALK POS3");
 		_end2 = series_show("608END2", 0xe00, 16);
 		ws_unhide_walker();
-		ws_demand_location(494, 276, 3);
+		ws_demand_location(_G(my_walker), 494, 276, 3);
 
 		sendWSMessage_10000(_G(my_walker), 524, 296, 9, 532, 1);
 		_ol = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, 0,
@@ -1124,12 +1124,12 @@ void Room608::daemon() {
 		break;
 
 	case 699:
-		ws_walk(43, 345, nullptr, -1, 3);
+		ws_walk(_G(my_walker), 43, 345, nullptr, -1, 3);
 		break;
 
 	case 700:
 		player_update_info(_tt, &_G(player_info));
-		ws_hide_walker();
+		ws_hide_walker(_tt);
 		_ttShadow = series_show("tt walker shadow 3", 0xf00, 0, -1, -1, 0,
 			_G(player_info).scale, _G(player_info).x, _G(player_info).y);
 		_ttTalker = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
@@ -1265,7 +1265,7 @@ void Room608::daemon() {
 
 	case 747:
 		ws_unhide_walker();
-		ws_demand_location(461, 293, 3);
+		ws_demand_location(_G(my_walker), 461, 293, 3);
 		sendWSMessage_10000(_G(my_walker), 432, 297, 3, 738, 1);
 		break;
 
@@ -1316,7 +1316,7 @@ void Room608::daemon() {
 		break;
 
 	case 758:
-		sendWSMessage_10000(1, _ttTalker, _all5a, 760, 7, -1, _all5a, 1, 12, 4);
+		sendWSMessage_10000(1, _ttTalker, _all5a, 7, 7, -1, _all5a, 7, 12, 4);
 		digi_play("608t11", 2, 255, 760);
 		break;
 
@@ -1371,7 +1371,7 @@ void Room608::daemon() {
 		break;
 
 	case 770:
-		sendWSMessage_10000(1, _ttTalker, _all5a, 23, 1, 773, _all5a, 1, 1, 1);
+		sendWSMessage_10000(1, _ttTalker, _tt05, 23, 1, 773, _tt05, 1, 1, 1);
 		break;
 
 	case 771:
@@ -1520,7 +1520,7 @@ void Room608::parser() {
 	} else if (player_said("POLE", "DRIFTWOOD STUMP ") && inv_player_has("POLE")) {
 		switch (_G(kernel).trigger) {
 		case -1:
-			ws_walk(453, 311, nullptr, 1, 1);
+			ws_walk(_G(my_walker), 453, 311, nullptr, 1, 1);
 			break;
 		case 1:
 			player_set_commands_allowed(false);
@@ -1560,7 +1560,7 @@ void Room608::parser() {
 	} else if (takeFlag && player_said("POLE") && !inv_player_has("POLE")) {
 		switch (_G(kernel).trigger) {
 		case -1:
-			ws_walk(453, 311, nullptr, 1, 1);
+			ws_walk(_G(my_walker), 453, 311, nullptr, 1, 1);
 			break;
 		case 1:
 			player_set_commands_allowed(false);
@@ -1901,7 +1901,7 @@ bool Room608::stumpHole() {
 	switch (_G(kernel).trigger) {
 	case -1:
 		if (inv_player_has("DRIFTWOOD STUMP")) {
-			ws_walk(474, 309, nullptr, 1, 2);
+			ws_walk(_G(my_walker), 474, 309, nullptr, 1, 2);
 			return true;
 		}
 		break;
@@ -1939,7 +1939,7 @@ bool Room608::takeStump2() {
 	} else {
 		switch (_G(kernel).trigger) {
 		case -1:
-			ws_walk(474, 309, nullptr, 1, 2);
+			ws_walk(_G(my_walker), 474, 309, nullptr, 1, 2);
 			break;
 
 		case 1:
@@ -1975,6 +1975,8 @@ bool Room608::takeLighter() {
 		if (inv_object_is_here("LIGHTER")) {
 			player_set_commands_allowed(false);
 			_ripLowReach = series_load("RIP LOW REACH POS1");
+			setGlobals1(_ripLowReach, 1, 16, 16, 16);
+			sendWSMessage_110000(2);
 			return true;
 		}
 		break;
@@ -2009,7 +2011,7 @@ bool Room608::hornCordWater() {
 	} else {
 		switch (_G(kernel).trigger) {
 		case -1:
-			ws_walk(64, 354, nullptr, 1, 7);
+			ws_walk(_G(my_walker), 64, 354, nullptr, 1, 7);
 			return true;
 
 		case 1:
@@ -2020,6 +2022,7 @@ bool Room608::hornCordWater() {
 
 			_shadow5 = series_show("safari shadow 5", _G(player_info).depth, 144, -1, -1, 0,
 				_G(player_info).scale, _G(player_info).x, _G(player_info.y));
+			_horn = series_load("608horn");
 			_ol2 = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
 				triggerMachineByHashCallback, "ol");
 			sendWSMessage_10000(1, _ol2, _horn, 1, 16, 2, _horn, 16, 16, 0);
@@ -2083,7 +2086,7 @@ bool Room608::lookPuffin() {
 void Room608::usePole() {
 	switch (_G(kernel).trigger) {
 	case -1:
-		ws_walk(453, 311, nullptr, 1, 1);
+		ws_walk(_G(my_walker), 453, 311, nullptr, 1, 1);
 		break;
 
 	case 1:
@@ -2137,7 +2140,7 @@ void Room608::usePole() {
 
 		ws_unhide_walker();
 		player_update_info();
-		ws_walk(_G(player_info).x + 1, _G(player_info).y,
+		ws_walk(_G(my_walker), _G(player_info).x + 1, _G(player_info).y,
 			nullptr, 12, 4);
 		break;
 
@@ -2159,7 +2162,7 @@ void Room608::usePole() {
 		// call for animating old lady. Is something supposed to set a value?
 		// For now, do a dummy ws_walk to reset internal states
 		player_update_info();
-		ws_walk(_G(player_info).x, _G(player_info).y, nullptr, -1, 4);
+		ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, -1, 4);
 
 		sendWSMessage_110000(2);
 		digi_play("608r16", 1, 255, 20);

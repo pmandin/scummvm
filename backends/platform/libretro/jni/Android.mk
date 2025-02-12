@@ -2,6 +2,7 @@ LOCAL_PATH  := $(call my-dir)
 ROOT_PATH   := $(LOCAL_PATH)/..
 TARGET_NAME := scummvm
 HAVE_OPENGLES2 := 1
+USE_IMGUI := 0
 
 # Reset flags not reset to Makefile.common
 DEFINES   :=
@@ -24,7 +25,7 @@ OBJS_MODULES := $(addprefix $(SCUMMVM_PATH)/, $(foreach MODULE,$(MODULES),$(MODU
 #TODO:
 # -O2 or higher causes segmentation fault with some engines (e.g. hopkins)
 # -Fortify triggers abort with some engines (e.g. sword25)
-COREFLAGS := $(DEFINES) -DUSE_CXX11 -O1 -U_FORTIFY_SOURCE
+COREFLAGS := $(DEFINES) -DUSE_CXX11 -O1 -U_FORTIFY_SOURCE -Wno-undefined-var-template
 
 ifeq ($(TARGET_ARCH),arm)
   COREFLAGS += -D_ARM_ASSEM_

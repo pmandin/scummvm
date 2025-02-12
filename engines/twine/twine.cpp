@@ -781,10 +781,10 @@ void TwinEEngine::processInventoryAction() {
 		_screens->_flagFade = true;
 		break;
 	case kiMagicBall:
-		if (_gameState->_usingSabre) {
+		if (_gameState->_weapon) {
 			_actor->initBody(BodyType::btNormal, OWN_ACTOR_SCENE_INDEX);
 		}
-		_gameState->_usingSabre = false;
+		_gameState->_weapon = false;
 		break;
 	case kiUseSabre:
 		if (_scene->_sceneHero->_genBody != BodyType::btSabre) {
@@ -794,7 +794,7 @@ void TwinEEngine::processInventoryAction() {
 			_actor->initBody(BodyType::btSabre, OWN_ACTOR_SCENE_INDEX);
 			_animations->initAnim(AnimationTypes::kSabreUnknown, AnimType::kAnimationThen, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 
-			_gameState->_usingSabre = true;
+			_gameState->_weapon = true;
 		}
 		break;
 	case kiBookOfBu: {
@@ -1096,7 +1096,8 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 				actor->_workFlags.bIsHitting = 0;
 #endif
 			} else {
-				_sound->playSample(Samples::Explode, 1, actor->posObj(), a);
+				const uint16 pitchBend = 0x1000 + getRandomNumber(2000) - (2000 / 2);
+				_sound->playSample(Samples::Explode, pitchBend, 1, actor->posObj(), a);
 
 				if (a == _scene->_mecaPenguinIdx) {
 					_extra->extraExplo(actor->posObj());
@@ -1160,7 +1161,8 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 						actor->_flags.bNoShadow = 1;
 					}
 				} else {
-					_sound->playSample(Samples::Explode, 1, actor->posObj(), a);
+					const uint16 pitchBend = 0x1000 + getRandomNumber(2000) - (2000 / 2);
+					_sound->playSample(Samples::Explode, pitchBend, 1, actor->posObj(), a);
 					if (actor->_bonusParameter.cloverleaf || actor->_bonusParameter.kashes || actor->_bonusParameter.key || actor->_bonusParameter.lifepoints || actor->_bonusParameter.magicpoints) {
 						if (!actor->_bonusParameter.givenNothing) {
 							_actor->giveExtraBonus(a);

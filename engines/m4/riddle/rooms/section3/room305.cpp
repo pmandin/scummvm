@@ -174,7 +174,7 @@ void Room305::init() {
 		}
 
 		if (_drawerOpen) {
-			ws_demand_facing(11);
+			ws_demand_facing(_G(my_walker), 11);
 			player_update_info();
 
 			if (_G(flags)[V000]) {
@@ -211,7 +211,7 @@ void Room305::init() {
 		player_set_commands_allowed(false);
 
 		if (player_been_here(301)) {
-			ws_demand_location(1320, 296, 9);
+			ws_demand_location(_G(my_walker), 1320, 296, 9);
 
 			if (player_been_here(201)) {
 				_stander = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 494, 278, 73, 0xf00, true,
@@ -227,7 +227,7 @@ void Room305::init() {
 			MoveScreenDelta(game_buff_ptr, -640, 0);
 			kernel_timing_trigger(1, 10);
 		} else {
-			ws_demand_location(1320, 296, 9);
+			ws_demand_location(_G(my_walker), 1320, 296, 9);
 			hotspot_set_active("FENG LI", false);
 			kernel_timing_trigger(1, 10);
 			MoveScreenDelta(game_buff_ptr, -640, 0);
@@ -236,7 +236,7 @@ void Room305::init() {
 		break;
 
 	default:
-		ws_demand_location(1180, 320, 9);
+		ws_demand_location(_G(my_walker), 1180, 320, 9);
 		hotspot_set_active("FENG LI", false);
 		break;
 	}
@@ -679,7 +679,7 @@ void Room305::parser() {
 	} else if (takeFlag && player_said("turtle treats")) {
 		takeTurtleTreats();
 	} else if (takeFlag && player_said("turtle")) {
-		if (_G(flags)[V018]) {
+		if (_G(flags)[kWolfFled]) {
 			digi_play("305r55", 1);
 		} else {
 			switch (_G(kernel).trigger) {
@@ -1078,7 +1078,7 @@ next4:
 	} else if (lookFlag && player_said("terrarium")) {
 		if (inv_player_has("TURTLE")) {
 			digi_play("305r16a", 1);
-		} else if (_G(flags)[V018]) {
+		} else if (_G(flags)[kWolfFled]) {
 			digi_play("305r16b", 1);
 		} else if (inv_object_is_here("TURTLE")) {
 			digi_play("305r16c", 1);

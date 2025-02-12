@@ -78,7 +78,7 @@ void Room403::init() {
 		_G(flags)[V313] = player_been_here(403) && (
 			(_G(flags)[V110] && inv_player_has("TURTLE")) ||
 			inv_player_has("STEP LADDER") ||
-			_G(flags)[V018] ||
+			_G(flags)[kWolfFled] ||
 			!inv_object_is_here("STEP LADDER")) ? 0 : 1;
 		_plank = inv_object_in_scene("PLANK", 403) ? 2 : 0;
 
@@ -96,14 +96,14 @@ void Room403::init() {
 	if (_G(flags)[V139] == 2) {
 		_G(flags)[V139] = 0;
 
-		if (_G(flags)[V133] && _G(flags)[V131] != 403) {
+		if (_G(flags)[V133] && _G(flags)[kWolfLocation] != 403) {
 			_edger = series_place_sprite("ONE FRAME EDGER", 0, 0, 0, 100, 0xf00);
 			hotspot_set_active("EDGER", true);
 			inv_move_object("EDGER", 403);
 		}
 
 		MoveScreenDelta(-640, 0);
-		ws_demand_location(1172, 322, 3);
+		ws_demand_location(_G(my_walker), 1172, 322, 3);
 		ws_walk(1172, 322, nullptr, 400, 1);
 
 	} else if (_G(flags)[V139] == 4) {
@@ -111,7 +111,7 @@ void Room403::init() {
 		_ladder = series_place_sprite("LADDER LEANS AGAINST WALL", 0, 0, 0, 100, 0xf00);
 		hotspot_set_active("STEP LADDER ", true);
 		MoveScreenDelta(-640, 0);
-		ws_demand_location(1083, 322, 3);
+		ws_demand_location(_G(my_walker), 1083, 322, 3);
 		ws_walk(1201, 321, nullptr, 420, 2);
 
 	} else {
@@ -131,7 +131,7 @@ void Room403::init() {
 			break;
 		}
 
-		if (_G(flags)[V133] && !_G(flags)[V018] && _G(flags)[V131] != 403 &&
+		if (_G(flags)[V133] && !_G(flags)[kWolfFled] && _G(flags)[kWolfLocation] != 403 &&
 				!inv_player_has("TURTLE") && !inv_player_has("EDGER")) {
 			_edger = series_place_sprite("ONE FRAME EDGER", 0, 0, 0, 100, 0xf00);
 			hotspot_set_active("EDGER", true);
@@ -144,7 +144,7 @@ void Room403::init() {
 		}
 
 		if (_G(game).previous_room == KERNEL_RESTORING_GAME) {
-			if (_G(flags)[V131] == 403) {
+			if (_G(flags)[kWolfLocation] == 403) {
 				hotspot_set_active("WOLF", true);
 				_wolfTurnTalk = series_load("WOLF TURN AND TALK");
 				_wolfTurnHand = series_load("WOLF TURN WITH HAND OUT");
@@ -167,7 +167,7 @@ void Room403::init() {
 			}
 
 			if (_ladderMode) {
-				ws_demand_facing(11);
+				ws_demand_facing(_G(my_walker), 11);
 				ws_hide_walker();
 				_ripOnLadder = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
 					triggerMachineByHashCallback, "RIP on ladder/plank");
@@ -223,12 +223,12 @@ void Room403::init() {
 			_G(flags)[V132] = 0;
 			_G(camera_reacts_to_player) = false;
 			MoveScreenDelta(-640, 0);
-			ws_demand_location(620, 326, 3);
+			ws_demand_location(_G(my_walker), 620, 326, 3);
 			ws_walk_load_shadow_series(S4_SHADOW_DIRS, S4_SHADOW_NAMES);
 			ws_walk_load_walker_series(S4_NORMAL_DIRS, S4_NORMAL_NAMES);
 			kernel_timing_trigger(1, 310);
 		} else {
-			if (_G(flags)[V131] == 403) {
+			if (_G(flags)[kWolfLocation] == 403) {
 				hotspot_set_active("WOLF", true);
 				_wolfTurnTalk = series_load("WOLF TURN AND TALK");
 				_wolfTurnHand = series_load("WOLF TURN WITH HAND OUT");
@@ -246,10 +246,10 @@ void Room403::init() {
 
 			if (_G(kittyScreaming)) {
 				MoveScreenDelta(-640, 0);
-				ws_demand_location(1110, 322);
+				ws_demand_location(_G(my_walker), 1110, 322);
 				player_set_commands_allowed(true);
 			} else {
-				ws_demand_location(4, 296);
+				ws_demand_location(_G(my_walker), 4, 296);
 				ws_walk(80, 300, nullptr, 300, 3);
 			}
 		}
@@ -1217,7 +1217,7 @@ void Room403::daemon() {
 		hotspot_set_active("EDGER", true);
 
 		_G(flags)[V133] = 1;
-		_G(flags)[V131] = 402;
+		_G(flags)[kWolfLocation] = 402;
 		terminateMachineAndNull(_ripOnLadder);
 		terminateMachineAndNull(_ripTalksWolf);
 		ws_unhide_walker();
@@ -1417,7 +1417,7 @@ void Room403::daemon() {
 		ws_unhide_walker();
 		series_unload(_ripPutBoard);
 
-		ws_walk(620, 326, nullptr, 1);
+		ws_walk(_G(my_walker), 620, 326, nullptr, -1, 1, true);
 		kernel_timing_trigger(60, 444);
 		break;
 
@@ -1505,7 +1505,7 @@ void Room403::pre_parser() {
 
 		intr_cancel_sentence();
 
-		if (player_said("TURTLE TREATS", "GRATE")) {
+		if (useFlag && player_said("GRATE")) {
 			_ripleyMode = 1020;
 			_ripleyShould = 1320;
 		} else {
@@ -1675,7 +1675,7 @@ void Room403::parser() {
 		digi_play("403r53", 1);
 	} else if (lookFlag && player_said_any("STEP LADDER", "STEP LADDER ") &&
 			inv_object_is_here("STEP LADDER")) {
-		digi_play(_G(flags)[V131] == 403 ? "403R10" : "403R46", 1);
+		digi_play(_G(flags)[kWolfLocation] == 403 ? "403R10" : "403R46", 1);
 	} else if (useFlag && player_said("PLANK") && inv_object_is_here("PLANK")) {
 		_ripleyMode = 1020;
 		_ripleyShould = 1300;
@@ -1976,7 +1976,7 @@ void Room403::plankUrn() {
 	switch (_G(kernel).trigger) {
 	case 69:
 		player_set_commands_allowed(false);
-		ws_walk(1110, 322, nullptr, 1, 11);
+		ws_walk(_G(my_walker), 1110, 322, nullptr, 1, 11);
 		_plank = 2;
 		break;
 
@@ -2041,7 +2041,7 @@ bool Room403::edgerUrn() {
 	case 69:
 		if (inv_player_has("EDGER")) {
 			player_set_commands_allowed(false);
-			ws_walk(1201, 321, 0, 1, 2);
+			ws_walk(_G(my_walker), 1201, 321, nullptr, 1, 2, true);
 			return true;
 		}
 		return false;
@@ -2183,7 +2183,7 @@ bool Room403::takeStepLadder() {
 		return false;
 
 	case 1:
-		if (_G(flags)[V131] == 403) {
+		if (_G(flags)[kWolfLocation] == 403) {
 			digi_play("403w08", 1, 255, 3);
 			_wolfMode = 2000;
 			_wolfShould = 2100;
@@ -2237,7 +2237,7 @@ void Room403::takeStepLadder_() {
 		break;
 
 	case 1:
-		if (_G(flags)[V131] == 403) {
+		if (_G(flags)[kWolfLocation] == 403) {
 			digi_play("403w08", 1, 255, 3);
 			_wolfMode = 2000;
 			_wolfShould = 2100;

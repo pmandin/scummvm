@@ -23,6 +23,7 @@
 #define DARKSEED_PAL_H
 
 #include "common/path.h"
+#include "common/stream.h"
 
 namespace Darkseed {
 
@@ -40,7 +41,9 @@ public:
 	void loadFromScreen();
 	void load(const Pal &pal);
 	bool load(const Common::Path &filename, bool shouldInstallPalette = true);
+	bool loadFromStream(Common::SeekableReadStream &readStream, bool shouldInstallPalette = true);
 	void clear();
+	void swapEntries(int idx1, int idx2);
 	void updatePalette(int delta, const Pal &targetPal, bool shouldInstallPalette = true);
 	void installPalette() const;
 };

@@ -70,13 +70,13 @@ void Room402::init() {
 	digi_preload("950_s21");
 	digi_preload("950_s23");
 
-	if (!_G(flags)[V018] && !_G(flags)[V117]) {
+	if (!_G(flags)[kWolfFled] && !_G(flags)[V117]) {
 		if (!_G(flags)[V110])
-			_G(flags)[V131] = 402;
+			_G(flags)[kWolfLocation] = 402;
 		else if (inv_player_has("TURTLE"))
-			_G(flags)[V131] = 408;
+			_G(flags)[kWolfLocation] = 408;
 		else
-			_G(flags)[V131] = _G(flags)[V124] ? 402 : 403;
+			_G(flags)[kWolfLocation] = _G(flags)[V124] ? 402 : 403;
 	}
 
 	if (inv_player_has("PLANK")) {
@@ -94,7 +94,7 @@ void Room402::init() {
 			hotspot_set_active("WOLF", true);
 			hotspot_set_active("TOPIARY", true);
 
-			_G(flags)[V131] = 402;
+			_G(flags)[kWolfLocation] = 402;
 			_G(flags)[V318] = 0;
 
 			_ripPaysWolfie = series_load("RIP PAYS WOLFIE");
@@ -112,17 +112,17 @@ void Room402::init() {
 				_wolfClipping, 10, 10, 0);
 			_wolfMode = 2001;
 			_wolfShould = 2300;
-			ws_demand_facing(11);
+			ws_demand_facing(_G(my_walker), 11);
 
 			if (!_G(kittyScreaming)) {
-				ws_demand_location(660, 290);
+				ws_demand_location(_G(my_walker), 660, 290);
 				digi_play("402_S03", 1, 255, 19);
 			} else {
-				ws_demand_location(425, 285);
+				ws_demand_location(_G(my_walker), 425, 285);
 				player_set_commands_allowed(true);
 			}
 
-		} else if (_G(flags)[V131] != 402) {
+		} else if (_G(flags)[kWolfLocation] != 402) {
 			hotspot_set_active("TOPIARY ", true);
 
 			switch (_G(game).previous_room) {
@@ -148,13 +148,13 @@ void Room402::init() {
 				break;
 
 			case 408:
-				ws_demand_location(517, 239, 3);
+				ws_demand_location(_G(my_walker), 517, 239, 3);
 				ws_walk(510, 260, nullptr, 50, 8);
 				break;
 
 			default:
 				digi_preload("950_s22");
-				ws_demand_location(660, 290, 3);
+				ws_demand_location(_G(my_walker), 660, 290, 3);
 				ws_walk(612, 287, nullptr, 50, 9);
 				midi_fade_volume(0, 120);
 				break;
@@ -208,9 +208,9 @@ void Room402::init() {
 
 			case 408:
 				if (_G(flags)[V125] == 3) {
-					_G(flags)[V018] = 1;
+					_G(flags)[kWolfFled] = 1;
 					_G(flags)[V125] = 4;
-					_G(flags)[V131] = 999;
+					_G(flags)[kWolfLocation] = NOWHERE;
 
 					_wolfClipping = series_load("WOLF CLIPPING LOOP");
 					_wolfClippersDown = series_load("WOLF CLPRS DOWN TURNS POS9");
@@ -225,27 +225,27 @@ void Room402::init() {
 
 					sendWSMessage_10000(1, _wolfieMach, _wolfClipping, 1, 10, 110,
 						_wolfClipping, 10, 10, 0);
-					ws_demand_location(517, 239, 3);
+					ws_demand_location(_G(my_walker), 517, 239, 3);
 					ws_walk(503, 248, nullptr, 350, 7);
 				} else if (_G(flags)[V117] != 0 && inv_player_has("TURTLE")) {
 					_G(flags)[V117] = 0;
 					hotspot_set_active("TOPIARY ", true);
-					_G(flags)[V131] = 408;
-					ws_demand_location(517, 239, 3);
+					_G(flags)[kWolfLocation] = 408;
+					ws_demand_location(_G(my_walker), 517, 239, 3);
 
 					_wolfWalker = triggerMachineByHash_3000(8, 8, *S4_NORMAL_DIRS, *S4_SHADOW_DIRS,
 						475, 300, 11, triggerMachineByHashCallback3000, "wolf_walker");
 					sendWSMessage_10000(_wolfWalker, 549, 239, 9, 42, 0);
 					kernel_timing_trigger(90, 40);
 				} else {
-					ws_demand_location(517, 239, 3);
+					ws_demand_location(_G(my_walker), 517, 239, 3);
 					ws_walk(449, 317, nullptr, 30, 3);
 				}
 				break;
 
 			default:
 				digi_preload("950_s22");
-				ws_demand_location(660, 290, 3);
+				ws_demand_location(_G(my_walker), 660, 290, 3);
 				ws_walk(449, 317, nullptr, 30, 3);
 				midi_fade_volume(0, 120);
 
@@ -265,7 +265,7 @@ void Room402::init() {
 
 		sendWSMessage_10000(1, _wolfieMach, _wolfClipping, 1, 10, 110,
 			_wolfClipping, 10, 10, 0);
-		ws_demand_location(517, 239, 3);
+		ws_demand_location(_G(my_walker), 517, 239, 3);
 		ws_walk(510, 260, nullptr, 370, 8);
 	}
 
@@ -378,9 +378,9 @@ void Room402::daemon() {
 		terminateMachineAndNull(_ripEnterLeave);
 		series_unload(_ripDownStairs);
 		ws_unhide_walker();
-		ws_demand_location(345, 275, 3);
+		ws_demand_location(_G(my_walker), 345, 275, 3);
 		ws_walk(375, 279, nullptr,
-			(_G(flags)[V131] == 402) ? 56 : 50,
+			(_G(flags)[kWolfLocation] == 402) ? 56 : 50,
 			4);
 		break;
 

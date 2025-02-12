@@ -160,13 +160,13 @@ void RiddleEngine::global_parser() {
 	} else if (useFlag && player_said("UNLIT URN")) {
 		digi_play("COM073", 1, 255, -1, 997);
 
-	} else if (!player_said("journal", " ") &&
-			!player_said("journal", "tower") &&
-			!player_said("journal", "tower ") &&
-			!player_said("journal", "dome") &&
-			!player_said("journal", "observatory dome") &&
-			!player_said("journal", "terrace") &&
-			!takeFlag && !lookFlag && inv_player_has(_G(player).noun) &&
+	} else if ((player_said("journal", " ") ||
+			player_said("journal", "tower") ||
+			player_said("journal", "tower ") ||
+			player_said("journal", "dome") ||
+			player_said("journal", "observatory dome") ||
+			player_said("journal", "terrace")) &&
+			!takeFlag && !lookFlag && !inv_player_has(_G(player).noun) &&
 			_G(game).room_id >= 504 && _G(game).room_id <= 510 &&
 			_G(game).room_id != 507) {
 		if (_G(flags)[kMocaMocheCartoon]) {
@@ -176,7 +176,7 @@ void RiddleEngine::global_parser() {
 				_G(flags)[V089] = 1;
 				_G(flags)[kMocaMocheCartoon] = 1;
 			}
-			
+
 			sketchInJournal("COM028");
 		}
 	} else if ((player_said("journal", " ") || player_said("journal", "temple")) &&
@@ -319,7 +319,7 @@ void RiddleEngine::global_parser() {
 					case 2:
 					case 3:
 					case 4:
-						ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 5, 1);
+						ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 5, 1);
 						break;
 					case 5:
 					case 7:
@@ -330,7 +330,7 @@ void RiddleEngine::global_parser() {
 					case 9:
 					case 10:
 					case 11:
-						ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 7, 1);
+						ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 7, 1);
 						break;
 					default:
 						player_set_commands_allowed(false);
@@ -352,7 +352,7 @@ void RiddleEngine::global_parser() {
 
 				switch (_G(player_info).facing) {
 				case 1:
-					ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 2, 1);
+					ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 2, 1);
 					break;
 				case 2:
 				case 3:
@@ -362,14 +362,14 @@ void RiddleEngine::global_parser() {
 					break;
 				case 4:
 				case 5:
-					ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 3, 1);
+					ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 3, 1);
 					break;
 				case 7:
 				case 8:
-					ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 9, 1);
+					ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 9, 1);
 					break;
 				case 11:
-					ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 10, 1);
+					ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 10, 1);
 					break;
 				default:
 					break;
@@ -639,30 +639,30 @@ void sketchInJournal(const char *digiName) {
 		switch (_G(player_info).facing) {
 		case 1:
 		case 2:
-			ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 1, 2);
+			ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 1, 2);
 			break;
 
 		case 3:
-			ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 1, 3);
+			ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 1, 3);
 			break;
 
 		case 4:
 		case 5:
-			ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 1, 4);
+			ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 1, 4);
 			break;
 
 		case 7:
 		case 8:
-			ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 1, 8);
+			ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 1, 8);
 			break;
 
 		case 9:
-			ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 1, 9);
+			ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 1, 9);
 			break;
 
 		case 10:
 		case 11:
-			ws_walk(_G(player_info).x, _G(player_info).y, nullptr, 1, 10);
+			ws_walk(_G(my_walker), _G(player_info).x, _G(player_info).y, nullptr, 1, 10);
 			break;
 
 		default:
@@ -729,7 +729,7 @@ void sketchInJournal(const char *digiName) {
 		series_unload(_G(ripSketching));
 		digi_unload("950_s34");
 		player_set_commands_allowed(true);
-		return;
+		break;
 
 	case 7:
 		if (_G(player_info).facing == 3 || _G(player_info).facing == 9)

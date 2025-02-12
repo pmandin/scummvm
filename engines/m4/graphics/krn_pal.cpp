@@ -109,8 +109,9 @@ static void grey_fade(RGB8 *pal, int32 to_from_flag, int32 from, int32 to, int32
 static void create_luminance_map(RGB8 *pal) {
 	for (int i = GREY_START; i <= FREE_END; i++) {
 		Byte luminance = (Byte)((pal[i].r + pal[i].g + pal[i].b) / 3);
-		_GP(fadeToMe)[i].g = (Byte)imath_min(255, luminance);		 // New green screen!
-		_GP(fadeToMe)[i].r = _GP(fadeToMe)[i].b = 0;
+		_GP(fadeToMe)[i].g = luminance;
+		// Orion Burger uses green shading, Riddle uses grey shading
+		_GP(fadeToMe)[i].r = _GP(fadeToMe)[i].b = IS_RIDDLE ? luminance : 0;
 	}
 }
 
@@ -162,18 +163,13 @@ void krn_fade_to_grey(RGB8 *pal, int32 steps, int32 delay) {
 	memcpy(_GP(picPal), pal, sizeof(RGB8) * 256);
 	create_luminance_map(pal);
 
-	grey_fade(pal, TO_GREY, 21, 255, steps, delay);
+	grey_fade(pal, TO_GREY, GREY_START, GREY_END, steps, delay);
 
 	// Make translation table to translate colors using entries 59-255 into 21-58 range
 
 	for (i = 0; i < 32; i++) {
 		bestMatch = 65;
 		minDist = 255;
-
-		if (!(i & 0x3ff)) {
-			_G(digi).task();
-			_G(midi).task();
-		}
 
 		for (j = 59; j <= 255; j++) {
 			if (imath_abs((_GP(fadeToMe)[j].r >> 2) - i) < minDist) {
@@ -212,11 +208,11 @@ void krn_fade_to_grey(RGB8 *pal, int32 steps, int32 delay) {
 
 	// Make new trickPal with grey-scale ramp entries and load it into VGA registers
 	memcpy(_GP(trick), _GP(fadeToMe), sizeof(RGB8) * 256);	// trick pal is the greyed version plus the grey ramp overlayed on top
-	int8 grey_step = 256 / NUM_GREYS;
-	int8 grey_ramp = 0;
+	byte grey_step = 256 / NUM_GREYS;
+	byte grey_ramp = 0;
 	for (i = GREY_START; i <= GREY_END; i++) {
-		_GP(trick)[i].g = (Byte)(grey_ramp);		  // New green screen
-		_GP(trick)[i].r = _GP(trick)[i].b = 0;
+		_GP(trick)[i].g = grey_ramp;
+		_GP(trick)[i].r = _GP(trick)[i].b = IS_RIDDLE ? grey_ramp : 0;
 		grey_ramp += grey_step;
 	}
 
@@ -387,20 +383,27 @@ void kernel_unexamine_inventory_object(RGB8 *pal, int steps, int delay) {
 void remap_buffer_with_luminance_map(Buffer *src, int32 x1, int32 y1, int32 x2, int32 y2) {
 	uint8 *ptr;
 	int32 x, y;
+
 	if ((!src) || (!src->data)) return;
-	if ((x2 - x1 < 0) || (y2 - y1 < 0)) return;
-	if (x2 - x1 + 1 > src->w) x2 = src->w - 1;
-	if (y2 - y1 + 1 > src->h) y2 = src->h - 1;
+
+	// WORKAROUND: Fix original bounding that could result in buffer overruns on final y2 line
+	if (x1 < 0) x1 = 0;
+	if (y1 < 0) y1 = 0;
+	if (x2 >= src->w) x2 = src->w - 1;
+	if (y2 >= src->h) y2 = src->h - 1;
+	if (x2 <= x1 || y2 <= y1)
+		return;
 
 	x2 -= x1;
 	y2 -= y1;
+
 	for (y = 0; y <= y2; y++) {
 		ptr = &src->data[(y + y1) * src->stride + x1];
-		for (x = 0; x <= x2; x++)								  // for each pixel in row
-
-			// remap the greyed out pixel to the closest grey in GREY_START to GREY_END range
+		for (x = 0; x <= x2; x++) {
+			// Remap the greyed out pixel to the closest grey in GREY_START to GREY_END range
 			// shift right 3, takes a 255 value and makes it out of 32 (the number of greys in reduced grey ramp)
 			ptr[x] = (uint8)(GREY_START + (_GP(fadeToMe)[ptr[x]].g >> 3));	 // Use green instead of red cause we're having a green screen 
+		}
 
 		if (!(y & 0xff)) {
 			_G(digi).task();

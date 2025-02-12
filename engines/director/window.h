@@ -166,6 +166,9 @@ public:
 	void freezeLingoPlayState();
 	bool thawLingoPlayState();
 	LingoState *getLastFrozenLingoState() { return _frozenLingoStates.empty() ? nullptr : _frozenLingoStates[_frozenLingoStates.size() - 1]; }
+	void moveLingoState(Window *target);
+
+	Common::String formatWindowInfo();
 
 	// events.cpp
 	bool processEvent(Common::Event &event) override;
@@ -182,6 +185,7 @@ public:
 	Common::Error loadInitialMovie();
 	void probeResources(Archive *archive);
 	void loadINIStream();
+	void loadXtrasFromPath();
 	void loadStartMovieXLibs();
 
 	// lingo/lingo-object.cpp

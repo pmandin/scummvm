@@ -30,10 +30,10 @@ namespace Rooms {
 
 void Room610::init() {
 	if (_G(game).previous_room != KERNEL_RESTORING_GAME) {
-		_val1 = 1;
-		_val2 = 1;
+		_sgMode = 1;
+		_sgShould = 1;
 		_val3 = 0;
-		_val4 = 1;
+		_kShould = 1;
 		_val5 = 1;
 		_val6 = 0;
 	}
@@ -81,7 +81,7 @@ void Room610::init() {
 		midi_play("tensions", 255, 1, -1, 949);
 
 		if (_flag1)
-			ws_demand_location(615, 364, 10);
+			ws_demand_location(_G(my_walker), 615, 364, 10);
 
 		setup();
 		kernel_timing_trigger(300, 135);
@@ -92,7 +92,7 @@ void Room610::init() {
 		digi_preload("950_s28a");
 		setup();
 		kernel_timing_trigger(300, 135);
-		ws_demand_location(472, 262, 3);
+		ws_demand_location(_G(my_walker), 472, 262, 3);
 		break;
  
 	default:
@@ -103,16 +103,16 @@ void Room610::init() {
 		if (player_been_here(610)) {
 			setup();
 			player_set_commands_allowed(false);
-			ws_demand_location(665, 364, 9);
-			ws_walk(615, 364, nullptr, 1, 10);
+			ws_demand_location(_G(my_walker), 665, 364, 9);
+			ws_walk(_G(my_walker), 615, 364, nullptr, 1, 10);
 		} else {
 			sendWSMessage_10000(1, _k, _k00, 1, 50, -1, _k00, 50, 60, 4);
 			sendWSMessage_10000(1, _sgTt, _sgSlapsTt1, 1, 1, -1,
 				_sgSlapsTt1, 1, 1, 4);
 
 			player_set_commands_allowed(false);
-			ws_demand_location(665, 364, 9);
-			ws_walk(240, 272, nullptr, 10, 10);
+			ws_demand_location(_G(my_walker), 665, 364, 9);
+			ws_walk(_G(my_walker), 240, 272, nullptr, 10, 10);
 			kernel_timing_trigger(1, 100);
 		}
 		break;
@@ -134,7 +134,7 @@ void Room610::daemon() {
 	case 10:
 		_pu01 = series_stream("610pu01", 5, 0, 103);
 		series_stream_break_on_frame(_pu01, 6, 102);
-		ws_demand_location(272, 273, 7);
+		ws_demand_location(_G(my_walker), 272, 273, 7);
 		ws_hide_walker();
 
 		_ripAction = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x100, 0,
@@ -260,13 +260,13 @@ void Room610::daemon() {
 	case 130:
 		sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 1, 1, 200,
 			_sgSlapsTt2, 1, 1, 1);
-		_val1 = 1;
-		_val2 = 0;
+		_sgMode = 1;
+		_sgShould = 0;
 		_val3 = 0;
 		sendWSMessage_10000(1, _k, _k00, 50, 50, 400, _k00, 50, 60, 4);
 		sendWSMessage_190000(_k, 11);
 		sendWSMessage_1a0000(_k, 11);
-		_val4 = 0;
+		_kShould = 0;
 		_val5 = 1;
 		_val6 = 0;
 		_flag2 = 1;
@@ -279,14 +279,14 @@ void Room610::daemon() {
 		break;
 
 	case 201:
-		switch (_val1) {
+		switch (_sgMode) {
 		case 1:
-			switch (_val2) {
+			switch (_sgShould) {
 			case 0:
 				if (imath_ranged_rand(1, 40) == 1) {
 					sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 1, 46, 200,
 						_sgSlapsTt2, 46, 46, 0);
-					_val1 = 2;
+					_sgMode = 2;
 				} else {
 					sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 1, 1, 200,
 						_sgSlapsTt2, 1, 1, 0);
@@ -301,7 +301,7 @@ void Room610::daemon() {
 			case 3:
 				sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 1, 46, 200,
 					_sgSlapsTt2, 46, 46, 0);
-				_val1 = 2;
+				_sgMode = 2;
 				break;
 
 			case 4:
@@ -315,12 +315,12 @@ void Room610::daemon() {
 			break;
 
 		case 2:
-			switch (_val2) {
+			switch (_sgShould) {
 			case 0:
 				if (imath_ranged_rand(1, 40) == 1) {
 					sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 46, 1, 200,
 						_sgSlapsTt2, 1, 1, 0);
-					_val1 = 1;
+					_sgMode = 1;
 				} else {
 					sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 46, 46, 200,
 						_sgSlapsTt2, 46, 46, 0);
@@ -335,14 +335,14 @@ void Room610::daemon() {
 			case 3:
 				sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 47, 48, 202,
 					_sgSlapsTt2, 48, 48, 0);
-				_val1 = 1;
-				_val2 = 0;
+				_sgMode = 1;
+				_sgShould = 0;
 				break;
 
 			default:
 				sendWSMessage_10000(1, _sgTt, _sgSlapsTt2, 47, 48, 202,
 					_sgSlapsTt2, 48, 48, 0);
-				_val1 = 1;
+				_sgMode = 1;
 				break;
 			}
 			break;
@@ -365,7 +365,7 @@ void Room610::daemon() {
 		break;
 
 	case 401:
-		switch (_val4) {
+		switch (_kShould) {
 		case 0:
 			sendWSMessage_10000(1, _k, _k00, 54, 54, 400, _k00, 54, 54, 0);
 			break;
@@ -519,7 +519,7 @@ void Room610::triggerMachineByHashCallback610(frac16 myMessage, machine *sender)
 	int trigger = myMessage >> 16;
 
 	if (trigger >= 0)
-		kernel_trigger_dispatchx(trigger);
+		kernel_trigger_dispatchx(myMessage);
 }
 
 void Room610::setup() {
@@ -528,10 +528,10 @@ void Room610::setup() {
 	sendWSMessage_10000(1, _k, _k00, 50, 50, 400, _k00, 50, 60, 4);
 	sendWSMessage_190000(_k, 11);
 	sendWSMessage_1a0000(_k, 11);
-	_val1 = 1;
-	_val2 = 0;
+	_sgMode = 1;
+	_sgShould = 0;
 	_val3 = 0;
-	_val4 = 0;
+	_kShould = 0;
 	_val5 = 1;
 	_val6 = 0;
 }
@@ -543,7 +543,7 @@ void Room610::talkKuangShenGuo() {
 		digi_stop(2);
 		player_set_commands_allowed(false);
 		_val5 = 2;
-		_val2 = 4;
+		_sgShould = 4;
 		digi_play("610r12", 1, 255, 1);
 		break;
 
@@ -589,7 +589,7 @@ void Room610::talkSamantha() {
 		digi_stop(2);
 		player_set_commands_allowed(false);
 		_val5 = 2;
-		_val2 = 4;
+		_sgShould = 4;
 		digi_play("610r14", 1, 255, 1);
 		break;
 
@@ -633,7 +633,7 @@ bool Room610::useHorn() {
 
 	if (_G(kernel).trigger == 5) {
 		_val5 = 2;
-		_val2 = 4;
+		_sgShould = 4;
 	}
 
 	// Original never exits parser even when this code is called
@@ -723,7 +723,7 @@ void Room610::daemonPreprocess() {
 		break;
 
 	case 137:
-		_val2 = 3;
+		_sgShould = 3;
 		break;
 
 	default:
@@ -743,10 +743,10 @@ void Room610::daemonPostprocess() {
 				!player_said("talk to", "SAMANTHA") &&
 				_G(player_info).x <= 222) {
 			intr_cancel_sentence();
-			ws_walk(202, 244, nullptr, 666, 11);
+			ws_walk(_G(my_walker), 202, 244, nullptr, 666, 11);
 			_flag1 = true;
 			_val5 = 2;
-			_val2 = 4;
+			_sgShould = 4;
 		}
 	}
 }

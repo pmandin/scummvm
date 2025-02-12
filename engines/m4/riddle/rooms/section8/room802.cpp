@@ -46,9 +46,9 @@ void Room802::init() {
 	digi_preload("801_s02", -1);
 	digi_play_loop("801_s02", 3, 35, -1, -1);
 	if (!player_been_here(802)) {
-		_G(flags)[V253] = 0;
-		_G(flags)[V254] = 0;
-		_G(flags)[V255] = 0;
+		_G(flags)[kRiceSackMoved] = 0;
+		_G(flags)[kDugInWall] = 0;
+		_G(flags)[kOpenedHoleInWall] = 0;
 	}
 
 	digi_preload("802_s01", -1);
@@ -59,14 +59,14 @@ void Room802::init() {
 	_ripArmXPos3 = series_load("RIP TREK ARMS X POS3", -1, nullptr);
 	_ripTalkOffTd33 = series_load("RIP HEAD DOWN TALK OFF TD33", -1, nullptr);
 
-	if (_G(flags)[V254]) {
+	if (!_G(flags)[kDugInWall]) {
 		_handInWall = series_load("HAND IN WALL", -1, nullptr);
 		if (inv_player_has("farmer's shovel")) {
 			_ripDigsWall = series_load("802 RIP DIGS AT WALL", -1, nullptr);
 		}
 	}
 
-	if (_G(flags)[V255]) {
+	if (!_G(flags)[kOpenedHoleInWall]) {
 		_handInWallPartlyDug = series_load("HAND IN WALL PARTLY DUG ", -1, nullptr);
 		if (inv_player_has("farmer's shovel")) {
 			_ripTugsOnArm = series_load("RIP TUGS ON ARM", -1, nullptr);
@@ -78,7 +78,7 @@ void Room802::init() {
 		_holeInWall = series_load("HOLE IN WALL", -1, nullptr);
 	}
 
-	if (_G(flags)[V253]) {
+	if (!_G(flags)[kRiceSackMoved]) {
 		_sackAgainstWall = series_load("SACK AGAINST WALL", -1, nullptr);
 		_ripDragsSack = series_load("RIP DRAGS SACK ASIDE", -1, nullptr);
 	}
@@ -88,7 +88,7 @@ void Room802::init() {
 	_ripDownStairs = series_load("802 RIP DOWN STAIRS", -1, nullptr);
 	_ripLooksAtHand = series_load("RIP looks at hand in wall", -1, nullptr);
 
-	if (inv_player_has("match") && !_G(flags)[V255]) {
+	if (inv_player_has("match") && _G(flags)[kOpenedHoleInWall]) {
 		_lookWithMatch = series_load("802 LOOK WITH MATCH", -1, nullptr);
 		hotspot_set_active(_G(currentSceneDef).hotspots, "HOLE", false);
 		hotspot_set_active(_G(currentSceneDef).hotspots, "HOLE ", true);
@@ -97,7 +97,7 @@ void Room802::init() {
 		hotspot_set_active(_G(currentSceneDef).hotspots, "HOLE ", false);
 	}
 
-	if (_G(flags)[V253]) {
+	if (_G(flags)[kRiceSackMoved]) {
 		hotspot_set_active(_G(currentSceneDef).hotspots, "RICE SACK", false);
 		hotspot_set_active(_G(currentSceneDef).hotspots, "RICE SACK ", true);
 	} else {
@@ -106,26 +106,26 @@ void Room802::init() {
 		hotspot_set_active(_G(currentSceneDef).hotspots, "RICE SACK ", false);
 	}
 
-	if (_G(flags)[V255]) {
+	if (_G(flags)[kOpenedHoleInWall]) {
 		_sackAgainstWallMach = series_place_sprite("802SACK2", 0, 0, 0, 100, 768);
 	}
 
-	if (_G(flags)[V255] || !_G(flags)[V253])
+	if (_G(flags)[kOpenedHoleInWall] || !_G(flags)[kRiceSackMoved]) {
 		hotspot_set_active(_G(currentSceneDef).hotspots, "HAND", false);
-	else {
+	} else {
 		hotspot_set_active(_G(currentSceneDef).hotspots, "HAND", true);
-		if (_G(flags)[V254])
+		if (_G(flags)[kDugInWall])
 			_handInWallMach = series_place_sprite("HAND IN WALL PARTLY DUG ", 0, 0, 0, 100, 512);
 		else
 			_handInWallMach = series_place_sprite("HAND IN WALL", 0, 0, 0, 100, 512);
 	}
 
-	if (_G(flags)[V255])
+	if (_G(flags)[kOpenedHoleInWall])
 		_holeInWallMach = series_place_sprite("HOLE IN WALL", 0, 0, 0, 100, 512);
 	else
 		hotspot_set_active(_G(currentSceneDef).hotspots, "HOLE", false);
 
-	if (_G(flags)[V255])
+	if (_G(flags)[kOpenedHoleInWall])
 		hotspot_set_active(_G(currentSceneDef).hotspots, "WALL", false);
 
 	if (_G(game).previous_room == KERNEL_RESTORING_GAME)
@@ -179,8 +179,8 @@ void Room802::parser() {
 		_G(kernel).trigger_mode = KT_PARSE;
 	}
 
-	else if (lookFl && player_said("wall") && _G(flags)[V255] == 0) {
-		if (_G(flags)[V252]) {
+	else if (lookFl && player_said("wall") && _G(flags)[kOpenedHoleInWall] == 0) {
+		if (_G(flags)[kTerracottaSoldiers]) {
 			_G(kernel).trigger_mode = KT_DAEMON;
 			kernel_trigger_dispatchx(kernel_trigger_create(14));
 			_G(kernel).trigger_mode = KT_PARSE;
@@ -194,9 +194,9 @@ void Room802::parser() {
 		case -1:
 			player_set_commands_allowed(false);
 			interface_hide();
-			ws_unhide_walker(_G(my_walker));
-			_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip lights match");
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _lookWithMatch, 1, 12, 10, _lookWithMatch, 12, 12, 0);
+			ws_hide_walker(_G(my_walker));
+			_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip lights match");
+			sendWSMessage_10000(1, _ripActionMach, _lookWithMatch, 1, 12, 10, _lookWithMatch, 12, 12, 0);
 			break;
 		case 1:
 			digi_play("802r16", 1, 255, 2, 802);
@@ -209,7 +209,7 @@ void Room802::parser() {
 			break;
 		case 4:
 			inv_move_object("match", 999);
-			terminateMachine(_ripWalksDownstairsMach);
+			terminateMachine(_ripActionMach);
 			player_set_commands_allowed(true);
 			_G(flags)[V260] = 1;
 			adv_kill_digi_between_rooms(false);
@@ -217,7 +217,7 @@ void Room802::parser() {
 			_G(game).new_room = 801;
 			break;
 		case 10:
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _lookWithMatch, 13, 18, 1, _lookWithMatch, 19, 22, 1);
+			sendWSMessage_10000(1, _ripActionMach, _lookWithMatch, 13, 18, 1, _lookWithMatch, 19, 22, 1);
 			digi_play("802_s05", 2, 255, -1, -1);
 			break;
 		default:
@@ -230,26 +230,27 @@ void Room802::parser() {
 		case -1:
 			player_set_commands_allowed(false);
 			ws_hide_walker(_G(my_walker));
-			_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip bends down to look in hole / at hand");
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripLooksAtHand, 1, 17, 1, _ripLooksAtHand, 17, 17, 0);
+			_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip bends down to look in hole / at hand");
+			sendWSMessage_10000(1, _ripActionMach, _ripLooksAtHand, 1, 17, 1, _ripLooksAtHand, 17, 17, 0);
 			break;
 		case 1:
 			if (player_said("hole")) {
 				digi_play("802r09", 1, 255, 2, -1);
-			} else if (_G(flags)[V254]){
+			} else if (_G(flags)[kDugInWall]){
 				digi_play("802r15", 1, 255, 2, -1);
-			} else if (_G(flags)[V252]) {
+			} else if (_G(flags)[kTerracottaSoldiers]) {
 				digi_play("802r02", 1, 255, 2, -1);
 			} else {
 				digi_play("802r03", 1, 255, 2, -1);
 			}
 			break;
 		case 2:
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripLooksAtHand, 17, 1, 3, _ripLooksAtHand, 1, 1, 0);
+			sendWSMessage_10000(1, _ripActionMach, _ripLooksAtHand, 17, 1, 3, _ripLooksAtHand, 1, 1, 0);
 			break;
 		case 3:
-			terminateMachine(_ripWalksDownstairsMach);
+			terminateMachine(_ripActionMach);
 			ws_unhide_walker(_G(my_walker));
+			player_set_commands_allowed(true);
 			break;
 		default:
 			break;
@@ -264,35 +265,36 @@ void Room802::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip moves sack of rice");
+			_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, false,
+				triggerMachineByHashCallback, "rip moves sack of rice");
 			ws_hide_walker(_G(my_walker));
 			terminateMachine(_sackAgainstWallMach);
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDragsSack, 1, 15, 10, _ripDragsSack, 15, 15, 0);
+			sendWSMessage_10000(1, _ripActionMach, _ripDragsSack, 1, 15, 10, _ripDragsSack, 15, 15, 0);
 			break;
 		case 1:
 			digi_play("802r05", 1, 255, 2, -1);
 			break;
 		case 2:
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDragsSack, 41, 46, 3, _ripDragsSack, 46, 46, 0);
+			sendWSMessage_10000(1, _ripActionMach, _ripDragsSack, 41, 46, 3, _ripDragsSack, 46, 46, 0);
 			break;
 		case 3:
-			terminateMachine(_ripWalksDownstairsMach);
+			terminateMachine(_ripActionMach);
 			ws_unhide_walker(_G(my_walker));
 			_handInWallMach = series_place_sprite("HAND IN WALL", 0, 0, 0, 100, 512);
 			series_unload(_ripDragsSack);
 			series_unload(_sackAgainstWall);
-			_G(flags)[V253] = 1;
+			_G(flags)[kRiceSackMoved] = 1;
 			hotspot_set_active(_G(currentSceneDef).hotspots, "rice sack", false);
 			hotspot_set_active(_G(currentSceneDef).hotspots, "rice sack ", true);
 			hotspot_set_active(_G(currentSceneDef).hotspots, "hand", true);
 			player_set_commands_allowed(true);
 			break;
 		case 10:
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDragsSack, 16, 25, 11, _ripDragsSack, 25, 25, 0);
+			sendWSMessage_10000(1, _ripActionMach, _ripDragsSack, 16, 25, 11, _ripDragsSack, 25, 25, 0);
 			digi_play("802_s01", 2, 255, -1, -1);
 			break;
 		case 11:
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDragsSack, 26, 40, 1, _ripDragsSack, 40, 40, 0);
+			sendWSMessage_10000(1, _ripActionMach, _ripDragsSack, 26, 40, 1, _ripDragsSack, 40, 40, 0);
 			digi_stop(2);
 			break;
 		default:
@@ -300,29 +302,29 @@ void Room802::parser() {
 		}
 	}
 
-	else if ((player_said("farmer's shovel", "hand") || player_said("farmer's shovel", "wall")) && _G(flags)[V254] == 0) {
-		if (_G(flags)[V253]) {
+	else if ((player_said("farmer's shovel", "hand") || player_said("farmer's shovel", "wall")) && _G(flags)[kDugInWall] == 0) {
+		if (_G(flags)[kRiceSackMoved]) {
 			switch (_G(kernel).trigger) {
 			case -1:
 				player_set_commands_allowed(false);
 				ws_hide_walker(_G(my_walker));
 				terminateMachine(_handInWallMach);
-				_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "802 rip digs at wall");
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDigsWall, 1, 24, 10, _ripDigsWall, 24, 24, 0);
+				_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "802 rip digs at wall");
+				sendWSMessage_10000(1, _ripActionMach, _ripDigsWall, 1, 24, 10, _ripDigsWall, 24, 24, 0);
 				break;
 			case 1:
-				terminateMachine(_ripWalksDownstairsMach);
+				terminateMachine(_ripActionMach);
 				ws_unhide_walker((_G(my_walker)));
 				_handInWallMach = series_place_sprite("HAND IN WALL PARTLY DUG ", 0, 0, 0, 100, 512);
-				_G(flags)[V254] = 1;
+				_G(flags)[kDugInWall] = 1;
 				player_set_commands_allowed(true);
 				break;
 			case 10:
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDigsWall, 25, 54, 11, _ripDigsWall, 54, 54, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripDigsWall, 25, 54, 11, _ripDigsWall, 54, 54, 0);
 				digi_play("802_s04", 2, 255, -1, -1);
 				break;
 			case 11:
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDigsWall, 55, 66, 1, _ripDigsWall, 66, 66, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripDigsWall, 55, 66, 1, _ripDigsWall, 66, 66, 0);
 				digi_stop(2);
 				break;
 			default:
@@ -334,38 +336,38 @@ void Room802::parser() {
 	}
 
 	else if ((gearFl || takeFl) && player_said("hand")) {
-		if (inv_player_has("farmer's shovel") && _G(flags)[V254]) {
-			if (_G(flags)[V254] >= 1) {
+		if (inv_player_has("farmer's shovel") && _G(flags)[kDugInWall]) {
+			if (_G(flags)[kDugInWall] >= 1) {
 				switch (_G(kernel).trigger) {
 				case -1:
 					player_set_commands_allowed(false);
-					ws_unhide_walker(_G(my_walker));
-					_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip tugs at hand and removes it");
+					ws_hide_walker(_G(my_walker));
+					_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip tugs at hand and removes it");
 					terminateMachine(_handInWallMach);
-					sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsOnArm, 1, 36, 10, _ripTugsOnArm, 36, 36, 0);
+					sendWSMessage_10000(1, _ripActionMach, _ripTugsOnArm, 1, 36, 10, _ripTugsOnArm, 36, 36, 0);
 					break;
 				case 10:
-					sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsOnArm, 37, 68, 20, _ripTugsOnArm, 68, 68, 0);
+					sendWSMessage_10000(1, _ripActionMach, _ripTugsOnArm, 37, 68, 20, _ripTugsOnArm, 68, 68, 0);
 					digi_play("802_s03", 2, 255, -1, -1);
 					break;
 				case 20:
-					terminateMachine(_ripWalksDownstairsMach);
+					terminateMachine(_ripActionMach);
 					ws_unhide_walker(_G(my_walker));
 					_holeInWallMach = series_place_sprite("HOLE IN WALL", 0, 0, 0, 100, 512);
 					_sackAgainstWallMach = series_place_sprite("802SACK2", 0, 0, 0, 100, 768);
 
 					if (inv_player_has("match")) {
-						hotspot_set_active(_G(currentSceneDef).hotspots, "hole", true);
-						hotspot_set_active(_G(currentSceneDef).hotspots, "hole ", false);
-					} else {
-						hotspot_set_active(_G(currentSceneDef).hotspots, "hole", false);
 						hotspot_set_active(_G(currentSceneDef).hotspots, "hole ", true);
+						hotspot_set_active(_G(currentSceneDef).hotspots, "hole", false);
+					} else {
+						hotspot_set_active(_G(currentSceneDef).hotspots, "hole ", false);
+						hotspot_set_active(_G(currentSceneDef).hotspots, "hole", true);
 					}
 
 					hotspot_set_active(_G(currentSceneDef).hotspots, "hand", false);
 					hotspot_set_active(_G(currentSceneDef).hotspots, "wall", false);
 
-					_G(flags)[V255] = 1;
+					_G(flags)[kOpenedHoleInWall] = 1;
 					player_set_commands_allowed(true);
 					break;
 				default:
@@ -378,34 +380,41 @@ void Room802::parser() {
 			case -1:
 				player_set_commands_allowed(false);
 				ws_hide_walker(_G(my_walker));
-				_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512, false, triggerMachineByHashCallback, "rip tugs at hand (noshovel)");
+				_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 512,
+					false, triggerMachineByHashCallback, "rip tugs at hand (noshovel)");
 				terminateMachine(_handInWallMach);
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsBeforeDigging, 1, 15, 10, _ripTugsBeforeDigging, 15, 15, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripTugsBeforeDigging, 1, 15, 10,
+					_ripTugsBeforeDigging, 15, 15, 0);
 				break;
 			case 1:
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsBeforeDigging, 26, 20, 2, _ripTugsBeforeDigging, 19, 19, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripTugsBeforeDigging, 26, 20, 2,
+					_ripTugsBeforeDigging, 19, 19, 0);
 				break;
 			case 2:
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsBeforeDigging, 19, 15, 13, _ripTugsBeforeDigging, 15, 15, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripTugsBeforeDigging, 19, 15, 13,
+					_ripTugsBeforeDigging, 15, 15, 0);
+
 				if (inv_player_has("farmer's shovel")) {
-					if (_G(flags)[V254] == 1)
+					if (_G(flags)[kDugInWall] == 1)
 						digi_play("802r07", 1, 255, -1, -1);
 				} else {
 					digi_play("802r06", 1, 255, -1, -1);
 				}
 				break;
 			case 3:
-				terminateMachine(_ripWalksDownstairsMach);
+				terminateMachine(_ripActionMach);
 				ws_unhide_walker(_G(my_walker));
 				_handInWallMach = series_place_sprite("HAND IN WALL", 0, 0, 0, 100, 512);
 				player_set_commands_allowed(true);
 				break;
 			case 10:
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsBeforeDigging, 16, 26, 1, _ripTugsBeforeDigging, 26, 26, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripTugsBeforeDigging, 16, 26, 1,
+					_ripTugsBeforeDigging, 26, 26, 0);
 				digi_play("802_s02", 2, 255, -1, -1);
 				break;
 			case 13:
-				sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripTugsBeforeDigging, 14, 1, 3, _ripTugsBeforeDigging, 1, 1, 0);
+				sendWSMessage_10000(1, _ripActionMach, _ripTugsBeforeDigging, 14, 1, 3,
+					_ripTugsBeforeDigging, 1, 1, 0);
 				digi_stop(2);
 				break;
 			default:
@@ -422,15 +431,15 @@ void Room802::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "rip walks up stairs");
+			_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "rip walks up stairs");
 			ws_hide_walker(_G(my_walker));
-			sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripUpStairs, 1, 23, 1, _ripUpStairs, 24, 29, 0);
+			sendWSMessage_10000(1, _ripActionMach, _ripUpStairs, 1, 23, 1, _ripUpStairs, 24, 29, 0);
 			break;
 		case 1:
 			disable_player_commands_and_fade_init(2);
 			break;
 		case 2:
-			terminateMachine(_ripWalksDownstairsMach);
+			terminateMachine(_ripActionMach);
 			_G(game).new_room = 801;
 			break;
 		default:
@@ -451,17 +460,17 @@ void Room802::daemon() {
 	case 6:
 	case 7:
 		player_set_commands_allowed(false);
-		_ripWalksDownstairsMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "rip walks down stairs");
-		sendWSMessage_10000(1, _ripWalksDownstairsMach, _ripDownStairs, 1, 20, 51, _ripDownStairs, 20, 20, 0);
+		_ripActionMach = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 768, false, triggerMachineByHashCallback, "rip walks down stairs");
+		sendWSMessage_10000(1, _ripActionMach, _ripDownStairs, 1, 20, 51, _ripDownStairs, 20, 20, 0);
 		break;
 	case 14:
 		player_set_commands_allowed(false);
-		setGlobals1(1, _ripArmXPos3, 15, 15, 15, 0, 15, 1, 1, 1, 0, 1, 1, 1, 1, 0, 15, 15, 15, 15, 0);
+		setGlobals1(_ripArmXPos3, 1, 15, 15, 15, 0, 15, 1, 1, 1, 0, 1, 1, 1, 1, 0, 15, 15, 15, 15, 0);
 		sendWSMessage_110000(_G(my_walker), 16);
 		break;
 	case 16:
 		sendWSMessage_150000(_G(my_walker), 0);
-		setGlobals1(1, _ripTalkOffTd33, 3, 3, 3, 0, 3, 1, 1, 1, 0, 1, 1, 1, 1, 0, 3, 3, 3, 3, 0);
+		setGlobals1(_ripTalkOffTd33, 1, 3, 3, 3, 0, 3, 1, 1, 1, 0, 1, 1, 1, 1, 0, 3, 3, 3, 3, 0);
 		sendWSMessage_110000(_G(my_walker), 15);
 		if (player_said("rice sack") || player_said("rice sack "))
 			digi_play("802R01", 1, 255, 17, -1);
@@ -480,7 +489,7 @@ void Room802::daemon() {
 		player_set_commands_allowed(true);
 		break;
 	case 51:
-		terminateMachine(_ripWalksDownstairsMach);
+		terminateMachine(_ripActionMach);
 		ws_unhide_walker(_G(my_walker));
 		series_unload(_ripDownStairs);
 		player_set_commands_allowed(true);

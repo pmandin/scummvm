@@ -395,6 +395,11 @@ void Sections::pal_game_task() {
 		if (!game_buff_ptr)
 			error_show(FL, 'BUF!');
 
+		if _G(please_hyperwalk) {
+			_G(please_hyperwalk) = false;
+			adv_hyperwalk_to_final_destination(nullptr, nullptr);
+		}
+
 		if (_cameraShiftAmount) {
 			if (_G(kernel).camera_pan_instant) {
 				delta = _cameraShiftAmount;
@@ -462,6 +467,11 @@ void Sections::camera_shift_xy(int32 x, int32 y) {
 
 	_cameraShiftAmount = -sc->x1 - x + _G(kernel).letter_box_x;
 	_cameraShift_vert_Amount = -sc->y1 - y + _G(kernel).letter_box_y;
+}
+
+void Sections::set_camera_delta_pan(int32 deltaX, int32 deltaY) {
+	_cameraShiftAmount = -deltaX;
+	_cameraShift_vert_Amount = -deltaY;
 }
 
 void Sections::adv_camera_pan_step(int32 step) {

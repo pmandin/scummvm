@@ -218,6 +218,13 @@ void FreescapeEngine::swapPalette(uint16 levelID) {
 		_gfx->_paperColor = _areaMap[levelID]->_paperColor;
 		_gfx->_underFireBackgroundColor = _areaMap[levelID]->_underFireBackgroundColor;
 
+		if (isC64()) {
+			_gfx->_inkColor %= 16;
+			_gfx->_paperColor %= 16;
+			_gfx->_underFireBackgroundColor %= 16;
+			return; // C64 does not have to process the border
+		}
+
 		if (!_border)
 			return;
 

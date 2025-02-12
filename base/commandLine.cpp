@@ -39,6 +39,7 @@
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "common/tokenizer.h"
+#include "common/zip-set.h"
 
 #include "gui/ThemeEngine.h"
 
@@ -113,6 +114,9 @@ static const char HELP_STRING1[] =
 	"  -f, --fullscreen         Force full-screen mode\n"
 	"  -F, --no-fullscreen      Force windowed mode\n"
 	"  -g, --gfx-mode=MODE      Select graphics mode\n"
+#ifdef USE_OPENGL
+	"  --shader=PATH            Name of internal shader or path to shader file (OpenGL only)\n"
+#endif
 	"  --stretch-mode=MODE      Select stretch mode (center, pixel-perfect, even-pixels,\n"
 	"                           fit, stretch, fit_force_aspect)\n"
 	"  --scaler=MODE            Select graphics scaler (normal,hq,edge,advmame,sai,\n"
@@ -518,7 +522,7 @@ bool ensureAccessibleDirectoryForPathOption(Common::FSNode &node,
 #ifndef DISABLE_COMMAND_LINE
 
 // Use this for options which have an *optional* value
-#define DO_OPTION_OPT(shortCmd, longCmd, defaultVal) \
+#define DO_OPTION_OPT_ALIASED(shortCmd, longCmd, defaultVal, settingsKey) \
 	if (isLongCmd ? (!strcmp(s + 2, longCmd) || !strncmp(s + 2, longCmd"=", sizeof(longCmd"=") - 1)) : (tolower(s[1]) == shortCmd)) { \
 		s += 2; \
 		if (isLongCmd) { \
@@ -529,11 +533,19 @@ bool ensureAccessibleDirectoryForPathOption(Common::FSNode &node,
 		const char *option = s; \
 		if (*s == '\0' && !isLongCmd) { option = s2; i++; } \
 		if (!option || *option == '\0') option = defaultVal; \
-		if (option) settings[longCmd] = option;
+		if (option) settings[settingsKey] = option;
+
+#define DO_OPTION_OPT(shortCmd, longCmd, defaultVal) \
+	DO_OPTION_OPT_ALIASED(shortCmd, longCmd, defaultVal, longCmd)
 
 // Use this for options which have a required (string) value
 #define DO_OPTION(shortCmd, longCmd) \
 	DO_OPTION_OPT(shortCmd, longCmd, 0) \
+	if (!option) usage("Option '%s' requires an argument", argv[isLongCmd ? i : i-1]);
+
+// Use this for options alias which have a required (string) value
+#define DO_OPTION_ALIASED(shortCmd, longCmd, settingsKey) \
+	DO_OPTION_OPT_ALIASED(shortCmd, longCmd, 0, settingsKey) \
 	if (!option) usage("Option '%s' requires an argument", argv[isLongCmd ? i : i-1]);
 
 // Use this for options which have a required integer value
@@ -592,6 +604,8 @@ bool ensureAccessibleDirectoryForPathOption(Common::FSNode &node,
 #define DO_LONG_OPTION_BOOL(longCmd)    DO_OPTION_BOOL(0, longCmd)
 #define DO_LONG_OPTION_PATH(longCmd)    DO_OPTION_PATH(0, longCmd)
 #define DO_LONG_COMMAND(longCmd)        DO_COMMAND(0, longCmd)
+
+#define DO_LONG_OPTION_ALIASED(longCmd, settingsKey)  DO_OPTION_ALIASED(0, longCmd, settingsKey)
 
 // End an option handler
 #define END_OPTION \
@@ -737,6 +751,9 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			DO_LONG_OPTION("debugflags")
 			END_OPTION
 
+			DO_LONG_OPTION_ALIASED("debug-flags", "debugflags")
+			END_OPTION
+
 			DO_LONG_OPTION_BOOL("debug-channels-only")
 			END_OPTION
 
@@ -872,7 +889,6 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			DO_LONG_OPTION_BOOL("disable-sdl-audio")
 			END_OPTION
 #endif
-
 			DO_LONG_OPTION_BOOL("multi-midi")
 			END_OPTION
 
@@ -951,6 +967,21 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			END_OPTION
 
 			DO_LONG_OPTION_PATH("themepath")
+			END_OPTION
+
+			DO_LONG_OPTION("shader")
+				Common::SearchSet _shaderSet;
+				Common::generateZipSet(_shaderSet, "shaders.dat", "shaders*.dat");
+				Common::FSNode path(Common::Path::fromCommandLine(option));
+				
+				if (!_shaderSet.hasFile(Common::Path::fromCommandLine(option))) {
+					if (!path.exists()) {
+						usage("Non-existent shader path '%s' or internal shader", option);
+					} else if (!path.isReadable()) {
+						usage("Non-readable shader path '%s'", option);
+					}
+				}
+				settings["shader"] = path.getPath().toConfig();
 			END_OPTION
 
 			DO_LONG_COMMAND("list-themes")
@@ -2092,6 +2123,7 @@ bool processSettings(Common::String &command, Common::StringMap &settings, Commo
 		"stretch-mode",
 		"scaler",
 		"scale-factor",
+		"shader",
 		"filtering",
 		"gui-theme",
 		"themepath",

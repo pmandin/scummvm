@@ -32,6 +32,7 @@
 #include "audio/decoders/adpcm.h"
 #include "audio/decoders/mp3.h"
 #include "audio/decoders/raw.h"
+#include "audio/decoders/wma.h"
 
 namespace Scumm {
 
@@ -163,10 +164,10 @@ void SoundSE::indexXWBFile(SoundSEType type) {
 			Common::String name = f->readString(0, 64);
 			name.toLowercase();
 
-			if (type != kSoundSETypePatch) {
+			if (type == kSoundSETypeSpeech) {
 				(*audioIndex)[i].name = name;
-				_nameToIndex[name] = i;
-			} else {
+				_nameToIndexMISpeech[name] = i;
+			} else if (type == kSoundSETypePatch) {
 				// Patch audio resources for MI2
 				// Note: We assume that patch XWB files always contain file names
 
@@ -190,10 +191,10 @@ void SoundSE::indexXWBFile(SoundSEType type) {
 				//   yet, so we don't patch them.
 				//   TODO: Process and patch music entries, once we start using
 				//   the SE audio files for music.
-				const int32 originalAudioIndex = _nameToIndex[name];
+				const int32 originalAudioIndex = _nameToIndexMISpeech[name];
 				if (originalAudioIndex < (int32)_speechEntries.size() && _speechEntries[originalAudioIndex].name == name) {
 					_speechEntries[originalAudioIndex].isPatched = true;
-					_nameToIndexPatched[name] = i;
+					_nameToIndexMISpeechPatched[name] = i;
 				}
 			}
 		}
@@ -246,7 +247,7 @@ void SoundSE::indexSpeechXSBFile() {
 
 		if (index < (*audioIndex).size()) {
 			(*audioIndex)[index].name = name;
-			_nameToIndex[name] = index;
+			_nameToIndexMISpeech[name] = index;
 			//debug("indexSpeechXSBFile: %s -> index %d", name.c_str(), index);
 		}
 	}
@@ -662,17 +663,12 @@ Audio::SeekableAudioStream *SoundSE::createSoundStream(Common::SeekableSubReadSt
 	}
 	case kXWBCodecWMA:
 		// TODO: Implement WMA codec
-		/*return new Audio::WMACodec(
-			2,
-			entry.rate,
-			entry.channels,
-			entry.bits,
-			entry.align,
-			stream
-		);*/
 		warning("createSoundStream: WMA codec not implemented");
 		delete stream;
 		return nullptr;
+#if 0
+		return new HeaderlessWMAStream(stream, entry, disposeAfterUse);
+#endif
 	case kFSBCodecMP3:
 #ifdef USE_MAD
 		return Audio::makeMP3Stream(
@@ -774,8 +770,8 @@ Audio::SeekableAudioStream *SoundSE::getAudioStreamFromIndex(int32 index, SoundS
 	audioEntry = (*audioIndex)[index];
 
 	// Load patched audio files, if present
-	if (audioEntry.isPatched && _nameToIndexPatched.contains(audioEntry.name)) {
-		int32 patchedEntry = _nameToIndexPatched[audioEntry.name];
+	if (audioEntry.isPatched && _nameToIndexMISpeechPatched.contains(audioEntry.name)) {
+		int32 patchedEntry = _nameToIndexMISpeechPatched[audioEntry.name];
 		type = kSoundSETypePatch;
 		audioIndex = getAudioEntries(type);
 		audioEntry = (*audioIndex)[patchedEntry];
@@ -896,10 +892,100 @@ int32 SoundSE::handleMISESpeech(const char *msgString, const char *speechFilenam
 	if (entryIndex >= 0 && entryIndex < (int32)_audioEntriesMI.size()) {
 		const AudioEntryMI *entry = &_audioEntriesMI[entryIndex];
 		//debug("Selected entry: %s (%s)", entry->textEnglish.c_str(), entry->speechFile.c_str());
-		return _nameToIndex.contains(entry->speechFile) ? _nameToIndex[entry->speechFile] : -1;
+		return _nameToIndexMISpeech.contains(entry->speechFile) ? _nameToIndexMISpeech[entry->speechFile] : -1;
 	}
 
 	return -1;
 }
+
+int32 SoundSE::getAmbienceTrack(int32 musicTrack) {
+#if 0
+	// TODO: Read ambience tracks from game resource files
+	if (musicTrack == 8)
+		return 18;	// SCUMM Bar
+	else if (musicTrack == 22)
+		return 2;	// Docks
+#endif
+	return -1;
+}
+
+void SoundSE::startAmbience(int32 musicTrack) {
+	int32 ambienceTrack = getAmbienceTrack(musicTrack);
+	if (ambienceTrack >= 0) {
+		stopAmbience();
+		Audio::SeekableAudioStream *ambienceStream = getAudioStreamFromIndex(ambienceTrack, kSoundSETypeAmbience);
+		if (!ambienceStream)
+			return;
+		_mixer->playStream(Audio::Mixer::kMusicSoundType, &_ambienceHandle,
+						   Audio::makeLoopingAudioStream(ambienceStream, 0, 0, 0));
+	}
+}
+
+void SoundSE::stopAmbience() {
+	_mixer->stopHandle(_ambienceHandle);
+}
+
+#if 0
+HeaderlessWMAStream::HeaderlessWMAStream(
+					Common::SeekableReadStream *stream,
+					AudioEntry entry,
+					DisposeAfterUse::Flag disposeAfterUse) :
+					_stream(stream), _entry(entry), _disposeAfterUse(disposeAfterUse) {
+	// Taken from https://github.com/bgbennyboy/Monkey-Island-Explorer/blob/master/uMIExplorer_XWBManager.pas
+	const uint16 blockAlignArray[] = {
+		929, 1487, 1280, 2230, 8917,
+		8192, 4459, 5945, 2304, 1536,
+		1485, 1008, 2731, 4096, 6827,
+		5462, 1280
+	};
+
+	const uint16 index = _entry.align < ARRAYSIZE(blockAlignArray) ? _entry.align : 0;
+	const uint32 blockAlign = blockAlignArray[index];
+	const uint32 bitRate = (_entry.bits + 1) * 8;
+
+	_wmaCodec = new Audio::WMACodec(2, _entry.rate, _entry.channels, bitRate, blockAlign);
+	_audioStream = _wmaCodec->decodeFrame(*stream);
+}
+
+HeaderlessWMAStream::~HeaderlessWMAStream() {
+	delete _wmaCodec;
+	delete _audioStream;
+	if (_disposeAfterUse == DisposeAfterUse::Flag::YES)
+		delete _stream;
+}
+
+bool HeaderlessWMAStream::seek(const Audio::Timestamp &where) {
+	if (where == 0) {
+		return rewind();
+	}
+
+	// Seeking is not supported
+	return false;
+}
+
+int HeaderlessWMAStream::readBuffer(int16 *buffer, const int numSamples) {
+	int samplesDecoded = 0;
+
+	for (;;) {
+		if (_audioStream) {
+			samplesDecoded += _audioStream->readBuffer(buffer + samplesDecoded, numSamples - samplesDecoded);
+
+			if (_audioStream->endOfData()) {
+				delete _audioStream;
+				_audioStream = nullptr;
+			}
+		}
+
+		if (samplesDecoded == numSamples || endOfData())
+			break;
+
+		if (!_audioStream) {
+			_audioStream = _wmaCodec->decodeFrame(*_stream);
+		}
+	}
+
+	return samplesDecoded;
+}
+#endif
 
 } // End of namespace Scumm

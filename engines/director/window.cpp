@@ -169,15 +169,22 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 		_dirtyChannels = _currentMovie->getScore()->getSpriteIntersections(r);
 
 		bool shouldClear = true;
+		Channel *trailChannel = nullptr;
 		for (auto &j : _dirtyChannels) {
 			if (j->_visible && r == j->getBbox() && j->isTrail()) {
 				shouldClear = false;
+				trailChannel = j;
 				break;
 			}
 		}
 
-		if (shouldClear)
+		if (shouldClear) {
 			blitTo->fillRect(r, _stageColor);
+		} else if (trailChannel) {
+			// Trail rendering mode; do not re-render the background and sprites underneath.
+			_dirtyChannels.clear();
+			_dirtyChannels.push_back(trailChannel);
+		}
 
 		for (int pass = 0; pass < 2; pass++) {
 			for (auto &j : _dirtyChannels) {
@@ -357,6 +364,12 @@ void Window::ensureMovieIsLoaded() {
 	if (_nextMovie.movie.empty()) {
 		warning("Window::ensureMovieIsLoaded(): No movie to load");
 		return;
+	}
+
+	if (_currentMovie) {
+		if (!_lingoState->callstack.empty())
+			freezeLingoState();
+		_currentMovie->getScore()->stopPlay();
 	}
 
 	loadNextMovie();
@@ -666,6 +679,17 @@ bool Window::thawLingoPlayState() {
 }
 
 
+void Window::moveLingoState(Window *target) {
+	if (target == this)
+		return;
+	if (!target->_lingoState->callstack.empty())
+		target->freezeLingoState();
+	delete target->_lingoState;
+	target->_lingoState = _lingoState;
+	_lingoState = new LingoState();
+}
+
+
 // Check how many times enterFrame/stepMovie have been called recursively.
 // When Lingo encounters a go() call, it freezes the execution state and starts
 // processing the next frame. In the case of enterFrame/stepMovie, it is possible
@@ -692,6 +716,16 @@ uint32 Window::frozenLingoRecursionCount() {
 	}
 
 	return count;
+}
+
+Common::String Window::formatWindowInfo() {
+	return Common::String::format(
+			"name: \"%s\", movie: \"%s\", currentPath: \"%s\", dims: (%d,%d) %dx%d, innerDims: (%d, %d) %dx%d, visible: %d",
+			_name.c_str(), _currentMovie->getMacName().c_str(), _currentPath.c_str(),
+			_dims.left, _dims.top, _dims.width(), _dims.height(),
+			_innerDims.left, _innerDims.top, _innerDims.width(), _innerDims.height(),
+			_visible
+	);
 }
 
 } // End of namespace Director

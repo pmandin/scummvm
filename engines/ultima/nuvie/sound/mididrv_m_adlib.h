@@ -65,7 +65,7 @@ protected:
 
 	uint8 allocateOplChannel(uint8 channel, uint8 source, uint8 instrumentId) override;
 	uint16 calculateFrequency(uint8 channel, uint8 source, uint8 note) override;
-	uint8 calculateUnscaledVolume(uint8 channel, uint8 source, uint8 velocity, OplInstrumentDefinition &instrumentDef, uint8 operatorNum) override;
+	uint8 calculateUnscaledVolume(uint8 channel, uint8 source, uint8 velocity, const OplInstrumentDefinition &instrumentDef, uint8 operatorNum) override;
 	void writeVolume(uint8 oplChannel, uint8 operatorNum, OplInstrumentRhythmType rhythmType = RHYTHM_TYPE_UNDEFINED) override;
 
 	void deinitSource(uint8 source) override;

@@ -82,6 +82,7 @@ Score::Score(Movie *movie) {
 	_waitForClickCursor = false;
 	_activeFade = false;
 	_exitFrameCalled = false;
+	_stopPlayCalled = false;
 	_playState = kPlayNotStarted;
 
 	_numChannelsDisplayed = 0;
@@ -353,6 +354,9 @@ void Score::step() {
 }
 
 void Score::stopPlay() {
+	if (_stopPlayCalled)
+		return;
+	_stopPlayCalled = true;
 	if (_vm->getVersion() >= 300)
 		_movie->processEvent(kEventStopMovie);
 	_lingo->executePerFrameHook(-1, 0);
@@ -1627,7 +1631,7 @@ void Score::loadFrames(Common::SeekableReadStreamEndian &stream, uint16 version)
 			_framesStream->readUint16(); // Skip
 		}
 
-		warning("STUB: Score::loadFrames(): frame1Offset: 0x%x, version: %d, spriteRecordSize: 0x%x, numChannels: %d, numChannelsDisplayed: %d",
+		debugC(1, kDebugLoading, "Score::loadFrames(): frame1Offset: 0x%x, version: %d, spriteRecordSize: 0x%x, numChannels: %d, numChannelsDisplayed: %d",
 			frame1Offset, _framesVersion, spriteRecordSize, _numChannels, _numChannelsDisplayed);
 		// Unknown, some bytes - constant (refer to contuinity).
 	} else {
@@ -1912,7 +1916,7 @@ Common::String Score::formatChannelInfo() {
 		frame._mainChannels.transType, frame._mainChannels.transDuration, frame._mainChannels.transChunkSize);
 	result += Common::String::format("SND: 1  sound1: %d, soundType1: %d\n", frame._mainChannels.sound1.member, frame._mainChannels.soundType1);
 	result += Common::String::format("SND: 2  sound2: %d, soundType2: %d\n", frame._mainChannels.sound2.member, frame._mainChannels.soundType2);
-	result += Common::String::format("LSCR:   actionId: %d\n", frame._mainChannels.actionId.member);
+	result += Common::String::format("LSCR:   actionId: %s\n", frame._mainChannels.actionId.asString().c_str());
 
 	for (int i = 0; i < frame._numChannels; i++) {
 		Channel &channel = *_channels[i + 1];

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-01-24 06:23+0000\n"
-"PO-Revision-Date: 2025-01-24 23:24+0000\n"
+"POT-Creation-Date: 2025-02-12 14:51+0000\n"
+"PO-Revision-Date: 2025-02-07 15:09+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Ukrainian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/uk/>\n"
@@ -121,7 +121,7 @@ msgstr "Вгору"
 #: engines/scumm/dialog-createsession.cpp:47
 #: engines/scumm/dialog-sessionselector.cpp:67
 #: engines/scumm/he/moonbase/dialog-mapgenerator.cpp:138
-#: engines/sword1/control.cpp:2813 engines/wintermute/wintermute.cpp:184
+#: engines/sword1/control.cpp:2816 engines/wintermute/wintermute.cpp:184
 msgid "Cancel"
 msgstr "Скасувати"
 
@@ -317,7 +317,7 @@ msgstr "Інше хмарне сховище вже є активним. Чи в
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:143
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4180
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
 #: engines/toon/toon.cpp:1543
 msgid "Yes"
 msgstr "Так"
@@ -330,7 +330,7 @@ msgstr "Так"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:149
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4180
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
 #: engines/toon/toon.cpp:1543
 msgid "No"
 msgstr "Ні"
@@ -354,16 +354,16 @@ msgstr "Невірний формат JSON-коду."
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2035
+#: engines/director/lingo/lingo-builtins.cpp:2089
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:76
 #: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1342
-#: engines/scumm/scumm.cpp:1749 engines/scumm/scumm.cpp:2239
-#: engines/scumm/scumm.cpp:2255 engines/sky/compact.cpp:140
+#: engines/scumm/scumm.cpp:1759 engines/scumm/scumm.cpp:2249
+#: engines/scumm/scumm.cpp:2265 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:532 engines/sword1/animation.cpp:563
-#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2813
+#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2816
 #: engines/sword1/logic.cpp:1732 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
@@ -1019,7 +1019,7 @@ msgstr "Взаємодія"
 #: engines/dragons/metaengine.cpp:159 engines/freescape/movement.cpp:35
 #: engines/got/metaengine.cpp:55 engines/griffon/metaengine.cpp:121
 #: engines/grim/grim.cpp:481 engines/grim/grim.cpp:562 engines/icb/icb.cpp:68
-#: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:950
+#: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:968
 #: engines/twine/metaengine.cpp:430 engines/twine/metaengine.cpp:497
 #: engines/twp/metaengine.cpp:154 engines/wintermute/keymapper_tables.h:1290
 #: engines/wintermute/keymapper_tables.h:1373
@@ -1034,7 +1034,7 @@ msgstr "Догори"
 #: engines/dragons/metaengine.cpp:165 engines/freescape/movement.cpp:42
 #: engines/got/metaengine.cpp:56 engines/griffon/metaengine.cpp:127
 #: engines/grim/grim.cpp:486 engines/grim/grim.cpp:567 engines/icb/icb.cpp:73
-#: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:917
+#: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:935
 #: engines/twine/metaengine.cpp:437 engines/twine/metaengine.cpp:505
 #: engines/twp/metaengine.cpp:155 engines/wintermute/keymapper_tables.h:1296
 #: engines/wintermute/keymapper_tables.h:1379
@@ -1049,7 +1049,7 @@ msgstr "Донизу"
 #: engines/dragons/metaengine.cpp:171 engines/got/metaengine.cpp:57
 #: engines/griffon/metaengine.cpp:133 engines/grim/grim.cpp:491
 #: engines/grim/grim.cpp:572 engines/icb/icb.cpp:78 engines/icb/icb.cpp:162
-#: engines/scumm/metaengine.cpp:930 engines/twine/metaengine.cpp:452
+#: engines/scumm/metaengine.cpp:948 engines/twine/metaengine.cpp:452
 #: engines/twine/metaengine.cpp:520 engines/twp/metaengine.cpp:152
 #: engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1302
@@ -1065,7 +1065,7 @@ msgstr "Наліво"
 #: engines/dragons/metaengine.cpp:177 engines/got/metaengine.cpp:58
 #: engines/griffon/metaengine.cpp:139 engines/grim/grim.cpp:496
 #: engines/grim/grim.cpp:577 engines/icb/icb.cpp:83 engines/icb/icb.cpp:167
-#: engines/scumm/metaengine.cpp:937 engines/twine/metaengine.cpp:444
+#: engines/scumm/metaengine.cpp:955 engines/twine/metaengine.cpp:444
 #: engines/twine/metaengine.cpp:513 engines/twp/metaengine.cpp:153
 #: engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1308
@@ -2995,7 +2995,7 @@ msgstr ""
 "Кроки 1 та 6 необхідно повторити для кожної з ваших ігор."
 
 #: base/main.cpp:652 base/main.cpp:677
-#: engines/director/lingo/lingo-builtins.cpp:1389
+#: engines/director/lingo/lingo-builtins.cpp:1415
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -4106,13 +4106,13 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "Режим дотику у тачскріні - Проліт (клік DPad)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:695
-#: backends/fs/android/android-saf-fs.cpp:699
+#: backends/fs/android/android-saf-fs.cpp:802
+#: backends/fs/android/android-saf-fs.cpp:806
 msgid "Add a new folder"
 msgstr "Додати нову папку"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:811
+#: backends/fs/android/android-saf-fs.cpp:918
 msgid "Choose a new folder"
 msgstr "Вибрати нову папку"
 
@@ -6325,7 +6325,7 @@ msgstr "Відновити"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Швидке завантаження або збереження не підтримується в цій локації"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3135
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3145
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -6336,7 +6336,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3122
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3132
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -6347,7 +6347,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3155
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3165
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -6736,19 +6736,23 @@ msgstr "Перемикання анімації"
 msgid "Return to gameplay"
 msgstr "Повернутися у гру"
 
-#: engines/asylum/metaengine.cpp:238
+#. I18N: Switch to previous image in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:239
 msgid "Previous resource"
 msgstr "Попередній ресурс"
 
-#: engines/asylum/metaengine.cpp:245
+#. I18N: Switch to next image in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:247
 msgid "Next resource"
 msgstr "Наступний ресурс"
 
-#: engines/asylum/metaengine.cpp:252
+#. I18N: Switch to previous palette in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:255
 msgid "Previous palette"
 msgstr "Попередня палітра"
 
-#: engines/asylum/metaengine.cpp:259
+#. I18N: Switch to next palette in internal game resouce viewer
+#: engines/asylum/metaengine.cpp:263
 msgid "Next palette"
 msgstr "Наступна палітра"
 
@@ -6995,7 +6999,7 @@ msgstr "Перемкнути режим бою"
 
 #. I18N: This keymap allows skipping video cutscenes
 #: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
-#: engines/scumm/metaengine.cpp:976 engines/twp/metaengine.cpp:162
+#: engines/scumm/metaengine.cpp:994 engines/twp/metaengine.cpp:162
 #: engines/zvision/metaengine.cpp:284
 msgid "Skip cutscene"
 msgstr "Пропустити ролік"
@@ -7053,7 +7057,7 @@ msgstr "Перемкнути приватність підказок"
 #. SAVE GAME
 #: engines/bladerunner/metaengine.cpp:330 engines/dgds/metaengine.cpp:74
 #: engines/freescape/games/castle/castle.cpp:246
-#: engines/freescape/games/dark/dark.cpp:184
+#: engines/freescape/games/dark/dark.cpp:186
 #: engines/freescape/games/driller/driller.cpp:132
 #: engines/freescape/games/eclipse/eclipse.cpp:204
 #: engines/pegasus/pegasus.cpp:2825
@@ -7066,7 +7070,7 @@ msgstr "Зберегти гру"
 #. LOAD GAME
 #: engines/bladerunner/metaengine.cpp:339 engines/dgds/metaengine.cpp:73
 #: engines/freescape/games/castle/castle.cpp:251
-#: engines/freescape/games/dark/dark.cpp:189
+#: engines/freescape/games/dark/dark.cpp:191
 #: engines/freescape/games/driller/driller.cpp:137
 #: engines/freescape/games/eclipse/eclipse.cpp:209
 #: engines/pegasus/pegasus.cpp:2831
@@ -7104,7 +7108,7 @@ msgstr "База даних доказів"
 #: engines/bladerunner/metaengine.cpp:375 engines/darkseed/metaengine.cpp:82
 #: engines/dragons/metaengine.cpp:224
 #: engines/freescape/games/castle/castle.cpp:259
-#: engines/freescape/games/dark/dark.cpp:194
+#: engines/freescape/games/dark/dark.cpp:196
 #: engines/freescape/games/driller/driller.cpp:142
 #: engines/freescape/games/eclipse/eclipse.cpp:214
 #: engines/sword1/metaengine.cpp:295
@@ -7449,7 +7453,7 @@ msgstr "Говорити/Взаємодіятя"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/crab/input/input.cpp:125 engines/griffon/metaengine.cpp:145
-#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:963
+#: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:981
 msgid "Attack"
 msgstr "Атака"
 
@@ -7820,21 +7824,21 @@ msgid "Select Princess"
 msgstr "Вибрати Принцесу"
 
 #: engines/freescape/games/castle/castle.cpp:268
-#: engines/freescape/games/dark/dark.cpp:204
+#: engines/freescape/games/dark/dark.cpp:206
 #: engines/freescape/games/driller/driller.cpp:150
 #: engines/freescape/games/eclipse/eclipse.cpp:222
 msgid "Toggle Sound"
 msgstr "Перемкнути звук"
 
 #: engines/freescape/games/castle/castle.cpp:273
-#: engines/freescape/games/dark/dark.cpp:210
+#: engines/freescape/games/dark/dark.cpp:212
 #: engines/freescape/games/driller/driller.cpp:156
 #: engines/freescape/games/eclipse/eclipse.cpp:227
 msgid "Rotate Left"
 msgstr "Обертання наліво"
 
 #: engines/freescape/games/castle/castle.cpp:278
-#: engines/freescape/games/dark/dark.cpp:215
+#: engines/freescape/games/dark/dark.cpp:217
 #: engines/freescape/games/driller/driller.cpp:161
 #: engines/freescape/games/eclipse/eclipse.cpp:232
 msgid "Rotate Right"
@@ -7857,28 +7861,28 @@ msgid "Face Forward"
 msgstr "Повернутись уперед"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/dark/dark.cpp:221
+#: engines/freescape/games/dark/dark.cpp:223
 #: engines/freescape/games/driller/driller.cpp:167
 msgid "Increase Step Size"
 msgstr "Збільшити розмір кроку"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/dark/dark.cpp:227
+#: engines/freescape/games/dark/dark.cpp:229
 #: engines/freescape/games/driller/driller.cpp:173
 msgid "Decrease Step Size"
 msgstr "Зменшити розмір кроку"
 
-#: engines/freescape/games/dark/dark.cpp:232
+#: engines/freescape/games/dark/dark.cpp:234
 #: engines/freescape/games/driller/driller.cpp:178
 msgid "Rise/Fly up"
 msgstr "Піднятися/Летіти догори"
 
-#: engines/freescape/games/dark/dark.cpp:238
+#: engines/freescape/games/dark/dark.cpp:240
 #: engines/freescape/games/driller/driller.cpp:184
 msgid "Lower/Fly down"
 msgstr "Знизитись/Летіти додолу"
 
-#: engines/freescape/games/dark/dark.cpp:244
+#: engines/freescape/games/dark/dark.cpp:246
 msgid "Enable/Disable Jetpack"
 msgstr "Ввімкнути/вимкнути реактивний ранець"
 
@@ -10240,15 +10244,15 @@ msgstr "Casio MT-540"
 msgid "Casio CT-460 / CSM-1"
 msgstr "Casio MT-540 / CSM-1"
 
-#: engines/sci/detection_tables.h:1428 engines/sci/detection_tables.h:1439
+#: engines/sci/detection_tables.h:1447 engines/sci/detection_tables.h:1458
 msgid "Game does not contain menu resources"
 msgstr "Гра не містить ресурсів меню"
 
-#: engines/sci/detection_tables.h:4758
+#: engines/sci/detection_tables.h:4777
 msgid "This demo uses an unimplemented version of Robot videos"
 msgstr "У цій демо використовується нереалізована версія відео Robot"
 
-#: engines/sci/detection_tables.h:4813
+#: engines/sci/detection_tables.h:4832
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "Неповна версія гри. Ви мусите скопіювати дані з усіх CD."
 
@@ -10457,7 +10461,7 @@ msgid "Your Name:"
 msgstr "Ваше ім'я:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4186
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4196
 msgid "Host"
 msgstr "Розпочати"
 
@@ -10467,7 +10471,7 @@ msgid "Querying games..."
 msgstr "Вичитую список ігор..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4186
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4196
 msgid "Join"
 msgstr "Приєднатись"
 
@@ -11224,19 +11228,19 @@ msgstr "Летіти направо"
 msgid "Fly to lower right"
 msgstr "Летіти донизу направо"
 
-#: engines/scumm/input.cpp:1392
+#: engines/scumm/input.cpp:1393
 msgid "Snap scroll on"
 msgstr "Прокрутка стрибками"
 
-#: engines/scumm/input.cpp:1394
+#: engines/scumm/input.cpp:1395
 msgid "Snap scroll off"
 msgstr "Вмикає прокрутку стрибками"
 
-#: engines/scumm/input.cpp:1407
+#: engines/scumm/input.cpp:1408
 msgid "Music volume: "
 msgstr "Гучність музики: "
 
-#: engines/scumm/input.cpp:1424
+#: engines/scumm/input.cpp:1425
 msgid "Subtitle speed: "
 msgstr "Швид. субтитрів: "
 
@@ -11379,28 +11383,36 @@ msgstr "Використовувати ремастер аудіо"
 msgid "Use the remastered speech and sound effects."
 msgstr "Використовувати ремастер для озвучки та звукових ефектів."
 
-#: engines/scumm/metaengine.cpp:911
+#: engines/scumm/metaengine.cpp:816
+msgid "Enable ambience sounds"
+msgstr "Ввімкнути фонові звуки"
+
+#: engines/scumm/metaengine.cpp:817
+msgid "Enable ambience sounds."
+msgstr "Ввімкнути фонові звуки."
+
+#: engines/scumm/metaengine.cpp:929
 msgid "Down Left"
 msgstr "Донизу-наліво"
 
-#: engines/scumm/metaengine.cpp:924
+#: engines/scumm/metaengine.cpp:942
 msgid "Down Right"
 msgstr "Донизу-направо"
 
-#: engines/scumm/metaengine.cpp:944
+#: engines/scumm/metaengine.cpp:962
 msgid "Up Left"
 msgstr "Догори-наліво"
 
-#: engines/scumm/metaengine.cpp:957
+#: engines/scumm/metaengine.cpp:975
 msgid "Up Right"
 msgstr "Догори-направо"
 
-#: engines/scumm/metaengine.cpp:969
+#: engines/scumm/metaengine.cpp:987
 msgid "Switch weapon"
 msgstr "Перемкнути зброю"
 
 #. I18N: Lets one skip the bike/car fight sequences in Full Throttle
-#: engines/scumm/metaengine.cpp:983
+#: engines/scumm/metaengine.cpp:1001
 msgid "Win the bike fight cheat"
 msgstr "Чіт вигравання бою на мотиках"
 
@@ -11480,7 +11492,19 @@ msgstr "Не вдалося відкрити файл ресурсів Macintosh
 msgid "Could not find resource fork in Macintosh resource file %s"
 msgstr "Не вдалося знайти гілку ресурсів у файлі ресурсів Macintosh %s"
 
-#: engines/scumm/scumm.cpp:1746
+#: engines/scumm/scumm.cpp:1373
+#, c-format
+msgid ""
+"'%s' appears to be the wrong Dig executable. It may be the launcher one "
+"found in the CD root, which does not contain any of the necessary menu and "
+"dialog definitions. Look for a 'The Dig f' folder on your CD. Any one from "
+"its sub-folders should be what you need."
+msgstr ""
+"'%s' здається є невірним файлом Dig. Можливо це лончер з кореня CD і не "
+"містить необхідних даних для меню та діалогів. Гляньте у папку 'The Dig f' "
+"на вашому CD. Всередині ви зможете знайти вірний файл."
+
+#: engines/scumm/scumm.cpp:1756
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -11491,7 +11515,7 @@ msgstr ""
 "виключено.\n"
 "Будь-ласка скопіюйте наново файли з оригінальних дисків без компресії."
 
-#: engines/scumm/scumm.cpp:2237
+#: engines/scumm/scumm.cpp:2247
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -11500,7 +11524,7 @@ msgstr ""
 "Режим \"рідного\" MIDI потребує поновлення Roland Upgrade від\n"
 "LucasArts, проте %s відсутній. Перемикаюсь на AdLib."
 
-#: engines/scumm/scumm.cpp:2253
+#: engines/scumm/scumm.cpp:2263
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -11508,7 +11532,7 @@ msgstr ""
 "Ця версія Monkey Island 1 бракує деякі ресурси, необхідні\n"
 "для роботи MT-32. Перемикаюсь на AdLib."
 
-#: engines/scumm/scumm.cpp:4074
+#: engines/scumm/scumm.cpp:4084
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -11518,7 +11542,7 @@ msgstr ""
 "вам потрібно переписати файли гри Maniac Manssion у папку Maniac всередині "
 "папки з грою Tentacle, а також додати саму гру у ScummVM."
 
-#: engines/scumm/scumm.cpp:4186
+#: engines/scumm/scumm.cpp:4196
 msgid "Would you like to host or join a network play session?"
 msgstr "Чи ви хочете розпочати або приєднатися до мережевої гри?"
 
@@ -11955,7 +11979,7 @@ msgstr ""
 msgid "Cutscene '%s' not found"
 msgstr "Ролик '%s' не знайдено"
 
-#: engines/sword1/control.cpp:2811
+#: engines/sword1/control.cpp:2814
 msgid ""
 "ScummVM found that you have old saved games for Broken Sword 1 that should "
 "be converted.\n"
@@ -11972,7 +11996,7 @@ msgstr ""
 "Натисніть ОК, щоб перевести їх зараз, інакше це повідомлення з'явиться при "
 "наступному запуску гри.\n"
 
-#: engines/sword1/control.cpp:2997
+#: engines/sword1/control.cpp:3000
 #, c-format
 msgid ""
 "Target new saved game already exists!\n"
@@ -11981,11 +12005,11 @@ msgstr ""
 "Збережена гра з такою назвою вже існує!\n"
 "Чи ви хочете лишити стару збережену гру (%s) або нову (%s)?\n"
 
-#: engines/sword1/control.cpp:3000
+#: engines/sword1/control.cpp:3003
 msgid "Keep the old one"
 msgstr "Лишити стару"
 
-#: engines/sword1/control.cpp:3000
+#: engines/sword1/control.cpp:3003
 msgid "Keep the new one"
 msgstr "Взяти нову"
 
@@ -13566,24 +13590,22 @@ msgstr "Дістати монету"
 msgid "Preferences"
 msgstr "Уподобання"
 
-#: engines/zvision/zvision.cpp:309
+#: engines/zvision/zvision.cpp:302
 msgid ""
 "Before playing this game, you'll need to copy the required fonts into "
 "ScummVM's extras directory, or into the game directory. On Windows, you'll "
 "need the following font files from the Windows font directory: Times New "
 "Roman, Century Schoolbook, Garamond, Courier New and Arial. Alternatively, "
-"you can download the Liberation Fonts or the GNU FreeFont package. You'll "
-"need all the fonts from the font package you choose, i.e., LiberationMono, "
-"LiberationSans and LiberationSerif, or FreeMono, FreeSans and FreeSerif "
-"respectively."
+"you can download the Liberation Fonts package. You'll need all the fonts "
+"from the font package you choose, i.e., LiberationMono, LiberationSans and "
+"LiberationSerif."
 msgstr ""
 "Перед тим, як ви зможете грати у цю гру, вам буде потрібно скопіювати "
 "необхідні файли шрифів у extra папку ScummVM, або у папку з ігрою. У Windows "
 "вам будуть потрібні наступні файли з папки шрифтів Windows: Times New Roman, "
 "Century Schoolbook, Garamond, Courier New та Arial. Також ви можете "
-"завантажити Liberation Fonts, або пакет GNU FreeFont. Вам будуть потрібні "
-"всі шрифти з пакету, який ви оберете, тобто, LiberationMono, LiberationSans "
-"та LiberationSerif, або FreeMono, FreeSans та FreeSerif відповідно."
+"завантажити Liberation Fonts. Вам будуть потрібні всі шрифти з пакету, який "
+"ви оберете, тобто, LiberationMono, LiberationSans та LiberationSerif."
 
 #~ msgid ""
 #~ "Could not find the 'Fate of Atlantis' Macintosh executable.\n"

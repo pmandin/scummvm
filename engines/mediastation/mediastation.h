@@ -72,6 +72,7 @@ public:
 	};
 	bool isFirstGenerationEngine();
 	void processEvents();
+	void redraw();
 
 	void setPalette(Asset *palette);
 	void addPlayingAsset(Asset *assetToAdd);
@@ -85,7 +86,9 @@ public:
 	Common::HashMap<uint32, Variable *> _variables;
 
 	Graphics::Screen *_screen = nullptr;
-	Audio::Mixer *_mixer = nullptr;
+	Context *_currentContext = nullptr;
+
+	Common::Array<Common::Rect> _dirtyRects;
 
 	// All Media Station titles run at 640x480.
 	const uint16 SCREEN_WIDTH = 640;
@@ -102,6 +105,7 @@ private:
 	Boot *_boot = nullptr;
 	Common::Array<Asset *> _assetsPlaying;
 	Common::HashMap<uint, Context *> _loadedContexts;
+	Asset *_currentHotspot = nullptr;
 
 	Context *loadContext(uint32 contextId);
 	void setPaletteFromHeader(AssetHeader *header);

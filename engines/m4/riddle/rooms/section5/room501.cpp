@@ -76,8 +76,8 @@ void Room501::init() {
 			++_val4;
 		}
 
-		ws_demand_location(588, 267, 9);
-		ws_walk(287, 268, nullptr, 522, 9);
+		ws_demand_location(_G(my_walker), 588, 267, 9);
+		ws_walk(_G(my_walker), 287, 268, nullptr, 522, 9);
 		_val5 = 0;
 		_trigger1 = -1;
 		_trigger4 = -1;
@@ -466,6 +466,7 @@ void Room501::daemon() {
 		conv_export_value_curr(_G(flags)[V145] == 1 ||
 			_G(flags)[V146] > 0 || _G(flags)[V143] == 1 ? 1 : 0, 10);
 
+		_hasCrystalSkull = inv_player_has("CRYSTAL SKULL");
 		_hasStickAndShellMap = inv_player_has("STICK AND SHELL MAP");
 		_hasWheeledToy = inv_player_has("WHEELED TOY");
 		_hasRebusAmulet = inv_player_has("REBUS AMULET");
@@ -731,7 +732,7 @@ void Room501::daemon() {
 
 	case 540:
 		_agentShould = 5;
-		_xyzzy7 = kernel_trigger_create(540);
+		_xyzzy7 = kernel_trigger_create(541);
 		break;
 
 	case 541:
@@ -748,7 +749,7 @@ void Room501::daemon() {
 		series_unload(_ripParcelExchange);
 
 		int item = conv_current_entry();
-		if (item >= 1 && item <= 12) {
+		if (item >= 0 && item <= 11) {
 			static const char *ITEMS[12] = {
 				"CRYSTAL SKULL", "STICK AND SHELL MAP",
 				"WHEELED TOY", "REBUS AMULET", "SHRUNKEN HEAD",
@@ -757,7 +758,7 @@ void Room501::daemon() {
 				"CHISEL",  "INCENSE BURNER",  "INCENSE BURNER"
 			};
 
-			inv_move_object(ITEMS[item - 1], (item == 12) ? NOWHERE : 305);
+			inv_move_object(ITEMS[item], (item == 11) ? NOWHERE : 305);
 		}
 		conv_resume();
 		break;
@@ -1102,6 +1103,7 @@ void Room501::daemon() {
 
 	case 611:
 		_ripleyShould = 3;
+		conv_resume();
 		break;
 
 	case 612:
@@ -1224,12 +1226,12 @@ void Room501::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 		case 666:
-			ws_walk(595, 267, nullptr, 2, 3);
+			ws_walk(_G(my_walker), 595, 267, nullptr, 2, 3);
 			break;
 		case 2:
 			player_set_commands_allowed(false);
 			digi_play("501R40", 1);
-			ws_walk(287, 268, nullptr, 3, 9);
+			ws_walk(_G(my_walker), 287, 268, nullptr, 3, 9);
 			break;
 		case 3:
 			player_set_commands_allowed(true);
@@ -1240,7 +1242,7 @@ void Room501::parser() {
 	} else if (player_said("WALK THROUGH") && player_been_here(504)) {
 		switch (_G(kernel).trigger) {
 		case -1:
-			ws_walk(595, 267, nullptr, 2, 3);
+			ws_walk(_G(my_walker), 595, 267, nullptr, 2, 3);
 			break;
 		case 2:
 			player_set_commands_allowed(false);

@@ -197,6 +197,7 @@ void Room805::daemonSub1() {
 
 	case 102:
 	case 103:
+	case 107:
 	case 108:
 		ws_walk(_G(my_walker), 295, 305, nullptr, -1, 3, true);
 		ws_walk(_mcMach, 250, 201, nullptr, 101, 3, true);
@@ -492,22 +493,19 @@ void Room805::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			setGlobals1(_unkSeries1, 1, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			setGlobals1(_ripLookDownPos3, 1, 9, 9, 9);
 			sendWSMessage_110000(_G(my_walker), 10);
 			digi_stop(1);
-
 			break;
 
 		case 2:
 			player_set_commands_allowed(true);
 			_unkFlag1 = false;
-
 			break;
 
 		case 10:
 			sendWSMessage_140000(_G(my_walker), -1);
 			digi_play("805r07", 1, 255, 2, -1);
-
 			break;
 
 		default:
@@ -645,7 +643,7 @@ void Room805::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			setGlobals1(_unkSeries5, 1, 13, 13, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			setGlobals1(_ripMedHiReachPos2, 1, 13, 13, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 			sendWSMessage_110000(_G(my_walker), 10);
 			digi_stop(1);
 
@@ -688,7 +686,7 @@ void Room805::parser() {
 		switch (_G(kernel).trigger) {
 		case -1:
 			player_set_commands_allowed(false);
-			setGlobals1(_unkSeries6, 1, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			setGlobals1(_ripMedHiReachPos3, 1, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 			sendWSMessage_110000(_G(my_walker), 10);
 			digi_stop(1);
 
@@ -736,12 +734,11 @@ void Room805::parser() {
 				player_set_commands_allowed(false);
 				player_update_info(_G(my_walker), &_G(player_info));
 				player_set_commands_allowed(false);
-				setGlobals1(_unkSeries7, 1, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				setGlobals1(_ripLowReachPos2, 1, 16, 16, 16);
 				sendWSMessage_110000(_G(my_walker), 10);
 			}
 
 			digi_stop(1);
-
 			break;
 
 		case 10:
@@ -749,7 +746,6 @@ void Room805::parser() {
 			_unkFlag1 = true;
 			kernel_examine_inventory_object("PING WOODEN POST", _G(master_palette), 5, 1, 386, 279, 20, nullptr, -1);
 			terminateMachine(_fallenBeamOnFloorMach);
-
 			break;
 
 		case 20:
@@ -760,7 +756,6 @@ void Room805::parser() {
 			_unkFlag1 = false;
 			hotspot_set_active(_G(currentSceneDef).hotspots, "WOODEN POST", false);
 			player_set_commands_allowed(true);
-
 			break;
 
 		default:
@@ -824,7 +819,7 @@ void Room805::parser() {
 		}
 
 		ws_demand_facing(_G(my_walker), 3);
-		setGlobals1(_unkSeries8, 1, 5, 1, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		setGlobals1(_ripTalkerPos3, 1, 5, 1, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		sendWSMessage_110000(_G(my_walker), -1);
 	} // if (talkFl && player_said("MEI CHEN"))
 
@@ -885,7 +880,7 @@ void Room805::parser() {
 		case -1:
 			if (_G(flags)[V257]) {
 				player_set_commands_allowed(false);
-				setGlobals1(_unkSeries5, 1, 13, 13, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				setGlobals1(_ripMedHiReachPos2, 1, 13, 13, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 				sendWSMessage_110000(_G(my_walker), 10);
 				digi_stop(1);
 			} else {
@@ -924,7 +919,7 @@ void Room805::parser() {
 		case -1:
 			if (_G(flags)[V258]) {
 				player_set_commands_allowed(false);
-				setGlobals1(_unkSeries6, 1, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				setGlobals1(_ripMedHiReachPos3, 1, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 				sendWSMessage_110000(_G(my_walker), 10);
 				digi_stop(1);
 			} else {
@@ -1200,6 +1195,7 @@ void Room805::daemon() {
 	case 103:
 	case 104:
 	case 105:
+	case 107:
 	case 108:
 	case 109:
 	case 111:

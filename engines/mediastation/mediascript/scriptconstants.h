@@ -36,6 +36,7 @@ enum Opcode {
 	kOpcodeIfElse = 202,
 	kOpcodeAssignVariable = 203,
 	kOpcodeOr = 204,
+	kOpcodeNot = 205,
 	kOpcodeAnd = 206,
 	kOpcodeEquals = 207,
 	kOpcodeNotEquals = 208,
@@ -112,6 +113,7 @@ enum BuiltInMethod {
 
 	// SPRITE METHODS.
 	kMovieResetMethod = 219, // PARAMS: 0
+	kSetCurrentClipMethod = 221, // PARAMS: 0-1
 
 	// STAGE METHODS.
 	kSetWorldSpaceExtentMethod = 363, // PARAMS: 2
@@ -156,6 +158,8 @@ enum BuiltInMethod {
 	kSeekMethod = 256, // PARAMS: 1
 	kSortMethod = 266, // PARAMS: 0
 	kDeleteAtMethod = 258, // PARAMS: 1
+	kJumbleMethod = 255, // PARAMS: 0
+	kDeleteFirstMethod = 250, // PARAMS: 0
 
 	// PRINTER METHODS.
 	kOpenLensMethod = 346, // PARAMS: 0
@@ -243,6 +247,7 @@ enum OperandType {
 	kOperandTypeDollarSignVariable = 155,
 	kOperandTypeAssetId = 156,
 	kOperandTypeVariableDeclaration = 158,
+	kOperandTypeCollection = 159,
 	kOperandTypeFunction = 160
 };
 const char *operandTypeToStr(OperandType type);

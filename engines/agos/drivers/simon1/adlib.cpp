@@ -105,33 +105,33 @@ void MidiDriver_Simon1_AdLib::parseInstrumentData(const byte *instrumentData) {
 	const byte *dataPtr = instrumentData;
 
 	// The instrument data consists of 128 16-byte entries.
-	_instrumentBank = new OplInstrumentDefinition[128];
+	OplInstrumentDefinition *instrumentBank = new OplInstrumentDefinition[128];
 
 	for (int i = 0; i < 128; i++) {
-		_instrumentBank[i].fourOperator = false;
+		instrumentBank[i].fourOperator = false;
 
-		_instrumentBank[i].operator0.freqMultMisc = *dataPtr++;
-		_instrumentBank[i].operator1.freqMultMisc = *dataPtr++;
-		_instrumentBank[i].operator0.level = *dataPtr++;
-		_instrumentBank[i].operator1.level = *dataPtr++;
-		_instrumentBank[i].operator0.decayAttack = *dataPtr++;
-		_instrumentBank[i].operator1.decayAttack = *dataPtr++;
-		_instrumentBank[i].operator0.releaseSustain = *dataPtr++;
-		_instrumentBank[i].operator1.releaseSustain = *dataPtr++;
-		_instrumentBank[i].operator0.waveformSelect = *dataPtr++;
-		_instrumentBank[i].operator1.waveformSelect = *dataPtr++;
+		instrumentBank[i].operator0.freqMultMisc = *dataPtr++;
+		instrumentBank[i].operator1.freqMultMisc = *dataPtr++;
+		instrumentBank[i].operator0.level = *dataPtr++;
+		instrumentBank[i].operator1.level = *dataPtr++;
+		instrumentBank[i].operator0.decayAttack = *dataPtr++;
+		instrumentBank[i].operator1.decayAttack = *dataPtr++;
+		instrumentBank[i].operator0.releaseSustain = *dataPtr++;
+		instrumentBank[i].operator1.releaseSustain = *dataPtr++;
+		instrumentBank[i].operator0.waveformSelect = *dataPtr++;
+		instrumentBank[i].operator1.waveformSelect = *dataPtr++;
 
-		_instrumentBank[i].connectionFeedback0 = *dataPtr++;
-		_instrumentBank[i].connectionFeedback1 = 0;
-		_instrumentBank[i].rhythmNote = 0;
-		_instrumentBank[i].rhythmType = RHYTHM_TYPE_UNDEFINED;
+		instrumentBank[i].connectionFeedback0 = *dataPtr++;
+		instrumentBank[i].connectionFeedback1 = 0;
+		instrumentBank[i].rhythmNote = 0;
+		instrumentBank[i].rhythmType = RHYTHM_TYPE_UNDEFINED;
 
 		// Remaining bytes seem to be unused.
 		dataPtr += 5;
 	}
 
 	// Construct a rhythm bank from the original rhythm map data.
-	_rhythmBank = new OplInstrumentDefinition[39];
+	OplInstrumentDefinition *rhythmBank = new OplInstrumentDefinition[39];
 	// MIDI note range 36-74.
 	_rhythmBankFirstNote = 36;
 	_rhythmBankLastNote = 36 + 39 - 1;
@@ -139,20 +139,24 @@ void MidiDriver_Simon1_AdLib::parseInstrumentData(const byte *instrumentData) {
 	for (int i = 0; i < 39; i++) {
 		if (RHYTHM_MAP[i].channel == 0) {
 			// Some notes in the range have no definition.
-			_rhythmBank[i].rhythmType = RHYTHM_TYPE_UNDEFINED;
+			rhythmBank[i].rhythmType = RHYTHM_TYPE_UNDEFINED;
 		} else {
 			// The rhythm bank makes use of instruments defined in the main instrument bank.
-			_rhythmBank[i] = _instrumentBank[RHYTHM_MAP[i].program];
+			rhythmBank[i] = _instrumentBank[RHYTHM_MAP[i].program];
 			// The MIDI channels used in the rhythm map correspond to OPL rhythm instrument types:
 			// 11 - bass drum
 			// 12 - snare drum
 			// 13 - tom tom
 			// 14 - cymbal
 			// 15 - hi-hat
-			_rhythmBank[i].rhythmType = static_cast<OplInstrumentRhythmType>(6 - (RHYTHM_MAP[i].channel - 10));
-			_rhythmBank[i].rhythmNote = RHYTHM_MAP[i].note;
+			rhythmBank[i].rhythmType = static_cast<OplInstrumentRhythmType>(6 - (RHYTHM_MAP[i].channel - 10));
+			rhythmBank[i].rhythmNote = RHYTHM_MAP[i].note;
 		}
 	}
+
+	// Set the const class variables with our just allocated banks
+	_instrumentBank = instrumentBank;
+	_rhythmBank = rhythmBank;
 }
 
 void MidiDriver_Simon1_AdLib::noteOn(uint8 channel, uint8 note, uint8 velocity, uint8 source) {
@@ -283,7 +287,7 @@ uint16 MidiDriver_Simon1_AdLib::calculateFrequency(uint8 channel, uint8 source, 
 	return (octave << 10) | octaveNoteFrequency;
 }
 
-uint8 MidiDriver_Simon1_AdLib::calculateUnscaledVolume(uint8 channel, uint8 source, uint8 velocity, OplInstrumentDefinition &instrumentDef, uint8 operatorNum) {
+uint8 MidiDriver_Simon1_AdLib::calculateUnscaledVolume(uint8 channel, uint8 source, uint8 velocity, const OplInstrumentDefinition &instrumentDef, uint8 operatorNum) {
 	if (channel == MIDI_RHYTHM_CHANNEL && _sources[source].type != SOURCE_TYPE_SFX)
 		// The original interpreter halves the velocity for music rhythm notes.
 		// Note that SFX notes always use max velocity.

@@ -335,6 +335,7 @@ struct LingoState {
 	ScriptContext *context = nullptr;		// current Lingo script context
 	DatumHash *localVars = nullptr;			// current local variables
 	Datum me;								// current me object
+	StackData stack;
 
 	~LingoState();
 };
@@ -358,7 +359,7 @@ public:
 	int getMenuItemsNum(Datum &d);
 	int getXtrasNum();
 	int getCastLibsNum();
-	int getMembersNum();
+	int getMembersNum(uint16 castLibID);
 
 	void executeHandler(const Common::String &name);
 	void executeScript(ScriptType type, CastMemberID id);
@@ -418,6 +419,7 @@ public:
 	Common::U32String evalChunkRef(const Datum &var);
 	Datum findVarV4(int varType, const Datum &id);
 	CastMemberID resolveCastMember(const Datum &memberID, const Datum &castLib, CastType type);
+	CastMemberID toCastMemberID(const Datum &member, const Datum &castLib);
 	void exposeXObject(const char *name, Datum obj);
 
 	int getAlignedType(const Datum &d1, const Datum &d2, bool equality);
@@ -482,6 +484,8 @@ public:
 	void setTheSprite(Datum &id, int field, Datum &d);
 	Datum getTheCast(Datum &id, int field);
 	void setTheCast(Datum &id, int field, Datum &d);
+	Datum getTheCastLib(Datum &id, int field);
+	void setTheCastLib(Datum &id, int field, Datum &d);
 	Datum getTheField(Datum &id1, int field);
 	void setTheField(Datum &id1, int field, Datum &d);
 	Datum getTheChunk(Datum &chunk, int field);
@@ -546,8 +550,6 @@ public:
 	Common::HashMap<int, const LingoV4TheEntity *> _lingoV4TheEntity;
 
 	uint _globalCounter;
-
-	StackData _stack;
 
 	DirectorEngine *_vm;
 
