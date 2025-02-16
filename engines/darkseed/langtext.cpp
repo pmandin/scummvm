@@ -24,12 +24,13 @@
 
 namespace Darkseed {
 
-const char *getI18NText(const I18nText &text) {
+Common::U32String getI18NText(const I18nText &text) {
 	switch (g_engine->getLanguage()) {
-	case Common::ES_ESP : return text.es;
-	case Common::FR_FRA : return text.fr;
-	case Common::DE_DEU : return text.de;
-	default : return text.en;
+	case Common::ES_ESP : return Common::U32String(text.es);
+	case Common::FR_FRA : return Common::U32String(text.fr);
+	case Common::DE_DEU : return Common::U32String(text.de);
+	case Common::KO_KOR : return text.ko ? convertToU32String(text.ko, Common::KO_KOR) : Common::U32String(text.en);
+	default : return Common::U32String(text.en);
 	}
 }
 
@@ -44,7 +45,7 @@ const TextWithPosition &getI18NTextWithPosition(const I18NTextWithPosition &i18n
 }
 
 Common::U32String convertToU32String(const char *text, Common::Language language) {
-	uint len = strlen(text);
+	size_t len = strlen(text);
 	switch (language) {
 	case Common::ZH_ANY:
 	case Common::KO_KOR: {
@@ -66,6 +67,32 @@ Common::U32String convertToU32String(const char *text, Common::Language language
 	default : break;
 	}
 	return Common::U32String(text);
+}
+
+Common::U32String formatInjectStrings(const Common::u32char_type_t *format, ...) {
+	Common::U32String outString;
+	va_list args;
+	va_start(args, format);
+
+	for (const Common::u32char_type_t *itr = format; *itr; itr++) {
+		if (*itr == '%') {
+			itr++;
+			if (!*itr) {
+				outString += '%';
+				break;
+			}
+			if (*itr == 's') {
+				auto text = va_arg(args, char32_t *);
+				outString += text;
+			} else {
+				outString += *itr;
+			}
+		} else {
+			outString += *itr;
+		}
+	}
+	va_end(args);
+	return outString;
 }
 
 } // End of namespace Darkseed

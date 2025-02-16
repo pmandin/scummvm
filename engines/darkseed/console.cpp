@@ -57,7 +57,7 @@ Console::~Console() {
 	delete _font;
 }
 
-void Console::printTosText(int tosIndex) {
+void Console::printTosText(int tosIndex, bool shouldAddToCurrentLine) {
 	const Common::U32String &text = _tosText->getText(tosIndex);
 
 	if (!_isCJKLanguage) {
@@ -69,19 +69,19 @@ void Console::printTosText(int tosIndex) {
 		}
 		debug("%s", "");
 	}
-	addTextLineU32(text);
+	if (shouldAddToCurrentLine) {
+		addToCurrentLine(text);
+	} else {
+		addTextLine(text);
+	}
 	_sound->playTosSpeech(tosIndex);
-}
-
-void Console::addTextLine(const Common::String &text) {
-	addTextLineU32(Common::U32String(text));
 }
 
 void Console::addToCurrentLine(const Common::String &text) {
 	addToCurrentLineU32(Common::U32String(text));
 }
 
-void Console::addTextLineU32(const Common::U32String &text) {
+void Console::addTextLine(const Common::U32String &text) {
 	Common::U32StringArray lines;
 	_font->wordWrapText(text, consoleArea.width(), lines);
 	for (auto &line : lines) {
@@ -92,7 +92,7 @@ void Console::addTextLineU32(const Common::U32String &text) {
 void Console::addToCurrentLineU32(const Common::U32String &text) {
 	int curIdx = _startIdx == 0 ? _text.size() - 1 : _startIdx - 1;
 	_startIdx = curIdx;
-	addTextLineU32(_text[_startIdx] + text);
+	addTextLine(_text[_startIdx] + text);
 }
 
 void Console::addI18NText(const I18nText &text) {

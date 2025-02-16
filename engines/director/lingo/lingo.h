@@ -361,7 +361,7 @@ public:
 	int getCastLibsNum();
 	int getMembersNum(uint16 castLibID);
 
-	void executeHandler(const Common::String &name);
+	void executeHandler(const Common::String &name, int numargs = 0);
 	void executeScript(ScriptType type, CastMemberID id);
 	Common::String formatStack();
 	void printStack(const char *s, uint pc);
@@ -407,7 +407,7 @@ public:
 	void processEvents(Common::Queue<LingoEvent> &queue, bool isInputEvent);
 
 public:
-	bool execute();
+	bool execute(int targetFrame = -1);
 	void switchStateFromWindow();
 	void freezeState();
 	void freezePlayState();

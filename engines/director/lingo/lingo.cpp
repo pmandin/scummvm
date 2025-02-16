@@ -338,7 +338,7 @@ Symbol Lingo::getHandler(const Common::String &name) {
 	if (_state->context && _state->context->_functionHandlers.contains(name))
 		return _state->context->_functionHandlers[name];
 
-	sym = g_director->getCurrentMovie()->getHandler(name, _state->context->_castLibHint);
+	sym = g_director->getCurrentMovie()->getHandler(name, _state->context ? _state->context->_castLibHint : 0);
 	if (sym.type != VOIDSYM)
 		return sym;
 
@@ -615,10 +615,13 @@ Common::String Lingo::formatFunctionBody(Symbol &sym) {
 	return result;
 }
 
-bool Lingo::execute() {
+bool Lingo::execute(int targetFrame) {
 	uint localCounter = 0;
 
 	while (!_abort && !_freezeState && _state->script && (*_state->script)[_state->pc] != STOP) {
+		if (targetFrame != -1 && (int)_state->callstack.size() == targetFrame)
+			break;
+
 		if ((_exec._state == kPause) || (_exec._shouldPause && _exec._shouldPause())) {
 			// if execution is in pause -> poll event + update screen
 			_exec._state = kPause;
@@ -736,11 +739,13 @@ void Lingo::executeScript(ScriptType type, CastMemberID id) {
 	execute();
 }
 
-void Lingo::executeHandler(const Common::String &name) {
+void Lingo::executeHandler(const Common::String &name, int numargs) {
 	debugC(1, kDebugLingoExec, "Executing script handler : %s", name.c_str());
 	Symbol sym = getHandler(name);
-	LC::call(sym, 0, false);
-	execute();
+
+	int frame = _state->callstack.size();
+	LC::call(sym, numargs, false);
+	execute(frame);
 }
 
 void Lingo::lingoError(const char *s, ...) {

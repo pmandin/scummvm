@@ -74,14 +74,24 @@ Operand Hotspot::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args
 		assert(args.empty());
 		_isActive = true;
 		g_engine->addPlayingAsset(this);
+		g_engine->refreshActiveHotspot();
 		return Operand();
 	}
 
 	case kMouseDeactivateMethod: {
 		assert(args.empty());
 		_isActive = false;
+		g_engine->refreshActiveHotspot();
 		return Operand();
 	}
+
+	case kIsActiveMethod: {
+		assert(args.empty());
+		Operand returnValue(kOperandTypeLiteral1);
+		returnValue.putInteger(static_cast<int>(_isActive));
+		return returnValue;
+	}
+
 
 	default: {
 		error("Hotspot::callMethod(): Got unimplemented method ID %d", methodId);

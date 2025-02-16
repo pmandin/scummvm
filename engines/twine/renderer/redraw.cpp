@@ -30,6 +30,7 @@
 #include "twine/input.h"
 #include "twine/menu/interface.h"
 #include "twine/menu/menu.h"
+#include "twine/parser/body.h"
 #include "twine/parser/sprite.h"
 #include "twine/renderer/renderer.h"
 #include "twine/renderer/screens.h"
@@ -332,7 +333,7 @@ int32 Redraw::fillExtraDrawingList(DrawListStruct *drawList, int32 drawListPos) 
 			if (_engine->timerRef - extra->spawnTime > 35) {
 				extra->spawnTime = _engine->timerRef;
 				extra->type &= ~ExtraType::TIME_IN;
-				_engine->_sound->playSample(Samples::ItemPopup, 0x1000, 1, extra->pos);
+				_engine->_sound->mixSample3D(Samples::ItemPopup, 0x1000, 1, extra->pos, -1);
 			}
 			continue;
 		}
@@ -404,7 +405,8 @@ void Redraw::processDrawListActors(const DrawListStruct &drawCmd, bool flagflip)
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
 	if (actor->_anim >= 0) {
 		const AnimData &animData = _engine->_resources->_animData[actor->_anim];
-		_engine->_animations->setInterAnimObjet2(actor->_frame, animData, actor->_entityDataPtr->getBody(actor->_body), &actor->_animTimerData);
+		BodyData &bodyData = actor->_entityDataPtr->getBody(actor->_body);
+		_engine->_animations->setInterAnimObjet2(actor->_frame, animData, bodyData, &bodyData._animTimerData);
 	}
 
 	const IVec3 &delta = actor->posObj() - _engine->_grid->_worldCube;

@@ -31,6 +31,7 @@ Objects::Objects() {
 	_objectRunningCode.resize(MAX_OBJECTS);
 	_moveObjectXY.resize(MAX_OBJECTS);
 	_moveObjectRoom.resize(MAX_OBJECTS); // The original only allocates 42 entries here but writes 199 in the save file!
+	_objectNames.resize(MAX_OBJECTS);
 	reset();
 }
 
@@ -94,6 +95,56 @@ const int16 &Objects::operator[](uint16 varIdx) const {
 		error("getVar: Object Index out of range! %d", varIdx);
 	}
 	return _objectVar[varIdx];
+}
+
+void Objects::loadObjectNames() {
+	auto lang = g_engine->getLanguage();
+	if (lang == Common::KO_KOR) {
+		loadKoreanObjectNames();
+	} else {
+		for (int i = 0; i < MAX_OBJECTS; i++) {
+			switch (lang) {
+			case Common::FR_FRA: _objectNames[i] = Common::U32String(objectNameTbl_fr[i]); break;
+			case Common::DE_DEU: _objectNames[i] = Common::U32String(objectNameTbl_de[i]); break;
+			case Common::ES_ESP: _objectNames[i] = Common::U32String(objectNameTbl_es[i]); break;
+			default: _objectNames[i] = Common::U32String(objectNameTbl_en[i]); break;
+			}
+		}
+	}
+}
+
+void Objects::loadKoreanObjectNames() {
+	Common::File file;
+	if (!file.open("tos.exe")) {
+		error("Failed to open TOS.EXE");
+	}
+
+	for (int i = 0; i < MAX_OBJECTS; i++) {
+		file.seek(0x22f62 + i * 4);
+		uint16 offset = file.readUint16LE();
+		file.seek(0x20990 + offset);
+		_objectNames[i] = readU32String(file);
+	}
+
+	file.close();
+}
+
+Common::U32String Objects::readU32String(Common::SeekableReadStream &readStream) {
+	Common::U32String str;
+	uint8 byte = readStream.readByte();
+	while (byte != 0) {
+		if (byte & 0x80) {
+			uint8 byte2 = readStream.readByte();
+			if (readStream.err()) {
+				error("Failed to read byte from stream!");
+			}
+			str += (int)byte << 8 | byte2;
+		} else {
+			str += byte;
+		}
+		byte = readStream.readByte();
+	}
+	return str;
 }
 
 static constexpr uint16 eyeDescriptionsTbl[] = {
@@ -184,19 +235,12 @@ void Objects::setObjectRunningCode(int idx, int16 value) {
 	_objectRunningCode[idx] = value;
 }
 
-const char *Objects::getObjectName(int idx) {
+const Common::U32String &Objects::getObjectName(int idx) {
 	if (idx < 0 || idx >= MAX_OBJECTS) {
 		error("getObjectName: index out of range.");
 	}
 
-	switch (g_engine->getLanguage()) {
-	case Common::FR_FRA: return objectNameTbl_fr[idx];
-	case Common::DE_DEU: return objectNameTbl_de[idx];
-	case Common::ES_ESP: return objectNameTbl_es[idx];
-	default: break;
-	}
-
-	return objectNameTbl_en[idx];
+	return _objectNames[idx];
 }
 
 static inline void syncPoint(Common::Serializer &s, Common::Point &value) {

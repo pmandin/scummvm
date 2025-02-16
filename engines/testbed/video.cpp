@@ -59,7 +59,6 @@ Common::Error Videotests::videoTest(Common::SeekableReadStream *stream, const Co
 	Video::QuickTimeDecoder *video = new Video::QuickTimeDecoder();
 	if (!video->loadStream(stream)) {
 		warning("Cannot open video %s", name.c_str());
-		delete stream;
 		delete video;
 		return Common::kReadingFailed;
 	}
@@ -80,11 +79,6 @@ Common::Error Videotests::videoTest(Common::SeekableReadStream *stream, const Co
 			pixelformat = Graphics::PixelFormat::createFormatCLUT8();
 		} else {
 			pixelformat = supportedFormatsList.front();
-
-			if (!video->setOutputPixelFormat(pixelformat)) {
-				// TODO: Search for the pixel format in supportedFormatsList?
-				warning("Format mismatch. Video will be converted");
-			}
 		}
 	}
 
@@ -107,6 +101,7 @@ Common::Error Videotests::videoTest(Common::SeekableReadStream *stream, const Co
 	video->start();
 
 	Common::Point mouse;
+	bool renderHotspots = false;
 
 	while (!video->endOfVideo()) {
 		if (video->needsUpdate()) {
@@ -164,6 +159,11 @@ Common::Error Videotests::videoTest(Common::SeekableReadStream *stream, const Co
 						break;
 					case Common::EVENT_KEYUP:
 					case Common::EVENT_KEYDOWN:
+						if (event.kbd == Common::KEYCODE_h && event.type == Common::EVENT_KEYDOWN) {
+							renderHotspots = !renderHotspots;
+							((Video::QuickTimeDecoder *)video)->renderHotspots(renderHotspots);
+						}
+
 						((Video::QuickTimeDecoder *)video)->handleKey(event.kbd, event.type == Common::EVENT_KEYDOWN);
 						break;
 					default:

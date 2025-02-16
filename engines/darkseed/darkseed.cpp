@@ -35,6 +35,7 @@
 #include "darkseed/pal.h"
 #include "darkseed/pic.h"
 #include "darkseed/room.h"
+#include "darkseed/kofont.h"
 
 namespace Darkseed {
 
@@ -77,6 +78,7 @@ Common::Error DarkseedEngine::run() {
 	_screen = new Graphics::Screen();
 	_tosText = new TosText();
 	_tosText->load();
+	_objectVar.loadObjectNames();
 	_console = new Console(_tosText, _sound);
 	_player = new Player();
 	_useCode = new UseCode(_console, _player, _objectVar, _inventory);
@@ -1657,9 +1659,13 @@ void DarkseedEngine::handleObjCollision(int targetObjNum) {
 		} else if (_actionMode == 27) {
 			_console->printTosText(929);
 		} else {
-			_console->printTosText(967);
-			_console->addToCurrentLine(_objectVar.getObjectName(_actionMode)); // TODO remove newline after object name
-			_console->printTosText(968);
+			_console->printTosText(967); // The
+			if (g_engine->getLanguage() == Common::KO_KOR) {
+				_console->addToCurrentLine(KoFont::getObjectString(_objectVar.getObjectName(_actionMode)));
+			} else {
+				_console->addToCurrentLine(_objectVar.getObjectName(_actionMode));
+			}
+			_console->printTosText(968, true); // was disintegrated.
 			_inventory.removeItem(_actionMode);
 		}
 		if (_actionMode > 4) {
@@ -1902,7 +1908,11 @@ void DarkseedEngine::lookCode(int objNum) {
 		}
 		return;
 	}
-	_console->addTextLine(Common::String::format("%s %s.", getI18NText(kI18N_youSeeTheText), _objectVar.getObjectName(objNum)));
+	if (g_engine->getLanguage() == Common::KO_KOR) {
+		_console->addTextLine(formatInjectStrings(getI18NText(kI18N_youSeeTheText).c_str(), KoFont::getObjectString(_objectVar.getObjectName(objNum)).c_str()));
+	} else {
+		_console->addTextLine(formatInjectStrings(getI18NText(kI18N_youSeeTheText).c_str(), _objectVar.getObjectName(objNum).c_str()));
+	}
 }
 
 void DarkseedEngine::printTime() {

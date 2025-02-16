@@ -88,11 +88,17 @@ public:
 	void setTiltAngle(float tiltAngle) { _tiltAngle = tiltAngle; }
 	float getFOV() const { return _fov; }
 	bool setFOV(float fov);
+	int getCurrentNodeID() { return _currentSample == -1 ? 0 : _panoTrack->panoSamples[_currentSample].hdr.nodeID; }
 
 	int getCurrentRow() { return _nextVideoTrack->getCurFrame() / _nav.columns; }
 	void setCurrentRow(int row);
 	int getCurrentColumn() { return _nextVideoTrack->getCurFrame() % _nav.columns; }
 	void setCurrentColumn(int column);
+
+	int getZoomState() { return _zoomState; }
+
+	const PanoHotSpot *getRolloverHotspot() { return _rolloverHotspot; }
+	const PanoHotSpot *getClickedHotspot() { return _clickedHotspot; }
 
 	void nudge(const Common::String &direction);
 
@@ -101,6 +107,8 @@ public:
 
 	uint8 getWarpMode() const { return _warpMode; }
 	void setWarpMode(uint8 warpMode) { _warpMode = warpMode; }
+
+	void renderHotspots(bool mode);
 
 	struct NodeData {
 		uint32 nodeID;
@@ -119,6 +127,7 @@ public:
 	};
 
 	NodeData getNodeData(uint32 nodeID);
+	void goToNode(uint32 nodeID);
 
 protected:
 	Common::QuickTimeParser::SampleDesc *readSampleDesc(Common::QuickTimeParser::Track *track, uint32 format, uint32 descSize);
@@ -139,6 +148,7 @@ private:
 
 	void closeQTVR();
 	void updateAngles();
+	void lookupHotspot(int16 x, int16 y);
 	void updateQTVRCursor(int16 x, int16 y);
 	void setCursor(int curId);
 	void cleanupCursors();
@@ -147,12 +157,21 @@ private:
 	uint16 _width, _height;
 
 public:
-	uint16 _prevMouseX, _prevMouseY;
+	int _currentSample = -1;
+	Common::Point _prevMouse;
 	bool _isMouseButtonDown;
 	Common::Point _mouseDrag;
 
 	bool _isKeyDown = false;
 	Common::KeyState _lastKey;
+
+	enum {
+		kZoomNone,
+		kZoomQuestion,
+		kZoomIn,
+		kZoomOut,
+		kZoomLimit,
+	};
 
 private:
 	Common::Rect _curBbox;
@@ -173,19 +192,15 @@ private:
 	int _zoomState = kZoomNone;
 	bool _repeatTimerActive = false;
 
+	const PanoHotSpot *_rolloverHotspot = nullptr;
+	const PanoHotSpot *_clickedHotspot = nullptr;
+	bool _renderHotspots = false;
+
 	Graphics::Surface *_scaledSurface;
 	void scaleSurface(const Graphics::Surface *src, Graphics::Surface *dst,
 			const Common::Rational &scaleFactorX, const Common::Rational &scaleFactorY);
 
 	bool _enableEditListBoundsCheckQuirk;
-
-	enum {
-		kZoomNone,
-		kZoomQuestion,
-		kZoomIn,
-		kZoomOut,
-		kZoomLimit,
-	};
 
 	class VideoSampleDesc : public Common::QuickTimeParser::SampleDesc {
 	public:
@@ -340,6 +355,7 @@ private:
 		Common::Rational getScaledWidth() const;
 		Common::Rational getScaledHeight() const;
 
+		void initPanorama();
 		void constructPanorama();
 		Graphics::Surface *constructMosaic(VideoTrackHandler *track, uint w, uint h, Common::String fname);
 

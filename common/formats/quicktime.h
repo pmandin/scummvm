@@ -127,8 +127,10 @@ protected:
 		Rational mediaRate;
 	};
 
+public:
 	struct Track;
 
+protected:
 	class SampleDesc {
 	public:
 		SampleDesc(Track *parentTrack, uint32 codecTag);
@@ -144,6 +146,7 @@ protected:
 		uint32 _codecTag;
 	};
 
+public:
 	enum CodecType {
 		CODEC_TYPE_MOV_OTHER,
 		CODEC_TYPE_VIDEO,
@@ -195,12 +198,13 @@ protected:
 	};
 
 	enum class HotSpotType {
-		undefined,
-		anim,
-		cnod,
-		link,
-		navg,
-		soun,
+		undefined = MKTAG('u','n','d','f'),
+		anim = MKTAG('a','n','i','m'),
+		cnod = MKTAG('c','n','o','d'),
+		link = MKTAG('l','i','n','k'),
+		navg = MKTAG('n','a','v','g'),
+		soun = MKTAG('s','o','u','n'),
+		cmov = MKTAG('c','m','o','v'),
 	};
 
 	struct PanoHotSpot {
@@ -225,6 +229,14 @@ protected:
 
 	struct PanoHotSpotTable {
 		Array<PanoHotSpot> hotSpots;
+
+		PanoHotSpot *get(uint16 id) {
+			for (uint i = 0; i < hotSpots.size(); i++)
+				if (hotSpots[i].id == id)
+					return &hotSpots[i];
+
+			return nullptr;
+		}
 	};
 
 	struct PanoStringTable {
@@ -248,6 +260,14 @@ protected:
 
 	struct PanoLinkTable {
 		Array<PanoLink> links;
+
+		PanoLink *get(uint16 id) {
+			for (uint i = 0; i < links.size(); i++)
+				if (links[i].id == id)
+					return &links[i];
+
+			return nullptr;
+		}
 	};
 
 	struct PanoNavigation {
@@ -266,6 +286,14 @@ protected:
 
 	struct PanoNavigationTable {
 		Array<PanoNavigation> navs;
+
+		PanoNavigation *get(uint16 id) {
+			for (uint i = 0; i < navs.size(); i++)
+				if (navs[i].id == id)
+					return &navs[i];
+
+			return nullptr;
+		}
 	};
 
 	struct PanoTrackSample {
@@ -351,6 +379,7 @@ protected:
 		float initialVPan = 1.0f;
 	};
 
+protected:
 	virtual SampleDesc *readSampleDesc(Track *track, uint32 format, uint32 descSize) = 0;
 
 	uint32 _timeScale;      // movie time

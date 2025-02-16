@@ -49,21 +49,16 @@ public:
 
 	Common::Rect _rect;
 	bool _visible;
-	float _quality;
-
-	Video::QuickTimeDecoder::NodeData _currentNode;
-
-	Common::String _transitionMode;
-	float _transitionSpeed;
-
-	Common::String _updateMode;
-
-	bool _capEventsMouseOver;
-	bool _capEventsMouseDown;
 
 	bool _passMouseDown;
+	bool _exitMouseOver = false;
 
+	Common::String _rolloverHotSpotHandler;
 	Common::String _mouseDownHandler;
+	Common::String _mouseOverHandler;
+	Common::String _mouseStillDownHandler;
+	Common::String _panZoomStartHandler;
+	Common::String _nodeLeaveHandler;
 };
 
 namespace QtvrxtraXtra {

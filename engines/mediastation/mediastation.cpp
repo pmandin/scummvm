@@ -54,6 +54,9 @@ MediaStationEngine::~MediaStationEngine() {
 	delete _screen;
 	_screen = nullptr;
 
+	delete _cursor;
+	_cursor = nullptr;
+
 	delete _boot;
 	_boot = nullptr;
 
@@ -106,6 +109,14 @@ Common::String MediaStationEngine::getGameId() const {
 	return _gameDescription->gameId;
 }
 
+Common::Platform MediaStationEngine::getPlatform() const {
+	return _gameDescription->platform;
+}
+
+const char *MediaStationEngine::getAppName() const {
+	return _gameDescription->filesDescriptions[0].fileName;
+}
+
 bool MediaStationEngine::isFirstGenerationEngine() {
 	if (_boot == nullptr) {
 		error("Attempted to get engine version before BOOT.STM was read");
@@ -126,17 +137,18 @@ Common::Error MediaStationEngine::run() {
 	Common::Path bootStmFilepath = Common::Path("BOOT.STM");
 	_boot = new Boot(bootStmFilepath);
 
-	// LOAD THE ROOT CONTEXT.
-	// This is because we might have assets that always need to be loaded.
-	//Context *root = nullptr;
-	uint32 rootContextId = _boot->getRootContextId();
-	if (rootContextId != 0) {
-		loadContext(rootContextId);
+	if (getPlatform() == Common::kPlatformWindows) {
+		_cursor = new WindowsCursorManager(getAppName());
+	} else if (getPlatform() == Common::kPlatformMacintosh) {
+		_cursor = new MacCursorManager(getAppName());
 	} else {
-		warning("MediaStation::run(): Title has no root context");
+		error("MediaStationEngine::run(): Attempted to use unsupported platform %s", Common::getPlatformDescription(getPlatform()));
 	}
+	_cursor->showCursor();
 
-	branchToScreen(_boot->_entryContextId);
+	_requestedScreenBranchId = _boot->_entryContextId;
+	doBranchToScreen();
+
 	while (true) {
 		processEvents();
 		if (shouldQuit()) {
@@ -146,6 +158,15 @@ Common::Error MediaStationEngine::run() {
 		debugC(5, kDebugGraphics, "***** START SCREEN UPDATE ***");
 		for (auto it = _assetsPlaying.begin(); it != _assetsPlaying.end();) {
 			(*it)->process();
+
+			// If we're changing screens, exit out now so we don't try to access
+			// any assets that no longer exist.
+			if (_requestedScreenBranchId != 0) {
+				doBranchToScreen();
+				_requestedScreenBranchId = 0;
+				break;
+			}
+
 			if (!(*it)->isActive()) {
 				it = _assetsPlaying.erase(it);
 			} else {
@@ -176,29 +197,7 @@ void MediaStationEngine::processEvents() {
 		}
 
 		case Common::EVENT_MOUSEMOVE: {
-			Asset *hotspot = findAssetToAcceptMouseEvents(e.mouse);
-			if (hotspot != nullptr) {
-				if (_currentHotspot == nullptr) {
-					_currentHotspot = hotspot;
-					debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Entered hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
-					hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
-				} else if (_currentHotspot == hotspot) {
-					// We are still in the same hotspot.
-				} else {
-					_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
-					_currentHotspot = hotspot;
-					debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
-					hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
-				}
-				debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Sent to hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
-				hotspot->runEventHandlerIfExists(kMouseMovedEvent);
-			} else {
-				if (_currentHotspot != nullptr) {
-					_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
-					debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", e.mouse.x, e.mouse.y, _currentHotspot->getHeader()->_id);
-					_currentHotspot = nullptr;
-				}
-			}
+			refreshActiveHotspot();
 			break;
 		}
 
@@ -236,6 +235,43 @@ void MediaStationEngine::processEvents() {
 	}
 }
 
+void MediaStationEngine::setCursor(uint id) {
+	// The cursor ID is not a resource ID in the executable, but a numeric ID
+	// that's a lookup into BOOT.STM, which gives actual name the name of the
+	// resource in the executable.
+	if (id != 0) {
+		CursorDeclaration *cursorDeclaration = _boot->_cursorDeclarations.getValOrDefault(id);
+		if (cursorDeclaration == nullptr) {
+			error("MediaStationEngine::setCursor(): Cursor %d not declared", id);
+		}
+		_cursor->setCursor(*cursorDeclaration->_name);
+	}
+}
+
+void MediaStationEngine::refreshActiveHotspot() {
+	Asset *hotspot = findAssetToAcceptMouseEvents(_eventMan->getMousePos());
+	if (hotspot != _currentHotspot) {
+		if (_currentHotspot != nullptr) {
+			_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
+			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", e.mouse.x, e.mouse.y, _currentHotspot->getHeader()->_id);
+		}
+		_currentHotspot = hotspot;
+		if (hotspot != nullptr) {
+			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Entered hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+			setCursor(hotspot->getHeader()->_cursorResourceId);
+			hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
+		} else {
+			// There is no hotspot, so set the default cursor for this screen instead.
+			setCursor(_currentContext->_screenAsset->_cursorResourceId);
+		}
+	}
+
+	if (hotspot != nullptr) {
+		debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Sent to hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+		hotspot->runEventHandlerIfExists(kMouseMovedEvent);
+	}
+}
+
 void MediaStationEngine::redraw() {
 	if (_dirtyRects.empty()) {
 		return;
@@ -265,18 +301,20 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 		error("Cannot load contexts before BOOT.STM is read");
 	}
 
+	debugC(5, kDebugLoading, "MediaStationEngine::loadContext(): Loading context %d", contextId);
 	if (_loadedContexts.contains(contextId)) {
-		warning("MediaStationEngine::loadContext(): Context 0x%x already loaded, returning existing context", contextId);
+		warning("MediaStationEngine::loadContext(): Context %d already loaded, returning existing context", contextId);
 		return _loadedContexts.getVal(contextId);
 	}
 
 	// GET THE FILE ID.
 	SubfileDeclaration *subfileDeclaration = _boot->_subfileDeclarations.getValOrDefault(contextId);
 	if (subfileDeclaration == nullptr) {
-		warning("MediaStationEngine::loadContext(): Couldn't find subfile declaration with ID 0x%x", contextId);
+		error("MediaStationEngine::loadContext(): Couldn't find subfile declaration with ID %d", contextId);
 		return nullptr;
 	}
-	// The subfile declarations have other assets too, so we need to make sure
+	// There are other assets in a subfile too, so we need to make sure we're
+	// referencing the screen asset, at the start of the file.
 	if (subfileDeclaration->_startOffsetInFile != 16) {
 		warning("MediaStationEngine::loadContext(): Requested ID wasn't for a context.");
 		return nullptr;
@@ -344,9 +382,13 @@ void MediaStationEngine::addPlayingAsset(Asset *assetToAdd) {
 Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) {
 	switch (methodId) {
 	case kBranchToScreenMethod: {
-		assert(args.size() == 1);
+		assert(args.size() >= 1);
+		if (args.size() > 1) {
+			// TODO: Figure out what the rest of the args can be.
+			warning("MediaStationEngine::callMethod(): branchToScreen got more than one arg");
+		}
 		uint32 contextId = args[0].getAssetId();
-		branchToScreen(contextId);
+		_requestedScreenBranchId = contextId;
 		return Operand();
 	}
 
@@ -363,7 +405,7 @@ Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Ope
 	}
 }
 
-void MediaStationEngine::branchToScreen(uint32 contextId) {
+void MediaStationEngine::doBranchToScreen() {
 	if (_currentContext != nullptr) {
 		EventHandler *exitEvent = _currentContext->_screenAsset->_eventHandlers.getValOrDefault(kExitEvent);
 		if (exitEvent != nullptr) {
@@ -372,9 +414,11 @@ void MediaStationEngine::branchToScreen(uint32 contextId) {
 		} else {
 			debugC(5, kDebugScript, "No context exit event handler");
 		}
+
+		releaseContext(_currentContext->_screenAsset->_id);
 	}
 
-	Context *context = loadContext(contextId);
+	Context *context = loadContext(_requestedScreenBranchId);
 	_currentContext = context;
 	_dirtyRects.push_back(Common::Rect(SCREEN_WIDTH, SCREEN_HEIGHT));
 	_currentHotspot = nullptr;
@@ -390,6 +434,8 @@ void MediaStationEngine::branchToScreen(uint32 contextId) {
 			debugC(5, kDebugScript, "No context entry event handler");
 		}
 	}
+
+	_requestedScreenBranchId = 0;
 }
 
 void MediaStationEngine::releaseContext(uint32 contextId) {

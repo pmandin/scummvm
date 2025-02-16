@@ -23,7 +23,8 @@
 #ifndef M4_RIDDLE_GUI_GAME_MENU_H
 #define M4_RIDDLE_GUI_GAME_MENU_H
 
-#include "m4/m4_types.h"
+#include "m4/gui/gui_menu_items.h"
+#include "m4/gui/game_menu.h"
 
 namespace M4 {
 namespace Riddle {
@@ -31,16 +32,61 @@ namespace GUI {
 
 class GameMenu {
 private:
-	static void DestroyGameMenu();
+	static void destroyGameMenu();
 	static void cbQuitGame(void *, void *);
 	static void cbMainMenu(void *, void *);
 	static void cbResume(void *, void *);
+	static void cbOptions(void *, void *);
+	static void cbSave(void *, void *);
+	static void cbLoad(void *, void *);
+
+public:
+	static void show(RGB8 *myPalette);
+};
+
+class OptionsMenu {
+private:
+	static void destroyOptionsMenu();
+	static void cbGameMenu(void *, void *);
+	static void cbScrolling(M4::GUI::menuItemButton *myItem, M4::GUI::guiMenu *);
+	static void cbSetDigi(M4::GUI::menuItemHSlider *myItem, M4::GUI::guiMenu *);
+	static void cbSetMidi(M4::GUI::menuItemHSlider *myItem, M4::GUI::guiMenu *);
+
+public:
+	static void show();
+};
+
+class SaveLoadMenu : public M4::GUI::SaveLoadMenuBase {
+private:
+	static void destroyMenu(bool saveMenu);
+	static bool load_Handler(M4::GUI::menuItemButton *myItem, int32 eventType,
+		int32 event, int32 x, int32 y, void **currItem);
+	static void cbCancel(M4::GUI::menuItemButton *, M4::GUI::guiMenu *myMenu);
+	static void cbSave(void *, M4::GUI::guiMenu *myMenu);
+	static void cbLoad(void *, M4::GUI::guiMenu *myMenu);
+	static void cbSlot(M4::GUI::menuItemButton *myButton, M4::GUI::guiMenu *myMenu);
+	static void cbVSlider(M4::GUI::menuItemVSlider *myItem, M4::GUI::guiMenu *myMenu);
+
+public:
+	static void show(RGB8 *myPalette, bool saveMenu);
+};
+
+class ErrorMenu {
+private:
+	static void destroyMenu();
+	static void cbDone(void *, void *);
 
 public:
 	static void show(RGB8 *myPalette);
 };
 
 extern void CreateGameMenu(RGB8 *myPalette);
+extern void CreateF2SaveMenu(RGB8 *myPalette);
+extern void CreateLoadMenu(RGB8 *myPalette);
+extern void CreateF3LoadMenu(RGB8 *myPalette);
+// Routines used by the main menu
+void CreateLoadMenuFromMain(RGB8 *myPalette);
+void CreateGameMenuFromMain(RGB8 *myPalette);
 
 } // namespace GUI
 } // namespace Riddle

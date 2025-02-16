@@ -23,6 +23,7 @@
 #include "common/config-manager.h"
 #include "common/file.h"
 #include "common/memstream.h"
+#include "common/textconsole.h"
 #include "common/util.h"
 #include "engines/enhancements.h"
 #include "twine/audio/music.h"
@@ -248,7 +249,7 @@ bool Scene::loadSceneLBA2() {
 		act->_posObj.y = (int16)stream.readUint16LE();
 		act->_posObj.z = (int16)stream.readUint16LE();
 		act->_oldPos = act->posObj();
-		act->_strengthOfHit = stream.readByte();
+		act->_hitForce = stream.readByte();
 		setBonusParameterFlags(act, stream.readUint16LE());
 		act->_beta = (int16)stream.readUint16LE();
 		act->_srot = (int16)stream.readUint16LE();
@@ -382,7 +383,7 @@ bool Scene::loadSceneLBA1() {
 		act->_posObj.y = (int16)stream.readUint16LE();
 		act->_posObj.z = (int16)stream.readUint16LE();
 		act->_oldPos = act->posObj();
-		act->_strengthOfHit = stream.readByte();
+		act->_hitForce = stream.readByte();
 		setBonusParameterFlags(act, stream.readUint16LE());
 		act->_bonusParameter.givenNothing = 0;
 		act->_beta = (int16)stream.readUint16LE();
@@ -462,7 +463,7 @@ bool Scene::loadSceneLBA1() {
 				// https://bugs.scummvm.org/ticket/13819
 				// Set this zone to something invalid to fix a getting-stuck-bug
 				// the original value was ZoneType::kGrid (3)
-				_sceneZones[11].type = (ZoneType)50;
+				_sceneZones[11].type = ZoneType::kFunFrockFix;
 			}
 		}
 	}
@@ -722,10 +723,11 @@ void Scene::processEnvironmentSound() {
 
 			const int16 sampleIdx = _sampleAmbiance[currentAmb];
 			if (sampleIdx != -1) {
-				/*int16 decal = _sampleRound[currentAmb];*/
+				int16 decal = _sampleRound[currentAmb];
 				int16 repeat = _sampleRepeat[currentAmb];
 
-				_engine->_sound->playSample(sampleIdx, repeat, 110, -1, 110);
+				const uint16 pitchbend = 0x1000 + _engine->getRandomNumber(decal) - (decal / 2);
+				_engine->_sound->mixSample(sampleIdx, pitchbend, repeat, 110, 110);
 				break;
 			}
 		}
@@ -783,7 +785,10 @@ void Scene::checkZoneSce(int32 actorIdx) {
 		    (currentZ >= zone->mins.z && currentZ <= zone->maxs.z)) {
 			switch (zone->type) {
 			default:
-				error("lba2 zone types not yet implemented");
+				warning("lba2 zone types not yet implemented");
+				break;
+			case ZoneType::kFunFrockFix:
+				break;
 			case ZoneType::kCube:
 				if (IS_HERO(actorIdx) && actor->_lifePoint > 0) {
 					_newCube = zone->num;
@@ -852,7 +857,7 @@ void Scene::checkZoneSce(int32 actorIdx) {
 							if (actor->_posObj.y >= (zone->mins.y + zone->maxs.y) / 2) {
 								_engine->_animations->initAnim(AnimationTypes::kTopLadder, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx); // reached end of ladder
 							} else {
-								_engine->_animations->initAnim(AnimationTypes::kClimbLadder, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx); // go up in ladder
+								_engine->_animations->initAnim(AnimationTypes::kClimbLadder, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx); // go up in ladder
 							}
 						}
 					}
