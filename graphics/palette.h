@@ -27,15 +27,16 @@
 namespace Graphics {
 
 enum ColorDistanceMethod {
-	kColorDistanceNaive,	///< Weighted red 30%, green 50%, blue 20%
-	kColorDistanceRedmean,	///< Common low-cost approximation
+	kColorDistanceEuclidean, ///< Non-Weighted distance
+	kColorDistanceNaive,	 ///< Weighted red 30%, green 50%, blue 20%
+	kColorDistanceRedmean,	 ///< Common low-cost approximation
 };
 
 /**
  * Constants available for use in paletted code
  */
-#define PALETTE_COUNT 256
-#define PALETTE_SIZE (256 * 3)
+constexpr int PALETTE_COUNT = 256;
+constexpr int PALETTE_SIZE = (256 * 3);
 
 /**
  * @brief Simple class for handling a palette data.
@@ -88,6 +89,19 @@ public:
 
 	const byte *data() const { return _data; }
 	uint size() const { return _size; }
+	
+	/**
+	 * Clears the palette of all entries and resets the size to zero.
+	 */
+	void clear();
+
+	/**
+	 * Changes the number of palette entries.
+	 * 
+	 * @param newSize the new number of palette entries
+	 * @param preserve indicates the existing entry values should be preserved
+	 */
+	void resize(uint newSize, bool preserve);
 
 	void set(uint entry, byte r, byte g, byte b) {
 		assert(entry < _size);
@@ -124,8 +138,6 @@ public:
 	 * @return the palette index
 	 */
 	byte findBestColor(byte r, byte g, byte b, ColorDistanceMethod method = kColorDistanceRedmean) const;
-
-	void clear();
 
 	/**
 	 * Replace the specified range of the palette with new colors.

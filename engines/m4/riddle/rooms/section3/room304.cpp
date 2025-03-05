@@ -30,12 +30,24 @@ namespace M4 {
 namespace Riddle {
 namespace Rooms {
 
+void Room304::preload() {
+	if (_G(flags)[V000]) {
+		_G(art_base_override) = "RIPLEYS OFFICE-TREK";
+		_G(use_alternate_attribute_file) = false;
+		_G(player).walker_type = WALKER_ALT;
+		_G(player).shadow_type = SHADOW_ALT;
+	} else {
+		_G(player).walker_type = WALKER_PLAYER;
+		_G(player).shadow_type = SHADOW_PLAYER;
+	}
+}
+
 void Room304::init() {
 	interface_show();
 	_val1 = 0;
 
 	if (_G(game).previous_room != KERNEL_RESTORING_GAME)
-		_flag1 = false;
+		_closeCartoonFl = false;
 
 	if (_G(game).previous_room == 303 && _G(flags)[V001])
 		_G(game).previous_room = 354;
@@ -110,7 +122,7 @@ void Room304::init() {
 			_G(globals)[GLB_TEMP_1] = _smoke << 24;
 			_G(globals)[GLB_TEMP_2] = 0x10000;
 
-			_machine2 = TriggerMachineByHash(45, nullptr, -1, -1, intrMsg, 0, "MACHINE fl snake rock");
+			_machine2 = TriggerMachineByHash(45, nullptr, -1, -1, intrMsg, false, "MACHINE fl snake rock");
 		}
 
 		_sword = series_show_sprite("one frame sword", 0, 0xa00);
@@ -154,12 +166,12 @@ void Room304::daemon() {
 }
 
 void Room304::pre_parser() {
-	bool takeFlag = player_said("take");
-	bool useFlag = player_said("gear");
+	const bool takeFlag = player_said("take");
+	const bool useFlag = player_said("gear");
 
-	if (_flag1) {
-		terminateMachineAndNull(_machine3);
-		_flag1 = false;
+	if (_closeCartoonFl) {
+		terminateMachineAndNull(_cartoonMach);
+		_closeCartoonFl = false;
 		intr_cancel_sentence();
 		hotspot_restore_all();
 		interface_show();
@@ -190,9 +202,9 @@ void Room304::pre_parser() {
 }
 
 void Room304::parser() {
-	bool lookFlag = player_said_any("look", "look at");
-	bool takeFlag = player_said("take");
-	bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
+	const bool lookFlag = player_said_any("look", "look at");
+	const bool takeFlag = player_said("take");
+	const bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
 
 	if (lookFlag && player_said("cartoon")) {
 		if (_G(flags)[V001]) {
@@ -204,8 +216,8 @@ void Room304::parser() {
 			intr_cancel_sentence();
 			hotspot_add_dynamic("x", " ", 0, 0, 1500, 374, 0);
 
-			_flag1 = true;
-			_pu = series_show_sprite(_G(flags)[V000] ? "394pu99" : "304pu99", 0, 0);
+			_closeCartoonFl = true;
+			_cartoonMach = series_show_sprite(_G(flags)[V000] ? "394pu99" : "304pu99", 0, 0);
 			digi_play("304r59", 1);
 		}
 	} else if (_G(kernel).trigger == 749) {
@@ -400,7 +412,7 @@ void Room304::parser() {
 
 void Room304::intrMsg(frac16 myMessage, struct machine *sender) {
 	Room304 *r = static_cast<Room304 *>(g_engine->_activeRoom);
-	auto oldMode = _G(kernel).trigger_mode;
+	const KernelTriggerType oldMode = _G(kernel).trigger_mode;
 
 	if ((myMessage >> 16) == 57) {
 		if ((_G(globals)[GLB_TEMP_1] >> 16) == 1) {
@@ -695,7 +707,7 @@ void Room304::handlingStickAndSword() {
 		ws_hide_walker(_mei);
 
 		_field60 = series_ranged_play_xy("mc hand to chin pos3",
-			1, 0, 0, 17, 29, 295, 100, 0x100, 9);
+			1, 0, 0, 17, 29, 295, 100, 0x100, 9, -1, true);
 		digi_play("304m06", 1, 255, 55);
 		break;
 

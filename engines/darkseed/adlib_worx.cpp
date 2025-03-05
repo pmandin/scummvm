@@ -194,7 +194,7 @@ MidiDriver_Worx_AdLib::MidiDriver_Worx_AdLib(OPL::Config::OplType oplType, int t
 	_instrumentBank = instrumentBank;
 
 	_defaultChannelVolume = 0x7F;
-	_channel10Melodic = true;
+	_rhythmInstrumentMode = RHYTHM_INSTRUMENT_MODE_RHYTHM_TYPE;
 	_instrumentWriteMode = INSTRUMENT_WRITE_MODE_FIRST_NOTE_ON;
 }
 
@@ -202,7 +202,7 @@ MidiDriver_Worx_AdLib::~MidiDriver_Worx_AdLib() {
 	delete[] _instrumentBank;
 }
 
-uint8 MidiDriver_Worx_AdLib::allocateOplChannel(uint8 channel, uint8 source, uint8 instrumentId) {
+uint8 MidiDriver_Worx_AdLib::allocateOplChannel(uint8 channel, uint8 source, InstrumentInfo &instrumentInfo) {
 	uint8 allocatedChannel = 0xFF;
 
 	_allocationMutex.lock();

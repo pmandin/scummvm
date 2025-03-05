@@ -197,19 +197,9 @@ public:
 		int32 commentStrOffset;
 	};
 
-	enum class HotSpotType {
-		undefined = MKTAG('u','n','d','f'),
-		anim = MKTAG('a','n','i','m'),
-		cnod = MKTAG('c','n','o','d'),
-		link = MKTAG('l','i','n','k'),
-		navg = MKTAG('n','a','v','g'),
-		soun = MKTAG('s','o','u','n'),
-		cmov = MKTAG('c','m','o','v'),
-	};
-
 	struct PanoHotSpot {
 		uint16 id;
-		HotSpotType type;
+		uint32 type;
 		uint32 typeData; // for link and navg, the ID in the link and navg table
 
 		// Canonical view for this hotspot
@@ -273,11 +263,12 @@ public:
 	struct PanoNavigation {
 		uint16 id;
 
-		uint32 hPan;
-		uint32 vPan;
-		uint32 zoom;
+		// Info for Navigable Movie Controller
+		float navgHPan;	// the object's orientation in the scene
+		float navgVPan;
+		float navgZoom;
 
-		Rect rect; // Starting rect for zoom out transitions
+		Rect zoomRect; // Starting rect for zoom out transitions
 
 		// Values to set at the destination node
 		int32 nameStrOffset;

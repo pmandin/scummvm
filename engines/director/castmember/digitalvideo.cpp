@@ -19,6 +19,8 @@
  *
  */
 
+#include "common/macresman.h"
+
 #include "graphics/paletteman.h"
 #include "graphics/surface.h"
 #include "graphics/macgui/macwidget.h"
@@ -68,6 +70,7 @@ DigitalVideoCastMember::DigitalVideoCastMember(Cast *cast, uint16 castId, Common
 	_crop = !(_vflags & 0x02);
 	_center = _vflags & 0x01;
 	_dirty = false;
+	_emptyFile = false;
 
 	if (debugChannelSet(2, kDebugLoading))
 		_initialRect.debugPrint(2, "DigitalVideoCastMember(): rect:");
@@ -156,10 +159,23 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 	bool result = _video->loadFile(location);
 	if (!result) {
 		delete _video;
+		_video = nullptr;
+
+		// Probe for empty file
+		Common::MacResManager mgr;
+		if (mgr.open(location)) {
+			if (!mgr.hasDataFork()) {
+				debugC(8, kDebugLevelGVideo, "DigitalVideoCastMember::loadVideo(): skipping empty stream");
+				_emptyFile = true;
+			}
+
+			return false;
+		}
+
 		_video = new Video::AVIDecoder();
 		result = _video->loadFile(location);
 		if (!result) {
-		    warning("DigitalVideoCastMember::loadVideo(): format not supported, skipping");
+		    warning("DigitalVideoCastMember::loadVideo(): format not supported, skipping video '%s'", path.c_str());
 		    delete _video;
 		    _video = nullptr;
 		} else {
@@ -178,6 +194,12 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 	}
 
 	_duration = getMovieTotalTime();
+
+	if (_video) {
+		// Setting the initial rect to the actual movie dimensions
+		_initialRect.setWidth(_video->getWidth());
+		_initialRect.setHeight(_video->getHeight());
+	}
 
 	return result;
 }
@@ -237,7 +259,8 @@ void DigitalVideoCastMember::startVideo() {
 
 void DigitalVideoCastMember::stopVideo() {
 	if (!_video || !_video->isVideoLoaded()) {
-		warning("DigitalVideoCastMember::stopVideo: No video decoder");
+		if (!_emptyFile)
+			warning("DigitalVideoCastMember::stopVideo: No video decoder");
 		return;
 	}
 
@@ -248,7 +271,8 @@ void DigitalVideoCastMember::stopVideo() {
 
 void DigitalVideoCastMember::rewindVideo() {
 	if (!_video || !_video->isVideoLoaded()) {
-		warning("DigitalVideoCastMember::rewindVideo: No video decoder");
+		if (!_emptyFile)
+			warning("DigitalVideoCastMember::rewindVideo: No video decoder");
 		return;
 	}
 
@@ -258,6 +282,9 @@ void DigitalVideoCastMember::rewindVideo() {
 }
 
 Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) {
+	if (_emptyFile)
+		return nullptr;
+
 	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
 
 	_channel = channel;
@@ -283,7 +310,7 @@ Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Ch
 
 	const Graphics::Surface *frame = _video->decodeNextFrame();
 
-	debugC(1, kDebugImages, "Video time: %d  rate: %f", _channel->_movieTime, _channel->_movieRate);
+	debugC(1, kDebugImages, "Video time: %d  rate: %f frame: %p dims: %d x %d", _channel->_movieTime, _channel->_movieRate, (const void *)frame, bbox.width(), bbox.height());
 
 	if (frame) {
 		if (_lastFrame) {

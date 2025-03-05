@@ -73,10 +73,10 @@ void Room207::init() {
 		_fieldA8 = 0;
 		_pipeFlag = false;
 		_fieldAE_rnd = 1;
-		_fieldB2 = false;
+		_peasantShoutingFl = false;
 	}
 
-	_fieldB6_counter = 0;
+	_guardComingDelay = 0;
 	digi_preload("950_s02", -1);
 	digi_preload("950_s03", -1);
 	digi_preload("950_s04", -1);
@@ -153,7 +153,7 @@ void Room207::init() {
 				hotspot_set_active("PEASANT", false);
 				Common::strcpy_s(_G(player).verb, "xxx");
 				Common::strcpy_s(_G(player).noun, "xxx");
-				_fieldB6_counter = 0;
+				_guardComingDelay = 0;
 				kernel_timing_trigger(60, 40);
 			}
 
@@ -231,7 +231,7 @@ void Room207::pre_parser() {
 			} else if (player_said(" ", "METAL RIM")) {
 				Common::strcpy_s(_G(player).verb, "take");
 				Common::strcpy_s(_G(player).noun, "METAL RIM");
-				_fieldB2 = false;
+				_peasantShoutingFl = false;
 			}
 		}
 
@@ -248,9 +248,9 @@ void Room207::pre_parser() {
 			} else if (player_said("take", "METAL RIM") && inv_object_is_here("METAL RIM")) {
 				Common::strcpy_s(_G(player).verb, "take");
 				Common::strcpy_s(_G(player).noun, "SPLEEN");
-			} else if (player_said(" ", "WHEEL")) {
+			} else if (player_said("take", "WHEEL")) {
 				Common::strcpy_s(_G(player).verb, "take");
-				Common::strcpy_s(_G(player).noun, "METAL RIM");
+				Common::strcpy_s(_G(player).noun, "SPLEEN");
 			} else if (player_said("take", "SEVEN SPOKES") && inv_object_is_here("SEVEN SPOKES")) {
 				Common::strcpy_s(_G(player).verb, "take");
 				Common::strcpy_s(_G(player).noun, "SPLEEN");
@@ -260,11 +260,11 @@ void Room207::pre_parser() {
 			} else if (player_said("LEAD PIPE", "PIPES") || player_said("LEAD PIPE", " ")) {
 				Common::strcpy_s(_G(player).verb, "take");
 				Common::strcpy_s(_G(player).noun, "pipes");
-				_fieldB2 = false;
+				_peasantShoutingFl = false;
 			}
 
 		}
-	} // if (_fieldAA)
+	} // if (_pipeFlag)
 
 	if (takeFl && player_said("PIPES") && inv_object_is_here("LEAD PIPE") && _G(flags)[V061] == 0) {
 		_G(player).need_to_walk = false;
@@ -355,7 +355,7 @@ void Room207::parser() {
 			break;
 
 		case 4:
-			series_ranged_play_xy("rip trek low reacher pos1", 1, 2, 0, 9, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 512, 6, 6, false);
+			series_ranged_play_xy("rip trek low reacher pos1", 1, 2, 0, 9, _G(player_info).x, _G(player_info).y, _G(player_info).scale, 512, 5, 5, false);
 			_peasantShould = 0;
 
 			break;
@@ -738,8 +738,8 @@ void Room207::parser() {
 			case 6:
 				_peasantShould = 2;
 				player_set_commands_allowed(true);
-				_fieldB6_counter = 0;
-				_fieldB2 = true;
+				_guardComingDelay = 0;
+				_peasantShoutingFl = true;
 				_G(kernel).trigger_mode = KT_DAEMON;
 				kernel_timing_trigger(60, 40, nullptr);
 				break;
@@ -827,8 +827,8 @@ void Room207::parser() {
 				hotspot_set_active(_G(currentSceneDef).hotspots, "METAL RIM", false);
 				_peasantShould = 2;
 				player_set_commands_allowed(true);
-				_fieldB6_counter = 0;
-				_fieldB2 = true;
+				_guardComingDelay = 0;
+				_peasantShoutingFl = true;
 				_G(kernel).trigger_mode = KT_DAEMON;
 				kernel_timing_trigger(60, 40, nullptr);
 
@@ -1226,9 +1226,9 @@ void Room207::daemon() {
 		break;
 
 	case 40:
-		if (_fieldB2) {
-			++_fieldB6_counter;
-			if (_fieldB6_counter < 20) {
+		if (_peasantShoutingFl) {
+			++_guardComingDelay;
+			if (_guardComingDelay < 20) {
 				kernel_timing_trigger(60, 40, nullptr);
 			} else {
 				other_save_game_for_resurrection();
@@ -1318,7 +1318,7 @@ void Room207::daemon() {
 				else
 					sendWSMessage_10000(1, _ppSquatMach, _peskyPointsRipBackgroundSeries, 17, 17, 100, _peskyPointsRipBackgroundSeries, 17, 17, 1);
 				_peasantMode = 3;
-			} else { // _field92 != 2 && _field92 != 3
+			} else { // _peasantShould != 2 && _peasantShould != 3
 				if (_ripForegroundFl)
 					sendWSMessage_10000(1, _ppSquatMach, _peskyPointsRipForegroundSeries, 18, 1, 115, _peskyRockLoopSeries, 1, 1, 0);
 				else
@@ -1595,8 +1595,8 @@ void Room207::daemon() {
 		player_set_commands_allowed(true);
 		_pipeFlag = true;
 		kernel_timing_trigger(1, 100, nullptr);
-		_fieldB6_counter = 0;
-		_fieldB2 = true;
+		_guardComingDelay = 0;
+		_peasantShoutingFl = true;
 		kernel_timing_trigger(60, 40, nullptr);
 
 		break;

@@ -37,6 +37,9 @@
 #include "dgds/sound/music.h"
 #include "dgds/sound/resource/sci_resource.h"
 
+#include "common/debug.h"
+
+
 namespace Dgds {
 
 static const uint16 SIGNAL_OFFSET = 0xffff;
@@ -484,6 +487,25 @@ void Sound::stopMusicOrSFX(int num) {
 	}
 }
 
+void Sound::pauseMusicOrSFX(int num) {
+	if (_musicIdMap.contains(num)) {
+		// NOTE: We assume there is only ever one music here..
+		_music->pauseMusic();
+	} else {
+		warning("Sound: TODO: Implement pause SFX %d", num);
+	}
+}
+
+void Sound::unpauseMusicOrSFX(int num) {
+	if (_musicIdMap.contains(num)) {
+		// NOTE: We assume there is only ever one music here..
+		_music->resumeMusic();
+	} else {
+		warning("Sound: TODO: Implement unpause SFX %d", num);
+	}
+}
+
+
 void Sound::processInitSound(uint32 obj, const SoundData &data, Audio::Mixer::SoundType soundType) {
 	// Check if a track with the same sound object is already playing
 	MusicEntry *oldSound = _music->getSlot(obj);
@@ -495,13 +517,13 @@ void Sound::processInitSound(uint32 obj, const SoundData &data, Audio::Mixer::So
 	newSound->resourceId = obj;
 	newSound->soundObj = obj;
 	newSound->loop = 0; // set in processPlaySound
-	newSound->overridePriority = false;
+	newSound->overridePriority = true;
 	newSound->priority = 255;
 	newSound->volume = MUSIC_VOLUME_DEFAULT;
 	newSound->reverb = -1;	// initialize to SCI invalid, it'll be set correctly in soundInitSnd() below
 
-	debug(10, "processInitSound: %08x number %d, loop %d, prio %d, vol %d", obj,
-			obj, newSound->loop, newSound->priority, newSound->volume);
+	//debug(10, "processInitSound: %08x number %d, loop %d, prio %d, vol %d", obj,
+	//		obj, newSound->loop, newSound->priority, newSound->volume);
 
 	initSoundResource(newSound, data, soundType);
 
@@ -590,7 +612,8 @@ void Sound::processPlaySound(uint32 obj, bool playBed, bool restoring, const Sou
 	if (!musicSlot->overridePriority && resourcePriority != 0xFF) {
 		musicSlot->priority = resourcePriority;
 	} else {
-		musicSlot->priority = 255;
+		// Set higher priority on music than sounds.
+		musicSlot->priority = (musicSlot->soundType == Audio::Mixer::kMusicSoundType ? 255 : 127);
 	}
 
 	// Reset hold when starting a new song. kDoSoundSetHold is always called after
@@ -617,15 +640,25 @@ void Sound::playPCSound(int num, const Common::Array<SoundData> &dataArray, Audi
 			playPCM(data._data, data._size);
 		} else {
 			int idOffset = soundType == Audio::Mixer::kSFXSoundType ? SND_RESOURCE_OFFSET : MUSIC_RESOURCE_OFFSET;
+			int soundId = num + idOffset;
 
 			// Only play one music at a time, don't play sfx if sfx muted.
-			if (soundType == Audio::Mixer::kMusicSoundType)
+			if (soundType == Audio::Mixer::kMusicSoundType) {
+				MusicEntry *currentMusic = _music->getSlot(soundId);
+				//
+				// Don't change music if we are already playing the same track.  This happens
+				// when walking through the house in Willy Beamish where all the rooms have
+				// the same music track.
+				//
+				if (currentMusic && currentMusic->status == kSoundPlaying)
+					return;
 				stopMusic();
-			else if (soundType == Audio::Mixer::kSFXSoundType && _isSfxMuted)
+			} else if (soundType == Audio::Mixer::kSFXSoundType && _isSfxMuted) {
 				return;
+			}
 
-			processInitSound(num + idOffset, data, soundType);
-			processPlaySound(num + idOffset, false, false, data);
+			processInitSound(soundId, data, soundType);
+			processPlaySound(soundId, false, false, data);
 
 			// Immediately pause new music if muted
 			if (_isMusicMuted && soundType == Audio::Mixer::kMusicSoundType)

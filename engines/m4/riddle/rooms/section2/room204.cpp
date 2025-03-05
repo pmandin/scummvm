@@ -372,7 +372,7 @@ void Room204::parser() {
 
 		if (lookFl && player_said("SHIH CHI TABLETS")) {
 			player_update_info(_G(my_walker), &_G(player_info));
-			if (_G(player_info).x >= 1300) {
+			if (_G(player_info).x < 1300) {
 				_meiMachineFlag = false;
 				_fieldE4_walkerDestX = 1245;
 				moveAndLookFl = true;
@@ -993,6 +993,7 @@ done:
 }
 
 void Room204::daemon() {
+	warning("Trigger %d", _G(kernel).trigger);
 	switch (_G(kernel).trigger) {
 	case 5:
 		digi_play("204r47", 1, 255, -1, -1);
@@ -2410,7 +2411,6 @@ void Room204::daemon() {
 	case 675:
 		player_set_commands_allowed(false);
 		digi_preload("950_s34", -1);
-		CompactMem();
 		midi_play("RIPTHEM1", 180, 0, -1, 949);
 		_204pu99Series = series_load("204PU99", -1, nullptr);
 		_ripSketchingInNotebookPos2Series = series_load("RIP SKETCHING IN NOTEBOOK POS 2", -1, nullptr);

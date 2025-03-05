@@ -34,6 +34,8 @@
 #include "common/keyboard.h"
 #include "common/scummsys.h"
 
+#include "graphics/transform_tools.h"
+
 #include "video/video_decoder.h"
 
 namespace Common {
@@ -76,19 +78,25 @@ public:
 	void enableEditListBoundsCheckQuirk(bool enable) { _enableEditListBoundsCheckQuirk = enable; }
 	Common::String getAliasPath();
 
+	////////////////
+	// QTVR stuff
+	////////////////
 	void setTargetSize(uint16 w, uint16 h);
 
 	void handleMouseMove(int16 x, int16 y);
 	void handleMouseButton(bool isDown, int16 x = -1, int16 y = -1, bool repeat = false);
 	void handleKey(Common::KeyState &state, bool down, bool repeat = false);
 
+	Common::Point getLastClick() { return _mouseDrag; }
+
 	float getPanAngle() const { return _panAngle; }
-	void setPanAngle(float panAngle) { _panAngle = panAngle; }
+	void setPanAngle(float panAngle);
 	float getTiltAngle() const { return _tiltAngle; }
-	void setTiltAngle(float tiltAngle) { _tiltAngle = tiltAngle; }
+	void setTiltAngle(float tiltAngle);
 	float getFOV() const { return _fov; }
 	bool setFOV(float fov);
 	int getCurrentNodeID() { return _currentSample == -1 ? 0 : _panoTrack->panoSamples[_currentSample].hdr.nodeID; }
+	Common::String getCurrentNodeName();
 
 	int getCurrentRow() { return _nextVideoTrack->getCurFrame() / _nav.columns; }
 	void setCurrentRow(int row);
@@ -98,15 +106,32 @@ public:
 	int getZoomState() { return _zoomState; }
 
 	const PanoHotSpot *getRolloverHotspot() { return _rolloverHotspot; }
+	int getRolloverHotspotID() { return _rolloverHotspotID; }
 	const PanoHotSpot *getClickedHotspot() { return _clickedHotspot; }
+	int getClickedHotspotID() { return _clickedHotspotID; }
+	Common::Point getPanLoc(int16 x, int16 y);
+	Graphics::FloatPoint getPanAngles(int16 x, int16 y);
+
+	Common::String getHotSpotName(int id);
+	void setClickedHotSpot(int id);
+	const PanoHotSpot *getHotSpotByID(int id);
+	const PanoNavigation *getHotSpotNavByID(int id);
 
 	void nudge(const Common::String &direction);
 
 	bool isVR() const { return _isVR; }
 	QTVRType getQTVRType() const { return _qtvrType; }
 
-	uint8 getWarpMode() const { return _warpMode; }
-	void setWarpMode(uint8 warpMode) { _warpMode = warpMode; }
+	int getWarpMode() const { return _warpMode; }
+	void setWarpMode(int warpMode);
+	float getQuality() const { return _quality; }
+	void setQuality(float quality);
+	Common::String getTransitionMode() const { return _transitionMode == kTransitionModeNormal ? "normal" : "swing"; }
+	void setTransitionMode(Common::String mode);
+	float getTransitionSpeed() const { return _transitionSpeed; }
+	void setTransitionSpeed(float speed);
+	Common::String getUpdateMode() const;
+	void setUpdateMode(Common::String mode);
 
 	void renderHotspots(bool mode);
 
@@ -159,7 +184,7 @@ private:
 public:
 	int _currentSample = -1;
 	Common::Point _prevMouse;
-	bool _isMouseButtonDown;
+	bool _isMouseButtonDown = false;
 	Common::Point _mouseDrag;
 
 	bool _isKeyDown = false;
@@ -171,6 +196,15 @@ public:
 		kZoomIn,
 		kZoomOut,
 		kZoomLimit,
+
+		kTransitionModeNormal,
+		kTransitionModeSwing,
+
+		kUpdateModeNormal,
+		kUpdateModeUpdateBoth,
+		kUpdateModeOffscreenOnly,
+		kUpdateModeFromOffscreen,
+		kUpdateModeDirectToScreen,
 	};
 
 private:
@@ -181,9 +215,13 @@ private:
 	Graphics::Cursor **_cursorCache = nullptr;
 	int _cursorDirMap[256];
 
-	bool _isVR;
+	bool _isVR = false;
 
-	uint8 _warpMode; // (2 | 1 | 0) for 2-d, 1-d or no warping
+	uint8 _warpMode = 2; // (2 | 1 | 0) for 2-d, 1-d or no warping
+	float _quality = 0.0f;
+	int _transitionMode = kTransitionModeNormal;
+	float _transitionSpeed = 1.0f;
+	int _updateMode = kUpdateModeNormal;
 
 	float _panAngle = 0.0f;
 	float _tiltAngle = 0.0f;
@@ -193,7 +231,9 @@ private:
 	bool _repeatTimerActive = false;
 
 	const PanoHotSpot *_rolloverHotspot = nullptr;
+	int _rolloverHotspotID = 0;
 	const PanoHotSpot *_clickedHotspot = nullptr;
+	int _clickedHotspotID = 0;
 	bool _renderHotspots = false;
 
 	Graphics::Surface *_scaledSurface;
@@ -359,12 +399,7 @@ private:
 		void constructPanorama();
 		Graphics::Surface *constructMosaic(VideoTrackHandler *track, uint w, uint h, Common::String fname);
 
-		int lookupHotspot(int16 x, int16 y);
-
-		float getPanAngle() { return _curPanAngle; }
-		void setPanAngle(float angle);
-		float getTiltAngle() { return _curTiltAngle; }
-		void setTiltAngle(float angle);
+		Common::Point projectPoint(int16 x, int16 y);
 
 		void setDirty() { _dirty = true; }
 
@@ -376,15 +411,14 @@ private:
 
 		const Graphics::Surface *bufferNextFrame();
 
+	public:
 		Graphics::Surface *_constructedPano;
 		Graphics::Surface *_constructedHotspots;
 		Graphics::Surface *_projectedPano;
 		Graphics::Surface *_planarProjection;
 
+	private:
 		bool _isPanoConstructed;
-
-		float _curPanAngle;
-		float _curTiltAngle;
 
 		bool _dirty;
 	};

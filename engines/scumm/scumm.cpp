@@ -201,6 +201,13 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		}
 	}
 
+	if (_game.platform == Common::kPlatformSegaCD) {
+		ConfMan.registerDefault("enable_sega_shadow_mode", false);
+		if (ConfMan.hasKey("enable_sega_shadow_mode", _targetName)) {
+			_enableSegaShadowMode = ConfMan.getBool("enable_sega_shadow_mode");
+		}
+	}
+
 	if (ConfMan.hasKey("gamma_correction", _targetName)) {
 		_useGammaCorrection = ConfMan.getBool("gamma_correction");
 	}
@@ -1273,7 +1280,9 @@ Common::Error ScummEngine::init() {
 			{ GID_DIG,      "The Dig"                  },
 			{ GID_DIG,      "The Dig Demo"             },
 			{ GID_FT,       "Full Throttle"            },
-			{ GID_FT,       "Full Throttle Demo"       }
+			{ GID_FT,       "Full Throttle Demo"       },
+			{ GID_FT,       "Vollgas"                  },
+			{ GID_FT,       "Vollgas Demo"             }
 		};
 
 		bool macScumm = false;

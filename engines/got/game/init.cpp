@@ -74,6 +74,10 @@ void setupPlayer() {
 }
 
 void initGame() {
+	if (_G(area) == 2)
+		_G(thorInfo)._armor = 1;
+	if (_G(area) == 3)
+		_G(thorInfo)._armor = 10;
 	loadStandardActors();
 	setupPlayer();
 
@@ -106,7 +110,6 @@ void initGame() {
 	_G(newLevel) = _G(currentLevel);
 	_G(scrn).load(_G(currentLevel));
 	showLevel(_G(currentLevel));
-	_G(sound).musicPlay(_G(levelMusic), true);
 
 	g_vars->resetEndGameFlags();
 	_G(startup) = false;

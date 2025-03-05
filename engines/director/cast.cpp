@@ -45,6 +45,7 @@
 #include "director/castmember/filmloop.h"
 #include "director/castmember/movie.h"
 #include "director/castmember/palette.h"
+#include "director/castmember/richtext.h"
 #include "director/castmember/script.h"
 #include "director/castmember/shape.h"
 #include "director/castmember/sound.h"
@@ -277,8 +278,8 @@ bool Cast::duplicateCastMember(CastMember *source, CastMemberInfo *info, int tar
 	case kCastText:
 		target = (CastMember *)(new TextCastMember(this, targetId, *(TextCastMember *)source));
 		break;
-	case kCastRTE:
-		target = (CastMember *)(new RTECastMember(this, targetId, *(RTECastMember *)source));
+	case kCastRichText:
+		target = (CastMember *)(new RichTextCastMember(this, targetId, *(RichTextCastMember *)source));
 		break;
 	case kCastTransition:
 		target = (CastMember *)(new TransitionCastMember(this, targetId, *(TransitionCastMember *)source));
@@ -1077,9 +1078,9 @@ void Cast::loadCastData(Common::SeekableReadStreamEndian &stream, uint16 id, Res
 		debugC(3, kDebugLoading, "Cast::loadCastData(): loading kCastLingoScript");
 		_loadedCast->setVal(id, new ScriptCastMember(this, id, castStream, _version));
 		break;
-	case kCastRTE:
-		debugC(3, kDebugLoading, "Cast::loadCastData(): loading kCastRTE (%d children)", res->children.size());
-		_loadedCast->setVal(id, new RTECastMember(this, id, castStream, _version));
+	case kCastRichText:
+		debugC(3, kDebugLoading, "Cast::loadCastData(): loading kCastRichText (%d children)", res->children.size());
+		_loadedCast->setVal(id, new RichTextCastMember(this, id, castStream, _version));
 		break;
 	case kCastDigitalVideo:
 		debugC(3, kDebugLoading, "Cast::loadCastData(): loading kCastDigitalVideo (%d children)", res->children.size());
@@ -1365,7 +1366,49 @@ void Cast::loadCastInfo(Common::SeekableReadStreamEndian &stream, uint16 id) {
 	// adding tons of ifs, we use this switch()
 	switch (castInfo.strings.size()) {
 	default:
-		warning("Cast::loadCastInfo(): BUILDBOT: extra %d strings", castInfo.strings.size() - 8);
+		warning("Cast::loadCastInfo(): BUILDBOT: extra %d strings for castid %d", castInfo.strings.size() - 15, id);
+		// fallthrough
+	case 15:
+		if (castInfo.strings[14].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 14, id);
+			Common::hexdump(castInfo.strings[14].data, castInfo.strings[14].len);
+		}
+		// fallthrough
+	case 14:
+		if (castInfo.strings[13].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 13, id);
+			Common::hexdump(castInfo.strings[13].data, castInfo.strings[13].len);
+		}
+		// fallthrough
+	case 13:
+		if (castInfo.strings[12].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 12, id);
+			Common::hexdump(castInfo.strings[12].data, castInfo.strings[12].len);
+		}
+		// fallthrough
+	case 12:
+		if (castInfo.strings[11].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 11, id);
+			Common::hexdump(castInfo.strings[11].data, castInfo.strings[11].len);
+		}
+		// fallthrough
+	case 11:
+		if (castInfo.strings[10].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 11, id);
+			Common::hexdump(castInfo.strings[10].data, castInfo.strings[10].len);
+		}
+		// fallthrough
+	case 10:
+		if (castInfo.strings[9].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 10, id);
+			Common::hexdump(castInfo.strings[9].data, castInfo.strings[9].len);
+		}
+		// fallthrough
+	case 9:
+		if (castInfo.strings[8].len) {
+			warning("Cast::loadCastInfo(): BUILDBOT: string #%d for castid %d", 9, id);
+			Common::hexdump(castInfo.strings[8].data, castInfo.strings[8].len);
+		}
 		// fallthrough
 	case 8:
 		if (castInfo.strings[7].len) {

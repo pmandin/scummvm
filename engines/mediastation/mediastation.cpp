@@ -40,7 +40,6 @@ MediaStationEngine::MediaStationEngine(OSystem *syst, const ADGameDescription *g
 	_gameDescription(gameDesc),
 	_randomSource("MediaStation") {
 	g_engine = this;
-	_mixer = g_system->getMixer();
 
 	_gameDataDir = Common::FSNode(ConfMan.getPath("path"));
 	SearchMan.addDirectory(_gameDataDir, 0, 3);
@@ -126,14 +125,11 @@ bool MediaStationEngine::isFirstGenerationEngine() {
 }
 
 Common::Error MediaStationEngine::run() {
-	// INITIALIZE SUBSYSTEMS.
-	// All Media Station games run at 640x480.
 	initGraphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 	_screen = new Graphics::Screen();
 	// TODO: Determine if all titles blank the screen to 0xff.
 	_screen->fillRect(Common::Rect(SCREEN_WIDTH, SCREEN_HEIGHT), 0xff);
 
-	// LOAD BOOT.STM.
 	Common::Path bootStmFilepath = Common::Path("BOOT.STM");
 	_boot = new Boot(bootStmFilepath);
 
@@ -146,7 +142,15 @@ Common::Error MediaStationEngine::run() {
 	}
 	_cursor->showCursor();
 
-	_requestedScreenBranchId = _boot->_entryContextId;
+    if (ConfMan.hasKey("entry_context")) {
+		// For development purposes, we can choose to start at an arbitrary context
+		// in this title. This might not work in all cases.
+        uint entryContextId = ConfMan.get("entry_context").asUint64();
+        warning("Starting at user-requested context %d", entryContextId);
+		_requestedScreenBranchId = entryContextId;
+	} else {
+		_requestedScreenBranchId = _boot->_entryContextId;
+	}
 	doBranchToScreen();
 
 	while (true) {
@@ -180,17 +184,16 @@ Common::Error MediaStationEngine::run() {
 		g_system->delayMillis(10);
 	}
 
-	// CLEAN UP.
 	return Common::kNoError;
 }
 
 void MediaStationEngine::processEvents() {
-	while (g_system->getEventManager()->pollEvent(e)) {
+	while (g_system->getEventManager()->pollEvent(_event)) {
 		debugC(9, kDebugEvents, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		debugC(9, kDebugEvents, "@@@@   Processing events");
 		debugC(9, kDebugEvents, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
-		switch (e.type) {
+		switch (_event.type) {
 		case Common::EVENT_QUIT: {
 			// TODO: Do any necessary clean-up.
 			return;
@@ -206,16 +209,16 @@ void MediaStationEngine::processEvents() {
 			Common::Point mousePos = g_system->getEventManager()->getMousePos();
 			Asset *hotspot = findAssetToAcceptMouseEvents(mousePos);
 			if (hotspot != nullptr) {
-				debugC(1, kDebugEvents, "EVENT_KEYDOWN (%d): Sent to hotspot %d", e.kbd.ascii, hotspot->getHeader()->_id);
-				hotspot->runKeyDownEventHandlerIfExists(e.kbd);
+				debugC(1, kDebugEvents, "EVENT_KEYDOWN (%d): Sent to hotspot %d", _event.kbd.ascii, hotspot->getHeader()->_id);
+				hotspot->runKeyDownEventHandlerIfExists(_event.kbd);
 			}
 			break;
 		}
 
 		case Common::EVENT_LBUTTONDOWN: {
-			Asset *hotspot = findAssetToAcceptMouseEvents(e.mouse);
+			Asset *hotspot = findAssetToAcceptMouseEvents(_event.mouse);
 			if (hotspot != nullptr) {
-				debugC(1, kDebugEvents, "EVENT_LBUTTONDOWN (%d, %d): Sent to hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+				debugC(1, kDebugEvents, "EVENT_LBUTTONDOWN (%d, %d): Sent to hotspot %d", _event.mouse.x, _event.mouse.y, hotspot->getHeader()->_id);
 				hotspot->runEventHandlerIfExists(kMouseDownEvent);
 			}
 			break;
@@ -226,11 +229,11 @@ void MediaStationEngine::processEvents() {
 			// Station engine doesn't seem to use the right button itself.
 			warning("EVENT_RBUTTONDOWN: Quitting for development purposes");
 			quitGame();
-		}
-
-		default: {
 			break;
 		}
+
+		default:
+			break;
 		}
 	}
 }
@@ -253,11 +256,11 @@ void MediaStationEngine::refreshActiveHotspot() {
 	if (hotspot != _currentHotspot) {
 		if (_currentHotspot != nullptr) {
 			_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
-			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", e.mouse.x, e.mouse.y, _currentHotspot->getHeader()->_id);
+			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", _event.mouse.x, _event.mouse.y, _currentHotspot->getHeader()->_id);
 		}
 		_currentHotspot = hotspot;
 		if (hotspot != nullptr) {
-			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Entered hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Entered hotspot %d", _event.mouse.x, _event.mouse.y, hotspot->getHeader()->_id);
 			setCursor(hotspot->getHeader()->_cursorResourceId);
 			hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
 		} else {
@@ -267,7 +270,7 @@ void MediaStationEngine::refreshActiveHotspot() {
 	}
 
 	if (hotspot != nullptr) {
-		debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Sent to hotspot %d", e.mouse.x, e.mouse.y, hotspot->getHeader()->_id);
+		debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Sent to hotspot %d", _event.mouse.x, _event.mouse.y, hotspot->getHeader()->_id);
 		hotspot->runEventHandlerIfExists(kMouseMovedEvent);
 	}
 }
@@ -307,7 +310,7 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 		return _loadedContexts.getVal(contextId);
 	}
 
-	// GET THE FILE ID.
+	// Get the file ID.
 	SubfileDeclaration *subfileDeclaration = _boot->_subfileDeclarations.getValOrDefault(contextId);
 	if (subfileDeclaration == nullptr) {
 		error("MediaStationEngine::loadContext(): Couldn't find subfile declaration with ID %d", contextId);
@@ -321,7 +324,7 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 	}
 	uint32 fileId = subfileDeclaration->_fileId;
 
-	// GET THE FILENAME.
+	// Get the filename.
 	FileDeclaration *fileDeclaration = _boot->_fileDeclarations.getValOrDefault(fileId);
 	if (fileDeclaration == nullptr) {
 		warning("MediaStationEngine::loadContext(): Couldn't find file declaration with ID 0x%x", fileId);
@@ -399,9 +402,8 @@ Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Ope
 		return Operand();
 	}
 
-	default: {
-		error("MediaStationEngine::callMethod(): Got unimplemented method ID %d", static_cast<uint>(methodId));
-	}
+	default:
+		error("MediaStationEngine::callMethod(): Got unimplemented method ID %s (%d)", builtInMethodToStr(methodId), static_cast<uint>(methodId));
 	}
 }
 
@@ -496,9 +498,8 @@ Operand MediaStationEngine::callBuiltInFunction(BuiltInFunction function, Common
 		return Operand();
 	}
 
-	default: {
-		error("MediaStationEngine::callBuiltInFunction(): Got unknown built-in function %s (%d)", builtInFunctionToStr(function), function);
-	}
+	default:
+		error("MediaStationEngine::callBuiltInFunction(): Got unknown built-in function %s (%d)", builtInFunctionToStr(function), static_cast<uint>(function));
 	}
 }
 

@@ -712,7 +712,6 @@ void Room305::parser() {
 				break;
 			default:
 				goto next1;
-				break;
 			}
 		}
 	} else {
@@ -800,7 +799,6 @@ next2:
 
 		default:
 			goto next3;
-			break;
 		}
 	} else {
 		goto next3;
@@ -883,7 +881,6 @@ next3:
 
 		default:
 			goto next4;
-			break;
 		}
 	} else {
 		goto next4;
@@ -995,7 +992,7 @@ next4:
 			else
 				setGlobals4(_suit1, 17, 17, 17);
 
-			sendWSMessage_C0000(0);
+			sendWSMessage_C0000(_G(my_walker), 0);
 
 			if (_G(flags)[V087]) {
 				digi_play("305r31", 1, 255, 2);
@@ -1009,7 +1006,7 @@ next4:
 			break;
 
 		case 2:
-			sendWSMessage_B0000(3);
+			sendWSMessage_B0000(_G(my_walker), 3);
 			break;
 
 		case 3:
@@ -1033,12 +1030,12 @@ next4:
 				setGlobals4(_lookUp, 7, 7, 7);
 			}
 
-			sendWSMessage_C0000(0);
+			sendWSMessage_C0000(_G(my_walker), 0);
 			digi_play("305r13", 1, 255, 2);
 			break;
 
 		case 2:
-			sendWSMessage_B0000(3);
+			sendWSMessage_B0000(_G(my_walker), 3);
 			break;
 
 		case 3:
@@ -1112,12 +1109,12 @@ next4:
 			else
 				setGlobals4(_suit1, 17, 17, 17);
 
-			sendWSMessage_C0000(0);
+			sendWSMessage_C0000(_G(my_walker), 0);
 			digi_play("305r14", 1, 255, 2);
 			break;
 
 		case 2:
-			sendWSMessage_B0000(3);
+			sendWSMessage_B0000(_G(my_walker), 3);
 			break;
 
 		case 3:
@@ -1141,16 +1138,17 @@ next4:
 				setGlobals4(_lookUp, 7, 7, 7);
 			}
 
-			sendWSMessage_C0000(0);
+			sendWSMessage_C0000(_G(my_walker), 0);
 			digi_play("305r12", 1, 255, 2);
 			break;
 
 		case 2:
-			sendWSMessage_B0000(3);
+			sendWSMessage_B0000(_G(my_walker), 3);
 			break;
 
 		case 3:
 			series_unload(_lookUp);
+			player_set_commands_allowed(true);
 			break;
 
 		default:

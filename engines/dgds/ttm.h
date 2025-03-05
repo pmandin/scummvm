@@ -41,7 +41,7 @@ class TTMEnviro : public ScriptParserData {
 public:
 	TTMEnviro() : _totalFrames(330), _enviro(0), _creditScrollMeasure(0),
 			_creditScrollYOffset(0), _xOff(0), _yOff(0), _xScroll(0), _yScroll(0),
-			ScriptParserData() {
+			_lastSelectedSample(0), ScriptParserData() {
 		ARRAYCLEAR(_scriptPals);
 	}
 
@@ -65,6 +65,7 @@ public:
 	int16 _xScroll;
 	int16 _yScroll;
 	Common::SharedPtr<SoundRaw> _soundRaw;
+	int16 _lastSelectedSample;
 };
 
 enum TTMRunType {
@@ -134,7 +135,7 @@ protected:
 	int16 doInitCreditScrollOp(const Image *img);
 	bool doCreditsScrollOp(const Image *img, int16 ygap, int16 ymax, int16 xoff, int16 measuredWidth, const Common::Rect &clipRect);
 	void doDrawDialogForStrings(const TTMEnviro &env, const TTMSeq &seq, int16 x, int16 y, int16 width, int16 height);
-	void doDrawSpriteOp(const TTMEnviro &env, const TTMSeq &seq, uint16 op, byte count, const int16 *ivals, int16 xoff = 0, int16 yoff = 0);
+	void doDrawSpriteOp(const TTMEnviro &env, const TTMSeq &seq, uint16 op, byte count, const int16 *ivals);
 	void doFadeOutOp(int16 colorno, int16 ncolors, int16 targetcol, int16 speed);
 	void doFadeInOp(int16 colorno, int16 ncolors, int16 targetcol, int16 speed);
 

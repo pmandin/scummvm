@@ -142,9 +142,139 @@ void QuickTimeDecoder::renderHotspots(bool mode) {
 	((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->setDirty();
 }
 
+void QuickTimeDecoder::setQuality(float quality) {
+	_quality = quality;
+
+	warning("STUB: Quality mode set to %f", quality);
+
+	// 4.0 Highest quality rendering. The rendered image is fully anti-aliased.
+	//
+	// 2.0 The rendered image is partially anti-aliased.
+	//
+	// 1.0 The rendered image is not anti-aliased.
+	//
+	// 0.0 Images are rendered at quality 1.0 when the user is interactively
+	//     panning or zooming, and are automatically updated at quality
+	//     4.0 during idle time when the user stops panning or zooming.
+	//     All other updates are rendered at quality 4.0.
+
+	((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->setDirty();
+}
+
+void QuickTimeDecoder::setWarpMode(int warpMode) {
+	_warpMode = warpMode;
+
+	warning("STUB: Warp mode set to %d", warpMode);
+
+	// 2 Two-dimensional warping. This produces perspectively correct
+	//   images from a panoramic source picture.
+	//
+	// 1 One-dimensional warping.
+	//
+	// 0 No warping. This reproduces the source panorama directly,
+	//   without warping it at all.
+
+	((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->setDirty();
+}
+
+void QuickTimeDecoder::setTransitionMode(Common::String mode) {
+	if (mode.equalsIgnoreCase("swing"))
+		_transitionMode = kTransitionModeSwing;
+	else
+		_transitionMode = kTransitionModeNormal;
+
+	warning("STUB: Transition mode set to '%s'", getTransitionMode().c_str());
+
+	// normal The new view is imaged and displayed. No transition effect is
+	//        used. The user sees a "cut" from the current view to the new
+	//        view.
+	//
+	// swing  If the new view is in the current node, the view point moves
+	//        smoothly from the current view to the new view, taking the
+	//        shortest path if the panorama wraps around. The speed of the
+	//        swing is controlled by the transitionSpeed property. If the new
+	//        view is in a different node, the new view is imaged and
+	//        displayed with a "normal" transition.
+	((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->setDirty();
+}
+
+void QuickTimeDecoder::setTransitionSpeed(float speed) {
+	_transitionSpeed = speed;
+
+	warning("STUB: Transition Speed set to %f", speed);
+
+	// The TransitionSpeed is a floating point quantity that provides the slowest swing transition
+	// at 1.0 and faster transitions at higher values. On mid-range computers, a rate of 4.0
+	// performs well off CD-ROM.
+	//
+	// If the TransitionSpeed property value is set to a negative number, swing updates will act
+	// the same as normal updates
+
+	((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->setDirty();
+}
+
+Common::String QuickTimeDecoder::getUpdateMode() const {
+	switch (_updateMode) {
+	case kUpdateModeUpdateBoth:
+		return "updateBoth";
+	case kUpdateModeOffscreenOnly:
+		return "offscreenOnly";
+	case kUpdateModeFromOffscreen:
+		return "fromOffscreen";
+	case kUpdateModeDirectToScreen:
+		return "directToScreen";
+	case kUpdateModeNormal:
+	default:
+		return "normal";
+	}
+}
+
+void QuickTimeDecoder::setUpdateMode(Common::String mode) {
+	if (mode.equalsIgnoreCase("updateBoth"))
+		_updateMode = kUpdateModeUpdateBoth;
+	else if (mode.equalsIgnoreCase("offscreenOnly"))
+		_updateMode = kUpdateModeOffscreenOnly;
+	else if (mode.equalsIgnoreCase("fromOffscreen"))
+		_updateMode = kUpdateModeFromOffscreen;
+	else if (mode.equalsIgnoreCase("directToScreen"))
+		_updateMode = kUpdateModeDirectToScreen;
+	else
+		_updateMode = kUpdateModeNormal;
+
+	warning("STUB: Update mode set to '%s'", getUpdateMode().c_str());
+
+	// normal         Images are computed and displayed directly onto the screen
+	//                while interactively panning and zooming. Provides the fastest
+	//                overall frame rate, but individual frame draw times may be
+	//                relatively slow for high-quality images on lower performance
+	//                systems. Programmatic updates are displayed into the offscreen
+	//                buffer, and then onto the screen.
+	//
+	// update         Both Images are computed and displayed into the offscreen buffer,and
+	//                then onto the screen. The use of the back buffer reduces the
+	//                overall frame rate but provides the fastest imaging time for each
+	//                frame.
+	//
+	// offscreenOnly  Images are computed and displayed into the offscreen buffer
+	//                only, and are not copied to the screen. Useful for preparing for a
+	//                screen refresh that will have to happen quickly.
+	//
+	// fromOffscreen  The offscreen buffer is copied directly to the screen. The offscreen
+	//                buffer is refreshed only if it is out of date. The offscreen buffer is
+	//                automatically updated if necessary to keep it in sync with the
+	//                screen image.
+	//
+	// directToScreen Images are computed and displayed directly to the screen,
+	//                without changing the offscreen buffer. Provides the fastest
+	//                overall frame rate, but individual frame draw times may be
+	//                relatively slow for high-quality images on lower performance
+	//                systems.
+	((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->setDirty();
+}
+
 void QuickTimeDecoder::setTargetSize(uint16 w, uint16 h) {
 	if (!isVR())
-		error("QuickTimeDecoder::setTargetSize() called on non-VR movie");
+		warning("QuickTimeDecoder::setTargetSize() called on non-VR movie");
 
 	if (_qtvrType == QTVRType::PANORAMA) {
 		_width = w;
@@ -163,9 +293,48 @@ void QuickTimeDecoder::setTargetSize(uint16 w, uint16 h) {
 	}
 }
 
+void QuickTimeDecoder::setPanAngle(float angle) {
+	PanoSampleDesc *desc = (PanoSampleDesc *)_panoTrack->sampleDescs[0];
+
+	if (desc->_hPanStart != desc->_hPanStart && (desc->_hPanStart != 0.0 || desc->_hPanStart != 360.0)) {
+		if (angle < desc->_hPanStart)
+			angle = desc->_hPanStart + _hfov / 2;
+
+		if (angle > desc->_hPanEnd - _hfov / 2)
+			angle = desc->_hPanStart - _hfov / 2;
+	}
+
+	if (_panAngle != angle) {
+		_panAngle = angle;
+
+		PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
+		track->setDirty();
+	}
+}
+
+void QuickTimeDecoder::setTiltAngle(float angle) {
+	PanoSampleDesc *desc = (PanoSampleDesc *)_panoTrack->sampleDescs[0];
+
+	if (angle < desc->_vPanBottom + _fov / 2)
+		angle = desc->_vPanBottom + _fov / 2;
+
+	if (angle > desc->_vPanTop - _fov / 2)
+		angle = desc->_vPanTop - _fov / 2;
+
+	if (_tiltAngle != angle) {
+		_tiltAngle = angle;
+
+		PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
+		track->setDirty();
+	}
+}
+
 bool QuickTimeDecoder::setFOV(float fov) {
 	PanoSampleDesc *desc = (PanoSampleDesc *)_panoTrack->sampleDescs[0];
 	bool success = true;
+
+	if (fov == 0.0f) // No change
+		return true;
 
 	if (fov <= desc->_minimumZoom) {
 		fov = desc->_minimumZoom;
@@ -189,12 +358,21 @@ bool QuickTimeDecoder::setFOV(float fov) {
 	return success;
 }
 
+Common::String QuickTimeDecoder::getCurrentNodeName() {
+	if (_currentSample == -1)
+		return Common::String();
+
+	PanoTrackSample *sample = &_panoTrack->panoSamples[_currentSample];
+
+	return sample->strTable.getString(sample->hdr.nameStrOffset);
+}
+
 void QuickTimeDecoder::updateAngles() {
 	if (_qtvrType == QTVRType::OBJECT) {
 		_panAngle = (float)getCurrentColumn() / (float)_nav.columns * 360.0;
 		_tiltAngle = ((_nav.rows - 1) / 2.0 - (float)getCurrentRow()) / (float)(_nav.rows - 1) * 180.0;
 
-		debugC(1, kDebugLevelMacGUI, "QTVR: row: %d col: %d  (%d x %d) pan: %f tilt: %f", getCurrentRow(), getCurrentColumn(), _nav.rows, _nav.columns, getPanAngle(), getTiltAngle());
+		debugC(1, kDebugLevelGVideo, "QTVR: row: %d col: %d  (%d x %d) pan: %f tilt: %f", getCurrentRow(), getCurrentColumn(), _nav.rows, _nav.columns, getPanAngle(), getTiltAngle());
 	}
 }
 
@@ -307,9 +485,6 @@ QuickTimeDecoder::PanoTrackHandler::PanoTrackHandler(QuickTimeDecoder *decoder, 
 	_projectedPano = nullptr;
 	_planarProjection = nullptr;
 
-	_curPanAngle = 0.0f;
-	_curTiltAngle = 0.0f;
-
 	_dirty = true;
 
 	_decoder->updateQTVRCursor(0, 0); // Initialize all things for cursor
@@ -356,44 +531,6 @@ Common::Rational QuickTimeDecoder::PanoTrackHandler::getScaledHeight() const {
 	return Common::Rational(_parent->height) / _parent->scaleFactorY;
 }
 
-void QuickTimeDecoder::PanoTrackHandler::setPanAngle(float angle) {
-	PanoSampleDesc *desc = (PanoSampleDesc *)_parent->sampleDescs[0];
-
-	if (desc->_hPanStart != desc->_hPanStart && (desc->_hPanStart != 0.0 || desc->_hPanStart != 360.0)) {
-		if (angle < desc->_hPanStart + _decoder->_hfov / 2)
-			angle = desc->_hPanStart + _decoder->_hfov / 2;
-
-		if (angle > desc->_hPanEnd - _decoder->_hfov / 2)
-			angle = desc->_hPanStart - _decoder->_hfov / 2;
-	}
-
-	if (_curPanAngle != angle) {
-		_curPanAngle = angle;
-
-		_decoder->setPanAngle(_curPanAngle);
-
-		_dirty = true;
-	}
-}
-
-void QuickTimeDecoder::PanoTrackHandler::setTiltAngle(float angle) {
-	PanoSampleDesc *desc = (PanoSampleDesc *)_parent->sampleDescs[0];
-
-	if (angle < desc->_vPanBottom + _decoder->_fov / 2)
-		angle = desc->_vPanBottom + _decoder->_fov / 2;
-
-	if (angle > desc->_vPanTop - _decoder->_fov / 2)
-		angle = desc->_vPanTop - _decoder->_fov / 2;
-
-	if (_curTiltAngle != angle) {
-		_curTiltAngle = angle;
-
-		_decoder->setTiltAngle(_curTiltAngle);
-
-		_dirty = true;
-	}
-}
-
 const Graphics::Surface *QuickTimeDecoder::PanoTrackHandler::decodeNextFrame() {
 	if (!_isPanoConstructed)
 		return nullptr;
@@ -415,7 +552,7 @@ Graphics::Surface *QuickTimeDecoder::PanoTrackHandler::constructMosaic(VideoTrac
 	Graphics::Surface *target = new Graphics::Surface();
 	target->create(w * framew, h * frameh, track->getPixelFormat());
 
-	warning("Pixel format: %s", track->getPixelFormat().toString().c_str());
+	debugC(1, kDebugLevelGVideo, "Pixel format: %s", track->getPixelFormat().toString().c_str());
 
 	Common::Rect srcRect(0, 0, framew, frameh);
 
@@ -466,12 +603,12 @@ void QuickTimeDecoder::PanoTrackHandler::constructPanorama() {
 		delete _constructedHotspots;
 	}
 
-	warning("scene: %d (%d x %d) hotspots: %d (%d x %d)", desc->_sceneTrackID, desc->_sceneSizeX, desc->_sceneSizeY,
+	debugC(1, kDebugLevelGVideo, "scene: %d (%d x %d) hotspots: %d (%d x %d)", desc->_sceneTrackID, desc->_sceneSizeX, desc->_sceneSizeY,
 			desc->_hotSpotTrackID, desc->_hotSpotSizeX, desc->_hotSpotSizeY);
 
-	warning("sceneNumFrames: %d x %d sceneColorDepth: %d", desc->_sceneNumFramesX, desc->_sceneNumFramesY, desc->_sceneColorDepth);
+	debugC(1, kDebugLevelGVideo, "sceneNumFrames: %d x %d sceneColorDepth: %d", desc->_sceneNumFramesX, desc->_sceneNumFramesY, desc->_sceneColorDepth);
 
-	warning("Node idx: %d", sample->hdr.nodeID);
+	debugC(1, kDebugLevelGVideo, "Node idx: %d", sample->hdr.nodeID);
 
 	int nodeidx = -1;
 	for (int i = 0; i < (int)_parent->panoInfo.nodes.size(); i++)
@@ -487,7 +624,7 @@ void QuickTimeDecoder::PanoTrackHandler::constructPanorama() {
 
 	uint32 timestamp = _parent->panoInfo.nodes[nodeidx].timestamp;
 
-	warning("Timestamp: %d", timestamp);
+	debugC(1, kDebugLevelGVideo, "Timestamp: %d", timestamp);
 
 	VideoTrackHandler *track = (VideoTrackHandler *)(_decoder->getTrack(_decoder->Common::QuickTimeParser::_tracks[desc->_sceneTrackID - 1]->targetTrack));
 
@@ -502,14 +639,11 @@ void QuickTimeDecoder::PanoTrackHandler::constructPanorama() {
 	_constructedHotspots = constructMosaic(track, desc->_hotSpotNumFramesX, desc->_hotSpotNumFramesY, "dumps/pano-hotspot.png");
 
 	_isPanoConstructed = true;
-
-	_curPanAngle = desc->_hPanStart;
-	_curTiltAngle = 0.0f;
 }
 
-int QuickTimeDecoder::PanoTrackHandler::lookupHotspot(int16 mx, int16 my) {
+Common::Point QuickTimeDecoder::PanoTrackHandler::projectPoint(int16 mx, int16 my) {
 	if (!_isPanoConstructed)
-		return 0;
+		return Common::Point(-1, -1);
 
 	uint16 w = _decoder->getWidth(), h = _decoder->getHeight();
 
@@ -530,8 +664,8 @@ int QuickTimeDecoder::PanoTrackHandler::lookupHotspot(int16 mx, int16 my) {
 	topRightVector[2] = bottomRightVector[2];
 
 	// Apply pitch (tilt) rotation
-	float cosTilt = cos(_curTiltAngle * M_PI / 180.0);
-	float sinTilt = sin(_curTiltAngle * M_PI / 180.0);
+	float cosTilt = cos(-_decoder->_tiltAngle * M_PI / 180.0);
+	float sinTilt = sin(-_decoder->_tiltAngle * M_PI / 180.0);
 
 	for (int v = 0; v < 2; v++) {
 		float y = cornerVectors[v][1];
@@ -563,7 +697,7 @@ int QuickTimeDecoder::PanoTrackHandler::lookupHotspot(int16 mx, int16 my) {
 	float yawAngle = atan2(mousePixelVector[0], mousePixelVector[2]);
 
 	// panorama is turned 90 degrees, width is height
-	int hotX = (1.0f - (yawAngle / (2.0 * M_PI) + _curPanAngle / 360.0f)) * (float)_constructedHotspots->h;
+	int hotX = (1.0f - (yawAngle / (2.0 * M_PI) + (360.0f - _decoder->_panAngle) / 360.0f)) * (float)_constructedHotspots->h;
 
 	hotX = hotX % _constructedHotspots->h;
 	if (hotX < 0)
@@ -585,7 +719,7 @@ int QuickTimeDecoder::PanoTrackHandler::lookupHotspot(int16 mx, int16 my) {
 	else if (hotY > _constructedHotspots->w)
 		hotY = _constructedHotspots->w;
 
-	return (int)_constructedHotspots->getPixel(hotY, hotX);
+	return Common::Point(hotX, hotY);
 }
 
 void QuickTimeDecoder::PanoTrackHandler::projectPanorama() {
@@ -621,8 +755,8 @@ void QuickTimeDecoder::PanoTrackHandler::projectPanorama() {
 	topRightVector[2] = bottomRightVector[2];
 
 	// Apply pitch (tilt) rotation
-	float cosTilt = cos(_curTiltAngle * M_PI / 180.0);
-	float sinTilt = sin(_curTiltAngle * M_PI / 180.0);
+	float cosTilt = cos(-_decoder->_tiltAngle * M_PI / 180.0);
+	float sinTilt = sin(-_decoder->_tiltAngle * M_PI / 180.0);
 
 	for (int v = 0; v < 2; v++) {
 		float y = cornerVectors[v][1];
@@ -708,7 +842,7 @@ void QuickTimeDecoder::PanoTrackHandler::projectPanorama() {
 		cylinderAngleOffsets[x] = atan(xCoord) * 0.5f / M_PI;
 	}
 
-	float angleT = fmod(_curPanAngle / 360.0, 1.0);
+	float angleT = fmod((360.0f - _decoder->_panAngle) / 360.0f, 1.0f);
 	if (angleT < 0.0f)
 		angleT += 1.0f;
 
@@ -784,7 +918,7 @@ void QuickTimeDecoder::PanoTrackHandler::projectPanorama() {
 		float yInterpolator = sideEdgeXYInterpolators[y * 2 + 1];
 
 		int32 srcY = static_cast<int32>(yInterpolator * (float)h);
-		int32 scanlineWidth = static_cast<int32>(xInterpolator * w);
+		int32 scanlineWidth = static_cast<int32>(xInterpolator * w) / 2 * 2;
 		int32 startX = (w - scanlineWidth) / 2;
 		//int32 endX = startX + scanlineWidth;
 
@@ -800,6 +934,78 @@ void QuickTimeDecoder::PanoTrackHandler::projectPanorama() {
 	_dirty = false;
 }
 
+Common::Point QuickTimeDecoder::getPanLoc(int16 x, int16 y) {
+	PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
+
+	return track->projectPoint(x, y);
+}
+
+Graphics::FloatPoint QuickTimeDecoder::getPanAngles(int16 x, int16 y) {
+	PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
+	PanoSampleDesc *desc = (PanoSampleDesc *)_panoTrack->sampleDescs[0];
+	Common::Point pos = track->projectPoint(x, y);
+
+	Graphics::FloatPoint res;
+
+	res.x = desc->_hPanStart + (desc->_hPanStart - desc->_hPanEnd) * (float)pos.x / (float)desc->_sceneSizeY;
+	res.y = desc->_vPanTop + (desc->_vPanBottom - desc->_vPanTop) * (float)pos.y / (float)desc->_sceneSizeX;
+
+	return res;
+}
+
+void QuickTimeDecoder::lookupHotspot(int16 x, int16 y) {
+	PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
+
+	Common::Point hotspotPoint = track->projectPoint(x, y);
+
+	if (hotspotPoint.x < 0) {
+		_rolloverHotspot = nullptr;
+		_rolloverHotspotID = 0;
+	} else {
+		int hotspotId = (int)(((PanoTrackHandler *)getTrack(_panoTrack->targetTrack))->_constructedHotspots->getPixel(hotspotPoint.y, hotspotPoint.x));
+
+		_rolloverHotspotID = hotspotId;
+
+		if (hotspotId && _currentSample != -1) {
+			if (!_rolloverHotspot || _rolloverHotspot->id != hotspotId)
+				_rolloverHotspot = _panoTrack->panoSamples[_currentSample].hotSpotTable.get(hotspotId);
+
+			if (!_rolloverHotspot)
+				debugC(1, kDebugLevelGVideo, "Hotspot id: %d has no data", hotspotId);
+			else
+				debugC(1, kDebugLevelGVideo, "Hotspot id: %d is of type '%s'", hotspotId, tag2str(_rolloverHotspot->type));
+		} else {
+			_rolloverHotspot = nullptr;
+		}
+	}
+}
+
+Common::String QuickTimeDecoder::getHotSpotName(int id) {
+	if (id <= 0)
+		return "";
+
+	PanoHotSpot *hotspot = _panoTrack->panoSamples[_currentSample].hotSpotTable.get(id);
+
+	return _panoTrack->panoSamples[_currentSample].strTable.getString(hotspot->nameStrOffset);
+}
+
+const QuickTimeDecoder::PanoHotSpot *QuickTimeDecoder::getHotSpotByID(int id) {
+	return _panoTrack->panoSamples[_currentSample].hotSpotTable.get(id);
+}
+
+const QuickTimeDecoder::PanoNavigation *QuickTimeDecoder::getHotSpotNavByID(int id) {
+	const QuickTimeDecoder::PanoHotSpot *hotspot = getHotSpotByID(id);
+
+	if (hotspot->type != MKTAG('n','a','v','g'))
+		return nullptr;
+
+	return _panoTrack->panoSamples[_currentSample].navTable.get(hotspot->typeData);
+}
+
+void QuickTimeDecoder::setClickedHotSpot(int id) {
+	_clickedHotspot = getHotSpotByID(id);
+	_clickedHotspotID = id;
+}
 
 
 ///////////////////////////////
@@ -930,19 +1136,23 @@ void QuickTimeDecoder::handlePanoMouseButton(bool isDown, int16 x, int16 y, bool
 		_mouseDrag.x = x;
 		_mouseDrag.y = y;
 
-		if (_rolloverHotspot)
-			_clickedHotspot = _rolloverHotspot;
+		_clickedHotspot = _rolloverHotspot;
+		_clickedHotspotID = _rolloverHotspotID;
 	}
 
-	if (!repeat && !isDown && _rolloverHotspot && _rolloverHotspot->type == HotSpotType::link && _prevMouse == _mouseDrag) {
-		PanoLink *link = _panoTrack->panoSamples[_currentSample].linkTable.get(_rolloverHotspot->typeData);
+	if (!repeat && !isDown && _rolloverHotspot && _prevMouse == _mouseDrag) {
+		if (_rolloverHotspot->type == MKTAG('l','i','n','k')) {
+			PanoLink *link = _panoTrack->panoSamples[_currentSample].linkTable.get(_rolloverHotspot->typeData);
 
-		if (link) {
-			goToNode(link->toNodeID);
+			if (link) {
+				goToNode(link->toNodeID);
 
-			setPanAngle(link->toHPan);
-			setTiltAngle(link->toVPan);
-			setFOV(link->toZoom);
+				setPanAngle(link->toHPan);
+				setTiltAngle(link->toVPan);
+				setFOV(link->toZoom);
+			}
+		} else if (_rolloverHotspot->type == MKTAG('n','a','v','g')) {
+			warning("navg hotpot id #%d not processed", _rolloverHotspot->id);
 		}
 	}
 
@@ -950,8 +1160,6 @@ void QuickTimeDecoder::handlePanoMouseButton(bool isDown, int16 x, int16 y, bool
 	// are used for dragging
 	if (!repeat)
 		return;
-
-	PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
 
 	// HACK: FIXME: Hard coded for now
 	const int sensitivity = 5;
@@ -964,10 +1172,10 @@ void QuickTimeDecoder::handlePanoMouseButton(bool isDown, int16 x, int16 y, bool
 	float speedY = (float)mouseDeltaY * speedFactor;
 
 	if (ABS(mouseDeltaX) >= sensitivity)
-		track->setPanAngle(track->getPanAngle() + speedX);
+		setPanAngle(getPanAngle() - speedX);
 
 	if (ABS(mouseDeltaY) >= sensitivity)
-		track->setTiltAngle(track->getTiltAngle() + speedY);
+		setTiltAngle(getTiltAngle() - speedY);
 }
 
 void QuickTimeDecoder::handleKey(Common::KeyState &state, bool down, bool repeat) {
@@ -1031,19 +1239,9 @@ void QuickTimeDecoder::handlePanoKey(Common::KeyState &state, bool down, bool re
 	} else {
 		_zoomState = kZoomNone;
 	}
-}
 
-void QuickTimeDecoder::lookupHotspot(int16 x, int16 y) {
-	PanoTrackHandler *track = (PanoTrackHandler *)getTrack(_panoTrack->targetTrack);
-
-	int hotspotId = track->lookupHotspot(x, y);
-
-	if (hotspotId && _currentSample != -1) {
-		if (!_rolloverHotspot || _rolloverHotspot->id != hotspotId)
-			_rolloverHotspot = _panoTrack->panoSamples[_currentSample].hotSpotTable.get(hotspotId);
-	} else {
-		_rolloverHotspot = nullptr;
-	}
+	if (state.keycode == Common::KEYCODE_h && down && !repeat)
+		renderHotspots(!_renderHotspots);
 }
 
 enum {
@@ -1163,7 +1361,7 @@ void QuickTimeDecoder::updateQTVRCursor(int16 x, int16 y) {
 		}
 
 		// Get hotspot cursors
-		HotSpotType hsType = HotSpotType::undefined;
+		uint32 hsType = MKTAG('u','n','d','f');
 
 		if (_rolloverHotspot)
 			hsType = _rolloverHotspot->type;
@@ -1171,15 +1369,18 @@ void QuickTimeDecoder::updateQTVRCursor(int16 x, int16 y) {
 		int hsOver, hsDown, hsUp;
 
 		switch (hsType) {
-		case HotSpotType::link:
+		case MKTAG('l','i','n','k'):
 			hsOver = kCursorPanoLinkOver;
 			hsDown = kCursorPanoLinkDown;
 			hsUp = kCursorPanoLinkUp;
 			break;
 
+		case MKTAG('n','a','v','g'):
+			debug(3, "Hotspot type: %s", tag2str((uint32)hsType));
+			// TODO FIXME: Implement
+			// fallthrough
+
 		default:
-			if (hsType != HotSpotType::undefined)
-				warning("Hotspot type: %s", tag2str((uint32)hsType));
 			hsOver = kCursorPanoObjOver;
 			hsDown = kCursorPanoObjDown;
 			hsUp = kCursorPanoObjUp;
@@ -1238,7 +1439,7 @@ void QuickTimeDecoder::updateQTVRCursor(int16 x, int16 y) {
 				res <<= 1;
 
 				// down stop
-				if (_tiltAngle >= desc->_vPanTop - _fov / 2)
+				if (_tiltAngle <= desc->_vPanBottom + _fov / 2)
 					res |= 1;
 				res <<= 1;
 			} else {
@@ -1251,7 +1452,7 @@ void QuickTimeDecoder::updateQTVRCursor(int16 x, int16 y) {
 				res <<= 1;
 
 				// up stop
-				if (_tiltAngle <= desc->_vPanBottom + _fov / 2)
+				if (_tiltAngle >= desc->_vPanTop - _fov / 2)
 					res |= 1;
 			} else {
 				res <<= 1;

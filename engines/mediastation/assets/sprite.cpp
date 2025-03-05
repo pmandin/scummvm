@@ -71,17 +71,15 @@ Sprite::Sprite(AssetHeader *header) : Asset(header) {
 		setActive();
 		_isShowing = true;
 	}
-
-	if (_header->_frameRate == 0) {
-		// It seems that the frame rate is 10 if it's not set in the asset
-		// header, or even if it's set to zero.
-		_header->_frameRate = 10;
-	}
 }
 
 Sprite::~Sprite() {
-	for (SpriteFrame *frame : _frames) {
-		delete frame;
+	// If we're just referencing another asset's frames,
+	// don't delete those frames.
+	if (_header->_assetReference == 0) {
+		for (SpriteFrame *frame : _frames) {
+			delete frame;
+		}
 	}
 	_frames.clear();
 }
@@ -130,9 +128,8 @@ Operand Sprite::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args)
 		return returnValue;
 	}
 
-	default: {
-		error("Sprite::callMethod(): Got unimplemented method ID %d", methodId);
-	}
+	default:
+		error("Sprite::callMethod(): Got unimplemented method ID %s (%d)", builtInMethodToStr(methodId), static_cast<uint>(methodId));
 	}
 }
 
@@ -237,7 +234,7 @@ void Sprite::updateFrameState() {
 
 	if (!_isPlaying) {
 		if (_activeFrame != nullptr) {
-			debugC(6, kDebugGraphics, "Sprite::updateFrameState(): (%d): Not playing. Persistent frame %d (%d x %d) @ (%d, %d)", 
+			debugC(6, kDebugGraphics, "Sprite::updateFrameState(): (%d): Not playing. Persistent frame %d (%d x %d) @ (%d, %d)",
 				_header->_id, _activeFrame->index(), _activeFrame->width(), _activeFrame->height(), _activeFrame->left(), _activeFrame->top());
 		} else {
 			debugC(6, kDebugGraphics, "Sprite::updateFrameState(): (%d): Not playing, no persistent frame", _header->_id);
@@ -296,7 +293,7 @@ void Sprite::showFrame(SpriteFrame *frame) {
 	if (_activeFrame != nullptr) {
 		g_engine->_dirtyRects.push_back(getActiveFrameBoundingBox());
 	}
-	
+
 	// Show the next frame.
 	_activeFrame = frame;
 	if (frame != nullptr) {

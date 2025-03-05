@@ -69,9 +69,8 @@ Operand Sound::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) 
 		return Operand();
 	}
 
-	default: {
-		error("Sound::callMethod(): Got unimplemented method %s (%d)", builtInMethodToStr(methodId), methodId);
-	}
+	default:
+		error("Sound::callMethod(): Got unimplemented method %s (%d)", builtInMethodToStr(methodId), static_cast<uint>(methodId));
 	}
 }
 
@@ -81,7 +80,7 @@ void Sound::readChunk(Chunk &chunk) {
 	Audio::SeekableAudioStream *stream = nullptr;
 	switch (_header->_soundEncoding) {
 	case SoundEncoding::PCM_S16LE_MONO_22050:
-		stream = Audio::makeRawStream(buffer, chunk._length, 22050, Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN, DisposeAfterUse::NO);
+		stream = Audio::makeRawStream(buffer, chunk._length, 22050, Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN);
 		break;
 
 	case SoundEncoding::IMA_ADPCM_S16LE_MONO_22050:

@@ -22,7 +22,6 @@
 #include "mediastation/mediastation.h"
 #include "mediastation/mediascript/codechunk.h"
 #include "mediastation/datum.h"
-#include "mediastation/chunk.h"
 #include "mediastation/debugchannels.h"
 
 #include "mediastation/assets/movie.h"
@@ -40,7 +39,10 @@ Operand CodeChunk::execute(Common::Array<Operand> *args) {
 	_args = args;
 	Operand returnValue;
 	while (_bytecode->pos() < _bytecode->size()) {
-		returnValue = executeNextStatement();
+		Operand instructionResult = executeNextStatement();
+		if (instructionResult.getType() != kOperandTypeEmpty) {
+			returnValue = instructionResult;
+		}
 	}
 
 	// Rewind the stream once we're finished, in case we need to execute
@@ -107,7 +109,7 @@ Operand CodeChunk::executeNextStatement() {
 		case kOpcodeCallMethod: {
 			// In Media Station, all methods seem be built-in - there don't
 			// seem to be custom objects or methods individual titles can
-			// define. Functions, however, CAN be title-defined. 
+			// define. Functions, however, CAN be title-defined.
 			// But here, we're only looking for built-in methods.
 			BuiltInMethod methodId = static_cast<BuiltInMethod>(Datum(*_bytecode).u.i);
 			uint32 parameterCount = Datum(*_bytecode).u.i;
@@ -320,9 +322,15 @@ Operand CodeChunk::executeNextStatement() {
 			return -value;
 		}
 
-		default: {
-			error("CodeChunk::getNextStatement(): Got unknown opcode %s (%d)", opcodeToStr(opcode), static_cast<uint>(opcode));
+		case kOpcodeReturn: {
+			debugCN(5, kDebugScript, "    return: ");
+			Operand value = executeNextStatement();
+
+			return value;
 		}
+
+		default:
+			error("CodeChunk::getNextStatement(): Got unimplemented opcode %s (%d)", opcodeToStr(opcode), static_cast<uint>(opcode));
 		}
 		break;
 	}
@@ -377,9 +385,8 @@ Operand CodeChunk::executeNextStatement() {
 			return operand;
 		}
 
-		default: {
-			error("CodeChunk::getNextStatement(): Got unknown operand type %s (%d)", operandTypeToStr(operandType), static_cast<uint>(operandType));
-		}
+		default:
+			error("CodeChunk::getNextStatement(): Got unimplemented operand type %s (%d)", operandTypeToStr(operandType), static_cast<uint>(operandType));
 		}
 		break;
 	}
@@ -392,9 +399,8 @@ Operand CodeChunk::executeNextStatement() {
 		return variable;
 	}
 
-	default: {
-		error("CodeChunk::getNextStatement(): Got unknown instruction type %s (%d)", instructionTypeToStr(instructionType), static_cast<uint>(instructionType));
-	}
+	default:
+		error("CodeChunk::getNextStatement(): Got unimplemented instruction type %s (%d)", instructionTypeToStr(instructionType), static_cast<uint>(instructionType));
 	}
 }
 
@@ -410,7 +416,6 @@ Operand CodeChunk::getVariable(uint32 id, VariableScope scope) {
 	case kVariableScopeLocal: {
 		uint index = id - 1;
 		return _locals.operator[](index);
-		break;
 	}
 
 	case kVariableScopeParameter: {
@@ -419,12 +424,10 @@ Operand CodeChunk::getVariable(uint32 id, VariableScope scope) {
 			error("CodeChunk::getVariable(): Requested a parameter in a code chunk that has no parameters");
 		}
 		return _args->operator[](index);
-		break;
 	}
 
-	default: {
-		error("CodeChunk::getVariable(): Got unknown variable scope %s (%d)", variableScopeToStr(scope), static_cast<uint>(scope));
-	}
+	default:
+		error("CodeChunk::getVariable(): Got unimplemented variable scope %s (%d)", variableScopeToStr(scope), static_cast<uint>(scope));
 	}
 }
 
@@ -450,9 +453,8 @@ void CodeChunk::putVariable(uint32 id, VariableScope scope, Operand value) {
 		break;
 	}
 
-	default: {
-		error("CodeChunk::getVariable(): Got unknown variable scope %s (%d)", variableScopeToStr(scope), static_cast<uint>(scope));
-	}
+	default:
+		error("CodeChunk::getVariable(): Got unimplemented variable scope %s (%d)", variableScopeToStr(scope), static_cast<uint>(scope));
 	}
 }
 
@@ -474,7 +476,6 @@ Operand CodeChunk::callBuiltInMethod(BuiltInMethod method, Operand self, Common:
 			// which case nothing happens. Still issue warning for traceability.
 			warning("CodeChunk::callBuiltInMethod(): Attempt to call method on a null asset ID");
 			return Operand();
-			break;
 		} else {
 			// This is a regular asset that we can process directly.
 			Asset *selfAsset = self.getAsset();
@@ -493,7 +494,7 @@ Operand CodeChunk::callBuiltInMethod(BuiltInMethod method, Operand self, Common:
 	}
 
 	default:
-		error("CodeChunk::callBuiltInMethod(): Attempt to call method on unsupported operand type %s (%d)", 
+		error("CodeChunk::callBuiltInMethod(): Attempt to call method on unimplemented operand type %s (%d)",
 			operandTypeToStr(literalType), static_cast<uint>(literalType));
 	}
 }

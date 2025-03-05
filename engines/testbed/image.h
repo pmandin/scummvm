@@ -19,21 +19,36 @@
  *
  */
 
-#include "mediastation/chunk.h"
-#include "mediastation/debugchannels.h"
+#ifndef TESTBED_IMAGE_H
+#define TESTBED_IMAGE_H
 
-namespace MediaStation {
+#include "testbed/testsuite.h"
 
-Chunk::Chunk(Common::SeekableReadStream *stream) : _input(stream), _dataStartOffset(0), _dataEndOffset(0) {
-	// READ THE HEADER.
-	_id = _input->readUint32BE();
-	_length = _input->readUint32LE();
-	_dataStartOffset = pos();
-	_dataEndOffset = _dataStartOffset + _length;
-	debugC(5, kDebugLoading, "Chunk::Chunk(): Got chunk with ID \"%s\" and size 0x%x", tag2str(_id), _length);
-	if (_length == 0) {
-		error("Encountered a zero-length chunk. This usually indicates corrupted data - maybe a CD-ROM read error.");
+namespace Testbed {
+
+class ImageTestSuite : public Testsuite {
+public:
+	/**
+	 * The constructor for the XXXTestSuite
+	 * For every test to be executed one must:
+	 * 1) Create a function that would invoke the test
+	 * 2) Add that test to list by executing addTest()
+	 *
+	 * @see addTest()
+	 */
+	ImageTestSuite();
+	~ImageTestSuite() override {}
+	const char *getName() const override {
+		return "Image";
 	}
-}
 
-} // End of namespace MediaStation
+	const char *getDescription() const override {
+		return "Image decoders";
+	}
+
+};
+
+
+} // End of namespace Testbed
+
+#endif // TESTBED_IMAGE_H

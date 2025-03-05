@@ -19,39 +19,32 @@
  *
  */
 
-#ifndef MEDIASTATION_CONTEXTPARAMETERS_H
-#define MEDIASTATION_CONTEXTPARAMETERS_H
+#ifndef MEDIASTATION_STAGE_H
+#define MEDIASTATION_STAGE_H
 
-#include "common/str.h"
-#include "common/hashmap.h"
-
-#include "mediastation/chunk.h"
-#include "mediastation/mediascript/variable.h"
-#include "mediastation/mediascript/function.h"
+#include "mediastation/asset.h"
 
 namespace MediaStation {
 
-enum ContextParametersSectionType {
-	kContextParametersEmptySection = 0x0000,
-	kContextParametersVariable = 0x0014,
-	kContextParametersName = 0x0bb9,
-	kContextParametersFileNumber = 0x0011,
-	kContextParametersBytecode = 0x0017
-};
-
-class ContextParameters {
+class Camera : public Asset {
 public:
-	ContextParameters(Chunk &chunk);
-	~ContextParameters();
+	Camera(AssetHeader *header) : Asset(header) {};
 
-	// This is not an internal file ID, but the number of the file
-	// as it appears in the filename. For instance, the context in
-	// "100.cxt" would have file number 100.
-	uint _fileNumber;
-	Common::String *_contextName;
-	Common::HashMap<uint32, Function *> _functions;
+	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override { error("CallMethod not implemented"); };
+	virtual void process() override {};
 };
 
-} // End of namespace MediaStation
+class Stage : public Asset {
+public:
+	Stage(AssetHeader *header) : Asset(header) {};
+
+	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override { error("CallMethod not implemented"); };
+	virtual void process() override {};
+
+private:
+	Common::Array<Asset *> _children;
+};
+
+}
 
 #endif

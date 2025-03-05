@@ -33,7 +33,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "e20ca609f2acb623e0076ef2288673b2", 147016),
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 {
@@ -51,7 +51,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "ba87f00c3a51ca3e3bb218fc58f128eb", 121662),
 		Common::ZH_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
     { // unpacked exe
@@ -60,7 +60,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "0fc2751aa16cac26ad3aa9d1cbbb5c7b", 209208),
 		Common::ZH_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 {
@@ -69,7 +69,7 @@ const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY1s("TOS.EXE", "62a636d3d6b19336d059cd2f8b1a365f", 154450),
 		Common::KO_KOR,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 	{
@@ -79,7 +79,7 @@ const ADGameDescription gameDescriptions[] = {
 		Common::EN_ANY,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_CD,
-		GUIO1(GUIO_NONE)
+		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
 	{	// 1.51 according to DS.BAT, 1.5P according to intro
 		"darkseed",
@@ -88,7 +88,7 @@ const ADGameDescription gameDescriptions[] = {
 		Common::EN_ANY,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_CD,
-		GUIO1(GUIO_NONE)
+		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
 	{
 		"darkseed",
@@ -97,7 +97,7 @@ const ADGameDescription gameDescriptions[] = {
 		Common::DE_DEU,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_CD,
-		GUIO1(GUIO_NONE)
+		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
 {
 		"darkseed",
@@ -106,7 +106,7 @@ const ADGameDescription gameDescriptions[] = {
 		Common::FR_FRA,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_CD,
-		GUIO1(GUIO_NONE)
+		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
 {
 		"darkseed",
@@ -115,7 +115,7 @@ const ADGameDescription gameDescriptions[] = {
 		Common::ES_ESP,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_CD,
-		GUIO1(GUIO_NONE)
+		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
 	{
 		"darkseed",

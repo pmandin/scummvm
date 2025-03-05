@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-02-15 22:42+0000\n"
+"POT-Creation-Date: 2025-03-02 00:34+0000\n"
 "PO-Revision-Date: 2025-02-15 11:09+0000\n"
 "Last-Translator: VAN-Gluon <van.gluonp@gmail.com>\n"
 "Language-Team: Japanese <https://translations.scummvm.org/projects/scummvm/"
@@ -315,7 +315,7 @@ msgstr "すでに別のストレージが使用されています。切断しま
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:143
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4199
 #: engines/toon/toon.cpp:1543
 msgid "Yes"
 msgstr "はい"
@@ -328,7 +328,7 @@ msgstr "はい"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:366
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:149
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4190
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4199
 #: engines/toon/toon.cpp:1543
 msgid "No"
 msgstr "いいえ"
@@ -352,18 +352,17 @@ msgstr "JSONコードの内容が不正です。"
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2089
+#: engines/director/lingo/lingo-builtins.cpp:2132
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:76
-#: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1342
-#: engines/scumm/scumm.cpp:1759 engines/scumm/scumm.cpp:2249
-#: engines/scumm/scumm.cpp:2265 engines/sky/compact.cpp:140
-#: engines/sword1/animation.cpp:532 engines/sword1/animation.cpp:563
-#: engines/sword1/animation.cpp:571 engines/sword1/control.cpp:2816
-#: engines/sword1/logic.cpp:1732 engines/sword2/animation.cpp:426
-#: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
+#: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1351
+#: engines/scumm/scumm.cpp:1768 engines/scumm/scumm.cpp:2258
+#: engines/scumm/scumm.cpp:2274 engines/sky/compact.cpp:140
+#: engines/sword1/animation.cpp:566 engines/sword1/animation.cpp:574
+#: engines/sword1/control.cpp:2816 engines/sword1/logic.cpp:1738
+#: engines/sword2/animation.cpp:459 engines/sword2/animation.cpp:469
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
 #: engines/zvision/file/save_manager.cpp:225
 msgid "OK"
@@ -566,7 +565,7 @@ msgstr "GFX"
 
 #: gui/editgamedialog.cpp:164 gui/options.cpp:2082 gui/options.cpp:2263
 #: backends/graphics/atari/atari-graphics.cpp:1033
-#: backends/graphics/sdl/sdl-graphics.cpp:485
+#: backends/graphics/sdl/sdl-graphics.cpp:529
 msgid "Graphics"
 msgstr "画像"
 
@@ -1005,7 +1004,7 @@ msgstr "作用"
 #: engines/crab/input/input.cpp:95 engines/crab/input/input.cpp:145
 #: engines/dragons/metaengine.cpp:159 engines/freescape/movement.cpp:35
 #: engines/got/metaengine.cpp:55 engines/griffon/metaengine.cpp:121
-#: engines/grim/grim.cpp:481 engines/grim/grim.cpp:562 engines/icb/icb.cpp:68
+#: engines/grim/grim.cpp:481 engines/grim/grim.cpp:563 engines/icb/icb.cpp:68
 #: engines/icb/icb.cpp:152 engines/scumm/metaengine.cpp:968
 #: engines/twine/metaengine.cpp:430 engines/twine/metaengine.cpp:497
 #: engines/twp/metaengine.cpp:154 engines/wintermute/keymapper_tables.h:1290
@@ -1020,7 +1019,7 @@ msgstr "上"
 #: engines/crab/input/input.cpp:101 engines/crab/input/input.cpp:151
 #: engines/dragons/metaengine.cpp:165 engines/freescape/movement.cpp:42
 #: engines/got/metaengine.cpp:56 engines/griffon/metaengine.cpp:127
-#: engines/grim/grim.cpp:486 engines/grim/grim.cpp:567 engines/icb/icb.cpp:73
+#: engines/grim/grim.cpp:486 engines/grim/grim.cpp:568 engines/icb/icb.cpp:73
 #: engines/icb/icb.cpp:157 engines/scumm/metaengine.cpp:935
 #: engines/twine/metaengine.cpp:437 engines/twine/metaengine.cpp:505
 #: engines/twp/metaengine.cpp:155 engines/wintermute/keymapper_tables.h:1296
@@ -1035,7 +1034,7 @@ msgstr "下"
 #: engines/crab/input/input.cpp:107 engines/crab/input/input.cpp:157
 #: engines/dragons/metaengine.cpp:171 engines/got/metaengine.cpp:57
 #: engines/griffon/metaengine.cpp:133 engines/grim/grim.cpp:491
-#: engines/grim/grim.cpp:572 engines/icb/icb.cpp:78 engines/icb/icb.cpp:162
+#: engines/grim/grim.cpp:573 engines/icb/icb.cpp:78 engines/icb/icb.cpp:162
 #: engines/scumm/metaengine.cpp:948 engines/twine/metaengine.cpp:452
 #: engines/twine/metaengine.cpp:520 engines/twp/metaengine.cpp:152
 #: engines/wintermute/keymapper_tables.h:320
@@ -1051,7 +1050,7 @@ msgstr "左"
 #: engines/crab/input/input.cpp:113 engines/crab/input/input.cpp:163
 #: engines/dragons/metaengine.cpp:177 engines/got/metaengine.cpp:58
 #: engines/griffon/metaengine.cpp:139 engines/grim/grim.cpp:496
-#: engines/grim/grim.cpp:577 engines/icb/icb.cpp:83 engines/icb/icb.cpp:167
+#: engines/grim/grim.cpp:578 engines/icb/icb.cpp:83 engines/icb/icb.cpp:167
 #: engines/scumm/metaengine.cpp:955 engines/twine/metaengine.cpp:444
 #: engines/twine/metaengine.cpp:513 engines/twp/metaengine.cpp:153
 #: engines/wintermute/keymapper_tables.h:326
@@ -1794,7 +1793,7 @@ msgstr "シェーダーをDL"
 msgid "Check on the scummvm.org website for updates of shader packs"
 msgstr "シェーダーパックの更新はscummvm.orgを確認して下さい"
 
-#: gui/options.cpp:1706 backends/graphics/sdl/sdl-graphics.cpp:476
+#: gui/options.cpp:1706 backends/graphics/sdl/sdl-graphics.cpp:520
 msgid "Fullscreen mode"
 msgstr "全面モード"
 
@@ -2902,7 +2901,7 @@ msgstr ""
 "ゲーム毎に上記を繰り返します。"
 
 #: base/main.cpp:652 base/main.cpp:677
-#: engines/director/lingo/lingo-builtins.cpp:1415
+#: engines/director/lingo/lingo-builtins.cpp:1454
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -3701,7 +3700,7 @@ msgstr "右クリック"
 #. I18N: Action in In Cold Blood
 #: engines/metaengine.cpp:79 engines/agos/metaengine.cpp:252
 #: engines/crab/input/input.cpp:261 engines/cruise/metaengine.cpp:191
-#: engines/grim/grim.cpp:549 engines/hdb/metaengine.cpp:258
+#: engines/grim/grim.cpp:550 engines/hdb/metaengine.cpp:258
 #: engines/icb/icb.cpp:137 engines/icb/icb.cpp:203 engines/mohawk/myst.cpp:595
 #: engines/mohawk/riven.cpp:876 engines/sky/metaengine.cpp:126
 #: engines/tucker/metaengine.cpp:184 engines/twine/metaengine.cpp:223
@@ -3713,9 +3712,11 @@ msgstr "一時停止"
 msgid "Game menu"
 msgstr "ゲームメニュー"
 
+#. I18N: Skipping cutscene plaback
+#. I18N: Skipping cutscene playback
 #: engines/metaengine.cpp:92 engines/composer/metaengine.cpp:125
-#: engines/freescape/movement.cpp:87 engines/grim/grim.cpp:532
-#: engines/grim/grim.cpp:628 engines/illusions/metaengine.cpp:142
+#: engines/freescape/movement.cpp:87 engines/grim/grim.cpp:533
+#: engines/grim/grim.cpp:633 engines/illusions/metaengine.cpp:142
 #: engines/made/metaengine.cpp:121 engines/mohawk/myst.cpp:566
 #: engines/mohawk/riven.cpp:847 engines/wintermute/keymapper_tables.h:220
 #: engines/wintermute/keymapper_tables.h:1092
@@ -3738,8 +3739,8 @@ msgstr "予測変換"
 #. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
 #. and also submitting a new save game name, or choosing an existing save game for overwriting.
 #: engines/metaengine.cpp:111 engines/bladerunner/metaengine.cpp:273
-#: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:538
-#: engines/grim/grim.cpp:634 engines/sky/metaengine.cpp:101
+#: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:539
+#: engines/grim/grim.cpp:639 engines/sky/metaengine.cpp:101
 #: engines/wintermute/keymapper_tables.h:54
 msgid "Confirm"
 msgstr "確認"
@@ -4011,89 +4012,89 @@ msgid "Choose a new folder"
 msgstr "新規フォルダー選択"
 
 #: backends/graphics/atari/atari-graphics.cpp:1037
-#: backends/graphics/sdl/sdl-graphics.cpp:507
+#: backends/graphics/sdl/sdl-graphics.cpp:556
 msgid "Toggle aspect ratio correction"
 msgstr "縦横比修正の切替"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:258
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:127
 #: backends/graphics3d/ios/ios-graphics3d.cpp:356
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:241
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:271
 #: engines/twine/metaengine.cpp:312
 msgid "Center"
 msgstr "中央"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:259
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:73
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:128
 #: backends/graphics3d/ios/ios-graphics3d.cpp:357
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:242
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:272
 msgid "Pixel-perfect scaling"
 msgstr "ピクセルパーフェクト"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:260
 #: backends/graphics3d/ios/ios-graphics3d.cpp:358
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:243
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:273
 msgid "Even pixels scaling"
 msgstr "ピクセル均一にスケーリング"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:261
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:74
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:129
 #: backends/graphics3d/ios/ios-graphics3d.cpp:359
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:244
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:274
 msgid "Fit to window"
 msgstr "ウィンドウに合わせる"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:262
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:75
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:130
 #: backends/graphics3d/ios/ios-graphics3d.cpp:360
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:245
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:275
 msgid "Stretch to window"
 msgstr "ウィンドウに合わせて拡大"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:263
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:76
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:131
 #: backends/graphics3d/ios/ios-graphics3d.cpp:361
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:246
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:276
 msgid "Fit to window (4:3)"
 msgstr "ウィンドウに合わせる(4:3)"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:800
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:847
 #, c-format
 msgid "Resolution: %dx%d"
 msgstr "解像度: %dx%d"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:844
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2684
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:891
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2941
 msgid "Active graphics filter:"
 msgstr "適用中の映像フィルター："
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:865
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2718
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:912
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2975
 msgid "Enabled aspect ratio correction"
 msgstr "縦横比修正適用"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:867
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2724
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:914
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2981
 msgid "Disabled aspect ratio correction"
 msgstr "縦横比修正無効"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:880
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2740
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:927
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2997
 msgid "Filtering enabled"
 msgstr "フィルター適用"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:882
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2742
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:929
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2999
 msgid "Filtering disabled"
 msgstr "フィルター無効"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:908
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2769
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:955
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:3026
 msgid "Stretch mode"
 msgstr "ストレッチモード"
 
 #: backends/graphics/riscossdl/riscossdl-graphics.cpp:30
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:66
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:121
 msgid "SDL Surface"
 msgstr "SDLサーフェス"
 
@@ -4101,29 +4102,33 @@ msgstr "SDLサーフェス"
 msgid "SDL Surface (forced 8bpp mode)"
 msgstr "SDLサーフェス(強制8bppモード)"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:416
+#: backends/graphics/sdl/sdl-graphics.cpp:456
 #, c-format
 msgid "Saved screenshot '%s'"
 msgstr "スクリーンショット'%s'を保存しました"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:431
+#: backends/graphics/sdl/sdl-graphics.cpp:471
 msgid "Could not save screenshot"
 msgstr "スクリーンショットを保存できませんでした"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:478
+#: backends/graphics/sdl/sdl-graphics.cpp:522
 msgid "Windowed mode"
 msgstr "ウインドーモード"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:489 engines/scumm/help.cpp:88
+#: backends/graphics/sdl/sdl-graphics.cpp:533 engines/scumm/help.cpp:88
 msgid "Toggle fullscreen"
 msgstr "全面モードの切替"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:496 engines/scumm/help.cpp:100
+#: backends/graphics/sdl/sdl-graphics.cpp:540 engines/scumm/help.cpp:100
 #: engines/wintermute/keymapper_tables.h:960
 msgid "Toggle mouse capture"
 msgstr "マウスキャプチャーの切替"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:501 engines/stark/metaengine.cpp:240
+#: backends/graphics/sdl/sdl-graphics.cpp:545
+msgid "Toggle resizable window"
+msgstr ""
+
+#: backends/graphics/sdl/sdl-graphics.cpp:550 engines/stark/metaengine.cpp:240
 #: engines/wintermute/keymapper_tables.h:646
 #: engines/wintermute/keymapper_tables.h:695
 #: engines/wintermute/keymapper_tables.h:1098
@@ -4136,27 +4141,27 @@ msgstr "マウスキャプチャーの切替"
 msgid "Save screenshot"
 msgstr "スクショを保存する"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:514
+#: backends/graphics/sdl/sdl-graphics.cpp:563
 msgid "Toggle linear filtered scaling"
 msgstr "線形フィルタースケーリングの切り替え"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:521
+#: backends/graphics/sdl/sdl-graphics.cpp:570
 msgid "Cycle through stretch modes"
 msgstr "ストレッチモードを繰り返し切り替える"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:527
+#: backends/graphics/sdl/sdl-graphics.cpp:576
 msgid "Increase the scale factor"
 msgstr "スケールを拡大する"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:533
+#: backends/graphics/sdl/sdl-graphics.cpp:582
 msgid "Decrease the scale factor"
 msgstr "スケールを縮小する"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:540
+#: backends/graphics/sdl/sdl-graphics.cpp:589
 msgid "Switch to the next scaler"
 msgstr "次のスケーラーに切り替え"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:545
+#: backends/graphics/sdl/sdl-graphics.cpp:594
 msgid "Switch to the previous scaler"
 msgstr "前のスケーラーに切り替え"
 
@@ -5480,11 +5485,11 @@ msgstr ""
 msgid "Click Mode"
 msgstr "クリックモード"
 
-#: backends/platform/sdl/sdl.cpp:1054
+#: backends/platform/sdl/sdl.cpp:1136
 msgid "Keyboard"
 msgstr "キーボード"
 
-#: backends/platform/sdl/sdl.cpp:1057
+#: backends/platform/sdl/sdl.cpp:1139
 msgid ""
 "## Keyboard shortcuts\n"
 "\n"
@@ -5515,23 +5520,23 @@ msgstr ""
 "| --------------|------------------\n"
 "| `Ctrl+F5` | グローバルメインメニューを表示\n"
 
-#: backends/platform/sdl/sdl.cpp:1069
+#: backends/platform/sdl/sdl.cpp:1151
 msgid "| `Cmd+q`    | Quit (macOS)\n"
 msgstr "| `Cmd+q`    | 終了(macOS)\n"
 
-#: backends/platform/sdl/sdl.cpp:1071
+#: backends/platform/sdl/sdl.cpp:1153
 msgid "| `Alt+F4`  | Quit (Windows)\n"
 msgstr "| `Alt+F4`  | 終了(Windows)\n"
 
-#: backends/platform/sdl/sdl.cpp:1073
+#: backends/platform/sdl/sdl.cpp:1155
 msgid "| `Ctrl+q`  | Quit (Linux/Unix)\n"
 msgstr "| `Ctrl+q`  | 終了(Linux/Unix)\n"
 
-#: backends/platform/sdl/sdl.cpp:1074
+#: backends/platform/sdl/sdl.cpp:1156
 msgid "| `Ctrl+z`  | Quit (other platforms)\n"
 msgstr "| `Ctrl+z`  | 終了(その他OS)\n"
 
-#: backends/platform/sdl/sdl.cpp:1077
+#: backends/platform/sdl/sdl.cpp:1159
 msgid ""
 "| `Ctrl+u`  | Mutes all sounds\n"
 "| `Ctrl+m`  | Toggles mouse capture\n"
@@ -5684,8 +5689,8 @@ msgstr "R2"
 
 #. I18N: Hardware key
 #: backends/platform/sdl/miyoo/miyoo.cpp:83
-#: backends/platform/sdl/miyoo/miyoo.cpp:114 engines/grim/grim.cpp:544
-#: engines/grim/grim.cpp:640 engines/hdb/metaengine.cpp:264
+#: backends/platform/sdl/miyoo/miyoo.cpp:114 engines/grim/grim.cpp:545
+#: engines/grim/grim.cpp:645 engines/hdb/metaengine.cpp:264
 #: engines/made/metaengine.cpp:156
 msgid "Menu"
 msgstr "メニュー"
@@ -6050,7 +6055,7 @@ msgstr "ゲームスピードメニューを追加(PC版と同様)"
 #: engines/dreamweb/metaengine.cpp:36 engines/gob/metaengine.cpp:42
 #: engines/lure/metaengine.cpp:41 engines/mads/metaengine.cpp:51
 #: engines/mm/metaengine.cpp:46 engines/saga/metaengine.cpp:52
-#: engines/scumm/dialogs.cpp:1195 engines/scumm/metaengine.cpp:785
+#: engines/scumm/dialogs.cpp:1202 engines/scumm/metaengine.cpp:785
 msgid "Enable copy protection"
 msgstr "コピープロテクト有効化"
 
@@ -6058,7 +6063,7 @@ msgstr "コピープロテクト有効化"
 #: engines/dreamweb/metaengine.cpp:37 engines/gob/metaengine.cpp:43
 #: engines/lure/metaengine.cpp:42 engines/mads/metaengine.cpp:52
 #: engines/mm/metaengine.cpp:47 engines/saga/metaengine.cpp:53
-#: engines/scumm/dialogs.cpp:1196 engines/scumm/metaengine.cpp:786
+#: engines/scumm/dialogs.cpp:1203 engines/scumm/metaengine.cpp:786
 msgid "Enable any copy protection that would otherwise be bypassed by default."
 msgstr "デフォルトではバイパスされるコピープロテクトを有効化します。"
 
@@ -6118,7 +6123,7 @@ msgid "Quick load or save game isn't supported in this location"
 msgstr ""
 "このロケーションでは、セーブまたはクイックロードはサポートされていません"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3145
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:3154
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -6129,7 +6134,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3132
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:3141
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -6140,7 +6145,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3165
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:3174
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -6527,22 +6532,22 @@ msgstr "アニメ ON/OFFの切替"
 msgid "Return to gameplay"
 msgstr "ゲームへ戻る"
 
-#. I18N: Switch to previous image in internal game resouce viewer
+#. I18N: Switch to previous image in internal game resource viewer
 #: engines/asylum/metaengine.cpp:239
 msgid "Previous resource"
 msgstr "前へ"
 
-#. I18N: Switch to next image in internal game resouce viewer
+#. I18N: Switch to next image in internal game resource viewer
 #: engines/asylum/metaengine.cpp:247
 msgid "Next resource"
 msgstr "次へ"
 
-#. I18N: Switch to previous palette in internal game resouce viewer
+#. I18N: Switch to previous palette in internal game resource viewer
 #: engines/asylum/metaengine.cpp:255
 msgid "Previous palette"
 msgstr "前へ"
 
-#. I18N: Switch to next palette in internal game resouce viewer
+#. I18N: Switch to next palette in internal game resource viewer
 #: engines/asylum/metaengine.cpp:263
 msgid "Next palette"
 msgstr "次へ"
@@ -6887,7 +6892,7 @@ msgstr "手がかりデータベース"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. QUIT GAME
-#: engines/bladerunner/metaengine.cpp:375 engines/darkseed/metaengine.cpp:82
+#: engines/bladerunner/metaengine.cpp:375 engines/darkseed/metaengine.cpp:93
 #: engines/dragons/metaengine.cpp:224
 #: engines/freescape/games/castle/castle.cpp:259
 #: engines/freescape/games/dark/dark.cpp:196
@@ -7157,7 +7162,7 @@ msgstr "取る"
 #: engines/cine/metaengine.cpp:325 engines/crab/input/input.cpp:251
 #: engines/cruise/metaengine.cpp:166 engines/draci/metaengine.cpp:180
 #: engines/dragons/metaengine.cpp:148 engines/griffon/metaengine.cpp:152
-#: engines/grim/grim.cpp:521 engines/grim/grim.cpp:617
+#: engines/grim/grim.cpp:521 engines/grim/grim.cpp:621
 #: engines/hdb/metaengine.cpp:251 engines/hpl1/metaengine.cpp:94
 #: engines/icb/icb.cpp:101 engines/icb/icb.cpp:179 engines/scumm/help.cpp:228
 #: engines/scumm/help.cpp:237 engines/scumm/help.cpp:244
@@ -7328,21 +7333,33 @@ msgstr "ゲーム終了"
 msgid "Versailles 1685 support is not compiled in"
 msgstr "Versailles 1685のサポートはコンパイルされていません"
 
-#: engines/darkseed/darkseed.cpp:67
+#: engines/darkseed/darkseed.cpp:68
 msgid "Unable to locate the darkseed.dat engine data file."
 msgstr "データファイルdarkseed.datが見つかりません。"
 
+#: engines/darkseed/metaengine.cpp:47
+#, fuzzy
+#| msgid "Use DOS version music tempos"
+msgid "Use floppy version music"
+msgstr "DOS版の音楽テンポを使用"
+
+#: engines/darkseed/metaengine.cpp:48
+msgid ""
+"Use the music from the floppy version. The floppy version's music files must "
+"be copied to the SOUND directory."
+msgstr ""
+
 #. I18N: Perform action on object where cursor points
-#: engines/darkseed/metaengine.cpp:64 engines/dragons/metaengine.cpp:136
+#: engines/darkseed/metaengine.cpp:75 engines/dragons/metaengine.cpp:136
 #: engines/tinsel/metaengine.cpp:294 engines/twp/metaengine.cpp:150
 msgid "Action"
 msgstr "アクション"
 
-#: engines/darkseed/metaengine.cpp:70 engines/dragons/metaengine.cpp:142
+#: engines/darkseed/metaengine.cpp:81 engines/dragons/metaengine.cpp:142
 msgid "Change Command"
 msgstr "コマンドを変更"
 
-#: engines/darkseed/metaengine.cpp:76
+#: engines/darkseed/metaengine.cpp:87
 msgid "Time Advance"
 msgstr "時間経過"
 
@@ -7637,9 +7654,10 @@ msgstr "左回転"
 msgid "Rotate Right"
 msgstr "右回転"
 
+#. I18N: Run is a movement type
 #. I18N: Action in In Cold Blood
 #: engines/freescape/games/castle/castle.cpp:283 engines/grim/grim.cpp:501
-#: engines/grim/grim.cpp:592 engines/hpl1/metaengine.cpp:82
+#: engines/grim/grim.cpp:596 engines/hpl1/metaengine.cpp:82
 #: engines/icb/icb.cpp:131 engines/icb/icb.cpp:197
 msgid "Run"
 msgstr "走る"
@@ -7851,7 +7869,7 @@ msgstr ""
 msgid "Thor Dies"
 msgstr ""
 
-#: engines/got/got.cpp:181 engines/got/got.cpp:191
+#: engines/got/got.cpp:185 engines/got/got.cpp:195
 #, fuzzy
 #| msgid "Saving game is currently unavailable"
 msgid "Savegames are not available in demo mode"
@@ -7877,35 +7895,37 @@ msgstr ""
 "す。\n"
 "それでも%sを実行しますか?"
 
-#: engines/grim/grim.cpp:511 engines/grim/grim.cpp:607
+#: engines/grim/grim.cpp:511 engines/grim/grim.cpp:611
 msgid "Use/Talk"
 msgstr "使う／話す"
 
-#: engines/grim/grim.cpp:516 engines/grim/grim.cpp:612
+#: engines/grim/grim.cpp:516 engines/grim/grim.cpp:616
 msgid "Pick up/Put away"
 msgstr "拾う／片付ける"
 
-#: engines/grim/grim.cpp:526 engines/grim/grim.cpp:622
+#: engines/grim/grim.cpp:526 engines/grim/grim.cpp:626
 msgid "Skip dialog lines"
 msgstr "ダイアログを行単位でスキップする"
 
-#: engines/grim/grim.cpp:582
+#. I18N: Cycle means rotate through
+#: engines/grim/grim.cpp:584
 msgid "Cycle Objects Up"
 msgstr "オブジェクトをサイクルアップする"
 
-#: engines/grim/grim.cpp:587
+#. I18N: Cycle means rotate through
+#: engines/grim/grim.cpp:590
 msgid "Cycle Objects Down"
 msgstr "オブジェクトをサイクルダウンする"
 
-#: engines/grim/grim.cpp:597
+#: engines/grim/grim.cpp:601
 msgid "Quick Room Exit"
 msgstr "クイックルームを終了する"
 
-#: engines/grim/grim.cpp:602
+#: engines/grim/grim.cpp:606
 msgid "Examine/Look"
 msgstr "調べる/見る"
 
-#: engines/grim/grim.cpp:1389
+#: engines/grim/grim.cpp:1394
 msgid "Error: the game could not be saved."
 msgstr "エラー：ゲームをセーブできませんでした。"
 
@@ -9219,7 +9239,7 @@ msgstr "早め"
 msgid "Normal"
 msgstr "標準"
 
-#: engines/mohawk/dialogs.cpp:367 engines/scumm/dialogs.cpp:1493
+#: engines/mohawk/dialogs.cpp:367 engines/scumm/dialogs.cpp:1500
 msgid "Best"
 msgstr "良質"
 
@@ -10323,7 +10343,7 @@ msgid "Your Name:"
 msgstr "ユーザー名："
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4196
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:4205
 msgid "Host"
 msgstr "ホスト"
 
@@ -10333,7 +10353,7 @@ msgid "Querying games..."
 msgstr "ゲームに照会中..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4196
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:4205
 msgid "Join"
 msgstr "参加"
 
@@ -10462,11 +10482,22 @@ msgstr "縦横比修正適用"
 msgid "Brighten the graphics to simulate a Macintosh monitor."
 msgstr ""
 
-#: engines/scumm/dialogs.cpp:1305
+#: engines/scumm/dialogs.cpp:1195
+msgid "Simulate Sega colors"
+msgstr ""
+
+#: engines/scumm/dialogs.cpp:1196
+msgid ""
+"Instead of using the colors defined in the game, simulate colors used on "
+"actual Sega hardware. These are significantly darker, though it's unclear if "
+"that was intended or not."
+msgstr ""
+
+#: engines/scumm/dialogs.cpp:1312
 msgid "Overture Timing:"
 msgstr "Overtureのタイミング："
 
-#: engines/scumm/dialogs.cpp:1309
+#: engines/scumm/dialogs.cpp:1316
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -10474,16 +10505,16 @@ msgstr ""
 "BGMを置き換える際、OvertureがLucasfilmとLoomのロゴに切り替わるタイミングを調"
 "整します。"
 
-#: engines/scumm/dialogs.cpp:1396
+#: engines/scumm/dialogs.cpp:1403
 msgid "Music Quality:"
 msgstr "音質："
 
-#: engines/scumm/dialogs.cpp:1400
+#: engines/scumm/dialogs.cpp:1407
 msgid ""
 "Select music quality. The original lets you choose this from the Game menu."
 msgstr "音楽の質を選択。オリジナル版ではゲームメニューから選択します。"
 
-#: engines/scumm/dialogs.cpp:1401
+#: engines/scumm/dialogs.cpp:1408
 msgid ""
 "Select music quality. The original determines the basic setup by hardware "
 "detection and speed tests, but also allows changes through the Game menu to "
@@ -10492,46 +10523,46 @@ msgstr ""
 "音楽の質を選択。オリジナル版ではハードの検出とスピードテストにより基本的な"
 "セットアップがなされますが、ゲームメニューからもある程度変更できます。"
 
-#: engines/scumm/dialogs.cpp:1492 engines/scumm/dialogs.cpp:1493
+#: engines/scumm/dialogs.cpp:1499 engines/scumm/dialogs.cpp:1500
 msgid "auto"
 msgstr "オート"
 
-#: engines/scumm/dialogs.cpp:1492
+#: engines/scumm/dialogs.cpp:1499
 msgid "Low"
 msgstr "低"
 
-#: engines/scumm/dialogs.cpp:1492
+#: engines/scumm/dialogs.cpp:1499
 #: engines/scumm/he/moonbase/dialog-mapgenerator.cpp:75
 msgid "Medium"
 msgstr "中"
 
-#: engines/scumm/dialogs.cpp:1492
+#: engines/scumm/dialogs.cpp:1499
 msgid "High"
 msgstr "高"
 
-#: engines/scumm/dialogs.cpp:1493
+#: engines/scumm/dialogs.cpp:1500
 msgid "Good"
 msgstr "良"
 
-#: engines/scumm/dialogs.cpp:1493
+#: engines/scumm/dialogs.cpp:1500
 msgid "Better"
 msgstr "可"
 
-#: engines/scumm/dialogs.cpp:1494
+#: engines/scumm/dialogs.cpp:1501
 #, c-format
 msgid "Hardware Rating: %s   -   "
 msgstr "ハードレート: %s   -   "
 
-#: engines/scumm/dialogs.cpp:1494
+#: engines/scumm/dialogs.cpp:1501
 #, c-format
 msgid "Quality Selection: %s"
 msgstr "品質セレクション: %s"
 
-#: engines/scumm/dialogs.cpp:1508
+#: engines/scumm/dialogs.cpp:1515
 msgid "Playback Adjust:"
 msgstr "再生アジャスト："
 
-#: engines/scumm/dialogs.cpp:1512
+#: engines/scumm/dialogs.cpp:1519
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -10539,11 +10570,11 @@ msgstr ""
 "CDオーディオトラックを再生する際、開始位置を調整します。サウンドに問題がある"
 "場合に使用して下さい。"
 
-#: engines/scumm/dialogs.cpp:1592
+#: engines/scumm/dialogs.cpp:1604
 msgid "Intro Adjust:"
 msgstr "イントロ調整："
 
-#: engines/scumm/dialogs.cpp:1596
+#: engines/scumm/dialogs.cpp:1608
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -10552,11 +10583,11 @@ msgstr ""
 "イントロトラックを、この位置から再生します。曲が途中で切れたり、同期が正しく"
 "ない場合に使用して下さい。"
 
-#: engines/scumm/dialogs.cpp:1605
+#: engines/scumm/dialogs.cpp:1617
 msgid "Outlook Adjust:"
 msgstr "アウトルック調整："
 
-#: engines/scumm/dialogs.cpp:1609
+#: engines/scumm/dialogs.cpp:1621
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -10565,25 +10596,25 @@ msgstr ""
 "アウトルックミュージックはイントロの一部です。トラック内での再生開始位置を調"
 "整します。曲が途切れたり、前の曲が聞こえる場合に使用して下さい。"
 
-#: engines/scumm/dialogs.cpp:1711 engines/scumm/metaengine.cpp:737
+#: engines/scumm/dialogs.cpp:1734 engines/scumm/metaengine.cpp:737
 msgid "Load modded audio"
 msgstr "改造オーディオをロード"
 
-#: engines/scumm/dialogs.cpp:1711 engines/scumm/metaengine.cpp:738
+#: engines/scumm/dialogs.cpp:1734 engines/scumm/metaengine.cpp:738
 msgid ""
 "Replace music, sound effects, and speech clips with modded audio files, if "
 "available."
 msgstr "可能なら、BGM・SE・スピーチクリップを改造ファイルに置き換えて下さい。"
 
-#: engines/scumm/dialogs.cpp:1713
+#: engines/scumm/dialogs.cpp:1736
 msgid "Multiplayer Server:"
 msgstr "マルチプレイサーバー："
 
-#: engines/scumm/dialogs.cpp:1719
+#: engines/scumm/dialogs.cpp:1742
 msgid "Online Server:"
 msgstr "オンラインサーバー："
 
-#: engines/scumm/dialogs.cpp:1720
+#: engines/scumm/dialogs.cpp:1743
 msgid ""
 "Address of the server to connect to for online play.  It must start with "
 "either \"https://\" or \"http://\" schemas."
@@ -10591,22 +10622,22 @@ msgstr ""
 "接続するサーバーのアドレスです。 \"https://\" または \"http://\"スキーマで始"
 "まる必要があります。"
 
-#: engines/scumm/dialogs.cpp:1722
+#: engines/scumm/dialogs.cpp:1745
 msgid "Enable online competitive mods"
 msgstr "オンライン対戦MODの有効化"
 
-#: engines/scumm/dialogs.cpp:1722
+#: engines/scumm/dialogs.cpp:1745
 #, fuzzy
 #| msgid ""
 #| "Enables custom-made modifications intented for online competitive play."
 msgid "Enables custom-made modifications intended for online competitive play."
 msgstr "オンライン対戦を想定したカスタムMODが利用可能です。"
 
-#: engines/scumm/dialogs.cpp:1726
+#: engines/scumm/dialogs.cpp:1749
 msgid "Enable connection to Multiplayer Server"
 msgstr "マルチプレイサーバーへの接続を許可"
 
-#: engines/scumm/dialogs.cpp:1726
+#: engines/scumm/dialogs.cpp:1749
 msgid ""
 "Toggles the connection to the server that allows hosting and joining online "
 "multiplayer games over the Internet."
@@ -10614,24 +10645,24 @@ msgstr ""
 "オンラインマルチプレイのホストおよび参加を可能とするサーバーへの接続を切り替"
 "えます。"
 
-#: engines/scumm/dialogs.cpp:1727
+#: engines/scumm/dialogs.cpp:1750
 msgid "Host games over LAN"
 msgstr "LANでゲームを開催"
 
-#: engines/scumm/dialogs.cpp:1727
+#: engines/scumm/dialogs.cpp:1750
 msgid "Allows the game sessions to be discovered over your local area network."
 msgstr "セッションをローカルネットワーク上で発見できるようにします。"
 
 #. I18N: Moonbase Console is a program name
-#: engines/scumm/dialogs.cpp:1731
+#: engines/scumm/dialogs.cpp:1754
 msgid "Generate random maps"
 msgstr "マップをランダム生成"
 
-#: engines/scumm/dialogs.cpp:1731
+#: engines/scumm/dialogs.cpp:1754
 msgid "Allow random map generation (Based from Moonbase Console)."
 msgstr "ランダムなマップ生成を許可(Moonbase Consoleに基づく)。"
 
-#: engines/scumm/dialogs.cpp:1734
+#: engines/scumm/dialogs.cpp:1757
 msgid ""
 "Address of the server to connect to for hosting and joining online game "
 "sessions."
@@ -11299,7 +11330,7 @@ msgid ""
 "this save file."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:305
+#: engines/scumm/scumm.cpp:312
 msgid ""
 "You have enabled 'aspect ratio correction'. However, FM-TOWNS' natural "
 "resolution is 320x240, which doesn't allow aspect ratio correction.\n"
@@ -11311,13 +11342,13 @@ msgstr ""
 "アスペクト比の補正は、[エンジン]タブで解像度を320x200にトリミングすることで実"
 "現できます。"
 
-#: engines/scumm/scumm.cpp:1333
+#: engines/scumm/scumm.cpp:1342
 #, fuzzy, c-format
 #| msgid "This game requires the 'Indy' Macintosh executable for its fonts."
 msgid "This game requires the '%s' Macintosh executable for its fonts."
 msgstr "このゲームのフォントにMacintoshの実行ファイル「Indy」が必要です。"
 
-#: engines/scumm/scumm.cpp:1337
+#: engines/scumm/scumm.cpp:1346
 #, fuzzy, c-format
 #| msgid ""
 #| "This game requires the 'Loom' Macintosh executable for its music and "
@@ -11326,7 +11357,7 @@ msgid ""
 "This game requires the '%s' Macintosh executable for its music and fonts."
 msgstr "このゲームのBGM・フォントにMacintoshの実行ファイル「Loom」が必要です。"
 
-#: engines/scumm/scumm.cpp:1341
+#: engines/scumm/scumm.cpp:1350
 #, fuzzy, c-format
 #| msgid ""
 #| "Could not find the 'Monkey Island' Macintosh executable to read the\n"
@@ -11339,25 +11370,25 @@ msgstr ""
 "ん。\n"
 "音楽は無効になります。"
 
-#: engines/scumm/scumm.cpp:1342
+#: engines/scumm/scumm.cpp:1351
 msgid "The Mac GUI"
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1342
+#: engines/scumm/scumm.cpp:1351
 msgid "The music and the Mac GUI"
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1362
+#: engines/scumm/scumm.cpp:1371
 #, c-format
 msgid "Could not open Macintosh resource file %s"
 msgstr "Macintoshのリソース %s を開けません"
 
-#: engines/scumm/scumm.cpp:1365
+#: engines/scumm/scumm.cpp:1374
 #, c-format
 msgid "Could not find resource fork in Macintosh resource file %s"
 msgstr "Macintoshのリソース %s でフォークが見つかりません"
 
-#: engines/scumm/scumm.cpp:1373
+#: engines/scumm/scumm.cpp:1382
 #, c-format
 msgid ""
 "'%s' appears to be the wrong Dig executable. It may be the launcher one "
@@ -11366,7 +11397,7 @@ msgid ""
 "its sub-folders should be what you need."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1756
+#: engines/scumm/scumm.cpp:1765
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -11376,7 +11407,7 @@ msgstr ""
 "このゲームではサポートされていないため、オーディオは無効になります。\n"
 "オリジナルのメディアから、圧縮せずにコピーしてください。"
 
-#: engines/scumm/scumm.cpp:2247
+#: engines/scumm/scumm.cpp:2256
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -11385,7 +11416,7 @@ msgstr ""
 "ネイティブMIDIのサポートには、LucasArts提供のthe Roland Upgradeが必要です。\n"
 "しかし%sがありません。代わりにAdLibを使用します。"
 
-#: engines/scumm/scumm.cpp:2263
+#: engines/scumm/scumm.cpp:2272
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -11393,7 +11424,7 @@ msgstr ""
 "このMonkey Island 1の特定のバージョンは、MT-32に必要な\n"
 "リソースが欠落しています。AdLibを代用します。"
 
-#: engines/scumm/scumm.cpp:4084
+#: engines/scumm/scumm.cpp:4093
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -11403,7 +11434,7 @@ msgstr ""
 "ディレクトリーの「Maniac」フォルダー内にゲームファイルを配置し、ゲームが"
 "ScummVMに追加されていなければなりません。"
 
-#: engines/scumm/scumm.cpp:4196
+#: engines/scumm/scumm.cpp:4205
 msgid "Would you like to host or join a network play session?"
 msgstr "セッションを開催、または参加しますか?"
 
@@ -11844,18 +11875,13 @@ msgid ""
 "Removes some repetitive actions, adds possibility to change verbs by keyboard"
 msgstr "いくつかの反復操作を削除し、キーボードで動詞を変更可能にする"
 
-#: engines/sword1/animation.cpp:532
-#, c-format
-msgid "PSX stream cutscene '%s' cannot be played in paletted mode"
-msgstr "PSXストリーム形式のムービー'%s'は、パレットモードで再生できません"
-
-#: engines/sword1/animation.cpp:563 engines/sword2/animation.cpp:456
+#: engines/sword1/animation.cpp:566 engines/sword2/animation.cpp:459
 msgid ""
 "MPEG-2 cutscenes found but ScummVM has been built without MPEG-2 support"
 msgstr ""
 "MPEG-2形式のムービーが見つかりましたが、ScummVMはMPEG-2をサポートしていません"
 
-#: engines/sword1/animation.cpp:570 engines/sword2/animation.cpp:465
+#: engines/sword1/animation.cpp:573 engines/sword2/animation.cpp:468
 #, c-format
 msgid "Cutscene '%s' not found"
 msgstr "ムービー'%s'が見つかりませんでした"
@@ -11893,7 +11919,7 @@ msgstr "古いフォーマットのデータを残す"
 msgid "Keep the new one"
 msgstr "新しいフォーマットのデータを残す"
 
-#: engines/sword1/logic.cpp:1732
+#: engines/sword1/logic.cpp:1738
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "Broken Sword 1のデモはここで終了です"
 
@@ -11962,13 +11988,6 @@ msgstr "方向ボタン："
 #| msgid "Main Men~u~"
 msgid "Main Menu"
 msgstr "メインメニュー(~u~)"
-
-#: engines/sword2/animation.cpp:426
-msgid ""
-"PSX cutscenes found but ScummVM has been built without RGB color support"
-msgstr ""
-"PSXのムービーが見つかりましたが、ScummVMはRGBカラーサポートなしで構築されてい"
-"ます"
 
 #: engines/sword2/detection_tables.h:419
 msgid "Remastered edition is not supported. Please, use the classic version"
@@ -13545,6 +13564,16 @@ msgstr ""
 "使用する場合、Times New Roman、Century Schoolbook、Garamond、Courier New、"
 "Arialが必要です。Liberation Fontsを使用する場合、LiberationMono、"
 "LiberationSans、LiberationSerifが必要です。"
+
+#, c-format
+#~ msgid "PSX stream cutscene '%s' cannot be played in paletted mode"
+#~ msgstr "PSXストリーム形式のムービー'%s'は、パレットモードで再生できません"
+
+#~ msgid ""
+#~ "PSX cutscenes found but ScummVM has been built without RGB color support"
+#~ msgstr ""
+#~ "PSXのムービーが見つかりましたが、ScummVMはRGBカラーサポートなしで構築され"
+#~ "ています"
 
 #, fuzzy
 #~| msgid ""

@@ -70,7 +70,7 @@ void Converstation_Globals::conv_reset_all() {
 
 /*------------------------------------------------------------------------*/
 
-void cdd_init(void) {
+void cdd_init() {
 	for (int i = 0; i < 16; i++) {
 		_G(cdd).text[i] = nullptr;
 		_G(cdd).snd_files[i] = nullptr;
@@ -280,6 +280,9 @@ void conv_init(Conv *c) {
 			c->myCNode = 0;
 		}
 		break;
+		
+	default:
+		break;
 	}
 }
 
@@ -344,6 +347,7 @@ static void conv_save_state(Conv *c) {
 	int32 next, tag;	// receive conv_ops_get_entry results
 	int32 myCNode = c->myCNode;
 	char fname[9];
+	memset(fname, 0, 9);
 
 	int32 num_decls = 0;
 	int32 num_entries = 0;
@@ -386,7 +390,6 @@ static void conv_save_state(Conv *c) {
 
 	int32 file_size = 0;
 	int32 offset;
-	int32 prev_size;
 	char *conv_save_buff;
 	bool overwrite_file = false;
 
@@ -408,7 +411,7 @@ static void conv_save_state(Conv *c) {
 
 		if (offset != -1) {
 			overwrite_file = true;
-			prev_size = READ_LE_UINT32(&conv_save_buff[offset]);
+			int32 prev_size = READ_LE_UINT32(&conv_save_buff[offset]);
 			prev_size += 3 * sizeof(int32);
 			offset += sizeof(int32);	// Skip header. (name + size)
 		} else {
@@ -625,8 +628,6 @@ static Conv *conv_restore_state(Conv *c) {
 
 		switch (tag) {
 		case LNODE_CHUNK:
-			break;
-
 		case NODE_CHUNK:
 			break;
 
@@ -720,8 +721,6 @@ static void conv_set_disp_default(void) {
 }
 
 Conv *conv_load(const char *filename, int x1, int y1, int32 myTrigger, bool want_box) {
-	Conv *convers = nullptr;
-	int32 cSize = 0;
 	char fullpathname[MAX_FILENAME_SIZE];
 
 	term_message("conv_load");
@@ -751,24 +750,19 @@ Conv *conv_load(const char *filename, int x1, int y1, int32 myTrigger, bool want
 	else
 		Common::sprintf_s(fullpathname, "%s.chk", filename);
 
-	SysFile fp(fullpathname, BINARY);
+	SysFile fp(fullpathname);
 	if (!fp.exists()) {
 		// Force the file open
 		error_show(FL, 'CNVL', "couldn't conv_load %s", fullpathname);
-		conv_set_handle(nullptr);
-		convers = nullptr;
-		fp.close();
-
-		return nullptr;
 	}
 
-	cSize = fp.size();
+	int32 cSize = fp.size();
 
 	if (conv_get_handle() != nullptr) {
 		conv_unload();
 	}
 
-	convers = new Conv();
+	Conv *convers = new Conv();
 
 	if (!convers) {
 		conv_set_handle(nullptr);
@@ -890,6 +884,9 @@ int conv_get_text(int32 offset, int32 size, Conv *c) {
 				_GC(width) = text_width;
 
 			_G(cdd).num_txt_ents++;
+			break;
+
+		default:
 			break;
 		}
 		i = next;

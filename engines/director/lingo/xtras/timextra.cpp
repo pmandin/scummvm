@@ -37,9 +37,21 @@
 /*
 -- xtra TimeXtra
 new object me, any
-* getTime -- add two numbers 
+* getTime -- add two numbers
 
  */
+
+
+/**************************************************
+ Return value is hours * 3600 + minutes * 60 + seconds in UTC.
+ The underlying function in the XTRA is GetSystemTime:
+	https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemtime
+
+ Safecrackers only needs the number of seconds since the start of the game.
+ Since not all platforms that run ScummVM have a clock, it's implemented as
+ the number of seconds since the start of ScummVM.
+ **************************************************/
+
 
 namespace Director {
 
@@ -86,7 +98,6 @@ void TimextraXtra::open(ObjectType type, const Common::Path &path) {
 void TimextraXtra::close(ObjectType type) {
     TimextraXtraObject::cleanupMethods();
     g_lingo->_globalvars[xlibName] = Datum();
-
 }
 
 void TimextraXtra::m_new(int nargs) {
@@ -95,6 +106,11 @@ void TimextraXtra::m_new(int nargs) {
 	g_lingo->push(g_lingo->_state->me);
 }
 
-XOBJSTUB(TimextraXtra::m_getTime, 0)
+void TimextraXtra::m_getTime(int nargs) {
+	ARGNUMCHECK(0);
+	int seconds = g_system->getMillis() / 1000;
+	Datum const res(seconds);
+	g_lingo->push(res);
+}
 
 }

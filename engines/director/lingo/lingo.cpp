@@ -618,7 +618,7 @@ Common::String Lingo::formatFunctionBody(Symbol &sym) {
 bool Lingo::execute(int targetFrame) {
 	uint localCounter = 0;
 
-	while (!_abort && !_freezeState && _state->script && (*_state->script)[_state->pc] != STOP) {
+	while (!_abort && !_freezeState && !_playDone && _state->script && (*_state->script)[_state->pc] != STOP) {
 		if (targetFrame != -1 && (int)_state->callstack.size() == targetFrame)
 			break;
 
@@ -698,7 +698,8 @@ bool Lingo::execute(int targetFrame) {
 	} else if (_freezeState) {
 		debugC(5, kDebugLingoExec, "Lingo::execute(): Context is frozen, pausing execution");
 		freezeState();
-	} else if (_abort || _vm->getCurrentMovie()->getScore()->_playState == kPlayStopped) {
+	// Returning from a script with "play done" does not freeze the state. Instead it obliterates it.
+	} else if (_abort || _playDone || _vm->getCurrentMovie()->getScore()->_playState == kPlayStopped) {
 		// Clean up call stack
 		while (_state->callstack.size()) {
 			popContext(true);
@@ -979,6 +980,7 @@ void Datum::reset() {
 		case ARGC:
 		case ARGCNORET:
 		case CASTLIBREF:
+		case SPRITEREF:
 			break;
 		case VARREF:
 		case GLOBALREF:
@@ -1291,6 +1293,7 @@ Datum Datum::clone() const {
 		for (auto &it : u.farr->arr) {
 			result.u.farr->arr.push_back(it.clone());
 		}
+		result.u.farr->_sorted = u.farr->_sorted;
 		break;
 	case PARRAY:
 		result.type = PARRAY;
@@ -1298,6 +1301,7 @@ Datum Datum::clone() const {
 		for (auto &it : u.parr->arr) {
 			result.u.parr->arr.push_back(PCell(it.p.clone(), it.v.clone()));
 		}
+		result.u.parr->_sorted = u.parr->_sorted;
 		break;
 	default:
 		result = *this;
@@ -1380,7 +1384,7 @@ const char *Datum::type2str(bool ilk) const {
 	}
 }
 
-int Datum::equalTo(Datum &d, bool ignoreCase) const {
+int Datum::equalTo(const Datum &d, bool ignoreCase) const {
 	// VOID can only be equal to VOID and INT 0
 	if (type == VOID && d.type == VOID) {
 		return 1;
@@ -1417,29 +1421,29 @@ int Datum::equalTo(Datum &d, bool ignoreCase) const {
 	return 0;
 }
 
-bool Datum::operator==(Datum &d) const {
+bool Datum::operator==(const Datum &d) const {
 	return equalTo(d);
 }
 
-bool Datum::operator>(Datum &d) const {
+bool Datum::operator>(const Datum &d) const {
 	return compareTo(d) & kCompareGreater;
 }
 
-bool Datum::operator<(Datum &d) const {
+bool Datum::operator<(const Datum &d) const {
 	return compareTo(d) & kCompareLess;
 }
 
-bool Datum::operator>=(Datum &d) const {
+bool Datum::operator>=(const Datum &d) const {
 	uint32 res = compareTo(d);
 	return res & kCompareGreater || res & kCompareEqual;
 }
 
-bool Datum::operator<=(Datum &d) const {
+bool Datum::operator<=(const Datum &d) const {
 	uint32 res = compareTo(d);
 	return res & kCompareLess || res & kCompareEqual;
 }
 
-uint32 Datum::compareTo(Datum &d) const {
+uint32 Datum::compareTo(const Datum &d) const {
 	// VOID will always be treated as:
 	// - equal to VOID
 	// - less than -and- equal to INT 0 (yes, really)
@@ -1478,7 +1482,7 @@ uint32 Datum::compareTo(Datum &d) const {
 		} else {
 			return kCompareGreater;
 		}
-	} else if (alignType == STRING) {
+	} else if (alignType == STRING || alignType == SYMBOL) {
 		int res = compareStrings(asString(), d.asString());
 		if (res < 0) {
 			return kCompareLess;

@@ -56,7 +56,7 @@ enum CastType {
 	kCastMovie = 9,
 	kCastDigitalVideo = 10,
 	kCastLingoScript = 11,
-	kCastRTE = 12,
+	kCastRichText = 12,
 	kCastTransition = 14,
 };
 
@@ -460,6 +460,8 @@ const char *scriptType2str(ScriptType scr);
 const char *castType2str(CastType type);
 const char *spriteType2str(SpriteType type);
 const char *inkType2str(InkType type);
+const char *symbolType2str(SymbolType type);
+Common::String objectType2str(int fl);
 
 } // End of namespace Director
 

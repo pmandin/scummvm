@@ -25,8 +25,7 @@
 #include "common/array.h"
 #include "audio/audiostream.h"
 
-#include "mediastation/subfile.h"
-#include "mediastation/chunk.h"
+#include "mediastation/datafile.h"
 #include "mediastation/assetheader.h"
 #include "mediastation/bitmap.h"
 #include "mediastation/mediascript/scriptconstants.h"
@@ -64,7 +63,7 @@ public:
 class MovieFrame : public Bitmap {
 public:
 	MovieFrame(Chunk &chunk, MovieFrameHeader *header);
-	~MovieFrame();
+	virtual ~MovieFrame() override;
 
 	void setFooter(MovieFrameFooter *footer);
 	uint32 left();
@@ -124,6 +123,7 @@ private:
 	void spatialHide();
 
 	void updateFrameState();
+	void showPersistentFrame();
 
 	Common::Rect getFrameBoundingBox(MovieFrame *frame);
 };

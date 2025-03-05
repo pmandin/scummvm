@@ -49,13 +49,9 @@ machine *triggerMachineByHash_3000(int myHash, int dataHash,
 extern void sendWSMessage_60000(machine *mach);
 extern void sendWSMessage_80000(machine *mach);
 extern void sendWSMessage_B0000(machine *mach, int trigger);
-extern void sendWSMessage_B0000(int trigger);
 extern void sendWSMessage_C0000(machine *mach, int trigger);
-extern void sendWSMessage_C0000(int trigger);
 extern void sendWSMessage_D0000(machine *mach);
-extern void sendWSMessage_D0000();
 extern void sendWSMessage_E0000(machine *mach);
-extern void sendWSMessage_E0000();
 extern void sendWSMessage_F0000(machine *mach, int trigger);
 extern void sendWSMessage_F0000(int trigger);
 extern void sendWSMessage_110000(machine *mach, int trigger);
@@ -84,6 +80,10 @@ extern void sendWSMessage_210000(machine *recv, int trigger);
 
 extern void sendWSMessage_29a0000(machine *recv, int val1);
 extern void sendWSMessage_29a0000(int val1);
+
+// Specific to room section 8
+extern void sendWSMessage_3840000(machine *mach, int32 val1);
+extern void sendWSMessage_3860000(machine *mach, int32 trigger);
 
 extern void intrMsgNull(frac16 myMessage, machine *sender);
 extern void triggerMachineByHashCallback(frac16 myMessage, machine *sender = nullptr);

@@ -64,7 +64,7 @@ MovieFrameFooter::MovieFrameFooter(Chunk &chunk) {
 		_index = Datum(chunk).u.i;
 		_keyframeIndex = Datum(chunk).u.i;
 		_unk9 = Datum(chunk).u.i;
-		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _startInMilliseconds = %d, _endInMilliseconds = %d, _left = %d, _top = %d, _index = %d, _keyframeIndex = %d (@0x%llx)", 
+		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _startInMilliseconds = %d, _endInMilliseconds = %d, _left = %d, _top = %d, _index = %d, _keyframeIndex = %d (@0x%llx)",
 			_startInMilliseconds, _endInMilliseconds, _left, _top, _index, _keyframeIndex, static_cast<long long int>(chunk.pos()));
 		debugC(5, kDebugLoading, "MovieFrameFooter::MovieFrameFooter(): _zIndex = %d, _diffBetweenKeyframeAndFrameX = %d, _diffBetweenKeyframeAndFrameY = %d, _unk4 = %d, _unk9 = %d",
 			_zIndex, _diffBetweenKeyframeAndFrameX, _diffBetweenKeyframeAndFrameY, _unk4,_unk9);
@@ -219,9 +219,8 @@ Operand Movie::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) 
 		return returnValue;
 	}
 
-	default: {
-		error("Movie::callMethod(): Got unimplemented method ID %d", methodId);
-	}
+	default:
+		error("Movie::callMethod(): Got unimplemented method ID %s (%d)", builtInMethodToStr(methodId), static_cast<uint>(methodId));
 	}
 }
 
@@ -345,7 +344,7 @@ void Movie::updateFrameState() {
 	if (!_isPlaying) {
 		debugC(6, kDebugGraphics, "Movie::updateFrameState (%d): Not playing", _header->_id);
 		for (MovieFrame *frame : _framesOnScreen) {
-			debugC(6, kDebugGraphics, "   PERSIST: Frame %d (%d x %d) @ (%d, %d); start: %d ms, end: %d ms, keyframeEnd: %d ms, zIndex = %d", 
+			debugC(6, kDebugGraphics, "   PERSIST: Frame %d (%d x %d) @ (%d, %d); start: %d ms, end: %d ms, keyframeEnd: %d ms, zIndex = %d",
 				frame->index(), frame->width(), frame->height(), frame->left(), frame->top(), frame->startInMilliseconds(), frame->endInMilliseconds(), frame->keyframeEndInMilliseconds(), frame->zCoordinate());
 		}
 		return;
@@ -354,14 +353,7 @@ void Movie::updateFrameState() {
 	uint currentTime = g_system->getMillis();
 	uint movieTime = currentTime - _startTime;
 	debugC(5, kDebugGraphics, "Movie::updateFrameState (%d): Starting update (movie time: %d)", _header->_id, movieTime);
-	if (_framesNotYetShown.empty()) {
-		_isPlaying = false;
-		setInactive();
-		_framesOnScreen.clear();
-		runEventHandlerIfExists(kMovieEndEvent);
-		return;
-	}
-	
+
 	// This complexity is necessary becuase movies can have more than one frame
 	// showing at the same time - for instance, a movie background and an
 	// animation on that background are a part of the saem movie and are on
@@ -400,9 +392,31 @@ void Movie::updateFrameState() {
 		}
 	}
 
+	// Now see if we're at the end of the movie.
+	if (_framesOnScreen.empty() && _framesNotYetShown.empty()) {
+		_isPlaying = false;
+		_framesOnScreen.clear();
+		if (_stills.empty()) {
+			setInactive();
+		} else {
+			showPersistentFrame();
+		}
+
+		runEventHandlerIfExists(kMovieEndEvent);
+		return;
+	}
+
+
 	// Show the frames that are currently active, for debugging purposes.
 	for (MovieFrame *frame : _framesOnScreen) {
 		debugC(5, kDebugGraphics, "   (time: %d ms) Frame %d (%d x %d) @ (%d, %d); start: %d ms, end: %d ms, keyframeEnd: %d ms, zIndex = %d", movieTime, frame->index(), frame->width(), frame->height(), frame->left(), frame->top(), frame->startInMilliseconds(), frame->endInMilliseconds(), frame->keyframeEndInMilliseconds(), frame->zCoordinate());
+	}
+}
+
+void Movie::showPersistentFrame() {
+	for (MovieFrame *still : _stills) {
+		_framesOnScreen.push_back(still);
+		g_engine->_dirtyRects.push_back(getFrameBoundingBox(still));
 	}
 }
 
@@ -448,9 +462,8 @@ void Movie::readChunk(Chunk &chunk) {
 		break;
 	}
 
-	default: {
+	default:
 		error("Unknown movie still section type");
-	}
 	}
 }
 
@@ -502,9 +515,8 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 				break;
 			}
 
-			default: {
+			default:
 				error("Movie::readSubfile(): Unknown movie animation section type 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
-			}
 			}
 
 			// READ THE NEXT CHUNK.
@@ -521,7 +533,7 @@ void Movie::readSubfile(Subfile &subfile, Chunk &chunk) {
 			Audio::SeekableAudioStream *stream = nullptr;
 			switch (_header->_soundEncoding) {
 			case SoundEncoding::PCM_S16LE_MONO_22050:
-				stream = Audio::makeRawStream(buffer, chunk._length, 22050, Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN, DisposeAfterUse::NO);
+				stream = Audio::makeRawStream(buffer, chunk._length, 22050, Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN);
 				break;
 
 			case SoundEncoding::IMA_ADPCM_S16LE_MONO_22050:

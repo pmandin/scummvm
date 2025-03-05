@@ -47,9 +47,8 @@ Operand Timer::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) 
 		return returnValue;
 	}
 
-	default: {
-		error("Got unimplemented method ID %d", methodId);
-	}
+	default:
+		error("Timer::callMethod(): Got unimplemented method ID %s (%d)", builtInMethodToStr(methodId), static_cast<uint>(methodId));
 	}
 }
 
@@ -59,13 +58,12 @@ void Timer::timePlay() {
 		//return;
 	}
 
-	// SET TIMER VARIABLES.
 	_isActive = true;
 	_startTime = g_system->getMillis();
 	_lastProcessedTime = 0;
 	g_engine->addPlayingAsset(this);
 
-	// GET THE DURATION OF THE TIMER.
+	// Get the duration of the timer.
 	// TODO: Is there a better way to find out what the max time is? Do we have to look
 	// through each of the timer event handlers to figure it out?
 	_duration = 0;

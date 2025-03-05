@@ -172,7 +172,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 
@@ -187,7 +187,23 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::DE_DEU,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
+		GUIO1(GUIO_NONE)
+	},
+
+	// Adventures of Willy Beamish (PC FDD)
+	// 1.01, Int. 10.11.91 reported by gabberhead (#15773)
+	{
+		"beamish",
+		0,
+		{
+			{"volume.rmf", 0, "25ac28f345a849237ad2662f0ce2ccb5", 9896},
+			{"volume.001", 0, "7e9f3b0b7a5ec9989d3149f5e1f011a9", 1263366},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 
@@ -217,14 +233,17 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 
 	// Adventures of Willy Beamish (GOG CD data)
+	// RESOURCE.RME is not strictly required to run the game (we read data from
+	// RESOURCE.MAP), but it helps differentiate this game from all the SCI
+	// detection entries.
 	{
 		"beamish",
-		0,
+		"CD",
 		{
 			{"resource.001", 0, "07eaebf5c9e569347308ff097bc6607c", 151525997},
 			{"resource.rme", 0, "09bc7bcb83b6d036c5988c81a769cf0c", 44247},
@@ -232,7 +251,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
 
@@ -247,7 +266,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE | ADGF_DEMO,
+		ADGF_TESTING | ADGF_DEMO,
 		GUIO1(GUIO_NONE)
 	},
 
@@ -266,7 +285,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE | ADGF_DEMO | ADGF_DGDS_ALT_DIALOG_COLORS,
+		ADGF_TESTING | ADGF_DEMO | ADGF_DGDS_ALT_DIALOG_COLORS,
 		GUIO1(GUIO_NONE)
 	},
 

@@ -32,7 +32,6 @@ namespace MediaStation {
 class Canvas : public Asset {
 public:
 	Canvas(AssetHeader *header) : Asset(header) {};
-	virtual ~Canvas() override = default;
 
 	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
 };

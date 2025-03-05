@@ -31,6 +31,7 @@
 #include "m4/graphics/krn_pal.h"
 #include "m4/mem/mem.h"
 #include "m4/mem/memman.h"
+#include "m4/platform/timer.h"
 #include "m4/vars.h"
 
 namespace M4 {
@@ -1319,8 +1320,7 @@ static void TextScrn_Show(void *s, void *r, void *b, int32 destX, int32 destY) {
 		while (myMatte) {
 			myGrBuff->refresh_video(myMatte->x1, myMatte->y1, myMatte->x1 - myScreen->x1, myMatte->y1 - myScreen->y1,
 				myMatte->x2 - myScreen->x1, myMatte->y2 - myScreen->y1);
-			//vmng_refresh_video(myMatte->x1, myMatte->y1, myMatte->x1 - myScreen->x1, myMatte->y1 - myScreen->y1,
-			//							myMatte->x2 - myScreen->x1, myMatte->y2 - myScreen->y1, myBuff);
+
 			myMatte = myMatte->nextMatte;
 		}
 	} else {

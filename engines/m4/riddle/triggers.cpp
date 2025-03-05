@@ -141,10 +141,6 @@ void sendWSMessage_B0000(machine *mach, int trigger) {
 	sendWSMessage(ACTION_11 << 16, 0, mach, 0, nullptr, 1);
 }
 
-void sendWSMessage_B0000(int trigger) {
-	sendWSMessage_B0000(_G(my_walker), trigger);
-}
-
 void sendWSMessage_C0000(machine *mach, int trigger) {
 	if (!trigger)
 		trigger = -1;
@@ -153,24 +149,12 @@ void sendWSMessage_C0000(machine *mach, int trigger) {
 	sendWSMessage(ACTION_12 << 16, 0, mach, 0, nullptr, 1);
 }
 
-void sendWSMessage_C0000(int trigger) {
-	sendWSMessage_C0000(_G(my_walker), trigger);
-}
-
 void sendWSMessage_D0000(machine *mach) {
 	sendWSMessage(ACTION_13 << 16, 0, mach, 0, nullptr, 1);
 }
 
-void sendWSMessage_D0000() {
-	sendWSMessage_D0000(_G(my_walker));
-}
-
 void sendWSMessage_E0000(machine *mach) {
 	sendWSMessage(ACTION_14 << 16, 0, mach, 0, nullptr, 1);
-}
-
-void sendWSMessage_E0000() {
-	sendWSMessage_E0000(_G(my_walker));
 }
 
 void sendWSMessage_F0000(machine *mach, int trigger) {
@@ -318,6 +302,20 @@ void sendWSMessage_29a0000(machine *recv, int val1) {
 
 void sendWSMessage_29a0000(int val1) {
 	sendWSMessage_29a0000(_G(my_walker), val1);
+}
+
+void sendWSMessage_3840000(machine *machine, int32 trigger) {
+	int32 num = trigger;
+	if (trigger == 0)
+		num = -1;
+
+	_G(globals[GLB_TEMP_4]) = kernel_trigger_create(num);
+	sendWSMessage(ACTION_900 << 16, 0, machine, 0, nullptr, 1);
+}
+
+void sendWSMessage_3860000(machine *mach, int32 trigger) {
+	_G(globals[GLB_TEMP_1]) = kernel_trigger_create(trigger);
+	sendWSMessage(ACTION_902 << 16, 0, mach, 0, nullptr, 1);
 }
 
 void intrMsgNull(frac16 myMessage, machine *sender) {

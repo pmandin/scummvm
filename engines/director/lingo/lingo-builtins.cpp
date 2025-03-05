@@ -233,8 +233,8 @@ static const BuiltinProto builtins[] = {
 	// References
 	{ "cast",			LB::b_cast,			1, 1, 400, FBLTIN },	//			D4 f
 	{ "castLib",		LB::b_castLib,		1, 1, 500, FBLTIN },	//				D5 f
-	{ "member",			LB::b_member,		1, 1, 500, FBLTIN },	//				D5 f
-	{ "script",			LB::b_script,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "member",			LB::b_member,		1, 2, 500, FBLTIN },	//				D5 f
+	{ "script",			LB::b_script,		1, 2, 400, FBLTIN },	//			D4 f
 	{ "sprite",			LB::b_sprite,		1, 1, 500, FBLTIN },	//				D5 f
 	{ "window",			LB::b_window,		1, 1, 400, FBLTIN },	//			D4 f
 	{ "windowPresent",	LB::b_windowPresent,1, 1, 500, FBLTIN },	//				D5 f
@@ -245,6 +245,7 @@ static const BuiltinProto builtins[] = {
 	{ "locVToLinePos",	LB::b_locVToLinePos, 2, 2, 500, FBLTIN },	//				D5 f
 	{ "scrollByLine",	LB::b_scrollByLine, 2, 2, 500, CBLTIN },	//				D5 c
 	{ "scrollByPage",	LB::b_scrollByPage, 2, 2, 500, CBLTIN },	//				D5 c
+	{ "lineHeight",		LB::b_lineHeight,   2, 2, 500, FBLTIN },	//				D5 f
 	// Chunk operations
 	{ "numberOfChars",	LB::b_numberofchars,1, 1, 300, FBLTIN },	//			D3 f
 	{ "numberOfItems",	LB::b_numberofitems,1, 1, 300, FBLTIN },	//			D3 f
@@ -631,9 +632,30 @@ void LB::b_value(int nargs) {
 // Lists
 ///////////////////
 void LB::b_add(int nargs) {
-	// FIXME: when a list is "sorted", add should insert based on
-	// the current ordering. otherwise, append to the end.
-	LB::b_append(nargs);
+	Datum value = g_lingo->pop();
+	Datum list = g_lingo->pop();
+
+	TYPECHECK(list, ARRAY);
+
+	// If the list is sorted, keep the sort
+	if (list.u.farr->_sorted) {
+		if (list.u.farr->arr.empty()) {
+			list.u.farr->arr.push_back(value);
+		} else {
+			// TODO: We'd better do a binary search here
+			uint pos = list.u.farr->arr.size();
+			for (uint i = 0; i < list.u.farr->arr.size(); i++) {
+				if (list.u.farr->arr[i] > value) { // We are using Datum::compareTo() here
+					pos = i;
+					break;
+				}
+			}
+			list.u.farr->arr.insert_at(pos, value);
+		}
+	} else {
+		list.u.farr->arr.push_back(value);
+		list.u.farr->_sorted = false;		// Drop the sorted flag
+	}
 }
 
 void LB::b_addAt(int nargs) {
@@ -668,7 +690,7 @@ void LB::b_addProp(int nargs) {
 		else {
 			uint pos = list.u.parr->arr.size();
 			for (uint i = 0; i < list.u.parr->arr.size(); i++) {
-				if (list.u.parr->arr[i].p.asString() > cell.p.asString()) {
+				if (list.u.parr->arr[i].p > cell.p) {
 					pos = i;
 					break;
 				}
@@ -686,22 +708,8 @@ void LB::b_append(int nargs) {
 
 	TYPECHECK(list, ARRAY);
 
-	if (list.u.farr->_sorted) {
-		if (list.u.farr->arr.empty())
-			list.u.farr->arr.push_back(value);
-		else {
-			uint pos = list.u.farr->arr.size();
-			for (uint i = 0; i < list.u.farr->arr.size(); i++) {
-				if (list.u.farr->arr[i].asInt() > value.asInt()) {
-					pos = i;
-					break;
-				}
-			}
-			list.u.farr->arr.insert_at(pos, value);
-		}
-	} else {
-		list.u.farr->arr.push_back(value);
-	}
+	list.u.farr->arr.push_back(value);
+	list.u.farr->_sorted = false;		// Drop the sorted flag
 }
 
 void LB::b_count(int nargs) {
@@ -812,11 +820,26 @@ void LB::b_findPos(int nargs) {
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	Datum d(g_lingo->getVoid());
-	TYPECHECK(list, PARRAY);
+	TYPECHECK2(list, ARRAY, PARRAY);
 
-	int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
-	if (index > 0) {
-		d = index;
+	if (list.type == ARRAY) {
+		if (list.u.farr->_sorted) {
+			int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
+			if (index > 0)
+				d = index;
+			else
+				d = 0;
+		} else {
+			if (prop.asInt() > 0 && prop.asInt() <= (int)list.u.farr->arr.size())
+				d = prop.asInt();
+			else
+				d = 0;
+		}
+	} else {
+		int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
+		if (index > 0) {
+			d = index;
+		}
 	}
 
 	g_lingo->push(d);
@@ -1088,10 +1111,15 @@ void LB::b_max(int nargs) {
 		Datum d = g_lingo->pop();
 		if (d.type == ARRAY) {
 			uint arrsize = d.u.farr->arr.size();
-			for (uint i = 0; i < arrsize; i++) {
-				Datum item = d.u.farr->arr[i];
-				if (i == 0 || item > max) {
-					max = item;
+
+			if (d.u.farr->_sorted && arrsize) {
+				max = d.u.farr->arr[arrsize - 1];
+			} else {
+				for (uint i = 0; i < arrsize; i++) {
+					Datum item = d.u.farr->arr[i];
+					if (i == 0 || item > max) {
+						max = item;
+					}
 				}
 			}
 		} else {
@@ -1121,10 +1149,15 @@ void LB::b_min(int nargs) {
 		Datum d = g_lingo->pop();
 		if (d.type == ARRAY) {
 			uint arrsize = d.u.farr->arr.size();
-			for (uint i = 0; i < arrsize; i++) {
-				Datum item = d.u.farr->arr[i];
-				if (i == 0 || item < min) {
-					min = item;
+
+			if (d.u.farr->_sorted && arrsize) {
+				min = d.u.farr->arr[0];
+			} else {
+				for (uint i = 0; i < arrsize; i++) {
+					Datum item = d.u.farr->arr[i];
+					if (i == 0 || item < min) {
+						min = item;
+					}
 				}
 			}
 		} else {
@@ -1247,7 +1280,7 @@ void LB::b_setProp(int nargs) {
 }
 
 static bool sortArrayHelper(const Datum &lhs, const Datum &rhs) {
-	return lhs.asString() < rhs.asString();
+	return lhs < rhs;
 }
 
 static bool sortNumericArrayHelper(const Datum &lhs, const Datum &rhs) {
@@ -1255,7 +1288,7 @@ static bool sortNumericArrayHelper(const Datum &lhs, const Datum &rhs) {
 }
 
 static bool sortPArrayHelper(const PCell &lhs, const PCell &rhs) {
-	return lhs.p.asString() < rhs.p.asString();
+	return lhs.p < rhs.p;
 }
 
 static bool sortNumericPArrayHelper(const PCell &lhs, const PCell &rhs) {
@@ -1270,6 +1303,9 @@ void LB::b_sort(int nargs) {
 	Datum list = g_lingo->pop();
 
 	if (list.type == ARRAY) {
+		if (list.u.farr->_sorted)
+			return;
+
 		// Check to see if the array is full of numbers
 		bool isNumeric = true;
 		for (const auto &it : list.u.farr->arr) {
@@ -1288,6 +1324,9 @@ void LB::b_sort(int nargs) {
 		list.u.farr->_sorted = true;
 
 	} else if (list.type == PARRAY) {
+		if (list.u.parr->_sorted)
+			return;
+
 		// Check to see if the array is full of numbers
 		bool isNumeric = true;
 		for (const auto &it : list.u.parr->arr) {
@@ -1589,6 +1628,10 @@ void LB::b_delay(int nargs) {
 
 void LB::b_do(int nargs) {
 	Common::String code = g_lingo->pop().asString();
+
+	if (code.empty())
+		return;
+
 	ScriptContext *sc = g_lingo->_compiler->compileAnonymous(code);
 	if (!sc) {
 		warning("b_do(): compilation failed, ignoring");
@@ -2896,7 +2939,12 @@ void LB::b_ramNeeded(int nargs) {
 void LB::b_rollOver(int nargs) {
 	Datum d = g_lingo->pop();
 	Datum res(0);
-	int arg = d.asInt();
+	int arg = 0;
+	if (d.type == SPRITEREF) {
+		arg = d.u.i;
+	} else {
+		arg = d.asInt();
+	}
 
 	Score *score = g_director->getCurrentMovie()->getScore();
 
@@ -3482,8 +3530,17 @@ void LB::b_castLib(int nargs) {
 
 void LB::b_member(int nargs) {
 	Movie *movie = g_director->getCurrentMovie();
-	Datum member = g_lingo->pop();
-	CastMemberID res = member.asMemberID();
+
+	CastMemberID res;
+	if (nargs == 1) {
+		Datum member = g_lingo->pop();
+		res = member.asMemberID();
+	} else if (nargs == 2) {
+		Datum library = g_lingo->pop();
+		Datum member = g_lingo->pop();
+		res = g_lingo->toCastMemberID(member, library);
+	}
+
 	if (!movie->getCastMember(res)) {
 		g_lingo->lingoError("No match found for cast member");
 		return;
@@ -3492,13 +3549,15 @@ void LB::b_member(int nargs) {
 }
 
 void LB::b_script(int nargs) {
-	Datum d = g_lingo->pop();
-	// FIXME: Check with later versions of director
-	//        The kCastText check version breaks Phibos, which loads a
-	//        non-kCastText script using this builtin.
-	//        With the kCastText version, Phibos crashes during its intro.
-	// CastMemberID memberID = d.asMemberID(kCastText);
-	CastMemberID memberID = d.asMemberID();
+	CastMemberID memberID;
+	if (nargs == 1) {
+		Datum member = g_lingo->pop();
+		memberID = member.asMemberID();
+	} else if (nargs == 2) {
+		Datum library = g_lingo->pop();
+		Datum member = g_lingo->pop();
+		memberID = g_lingo->toCastMemberID(member, library);
+	}
 	CastMember *cast = g_director->getCurrentMovie()->getCastMember(memberID);
 
 	if (cast) {
@@ -3520,7 +3579,7 @@ void LB::b_script(int nargs) {
 			return;
 		}
 	}
-	warning("b_script(): No script context found for '%s'", d.asString(true).c_str());
+	warning("b_script(): No script context found for '%s'", memberID.asString().c_str());
 	g_lingo->push(Datum());
 }
 
@@ -3601,6 +3660,13 @@ void LB::b_scrollByLine(int nargs) {
 void LB::b_scrollByPage(int nargs) {
 	g_lingo->printSTUBWithArglist("b_scrollByPage", nargs);
 	g_lingo->dropStack(nargs);
+}
+
+void LB::b_lineHeight(int nargs) {
+	g_lingo->printSTUBWithArglist("b_lineHeight", nargs);
+	g_lingo->dropStack(nargs);
+	Datum res(1);
+	g_lingo->push(res);
 }
 
 void LB::b_numberofchars(int nargs) {

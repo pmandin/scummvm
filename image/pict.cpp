@@ -37,10 +37,7 @@ namespace Image {
 // https://developer.apple.com/library/archive/documentation/mac/QuickDraw/QuickDraw-461.html
 // https://developer.apple.com/library/archive/documentation/mac/QuickDraw/QuickDraw-269.html
 
-PICTDecoder::PICTDecoder() {
-	_outputSurface = 0;
-	_paletteColorCount = 0;
-	_version = 2;
+PICTDecoder::PICTDecoder() : _outputSurface(nullptr), _palette(0), _version(2) {
 }
 
 PICTDecoder::~PICTDecoder() {
@@ -51,10 +48,10 @@ void PICTDecoder::destroy() {
 	if (_outputSurface) {
 		_outputSurface->free();
 		delete _outputSurface;
-		_outputSurface = 0;
+		_outputSurface = nullptr;
 	}
 
-	_paletteColorCount = 0;
+	_palette.clear();
 }
 
 #define OPCODE(a, b, c) _opcodes.push_back(PICTOpcode(a, &PICTDecoder::b, c))
@@ -106,18 +103,18 @@ void PICTDecoder::o_nop(Common::SeekableReadStream &) {
 void PICTDecoder::o_clip(Common::SeekableReadStream &stream) {
 	// Ignore
 	int size = stream.readUint16BE();
-	debug(3, "CLIP: size is %d", size);
+	debugC(3, kDebugLevelGGraphics, "CLIP: size is %d", size);
 	if (size >= 10) {
 		int x1 = stream.readSint16BE();
 		int y1 = stream.readSint16BE();
 		int x2 = stream.readSint16BE();
 		int y2 = stream.readSint16BE();
-		debug(3, "CLIP: RECT encountered: %d %d %d %d", x1, y1, x2, y2);
+		debugC(3, kDebugLevelGGraphics, "CLIP: RECT encountered: %d %d %d %d", x1, y1, x2, y2);
 		stream.skip(size - 10);
-		debug(3, "CLIP: skipped %d bytes", size - 10);
+		debugC(3, kDebugLevelGGraphics, "CLIP: skipped %d bytes", size - 10);
 	} else {
 		stream.skip(size - 2);
-		debug(3, "CLIP: skipped %d bytes", size - 2);
+		debugC(3, kDebugLevelGGraphics, "CLIP: skipped %d bytes", size - 2);
 	}
 }
 
@@ -320,7 +317,7 @@ bool PICTDecoder::loadStream(Common::SeekableReadStream &stream) {
 	setupOpcodesNormal();
 
 	_continueParsing = true;
-	memset(_palette, 0, sizeof(_palette));
+	_palette.clear();
 
 	uint16 fileSize = stream.readUint16BE();
 
@@ -334,7 +331,7 @@ bool PICTDecoder::loadStream(Common::SeekableReadStream &stream) {
 	_imageRect.left = stream.readUint16BE();
 	_imageRect.bottom = stream.readUint16BE();
 	_imageRect.right = stream.readUint16BE();
-	_imageRect.debugPrint(8, "PICTDecoder::loadStream(): loaded rect: ");
+	_imageRect.debugPrintC(8, kDebugLevelGGraphics, "PICTDecoder::loadStream(): loaded rect: ");
 
 	// NOTE: This is only a subset of the full PICT format.
 	//     - Only V2 (Extended) Images Supported
@@ -363,7 +360,7 @@ bool PICTDecoder::loadStream(Common::SeekableReadStream &stream) {
 
 		for (uint32 i = 0; i < _opcodes.size(); i++) {
 			if (_opcodes[i].op == opcode) {
-				debug(4, "Running PICT opcode %04x '%s'", opcode, _opcodes[i].desc);
+				debugC(4, kDebugLevelGGraphics, "Running PICT opcode %04x '%s'", opcode, _opcodes[i].desc);
 				(this->*(_opcodes[i].proc))(stream);
 				break;
 			} else if (i == _opcodes.size() - 1) {
@@ -435,13 +432,15 @@ void PICTDecoder::unpackBitsRect(Common::SeekableReadStream &stream, bool withPa
 		// See https://developer.apple.com/library/archive/documentation/mac/QuickDraw/QuickDraw-267.html
 		stream.readUint32BE(); // seed
 		stream.readUint16BE(); // flags
-		_paletteColorCount = stream.readUint16BE() + 1;
+		uint16 paletteColorCount = stream.readUint16BE() + 1;
 
-		for (uint32 i = 0; i < _paletteColorCount; i++) {
+		_palette.resize(paletteColorCount, false);
+		for (uint16 i = 0; i < paletteColorCount; i++) {
 			stream.readUint16BE();
-			_palette[i * 3] = stream.readUint16BE() >> 8;
-			_palette[i * 3 + 1] = stream.readUint16BE() >> 8;
-			_palette[i * 3 + 2] = stream.readUint16BE() >> 8;
+			byte r = stream.readUint16BE() >> 8;
+			byte g = stream.readUint16BE() >> 8;
+			byte b = stream.readUint16BE() >> 8;
+			_palette.set(i, r, g, b);
 		}
 	}
 

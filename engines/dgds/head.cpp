@@ -27,10 +27,15 @@
 #include "dgds/drawing.h"
 #include "dgds/scene.h"
 #include "dgds/dialog.h"
+#include "dgds/ads.h"
 
 #include "graphics/cursorman.h"
 
 namespace Dgds {
+
+ImageFlipMode Conversation::_lastHeadFrameFlipMode = kImageFlipNone;
+int16 Conversation::_lastHeadFrameX = 0;
+int16 Conversation::_lastHeadFrameY = 0;
 
 void TalkDataHead::drawHead(Graphics::ManagedSurface &dst, const TalkData &data) const {
 	uint drawtype = _drawType ? _drawType : 1;
@@ -38,19 +43,20 @@ void TalkDataHead::drawHead(Graphics::ManagedSurface &dst, const TalkData &data)
 	Common::SharedPtr<Image> img = _shape;
 	if (!img)
 		img = data._shape;
-	if (!img)
-		return;
+
 	switch (drawtype) {
 	case 1:
-		drawHeadType1(dst, *img);
+		if (img)
+			drawHeadType1(dst, *img);
 		break;
 	case 2:
-		drawHeadType2(dst, *img);
+		if (img)
+			drawHeadType2(dst, *img);
 		break;
 	case 3:
 		if (DgdsEngine::getInstance()->getGameId() == GID_WILLY)
 			drawHeadType3Beamish(dst, data);
-		else
+		else if (img)
 			drawHeadType3(dst, *img);
 		break;
 	default:
@@ -85,29 +91,39 @@ void TalkDataHead::drawHeadType2(Graphics::ManagedSurface &dst, const Image &img
 
 void TalkDataHead::drawHeadType3Beamish(Graphics::ManagedSurface &dst, const TalkData &data) const {
 	const Common::Rect r = _rect.toCommonRect();
-
-	// Note: only really need the 1px border here but just fill the box.
-	dst.fillRect(r, 8);
-
 	Common::Rect fillRect(r);
 	fillRect.grow(-1);
-	dst.fillRect(fillRect, _drawCol);
+
+	bool bgDone = false;
 
 	for (const auto &frame : _headFrames) {
 		int frameNo = frame._frameNo & 0x7fff;
 		bool useHeadShape = frame._frameNo & 0x8000;
 
 		Common::SharedPtr<Image> img = useHeadShape ? _shape : data._shape;
-		if (!img || !img->isLoaded() || frameNo >= img->loadedFrameCount())
-			continue;
+
+		if (!bgDone && img) {
+			dst.frameRect(r, 8);
+			dst.fillRect(fillRect, _drawCol);
+			bgDone = true;
+		}
 
 		ImageFlipMode flip = kImageFlipNone;
 		// Yes, the numerical values are reversed here (1 -> 2 and 2 -> 1).
 		// The head flip flags are reversed from the image draw flags.
 		if (frame._flipFlags & 1)
-			flip = static_cast<ImageFlipMode>(flip & kImageFlipH);
+			flip = static_cast<ImageFlipMode>(flip | kImageFlipH);
 		if (frame._flipFlags & 2)
-			flip = static_cast<ImageFlipMode>(flip & kImageFlipV);
+			flip = static_cast<ImageFlipMode>(flip | kImageFlipV);
+
+		// Slight hack from original CD version -  record the flip mode and offset
+		// for this frame and use it for drawing the head sprites in the script.
+		Conversation::_lastHeadFrameFlipMode = flip;
+		Conversation::_lastHeadFrameX = frame._xoff;
+		Conversation::_lastHeadFrameY = frame._yoff;
+
+		if (!img || !img->isLoaded() || frameNo >= img->loadedFrameCount())
+			continue;
 
 		img->drawBitmap(frameNo, r.left + frame._xoff, r.top + frame._yoff, fillRect, dst);
 	}
@@ -191,8 +207,8 @@ void CDSTTMInterpreter::handleOperation(TTMEnviro &env_, TTMSeq &seq, uint16 op,
 	case 0x1020: { // SET DELAY:	    i:int   [0..n]
 		// TODO: Probably should do this accounting (as well as timeCut and dialogs)
 		// 		 in game frames, not millis.
-		int delayMillis = (int)round(ivals[0] * MS_PER_FRAME);
-		env._cdsDelay = delayMillis;
+		int16 delayMillis = (int16)round(ivals[0] * MS_PER_FRAME);
+		env._cdsDelay = MAX(env._cdsDelay, delayMillis);
 		break;
 	}
 	case 0x1050: // SELECT BMP:  id:int [0]
@@ -236,12 +252,21 @@ void CDSTTMInterpreter::handleOperation(TTMEnviro &env_, TTMSeq &seq, uint16 op,
 		env._cdsDidStoreArea = true;
 		break;
 	}
-	case 0xa500: // DRAW SPRITE: x,y,frameno,bmpno:int [-n,+n]
-	case 0xa510: // DRAW SPRITE FLIP V x,y:int
-	case 0xa520: // DRAW SPRITE FLIP H: x,y:int
-	case 0xa530: // DRAW SPRITE FLIP HV: x,y,frameno,bmpno:int	[-n,+n]
-		doDrawSpriteOp(env, seq, op, count, ivals, env._xOff, env._yOff);
+	case 0xa500:   // DRAW SPRITE: x,y,frameno,bmpno:int [-n,+n]
+	case 0xa510:   // DRAW SPRITE FLIP V x,y:int
+	case 0xa520:   // DRAW SPRITE FLIP H: x,y:int
+	case 0xa530: { // DRAW SPRITE FLIP HV: x,y,frameno,bmpno:int	[-n,+n]
+		ImageFlipMode flip = Conversation::_lastHeadFrameFlipMode;
+		int16 x = ivals[0] + env._xOff;
+		int16 y = ivals[1] + env._yOff;
+		int16 frameno = ivals[2];
+		int16 bmpNo = ivals[3];
+		Common::SharedPtr<Image> img = env._scriptShapes[bmpNo];
+		if (flip & kImageFlipH)
+			x = env._xOff + (env._scriptShapes[0]->width(0) - ivals[0] - img->width(frameno));
+		img->drawBitmap(frameno, x, y, seq._drawWin, _vm->_compositionBuffer, flip, img->width(frameno), img->height(frameno));
 		break;
+	}
 	case 0xc220: // PLAY RAW SFX
 		if (env._cdsPlayedSound) // this is a one-shot op
 			break;
@@ -256,12 +281,13 @@ void CDSTTMInterpreter::handleOperation(TTMEnviro &env_, TTMSeq &seq, uint16 op,
 		uint16 hi = (uint16)ivals[1];
 		uint16 lo = (uint16)ivals[0];
 		uint32 offset = ((uint32)hi << 16) + lo;
-		debug("TODO: 0xC250 Sync raw sfx?? offset %d", offset);
-		/*if (env._soundRaw->playedOffset() < offset) {
-			// Not played to this point yet.
-			env.scr->seek(-6, SEEK_CUR);
-			return false;
-		}*/
+		// The offset is in bytes of the sample.
+		uint32 playedOffset = env._soundRaw->playedOffset();
+		if (playedOffset < offset) {
+			// Not played to this point yet.  Add a delay until that point.
+			env._cdsDelay = MAX(env._cdsDelay, (int16)(1000 * (offset - playedOffset) / 11025));
+			debug(10, "CDS SYNC SFX: played %d wait for %d (%d ms)", playedOffset, offset, env._cdsDelay);
+		}
 		break;
 	}
 	case 0xa100: // DRAW FILLED RECT
@@ -302,6 +328,9 @@ void Conversation::unloadData() {
 		_ttmEnv._soundRaw->stop();
 	_ttmEnv = CDSTTMEnviro();
 	_loadState = 0;
+	_lastHeadFrameFlipMode = kImageFlipNone;
+	_lastHeadFrameX = 0;
+	_lastHeadFrameY = 0;
 }
 
 void Conversation::clear() {
@@ -331,7 +360,7 @@ void Conversation::loadData(uint16 dlgFileNum, uint16 dlgNum, int16 sub, bool ha
 	_dlgFileNum = dlgFileNum;
 	_subNum = sub;
 	_nextExecMs = 0;
-	_runTempFrame = 0;
+	_runTempFrame = -1;
 	_tempFrameNum = 0;
 	_thisFrameMs = 0;
 	_stopScript = false;
@@ -388,7 +417,8 @@ bool Conversation::runScriptFrame(int16 frameNum) {
 	TTMSeq *seq = _ttmSeqs[0].get();
 	seq->_currentFrame = frameNum;
 
-	debug(10, "CDS: Running TTM sequence %d frame %d", seq->_seqNum, seq->_currentFrame);
+	debug(10, "CDS: Running TTM sequence %d frame %d current millis %d", seq->_seqNum,
+		seq->_currentFrame, _thisFrameMs);
 
 	seq->_drawWin = _drawRect.toCommonRect();
 	return _ttmScript->run(_ttmEnv, *seq);
@@ -409,6 +439,7 @@ void Conversation::checkAndRunScript() {
 	runScriptFrame(_ttmEnv._cdsFrame);
 	if (_ttmEnv._cdsDelay > 0) {
 		_nextExecMs = _thisFrameMs + _ttmEnv._cdsDelay;
+		debug(10, "CDS: This fame %d. Next frame will be on or after %d", _thisFrameMs, _nextExecMs);
 		_ttmEnv._cdsDelay = -1;
 	} else {
 		_nextExecMs = 0;
@@ -440,7 +471,7 @@ void Conversation::incrementFrame() {
 
 bool Conversation::isScriptRunning() {
 	return (_ttmScript &&
-		((_ttmEnv._soundRaw && _ttmEnv._soundRaw->isPlaying())
+		((_ttmEnv._soundRaw->isEmpty() || _ttmEnv._soundRaw->isPlaying())
 		||
 		(_ttmEnv._cdsFrame < _ttmEnv._totalFrames)
 		));
@@ -464,10 +495,43 @@ void Conversation::runScript() {
 	if (!_ttmScript)
 		return;
 
+	//
+	// If we have head data, run the script and don't return until it's
+	// finished - stop all other activity.
+	//
+	// If not, just run the script at the same time as it's supposed to animate over
+	// the top of the other game movements.
+	//
+	if (_haveHeadData)
+		runScriptExclusive();
+	else
+		runScriptStep();
+}
+
+void Conversation::runScriptStep() {
+	DgdsEngine *engine = DgdsEngine::getInstance();
+
+	if (_runTempFrame == -1)
+		_runTempFrame = 2;
+
+	if (!isScriptRunning())
+		return;
+
+	_thisFrameMs = engine->getThisFrameMs();
+	if (!_nextExecMs || _nextExecMs <= _thisFrameMs) {
+		incrementFrame();
+		checkAndRunScript();
+	}
+}
+
+
+void Conversation::runScriptExclusive() {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	engine->disableKeymapper();
 
 	_nextExecMs = 0;
+	_drawRect.x += _lastHeadFrameX;
+	_drawRect.y += _lastHeadFrameY;
 	_ttmEnv._xOff = _drawRect.x;
 	_ttmEnv._yOff = _drawRect.y;
 	_runTempFrame = 2;
@@ -510,10 +574,14 @@ void Conversation::runScript() {
 		if (!_nextExecMs || _nextExecMs <= _thisFrameMs) {
 			incrementFrame();
 
-			const Common::Rect r = _drawRect.toCommonRect();
-
 			checkAndRunScript();
 
+			// Redraw active dialogs eg to make sure thought bubble dots are
+			// over the moving heads
+			engine->getScene()->drawAndUpdateDialogs(&engine->_compositionBuffer);
+
+			Common::Rect r = _drawRect.toCommonRect();
+			r.clip(Common::Rect(SCREEN_WIDTH, SCREEN_HEIGHT));
 			const byte *srcPtr = (const byte *)engine->_compositionBuffer.getPixels() + r.top * SCREEN_WIDTH + r.left;
 			g_system->copyRectToScreen(srcPtr, SCREEN_WIDTH, r.left, r.top, r.width(), r.height());
 		}

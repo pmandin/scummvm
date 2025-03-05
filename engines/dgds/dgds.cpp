@@ -85,7 +85,7 @@ DgdsEngine::DgdsEngine(OSystem *syst, const ADGameDescription *gameDesc)
 	: Engine(syst), _fontManager(nullptr), _console(nullptr), _inventory(nullptr),
 	_soundPlayer(nullptr), _decompressor(nullptr), _scene(nullptr), _shellGame(nullptr),
 	_hocIntro(nullptr), _gdsScene(nullptr), _resource(nullptr), _gamePals(nullptr), _gameGlobals(nullptr),
-	_detailLevel(kDgdsDetailHigh), _textSpeed(1), _justChangedScene1(false),
+	_detailLevel(kDgdsDetailHigh), _textSpeed(5), _justChangedScene1(false),
 	_random("dgds"), _currentCursor(-1), _menuToTrigger(kMenuNone), _isLoading(true), _flipMode(false),
 	_rstFileName(nullptr), _difficulty(1), _menu(nullptr), _adsInterp(nullptr), _isDemo(false),
 	_dragonArcade(nullptr), _chinaTank(nullptr), _chinaTrain(nullptr), _isAltDlgColors(false),
@@ -253,8 +253,8 @@ bool DgdsEngine::changeScene(int sceneNum) {
 
 	debug(1, "%s", _scene->dump("").c_str());
 	_scene->runEnterSceneOps();
-
 	_justChangedScene1 = true;
+	_clock.resetMinsAdded();
 
 	return true;
 }
@@ -397,7 +397,8 @@ void DgdsEngine::loadGameFiles() {
 
 	switch (getGameId()) {
 	case GID_DRAGON:
-		_soundPlayer->loadSFX("SOUNDS.SNG");
+		if (getPlatform() == Common::kPlatformDOS)
+			_soundPlayer->loadSFX("SOUNDS.SNG");
 		_gameGlobals = new DragonGlobals(_clock);
 		_gamePals->loadPalette("DRAGON.PAL");
 		_gdsScene->load("DRAGON.GDS", _resource, _decompressor);
@@ -444,7 +445,7 @@ void DgdsEngine::loadGameFiles() {
 		reqParser.parse(&invRequestData, "WINV.REQ");
 		reqParser.parse(&vcrRequestData, "WVCR.REQ");
 		if (!_isDemo)
-			_menu->readRESData("WVCR.RES");
+			_menu->loadVCRHelp("WVCR.RES");
 
 		break;
 	case GID_QUARKY:
@@ -619,6 +620,10 @@ void DgdsEngine::dimPalForWillyDialog(bool force) {
 	}
 }
 
+void DgdsEngine::updateThisFrameMillis() {
+	_thisFrameMs = getTotalPlayTime();
+}
+
 Common::Error DgdsEngine::run() {
 	syncSoundSettings();
 	_isLoading = true;
@@ -636,7 +641,7 @@ Common::Error DgdsEngine::run() {
 	uint32 frameCount = 0;
 
 	while (!shouldQuit()) {
-		_thisFrameMs = getTotalPlayTime();
+		updateThisFrameMillis();
 
 		if (_lastMouseEvent == Common::EVENT_INVALID)
 			pumpMessages();

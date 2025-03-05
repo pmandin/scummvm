@@ -129,6 +129,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "csidarkmotives",		"CSI: Crime Scene Investigation - Dark Motives" },
 	{ "csimiami",			"CSI: Miami" },
 	{ "cutemachine",		"The Cute machine" },
+	{ "cybergrannies",		"Cyber Grannies" },
 	{ "daedalus",			"The Daedalus Encounter" },
 	{ "darkeye",			"The Dark Eye" },
 	{ "dazzeloids",			"Dazzeloids" },
@@ -819,6 +820,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "seinfeldondvd",		"Seinfeld on DVD" },
 	{ "sensei",				"Sensei" },
 	{ "simpsontrivia",		"The Simpsons Trivia" },
+	{ "smartstart",			"CIBC SmartStart" },
 	{ "smile",				"SMILE! The Splattering" },
 	{ "sorgato",			"Sylvain Sorgato's Drawings in variable color" },
 	{ "spitwad",			"High School High Spitwad Game" },
@@ -999,6 +1001,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "sachabenteuer",		"Toggolino Sachabenteuer" },
 	{ "schulerhilfemath1",	"Schülerhilfe Mathe: Klasse 1." },
 	{ "schulerhilfemath2",	"Schülerhilfe Mathe: Klasse 2." },
+	{ "suderhof",			"Geschichten vom Süderhof" },
 	{ "technicus",			"Technicus: Ten Hours Left" },
 	{ "tiefsee",			"S.O.S. Tiefsee" },
 	{ "tkkgkit",			"TKKG: Identikit" },
@@ -6554,6 +6557,9 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1("crystalskull",  "", "Crystal Skull", "c148f66ae3511fb88733102aa27efe7e", 719459,  501),
 	WINGAME1t("crystalskull", "", "CRYS32.EXE",	   "3f5fd025e808943e1fa9b91ce63ef9b7", 1410495, 501),
 
+	MACGAME1("cybergrannies", "", "Cyber Grannies", "r:231d3041df162be4a0ddd36a74eb03b6", 719337, 501),
+	WINGAME1("cybergrannies", "", "GRANNIES.EXE", "t:2bbebcd580ab1c80f4488d1d2bd0ddbb", 3281215, 501),
+
 	MACGAME1f_l("darlun", "", "DARLUN", "4bc4f93f5c5169de9f2fee12071a68b9", 717372, Common::JA_JPN, 501, GF_32BPP),
 	WINGAME1tf_l("darlun", "", "DARLUN_P.EXE", "713a7ef3728ed1952745d204e520972a", 1440286, Common::JA_JPN, 501, GF_32BPP),
 
@@ -6752,14 +6758,14 @@ static const DirectorGameDescription gameDescriptions[] = {
 	// Other versions are D3
 	PIPGAME1("gadget", "", "GADGET", "d7e907d3933869f055ae59774c87f501", 111000, 501),
 
-	MACGAME1("gadgetpaf",	"",		 "GADGET -Past as Future- (Disc1)", "3b96e0a903130cf68e6f8362bb4d096c", 178907, 501),
-	MACGAME1_l("gadgetpaf", "",		 "GADGET -Past as Future- (Disc1)", "4b2213a9fb04f390ec074c54b916370d", 113169, Common::JA_JPN, 501),
-	WINGAME2("gadgetpaf",	"",		 "GADGET/GADGET.EXE", "t:c8a85e9a0eda2b7dd7974197c02d6469", 1411507,
-									 "DATA/TEXT_E.Cxt", "f:e74119685db701dea9f31f91521fd078", 2457643, 501),
-	WINGAME2("gadgetpaf",	"",		 "GADGET/GADGET.EXE", "1a7acbba10a7246ba58c1d53fc7203f5", 1411507,
-									 "DATA/TEXT_E.Cxt", "5f14330705974a22deb9a12cd8ae6e79", 691046, 501),
-	WINGAME2_l("gadgetpaf", "",		 "GADGET/GADGET.EXE", "1a7acbba10a7246ba58c1d53fc7203f5", 1411507,
-									 "DATA/TEXT_E.Cxt", "056ab5419f65fab51fa50c28ad360e76", 561824, Common::ES_ESP, 501),
+	MACGAME1f("gadgetpaf",	"",		 "GADGET -Past as Future- (Disc1)", "3b96e0a903130cf68e6f8362bb4d096c", 178907, 501, GF_32BPP),
+	MACGAME1f_l("gadgetpaf", "",		 "GADGET -Past as Future- (Disc1)", "4b2213a9fb04f390ec074c54b916370d", 113169, Common::JA_JPN, 501, GF_32BPP),
+	WINGAME2f("gadgetpaf",	"",		 "GADGET/GADGET.EXE", "t:c8a85e9a0eda2b7dd7974197c02d6469", 1411507,
+									 "DATA/TEXT_E.Cxt", "f:e74119685db701dea9f31f91521fd078", 2457643, 501, GF_32BPP),
+	WINGAME2f("gadgetpaf",	"",		 "GADGET/GADGET.EXE", "1a7acbba10a7246ba58c1d53fc7203f5", 1411507,
+									 "DATA/TEXT_E.Cxt", "5f14330705974a22deb9a12cd8ae6e79", 691046, 501, GF_32BPP),
+	WINGAME2f_l("gadgetpaf", "",		 "GADGET/GADGET.EXE", "1a7acbba10a7246ba58c1d53fc7203f5", 1411507,
+									 "DATA/TEXT_E.Cxt", "056ab5419f65fab51fa50c28ad360e76", 561824, Common::ES_ESP, 501, GF_32BPP),
 	WINDEMO2f_l("gadgetpaf", "Demo", "GADGET.exe", "t:7e393434e06153a6413baf1b448f440e", 1647502,
 									 "TEXT_E.Cxt", "h:f2efb64dc4e3e1ea705309426fff7824", 152776, Common::ES_ESP, 501, GF_32BPP),
 
@@ -7539,6 +7545,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINDEMO2t_l("smallhouse", "Demo 2", "DEMOSH.EXE",    "73246839eb7cc3acaf10e67b837a32c1", 1411908,
 								 "S_DEMO/OPEN/MAIN.Dxr", "29c1134c7ffe2e7f1d3fc271443405ea", 361806, Common::JA_JPN, 501),
 
+	WINGAME1("smartstart", "", "SSTART.EXE", "t:2c0ba688150dafd663749f0ac6634810", 933967, 501),
+
 	MACGAME1("smarty", "", "Smarty.PPC", "559818fe064f608c69bf86d4c60dee93", 107863, 501),
 	MACGAME2("smarty", "Uplink rerelease", "MacPPC",			"r:d2531c0b8c0553be7c7cd5f6c6a07b78",  107863,
 										   "spStuff/Acres.dxr", "d:91b6ca83c64c64f48c864fa56d6344a4", 2719234, 501),
@@ -7596,6 +7604,12 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1("staytooned", "", "Power Mac Stay Tooned!", "r:d692140f81aaf86096538f66d6477404",   94045, 500),
 	WINGAME2("staytooned", "", "WIN95/START32.EXE",		 "t:32c18644025e9d2560d002f5a8024216", 1394421,
 							   "TOONED/PROJECT.DXR",	 "f:6490c4706e8b72b61c01a7eb1a39a96c", 2828130, 500),
+
+	MACGAME1_l("suderhof", "", "xn--PowerMac Sderhof_16bit-1lc", "r:c3e6e8e81d425957a49b0c6a97f0ffb0", 107863, Common::DE_DEU, 501),
+	WINGAME2_l("suderhof", "Win 3.1", "STARTW31.EXE",	   "t:ce222c38f57a2f73d60d5330e8356d09",  932281,
+									  "MEDIA/02AHEFT.DXR", "f:d65ebe48689bae17035de773595f6383", 1319598, Common::DE_DEU, 501),
+	WINGAME2_l("suderhof", "Win 95",  "STARTW95.EXE",	   "t:12038763eff6eb54111fb1e088a1ed61", 1410443,
+									  "MEDIA/02AHEFT.DXR", "f:d65ebe48689bae17035de773595f6383", 1319598, Common::DE_DEU, 501),
 
 	MACGAME2("takeru",   "Chapter 1", "Takeru",			    "rt:868ebe3bbcf766408e7009525c78a97c", 719033,
 									  "module_1/menu.Dxr",  "d:7fc6068c9ca58ef2f24028b817532c8d", 3024232, 501),
@@ -8246,6 +8260,10 @@ static const DirectorGameDescription gameDescriptions[] = {
 							 "MEDIA/DATA/BAUWAGEN.DXR", "d:56702894e84d310c5b7548b689953fbd",  8361884, Common::DE_DEU, 602),
 	WINGAME2_l("loewe2", "", "MEDIA/WIN95.exe",			"t:f808f4b3d526367fa8a1e32bf463dd64",  1512856,
 							 "MEDIA/DATA/BAUWAGEN.DXR", "f:56702894e84d310c5b7548b689953fbd",  8361884, Common::DE_DEU, 602),
+	// Version 2.0 adds networking features
+	MACGAME1_l("loewe2", "v2.0",		"MEDIA/xn--Lwenzahn 2-ecb", "rt:282d2d4d2959fbf698b2cdf238c7d588", 1033198, Common::DE_DEU, 602),
+	WINGAME1_l("loewe2", "v2.0 Win3.1", "SETUP/WIN31/LZ2_31.EXE",	"t:f6ad85eeb4b069357603379bc15a56a0",  1291107, Common::DE_DEU, 602),
+	WINGAME1_l("loewe2", "v2.0 Win95",  "SETUP/WIN95/LZ2_95.EXE",	"t:0772adacde0f8fa5a9767de25be13527",  1514451, Common::DE_DEU, 650),
 
 	// Original Mac filename is Löwenzahn 3
 	MACGAME1_l("loewe3", "", "xn--Lwenzahn 3-ecb",					"rt:e03c6cc5f2cdeef199f75c02928edafe", 1032378, Common::DE_DEU, 602),

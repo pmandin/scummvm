@@ -622,6 +622,8 @@ Graphics::PixelFormat MPEGPSDecoder::MPEGVideoTrack::getPixelFormat() const {
 }
 
 bool MPEGPSDecoder::MPEGVideoTrack::setOutputPixelFormat(const Graphics::PixelFormat &format) {
+	if (format.bytesPerPixel != 2 && format.bytesPerPixel != 4)
+		return false;
 	_pixelFormat = format;
 	return true;
 }
@@ -686,7 +688,7 @@ void MPEGPSDecoder::MPEGVideoTrack::findDimensions(Common::SeekableReadStream *f
 	if (_pixelFormat.bytesPerPixel == 1)
 		_pixelFormat = Graphics::PixelFormat(4, 8, 8, 8, 8, 8, 16, 24, 0);
 
-	debug(3, "MPEG dimensions: %dx%d", _width, _height);
+	debugC(3, kDebugLevelGVideo, "MPEG dimensions: %dx%d", _width, _height);
 
 	firstPacket->seek(0);
 }

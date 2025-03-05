@@ -27,7 +27,7 @@
 
 #include "mediastation/asset.h"
 #include "mediastation/assetheader.h"
-#include "mediastation/chunk.h"
+#include "mediastation/datafile.h"
 #include "mediastation/bitmap.h"
 #include "mediastation/mediascript/operand.h"
 #include "mediastation/mediascript/scriptconstants.h"
@@ -37,7 +37,7 @@ namespace MediaStation {
 class SpriteFrameHeader : public BitmapHeader {
 public:
 	SpriteFrameHeader(Chunk &chunk);
-	~SpriteFrameHeader();
+	virtual ~SpriteFrameHeader() override;
 
 	uint _index;
 	Common::Point *_boundingBox;
@@ -46,7 +46,7 @@ public:
 class SpriteFrame : public Bitmap {
 public:
 	SpriteFrame(Chunk &chunk, SpriteFrameHeader *header);
-	~SpriteFrame();
+	virtual ~SpriteFrame() override;
 
 	uint32 left();
 	uint32 top();
@@ -61,6 +61,8 @@ private:
 // Sprites are somewhat like movies, but they strictly show one frame at a time
 // and don't have sound. They are intended for background/recurrent animations.
 class Sprite : public Asset {
+friend class Context;
+
 public:
 	Sprite(AssetHeader *header);
 	~Sprite();

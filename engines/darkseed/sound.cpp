@@ -133,7 +133,9 @@ static constexpr char sfxCDFilenameTbl[][14] = {
 };
 
 Sound::Sound(Audio::Mixer *mixer) : _mixer(mixer) {
-	_musicPlayer = new MusicPlayer(g_engine);
+	bool floppyMusicSetting = ConfMan.hasKey("use_floppy_music") ? ConfMan.getBool("use_floppy_music") : false;
+	_useFloppyMusic = !g_engine->isCdVersion() || floppyMusicSetting;
+	_musicPlayer = new MusicPlayer(g_engine, _useFloppyMusic);
 	_didSpeech.resize(978);
 	resetSpeech();
 }
@@ -143,6 +145,17 @@ Sound::~Sound() {
 }
 
 int Sound::init() {
+	if (_useFloppyMusic) {
+		Common::File file;
+		Common::Path path = g_engine->isCdVersion() ? Common::Path("sound").join("tos1.sit") : Common::Path("tos1.sit");
+		if (file.open(path)) {
+			_musicPlayer->loadTosInstrumentBankData(&file, (int32)file.size());
+		} else {
+			debug("Failed to load TOS instrument bank data %s", path.toString().c_str());
+		}
+		file.close();
+	}
+
 	return _musicPlayer->open();
 }
 
@@ -195,28 +208,46 @@ void Sound::playMusic(MusicId musicId, bool loop) {
 		return;
 	}
 	int filenameIdx = static_cast<uint8>(musicId) - 1;
-	playMusic(g_engine->isCdVersion()
-		? musicDosCDFilenameTbl[filenameIdx]
-		: musicDosFloppyFilenameTbl[filenameIdx],
-		loop);
+	playMusic(_useFloppyMusic ?
+			Common::String(musicDosFloppyFilenameTbl[filenameIdx]) + ".sbr" : musicDosCDFilenameTbl[filenameIdx],
+		nullptr, 6, loop);
 }
 
 void Sound::playMusic(StartMusicId musicId) {
 	int filenameIdx = static_cast<uint8>(musicId);
-	playMusic(g_engine->isCdVersion()
-		? startMusicDosCDFilenameTbl[filenameIdx]
-		: startMusicDosFloppyFilenameTbl[filenameIdx]);
+	if (_useFloppyMusic) {
+		Common::String const &filenameBase = startMusicDosFloppyFilenameTbl[filenameIdx];
+		Common::String const &filenameSbr = filenameBase + ".sbr";
+		Common::String const &filenameSit = filenameBase + ".sit";
+
+		playMusic(filenameSbr, &filenameSit, 5);
+	}
+	else {
+		playMusic(startMusicDosCDFilenameTbl[filenameIdx]);
+	}
 }
 
-void Sound::playMusic(Common::String const &filename, bool loop) {
-	debug("Loading music: %s", filename.c_str());
+void Sound::playMusic(Common::String const &musicFilename, Common::String const *instrBankFilename, uint8 priority, bool loop) {
 	Common::File file;
 	Common::Path path;
-	if (!g_engine->isCdVersion()) {
-		path = Common::Path(filename);
-	} else {
-		path = Common::Path("sound").join(filename);
+	if (_useFloppyMusic) {
+		if (instrBankFilename != nullptr) {
+			path = g_engine->isCdVersion() ? Common::Path("sound").join(instrBankFilename->c_str()) : Common::Path(instrBankFilename->c_str());
+			debug("Loading instrument bank: %s", path.toString().c_str());
+			if (!file.open(path)) {
+				debug("Failed to load %s", path.toString().c_str());
+				return;
+			}
+			_musicPlayer->loadInstrumentBank(&file, (int32)file.size());
+			file.close();
+		}
+		else {
+			debug("Loading TOS instrument bank");
+			_musicPlayer->loadTosInstrumentBank();
+		}
 	}
+	path = g_engine->isCdVersion() ? Common::Path("sound").join(musicFilename) : Common::Path(musicFilename);
+	debug("Loading music: %s", path.toString().c_str());
 	if (!file.open(path)) {
 		debug("Failed to load %s", path.toString().c_str());
 		return;
@@ -224,11 +255,15 @@ void Sound::playMusic(Common::String const &filename, bool loop) {
 	_musicPlayer->load(&file, (int32)file.size());
 	file.close();
 
-	_musicPlayer->play(loop);
+	_musicPlayer->play(priority, loop);
 }
 
 void Sound::stopMusic() {
 	_musicPlayer->stop();
+}
+
+void Sound::pauseMusic(bool pause) {
+	_musicPlayer->pause(pause);
 }
 
 void Sound::killAllSound() {
@@ -328,6 +363,14 @@ void Sound::playFloppySpeech(int tosIdx) {
 	Audio::SeekableAudioStream *stream = Audio::makeVOCStream(srcStream,
 															  Audio::FLAG_UNSIGNED, DisposeAfterUse::YES);
 	_mixer->playStream(Audio::Mixer::kSpeechSoundType, &_speechHandle, stream);
+}
+
+void Sound::startFadeOut() {
+	_musicPlayer->startFadeOut();
+}
+
+bool Sound::isFading() {
+	return _musicPlayer->isFading();
 }
 
 } // End of namespace Darkseed

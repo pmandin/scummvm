@@ -76,7 +76,7 @@ void Room303::init() {
 		_triggerMode1 = _triggerMode2 = KT_DAEMON;
 		_val5 = 0;
 		_val6 = 0;
-		_val7 = 0;
+		_meiLipsFlag = false;
 		_val8 = 0;
 	}
 
@@ -107,17 +107,17 @@ void Room303::init() {
 			loadFengLi();
 
 			if (_fengFlag) {
-				_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+				_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 					triggerMachineByHashCallback, "fl");
 				setShadow5(true);
 			} else {
-				_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 706, 256, 86, 0xc00, 0,
+				_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 706, 256, 86, 0xc00, false,
 					triggerMachineByHashCallback, "fl state machine");
 				setShadow5(false);
 			}
 
 			sendWSMessage_10000(1, _fengLi, _feng4, 1, 1, 400, _feng4, 1, 6, 0);
-			_fengShould = _fengMode = 1;
+			_fengMode = _fengShould = 1;
 		}
 
 		playSeries();
@@ -143,7 +143,7 @@ void Room303::init() {
 			playSeries(false);
 
 			_door = series_show_sprite("DOOR", 7, 0xf05);
-			ws_demand_location(_G(my_walker), 393, 260, 5);
+			ws_demand_location(393, 260, 5);
 
 			ws_walk_load_walker_series(S3_NORMAL_DIRS, S3_NORMAL_NAMES);
 			ws_walk_load_shadow_series(S3_SHADOW_DIRS, S3_SHADOW_NAMES);
@@ -178,12 +178,12 @@ void Room303::init() {
 				ws_walk_load_shadow_series(S3_SHADOW_DIRS, S3_SHADOW_NAMES);
 				loadFengLi();
 
-				_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+				_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 					triggerMachineByHashCallback, "fl");
 				sendWSMessage_10000(1, _fengLi, _feng4, 1, 1, 400,
 					_feng4, 1, 6, 0);
 
-				_fengShould = _fengMode = 1;
+				_fengMode = _fengShould = 1;
 				_fengFlag = true;
 				setShadow5(true);
 			}
@@ -194,7 +194,7 @@ void Room303::init() {
 
 	case 305:
 		player_set_commands_allowed(false);
-		ws_demand_location(_G(my_walker), 28, 267, 3);
+		ws_demand_location(28, 267, 3);
 		playSeries();
 
 		if (!player_been_here(301)) {
@@ -206,10 +206,10 @@ void Room303::init() {
 			ws_walk_load_shadow_series(S3_SHADOW_DIRS, S3_SHADOW_NAMES);
 			loadFengLi();
 
-			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 				triggerMachineByHashCallback, "fl");
 			sendWSMessage_10000(1, _fengLi, _feng1, 1, 16, 400, _feng1, 1, 6, 0);
-			_fengShould = _fengMode = 1;
+			_fengMode = _fengShould = 1;
 			setShadow5(true);
 			_fengFlag = true;
 
@@ -222,7 +222,7 @@ void Room303::init() {
 
 	case 309:
 		interface_show();
-		ws_demand_location(_G(my_walker), 230, 258, 10);
+		ws_demand_location(230, 258, 10);
 		player_set_commands_allowed(false);
 
 		if (!player_been_here(301)) {
@@ -233,12 +233,12 @@ void Room303::init() {
 			_fengFlag = true;
 			loadFengLi();
 
-			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 				triggerMachineByHashCallback, "fl");
 			sendWSMessage_10000(1, _fengLi, _feng4, 1, 16, 400,
 				_feng4, 1, 6, 0);
 
-			_fengShould = _fengMode = 1;
+			_fengMode = _fengShould = 1;
 			setShadow5(true);
 			kernel_load_variant("303lock1");
 			setFengActive(true);
@@ -281,7 +281,7 @@ void Room303::init() {
 		_val12 = KT_PARSE;
 		kernel_load_variant("303lock1");
 		setFengActive(true);
-		ws_demand_location(_G(my_walker), 145, 289, 3);
+		ws_demand_location(145, 289, 3);
 		setupMei();
 		setShadow4(true);
 
@@ -290,10 +290,10 @@ void Room303::init() {
 
 		_fengFlag = true;
 		loadFengLi();
-		_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+		_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 			triggerMachineByHashCallback, "fl");
 		sendWSMessage_10000(1, _fengLi, _feng4, 1, 1, 400, _feng4, 1, 6, 0);
-		_fengShould = _fengMode = 1;
+		_fengMode = _fengShould = 1;
 		setShadow5(true);
 
 		playSeries();
@@ -315,12 +315,13 @@ void Room303::daemon() {
 
 	case 5:
 	case 61:
-		ws_demand_location(_G(my_walker), 230, 258);
+		series_unload(_ripBends);
+		ws_demand_location(230, 258);
 		player_set_commands_allowed(true);
 		break;
 
 	case 6:
-		ws_walk(_G(my_walker), 128, 267, nullptr, 75, 3);
+		ws_walk(128, 267, nullptr, 75, 3);
 		break;
 
 	case 7:
@@ -329,18 +330,18 @@ void Room303::daemon() {
 		break;
 
 	case 8:
-		ws_walk(_G(my_walker), 145, 289, nullptr, -1, 2);
+		ws_walk(145, 289, nullptr, -1, 2);
 		kernel_timing_trigger(200, 38);
 		break;
 
 	case 9:
-		ws_demand_location(_G(my_walker), 1350, 276, 9);
-		ws_walk(_G(my_walker), 1208, 276, nullptr, 75, 9);
+		ws_demand_location(1350, 276, 9);
+		ws_walk(1208, 276, nullptr, 75, 9);
 		break;
 
 	case 10:
-		ws_demand_location(_G(my_walker), 425, 227, 7);
-		ws_walk(_G(my_walker), 399, 260, nullptr, 50, 7);
+		ws_demand_location(425, 227, 7);
+		ws_walk(399, 260, nullptr, 50, 7);
 		break;
 
 	case 18:
@@ -384,11 +385,11 @@ void Room303::daemon() {
 
 	case 40:
 		sendWSMessage_60000(_fengLi);
-		_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+		_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 			triggerMachineByHashCallback, "fl");
 		sendWSMessage_10000(1, _fengLi, _feng1, 1, 16, 400,
 			_feng4, 1, 6, 0);
-		_fengShould = _fengMode = 1;
+		_fengMode = _fengShould = 1;
 		setShadow5(true);
 		player_set_commands_allowed(true);
 		break;
@@ -453,7 +454,7 @@ void Room303::daemon() {
 		break;
 
 	case 107:
-		ws_walk(_G(my_walker), 700, 305, 0, -1, 3);
+		ws_walk(700, 305, nullptr, -1, 3);
 		sendWSMessage_10000(_mei, 393, 260, 9, 109, 0);
 		break;
 
@@ -481,7 +482,7 @@ void Room303::daemon() {
 		kernel_timing_trigger(60, 103);
 		series_unload(_suitTalk1);
 		series_unload(_chinTalk4);
-		ws_walk(_G(my_walker), 700, 305, nullptr, -1, 3);
+		ws_walk(700, 305, nullptr, -1, 3);
 		break;
 
 	case 117:
@@ -492,7 +493,7 @@ void Room303::daemon() {
 		break;
 
 	case 118:
-		ws_walk(_G(my_walker), 444, 295, nullptr, 119, 10);
+		ws_walk(444, 295, nullptr, 119, 10);
 		break;
 
 	case 119:
@@ -516,7 +517,7 @@ void Room303::daemon() {
 	case 122:
 		series_unload(_chinTalk4);
 		player_update_info();
-		ws_walk(_G(my_walker), _G(player_info).x + 1, _G(player_info).y - 1,
+		ws_walk(_G(player_info).x + 1, _G(player_info).y - 1,
 			nullptr, 123, 1);
 		break;
 
@@ -538,16 +539,16 @@ void Room303::daemon() {
 	case 125:
 		_chinTalk4 = series_load("rip suit lft hand gest talk");
 		setGlobals4(_chinTalk4, 6, 6, 13);
-		sendWSMessage_C0000(126);
+		sendWSMessage_C0000(_G(my_walker), 126);
 		break;
 
 	case 126:
 		digi_play("303r07", 1, 255, 150);
-		sendWSMessage_D0000();
+		sendWSMessage_D0000(_G(my_walker));
 		break;
 
 	case 127:
-		ws_walk(_G(my_walker), _G(player_info).x + 50, _G(player_info).y + 10,
+		ws_walk(_G(player_info).x + 50, _G(player_info).y + 10,
 			nullptr, -1, 10);
 		break;
 
@@ -555,6 +556,7 @@ void Room303::daemon() {
 		series_unload(_chinTalk4);
 		_chinTalk4 = series_load("rip suit rt hand gest talk pos2");
 		setGlobals1(_chinTalk4, 1, 5, 5, 5);
+		sendWSMessage_110000(130);
 		digi_play("303r08", 1, 255, 131);
 		break;
 
@@ -568,8 +570,8 @@ void Room303::daemon() {
 		break;
 
 	case 132:
-		ws_walk(_G(my_walker), 565, 306, nullptr, 170, 10);
-		kernel_timing_trigger(1, 133);
+		ws_walk(565, 306, nullptr, 170, 10);
+		kernel_timing_trigger(60, 133);
 		break;
 
 	case 133:
@@ -591,13 +593,13 @@ void Room303::daemon() {
 		sendWSMessage_60000(_mei);
 		setupMei();
 		setShadow4(true);
-		_val11 = 7;
+		_meiShould = 7;
 		kernel_timing_trigger(1, 160);
 		break;
 
 	case 138:
 		series_unload(_chinTalk4);
-		ws_walk(_G(my_walker), 500, 300, nullptr, 125, 3);
+		ws_walk(500, 300, nullptr, 125, 3);
 		break;
 
 	case 143:
@@ -621,7 +623,7 @@ void Room303::daemon() {
 		break;
 
 	case 150:
-		sendWSMessage_B0000(127);
+		sendWSMessage_B0000(_G(my_walker), 127);
 		playSound("303f02", -1, 129);
 		break;
 
@@ -656,7 +658,7 @@ void Room303::daemon() {
 			triggerMachineByHashCallback, "fl");
 		sendWSMessage_10000(1, _fengLi, _feng4, 1, 1, 400,
 			_feng4, 1, 6, 0);
-		_fengShould = _fengMode = 1;
+		_fengMode = _fengShould = 1;
 
 		player_set_commands_allowed(true);
 		break;
@@ -674,11 +676,11 @@ void Room303::daemon() {
 		break;
 
 	case 198:
-		ws_walk(_G(my_walker), 444, 295, nullptr, 111, 11);
+		ws_walk(444, 295, nullptr, 111, 11);
 		break;
 
 	case 200:
-		if (_val10 == 0 && _val11 == 0 && _destTrigger != -1) {
+		if (_meiMode == 0 && _meiShould == 0 && _destTrigger != -1) {
 			kernel_trigger_dispatchx(_destTrigger);
 			_destTrigger = -1;
 
@@ -692,13 +694,13 @@ void Room303::daemon() {
 		break;
 
 	case 201:
-		switch (_val10) {
+		switch (_meiMode) {
 		case 0:
-			switch (_val11) {
+			switch (_meiShould) {
 			case 0:
-				if (_val7) {
+				if (_meiLipsFlag) {
 					series_unload(_meiLips);
-					_val7 = 0;
+					_meiLipsFlag = false;
 				}
 
 				if (_digiName1) {
@@ -716,13 +718,13 @@ void Room303::daemon() {
 					case 1:
 						sendWSMessage_10000(1, _mei, _mei2, 1, 14, 200,
 							_mei2, 14, 14, 0);
-						_val10 = _val11 = 1;
+						_meiMode = _meiShould = 1;
 						break;
 
 					case 2:
 						sendWSMessage_10000(1, _mei, _mei1, 2, 9, 200,
 							_mei1, 9, 9, 0);
-						_val10 = _val11 = 1;
+						_meiMode = _meiShould = 1;
 						break;
 
 					case 3:
@@ -740,26 +742,26 @@ void Room303::daemon() {
 			case 3:
 				sendWSMessage_10000(1, _mei, _mei3, 1, 12, 200,
 					_mei3, 12, 12, 0);
-				_val10 = 3;
+				_meiMode = 3;
 				break;
 
 			case 4:
 			case 5:
 				sendWSMessage_10000(1, _mei, _mei3, 17, 17, 200,
 					_mei3, 17, 17, 0);
-				_val10 = 4;
+				_meiMode = 4;
 				break;
 
 			case 6:
 				sendWSMessage_10000(1, _mei, _meiLips, 1, 13, 200,
 					_meiLips, 13, 13, 0);
-				_val10 = 6;
+				_meiMode = 6;
 				break;
 
 			case 7:
 				sendWSMessage_10000(1, _mei, _mei2, 1, 14, 200,
 					_mei2, 14, 14, 0);
-				_val10 = _val11 = 1;
+				_meiMode = _meiShould = 1;
 				break;
 
 			default:
@@ -768,7 +770,7 @@ void Room303::daemon() {
 			break;
 
 		case 1:
-			if (_val11 == 1) {
+			if (_meiShould == 1) {
 				++_val8;
 				if (imath_ranged_rand(7, 12) < _val8) {
 					_val8 = 0;
@@ -777,7 +779,7 @@ void Room303::daemon() {
 					case 1:
 						sendWSMessage_10000(1, _mei, _mei2, 14, 1, 200,
 							_mei1, 1, 1, 0);
-						_val10 = _val11 = 0;
+						_meiMode = _meiShould = 0;
 						break;
 
 					case 2:
@@ -793,12 +795,12 @@ void Room303::daemon() {
 			} else {
 				sendWSMessage_10000(1, _mei, _mei2, 14, 1, 200,
 					_mei1, 1, 1, 0);
-				_val10 = 0;
+				_meiMode = 0;
 			}
 			break;
 
 		case 2:
-			if (_val11 == 2) {
+			if (_meiShould == 2) {
 				++_val8;
 				if (imath_ranged_rand(7, 12) < _val8) {
 					_val8 = 0;
@@ -807,6 +809,7 @@ void Room303::daemon() {
 					case 1:
 						sendWSMessage_10000(1, _mei, _mei1, 9, 2, 200,
 							_mei1, 1, 1, 0);
+						_meiMode = _meiShould = 0;
 						break;
 
 					case 2:
@@ -823,23 +826,23 @@ void Room303::daemon() {
 			} else {
 				sendWSMessage_10000(1, _mei, _mei1, 9, 2, 200,
 					_mei1, 1, 1, 0);
-				_val10 = 0;
+				_meiMode = 0;
 			}
 			break;
 
 		case 3:
-			if (_val11 == 3) {
+			if (_meiShould == 3) {
 				sendWSMessage_10000(1, _mei, _mei3, 13, 13, 200,
 					_mei3, 13, 16, 0);
 			} else {
 				sendWSMessage_10000(1, _mei, _mei3, 12, 1, 200,
 					_mei1, 1, 1, 0);
-				_val10 = 0;
+				_meiMode = 0;
 			}
 			break;
 
 		case 4:
-			switch (_val11) {
+			switch (_meiShould) {
 			case 4:
 				sendWSMessage_10000(1, _mei, _mei3, 17, 17, 200,
 					_mei3, 17, 17, 0);
@@ -854,20 +857,20 @@ void Room303::daemon() {
 			default:
 				sendWSMessage_10000(1, _mei, _mei1, 1, 1, 200,
 					_mei1, 1, 1, 0);
-				_val10 = 0;
+				_meiMode = 0;
 				break;
 			}
 			break;
 
 		case 6:
-			if (_val11 == 6) {
+			if (_meiShould == 6) {
 				frame = imath_ranged_rand(14, 16);
 				sendWSMessage_10000(1, _mei, _meiLips, frame, frame, 200,
 					_meiLips, frame, frame, 0);
 			} else {
 				sendWSMessage_10000(1, _mei, _meiLips, 17, 24, 200,
 					_mei1, 1, 1, 0);
-				_val10 = 0;
+				_meiMode = 0;
 			}
 			break;
 
@@ -877,7 +880,7 @@ void Room303::daemon() {
 		break;
 
 	case 300:
-		if (_val17 == 0 && _val16 == 0 && _destTrigger != -1) {
+		if (_ripleyMode == 0 && _ripleyShould == 0 && _destTrigger != -1) {
 			kernel_trigger_dispatchx(_destTrigger);
 			_destTrigger = -1;
 
@@ -891,9 +894,9 @@ void Room303::daemon() {
 		break;
 
 	case 301:
-		switch (_val17) {
+		switch (_ripleyMode) {
 		case 0:
-			switch (_val16) {
+			switch (_ripleyShould) {
 			case 0:
 				if (_digiName1) {
 					digi_play(_digiName1, 1, 255, _val18);
@@ -902,28 +905,29 @@ void Room303::daemon() {
 					_G(kernel).trigger_mode = KT_DAEMON;
 				}
 
-				sendWSMessage_10000(1, _machine3, 1, 1, 1, 300, 1, 1, 1, 0);
+				sendWSMessage_10000(1, _ripley, 1, 1, 1, 300, 1, 1, 1, 0);
 				break;
 
 			case 1:
-				sendWSMessage_10000(1, _machine3, _suit2, 1, 10, 300, _suit2, 10, 10, 0);
-				_val17 = 1;
+				sendWSMessage_10000(1, _ripley, _suit2, 1, 10, 300, _suit2, 10, 10, 0);
+				_ripleyMode = 1;
 				break;
 
 			case 2:
-				sendWSMessage_10000(1, _machine3, _suit1, 1, 17, 300,
+				sendWSMessage_10000(1, _ripley, _suit1, 1, 17, 300,
 					_suit1, 17, 17, 0);
-				_val17 = 2;
+				_ripleyMode = 2;
 				break;
 
 			case 3:
 			case 4:
-				sendWSMessage_10000(1, _machine3, _ripGesture, 1, 14, 300,
+				sendWSMessage_10000(1, _ripley, _ripGesture, 1, 14, 300,
 					_ripGesture, 1, 14, 0);
+				_ripleyMode = 3;
 				break;
 
 			case 5:
-				terminateMachineAndNull(_machine3);
+				terminateMachineAndNull(_ripley);
 				terminateMachineAndNull(_ripsh2);
 				ws_unhide_walker();
 				series_unload(_suit1);
@@ -938,51 +942,52 @@ void Room303::daemon() {
 			break;
 
 		case 1:
-			if (_val16 == 1) {
-				sendWSMessage_10000(1, _machine3, _suit2, 10, 10, 300,
+			if (_ripleyShould == 1) {
+				sendWSMessage_10000(1, _ripley, _suit2, 10, 10, 300,
 					_suit2, 10, 10, 0);
 			} else {
-				sendWSMessage_10000(1, _machine3, _suit2, 11, 18, 300, 1, 1, 1, 0);
-				_val17 = 0;
+				sendWSMessage_10000(1, _ripley, _suit2, 11, 18, 300, 1, 1, 1, 0);
+				_ripleyMode = 0;
 			}
 			break;
 
 		case 2:
-			if (_val16 == 2) {
-				sendWSMessage_10000(1, _machine3, _suit1, 17, 17, 300,
+			if (_ripleyShould == 2) {
+				sendWSMessage_10000(1, _ripley, _suit1, 17, 17, 300,
 					_suit1, 17, 17, 0);
 			} else {
-				sendWSMessage_10000(1, _machine3, _suit1, 17, 1, 300, 1, 1, 1, 0);
-				_val17 = 0;
+				sendWSMessage_10000(1, _ripley, _suit1, 17, 1, 300, 1, 1, 1, 0);
+				_ripleyMode = 0;
 			}
 			break;
 
 		case 3:
-			switch (_val16) {
+			switch (_ripleyShould) {
 			case 3:
-				sendWSMessage_10000(1, _machine3, _ripGesture, 14, 14, 300,
+				sendWSMessage_10000(1, _ripley, _ripGesture, 14, 14, 300,
 					_ripGesture, 14, 14, 0);
 				break;
 			case 4:
-				sendWSMessage_10000(1, _machine3, _ripGesture, 15, 25, 300,
+				sendWSMessage_10000(1, _ripley, _ripGesture, 15, 25, 300,
 					_ripGesture, 25, 25, 0);
+				_ripleyMode = 4;
 				break;
 			default:
-				sendWSMessage_10000(1, _machine3, _ripGesture, 14,
+				sendWSMessage_10000(1, _ripley, _ripGesture, 14,
 					1, 300, 1, 1, 1, 0);
-				_val17 = 0;
+				_ripleyMode = 0;
 				break;
 			}
 			break;
 
 		case 4:
-			if (_val16 == 4) {
-				sendWSMessage_10000(1, _machine3, _ripGesture, 25, 25, 300,
+			if (_ripleyShould == 4) {
+				sendWSMessage_10000(1, _ripley, _ripGesture, 25, 25, 300,
 					_ripGesture, 25, 25, 0);
 			} else {
-				sendWSMessage_10000(1, _machine3, _ripGesture, 25, 15, 300,
+				sendWSMessage_10000(1, _ripley, _ripGesture, 25, 15, 300,
 					_ripGesture, 14, 14, 0);
-				_val17 = 3;
+				_ripleyMode = 3;
 			}
 			break;
 
@@ -992,7 +997,7 @@ void Room303::daemon() {
 		break;
 
 	case 400:
-		if (_fengShould == 0 && _fengMode == 0 && _destTrigger != -1) {
+		if (_fengMode == 0 && _fengShould == 0 && _destTrigger != -1) {
 			kernel_trigger_dispatchx(_destTrigger);
 			_destTrigger = -1;
 
@@ -1006,9 +1011,9 @@ void Room303::daemon() {
 		break;
 
 	case 401:
-		switch (_fengShould) {
+		switch (_fengMode) {
 		case 0:
-			switch (_fengMode) {
+			switch (_fengShould) {
 			case 0:
 				sendWSMessage_10000(1, _fengLi, _feng1, 1, 1, 400,
 					_feng1, 1, 1, 0);
@@ -1017,15 +1022,15 @@ void Room303::daemon() {
 			case 1:
 			case 2:
 			case 4:
-				sendWSMessage_10000(1, _fengLi, _feng1, 1, 18, 400,
+				sendWSMessage_10000(1, _fengLi, _feng1, 1, 16, 400,
 					_feng4, 1, 6, 1);
-				_fengShould = 1;
+				_fengMode = 1;
 				break;
 
 			case 3:
 				sendWSMessage_10000(1, _fengLi, _feng2, 1, 13, 400,
 					_feng2, 14, 19, 1);
-				_fengShould = 3;
+				_fengMode = 3;
 				break;
 
 			case 5:
@@ -1048,11 +1053,11 @@ void Room303::daemon() {
 			break;
 
 		case 1:
-			switch (_fengMode) {
+			switch (_fengShould) {
 			case 0:
 				sendWSMessage_10000(1, _fengLi, _feng1, 16, 1, 400,
 					_feng1, 1, 1, 0);
-				_fengShould = 0;
+				_fengMode = 0;
 				break;
 
 			case 1:
@@ -1065,7 +1070,7 @@ void Room303::daemon() {
 			case 5:
 				sendWSMessage_10000(1, _fengLi, _feng1, 16, 1, 400,
 					_feng2, 1, 1, 0);
-				_fengShould = 0;
+				_fengMode = 0;
 				break;
 
 			case 4:
@@ -1073,38 +1078,38 @@ void Room303::daemon() {
 				sendWSMessage_10000(1, _fengLi, _feng4, frame, frame, 400,
 					_feng4, frame, frame, 0);
 				player_set_commands_allowed(true);
-				_fengMode = 1;
+				_fengShould = 1;
 				break;
 
 			default:
 				sendWSMessage_10000(1, _fengLi, _feng3, 1, 18, 400,
 					_feng3, 19, 21, 1);
-				_fengShould = 2;
+				_fengMode = 2;
 				break;
 			}
 			break;
 
 		case 2:
-			if (_fengMode == 2) {
+			if (_fengShould == 2) {
 				frame = imath_ranged_rand(19, 21);
 				sendWSMessage_10000(1, _fengLi, _feng3, frame, frame, 400,
 					_feng3, frame, frame, 0);
 			} else {
 				sendWSMessage_10000(1, _fengLi, _feng3, 18, 1, 400,
 					_feng4, 1, 6, 0);
-				_fengShould = 1;
+				_fengMode = 1;
 			}
 			break;
 
 		case 3:
-			if (_fengMode == 3) {
+			if (_fengShould == 3) {
 				frame = imath_ranged_rand(14, 19);
 				sendWSMessage_10000(1, _fengLi, _feng2, frame, frame, 400,
 					_feng2, frame, frame, 0);
 			} else {
 				sendWSMessage_10000(1, _fengLi, _feng2, 20, 31, 400,
 					_feng2, 1, 1, 0);
-				_fengShould = 0;
+				_fengMode = 0;
 			}
 			break;
 
@@ -1148,7 +1153,7 @@ void Room303::pre_parser() {
 }
 
 void Room303::parser() {
-	bool lookFlag = player_said_any("look", "look at");
+	const bool lookFlag = player_said_any("look", "look at");
 
 	if (player_said("conv303b")) {
 		conv303b();
@@ -1158,27 +1163,28 @@ void Room303::parser() {
 			player_said_any("cow", "giant matchstick")) {
 		switch (_G(kernel).trigger) {
 		case -1:
-			_fengMode = 5;
+			_fengShould = 5;
 			player_set_commands_allowed(false);
 			break;
 
 		case 1:
 			setShadow5(false);
 			if (player_said("giant matchstick"))
-				ws_demand_location(_G(my_walker), 610, 256);
+				ws_demand_location(_fengLi, 610, 256);
 
 			sendWSMessage_10000(_fengLi, 706, 256, 5, 2, 1);
 			break;
 
 		case 2:
 			setShadow5Alt(true);
-			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 706, 256, 86, 0xc00, 0,
+			sendWSMessage_60000(_fengLi);
+			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 706, 256, 86, 0xc00, false,
 				triggerMachineByHashCallback, "fl state machine");
 
 			_G(kernel).trigger_mode = KT_DAEMON;
 			sendWSMessage_10000(1, _fengLi, _feng1, 1, 16, 400,
 				_feng4, 1, 6, 0);
-			_fengShould = _fengMode = 1;
+			_fengMode = _fengShould = 1;
 			setFengActive(false);
 			_fengFlag = false;
 
@@ -1201,13 +1207,13 @@ void Room303::parser() {
 		case 2:
 			setShadow5(true);
 			sendWSMessage_60000(_fengLi);
-			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, 1,
+			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 				triggerMachineByHashCallback, "fl state machine");
 
 			_G(kernel).trigger_mode = KT_DAEMON;
 			sendWSMessage_10000(1, _fengLi, _feng1, 1, 16, 400,
 				_feng4, 1, 6, 0);
-			_fengShould = _fengMode = 1;
+			_fengMode = _fengShould = 1;
 			setFengActive(true);
 			_fengFlag = true;
 
@@ -1229,12 +1235,12 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("suit chin in hand pos4");
 				setGlobals4(_chinTalk4, 15, 15, 15);
-				sendWSMessage_C0000(0);
+				sendWSMessage_C0000(_G(my_walker), 0);
 				digi_play("303r37", 1, 255, 2);
 				break;
 
 			case 2:
-				sendWSMessage_B0000(3);
+				sendWSMessage_B0000(_G(my_walker), 3);
 				break;
 
 			case 3:
@@ -1252,44 +1258,44 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("rip hand to chin talk pos4");
 				setGlobals4(_chinTalk4, 15, 16, 19);
-				sendWSMessage_C0000(0);
+				sendWSMessage_C0000(_G(my_walker), 0);
 				digi_play("303F13", 1, 255, 1);
-				_fengMode = 2;
+				_fengShould = 2;
 				break;
 
 			case 1:
-				_fengMode = 1;
+				_fengShould = 1;
 				kernel_timing_trigger(30, 2);
 				break;
 
 			case 2:
-				sendWSMessage_D0000();
-				digi_play("303r26", 1, 255, 3);
+				sendWSMessage_D0000(_G(my_walker));
+				digi_play("303r26", 1, 255, 3, -1);
 				break;
 
 			case 3:
-				sendWSMessage_E0000();
+				sendWSMessage_E0000(_G(my_walker));
 				sendWSMessage(0xe0000, 0, _G(my_walker), 0, nullptr, 1);
 				kernel_timing_trigger(30, 4);
 				break;
 
 			case 4:
 				digi_play("303F14", 1, 255, 5);
-				_fengMode = 2;
+				_fengShould = 2;
 				break;
 
 			case 5:
-				_fengMode = 1;
+				_fengShould = 1;
 				kernel_timing_trigger(30, 6);
 				break;
 
 			case 6:
-				sendWSMessage_D0000();
+				sendWSMessage_D0000(_G(my_walker));
 				digi_play("303r27", 1, 255, 7);
 				break;
 
 			case 7:
-				sendWSMessage_B0000(8);
+				sendWSMessage_B0000(_G(my_walker), 8);
 				break;
 
 			case 8:
@@ -1313,12 +1319,12 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("suit hand in pocket pos2");
 				setGlobals4(_chinTalk4, 19, 19, 19);
-				sendWSMessage_C0000(0);
+				sendWSMessage_C0000(_G(my_walker), 0);
 				digi_play("303r31", 1, 255, 2);
 				break;
 
 			case 2:
-				sendWSMessage_B0000(3);
+				sendWSMessage_B0000(_G(my_walker), 3);
 				break;
 
 			case 3:
@@ -1340,16 +1346,17 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("suit chin in hand pos4");
 				setGlobals4(_chinTalk4, 15, 15, 15);
-				sendWSMessage_C0000(-2);
+				sendWSMessage_C0000(_G(my_walker), -2);
 				digi_play("303r28a", 1, 255, 1);
 				break;
 
 			case 1:
-				sendWSMessage_B0000(3);
+				sendWSMessage_B0000(_G(my_walker), 3);
 				break;
 
 			case 3:
 				series_unload(_chinTalk4);
+				player_set_commands_allowed(true);
 				break;
 
 			default:
@@ -1362,18 +1369,23 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("rip suit talker pos4");
 				setGlobals4(_chinTalk4, 1, 1, 5);
-				sendWSMessage_C0000(-1);
+				sendWSMessage_C0000(_G(my_walker), -1);
 				digi_play("303F15", 1, 255, 1);
 				_fengMode = 2;
 				break;
 
+			case 1:
+				_fengMode = 1;
+				kernel_timing_trigger(30, 2);
+				break;
+				
 			case 2:
-				sendWSMessage_D0000();
+				sendWSMessage_D0000(_G(my_walker));
 				digi_play("303r28", 1, 255, 3);
 				break;
 
 			case 3:
-				sendWSMessage_B0000(4);
+				sendWSMessage_B0000(_G(my_walker), 4);
 				break;
 
 			case 4:
@@ -1401,11 +1413,11 @@ void Room303::parser() {
 			case 666:
 				player_set_commands_allowed(false);
 				digi_play("303F09", 1, 255, 1);
-				_fengMode = 2;
+				_fengShould = 2;
 				break;
 
 			case 1:
-				_fengMode = 1;
+				_fengShould = 1;
 				player_set_commands_allowed(true);
 				break;
 
@@ -1419,15 +1431,15 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("rip hand to chin talk pos4");
 				setGlobals4(_chinTalk4, 15, 16, 19);
-				sendWSMessage_C0000(0);
+				sendWSMessage_C0000(_G(my_walker), 0);
 				digi_play("303F10", 1, 255, 6);
-				_fengMode = 2;
+				_fengShould = 2;
 				break;
 
 			case 1:
 				digi_play("303r24", 1, 255, 3);
-				sendWSMessage_D0000();
-				_fengMode = 0;
+				sendWSMessage_D0000(_G(my_walker));
+				_fengShould = 0;
 				break;
 
 			case 3:
@@ -1435,19 +1447,19 @@ void Room303::parser() {
 				break;
 
 			case 4:
-				sendWSMessage_B0000(7);
-				_fengMode = 3;
+				sendWSMessage_B0000(_G(my_walker), 7);
+				_fengShould = 3;
 				digi_play("303f11", 1, 255, 5);
 				break;
 
 			case 5:
-				_fengMode = 1;
+				_fengShould = 1;
 				player_set_commands_allowed(true);
 				_G(flags)[V082] = 1;
 				break;
 
 			case 6:
-				_fengMode = 1;
+				_fengShould = 1;
 				kernel_timing_trigger(30, 1);
 				break;
 
@@ -1469,23 +1481,28 @@ void Room303::parser() {
 				player_set_commands_allowed(false);
 				_chinTalk4 = series_load("rip suit talker pos4");
 				setGlobals4(_chinTalk4, 1, 1, 5);
-				sendWSMessage_C0000(1);
+				sendWSMessage_C0000(_G(my_walker), 1);
 				break;
 
+			case 1:
+				kernel_timing_trigger(10, 2, nullptr);
+				break;
+				
 			case 2:
-				sendWSMessage_D0000();
+				sendWSMessage_D0000(_G(my_walker));
 				digi_play("303r25", 1, 255, 3);
 				break;
 
 			case 3:
 				digi_play("303F12", 1, 255, 4);
-				_fengMode = 2;
-				sendWSMessage_B0000(0);
+				_fengShould = 2;
+				sendWSMessage_B0000(_G(my_walker), 0);
 				break;
 
 			case 4:
-				_fengMode = 1;
+				_fengShould = 1;
 				series_unload(_chinTalk4);
+				player_set_commands_allowed(true);
 				break;
 
 			default:
@@ -1496,20 +1513,20 @@ void Room303::parser() {
 		if (player_been_here(301)) {
 			switch (_G(kernel).trigger) {
 			case -1:
-				ws_walk(_G(my_walker), 409, 266, nullptr, 1, 1);
+				ws_walk(_G(my_walker),409, 266, nullptr, 1, 1, true);
 				break;
 
 			case 1:
 				player_set_commands_allowed(false);
 				_med1 = series_load("RIP TREK MED REACH HAND POS1");
 				setGlobals1(_med1, 1, 10, 10, 10, 1);
-				sendWSMessage_110000(2);
+				sendWSMessage_110000(_G(my_walker), 2);
 				break;
 
 			case 2:
 				sendWSMessage_140000(4);
 				terminateMachineAndNull(_door);
-				series_plain_play("DOOR", 1, 0, 100, 0xf05, 7, 3);
+				series_plain_play("DOOR", 1, 0, 100, 0xf05, 7, 3, false);
 				digi_play("303_s01", 1);
 				break;
 
@@ -1518,7 +1535,8 @@ void Room303::parser() {
 				break;
 
 			case 4:
-				ws_walk(_G(my_walker), 417, 232, nullptr, -1, 2);
+				ws_walk(_G(my_walker), 417, 232, nullptr, -1, 2, true);
+				disable_player_commands_and_fade_init(5);
 				break;
 
 			case 5:
@@ -1543,6 +1561,14 @@ void Room303::parser() {
 					_G(player_info).scale, _G(player_info).depth, 7, 1);
 				break;
 
+			case 1:
+				terminateMachine(_door);
+				series_plain_play("DOOR", 1, 0, 100, 3845, 7, 2, false);
+				digi_play("303_s01", 1, 255, -1, -1);
+				_med1 = series_load("SUIT DOOR OPENER POS1", -1, nullptr);
+				series_play_xy("SUIT DOOR OPENER POS1", 1, 2, _G(player_info).x, _G(player_info).y, _G(player_info).scale, _G(player_info).depth, 7, 3);
+				break;
+				
 			case 2:
 				series_show_sprite("DOOR", 7, 0xf05);
 				break;
@@ -1554,7 +1580,7 @@ void Room303::parser() {
 				break;
 
 			case 4:
-				ws_walk(_G(my_walker), 417, 232, nullptr, -1, 2);
+				ws_walk(417, 232, nullptr, -1, 2, true);
 				disable_player_commands_and_fade_init(6);
 				break;
 
@@ -1621,28 +1647,28 @@ void Room303::parser() {
 
 		_ripsh2 = series_show("ripsh2", 0xf00, 128, -1, -1, 0,
 			_G(player_info).scale, _G(player_info).x, _G(player_info).y);
-		_machine3 = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
+		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 			_G(player_info).x, _G(player_info).y, _G(player_info).scale + 1,
-			0x500, 1, triggerMachineByHashCallback, "rip");
+			0x500, true, triggerMachineByHashCallback, "rip");
 
 		_G(kernel).trigger_mode = KT_DAEMON;
-		sendWSMessage_10000(1, _machine3, 1, 1, 1, 300, 1, 1, 1, 0);
+		sendWSMessage_10000(1, _ripley, 1, 1, 1, 300, 1, 1, 1, 0);
 
-		_val17 = _val16 = 0;
+		_ripleyMode = _ripleyShould = 0;
 		_G(kernel).trigger_mode = KT_PARSE;
 
 		conv_load("conv303b", 10, 10, 747);
 		conv_play(conv_get_handle());
-		_val11 = 4;
-		_val16 = 0;
+		_meiShould = 4;
+		_ripleyShould = 0;
 
 	} else if (_G(kernel).trigger == 747) {
 		midi_fade_volume(0, 120);
 		kernel_timing_trigger(120, 749);
 		_lonelyFlag = false;
-		_val7 = 1;
-		_val11 = 0;
-		_val16 = 5;
+		_meiLipsFlag = true;
+		_meiShould = 0;
+		_ripleyShould = 5;
 
 	} else if (_G(kernel).trigger == 749) {
 		midi_stop();
@@ -1657,21 +1683,21 @@ void Room303::parser() {
 		if (_fengFlag) {
 			_ripsh2 = series_show("ripsh2", 0xf00, 0, -1, -1, 0,
 				_G(player_info).scale, _G(player_info).x, _G(player_info).y);
-			_machine3 = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
+			_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 				_G(player_info).x, _G(player_info).y, _G(player_info).scale + 1,
-				0x500, 0, triggerMachineByHashCallback, "rip");
+				0x500, false, triggerMachineByHashCallback, "rip");
 
 		} else {
 			_ripsh2 = series_show("ripsh2", 0xf00, 128, -1, -1, 0,
 				_G(player_info).scale, _G(player_info).x, _G(player_info).y);
-			_machine3 = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
+			_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,
 				_G(player_info).x, _G(player_info).y, _G(player_info).scale + 1,
-				0x500, 1, triggerMachineByHashCallback, "rip");
+				0x500, true, triggerMachineByHashCallback, "rip");
 		}
 
 		_G(kernel).trigger_mode = KT_DAEMON;
-		sendWSMessage_10000(1, _machine3, 1, 1, 1, 300, 1, 1, 1, 0);
-		_val16 = _val17 = 0;
+		sendWSMessage_10000(1, _ripley, 1, 1, 1, 300, 1, 1, 1, 0);
+		_ripleyShould = _ripleyMode = 0;
 
 		_G(kernel).trigger_mode = KT_PARSE;
 		player_set_commands_allowed(false);
@@ -1679,8 +1705,8 @@ void Room303::parser() {
 
 		conv_export_value(conv_get_handle(), _G(flags)[V086], 0);
 		conv_play();
-		_fengMode = 1;
-		_val16 = 0;
+		_fengShould = 1;
+		_ripleyShould = 0;
 
 	} else if (_G(kernel).trigger == 748) {
 		_G(flags)[V082] = 1;
@@ -1688,8 +1714,8 @@ void Room303::parser() {
 		midi_fade_volume(0, 120);
 		kernel_timing_trigger(120, 749);
 		_lonelyFlag = false;
-		_fengMode = 4;
-		_val16 = 5;
+		_fengShould = 4;
+		_ripleyShould = 5;
 
 	} else if (player_said("exit left")) {
 		switch (_G(kernel).trigger) {
@@ -1734,12 +1760,12 @@ void Room303::setupMei() {
 	_mei1 = series_load("MC NY hands behind back pos4");
 	_mei2 = series_load("MC NY hand on hip pos4");
 	_mei3 = series_load("MC NY hand out talk pos4");
-	_mei = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 357, 255, 86, 0xf00, 0,
+	_mei = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 357, 255, 86, 0xf00, false,
 		triggerMachineByHashCallback, "mc");
 
 	_G(kernel).trigger_mode = KT_DAEMON;
 	sendWSMessage_10000(1, _mei, _mei1, 1, 1, 200, _mei1, 1, 1, 0);
-	_val10 = _val11 = 0;
+	_meiMode = _meiShould = 0;
 }
 
 void Room303::loadFengLi() {
@@ -1758,7 +1784,6 @@ void Room303::setFengActive(bool flag) {
 			} else {
 				hotspot->active = hotspot->lr_x > 600;
 			}
-			break;
 		}
 	}
 }
@@ -1796,18 +1821,19 @@ void Room303::playSeries(bool cow) {
 	series_plain_play("SPINNING TOMATO MAN", -1, 0, 100, 0, 7);
 	series_plain_play("PUFFBALL", -1, 0, 100, 0, 8);
 	series_plain_play("CREATURE FEATURE LONG VIEW", 1, 0, 100, 0xf05, 7, 70);
-	series_plain_play("303cow1", -1, 0, 100, 0, 9);
+	if (cow)
+		series_plain_play("303cow1", -1, 0, 100, 0, 9);
 }
 
 void Room303::conv303a() {
-	int who = conv_whos_talking();
-	int node = conv_current_node();
-	int entry = conv_current_entry();
+	const int who = conv_whos_talking();
+	const int node = conv_current_node();
+	const int entry = conv_current_entry();
 	const char *sound = conv_sound_to_play();
 
 	if (_G(kernel).trigger == 1) {
 		if (who <= 0) {
-			_fengMode = node != 3 || entry ? 1 : 0;
+			_fengShould = node != 3 || entry ? 1 : 0;
 
 		} else if (who == 1) {
 			if ((node == 0 && entry != 0) || (node == 0 && entry == 1)) {
@@ -1818,9 +1844,9 @@ void Room303::conv303a() {
 
 			if (node != 1 || entry != 1) {
 				if (node != 3 || entry != 1)
-					_val16 = 0;
+					_ripleyShould = 0;
 			} else {
-				_val16 = 3;
+				_ripleyShould = 3;
 			}
 		}
 
@@ -1832,22 +1858,22 @@ void Room303::conv303a() {
 	} else {
 		if (who <= 0) {
 			if (node == 3 && !entry)
-				_val16 = 2;
+				_ripleyShould = 2;
 			if ((node != 3 || entry != 1) && (node != 3 || entry))
-				_fengMode = 2;
+				_fengShould = 2;
 			else
-				_fengMode = 3;
+				_fengShould = 3;
 
 		} else if (who == 1) {
 			if (node != 1 || entry != 1) {
 				if (node != 5 || entry) {
 					if (node != 3 || entry != 1)
-						_val16 = 1;
+						_ripleyShould = 1;
 				} else {
-					_val16 = 0;
+					_ripleyShould = 0;
 				}
 			} else {
-				_val16 = 4;
+				_ripleyShould = 4;
 			}
 		}
 
@@ -1855,22 +1881,23 @@ void Room303::conv303a() {
 	}
 }
 
+// Conversation with Mei
 void Room303::conv303b() {
-	int who = conv_whos_talking();
-	int node = conv_current_node();
-	int entry = conv_current_entry();
+	const int who = conv_whos_talking();
+	const int node = conv_current_node();
+	const int entry = conv_current_entry();
 	const char *sound = conv_sound_to_play();
 
 	switch (_G(kernel).trigger) {
 	case 1:
 		if (who <= 0) {
-			_val11 = 4;
+			_meiShould = 4;
 
 			if (node == 1 && entry == 0) {
 				digi_unload("08_01n01");
 				digi_unload("08_02n01");
 			} else if (node == 2 && entry == 2) {
-				_val16 = 0;
+				_ripleyShould = 0;
 			} else if (node == 1 && entry == 2) {
 				digi_preload("com119");
 				_ripPonders = series_stream("303 rip reacts", 4, 0, 667);
@@ -1892,41 +1919,46 @@ void Room303::conv303b() {
 				series_unload(4);
 				_ripPonders = series_stream("303pu01", 4, 0x100, 666);
 				series_stream_break_on_frame(_ripPonders, 5, 700);
-			} else if (node == 1 && entry == 2) {
+				return;
+			}
+
+			if (node == 1 && entry == 2) {
 				// No implementation
 			} else if ((node == 2 && entry == 0) || (node == 2 && entry == 2)) {
-				_val16 = 3;
+				_ripleyShould = 3;
 			} else {
-				_val16 = 0;
+				_ripleyShould = 0;
 			}
 		}
+
+		conv_resume();
 		break;
 
 	case 2:
 		series_set_frame_rate(_ripPonders, 20);
 		series_stream_break_on_frame(_ripPonders, 27, 3);
-		return;
+		break;
 
 	case 3:
 		series_set_frame_rate(_ripPonders, 5);
-		return;
+		break;
 
 	case 4:
-		_val11 = 5;
-		return;
+		_meiShould = 5;
+		break;
 
 	case 5:
 		digi_play("com119", 1, 255, 6);
-		return;
+		break;
 
 	case 6:
 		digi_unload("com119");
-		return;
+		break;
 
 	case 7:
-		_val16 = 0;
+		_ripleyShould = 0;
 		series_stream_break_on_frame(_ripPonders, 22, 5);
-		return;
+		break;
 
 	case 666:
 		kernel_timing_trigger(1, 668);
@@ -1942,51 +1974,51 @@ void Room303::conv303b() {
 		digi_preload("08_02n01");
 		_ripPonders = series_stream("303 rip ponders", 5, 0, -1);
 		series_stream_break_on_frame(_ripPonders, 5, 2);
-		return;
+		break;
 
 	case 670:
 		series_load("test1");
 		series_load("test3");
 		series_load("test4");
 		series_load("test5");
+		conv_resume();
 		break;
 
 	case 700:
-		_val16 = 0;
+		_ripleyShould = 0;
 		break;
 
 	default:
 		if (sound) {
 			if (who <= 0) {
 				if (node != 2 || entry != 1)
-					_val11 = 5;
+					_meiShould = 5;
 			} else if (who == 1) {
 				if (node == 1 && entry == 2) {
-					_val16 = 2;
+					_ripleyShould = 2;
 				} else if (node == 2 && entry == 1) {
-					_val11 = 6;
+					_meiShould = 6;
 					kernel_timing_trigger(150, 4);
 				} else if ((node == 2 && entry == 0) ||
 						(node == 2 && entry == 2)) {
-					_val16 = 4;
+					_ripleyShould = 4;
 				} else {
-					_val16 = 1;
+					_ripleyShould = 1;
 				}
 			}
 
 			digi_play(sound, 1, 255, 1);
-			return;
+		} else {
+			conv_resume();
 		}
 		break;
 	}
-
-	conv_resume();
 }
 
 void Room303::priestTalkCallback(frac16 myMessage, machine *sender) {
 	Room303 *room = (Room303 *)g_engine->_activeRoom;
-	auto oldMode = _G(kernel).trigger_mode;
-	int trigger = myMessage >> 16;
+	const KernelTriggerType oldMode = _G(kernel).trigger_mode;
+	const int trigger = myMessage >> 16;
 
 	if (trigger > 0) {
 		_G(kernel).trigger_mode = room->_val12;
@@ -2017,7 +2049,7 @@ void Room303::priestTalk(bool flag, int trigger) {
 
 int Room303::getSize(const Common::String &assetName, int roomNum) {
 	Common::String name = expand_name_2_RAW(assetName, roomNum);
-	size_t fileSize = f_info_get_file_size(Common::Path(name));
+	const size_t fileSize = f_info_get_file_size(Common::Path(name));
 
 	return static_cast<int>((double)fileSize * 0.000090702946);
 }
@@ -2026,7 +2058,7 @@ void Room303::playSound(const Common::String &assetName, int trigger1, int trigg
 	if (!trigger2)
 		trigger2 = -1;
 
-	int size = MAX(getSize(assetName), 0);
+	const int size = MAX(getSize(assetName), 0);
 	_G(globals)[GLB_TEMP_1] = size << 16;
 	_G(globals)[GLB_TEMP_2] = trigger2 << 16;
 	sendWSMessage(0x200000, 0, _priestTalk, 0, nullptr, 1);

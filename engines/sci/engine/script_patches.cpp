@@ -9618,7 +9618,7 @@ static const SciScriptPatcherEntry larry5Signatures[] = {
 //  course also in sierra sci).
 // Applies to at least: German PC-CD
 // Responsible method: unknown
-static const uint16 larry6SignatureDeathDialog[] = {
+static const uint16 larry6DeathDialogSignature[] = {
 	SIG_MAGICDWORD,
 	0x3e, SIG_UINT16(0x0133),        // link 0133 (offset 0x20)
 	0x35, 0xff,                      // ldi ff
@@ -9642,7 +9642,7 @@ static const uint16 larry6SignatureDeathDialog[] = {
 	SIG_END
 };
 
-static const uint16 larry6PatchDeathDialog[] = {
+static const uint16 larry6DeathDialogPatch[] = {
 	0x3e, 0x00, 0x02,                                 // link 0200
 	PATCH_ADDTOOFFSET(+687),
 	0x5a, PATCH_UINT16(0x0004), PATCH_UINT16(0x0140), // lea temp[0140]
@@ -9653,9 +9653,48 @@ static const uint16 larry6PatchDeathDialog[] = {
 	PATCH_END
 };
 
+// The Interface Help feature does not display its help cursor, but it instructs
+//  the player to expect this. This bug occurs when CD speech is enabled. The
+//  script attempts to set the cursor, but it is immediately reverted by the
+//  narration script.
+//
+// We fix this by temporarily setting the game to text mode during Interface
+//  Help. This causes the Narrator class to not change the cursor. This patch
+//  overwrites the code in nClickHelp that saves and restores the cursor. This
+//  code is redundant because nClickHelp's caller immediately resets the cursor.
+//
+// Applies to: All PC versions
+// Responsible method: nClickHelp:doit
+static const uint16 larry6HelpCursorSignature[] = {
+	SIG_MAGICDWORD,
+	0x81, 0x13,                         // lag 13
+	0xa5, 0x02,                         // sat 02 [ temp2 = gTheCursor ]
+	0x38, SIG_SELECTOR16(setCursor),    // pushi setCursor
+	0x78,                               // push1
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa helpCursor
+	0x36,                               // push
+	SIG_ADDTOOFFSET(+171),
+	0x38, SIG_SELECTOR16(setCursor),    // pushi setCursor
+	SIG_END
+};
+
+static const uint16 larry6HelpCursorPatch[] = {
+	0x89, 0x5a,                         // lsg 5a [ store msgType on the stack ]
+	0x78,                               // push1
+	0xa9, 0x5a,                         // ssg 5a [ msgType = 1 (text) ]
+	0x38, PATCH_SELECTOR16(setCursor),  // pushi setCursor
+	0x78,                               // push1
+	0x74, PATCH_GETORIGINALUINT16(9),   // lofss helpCursor
+	PATCH_ADDTOOFFSET(+171),
+	0xa9, 0x15,                         // ssg 5a [ restore msgType from stack ]
+	0x48,                               // ret
+	PATCH_END
+};
+
 //          script, description,                                      signature                   patch
 static const SciScriptPatcherEntry larry6Signatures[] = {
-	{  true,    82, "death dialog memory corruption",              1, larry6SignatureDeathDialog, larry6PatchDeathDialog },
+	{  true,    75, "fix help cursor",                             1, larry6HelpCursorSignature,  larry6HelpCursorPatch },
+	{  true,    82, "death dialog memory corruption",              1, larry6DeathDialogSignature, larry6DeathDialogPatch },
 	{  true,    99, "disable speed test",                          1, sci11SpeedTestSignature,    sci11SpeedTestPatch },
 	{  true,   928, "Narrator lockup fix",                         1, sciNarratorLockupSignature, sciNarratorLockupPatch },
 	SCI_SIGNATUREENTRY_TERMINATOR
@@ -9870,7 +9909,7 @@ static const uint16 larry6HiresPhoneOperatorPatch[] = {
 //  originated in the low resolution version; it only worked in text mode and
 //  was incompatible with CD narration.
 //
-// We fix this by temporarily setting the global cursor variables to helpCusor
+// We fix this by temporarily setting the global cursor variables to helpCursor
 //  during Interface Help. This causes LarryTalker to use helpCursor instead of
 //  waitCursor or the previous cursor. Sierra fixed this in the Mac version by
 //  changing LarryTalker, so we limit this patch to PC versions by using little
@@ -9879,11 +9918,11 @@ static const uint16 larry6HiresPhoneOperatorPatch[] = {
 // Applies to: All PC versions
 // Responsible method: nClickHelp:doit
 // Fixes bug: #14591
-static const uint16 larry6HiresHelpCusorSignature[] = {
+static const uint16 larry6HiresHelpCursorSignature[] = {
 	SIG_MAGICDWORD,
-	0x38, SIG_SELECTOR16(setCursor),    // pushi setCusor
+	0x38, SIG_SELECTOR16(setCursor),    // pushi setCursor
 	0x78,                               // push1
-	0x72, SIG_ADDTOOFFSET(+2),          // lofsa helpCusor
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa helpCursor
 	0x36,                               // push
 	0x81, 0x01,                         // lag 01
 	0x4a, 0x06, 0x00,                   // send 06 [ LSL6 setCursor: helpCursor ]
@@ -9892,7 +9931,7 @@ static const uint16 larry6HiresHelpCusorSignature[] = {
 	SIG_END
 };
 
-static const uint16 larry6HiresHelpCusorPatch[] = {
+static const uint16 larry6HiresHelpCursorPatch[] = {
 	0x89, 0x15,                         // lsg 15   [ store gWaitCursor on stack ]
 	PATCH_GETORIGINALBYTES(4, 3),       // lofsa helpCursor
 	0xa0, PATCH_UINT16(0x0015),         // sag 0015 [ gWaitCursor = helpCursor ]
@@ -9908,7 +9947,7 @@ static const SciScriptPatcherEntry larry6HiresSignatures[] = {
 	{  true,    71, "disable volume reset on startup (1/2)",       1, sci2VolumeResetSignature,             sci2VolumeResetPatch },
 	{  true,    71, "disable volume reset on startup (2/2)",       1, larry6HiresVolumeResetSignature,      larry6HiresVolumeResetPatch },
 	{  true,    71, "disable video benchmarking",                  1, sci2BenchmarkSignature,               sci2BenchmarkPatch },
-	{  true,    75, "fix help cursor",                             1, larry6HiresHelpCusorSignature,        larry6HiresHelpCusorPatch },
+	{  true,    75, "fix help cursor",                             1, larry6HiresHelpCursorSignature,       larry6HiresHelpCursorPatch },
 	{  true,   270, "fix incorrect setScale call",                 1, larry6HiresSetScaleSignature,         larry6HiresSetScalePatch },
 	{  true,   330, "fix whale oil lamp lockup",                   1, larry6HiresWhaleOilLampSignature,     larry6HiresWhaleOilLampPatch },
 	{  true,   610, "phone operator crash",                        1, larry6HiresPhoneOperatorSignature,    larry6HiresPhoneOperatorPatch },
@@ -14792,9 +14831,66 @@ static const uint16 qfg1egaPatchPickSafeMessage2[] = {
 	PATCH_END
 };
 
+// In the brigands' fortress (room 94), opening the jack in the box and then
+//  tripping over the wire next to it locks up the game. The `egoTripsSouth`
+//  script is missing a call to egoObj:ignoreActors, unlike `egoTripsNorth`.
+//  Without this, the jack in the box causes egoObj:canBeHere to return false.
+//
+// We fix this by adding the missing call to ignoreActors. This bug occurs in
+//  the original, but only in some versions, and inconsistently, because another
+//  unrelated bug can cancel it out. Due to a script typo and a compiler bug,
+//  Actor:canBeHere reads an invalid property and tests out of bounds memory to
+//  determine if kCanBeHere is called to perform collision tests. We normalize
+//  this behavior in `validate_property`.
+//
+// Applies to: All versions
+// Responsible method: egoTripsSouth:changeState(0)
+// Fixes bug: #15736
+static const uint16 qfg1egaSignatureTripWire[] = {
+	SIG_MAGICDWORD,
+	0x3c,                               // dup
+	0x35, 0x00,                         // ldi 00
+	0x1a,                               // eq?
+	0x30,                               // bnt [ state 1 ]
+	SIG_ADDTOOFFSET(+71),
+	0x4a, 0x30,                         // send 30 [ egoObj ... ]
+	SIG_END
+};
+
+static const uint16 qfg1egaPatchTripWire[] = {
+	0x2e, PATCH_GETORIGINALUINT16ADJUST(5, +4), // bt [ state 1 ]
+	0x38, PATCH_SELECTOR16(ignoreActors),       // pushi ignoreActors
+	0x36,                                       // push0
+	PATCH_ADDTOOFFSET(+69),
+	0x4a, 0x34,                                 // send 34 [ egoObj ignoreActors: ... ]
+	PATCH_END
+};
+
+static const uint16 qfg1egaSignatureTripWirePC98[] = {
+	SIG_MAGICDWORD,
+	0x3c,                               // dup
+	0x35, 0x00,                         // ldi 00
+	0x1a,                               // eq?
+	0x30,                               // bnt [ state 1 ]
+	SIG_ADDTOOFFSET(+72),
+	0x4a, 0x30,                         // send 30 [ egoObj ... ]
+	SIG_END
+};
+
+static const uint16 qfg1egaPatchTripWirePC98[] = {
+	0x2e, PATCH_GETORIGINALUINT16ADJUST(5, +4), // bt [ state 1 ]
+	0x38, PATCH_SELECTOR16(ignoreActors),       // pushi ignoreActors
+	0x36,                                       // push0
+	PATCH_ADDTOOFFSET(+70),
+	0x4a, 0x34,                                 // send 34 [ egoObj ignoreActors: ... ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                            patch
 static const SciScriptPatcherEntry qfg1egaSignatures[] = {
 	{  true,    54, "throw rock at nest while running",            1, qfg1egaSignatureThrowRockAtNest,     qfg1egaPatchThrowRockAtNest },
+	{  true,    94, "trip wire",                                   1, qfg1egaSignatureTripWirePC98,        qfg1egaPatchTripWirePC98 },
+	{  true,   189, "trip wire",                                   1, qfg1egaSignatureTripWire,            qfg1egaPatchTripWire },
 	{  true,   289, "pick safe message",                           1, qfg1egaSignaturePickSafeMessage1,    qfg1egaPatchPickSafeMessage1 },
 	{  true,   299, "disable speed test",                          1, sci01SpeedTestGlobalSignature,       sci01SpeedTestGlobalPatch },
 	{  true,   321, "pick safe message",                           1, qfg1egaSignaturePickSafeMessage2,    qfg1egaPatchPickSafeMessage2 },

@@ -30,6 +30,7 @@
 #include "graphics/managed_surface.h"
 
 #include "dgds/dgds_rect.h"
+#include "dgds/image.h"
 #include "dgds/ttm.h"
 
 // Classes related to talking heads and conversations.
@@ -139,7 +140,8 @@ public:
 /** CDS data from Willy Beamish CD version talkie */
 class Conversation {
 public:
-	Conversation() : _nextExecMs(0), _runTempFrame(0), _tempFrameNum(0), _stopScript(false), _loadState(0), _dlgNum(-1), _dlgFileNum(-1), _subNum(-1), _finished(false), _haveHeadData(false) {}
+	Conversation() : _thisFrameMs(0), _nextExecMs(0), _runTempFrame(-1), _tempFrameNum(0), _stopScript(false), _loadState(0),
+		_dlgNum(-1), _dlgFileNum(-1), _subNum(-1), _finished(false), _haveHeadData(false) {}
 	~Conversation();
 
 	void unloadData();
@@ -150,6 +152,10 @@ public:
 	void clear();
 
 	DgdsRect _drawRect;
+
+	static enum ImageFlipMode _lastHeadFrameFlipMode;
+	static int16 _lastHeadFrameX;
+	static int16 _lastHeadFrameY;
 
 private:
 	Common::SharedPtr<CDSTTMInterpreter> _ttmScript;
@@ -162,6 +168,9 @@ private:
 	void incrementFrame();
 	bool isScriptRunning();
 	void pumpMessages();
+
+	void runScriptExclusive();
+	void runScriptStep();
 
 	int16 _runTempFrame;
 	int16 _tempFrameNum;

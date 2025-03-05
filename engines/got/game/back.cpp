@@ -46,6 +46,17 @@ const char *ITEM_NAMES[] = {
 static const char *odinEndMessage;
 
 void showLevel(const int newLevel) {
+	if (newLevel == 105) { // Shovel Maze
+		_G(thorInfo)._armor = 2; // eyeballs mode
+		loadNewThor();
+		_G(eyeballs) = 1;
+	} else if (_G(eyeballs) == 1) {
+		_G(setup).f25 = 0;
+		_G(thorInfo)._armor = 1;
+		loadNewThor();
+		_G(eyeballs) = 0;
+	}
+
 	_G(bossActive) = false;
 	if (!_G(shieldOn))
 		_G(actor[2])._active = false;
@@ -91,9 +102,6 @@ void showLevel(const int newLevel) {
 
 	if (!_G(setup)._scrollFlag)
 		_G(currentLevel) = newLevel; // Force no scroll
-
-	if (_G(currentMusic) != _G(levelMusic))
-		_G(sound).musicPause();
 
 	switch (_G(newLevel) - _G(currentLevel)) {
 	case 0:

@@ -103,7 +103,7 @@ protected:
 	Common::Error run() override;
 
 private:
-	Common::Event e;
+	Common::Event _event;
 	Common::FSNode _gameDataDir;
 	const ADGameDescription *_gameDescription;
 	Common::RandomSource _randomSource;
@@ -123,7 +123,6 @@ private:
 
 	Context *loadContext(uint32 contextId);
 	void setPaletteFromHeader(AssetHeader *header);
-	void branchToScreen(uint32 contextId);
 	void releaseContext(uint32 contextId);
 	Asset *findAssetToAcceptMouseEvents(Common::Point point);
 

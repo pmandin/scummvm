@@ -24,6 +24,8 @@
 
 #include "common/array.h"
 #include "common/stream.h"
+#include "graphics/surface.h"
+
 namespace Common {
 class SeekableReadStreamEndian;
 }
@@ -51,12 +53,13 @@ public:
 class RTE2 {
 public:
 	RTE2(Cast *cast, Common::SeekableReadStreamEndian &stream);
+	~RTE2();
 
 	Cast *_cast;
 	uint16 width;
 	uint16 height;
 	uint32 bpp;
-	Common::Array<byte> alphaMap;
+	Graphics::Surface *_surface;
 };
 
 } // End of namespace Director

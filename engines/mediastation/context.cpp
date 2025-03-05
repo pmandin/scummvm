@@ -40,21 +40,26 @@
 
 namespace MediaStation {
 
-Context::Context(const Common::Path &path) :
-	Datafile(path) {
-	// This stuff isn't part of any graphics palette.
-	readPreamble();
+Context::Context(const Common::Path &path) : Datafile(path) {
+	uint32 signature = _handle->readUint32BE();
+	if (signature != MKTAG('I', 'I', '\0', '\0')) {
+		error("Context::Context(): Wrong signature for file %s: 0x%08x", _name.c_str(), signature);
+	}
 
-	// READ THE FIRST SUBFILE.
-	Subfile subfile = Subfile(_stream);
+	_unk1 = _handle->readUint32LE();
+	_subfileCount = _handle->readUint32LE();
+	_fileSize = _handle->readUint32LE();
+	debugC(5, kDebugLoading, "Context::Context(): _unk1 = 0x%x", _unk1);
+
+	Subfile subfile = getNextSubfile();
 	Chunk chunk = subfile.nextChunk();
-	// First, read the header sections.
+
 	if (g_engine->isFirstGenerationEngine()) {
 		readOldStyleHeaderSections(subfile, chunk);
 	} else {
 		readNewStyleHeaderSections(subfile, chunk);
 	}
-	// Then, read any asset data.
+
 	chunk = subfile._currentChunk;
 	while (!subfile.atEnd()) {
 		readAssetInFirstSubfile(chunk);
@@ -63,10 +68,44 @@ Context::Context(const Common::Path &path) :
 		}
 	}
 
-	// Then, assets in the rest of the subfiles.
+	// Read assets in the rest of the subfiles.
 	for (uint i = 1; i < _subfileCount; i++) {
-		subfile = Subfile(_stream);
+		subfile = getNextSubfile();
 		readAssetFromLaterSubfile(subfile);
+	}
+
+	// Some sprites and images don't have any image data themselves, they just
+	// reference the same image data in another asset. So we need to check for
+	// these and create the appropriate references.
+	for (auto it = _assets.begin(); it != _assets.end(); ++it) {
+		Asset *asset = it->_value;
+		uint referencedAssetId = asset->getHeader()->_assetReference;
+		if (referencedAssetId != 0) {
+			switch (asset->getHeader()->_type) {
+			case kAssetTypeImage: {
+				Image *image = static_cast<Image *>(asset);
+				Image *referencedImage = static_cast<Image *>(getAssetById(referencedAssetId));
+				if (referencedImage == nullptr) {
+					error("Context::Context(): Asset %d references non-existent asset %d", asset->getHeader()->_id, referencedAssetId);
+				}
+				image->_bitmap = referencedImage->_bitmap;
+				break;
+			}
+
+			case kAssetTypeSprite: {
+				Sprite *sprite = static_cast<Sprite *>(asset);
+				Sprite *referencedSprite = static_cast<Sprite *>(getAssetById(referencedAssetId));
+				if (referencedSprite == nullptr) {
+					error("Context::Context(): Asset %d references non-existent asset %d", asset->getHeader()->_id, referencedAssetId);
+				}
+				sprite->_frames = referencedSprite->_frames;
+				break;
+			}
+
+			default:
+				error("Context::Context(): Asset type %d referenced, but reference not implemented yet", asset->getHeader()->_type);
+			}
+		}
 	}
 }
 
@@ -74,8 +113,8 @@ Context::~Context() {
 	delete _palette;
 	_palette = nullptr;
 
-	delete _parameters;
-	_parameters = nullptr;
+	delete _contextName;
+	_contextName = nullptr;
 
 	for (auto it = _assets.begin(); it != _assets.end(); ++it) {
 		delete it->_value;
@@ -111,23 +150,62 @@ void Context::registerActiveAssets() {
 	}
 }
 
-bool Context::readPreamble() {
-	uint16 signature = _stream->readUint16LE();
-	if (signature != 0x4949) { // "II"
-		warning("Datafile::openFile(): Wrong signature for file %s. Got 0x%04X", _path.toString(Common::Path::kNativeSeparator).c_str(), signature);
-		close();
-		return false;
+void Context::readParametersSection(Chunk &chunk) {
+	_fileNumber = Datum(chunk, kDatumTypeUint16_1).u.i;
+
+	ContextParametersSectionType sectionType = static_cast<ContextParametersSectionType>(Datum(chunk, kDatumTypeUint16_1).u.i);
+	while (sectionType != kContextParametersEmptySection) {
+		debugC(5, kDebugLoading, "ContextParameters::ContextParameters: sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
+		switch (sectionType) {
+		case kContextParametersName: {
+			uint repeatedFileNumber = Datum(chunk, kDatumTypeUint16_1).u.i;
+			if (repeatedFileNumber != _fileNumber) {
+				warning("ContextParameters::ContextParameters(): Repeated file number didn't match: %d != %d", repeatedFileNumber, _fileNumber);
+			}
+			_contextName = Datum(chunk, kDatumTypeString).u.string;
+
+			uint endingFlag = Datum(chunk, kDatumTypeUint16_1).u.i;
+			if (endingFlag != 0) {
+				warning("ContextParameters::ContextParameters(): Got non-zero ending flag 0x%x", endingFlag);
+			}
+			break;
+		}
+
+		case kContextParametersFileNumber: {
+			error("ContextParameters::ContextParameters(): Section type FILE_NUMBER not implemented yet");
+			break;
+		}
+
+		case kContextParametersVariable: {
+			uint repeatedFileNumber = Datum(chunk, kDatumTypeUint16_1).u.i;
+			if (repeatedFileNumber != _fileNumber) {
+				warning("ContextParameters::ContextParameters(): Repeated file number didn't match: %d != %d", repeatedFileNumber, _fileNumber);
+			}
+			Variable *variable = new Variable(chunk);
+			if (g_engine->_variables.contains(variable->_id)) {
+				// Don't overwrite the variable if it already exists. This can happen if we have
+				// unloaded a screen but are returning to it later.
+				debugC(5, kDebugScript, "ContextParameters::ContextParameters(): Skipping re-creation of existing global variable %d (type: %s)", variable->_id, variableTypeToStr(variable->_type));
+				delete variable;
+			} else {
+				g_engine->_variables.setVal(variable->_id, variable);
+				debugC(5, kDebugScript, "ContextParameters::ContextParameters(): Created global variable %d (type: %s)", variable->_id, variableTypeToStr(variable->_type));
+			}
+			break;
+		}
+
+		case kContextParametersBytecode: {
+			Function *function = new Function(chunk);
+			_functions.setVal(function->_id, function);
+			break;
+		}
+
+		default:
+			error("ContextParameters::ContextParameters(): Unknown section type 0x%x", static_cast<uint>(sectionType));
+		}
+
+		sectionType = static_cast<ContextParametersSectionType>(Datum(chunk, kDatumTypeUint16_1).u.i);
 	}
-	_stream->skip(2); // 0x00 0x00
-
-	_unk1 = _stream->readUint32LE();
-	debugC(5, kDebugLoading, "Context::openFile(): _unk1 = 0x%x", _unk1);
-
-	_subfileCount = _stream->readUint32LE();
-	// The total size of this file, including this header.
-	// (Basically the true file size shown on the filesystem.)
-	_fileSize = _stream->readUint32LE();
-	return true;
 }
 
 void Context::readOldStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
@@ -135,14 +213,13 @@ void Context::readOldStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
 }
 
 void Context::readNewStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
-	// READ THE PALETTE.
 	bool moreSectionsToRead = (chunk._id == MKTAG('i', 'g', 'o', 'd'));
 	if (!moreSectionsToRead) {
 		warning("Context::readNewStyleHeaderSections(): Got no header sections (@0x%llx)", static_cast<long long int>(chunk.pos()));
 	}
 
 	while (moreSectionsToRead) {
-		// VERIFY THIS CHUNK IS A HEADER.
+		// Verify this chunk is a header.
 		// TODO: What are the situations when it's not?
 		uint16 sectionType = Datum(chunk, kDatumTypeUint16_1).u.i;
 		debugC(5, kDebugLoading, "Context::readNewStyleHeaderSections(): sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
@@ -151,7 +228,7 @@ void Context::readNewStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
 			error("Context::readNewStyleHeaderSections(): Expected header chunk, got %s (@0x%llx)", tag2str(chunk._id), static_cast<long long int>(chunk.pos()));
 		}
 
-		// READ THIS HEADER SECTION.
+		// Read this header section.
 		moreSectionsToRead = readHeaderSection(subfile, chunk);
 		if (subfile.atEnd()) {
 			break;
@@ -205,10 +282,7 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 	debugC(5, kDebugLoading, "Context::readHeaderSection(): sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
 	switch (sectionType) {
 	case kContextParametersSection: {
-		if (_parameters != nullptr) {
-			error("Context::readHeaderSection(): Got multiple parameters (@0x%llx)", static_cast<long long int>(chunk.pos()));
-		}
-		_parameters = new ContextParameters(chunk);
+		readParametersSection(chunk);
 		break;
 	}
 
@@ -345,9 +419,8 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 		break;
 	}
 
-	default: {
+	default:
 		error("Context::readHeaderSection(): Unknown section type 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
-	}
 	}
 
 	return true;

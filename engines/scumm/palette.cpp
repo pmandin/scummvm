@@ -1729,6 +1729,27 @@ void ScummEngine::updatePalette() {
 	if (_game.platform == Common::kPlatformMacintosh && _game.heversion == 0 && _useGammaCorrection) {
 		for (int i = 0; i < 3 * num; ++i)
 			paletteColors[i] = _macGammaCorrectionLookUp[paletteColors[i]];
+	} else if (_game.platform == Common::kPlatformSegaCD && _game.id == GID_MONKEY && _enableSegaShadowMode) {
+		// Apparently the Sega had only 15 levels of intensity for each
+		// color component. You might think there would be 16, but the
+		// palette uses only three bits per color. These can then be
+		// rendered as normal, shadow, or highlight mode, and that comes
+		// out to 15 possible levels.
+
+		// These color levels come from the BlastEm emulator.
+
+		const byte levels[] = { 0, 27, 49, 71, 87, 103, 119, 130, 146, 157, 174, 190, 206, 228, 255 };
+
+		// For reasons unknown, the orignal interpreter rendered
+		// everything in shadow mode. We could easily emulate the other
+		// two modes as well:
+		//
+		// Normal: idx = (paletteColors[i] >> 4) & 0x0E;
+		// Shadow: idx = (paletteColors[i] >> 5) & 0x07;
+		// Hilite: idx = ((paletteColors[i] >> 5) & 0x07) + 7;
+
+		for (int i = 0; i < 3 * num; ++i)
+			paletteColors[i] = levels[(paletteColors[i] >> 5) & 0x07];
 	}
 
 	_system->getPaletteManager()->setPalette(paletteColors, first, num);

@@ -30,7 +30,7 @@ namespace Rooms {
 
 class Room304 : public Room {
 private:
-	bool _flag1 = false;
+	bool _closeCartoonFl = false;
 	int _val1 = 0;
 	bool _useSword = false;
 	bool _useHandlingStick = false;
@@ -41,8 +41,7 @@ private:
 	int _smoke = -1;
 	machine *_mei = nullptr;
 	machine *_machine2 = nullptr;
-	machine *_machine3 = nullptr;
-	machine *_pu = nullptr;
+	machine *_cartoonMach = nullptr;
 	machine *_cobraKills = nullptr;
 	machine *_field60 = nullptr;
 	int _cutSnake = -1;
@@ -68,6 +67,7 @@ public:
 	Room304() : Room() {}
 	~Room304() override {}
 
+	void preload() override;
 	void init() override;
 	void daemon() override;
 	void pre_parser() override;

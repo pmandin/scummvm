@@ -182,6 +182,12 @@ void DarkEngine::drawDOSUI(Graphics::Surface *surface) {
 	_gfx->readFromPalette(color, r, g, b);
 	uint32 back = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
+	Common::Rect stepBackgroundRect = Common::Rect(69, 177, 98, 185);
+	surface->fillRect(stepBackgroundRect, back);
+
+	Common::Rect positionBackgroundRect = Common::Rect(199, 135, 232, 160);
+	surface->fillRect(positionBackgroundRect, back);
+
 	int score = _gameStateVars[k8bitVariableScore];
 	int ecds = _gameStateVars[kVariableActiveECDs];
 	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 199, 137, front, back, surface);
@@ -214,19 +220,23 @@ void DarkEngine::drawDOSUI(Graphics::Surface *surface) {
 
 	if (shield >= 0) {
 		Common::Rect shieldBar;
-		shieldBar = Common::Rect(72, 139, 151 - (_maxShield - shield), 146);
+		shieldBar = Common::Rect(72, 140, 151 - (_maxShield - shield), 141); // Upper outer shieldBar
+		surface->fillRect(shieldBar, front);
+		shieldBar = Common::Rect(72, 145, 151 - (_maxShield - shield), 146); // Lower outer shieldBar
 		surface->fillRect(shieldBar, front);
 
-		shieldBar = Common::Rect(72, 140, 151 - (_maxShield - shield), 145);
+		shieldBar = Common::Rect(72, 142, 151 - (_maxShield - shield), 144); // Inner shieldBar
 		surface->fillRect(shieldBar, blue);
 	}
 
 	if (energy >= 0) {
 		Common::Rect energyBar;
-		energyBar = Common::Rect(72, 147, 151 - (_maxEnergy - energy), 154);
+		energyBar = Common::Rect(72, 148, 151 - (_maxEnergy - energy), 149); // Upper outer energyBar
+		surface->fillRect(energyBar, front);
+		energyBar = Common::Rect(72, 153, 151 - (_maxEnergy - energy), 154); // Lower outer energyBar
 		surface->fillRect(energyBar, front);
 
-		energyBar = Common::Rect(72, 148, 151 - (_maxEnergy - energy), 153);
+		energyBar = Common::Rect(72, 150, 151 - (_maxEnergy - energy), 152); // Inner energyBar
 		surface->fillRect(energyBar, blue);
 	}
 	uint32 clockColor = _renderMode == Common::kRenderCGA ? front : _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0xFF);

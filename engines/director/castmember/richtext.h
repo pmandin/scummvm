@@ -19,33 +19,37 @@
  *
  */
 
-#ifndef MEDIASTATION_SUBFILE_H
-#define MEDIASTATION_SUBFILE_H
+#ifndef DIRECTOR_CASTMEMBER_RICHTEXT_H
+#define DIRECTOR_CASTMEMBER_RICHTEXT_H
 
-#include "common/stream.h"
+#include "director/types.h"
+#include "director/castmember/castmember.h"
 
-#include "mediastation/chunk.h"
+namespace Director {
 
-namespace MediaStation {
-
-class Subfile {
+class RichTextCastMember : public CastMember {
 public:
-	Chunk _rootChunk;
-	Chunk _currentChunk;
+	RichTextCastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream, uint16 version);
+	RichTextCastMember(Cast *cast, uint16 castId, RichTextCastMember &source);
+	~RichTextCastMember();
 
-	Subfile();
-	Subfile(Common::SeekableReadStream *stream);
+	void load() override;
 
-	Chunk nextChunk();
-	bool atEnd();
+	Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) override;
 
-	uint32 _rate;
+	bool hasField(int field) override;
+	Datum getField(int field) override;
+	bool setField(int field, const Datum &value) override;
+
+	Common::String formatInfo() override;
 
 private:
-	Common::SeekableReadStream *_stream;
-
+	Common::U32String _plainText;
+	uint32 _foreColor;
+	uint32 _bgColor;
+	Picture *_picture;
 };
 
-} // End of namespace MediaStation
+} // End of namespace Director
 
 #endif

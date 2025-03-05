@@ -777,7 +777,8 @@ bool SDSScene::readTalkData(Common::SeekableReadStream *s, TalkData &dst) {
 					h._shape.reset(new Image(resMan, engine->getDecompressor()));
 					h._shape->loadBitmap(h._bmpFile);
 				} else {
-					warning("Couldn't load talkdata %d head %d BMP: %s", dst._num, h._num, h._bmpFile.c_str());
+					// This is the default situation in Willy Beamish CD
+					debug("Couldn't load talkdata %d head %d BMP: %s", dst._num, h._num, h._bmpFile.c_str());
 				}
 			}
 		}
@@ -1156,7 +1157,7 @@ bool SDSScene::drawAndUpdateDialogs(Graphics::ManagedSurface *dst) {
 				if (dlg._time)
 					delay = dlg._time;
 
-				int time = delay * (9 - engine->getTextSpeed());
+				int time = delay * 2 * (9 - engine->getTextSpeed());
 				assert(dlg._state);
 
 				dlg._state->_hideTime = DgdsEngine::getInstance()->getThisFrameMs() + time;
@@ -1453,6 +1454,8 @@ void SDSScene::mouseRDown(const Common::Point &pt) {
 		return;
 	}
 	_rbuttonDown = true;
+	// Ensure mouse cursor is updated
+	mouseMoved(pt);
 }
 
 void SDSScene::mouseRUp(const Common::Point &pt) {
@@ -1959,8 +1962,12 @@ Common::String GDSScene::dump(const Common::String &indent) const {
 }
 
 void GDSScene::globalOps(const Common::Array<uint16> &args) {
-	if (!args.size())
-		error("GDSScene::globalOps: Empty arg list");
+	if (!args.size()) {
+		// This happens in Willy Beamish CD version when vacuuming
+		// up the babysitter (D50.DDS, dialog num 54)
+		warning("GDSScene::globalOps: Empty arg list");
+		return;
+	}
 
 	// The arg list should be a first value giving the count of operations,
 	// then 3 values for each op (num, opcode, val).
@@ -2051,13 +2058,6 @@ void GDSScene::drawItems(Graphics::ManagedSurface &surf) {
 		if (item._inSceneNum == currentScene && &item != engine->getScene()->getDragItem()) {
 			if (!(item._flags & kItemStateDragging)) {
 				// Dropped item.
-				// Update the rect for the icon - Note: original doesn't do this,
-				// but then the napent icon is offset??
-				/*Common::SharedPtr<Graphics::ManagedSurface> icon = icons->getSurface(item._iconNum);
-				if (icon) {
-					item._rect.width = MIN((int)icon->w, item._rect.width);
-					item._rect.height = MIN((int)icon->h, item._rect.height);
-				}*/
 				if (xoff + item._rect.width > maxx)
 					xoff = 20;
 				int yoff = SCREEN_HEIGHT - (item._rect.height + 2);

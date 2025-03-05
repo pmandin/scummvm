@@ -39,10 +39,9 @@ void Operand::putInteger(int i) {
 		break;
 	}
 
-	default: {
-		error("Operand::putInteger(): Attempt to put integer into operand type %s (%d)", 
+	default:
+		error("Operand::putInteger(): Attempt to put integer into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -58,10 +57,9 @@ int Operand::getInteger() {
 		return _u.variable->_value.i;
 	}
 
-	default: {
+	default:
 		error("Operand::getInteger(): Attempt to get integer from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -79,10 +77,9 @@ void Operand::putDouble(double d) {
 		break;
 	}
 
-	default: {
-		error("Operand::putDouble(): Attempt to put double into operand type %s (%d)", 
+	default:
+		error("Operand::putDouble(): Attempt to put double into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -98,10 +95,9 @@ double Operand::getDouble() {
 		return _u.variable->_value.d;
 	}
 
-	default: {
+	default:
 		error("Operand::getDouble(): Attempt to get double from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -118,10 +114,9 @@ void Operand::putString(Common::String *string) {
 		break;
 	}
 
-	default: {
-		error("Operand::putString(): Attempt to put string into operand type %s (%d)", 
+	default:
+		error("Operand::putString(): Attempt to put string into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -136,10 +131,9 @@ Common::String *Operand::getString() {
 		return _u.variable->_value.string;
 	}
 
-	default: {
+	default:
 		error("Operand::getString(): Attempt to get string from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -150,10 +144,9 @@ void Operand::putVariable(Variable *variable) {
 		break;
 	}
 
-	default: {
-		error("Operand::putVariable(): Attempt to put variable into operand type %s (%d)", 
+	default:
+		error("Operand::putVariable(): Attempt to put variable into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -163,10 +156,9 @@ Variable *Operand::getVariable() {
 		return _u.variable;
 	}
 
-	default: {
+	default:
 		error("Operand::getVariable(): Attempt to get variable from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -177,10 +169,9 @@ void Operand::putFunction(uint functionId) {
 		break;
 	}
 
-	default: {
-		error("Operand::putFunction(): Attempt to put function ID into operand type %s (%d)", 
+	default:
+		error("Operand::putFunction(): Attempt to put function ID into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -190,10 +181,9 @@ uint Operand::getFunctionId() {
 		return _u.functionId;
 	}
 
-	default: {
+	default:
 		error("Operand::getFunction(): Attempt to get function ID from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -210,10 +200,9 @@ void Operand::putAsset(uint32 assetId) {
 		break;
 	}
 
-	default: {
-		error("Operand::putAsset(): Attempt to put asset ID into operand type %s (%d)", 
+	default:
+		error("Operand::putAsset(): Attempt to put asset ID into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -232,10 +221,9 @@ Asset *Operand::getAsset() {
 		return g_engine->getAssetById(_u.variable->_value.assetId);
 	}
 
-	default: {
+	default:
 		error("Operand::getAsset(): Attempt to get asset from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -250,10 +238,9 @@ uint32 Operand::getAssetId() {
 		return _u.variable->_value.assetId;
 	}
 
-	default: {
+	default:
 		error("Operand::getAssetId(): Attempt to get asset ID from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -270,10 +257,9 @@ void Operand::putCollection(Collection *collection) {
 		break;
 	}
 
-	default: {
-		error("Operand::putCollection(): Attempt to put collection into operand type %s (%d)", 
+	default:
+		error("Operand::putCollection(): Attempt to put collection into operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -286,13 +272,11 @@ Collection *Operand::getCollection() {
 	case kOperandTypeVariableDeclaration: {
 		assert(_u.variable->_type == kVariableTypeCollection);
 		return _u.variable->_value.collection;
-		break;
 	}
 
-	default: {
+	default:
 		error("Operand::getCollection(): Attempt to get collection from operand type %s (%d)",
 			operandTypeToStr(_type), static_cast<uint>(_type));
-	}
 	}
 }
 
@@ -309,109 +293,109 @@ Operand Operand::getLiteralValue() const {
 bool Operand::operator==(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
-	// TODO: Maybe some better type checking here. If the types being compared 
-	// end up being incompatible, the respective get method on the rhs will 
-	// raise the error. But better might be checking both before we try getting 
-	// values to report a more descriptive error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
-		return lhs.getInteger() == rhs.getInteger();
 
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		return lhs.getDouble() == rhs.getDouble();
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double comparison.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		return lhsValue == rhsValue;
+	} else {
+		switch (lhs.getType()) {
+		case kOperandTypeLiteral1:
+		case kOperandTypeLiteral2:
+			return lhs.getInteger() == rhs.getInteger();
 
-	case kOperandTypeString:
-		return *lhs.getString() == *rhs.getString();
+		case kOperandTypeAssetId:
+			return lhs.getAssetId() == rhs.getAssetId();
 
-	case kOperandTypeAssetId:
-		return lhs.getAssetId() == rhs.getAssetId();
-
-	default:
-		error("Operand::operator==(): Unsupported operand types %d and %d", static_cast<uint>(lhs.getType()), static_cast<uint>(rhs.getType()));
+		default:
+			error("Operand::operator==(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+		}
 	}
 }
 
 bool Operand::operator<(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
-	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
+
+	if (!lhs.isNumber() || !rhs.isNumber()) {
+		error("Operand::operator<(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	}
+
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double comparison.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		return lhsValue < rhsValue;
+	} else {
+		// Otherwise, perform integer comparison.
 		return lhs.getInteger() < rhs.getInteger();
-
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		return lhs.getDouble() < rhs.getDouble();
-
-	default:
-		error("Operand::operator<(): Unsupported operand types %d and %d", static_cast<uint>(lhs.getType()), static_cast<uint>(rhs.getType()));
 	}
 }
 
 bool Operand::operator>(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
-	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
+
+	if (!lhs.isNumber() || !rhs.isNumber()) {
+		error("Operand::operator>(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	}
+
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double comparison.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		return lhsValue > rhsValue;
+	} else {
+		// Otherwise, perform integer comparison.
 		return lhs.getInteger() > rhs.getInteger();
-
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		return lhs.getDouble() > rhs.getDouble();
-
-	default:
-		error("Operand::operator>(): Unsupported operand types %d and %d", static_cast<uint>(lhs.getType()), static_cast<uint>(rhs.getType()));
 	}
 }
 
 bool Operand::operator||(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
+
 	// If the types being compared end up being incompatible, the respective get
 	// method on the rhs will raise the error.
 	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral1:
 	case kOperandTypeLiteral2:
 		return lhs.getInteger() || rhs.getInteger();
 
 	default:
-		error("Operand::operator||(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+		error("Operand::operator||(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
 }
 
 bool Operand::operator!() const {
 	Operand literalValue = getLiteralValue();
+
 	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
+	// method will raise the error.
 	switch (literalValue.getType()) {
-	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral1:
 	case kOperandTypeLiteral2:
 		return !literalValue.getInteger();
 
 	default:
-		error("Operand::operator!(): Unsupported operand type %d", static_cast<uint>(literalValue.getType()));
+		error("Operand::operator!(): Unimplemented operand type %s", operandTypeToStr(literalValue.getType()));
 	}
 }
 
 bool Operand::operator&&(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
+
 	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
+	// method will raise the error.
 	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral1:
 	case kOperandTypeLiteral2:
 		return lhs.getInteger() && rhs.getInteger();
 
 	default:
-		error("Operand::operator&&(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+		error("Operand::operator&&(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
 }
 
@@ -419,105 +403,100 @@ Operand Operand::operator+(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
 	Operand returnValue(lhs.getType());
-	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
-		returnValue.putInteger(lhs.getInteger() + rhs.getInteger());
-		return returnValue;
 
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		returnValue.putDouble(lhs.getDouble() + rhs.getDouble());
-		return returnValue;
-
-	default:
-		error("Operand::operator+(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	if (!lhs.isNumber() || !rhs.isNumber()) {
+		error("Operand::operator+(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
+
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double addition.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		returnValue.putDouble(lhsValue + rhsValue);
+	} else {
+		// Otherwise, perform integer addition.
+		returnValue.putInteger(lhs.getInteger() + rhs.getInteger());
+	}
+
+	return returnValue;
 }
 
 Operand Operand::operator-(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
 	Operand returnValue(lhs.getType());
-	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
-		returnValue.putInteger(lhs.getInteger() - rhs.getInteger());
-		return returnValue;
 
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		returnValue.putDouble(lhs.getDouble() - rhs.getDouble());
-		return returnValue;
-
-	default:
-		error("Operand::operator-(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	if (!lhs.isNumber() || !rhs.isNumber()) {
+		error("Operand::operator-(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
+
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double subtraction.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		returnValue.putDouble(lhsValue - rhsValue);
+	} else {
+		// Otherwise, perform integer subtraction.
+		returnValue.putInteger(lhs.getInteger() - rhs.getInteger());
+	}
+
+	return returnValue;
 }
 
 Operand Operand::operator*(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
 	Operand returnValue(lhs.getType());
-	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
-		returnValue.putInteger(lhs.getInteger() * rhs.getInteger());
-		return returnValue;
 
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		returnValue.putDouble(lhs.getDouble() * rhs.getDouble());
-		return returnValue;
-
-	default:
-		error("Operand::operator*(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	if (!lhs.isNumber() || !rhs.isNumber()) {
+		error("Operand::operator*(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
+
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double multiplication.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		returnValue.putDouble(lhsValue * rhsValue);
+	} else {
+		// Otherwise, perform integer subtraction.
+		returnValue.putInteger(lhs.getInteger() * rhs.getInteger());
+	}
+
+	return returnValue;
 }
 
 Operand Operand::operator/(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
 	Operand returnValue(lhs.getType());
-	// If the types being compared end up being incompatible, the respective get
-	// method on the rhs will raise the error.
-	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
-	case kOperandTypeLiteral2:
-		if (rhs.getInteger() == 0) {
-			error("Operand::operator/(): Attempted divide by zero");
-		}
-		// Standard integer divison here.
-		returnValue.putInteger(lhs.getInteger() / rhs.getInteger());
-		return returnValue;
 
-	case kOperandTypeFloat1:
-	case kOperandTypeFloat2:
-		if (rhs.getDouble() == 0) {
-			error("Operand::operator/(): Attempted divide by zero");
-		}
-		returnValue.putDouble(lhs.getDouble() / rhs.getDouble());
-		return returnValue;
-
-	default:
-		error("Operand::operator/(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+	if (!lhs.isNumber() || !rhs.isNumber()) {
+		error("Operand::operator/(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
+
+	if (lhs.isDouble() || rhs.isDouble()) {
+		// If either operand is a double, perform double division.
+		double lhsValue = lhs.isDouble() ? lhs.getDouble() : static_cast<double>(lhs.getInteger());
+		double rhsValue = rhs.isDouble() ? rhs.getDouble() : static_cast<double>(rhs.getInteger());
+		returnValue.putDouble(lhsValue / rhsValue);
+	} else {
+		// Otherwise, perform integer division.
+		returnValue.putInteger(lhs.getInteger() / rhs.getInteger());
+	}
+
+	return returnValue;
+
 }
 
 Operand Operand::operator%(const Operand &other) const {
 	Operand lhs = getLiteralValue();
 	Operand rhs = other.getLiteralValue();
 	Operand returnValue(lhs.getType());
+
 	// If the types being compared end up being incompatible, the respective get
 	// method on the rhs will raise the error.
 	switch (lhs.getType()) {
-	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral1:
 	case kOperandTypeLiteral2:
 		if (rhs.getInteger() == 0) {
 			error("Operand::operator%%(): Attempted mod by zero");
@@ -526,17 +505,18 @@ Operand Operand::operator%(const Operand &other) const {
 		return returnValue;
 
 	default:
-		error("Operand::operator/(): Unsupported operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
+		error("Operand::operator/(): Unimplemented operand types %s and %s", operandTypeToStr(lhs.getType()), operandTypeToStr(rhs.getType()));
 	}
 }
 
 Operand Operand::operator-() const {
 	Operand literalValue = getLiteralValue();
 	Operand returnValue(literalValue.getType());
+
 	// If the types being compared end up being incompatible, the respective get
 	// method on the rhs will raise the error.
 	switch (literalValue.getType()) {
-	case kOperandTypeLiteral1: 
+	case kOperandTypeLiteral1:
 	case kOperandTypeLiteral2:
 		returnValue.putInteger(-literalValue.getInteger());
 		return returnValue;
@@ -547,7 +527,7 @@ Operand Operand::operator-() const {
 		return returnValue;
 
 	default:
-		error("Operand::operator-(): Unsupported operand type %d", static_cast<uint>(literalValue.getType()));
+		error("Operand::operator-(): Unimplemented operand type %s", operandTypeToStr(literalValue.getType()));
 	}
 }
 

@@ -45,14 +45,16 @@ public:
 	void play();
 	void stop();
 	bool isPlaying() const;
+	bool isEmpty() const { return _data.empty(); }
 	void loadFromStream(Common::SeekableReadStream *stream, int size);
-	uint32 playedOffset() const;
+	uint32 playedOffset() const; //< Current offset into the sample in bytes, or 0xFFFFFFFF if not playing.
 
 private:
 	Common::Array<byte> _data;
 	ResourceManager *_resourceMan;
 	Decompressor *_decompressor;
 	Audio::SoundHandle _handle;
+	Common::String _filename;
 };
 
 } // end namespace Dgds
