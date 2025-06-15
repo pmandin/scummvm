@@ -23,6 +23,7 @@
 #define REEVENGI_TIM_H
 
 #include "graphics/surface.h"
+#include "graphics/palette.h"
 #include "image/image_decoder.h"
 
 namespace Common {
@@ -45,8 +46,8 @@ public:
 	virtual void destroy();
 	virtual bool loadStream(Common::SeekableReadStream &tim);
 	virtual const Graphics::Surface *getSurface() const { return &_surface; }
-	virtual const byte *getPalette() const { return _colorMap; }
-	virtual const byte *getPalette(int numColorMap) const { return &_colorMap[_colorMapLength * numColorMap]; }
+	const Graphics::Palette &getPalette() const override { return _colorMap; }
+	virtual const byte *getPalette(int numColorMap) const { return &_colorMap.data()[256 /*_colorMapLength*/ * numColorMap]; }
 	virtual uint16 getPaletteColorCount() const { return _colorMapLength; }
 
 protected:
@@ -58,7 +59,7 @@ private:
 	uint16 *_timPalette;	/* Original palette, needed for masking using alpha component */
 
 	// Color-map:
-	byte *_colorMap;
+	Graphics::Palette _colorMap;
 	int16 _colorMapCount;	/* Number of color maps */
 	int16 _colorMapLength;	/* Number of colors per color map */
 

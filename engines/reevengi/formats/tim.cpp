@@ -60,7 +60,7 @@ typedef struct {
 
 /*--- Class ---*/
 
-TimDecoder::TimDecoder(): _colorMapCount(0), _colorMapLength(0), _colorMap(nullptr),
+TimDecoder::TimDecoder(): _colorMapCount(0), _colorMapLength(0), _colorMap(0),
 	_forcedW(0), _forcedH(0), _timPalette(nullptr) {
 }
 
@@ -70,8 +70,7 @@ TimDecoder::~TimDecoder() {
 
 void TimDecoder::destroy() {
 	_surface.free();
-	delete[] _colorMap;
-	_colorMap = nullptr;
+	_colorMap.clear();
 	delete[] _timPalette;
 	_timPalette = nullptr;
 }
@@ -174,8 +173,7 @@ uint16 TimDecoder::readPixel(uint16 color) {
 }
 
 bool TimDecoder::readColorMap(Common::SeekableReadStream &tim, byte imageType) {
-	_colorMap = new byte[3 * _colorMapCount * _colorMapLength];
-	byte *_colorMapFill = _colorMap;
+	_colorMap.resize(256 /*_colorMapLength*/ * _colorMapCount, false);
 	_timPalette = new uint16[256 * _colorMapCount];
 
 	for (int j = 0; j < _colorMapCount; j++) {
@@ -187,15 +185,7 @@ bool TimDecoder::readColorMap(Common::SeekableReadStream &tim, byte imageType) {
 			_timPalette[j*256+i] = color;
 			format.colorToARGB(color, a, r, g, b);
 
-#ifdef SCUMM_LITTLE_ENDIAN
-			*_colorMapFill++ = r;
-			*_colorMapFill++ = g;
-			*_colorMapFill++ = b;
-#else
-			*_colorMapFill++ = b;
-			*_colorMapFill++ = g;
-			*_colorMapFill++ = r;
-#endif
+			_colorMap.set(j*256+i, r,g,b);
 		}
 	}
 	return true;
