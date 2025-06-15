@@ -22,14 +22,19 @@
 #ifndef DIRECTOR_CASTMEMBER_MOVIE_H
 #define DIRECTOR_CASTMEMBER_MOVIE_H
 
-#include "director/castmember/castmember.h"
+#include "director/castmember/filmloop.h"
 
 namespace Director {
 
-class MovieCastMember : public CastMember {
+class MovieCastMember : public FilmLoopCastMember {
 public:
 	MovieCastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream, uint16 version);
 	MovieCastMember(Cast *cast, uint16 castId, MovieCastMember &source);
+
+	CastMember *duplicate(Cast *cast, uint16 castId) override { return (CastMember *)(new MovieCastMember(cast, castId, *this)); }
+
+	Common::Array<Channel> *getSubChannels(Common::Rect &bbox, Channel *channel) override;
+	void load() override;
 
 	bool hasField(int field) override;
 	Datum getField(int field) override;
@@ -38,11 +43,7 @@ public:
 	Common::String formatInfo() override;
 
 	uint32 _flags;
-	bool _looping;
 	bool _enableScripts;
-	bool _enableSound;
-	bool _crop;
-	bool _center;
 };
 
 } // End of namespace Director

@@ -219,9 +219,6 @@ GrBuff *guiMenu::copyBackground(guiMenu *myMenu, int32 x, int32 y, int32 w, int3
 
 	// Create a new grbuff struct
 	GrBuff *copyOfBackground = new GrBuff(w, h);
-	if (!copyOfBackground) {
-		return nullptr;
-	}
 
 	// Get the source and destination buffers
 	Buffer *srcBuff = myMenu->menuBuffer->get_buffer();
@@ -607,10 +604,7 @@ bool guiMenu::loadSprites(const char *series, int32 numSprites) {
 	_GM(menuSeriesResource) = mem_strdup(series);
 
 	// Update the palette for the menu
-	if (IS_BURGER)
-		gr_pal_set_range(_GM(menuPalette), 59, 197);
-	else
-		gr_pal_set_range(_GM(menuPalette), 128, 128);
+	gr_pal_set_range(_GM(menuPalette), 59, 197);
 
 	_GM(spriteCount) = numSprites;
 

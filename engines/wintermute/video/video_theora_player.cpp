@@ -153,7 +153,6 @@ bool VideoTheoraPlayer::initialize(const Common::String &filename, const Common:
 
 //////////////////////////////////////////////////////////////////////////
 bool VideoTheoraPlayer::resetStream() {
-	warning("VidTheoraPlayer::resetStream - hacked");
 	// HACK: Just reopen the same file again.
 	if (_theoraDecoder) {
 		_theoraDecoder->close();
@@ -304,9 +303,8 @@ bool VideoTheoraPlayer::update() {
 		}
 
 		if (_theoraDecoder->endOfVideo() && _looping) {
-			warning("Should loop movie %s, hacked for now", _filename.c_str());
 			_theoraDecoder->rewind();
-			//HACK: Just reinitialize the same video again:
+			// HACK: Just reinitialize the same video again
 			return resetStream();
 		} else if (_theoraDecoder->endOfVideo() && !_looping) {
 			debugC(kWintermuteDebugLog, "Finished movie %s", _filename.c_str());
@@ -320,10 +318,8 @@ bool VideoTheoraPlayer::update() {
 			if (!_theoraDecoder->endOfVideo() && _theoraDecoder->getTimeToNextFrame() == 0) {
 				const Graphics::Surface *decodedFrame = _theoraDecoder->decodeNextFrame();
 				if (decodedFrame) {
-					if (decodedFrame->format == _surface.format && decodedFrame->pitch == _surface.pitch && decodedFrame->h == _surface.h) {
-						const byte *src = (const byte *)decodedFrame->getBasePtr(0, 0);
-						byte *dst = (byte *)_surface.getBasePtr(0, 0);
-						memcpy(dst, src, _surface.pitch * _surface.h);
+					if (decodedFrame->format == _surface.format && decodedFrame->w == _surface.w && decodedFrame->h == _surface.h) {
+						_surface.copyRectToSurface(*decodedFrame, 0, 0, Common::Rect(decodedFrame->w, decodedFrame->h));
 					} else {
 						_surface.free();
 						_surface.copyFrom(*decodedFrame);
@@ -388,7 +384,9 @@ bool VideoTheoraPlayer::writeVideo() {
 
 void VideoTheoraPlayer::writeAlpha() {
 	if (_alphaImage && _surface.w == _alphaImage->getSurface()->w && _surface.h == _alphaImage->getSurface()->h) {
+		assert(_alphaImage->getSurface()->pitch == _alphaImage->getSurface()->w * 4);
 		assert(_alphaImage->getSurface()->format.bytesPerPixel == 4);
+		assert(_surface.pitch == _surface.w * 4);
 		assert(_surface.format.bytesPerPixel == 4);
 		const byte *alphaData = (const byte *)_alphaImage->getSurface()->getPixels();
 #ifdef SCUMM_LITTLE_ENDIAN
@@ -453,16 +451,6 @@ bool VideoTheoraPlayer::setAlphaImage(const Common::String &filename) {
 }
 
 //////////////////////////////////////////////////////////////////////////
-byte VideoTheoraPlayer::getAlphaAt(int x, int y) const {
-	if (_alphaImage) {
-		return _alphaImage->getAlphaAt(x, y);
-	} else {
-		return 0xFF;
-	}
-}
-
-
-//////////////////////////////////////////////////////////////////////////
 inline int intlog(int num) {
 	int r = 0;
 	while (num > 0) {
@@ -475,7 +463,7 @@ inline int intlog(int num) {
 
 //////////////////////////////////////////////////////////////////////////
 bool VideoTheoraPlayer::seekToTime(uint32 time) {
-	warning("VideoTheoraPlayer::SeekToTime(%d) - not supported", time);
+	error("VideoTheoraPlayer::SeekToTime(%d) - not supported", time);
 	return STATUS_OK;
 }
 

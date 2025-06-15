@@ -23,10 +23,9 @@
 #define MEDIASTATION_FONT_H
 
 #include "mediastation/asset.h"
-#include "mediastation/assetheader.h"
 #include "mediastation/bitmap.h"
 #include "mediastation/datafile.h"
-#include "mediastation/mediascript/operand.h"
+#include "mediastation/mediascript/scriptvalue.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
@@ -43,18 +42,14 @@ private:
 
 class Font : public Asset {
 public:
-	Font(AssetHeader *header) : Asset(header) {};
+	Font() : Asset(kAssetTypeFont) {};
 	~Font();
 
-	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
-
+	virtual void readParameter(Chunk &chunk, AssetHeaderSectionType paramType) override;
 	virtual void readChunk(Chunk &chunk) override;
 
 private:
 	Common::HashMap<uint, FontGlyph *> _glyphs;
-
-	// Method implementations.
-	// No methods are implemented as of now.
 };
 
 } // End of namespace MediaStation

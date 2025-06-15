@@ -178,7 +178,7 @@ public:
 	const Graphics::ManagedSurface *filenameToSurface(const Common::String &name);
 	const Graphics::ManagedSurface *languageToSurface(Common::Language languageCode, Graphics::AlphaType &alphaType);
 	const Graphics::ManagedSurface *platformToSurface(Common::Platform platformCode, Graphics::AlphaType &alphaType);
-	const Graphics::ManagedSurface *demoToSurface(const Common::String extraString, Graphics::AlphaType &alphaType);
+	const Graphics::ManagedSurface *demoToSurface(const Common::String &extraString, Graphics::AlphaType &alphaType);
 	const Graphics::ManagedSurface *disabledThumbnail();
 
 	/// Update _visibleEntries from _allEntries and returns true if reload is required.
@@ -210,7 +210,7 @@ public:
 	void scrollToEntry(int id, bool forceToTop);
 	void assignEntriesToItems();
 
-	int getNextPos(int oldSel);
+	int getItemPos(int item);
 	int getNewSel(int index);
 	int getScrollPos() const { return _scrollPos; }
 	int getSelected() const { return ((_selectedEntry == nullptr) ? -1 : _selectedEntry->entryID); }

@@ -24,19 +24,20 @@
 
 namespace MediaStation {
 
-enum InstructionType {
-	kInstructionTypeEmpty = 0x0000,
-	kInstructionTypeFunctionCall = 0x0067,
-	kInstructionTypeOperand = 0x0066,
-	kInstructionTypeVariableRef = 0x0065
+enum ExpressionType {
+	kExpressionTypeEmpty = 0x0000,
+	kExpressionTypeVariable = 0x0065,
+	kExpressionTypeValue = 0x0066,
+	kExpressionTypeOperation = 0x0067,
 };
-const char *instructionTypeToStr(InstructionType type);
+const char *expressionTypeToStr(ExpressionType type);
 
 enum Opcode {
+	kOpcodeIf = 201,
 	kOpcodeIfElse = 202,
 	kOpcodeAssignVariable = 203,
 	kOpcodeOr = 204,
-	kOpcodeNot = 205,
+	kOpcodeXor = 205,
 	kOpcodeAnd = 206,
 	kOpcodeEquals = 207,
 	kOpcodeNotEquals = 208,
@@ -50,28 +51,27 @@ enum Opcode {
 	kOpcodeDivide = 216,
 	kOpcodeModulo = 217,
 	kOpcodeNegate = 218,
-	kOpcodeCallRoutine = 219,
+	kOpcodeCallFunction = 219,
 	kOpcodeCallMethod = 220,
-	// This seems to appear at the start of a function to declare the number of
-	// local variables used in the function. It seems to be the `Declare`
-	// keyword. In the observed examples, the number of variables to create is
-	// given, then the next instructions are variable assignments for that number
-	// of variables.
-	kOpcodeDeclareVariables = 221,
-	kOpcodeWhile = 224,
+	kOpcodeDeclareLocals = 221,
 	kOpcodeReturn = 222,
-	kOpcodeUnk1 = 223
+	kOpcodeReturnNoValue = 223,
+	kOpcodeWhile = 224,
+	kOpcodeCallFunctionInVariable = 225, // IndirectCall
+	kOpcodeCallMethodInVariable = 226 // IndirectMsg
 };
 const char *opcodeToStr(Opcode opcode);
 
 enum VariableScope {
 	kVariableScopeLocal = 1,
 	kVariableScopeParameter = 2,
+	kVariableScopeIndirectParameter = 3,
 	kVariableScopeGlobal = 4
 };
 const char *variableScopeToStr(VariableScope scope);
 
 enum BuiltInFunction {
+	kUnk1Function = 10,
 	// TODO: Figure out if effectTransitionOnSync = 13 is consistent across titles?
 	kEffectTransitionFunction = 12, // PARAMS: 1
 	kEffectTransitionOnSyncFunction = 13,
@@ -84,36 +84,48 @@ enum BuiltInFunction {
 const char *builtInFunctionToStr(BuiltInFunction function);
 
 enum BuiltInMethod {
+	kInvalidMethod = 0,
 	// TODO: What object types does CursorSet apply to?
 	// Currently it's only in var_7be1_cursor_currentTool in
 	// IBM/Crayola.
 	kCursorSetMethod = 200, // PARAMS: 0
+
+	// SPATIAL ENTITY METHODS.
 	kSpatialHideMethod = 203, // PARAMS: 1
 	kSpatialMoveToMethod = 204, // PARAMS: 2
+	kSpatialMoveToByOffsetMethod = 205, // PARAMS: 2
 	kSpatialZMoveToMethod = 216, // PARAMS: 1
 	kSpatialShowMethod = 202, // PARAMS: 1
 	kTimePlayMethod = 206, // PARAMS: 1
 	kTimeStopMethod = 207, // PARAMS: 0
 	kIsPlayingMethod = 372, // PARAMS: 0
 	kSetDissolveFactorMethod = 241, // PARAMS: 1
+	kSpatialCenterMoveToMethod = 230,
+	kGetLeftXMethod = 233,
+	kGetTopYMethod = 234,
+	kGetWidthMethod = 235, // PARAMS: 0
+	kGetHeightMethod = 236, // PARAMS: 0
+	kGetCenterXMethod = 237,
+	kGetCenterYMethod = 238,
+	kGetZCoordinateMethod = 239,
+	kIsPointInsideMethod = 246,
+	kGetMouseXOffsetMethod = 264,
+	kGetMouseYOffsetMethod = 265,
+	kIsVisibleMethod = 269,
 
 	// HOTSPOT METHODS.
 	kMouseActivateMethod = 210, // PARAMS: 1
 	kMouseDeactivateMethod = 211, // PARAMS: 0
-	kXPositionMethod = 233, // PARAMS: 0
-	kYPositionMethod = 234, // PARAMS: 0
 	kTriggerAbsXPositionMethod = 321, // PARAMS: 0
 	kTriggerAbsYPositionMethod = 322, // PARAMS: 0
 	kIsActiveMethod = 371, // PARAMS: 0
 
-	// IMAGE METHODS.
-	kWidthMethod = 235, // PARAMS: 0
-	kHeightMethod = 236, // PARAMS: 0
-	kIsVisibleMethod = 269,
-
 	// SPRITE METHODS.
 	kMovieResetMethod = 219, // PARAMS: 0
-	kSetCurrentClipMethod = 221, // PARAMS: 0-1
+	kSetCurrentClipMethod = 220, // PARAMS: 1
+	kIncrementFrameMethod = 221, // PARAMS: 0-1
+	kDecrementFrameMethod = 222, // PARAMS: 0-1
+	kGetCurrentClipIdMethod = 240, // PARAMS: 0
 
 	// STAGE METHODS.
 	kSetWorldSpaceExtentMethod = 363, // PARAMS: 2
@@ -144,22 +156,23 @@ enum BuiltInMethod {
 	kSetMaximumTextLengthMethod = 293, // PARAM: 1
 
 	// COLLECTION METHODS.
-	// These aren't assets but arrays used in Media Script.
-	kIsEmptyMethod = 254, // PARAMS: 0
-	kEmptyMethod = 252, // PARAMS: 0
+	// These are arrays used in Media Script.
 	kAppendMethod = 247, // PARAMS: 1+
-	kGetAtMethod = 253, // PARAMS: 1
+	kApplyMethod = 248, // PARAMS: 1+
 	kCountMethod = 249, // PARAMS: 0
-	// Looks like this lets you call a method on all the items in a collection.
-	// Examples look like : var_7be1_collect_shapes.send(spatialHide);
-	kSendMethod = 257, // PARAMS: 1+. Looks like the first param is the function,
-	// Seeking seems to be finding the index where a certain item is.
-	// and the next params are any arguments you want to send.
-	kSeekMethod = 256, // PARAMS: 1
-	kSortMethod = 266, // PARAMS: 0
-	kDeleteAtMethod = 258, // PARAMS: 1
-	kJumbleMethod = 255, // PARAMS: 0
 	kDeleteFirstMethod = 250, // PARAMS: 0
+	kDeleteLastMethod = 251, // PARAMS: 0
+	kEmptyMethod = 252, // PARAMS: 0
+	kGetAtMethod = 253, // PARAMS: 1
+	kIsEmptyMethod = 254, // PARAMS: 0
+	kJumbleMethod = 255, // PARAMS: 0
+	kSeekMethod = 256, // PARAMS: 1
+	kSendMethod = 257, // PARAMS: 1+
+	kDeleteAtMethod = 258, // PARAMS: 1
+	kInsertAtMethod = 259, // PARAMS: 2
+	kReplaceAtMethod = 260, // PARAMS: 2
+	kPrependListMethod = 261, // PARAMS: 1+
+	kSortMethod = 266, // PARAMS: 0
 
 	// PRINTER METHODS.
 	kOpenLensMethod = 346, // PARAMS: 0
@@ -193,7 +206,7 @@ enum EventType {
 	kMovieStoppedEvent = 31,
 	kMovieBeginEvent = 32,
 
-	//SPRITE EVENTS.
+	// SPRITE EVENTS.
 	// Just "MovieEnd" in source.
 	kSpriteMovieEndEvent = 23,
 
@@ -219,59 +232,35 @@ enum EventType {
 };
 const char *eventTypeToStr(EventType type);
 
-enum EventHandlerArgumentType {
-	kNullEventHandlerArgument = 0,
-	kAsciiCodeEventHandlerArgument = 1,
-	kTimeEventHandlerArgument = 3,
-	// TODO: This argument type Appears to happen with MovieStart
-	// and nowhere else. However, this event handler shouldn't even need an
-	// argument...
-	kUnk1EventHandlerArgument = 4,
-	kContextEventHandlerArgument = 5
-};
-const char *eventHandlerArgumentTypeToStr(EventHandlerArgumentType type);
-
 enum OperandType {
-	// This is an invalid type used for initialization only.
 	kOperandTypeEmpty = 0,
-
-	// TODO: Figure out the difference between these two.
-	kOperandTypeLiteral1 = 151,
-	kOperandTypeLiteral2 = 153,
-	// TODO: Figure out the difference between these two.
-	kOperandTypeFloat1 = 152,
-	kOperandTypeFloat2 = 157,
+	kOperandTypeBool = 151,
+	kOperandTypeFloat = 152,
+	kOperandTypeInt = 153,
 	kOperandTypeString = 154,
-	// TODO: This only seems to be used in effectTransition,
-	// as in effectTransition ( $FadeToPalette )
-	kOperandTypeDollarSignVariable = 155,
+	kOperandTypeParamToken = 155,
 	kOperandTypeAssetId = 156,
-	kOperandTypeVariableDeclaration = 158,
-	kOperandTypeCollection = 159,
-	kOperandTypeFunction = 160
+	kOperandTypeTime = 157,
+	kOperandTypeVariable = 158,
+	kOperandTypeFunctionId = 159,
+	kOperandTypeMethodId = 160,
+	kOperandTypeCollection = 161
 };
 const char *operandTypeToStr(OperandType type);
 
-enum VariableType {
-	// This is an invalid type used for initialization only.
-	kVariableTypeEmpty = 0x0000,
-
-	kVariableTypeCollection = 0x0007,
-	kVariableTypeString = 0x0006,
-	kVariableTypeAssetId = 0x0005,
-	kVariableTypeInt = 0x0004,
-	// These seem to be constants of some sort? This is what some of these
-	// IDs look like in PROFILE._ST:
-	//  - $downEar 10026
-	//  - $sitDown 10027
-	// Seems like these can also reference variables:
-	//  - var_6c14_bool_FirstThingLev3 315
-	//  - var_6c14_NextEncouragementSound 316
-	kVariableTypeUnk2 = 0x0003,
-	kVariableTypeBoolean = 0x0002,
-	kVariableTypeFloat = 0x0001
+enum ScriptValueType {
+	kScriptValueTypeEmpty = 0,
+	kScriptValueTypeFloat = 1,
+	kScriptValueTypeBool = 2,
+	kScriptValueTypeTime = 3,
+	kScriptValueTypeParamToken = 4,
+	kScriptValueTypeAssetId = 5,
+	kScriptValueTypeString = 6,
+	kScriptValueTypeCollection = 7,
+	kScriptValueTypeFunctionId = 8,
+	kScriptValueTypeMethodId = 9
 };
-const char *variableTypeToStr(VariableType type);
+const char *scriptValueTypeToStr(ScriptValueType type);
 
 } // End of namespace MediaStation
 

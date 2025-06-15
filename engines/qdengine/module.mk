@@ -3,6 +3,7 @@ MODULE := engines/qdengine
 MODULE_OBJS = \
 	qdengine.o \
 	console.o \
+	dialogs.o \
 	metaengine.o \
 	minigames/adv/common.o \
 	minigames/adv/EffectManager.o \
@@ -13,6 +14,7 @@ MODULE_OBJS = \
 	minigames/adv/Range.o \
 	minigames/adv/RunTime.o \
 	minigames/adv/TextManager.o \
+	minigames/adv/m_karaoke.o \
 	minigames/adv/m_puzzle.o \
 	minigames/adv/m_scores.o \
 	minigames/adv/m_swap.o \

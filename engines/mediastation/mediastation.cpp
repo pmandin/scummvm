@@ -28,8 +28,10 @@
 #include "mediastation/boot.h"
 #include "mediastation/context.h"
 #include "mediastation/asset.h"
-#include "mediastation/assets/hotspot.h"
 #include "mediastation/assets/movie.h"
+#include "mediastation/assets/screen.h"
+#include "mediastation/assets/palette.h"
+#include "mediastation/assets/hotspot.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
@@ -38,7 +40,8 @@ MediaStationEngine *g_engine;
 
 MediaStationEngine::MediaStationEngine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(syst),
 	_gameDescription(gameDesc),
-	_randomSource("MediaStation") {
+	_randomSource("MediaStation"),
+	_spatialEntities(MediaStationEngine::compareAssetByZIndex) {
 	g_engine = this;
 
 	_gameDataDir = Common::FSNode(ConfMan.getPath("path"));
@@ -63,17 +66,11 @@ MediaStationEngine::~MediaStationEngine() {
 		delete it->_value;
 	}
 	_loadedContexts.clear();
-
-	for (auto it = _variables.begin(); it != _variables.end(); ++it) {
-		delete it->_value;
-	}
-	_variables.clear();
 }
 
 Asset *MediaStationEngine::getAssetById(uint assetId) {
-	for (auto it = _loadedContexts.begin(); it != _loadedContexts.end(); ++it) {
-		Asset *asset = it->_value->getAssetById(assetId);
-		if (asset != nullptr) {
+	for (auto asset : _assets) {
+		if (asset->id() == assetId) {
 			return asset;
 		}
 	}
@@ -100,6 +97,16 @@ Function *MediaStationEngine::getFunctionById(uint functionId) {
 	return nullptr;
 }
 
+ScriptValue *MediaStationEngine::getVariable(uint variableId) {
+	for (auto it = _loadedContexts.begin(); it != _loadedContexts.end(); ++it) {
+		ScriptValue *variable = it->_value->getVariable(variableId);
+		if (variable != nullptr) {
+			return variable;
+		}
+	}
+	return nullptr;
+}
+
 uint32 MediaStationEngine::getFeatures() const {
 	return _gameDescription->flags;
 }
@@ -120,7 +127,7 @@ bool MediaStationEngine::isFirstGenerationEngine() {
 	if (_boot == nullptr) {
 		error("Attempted to get engine version before BOOT.STM was read");
 	} else {
-		return (_boot->_versionInfo == nullptr);
+		return (_boot->_versionInfo.major == 0);
 	}
 }
 
@@ -142,11 +149,11 @@ Common::Error MediaStationEngine::run() {
 	}
 	_cursor->showCursor();
 
-    if (ConfMan.hasKey("entry_context")) {
+	if (ConfMan.hasKey("entry_context")) {
 		// For development purposes, we can choose to start at an arbitrary context
 		// in this title. This might not work in all cases.
-        uint entryContextId = ConfMan.get("entry_context").asUint64();
-        warning("Starting at user-requested context %d", entryContextId);
+		uint entryContextId = ConfMan.get("entry_context").asUint64();
+		warning("Starting at user-requested context %d", entryContextId);
 		_requestedScreenBranchId = entryContextId;
 	} else {
 		_requestedScreenBranchId = _boot->_entryContextId;
@@ -159,22 +166,26 @@ Common::Error MediaStationEngine::run() {
 			break;
 		}
 
-		debugC(5, kDebugGraphics, "***** START SCREEN UPDATE ***");
-		for (auto it = _assetsPlaying.begin(); it != _assetsPlaying.end();) {
-			(*it)->process();
+		if (!_requestedContextReleaseId.empty()) {
+			for (uint contextId : _requestedContextReleaseId) {
+				releaseContext(contextId);
+			}
+			_requestedContextReleaseId.clear();
+		}
 
-			// If we're changing screens, exit out now so we don't try to access
-			// any assets that no longer exist.
+		debugC(5, kDebugGraphics, "***** START SCREEN UPDATE ***");
+		for (Asset *asset : _assets) {
+			asset->process();
+
 			if (_requestedScreenBranchId != 0) {
 				doBranchToScreen();
 				_requestedScreenBranchId = 0;
 				break;
 			}
 
-			if (!(*it)->isActive()) {
-				it = _assetsPlaying.erase(it);
-			} else {
-				++it;
+			if (_needsHotspotRefresh) {
+				refreshActiveHotspot();
+				_needsHotspotRefresh = false;
 			}
 		}
 		redraw();
@@ -200,25 +211,27 @@ void MediaStationEngine::processEvents() {
 		}
 
 		case Common::EVENT_MOUSEMOVE: {
-			refreshActiveHotspot();
+			_mousePos = g_system->getEventManager()->getMousePos();
+			_needsHotspotRefresh = true;
 			break;
 		}
 
 		case Common::EVENT_KEYDOWN: {
 			// Even though this is a keydown event, we need to look at the mouse position.
-			Common::Point mousePos = g_system->getEventManager()->getMousePos();
-			Asset *hotspot = findAssetToAcceptMouseEvents(mousePos);
+			Asset *hotspot = findAssetToAcceptMouseEvents();
 			if (hotspot != nullptr) {
-				debugC(1, kDebugEvents, "EVENT_KEYDOWN (%d): Sent to hotspot %d", _event.kbd.ascii, hotspot->getHeader()->_id);
-				hotspot->runKeyDownEventHandlerIfExists(_event.kbd);
+				debugC(1, kDebugEvents, "EVENT_KEYDOWN (%d): Sent to hotspot %d", _event.kbd.ascii, hotspot->id());
+				ScriptValue keyCode;
+				keyCode.setToFloat(_event.kbd.ascii);
+				hotspot->runEventHandlerIfExists(kKeyDownEvent, keyCode);
 			}
 			break;
 		}
 
 		case Common::EVENT_LBUTTONDOWN: {
-			Asset *hotspot = findAssetToAcceptMouseEvents(_event.mouse);
+			Asset *hotspot = findAssetToAcceptMouseEvents();
 			if (hotspot != nullptr) {
-				debugC(1, kDebugEvents, "EVENT_LBUTTONDOWN (%d, %d): Sent to hotspot %d", _event.mouse.x, _event.mouse.y, hotspot->getHeader()->_id);
+				debugC(1, kDebugEvents, "EVENT_LBUTTONDOWN (%d, %d): Sent to hotspot %d", _mousePos.x, _mousePos.y, hotspot->id());
 				hotspot->runEventHandlerIfExists(kMouseDownEvent);
 			}
 			break;
@@ -243,25 +256,26 @@ void MediaStationEngine::setCursor(uint id) {
 	// that's a lookup into BOOT.STM, which gives actual name the name of the
 	// resource in the executable.
 	if (id != 0) {
-		CursorDeclaration *cursorDeclaration = _boot->_cursorDeclarations.getValOrDefault(id);
-		if (cursorDeclaration == nullptr) {
-			error("MediaStationEngine::setCursor(): Cursor %d not declared", id);
-		}
-		_cursor->setCursor(*cursorDeclaration->_name);
+		const CursorDeclaration &cursorDeclaration = _boot->_cursorDeclarations.getVal(id);
+		_cursor->setCursor(cursorDeclaration._name);
 	}
 }
 
 void MediaStationEngine::refreshActiveHotspot() {
-	Asset *hotspot = findAssetToAcceptMouseEvents(_eventMan->getMousePos());
+	Asset *asset = findAssetToAcceptMouseEvents();
+	if (asset != nullptr && asset->type() != kAssetTypeHotspot) {
+		return;
+	}
+	Hotspot *hotspot = static_cast<Hotspot *>(asset);
 	if (hotspot != _currentHotspot) {
 		if (_currentHotspot != nullptr) {
 			_currentHotspot->runEventHandlerIfExists(kMouseExitedEvent);
-			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Exited hotspot %d", _event.mouse.x, _event.mouse.y, _currentHotspot->getHeader()->_id);
+			debugC(5, kDebugEvents, "refreshActiveHotspot(): (%d, %d): Exited hotspot %d", _mousePos.x, _mousePos.y, _currentHotspot->id());
 		}
 		_currentHotspot = hotspot;
 		if (hotspot != nullptr) {
-			debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Entered hotspot %d", _event.mouse.x, _event.mouse.y, hotspot->getHeader()->_id);
-			setCursor(hotspot->getHeader()->_cursorResourceId);
+			debugC(5, kDebugEvents, "refreshActiveHotspot(): (%d, %d): Entered hotspot %d", _mousePos.x, _mousePos.y, hotspot->id());
+			setCursor(hotspot->_cursorResourceId);
 			hotspot->runEventHandlerIfExists(kMouseEnteredEvent);
 		} else {
 			// There is no hotspot, so set the default cursor for this screen instead.
@@ -270,7 +284,7 @@ void MediaStationEngine::refreshActiveHotspot() {
 	}
 
 	if (hotspot != nullptr) {
-		debugC(5, kDebugEvents, "EVENT_MOUSEMOVE (%d, %d): Sent to hotspot %d", _event.mouse.x, _event.mouse.y, hotspot->getHeader()->_id);
+		debugC(5, kDebugEvents, "refreshActiveHotspot(): (%d, %d): Sent to hotspot %d", _mousePos.x, _mousePos.y, hotspot->id());
 		hotspot->runEventHandlerIfExists(kMouseMovedEvent);
 	}
 }
@@ -280,16 +294,21 @@ void MediaStationEngine::redraw() {
 		return;
 	}
 
-	Common::sort(_assetsPlaying.begin(), _assetsPlaying.end(), [](Asset * a, Asset * b) {
-		return a->zIndex() > b->zIndex();
-	});
-
 	for (Common::Rect dirtyRect : _dirtyRects) {
-		for (Asset *asset : _assetsPlaying) {
-			Common::Rect *bbox = asset->getBbox();
-			if (bbox != nullptr) {
-				if (dirtyRect.intersects(*bbox)) {
-					asset->redraw(dirtyRect);
+		for (Asset *asset : _spatialEntities) {
+			if (!asset->isSpatialActor()) {
+				continue;
+			}
+
+			SpatialEntity *entity = static_cast<SpatialEntity *>(asset);
+			if (!entity->isVisible()) {
+				continue;
+			}
+
+			Common::Rect bbox = entity->getBbox();
+			if (!bbox.isEmpty()) {
+				if (dirtyRect.intersects(bbox)) {
+					entity->redraw(dirtyRect);
 				}
 			}
 		}
@@ -311,31 +330,23 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 	}
 
 	// Get the file ID.
-	SubfileDeclaration *subfileDeclaration = _boot->_subfileDeclarations.getValOrDefault(contextId);
-	if (subfileDeclaration == nullptr) {
-		error("MediaStationEngine::loadContext(): Couldn't find subfile declaration with ID %d", contextId);
-		return nullptr;
-	}
+	const SubfileDeclaration &subfileDeclaration = _boot->_subfileDeclarations.getVal(contextId);
 	// There are other assets in a subfile too, so we need to make sure we're
 	// referencing the screen asset, at the start of the file.
-	if (subfileDeclaration->_startOffsetInFile != 16) {
+	if (subfileDeclaration._startOffsetInFile != 16) {
 		warning("MediaStationEngine::loadContext(): Requested ID wasn't for a context.");
 		return nullptr;
 	}
-	uint32 fileId = subfileDeclaration->_fileId;
+	uint fileId = subfileDeclaration._fileId;
 
 	// Get the filename.
-	FileDeclaration *fileDeclaration = _boot->_fileDeclarations.getValOrDefault(fileId);
-	if (fileDeclaration == nullptr) {
-		warning("MediaStationEngine::loadContext(): Couldn't find file declaration with ID 0x%x", fileId);
-		return nullptr;
-	}
-	Common::Path entryCxtFilepath(*fileDeclaration->_name);
+	const FileDeclaration &fileDeclaration = _boot->_fileDeclarations.getVal(fileId);
+	Common::Path entryCxtFilepath(fileDeclaration._name);
 
 	// Load any child contexts before we actually load this one. The child
 	// contexts must be unloaded explicitly later.
-	ContextDeclaration *contextDeclaration = _boot->_contextDeclarations.getValOrDefault(contextId);
-	for (uint32 childContextId : contextDeclaration->_fileReferences) {
+	ContextDeclaration contextDeclaration = _boot->_contextDeclarations.getVal(contextId);
+	for (uint childContextId : contextDeclaration._parentContextIds) {
 		// The root context is referred to by an ID of 0, regardless of what its
 		// actual ID is. The root context is already always loaded.
 		if (childContextId != 0) {
@@ -352,37 +363,35 @@ Context *MediaStationEngine::loadContext(uint32 contextId) {
 		_screen->setPalette(*context->_palette);
 	}
 
-	context->registerActiveAssets();
 	_loadedContexts.setVal(contextId, context);
 	return context;
 }
 
-void MediaStationEngine::setPalette(Asset *palette) {
-	assert(palette != nullptr);
-	setPaletteFromHeader(palette->getHeader());
-}
-
-void MediaStationEngine::setPaletteFromHeader(AssetHeader *header) {
-	assert(header != nullptr);
-	if (header->_palette != nullptr) {
-		_screen->setPalette(*header->_palette);
+void MediaStationEngine::setPalette(Asset *asset) {
+	if (asset == nullptr) {
+		error("Requested palette not found");
+	} else if (asset->type() != kAssetTypePalette) {
+		error("Requested palette %d is not a palette", asset->id());
 	} else {
-		warning("MediaStationEngine::setPaletteFromHeader(): Asset %d does not have a palette. Current palette will be unchanged.", header->_id);
+		Palette *paletteAsset = static_cast<Palette *>(asset);
+		_screen->setPalette(*paletteAsset->_palette);
 	}
 }
 
-void MediaStationEngine::addPlayingAsset(Asset *assetToAdd) {
-	// If we're already marking the asset as played, we don't need to mark it
-	// played again.
-	for (Asset *asset : g_engine->_assetsPlaying) {
-		if (asset == assetToAdd) {
-			return;
-		}
+void MediaStationEngine::registerAsset(Asset *assetToAdd) {
+	if (getAssetById(assetToAdd->id())) {
+		error("Asset with ID 0x%d was already defined in this title", assetToAdd->id());
 	}
-	g_engine->_assetsPlaying.push_back(assetToAdd);
+
+	_assets.push_back(assetToAdd);
+	if (assetToAdd->isSpatialActor()) {
+		_spatialEntities.insert(static_cast<SpatialEntity *>(assetToAdd));
+	}
 }
 
-Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) {
+ScriptValue MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) {
+	ScriptValue returnValue;
+
 	switch (methodId) {
 	case kBranchToScreenMethod: {
 		assert(args.size() >= 1);
@@ -390,16 +399,16 @@ Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Ope
 			// TODO: Figure out what the rest of the args can be.
 			warning("MediaStationEngine::callMethod(): branchToScreen got more than one arg");
 		}
-		uint32 contextId = args[0].getAssetId();
+		uint32 contextId = args[0].asAssetId();
 		_requestedScreenBranchId = contextId;
-		return Operand();
+		return returnValue;
 	}
 
 	case kReleaseContextMethod: {
 		assert(args.size() == 1);
-		uint32 contextId = args[0].getAssetId();
-		releaseContext(contextId);
-		return Operand();
+		uint32 contextId = args[0].asAssetId();
+		_requestedContextReleaseId.push_back(contextId);
+		return returnValue;
 	}
 
 	default:
@@ -409,15 +418,8 @@ Operand MediaStationEngine::callMethod(BuiltInMethod methodId, Common::Array<Ope
 
 void MediaStationEngine::doBranchToScreen() {
 	if (_currentContext != nullptr) {
-		EventHandler *exitEvent = _currentContext->_screenAsset->_eventHandlers.getValOrDefault(kExitEvent);
-		if (exitEvent != nullptr) {
-			debugC(5, kDebugScript, "Executing context exit event handler");
-			exitEvent->execute(_currentContext->_screenAsset->_id);
-		} else {
-			debugC(5, kDebugScript, "No context exit event handler");
-		}
-
-		releaseContext(_currentContext->_screenAsset->_id);
+		_currentContext->_screenAsset->runEventHandlerIfExists(kExitEvent);
+		releaseContext(_currentContext->_screenAsset->id());
 	}
 
 	Context *context = loadContext(_requestedScreenBranchId);
@@ -426,15 +428,7 @@ void MediaStationEngine::doBranchToScreen() {
 	_currentHotspot = nullptr;
 
 	if (context->_screenAsset != nullptr) {
-		// TODO: Make the screen an asset just like everything else so we can
-		// run event handlers with runEventHandlerIfExists.
-		EventHandler *entryEvent = context->_screenAsset->_eventHandlers.getValOrDefault(MediaStation::kEntryEvent);
-		if (entryEvent != nullptr) {
-			debugC(5, kDebugScript, "Executing context entry event handler");
-			entryEvent->execute(context->_screenAsset->_id);
-		} else {
-			debugC(5, kDebugScript, "No context entry event handler");
-		}
+		context->_screenAsset->runEventHandlerIfExists(kEntryEvent);
 	}
 
 	_requestedScreenBranchId = 0;
@@ -447,13 +441,30 @@ void MediaStationEngine::releaseContext(uint32 contextId) {
 		error("MediaStationEngine::releaseContext(): Attempted to unload context %d that is not currently loaded", contextId);
 	}
 
-	// Unload any assets currently playing from this context. They should have
-	// already been stopped by scripts, but this is a last check.
-	for (auto it = _assetsPlaying.begin(); it != _assetsPlaying.end();) {
-		uint assetId = (*it)->getHeader()->_id;
-		Asset *asset = context->getAssetById(assetId);
-		if (asset != nullptr) {
-			it = _assetsPlaying.erase(it);
+	// Make sure nothing is still using this context.
+	for (auto it = _loadedContexts.begin(); it != _loadedContexts.end(); ++it) {
+		uint id = it->_key;
+		ContextDeclaration contextDeclaration = _boot->_contextDeclarations.getVal(id);
+		for (uint32 childContextId : contextDeclaration._parentContextIds) {
+			if (childContextId == contextId) {
+				return;
+			}
+		}
+	}
+
+	for (auto it = _assets.begin(); it != _assets.end();) {
+		uint assetContextId = (*it)->contextId();
+		if (assetContextId == contextId) {
+			it = _assets.erase(it);
+		} else {
+			++it;
+		}
+	}
+
+	for (auto it = _spatialEntities.begin(); it != _spatialEntities.end();) {
+		uint assetContextId = (*it)->contextId();
+		if (assetContextId == contextId) {
+			it = _spatialEntities.erase(it);
 		} else {
 			++it;
 		}
@@ -463,17 +474,19 @@ void MediaStationEngine::releaseContext(uint32 contextId) {
 	_loadedContexts.erase(contextId);
 }
 
-Asset *MediaStationEngine::findAssetToAcceptMouseEvents(Common::Point point) {
+Asset *MediaStationEngine::findAssetToAcceptMouseEvents() {
 	Asset *intersectingAsset = nullptr;
 	// The z-indices seem to be reversed, so the highest z-index number is
 	// actually the lowest asset.
 	int lowestZIndex = INT_MAX;
 
-	for (Asset *asset : _assetsPlaying) {
+	for (Asset *asset : _assets) {
 		if (asset->type() == kAssetTypeHotspot) {
-			if (asset->isActive() && static_cast<Hotspot *>(asset)->isInside(point)) {
-				if (asset->zIndex() < lowestZIndex) {
-					lowestZIndex = asset->zIndex();
+			Hotspot *hotspot = static_cast<Hotspot *>(asset);
+			debugC(5, kDebugGraphics, "findAssetToAcceptMouseEvents(): Hotspot %d (z-index %d)", hotspot->id(), hotspot->zIndex());
+			if (hotspot->isActive() && hotspot->isInside(_mousePos)) {
+				if (hotspot->zIndex() < lowestZIndex) {
+					lowestZIndex = hotspot->zIndex();
 					intersectingAsset = asset;
 				}
 			}
@@ -482,24 +495,44 @@ Asset *MediaStationEngine::findAssetToAcceptMouseEvents(Common::Point point) {
 	return intersectingAsset;
 }
 
-Operand MediaStationEngine::callBuiltInFunction(BuiltInFunction function, Common::Array<Operand> &args) {
+ScriptValue MediaStationEngine::callBuiltInFunction(BuiltInFunction function, Common::Array<ScriptValue> &args) {
+	ScriptValue returnValue;
+
 	switch (function) {
 	case kEffectTransitionFunction:
 	case kEffectTransitionOnSyncFunction: {
 		// TODO: effectTransitionOnSync should be split out into its own function.
 		effectTransition(args);
-		return Operand();
+		return returnValue;
 	}
 
 	case kDrawingFunction: {
 		// Not entirely sure what this function does, but it seems like a way to
 		// call into some drawing functions built into the IBM/Crayola executable.
 		warning("MediaStationEngine::callBuiltInFunction(): Built-in drawing function not implemented");
-		return Operand();
+		return returnValue;
+	}
+
+	case kUnk1Function: {
+		warning("MediaStationEngine::callBuiltInFunction(): Function 10 not implemented");
+		returnValue.setToFloat(1.0);
+		return returnValue;
 	}
 
 	default:
 		error("MediaStationEngine::callBuiltInFunction(): Got unknown built-in function %s (%d)", builtInFunctionToStr(function), static_cast<uint>(function));
+	}
+}
+
+int MediaStationEngine::compareAssetByZIndex(const SpatialEntity *a, const SpatialEntity *b) {
+	int diff = b->zIndex() - a->zIndex();
+	if (diff < 0)
+		return -1; // a should come before b
+	else if (diff > 0)
+		return 1; // b should come before a
+	else {
+		// If z-indices are equal, compare pointers for stable sort
+		return (a < b) ? -1 : 1;
 	}
 }
 

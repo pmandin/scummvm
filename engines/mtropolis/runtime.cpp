@@ -2726,11 +2726,11 @@ const Common::SharedPtr<CursorGraphicCollection> &ProjectDescription::getCursorG
 	return _cursorGraphics;
 }
 
-void ProjectDescription::setLanguage(const Common::Language &language) {
+void ProjectDescription::setLanguage(Common::Language language) {
 	_language = language;
 }
 
-const Common::Language &ProjectDescription::getLanguage() const {
+Common::Language ProjectDescription::getLanguage() const {
 	return _language;
 }
 
@@ -5694,6 +5694,12 @@ void Runtime::recursiveDeactivateStructural(Structural *structural) {
 	for (const Common::SharedPtr<Structural> &child : structural->getChildren()) {
 		recursiveDeactivateStructural(child.get());
 	}
+
+	// If a mouseover object is deactivated, then it no longer receives events.
+	// (Otherwise hot-loading causes a bunch of problems with Mouse Outside events
+	// hot-loading scenes)
+	if (_mouseOverObject.lock().get() == structural)
+		_mouseOverObject.reset();
 
 	structural->deactivate();
 }

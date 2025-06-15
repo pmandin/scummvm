@@ -43,8 +43,8 @@ SRTParser::~SRTParser() {
 }
 
 void SRTParser::cleanup() {
-	for (Common::Array<SRTEntry *>::const_iterator item = _entries.begin(); item != _entries.end(); ++item)
-		delete *item;
+	for (const auto *item : _entries)
+		delete item;
 
 	_entries.clear();
 }
@@ -280,7 +280,7 @@ void Subtitles::loadSRTFile(const Common::Path &fname) {
 	_loaded = _srtParser.parseFile(fname);
 }
 
-void Subtitles::setBBox(const Common::Rect bbox) {
+void Subtitles::setBBox(const Common::Rect &bbox) {
 	_requestedBBox = bbox;
 
 	Graphics::PixelFormat overlayFormat = g_system->getOverlayFormat();

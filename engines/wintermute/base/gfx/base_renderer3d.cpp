@@ -37,13 +37,6 @@ BaseRenderer3D::BaseRenderer3D(Wintermute::BaseGame *inGame) : BaseRenderer(inGa
 
 	_lastTexture = nullptr;
 
-	_blendMode = Graphics::BLEND_UNKNOWN;
-
-	_spriteBatchMode = false;
-	_batchBlendMode = Graphics::BLEND_UNKNOWN;
-	_batchAlphaDisable = false;
-	_batchTexture = nullptr;
-
 	_ambientLightColor = 0x00000000;
 	_ambientLightOverride = false;
 
@@ -62,15 +55,15 @@ void BaseRenderer3D::initLoop() {
 }
 
 bool BaseRenderer3D::drawSprite(BaseSurface *texture, const Wintermute::Rect32 &rect,
-							float zoomX, float zoomY, const Wintermute::Vector2 &pos,
-							uint32 color, bool alphaDisable, Graphics::TSpriteBlendMode blendMode,
-							bool mirrorX, bool mirrorY) {
+	                        float zoomX, float zoomY, const Wintermute::Vector2 &pos,
+	                        uint32 color, bool alphaDisable, Graphics::TSpriteBlendMode blendMode,
+	                        bool mirrorX, bool mirrorY) {
 	Vector2 scale(zoomX / 100.0f, zoomY / 100.0f);
 	return drawSpriteEx(texture, rect, pos, Vector2(0.0f, 0.0f), scale, 0.0f, color, alphaDisable, blendMode, mirrorX, mirrorY);
 }
 
 bool BaseRenderer3D::getProjectionParams(float *resWidth, float *resHeight, float *layerWidth, float *layerHeight,
-										 float *modWidth, float *modHeight, bool *customViewport) {
+	                                 float *modWidth, float *modHeight, bool *customViewport) {
 	*resWidth = _width;
 	*resHeight = _height;
 
@@ -123,23 +116,27 @@ bool BaseRenderer3D::setDefaultAmbientLightColor() {
 	return true;
 }
 
+bool BaseRenderer3D::setup3DCustom(DXMatrix &viewMat, DXMatrix &projMat) {
+	setup3D();
+	_state = RSTATE_3D;
+	if (viewMat)
+		setViewTransform(viewMat);
+	if (projMat)
+		setProjectionTransform(projMat);
+
+	return true;
+}
+
 DXViewport BaseRenderer3D::getViewPort() {
 	return _viewport;
 }
 
 Graphics::PixelFormat BaseRenderer3D::getPixelFormat() const {
-	return g_system->getScreenFormat();
-}
-
-void BaseRenderer3D::flipVertical(Graphics::Surface *s) {
-	for (int y = 0; y < s->h / 2; ++y) {
-		// Flip the lines
-		byte *line1P = (byte *)s->getBasePtr(0, y);
-		byte *line2P = (byte *)s->getBasePtr(0, s->h - y - 1);
-
-		for (int x = 0; x < s->pitch; ++x)
-			SWAP(line1P[x], line2P[x]);
-	}
+#ifdef SCUMM_BIG_ENDIAN
+	return Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
+#else
+	return Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
+#endif
 }
 
 bool BaseRenderer3D::flip() {

@@ -30,6 +30,7 @@
 #include "engines/savestate.h"
 
 #include "graphics/color_quantizer.h"
+#include "graphics/macgamma.h"
 #include "graphics/palette.h"
 #include "graphics/paletteman.h"
 #include "graphics/macgui/macwindowmanager.h"
@@ -69,6 +70,8 @@ MacV6Gui::MacV6Gui(ScummEngine *vm, const Common::Path &resourceFile) : MacGuiIm
 #endif
 	else if (_vm->_game.id == GID_MANIAC)
 		_gameName = "Maniac Mansion";
+	else if (_vm->_game.id == GID_INDY4)
+		_gameName = "Fate of Atlantis PowerPC";
 	else
 		_gameName = "Some Game I Do Not Know";
 
@@ -128,38 +131,71 @@ bool MacV6Gui::getFontParams(FontId fontId, int &id, int &size, int &slant) cons
 }
 
 void MacV6Gui::setupCursor(int &width, int &height, int &hotspotX, int &hotspotY, int &animate) {
-	if (_vm->_game.id != GID_MANIAC)
-		return;
+	if (_vm->_game.id == GID_INDY4) {
+		byte cross[15 * 15];
 
-	byte invertedMacArrow[] = {
-		0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0xFF,
-		0x00, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x0F, 0x0F, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
-		0x00, 0x0F, 0x00, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF,
-		0x00, 0x00, 0xFF, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF,
-		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF
-	};
+		memset(cross, 3, sizeof(cross));
 
-	memcpy(_vm->_grabbedCursor, invertedMacArrow, sizeof(invertedMacArrow));
+		for (int i = 0; i < 15; i++) {
+			if (i < 6 || i > 8) {
+				cross[i * 15 + 7] = 1;
+				cross[7 * 15 + i] = 1;
+			}
+		}
 
-	width = 11;
-	height = 16;
-	hotspotX = 1;
-	hotspotY = 1;
+		width = height = 15;
+		hotspotX = hotspotY = 7;
+		animate = false;
+
+		_windowManager->replaceCustomCursor(cross, width, height, hotspotX, hotspotY, 3);
+	} else if (_vm->_game.id == GID_MANIAC) {
+		byte invertedMacArrow[11 * 16] = {
+			0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+			0, 1, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+			0, 1, 1, 0, 3, 3, 3, 3, 3, 3, 3,
+			0, 1, 1, 1, 0, 3, 3, 3, 3, 3, 3,
+			0, 1, 1, 1, 1, 0, 3, 3, 3, 3, 3,
+			0, 1, 1, 1, 1, 1, 0, 3, 3, 3, 3,
+			0, 1, 1, 1, 1, 1, 1, 0, 3, 3, 3,
+			0, 1, 1, 1, 1, 1, 1, 1, 0, 3, 3,
+			0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 3,
+			0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+			0, 1, 1, 0, 1, 1, 0, 3, 3, 3, 3,
+			0, 1, 0, 3, 0, 1, 1, 0, 3, 3, 3,
+			0, 0, 3, 3, 0, 1, 1, 0, 3, 3, 3,
+			0, 3, 3, 3, 3, 0, 1, 1, 0, 3, 3,
+			3, 3, 3, 3, 3, 0, 1, 1, 0, 3, 3,
+			3, 3, 3, 3, 3, 3, 0, 0, 0, 3, 3
+		};
+
+		width = 11;
+		height = 16;
+		hotspotX = 1;
+		hotspotY = 1;
+		animate = false;
+
+		_windowManager->replaceCustomCursor(invertedMacArrow, width, height, hotspotX, hotspotY, 3);
+	}
 }
 
 void MacV6Gui::updateMenus() {
 	MacGuiImpl::updateMenus();
+
+#if ENABLE_SCUMM_7_8
+	// Remember the old music and sfx volume so that we can toggle back and
+	// forth between that and 0. If we don't have an old volume, use the
+	// default value. We could save it to the config file, but... Nah.
+
+	if (_vm->_imuseDigital && _oldMusicVolume == -1 && _oldSfxVolume == -1) {
+		_oldMusicVolume = _vm->_imuseDigital->diMUSEGetMusicGroupVol();
+		if (_oldMusicVolume == 0)
+			_oldMusicVolume = 81;
+
+		_oldSfxVolume = _vm->_imuseDigital->diMUSEGetSFXGroupVol();
+		if (_oldSfxVolume == 0)
+			_oldSfxVolume = 81;
+	}
+#endif
 
 	Graphics::MacMenu *menu = _windowManager->getMenu();
 	Graphics::MacMenuItem *videoMenu = menu->getMenuItem(3);
@@ -170,22 +206,36 @@ void MacV6Gui::updateMenus() {
 		menu->getSubMenuItem(videoMenu, 3)->checked = _vm->_useMacGraphicsSmoothing;
 
 	Graphics::MacMenuItem *soundMenu = menu->getMenuItem(4);
+	int voiceMenuIndex = 5;
 
-	menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_soundEnabled & 2); // Music
-	menu->getSubMenuItem(soundMenu, 1)->checked = (_vm->_soundEnabled & 1); // Effects
-	menu->getSubMenuItem(soundMenu, 5)->checked = false; // Text Only
-	menu->getSubMenuItem(soundMenu, 6)->checked = false; // Voice Only
-	menu->getSubMenuItem(soundMenu, 7)->checked = false; // Text & Voice
+#if ENABLE_SCUMM_7_8
+	if (_vm->_game.version >= 7) {
+		if (_vm->_imuseDigital) {
+			menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_imuseDigital->diMUSEGetMusicGroupVol() > 0);
+			menu->getSubMenuItem(soundMenu, 1)->checked = (_vm->_imuseDigital->diMUSEGetSFXGroupVol() > 0);
+		}
+	} else
+#endif
+	if (_vm->_game.id == GID_INDY4) {
+		menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_soundEnabled & 2); // Music
+		voiceMenuIndex = 4;
+	} else {
+		menu->getSubMenuItem(soundMenu, 0)->checked = (_vm->_soundEnabled & 2); // Music
+		menu->getSubMenuItem(soundMenu, 1)->checked = (_vm->_soundEnabled & 1); // Effects
+	}
+
+	for (int i = 0; i < 3; i++)
+		menu->getSubMenuItem(soundMenu, i + voiceMenuIndex)->checked = false;
 
 	switch (_vm->_voiceMode) {
 	case 0:	// Voice Only
-		menu->getSubMenuItem(soundMenu, 6)->checked = true;
+		menu->getSubMenuItem(soundMenu, voiceMenuIndex + 1)->checked = true;
 		break;
 	case 1: // Voice and Text
-		menu->getSubMenuItem(soundMenu, 7)->checked = true;
+		menu->getSubMenuItem(soundMenu, voiceMenuIndex + 2)->checked = true;
 		break;
 	case 2:	// Text Only
-		menu->getSubMenuItem(soundMenu, 5)->checked = true;
+		menu->getSubMenuItem(soundMenu, voiceMenuIndex)->checked = true;
 		break;
 	default:
 		warning("MacV6Gui::updateMenus(): Invalid voice mode %d", _vm->_voiceMode);
@@ -202,6 +252,10 @@ bool MacV6Gui::handleMenu(int id, Common::String &name) {
 
 	// The Dig and Full Throttle don't have a Restart menu entry
 	if (_vm->_game.version > 6 && id >= 204 && id < 300)
+		id++;
+
+	// Fate of Atlantis doesn't have an Effects menu entry
+	if (_vm->_game.id == GID_INDY4 && id >= 501 && id < 600)
 		id++;
 
 	switch (id) {
@@ -267,16 +321,46 @@ bool MacV6Gui::handleMenu(int id, Common::String &name) {
 		return true;
 
 	case 500:	// Music
-		_vm->_soundEnabled = (_vm->_soundEnabled & ~8) ^ 2;
-		ConfMan.setBool("music_mute", !(_vm->_soundEnabled & 2));
-		ConfMan.setBool("mute", (_vm->_soundEnabled == 0 && _vm->_voiceMode == 2));
+#if ENABLE_SCUMM_7_8
+		if (_vm->_game.version >= 7) {
+			int musicVolume = _vm->_imuseDigital->diMUSEGetMusicGroupVol();
+			if (musicVolume == 0) {
+				musicVolume = _oldMusicVolume;
+			} else {
+				_oldMusicVolume = musicVolume;
+				musicVolume = 0;
+			}
+
+			setVolume(0, musicVolume / 8);
+		} else
+#endif
+		{
+			_vm->_soundEnabled = (_vm->_soundEnabled & ~8) ^ 2;
+			ConfMan.setBool("music_mute", !(_vm->_soundEnabled & 2));
+			ConfMan.setBool("mute", (_vm->_soundEnabled == 0 && _vm->_voiceMode == 2));
+		}
 		syncSoundSettings = true;
 		break;
 
 	case 501:	// Effects
-		_vm->_soundEnabled = (_vm->_soundEnabled & ~8) ^ 1;
-		ConfMan.setBool("sfx_mute", !(_vm->_soundEnabled & 1));
-		ConfMan.setBool("mute", (_vm->_soundEnabled == 0 && _vm->_voiceMode == 2));
+#if ENABLE_SCUMM_7_8
+		if (_vm->_game.version >= 7) {
+			int sfxVolume = _vm->_imuseDigital->diMUSEGetSFXGroupVol();
+			if (sfxVolume == 0) {
+				sfxVolume = _oldSfxVolume;
+			} else {
+				_oldSfxVolume = sfxVolume;
+				sfxVolume = 0;
+			}
+
+			setVolume(1, sfxVolume / 8);
+		} else
+#endif
+		{
+			_vm->_soundEnabled = (_vm->_soundEnabled & ~8) ^ 1;
+			ConfMan.setBool("sfx_mute", !(_vm->_soundEnabled & 1));
+			ConfMan.setBool("mute", (_vm->_soundEnabled == 0 && _vm->_voiceMode == 2));
+		}
 		syncSoundSettings = true;
 		break;
 
@@ -365,9 +449,9 @@ void MacV6Gui::saveScreen() {
 				byte r, g, b;
 
 				palette.get(i, r, g, b);
-				r = _vm->_macGammaCorrectionLookUp[r];
-				g = _vm->_macGammaCorrectionLookUp[g];
-				b = _vm->_macGammaCorrectionLookUp[b];
+				r = Graphics::macGammaCorrectionLookUp[r];
+				g = Graphics::macGammaCorrectionLookUp[g];
+				b = Graphics::macGammaCorrectionLookUp[b];
 				palette.set(i, r, g, b);
 			}
 		}
@@ -564,9 +648,9 @@ void MacV6Gui::runAboutDialog() {
 			black = i;
 
 		if (_vm->_useGammaCorrection) {
-			r = _vm->_macGammaCorrectionLookUp[r];
-			g = _vm->_macGammaCorrectionLookUp[g];
-			b = _vm->_macGammaCorrectionLookUp[b];
+			r = Graphics::macGammaCorrectionLookUp[r];
+			g = Graphics::macGammaCorrectionLookUp[g];
+			b = Graphics::macGammaCorrectionLookUp[b];
 		}
 
 		palette.set(i, r, g, b);
@@ -864,8 +948,8 @@ void MacV6Gui::setVolume(int type, int volume) {
 
 	int mixerVolume = CLIP(16 * volume, 0, 256);
 
-	if (_vm->_game.version >= 7) {
 #ifdef ENABLE_SCUMM_7_8
+	if (_vm->_game.version >= 7) {
 		int dimuseVolume = CLIP(8 * volume, 0, 127);
 
 		switch (type) {
@@ -879,8 +963,9 @@ void MacV6Gui::setVolume(int type, int volume) {
 			_vm->_imuseDigital->diMUSESetVoiceGroupVol(dimuseVolume);
 			break;
 		}
+	} else
 #endif
-	} else {
+	{
 		_vm->_mixer->setVolumeForSoundType(soundTypes[type], mixerVolume);
 	}
 
@@ -936,7 +1021,7 @@ bool MacV6Gui::runOptionsDialog() {
 
 	window->setDefaultWidget(buttonOk);
 
-	if (_vm->_game.id == GID_TENTACLE) {
+	if (_vm->_game.id == GID_TENTACLE || _vm->_game.id == GID_INDY4) {
 		// Yes, the frames really are supposed to be slightly
 		// misaligned to match the original appearance.
 
@@ -1029,7 +1114,7 @@ bool MacV6Gui::runOptionsDialog() {
 
 					if (_vm->_game.id == GID_MANIAC) {
 						effectVolume = musicVolume;
-					} else if (_vm->_game.id == GID_TENTACLE) {
+					} else if (_vm->_game.id == GID_TENTACLE || _vm->_game.id == GID_INDY4) {
 						musicVolume = sliderMusicVolume->getValue();
 						voiceVolume = sliderVoiceVolume->getValue();
 						effectVolume = voiceVolume;

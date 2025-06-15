@@ -57,14 +57,12 @@ CoktelDecoder::State::State() : flags(0), speechId(0) {
 
 CoktelDecoder::CoktelDecoder(Audio::Mixer *mixer, Audio::Mixer::SoundType soundType) :
 	_mixer(mixer), _soundType(soundType), _width(0), _height(0), _x(0), _y(0),
-	_defaultX(0), _defaultY(0), _features(0), _frameCount(0), _paletteDirty(false),
+	_defaultX(0), _defaultY(0), _features(0), _nbFramesPastEnd(0), _frameCount(0), _palette(256), _paletteDirty(false),
 	_isDouble(false), _ownSurface(true), _frameRate(12), _hasSound(false),
 	_soundEnabled(false), _soundStage(kSoundNone), _audioStream(0), _startTime(0),
 	_pauseStartTime(0), _isPaused(false) {
 
 	assert(_mixer);
-
-	memset(_palette, 0, 768);
 }
 
 CoktelDecoder::~CoktelDecoder() {
@@ -272,6 +270,10 @@ int CoktelDecoder::getCurFrame() const {
 	return _curFrame;
 }
 
+int CoktelDecoder::getNbFramesPastEnd() const {
+	return _nbFramesPastEnd;
+}
+
 void CoktelDecoder::close() {
 	disableSound();
 	freeSurface();
@@ -285,6 +287,7 @@ void CoktelDecoder::close() {
 	_features = 0;
 
 	_curFrame   = -1;
+	_nbFramesPastEnd = 0;
 	_frameCount =  0;
 
 	_startTime = 0;
@@ -316,7 +319,7 @@ uint32 CoktelDecoder::getFrameCount() const {
 
 const byte *CoktelDecoder::getPalette() {
 	_paletteDirty = false;
-	return _palette;
+	return _palette.data();
 }
 
 bool CoktelDecoder::hasDirtyPalette() const {
@@ -803,6 +806,7 @@ bool PreIMDDecoder::seek(int32 frame, int whence, bool restart) {
 
 	// Run through the frames
 	_curFrame = -1;
+	_nbFramesPastEnd = 0;
 	_stream->seek(2);
 	while (_curFrame != frame) {
 		uint16 frameSize = _stream->readUint16LE();
@@ -967,6 +971,14 @@ uint32 PreIMDDecoder::getFlags() const {
 	return 0;
 }
 
+uint16 PreIMDDecoder::getSoundFlags() const {
+	return 0;
+}
+
+uint32 PreIMDDecoder::getVideoBufferSize() const {
+	return _videoBufferSize;
+}
+
 Graphics::PixelFormat PreIMDDecoder::getPixelFormat() const {
 	return Graphics::PixelFormat::createFormatCLUT8();
 }
@@ -1034,6 +1046,7 @@ bool IMDDecoder::seek(int32 frame, int whence, bool restart) {
 		// audio to worry about, restart the video and run through the frames
 
 		_curFrame = 0;
+		_nbFramesPastEnd = 0;
 		_stream->seek(_firstFramePos);
 
 		for (int i = ((frame > _curFrame) ? _curFrame : 0); i <= frame; i++)
@@ -1051,6 +1064,7 @@ bool IMDDecoder::seek(int32 frame, int whence, bool restart) {
 	// Seek
 	_stream->seek(framePos);
 	_curFrame = frame;
+	_nbFramesPastEnd = 0;
 
 	return true;
 }
@@ -1122,8 +1136,12 @@ bool IMDDecoder::loadStream(Common::SeekableReadStream *stream) {
 	_features |= kFeaturesPalette;
 
 	// Palette
-	for (int i = 0; i < 768; i++)
-		_palette[i] = _stream->readByte() << 2;
+	for (int i = 0; i < 256; i++) {
+		byte r = _stream->readByte() << 2;
+		byte g = _stream->readByte() << 2;
+		byte b = _stream->readByte() << 2;
+		_palette.set(i, r, g, b);
+	}
 
 	_paletteDirty = true;
 
@@ -1403,8 +1421,12 @@ void IMDDecoder::processFrame() {
 
 			_paletteDirty = true;
 
-			for (int i = 0; i < 768; i++)
-				_palette[i] = _stream->readByte() << 2;
+			for (int i = 0; i < 256; i++) {
+				byte r = _stream->readByte() << 2;
+				byte g = _stream->readByte() << 2;
+				byte b = _stream->readByte() << 2;
+				_palette.set(i, r, g, b);
+			}
 
 			cmd = _stream->readUint16LE();
 		}
@@ -1417,6 +1439,7 @@ void IMDDecoder::processFrame() {
 			int16 frame = _stream->readSint16LE();
 			if (_framePos) {
 				_curFrame = frame - 1;
+				_nbFramesPastEnd = 0;
 				_stream->seek(_framePos[frame]);
 
 				hasNextCmd = true;
@@ -1519,9 +1542,13 @@ bool IMDDecoder::renderFrame(Common::Rect &rect) {
 		// One byte index
 		int index = *dataPtr++;
 
-		int count = MIN((255 - index) * 3, 48);
-		for (int i = 0; i < count; i++)
-			_palette[index * 3 + i] = dataPtr[i] << 2;
+		int count = MIN((255 - index), 16);
+		for (int i = 0; i < count; i++) {
+			byte r = dataPtr[i * 3] << 2;
+			byte g = dataPtr[i * 3 + 1] << 2;
+			byte b = dataPtr[i * 3 + 2] << 2;
+			_palette.set(index + i, r, g, b);
+		}
 
 		dataPtr  += 48;
 		dataSize -= 49;
@@ -1635,6 +1662,14 @@ void IMDDecoder::emptySoundSlice(bool hasNextCmd) {
 
 uint32 IMDDecoder::getFlags() const {
 	return _flags;
+}
+
+uint16 IMDDecoder::getSoundFlags() const {
+	return _soundFlags;
+}
+
+uint32 IMDDecoder::getVideoBufferSize() const {
+	return _videoBufferSize;
 }
 
 Graphics::PixelFormat IMDDecoder::getPixelFormat() const {
@@ -1819,6 +1854,7 @@ bool VMDDecoder::seek(int32 frame, int whence, bool restart) {
 		if (_curFrame > frame) {
 			_stream->seek(_frames[0].offset);
 			_curFrame = -1;
+			_nbFramesPastEnd = 0;
 		}
 
 		while (frame > _curFrame)
@@ -1830,6 +1866,7 @@ bool VMDDecoder::seek(int32 frame, int whence, bool restart) {
 	// Seek
 	_stream->seek(_frames[frame + 1].offset);
 	_curFrame = frame;
+	_nbFramesPastEnd = 0;
 	_startTime = g_system->getMillis() - ((frame + 2) * getStaticTimeToNextFrame());
 
 
@@ -1964,8 +2001,12 @@ bool VMDDecoder::loadStream(Common::SeekableReadStream *stream) {
 	_videoCodec = _stream->readUint32BE();
 
 	if (_features & kFeaturesPalette) {
-		for (int i = 0; i < 768; i++)
-			_palette[i] = _stream->readByte() << 2;
+		for (int i = 0; i < 256; i++) {
+			byte r = _stream->readByte() << 2;
+			byte g = _stream->readByte() << 2;
+			byte b = _stream->readByte() << 2;
+			_palette.set(i, r, g, b);
+		}
 
 		_paletteDirty = true;
 	}
@@ -1982,7 +2023,7 @@ bool VMDDecoder::loadStream(Common::SeekableReadStream *stream) {
 		}
 	}
 
-	_soundFreq        = _stream->readSint16LE();
+	_soundFreq        = _stream->readUint16LE();
 	_soundSliceSize   = _stream->readSint16LE();
 	_soundSlicesCount = _stream->readSint16LE();
 	_soundFlags       = _stream->readUint16LE();
@@ -2300,8 +2341,10 @@ bool VMDDecoder::isVideoLoaded() const {
 }
 
 const Graphics::Surface *VMDDecoder::decodeNextFrame() {
-	if (!isVideoLoaded() || endOfVideo())
-		return 0;
+	if (!isVideoLoaded() || endOfVideo()) {
+		++_nbFramesPastEnd;
+		return nullptr;
+	}
 
 	createSurface();
 
@@ -2389,8 +2432,12 @@ void VMDDecoder::processFrame() {
 				uint8 index = _stream->readByte();
 				uint8 count = _stream->readByte();
 
-				for (int j = 0; j < ((count + 1) * 3); j++)
-					_palette[index * 3 + j] = _stream->readByte() << 2;
+				for (int j = 0; j < (count + 1); j++) {
+					byte r = _stream->readByte() << 2;
+					byte g = _stream->readByte() << 2;
+					byte b = _stream->readByte() << 2;
+					_palette.set(index + j, r, g, b); 
+				}
 
 				_stream->skip((255 - count) * 3);
 
@@ -2706,8 +2753,10 @@ void VMDDecoder::filledSoundSlice(uint32 size) {
 		assert(buf);
 		const uint32 numBytesRead = _stream->read(buf, size);
 		assert(numBytesRead == size);
+		(void)numBytesRead;
 		const uint32 numBytesWritten = _oldStereoBuffer->write(buf, size);
 		assert(numBytesWritten == size);
+		(void)numBytesWritten;
 		free(buf);
 		return;
 	}
@@ -2836,6 +2885,14 @@ uint32 VMDDecoder::getFlags() const {
 	return _flags;
 }
 
+uint16 VMDDecoder::getSoundFlags() const {
+	return _soundFlags;
+}
+
+uint32 VMDDecoder::getVideoBufferSize() const {
+	return _videoBufferSize;
+}
+
 Graphics::PixelFormat VMDDecoder::getPixelFormat() const {
 #ifdef USE_INDEO3
 	if (_externalCodec) {
@@ -2891,35 +2948,35 @@ bool VMDDecoder::hasEmbeddedFiles() const {
 }
 
 bool VMDDecoder::hasEmbeddedFile(const Common::String &fileName) const {
-	for (Common::Array<File>::const_iterator file = _files.begin(); file != _files.end(); ++file)
-		if (!file->name.compareToIgnoreCase(fileName))
+	for (const auto &file : _files)
+		if (!file.name.compareToIgnoreCase(fileName))
 			return true;
 
 	return false;
 }
 
 Common::SeekableReadStream *VMDDecoder::getEmbeddedFile(const Common::String &fileName) const {
-	const File *file = 0;
+	const File *file = nullptr;
 
-	for (Common::Array<File>::const_iterator it = _files.begin(); it != _files.end(); ++it)
-		if (!it->name.compareToIgnoreCase(fileName)) {
-			file = &*it;
+	for (const auto &curFile : _files)
+		if (!curFile.name.compareToIgnoreCase(fileName)) {
+			file = &curFile;
 			break;
 		}
 
 	if (!file)
-		return 0;
+		return nullptr;
 
 	if ((file->size - 20) != file->realSize) {
 		warning("VMDDecoder::getEmbeddedFile(): Sizes for \"%s\" differ! (%d, %d)",
 				fileName.c_str(), (file->size - 20), file->realSize);
-		return 0;
+		return nullptr;
 	}
 
 	if (!_stream->seek(file->offset)) {
 		warning("VMDDecoder::getEmbeddedFile(): Can't seek to offset %d to (file \"%s\")",
 				file->offset, fileName.c_str());
-		return 0;
+		return nullptr;
 	}
 
 	byte *data = (byte *) malloc(file->realSize);
@@ -2927,7 +2984,7 @@ Common::SeekableReadStream *VMDDecoder::getEmbeddedFile(const Common::String &fi
 		free(data);
 		warning("VMDDecoder::getEmbeddedFile(): Couldn't read %d bytes (file \"%s\")",
 				file->realSize, fileName.c_str());
-		return 0;
+		return nullptr;
 	}
 
 	Common::MemoryReadStream *stream =

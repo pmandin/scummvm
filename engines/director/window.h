@@ -129,7 +129,6 @@ public:
 	Common::Point getMousePos();
 
 	DirectorEngine *getVM() const { return _vm; }
-	Archive *getMainArchive() const { return _mainArchive; }
 	Movie *getCurrentMovie() const { return _currentMovie; }
 	Common::String getCurrentPath() const { return _currentPath; }
 	DirectorSound *getSoundManager() const { return _soundManager; }
@@ -216,7 +215,6 @@ private:
 	Common::Array<LingoState *> _frozenLingoStates;
 	LingoState *_lingoPlayState;
 	bool _isStage;
-	Archive *_mainArchive;
 	Movie *_currentMovie;
 	Common::String _currentPath;
 	Common::StringArray _movieQueue;
@@ -227,6 +225,7 @@ private:
 
 private:
 	void inkBlitFrom(Channel *channel, Common::Rect destRect, Graphics::ManagedSurface *blitTo = nullptr);
+	static void drawChannelBox(Director::Movie *currentMovie, Graphics::ManagedSurface *blitTo, int selectedChannel);
 	void drawFrameCounter(Graphics::ManagedSurface *blitTo);
 
 

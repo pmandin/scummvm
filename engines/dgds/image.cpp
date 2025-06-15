@@ -28,13 +28,10 @@
 #include "common/system.h"
 #include "common/platform.h"
 #include "graphics/managed_surface.h"
-#include "graphics/surface.h"
 #include "dgds/dgds.h"
-#include "dgds/font.h"
 #include "dgds/includes.h"
 #include "dgds/image.h"
 #include "dgds/resource.h"
-#include "dgds/parser.h"
 
 namespace Dgds {
 
@@ -652,6 +649,8 @@ bool Image::loadSCN(Graphics::ManagedSurface *surf, Common::SeekableReadStream *
 			x += val;
 			break;
 		}
+		default:
+			break;
 		}
 		lastcmd = cmd;
 		if (x > tw)
@@ -662,19 +661,19 @@ bool Image::loadSCN(Graphics::ManagedSurface *surf, Common::SeekableReadStream *
 
 int16 Image::width(uint frameno) const {
 	if (frameno >= _frames.size())
-		error("Invalid frameno %d", frameno);
+		error("Image::width: Invalid frameno %d requested from shape '%s'", frameno, _filename.c_str());
 	return _frames[frameno]->w;
 }
 
 int16 Image::height(uint frameno) const {
 	if (frameno >= _frames.size())
-		error("Invalid frameno %d", frameno);
+		error("Image::height: Invalid frameno %d requested from shape '%s'", frameno, _filename.c_str());
 	return _frames[frameno]->h;
 }
 
 Common::SharedPtr<Graphics::ManagedSurface> Image::getSurface(uint frameno) const {
 	if (frameno >= _frames.size())
-		error("Invalid frameno %d", frameno);
+		error("Image::getSurface: Invalid frameno %d requested from shape '%s'", frameno, _filename.c_str());
 	return _frames[frameno];
 }
 

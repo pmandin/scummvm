@@ -25,7 +25,7 @@
 #include "sci/engine/state.h"
 #include "sci/graphics/drivers/gfxdriver.h"
 #include "sci/graphics/maciconbar.h"
-#include "sci/graphics/palette.h"
+#include "sci/graphics/palette16.h"
 #include "sci/graphics/screen.h"
 
 #include "common/memstream.h"
@@ -263,7 +263,7 @@ Graphics::Surface *GfxMacIconBar::loadPict(ResourceId id) {
 
 	Graphics::Surface *surface = new Graphics::Surface();
 	surface->copyFrom(*pictDecoder.getSurface());
-	remapColors(surface, pictDecoder.getPalette());
+	remapColors(surface, pictDecoder.getPalette().data());
 
 	return surface;
 }

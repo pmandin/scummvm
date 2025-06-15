@@ -45,7 +45,9 @@ public:
 
 	void copyToVertexArray(uint idx, const Math::Vector3d &src) {
 		assert(idx < kVertexArraySize);
-		_verts[idx].x = src.x(); _verts[idx].y = src.y(); _verts[idx].z = src.z();
+		_verts[idx].x = src.x();
+		_verts[idx].y = src.y();
+		_verts[idx].z = src.z();
 	}
 
 	Vertex *_verts;
@@ -59,14 +61,15 @@ public:
 
 	void copyToCoordArray(uint idx, const Math::Vector2d &src) {
 		assert(idx < kCoordsArraySize);
-		_coords[idx].x = src.getValue(0); _coords[idx].y = src.getValue(1);
+		_coords[idx].x = src.getValue(0);
+		_coords[idx].y = src.getValue(1);
 	}
 
 	virtual void init() override;
 	virtual void clear(uint8 r, uint8 g, uint8 b, bool ignoreViewport = false) override;
 	virtual void setViewport(const Common::Rect &rect) override;
 	virtual Common::Point nativeResolution() override;
-	virtual void positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest) override;
+	virtual void positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest, float rollAngle = 0.0) override;
 	virtual void updateProjectionMatrix(float fov, float aspectRatio, float nearClipPlane, float farClipPlane) override;
 
 	virtual void useColor(uint8 r, uint8 g, uint8 b) override;
@@ -80,10 +83,10 @@ public:
 	void freeTexture(Texture *texture) override;
 	virtual void drawTexturedRect2D(const Common::Rect &screenRect, const Common::Rect &textureRect, Texture *texture) override;
 
-	virtual void renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d player, const Common::Rect viewPort) override;
-	virtual void renderPlayerShootBall(byte color, const Common::Point position, int frame, const Common::Rect viewPort) override;
-	virtual void renderPlayerShootRay(byte color, const Common::Point position, const Common::Rect viewPort) override;
-	virtual void renderCrossair(const Common::Point crossairPosition) override;
+	virtual void renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d player, const Common::Rect &viewPort) override;
+	virtual void renderPlayerShootBall(byte color, const Common::Point &position, int frame, const Common::Rect &viewPort) override;
+	virtual void renderPlayerShootRay(byte color, const Common::Point &position, const Common::Rect &viewPort) override;
+	virtual void renderCrossair(const Common::Point &crossairPosition) override;
 
 	virtual void renderFace(const Common::Array<Math::Vector3d> &vertices) override;
 

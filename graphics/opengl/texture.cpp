@@ -36,8 +36,8 @@ namespace OpenGL {
 Texture::Texture(GLenum glIntFormat, GLenum glFormat, GLenum glType, bool autoCreate)
 	: _glIntFormat(glIntFormat), _glFormat(glFormat), _glType(glType),
 	  _width(0), _height(0), _logicalWidth(0), _logicalHeight(0),
-	  _texCoords(), _glFilter(GL_NEAREST),
-	  _glTexture(0) {
+	  _flip(false), _rotation(Common::kRotationNormal),
+	  _texCoords(), _glFilter(GL_NEAREST), _glTexture(0) {
 	if (autoCreate)
 		create();
 }
@@ -53,7 +53,9 @@ void Texture::enableLinearFiltering(bool enable) {
 		_glFilter = GL_NEAREST;
 	}
 
-	bind();
+	if (!bind()) {
+		return;
+	}
 
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _glFilter));
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _glFilter));
@@ -84,12 +86,10 @@ void Texture::setWrapMode(WrapMode wrapMode) {
 				break;
 			}
 		case kWrapModeMirroredRepeat:
-#if !USE_FORCED_GLES
 			if (OpenGLContext.textureMirrorRepeatSupported) {
 				glwrapMode = GL_MIRRORED_REPEAT;
 				break;
 			}
-#endif
 		// fall through
 		case kWrapModeRepeat:
 		default:
@@ -97,13 +97,18 @@ void Texture::setWrapMode(WrapMode wrapMode) {
 	}
 
 
-	bind();
+	if (!bind()) {
+		return;
+	}
 
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glwrapMode));
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glwrapMode));
 }
 
 void Texture::destroy() {
+	if (!_glTexture) {
+		return;
+	}
 	GL_CALL(glDeleteTextures(1, &_glTexture));
 	_glTexture = 0;
 }
@@ -117,7 +122,6 @@ void Texture::create() {
 
 	// Set up all texture parameters.
 	bind();
-	GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _glFilter));
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _glFilter));
 	if (OpenGLContext.textureEdgeClampSupported) {
@@ -138,8 +142,12 @@ void Texture::create() {
 	}
 }
 
-void Texture::bind() const {
+bool Texture::bind() const {
+	if (!_glTexture) {
+		return false;
+	}
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, _glTexture));
+	return true;
 }
 
 bool Texture::setSize(uint width, uint height) {
@@ -159,24 +167,14 @@ bool Texture::setSize(uint width, uint height) {
 
 	// If a size is specified, allocate memory for it.
 	if (width != 0 && height != 0) {
-		const GLfloat texWidth = (GLfloat)width / _width;
-		const GLfloat texHeight = (GLfloat)height / _height;
-
-		_texCoords[0] = 0;
-		_texCoords[1] = 0;
-
-		_texCoords[2] = texWidth;
-		_texCoords[3] = 0;
-
-		_texCoords[4] = 0;
-		_texCoords[5] = texHeight;
-
-		_texCoords[6] = texWidth;
-		_texCoords[7] = texHeight;
+		computeTexCoords();
 
 		// Allocate storage for OpenGL texture if necessary.
 		if (oldWidth != _width || oldHeight != _height) {
-			bind();
+			if (!bind()) {
+				return false;
+			}
+
 			bool error;
 			GL_CALL_CHECK(error, glTexImage2D(GL_TEXTURE_2D, 0, _glIntFormat, _width, _height,
 			             0, _glFormat, _glType, nullptr));
@@ -188,9 +186,71 @@ bool Texture::setSize(uint width, uint height) {
 	return true;
 }
 
+void Texture::computeTexCoords() {
+	const GLfloat texWidth = (GLfloat)_logicalWidth / _width;
+	const GLfloat texHeight = (GLfloat)_logicalHeight / _height;
+
+	if (_flip) {
+		_texCoords[0] = 0;
+		_texCoords[1] = texHeight;
+
+		_texCoords[2] = texWidth;
+		_texCoords[3] = texHeight;
+
+		_texCoords[4] = 0;
+		_texCoords[5] = 0;
+
+		_texCoords[6] = texWidth;
+		_texCoords[7] = 0;
+	} else {
+		_texCoords[0] = 0;
+		_texCoords[1] = 0;
+
+		_texCoords[2] = texWidth;
+		_texCoords[3] = 0;
+
+		_texCoords[4] = 0;
+		_texCoords[5] = texHeight;
+
+		_texCoords[6] = texWidth;
+		_texCoords[7] = texHeight;
+	}
+
+	switch(_rotation) {
+	default:
+	case Common::kRotationNormal:
+		// Nothing to do
+		break;
+	case Common::kRotation90:
+		// LT -> LB and RB -> RT
+		SWAP(_texCoords[1], _texCoords[7]);
+		// RT -> LT and LB -> RB
+		SWAP(_texCoords[2], _texCoords[4]);
+		break;
+	case Common::kRotation180:
+		// LT -> RT and RT -> LT
+		SWAP(_texCoords[0], _texCoords[2]);
+		// RT -> RB and LB -> LT
+		SWAP(_texCoords[1], _texCoords[5]);
+		// LT -> LB and RB -> RT
+		SWAP(_texCoords[3], _texCoords[7]);
+		// LT -> RT and RT -> LT
+		SWAP(_texCoords[4], _texCoords[6]);
+		break;
+	case Common::kRotation270:
+		// LT -> RT and RB -> LB
+		SWAP(_texCoords[0], _texCoords[6]);
+		// RT -> RB and LB -> LT
+		SWAP(_texCoords[3], _texCoords[5]);
+		break;
+	}
+}
+
 void Texture::updateArea(const Common::Rect &area, const Graphics::Surface &src) {
 	// Set the texture on the active texture unit.
-	bind();
+	if (!bind()) {
+		return;
+	}
 
 	// Update the actual texture.
 	// Although we have the area of the texture buffer we want to update we
@@ -210,16 +270,9 @@ void Texture::updateArea(const Common::Rect &area, const Graphics::Surface &src)
 	//
 	// 3) Use glTexSubImage2D per line changed. This is what the old OpenGL
 	//    graphics manager did but it is much slower! Thus, we do not use it.
+	GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 	GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, area.top, src.w, area.height(),
 	                       _glFormat, _glType, src.getBasePtr(0, area.top)));
-}
-
-const Graphics::PixelFormat Texture::getRGBAPixelFormat() {
-#ifdef SCUMM_BIG_ENDIAN
-	return Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
-#else
-	return Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
-#endif
 }
 
 } // End of namespace OpenGL

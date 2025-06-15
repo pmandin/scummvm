@@ -49,21 +49,27 @@ class BaseRenderOpenGL3D : public BaseRenderer3D {
 		float z;
 		float u;
 		float v;
-		uint8 r;
-		uint8 g;
-		uint8 b;
-		uint8 a;
+		float r;
+		float g;
+		float b;
+		float a;
+	};
+
+	struct RectangleVertex {
+		float x;
+		float y;
+		float z;
 	};
 
 	struct SimpleShadowVertex {
-		float u;
-		float v;
 		float nx;
 		float ny;
 		float nz;
 		float x;
 		float y;
 		float z;
+		float u;
+		float v;
 	};
 
 public:
@@ -71,6 +77,11 @@ public:
 	~BaseRenderOpenGL3D() override;
 
 	bool invalidateTexture(BaseSurfaceOpenGL3D *texture) override;
+
+	bool invalidateDeviceObjects() override;
+	bool restoreDeviceObjects() override;
+
+	bool resetDevice() override;
 
 	void setSpriteBlendMode(Graphics::TSpriteBlendMode blendMode, bool forceChange = false) override;
 
@@ -85,18 +96,16 @@ public:
 
 	bool enableShadows() override;
 	bool disableShadows() override;
-	void displayShadow(BaseObject *object, const DXVector3 *lightPos, bool lightPosRelative) override;
 	bool stencilSupported() override;
 
-	void dumpData(const char *filename) override {}
-	BaseImage *takeScreenshot() override;
+	BaseImage *takeScreenshot(int newWidth = 0, int newHeight = 0) override;
 	void fadeToColor(byte r, byte g, byte b, byte a) override;
 
 	bool flip() override;
-	bool fill(byte r, byte g, byte b, Common::Rect *rect = nullptr) override;
+	bool clear() override;
 
 	bool setViewport(int left, int top, int right, int bottom) override;
-	bool drawLine(int x1, int y1, int x2, int y2, uint32 color) override;
+	bool fillRect(int x, int y, int w, int h, uint32 color) override;
 
 	DXMatrix *buildMatrix(DXMatrix* out, const DXVector2 *centre, const DXVector2 *scaling, float angle);
 	void transformVertices(struct SpriteVertex *vertices, const DXVector2 *centre, const DXVector2 *scaling, float angle);
@@ -110,7 +119,6 @@ public:
 	bool initRenderer(int width, int height, bool windowed) override;
 	bool setup2D(bool force = false) override;
 	bool setup3D(Camera3D *camera, bool force = false) override;
-	bool setupLines() override;
 
 	Common::String getName() const override {
 		return "OpenGL 3D renderer";
@@ -136,10 +144,10 @@ public:
 	bool commitSpriteBatch() override;
 
 	bool drawSpriteEx(BaseSurface *texture, const Rect32 &rect, const Vector2 &pos, const Vector2 &rot, const Vector2 &scale,
-					  float angle, uint32 color, bool alphaDisable, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) override;
+	                  float angle, uint32 color, bool alphaDisable, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) override;
 
 	void renderSceneGeometry(const BaseArray<AdWalkplane *> &planes, const BaseArray<AdBlock *> &blocks,
-							 const BaseArray<AdGeneric *> &generics, const BaseArray<Light3D *> &lights, Camera3D *camera) override;
+	                         const BaseArray<AdGeneric *> &generics, const BaseArray<Light3D *> &lights, Camera3D *camera) override;
 	void renderShadowGeometry(const BaseArray<AdWalkplane *> &planes, const BaseArray<AdBlock *> &blocks, const BaseArray<AdGeneric *> &generics, Camera3D *camera) override;
 
 	Mesh3DS *createMesh3DS() override;
@@ -152,12 +160,13 @@ public:
 	void setPostfilter(PostFilter postFilter) override { _postFilterMode = postFilter; };
 
 private:
-	void renderSimpleShadow(BaseObject *object);
+	bool setupLines();
+	void displaySimpleShadow(BaseObject *object) override;
 
-	SimpleShadowVertex _simpleShadow[4]{};
+	SimpleShadowVertex _simpleShadow[4];
 	Common::Array<DXVector4> _lightPositions;
 	Common::Array<DXVector3> _lightDirections;
-	GLuint _filterTexture;
+	GLuint _postfilterTexture;
 };
 
 } // wintermute namespace

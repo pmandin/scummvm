@@ -221,7 +221,7 @@ void qdAnimation::redraw_rot(int x, int y, int z, float angle, const Vect2f &sca
 
 	if (tileAnimation()) {
 		tileAnimation()->drawFrame(Vect2i(x, y), get_cur_frame_number(), angle, scale, mode);
-	} else if (fabs(scale.x - scale.y) < 0.01f) {
+	} else if (fabs(scale.x - scale.y) >= 0.01f) {
 		if (const qdAnimationFrame *p = get_cur_frame())
 			p->redraw_rot(x, y, z, angle, scale, mode);
 	} else {
@@ -630,7 +630,7 @@ bool qdAnimation::hit(int x, int y, float scale) const {
 	return false;
 }
 
-bool qdAnimation::qda_load(Common::Path fpath) {
+bool qdAnimation::qda_load(const Common::Path &fpath) {
 	clear_frames();
 
 	debugC(3, kDebugLoad, "qdAnimation::qda_load(%s)", transCyrillic(fpath.toString()));
@@ -698,6 +698,8 @@ bool qdAnimation::qda_load(Common::Path fpath) {
 		}
 
 		debugC(1, kDebugLoad, "qdAnimation::qda_load() tileAnimation %s", transCyrillic(fpath.toString()));
+		if (_tileAnimation)
+			_tileAnimation->clear();
 		_tileAnimation = new grTileAnimation;
 		_tileAnimation->load(fh, version);
 
@@ -711,7 +713,7 @@ bool qdAnimation::qda_load(Common::Path fpath) {
 	return true;
 }
 
-void qdAnimation::qda_set_file(Common::Path fname) {
+void qdAnimation::qda_set_file(const Common::Path &fname) {
 	_qda_file = fname;
 }
 

@@ -1336,7 +1336,7 @@ void Room603::parser() {
 		player_set_commands_allowed(false);
 		ws_hide_walker();
 		_val2 = 1;
-		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 345, 300, -56, 0x100, 1,
+		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 345, 300, -56, 0x100, true,
 			triggerMachineByHashCallback, "rip");
 		_shadow = series_show("safari shadow 2", 0xf00, 128, -1, -1, 0, 56, 345, 300);
 		_G(kernel).trigger_mode = KT_DAEMON;
@@ -1355,7 +1355,7 @@ void Room603::parser() {
 		player_set_commands_allowed(false);
 		ws_hide_walker();
 		_val2 = 1;
-		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 311, 308, -59, 0x100, 1,
+		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 311, 308, -59, 0x100, true,
 			triggerMachineByHashCallback, "rip");
 		_shadow = series_show("safari shadow 2", 0xf00, 128, -1, -1, 0, 59, 311, 308);
 
@@ -1715,7 +1715,7 @@ void Room603::conv603a() {
 		sendWSMessage_60000(_tt);
 		_ttShadow = series_show("tt walker shadow 4", 0xf00, 0, -1, -1, 0, 53, 291, 293);
 		_trigger1 = 400;
-		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, 0,
+		_tt = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x200, false,
 			triggerMachineByHashCallback, "tt");
 		_G(kernel).trigger_mode = KT_DAEMON;
 		sendWSMessage_10000(1, _tt, _tt03, 110, 122, 400, _ttD01, 1, 1, 0);
@@ -1729,7 +1729,7 @@ void Room603::conv603a() {
 	case 16:
 		ws_hide_walker();
 		_val2 = 1;
-		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 345, 300, -56, 0x100, 1,
+		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 345, 300, -56, 0x100, true,
 			triggerMachineByHashCallback, "rip");
 		_shadow = series_show("safari shadow 2", 0xf00, 128, -1, -1, 0, 56, 345, 300);
 		_G(kernel).trigger_mode = KT_DAEMON;
@@ -1925,7 +1925,7 @@ bool Room603::takeSleeve() {
 		case 2:
 			hotspot_set_active("SLEEVE", false);
 			inv_give_to_player("SLEEVE");
-			kernel_examine_inventory_object("ping sleeve", 5, 1, 280, 220, 3, 0, -1);
+			kernel_examine_inventory_object("ping sleeve", 5, 1, 280, 220, 3, nullptr, -1);
 			terminateMachineAndNull(_sleeve);
 			return true;
 
@@ -2133,7 +2133,6 @@ bool Room603::takePole() {
 		case 3:
 			_ttShould = 17;
 			_val9 = 5000;
-			_val5 = 0;
 			kernel_timing_trigger(1, _val5 ? 400 : 500, KT_DAEMON, KT_PARSE);
 			sendWSMessage_140000(5);
 			return true;
@@ -2193,7 +2192,6 @@ void Room603::enter() {
 		case 3:
 			_ttShould = 17;
 			_val9 = 5000;
-			_val5 = 0;
 			kernel_timing_trigger(1, _val5 ? 400 : 500, KT_DAEMON, KT_PARSE);
 			sendWSMessage_140000(5);
 			break;

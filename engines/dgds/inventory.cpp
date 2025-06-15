@@ -124,6 +124,8 @@ void Inventory::drawHeader(Graphics::ManagedSurface &surf) {
 		title = "INVENTORY";
 	else if (DgdsEngine::getInstance()->getGameLang() == Common::DE_DEU)
 		title = "INVENTAR";
+	else if (DgdsEngine::getInstance()->getGameLang() == Common::FR_FRA)
+		title = "INVENTAIRE";
 	else
 		error("Unsupported language %d", DgdsEngine::getInstance()->getGameLang());
 
@@ -322,7 +324,7 @@ void Inventory::drawItems(Graphics::ManagedSurface &surf) {
 	}
 }
 
-void Inventory::mouseMoved(const Common::Point &pt) {
+void Inventory::mouseUpdate(const Common::Point &pt) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	GameItem *dragItem = engine->getScene()->getDragItem();
 	if (dragItem) {
@@ -334,7 +336,7 @@ void Inventory::mouseMoved(const Common::Point &pt) {
 			close();
 		}
 	} else {
-		engine->setMouseCursor(kDgdsMouseGameDefault);
+		engine->getScene()->mouseUpdate(pt);
 	}
 }
 
@@ -398,7 +400,7 @@ void Inventory::mouseLDown(const Common::Point &pt) {
 		GameItem *underMouse = itemUnderMouse(pt);
 		if (underMouse) {
 			_highlightItemNo = underMouse->_num;
-			engine->getScene()->runOps(underMouse->onLDownOps);
+			engine->getScene()->runOps(underMouse->onPickUpOps);
 			engine->getScene()->setDragItem(underMouse);
 			underMouse->_flags |= kItemStateWasInInv;
 			if (underMouse->_iconNum)
@@ -461,6 +463,8 @@ void Inventory::mouseLUp(const Common::Point &pt) {
 				break;
 			}
 		}
+	} else {
+		engine->getScene()->mouseLUp(pt);
 	}
 }
 
@@ -477,7 +481,7 @@ void Inventory::mouseRUp(const Common::Point &pt) {
 				// here for zooming within the box.
 				engine->getBackgroundBuffer().fillRect(Common::Rect(SCREEN_WIDTH, SCREEN_HEIGHT), 0);
 			}
-			engine->getScene()->runOps(underMouse->onRClickOps);
+			engine->getScene()->runOps(underMouse->onLookOps);
 		}
 	} else {
 		engine->getScene()->mouseRUp(pt);

@@ -4,10 +4,7 @@ MODULE_OBJS := \
 	metaengine.o \
 	shared/conf/xml_node.o \
 	shared/conf/xml_tree.o \
-	shared/core/file.o \
-	shared/engine/ultima.o \
 	shared/engine/data_archive.o \
-	shared/engine/debugger.o \
 	shared/engine/events.o \
 	shared/std/string.o
 
@@ -18,6 +15,7 @@ MODULE_OBJS += \
 	shared/actions/pass.o \
 	shared/core/base_object.o \
 	shared/core/character.o \
+	shared/core/file.o \
 	shared/core/lzw.o \
 	shared/core/map.o \
 	shared/core/message_target.o \
@@ -247,7 +245,6 @@ MODULE_OBJS += \
 	nuvie/core/converse_speech.o \
 	nuvie/core/cursor.o \
 	nuvie/core/debug.o \
-	nuvie/core/debugger.o \
 	nuvie/core/effect.o \
 	nuvie/core/effect_manager.o \
 	nuvie/core/egg_manager.o \
@@ -597,6 +594,12 @@ MODULE_OBJS += \
 	ultima8/world/actors/targeted_anim_process.o \
 	ultima8/world/actors/teleport_to_egg_process.o \
 	ultima8/world/actors/u8_avatar_mover_process.o
+
+ifdef USE_IMGUI
+MODULE_OBJS += \
+	ultima8/debugtools.o
+endif
+
 endif
 
 # This module can be built as a plugin

@@ -32,6 +32,8 @@ static const SludgeGameDescription gameDescriptions[] = {
 
 	GAME1("verbcoin", "", "Verb Coin.slg", "e39ec315dcbf3a1137481f0a5fe1617d", 980270),
 	GAME1l("verbcoin", "", "Verb Coin.slg", "e39ec315dcbf3a1137481f0a5fe1617d", 980270, Common::DE_DEU, Common::kPlatformUnknown, 1),
+	GAME1("verbcoin2", "", "Verb Coin.slg", "483b315990309c718617c7c47fa132d8", 1067575),
+	GAME1l("verbcoin2", "", "Verb Coin.slg", "483b315990309c718617c7c47fa132d8", 1067575, Common::DE_DEU, Common::kPlatformUnknown, 1),
 
 	GAME1("parallax", "", "Parallax_demo.slg", "daae3f75c6695bed47e5e633cd406a47", 65881),
 
@@ -101,12 +103,12 @@ static const SludgeGameDescription gameDescriptions[] = {
 	// Mar 9, 2004
 	GAME1l("cubert", "", "cubert.dat", "cabc424d4e39ecdba4b0afd4033b5ea8", 19696514, Common::EN_ANY, Common::kPlatformWindows, 0),
 	GAME1l("cubert", "", "cubert.dat", "cabc424d4e39ecdba4b0afd4033b5ea8", 19696514, Common::IT_ITA, Common::kPlatformWindows, 1),
-	GAME1l("cubert", "", "cubert.dat", "cabc424d4e39ecdba4b0afd4033b5ea8", 19696514, Common::SE_SWE, Common::kPlatformWindows, 2),
+	GAME1l("cubert", "", "cubert.dat", "cabc424d4e39ecdba4b0afd4033b5ea8", 19696514, Common::SV_SWE, Common::kPlatformWindows, 2),
 	GAME1l("cubert", "", "cubert.dat", "cabc424d4e39ecdba4b0afd4033b5ea8", 19696514, Common::DE_DEU, Common::kPlatformWindows, 3),
 	// Dec 15, 2005
 	GAME1l("cubert", "", "cubert.dat", "e70050692a0ab96e8753109793157ccd", 19677815, Common::EN_ANY, Common::kPlatformWindows, 0),
 	GAME1l("cubert", "", "cubert.dat", "e70050692a0ab96e8753109793157ccd", 19677815, Common::IT_ITA, Common::kPlatformWindows, 1),
-	GAME1l("cubert", "", "cubert.dat", "e70050692a0ab96e8753109793157ccd", 19677815, Common::SE_SWE, Common::kPlatformWindows, 2),
+	GAME1l("cubert", "", "cubert.dat", "e70050692a0ab96e8753109793157ccd", 19677815, Common::SV_SWE, Common::kPlatformWindows, 2),
 	GAME1l("cubert", "", "cubert.dat", "e70050692a0ab96e8753109793157ccd", 19677815, Common::DE_DEU, Common::kPlatformWindows, 3),
 
 	GAME1("nsc",  "v1.03", "gamedata.slg", "57f318cc09e93a1e0685b790a956ebdc", 12733871),

@@ -22,10 +22,7 @@
 #ifndef DGDS_SOUND_DRIVERS_MIDIDRIVER_H
 #define DGDS_SOUND_DRIVERS_MIDIDRIVER_H
 
-#include "dgds/sound/scispan.h"
-#include "dgds/dgds.h"
 #include "audio/mididrv.h"
-#include "common/error.h"
 #include "common/platform.h"
 
 namespace Dgds {
@@ -80,7 +77,7 @@ protected:
 	int8 _reverb;
 
 public:
-	MidiPlayer() : _driver(0), _reverb(-1) {}
+	MidiPlayer() : _driver(nullptr), _reverb(-1) {}
 
 	virtual int open() { return _driver->open(); }
 	virtual void close() { _driver->close(); }

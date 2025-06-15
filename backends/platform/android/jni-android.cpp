@@ -107,6 +107,8 @@ jmethodID JNI::_MID_eglVersion = 0;
 jmethodID JNI::_MID_getNewSAFTree = 0;
 jmethodID JNI::_MID_getSAFTrees = 0;
 jmethodID JNI::_MID_findSAFTree = 0;
+jmethodID JNI::_MID_exportBackup = 0;
+jmethodID JNI::_MID_importBackup = 0;
 
 jmethodID JNI::_MID_EGL10_eglSwapBuffers = 0;
 
@@ -115,8 +117,6 @@ jmethodID JNI::_MID_AudioTrack_pause = 0;
 jmethodID JNI::_MID_AudioTrack_play = 0;
 jmethodID JNI::_MID_AudioTrack_stop = 0;
 jmethodID JNI::_MID_AudioTrack_write = 0;
-
-PauseToken JNI::_pauseToken;
 
 const JNINativeMethod JNI::_natives[] = {
 	{ "create", "(Landroid/content/res/AssetManager;"
@@ -779,9 +779,11 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 	FIND_METHOD(, deinitSurface, "()V");
 	FIND_METHOD(, eglVersion, "()I");
 	FIND_METHOD(, getNewSAFTree,
-	            "(ZZLjava/lang/String;Ljava/lang/String;)Lorg/scummvm/scummvm/SAFFSTree;");
+	            "(ZLjava/lang/String;Ljava/lang/String;)Lorg/scummvm/scummvm/SAFFSTree;");
 	FIND_METHOD(, getSAFTrees, "()[Lorg/scummvm/scummvm/SAFFSTree;");
 	FIND_METHOD(, findSAFTree, "(Ljava/lang/String;)Lorg/scummvm/scummvm/SAFFSTree;");
+	FIND_METHOD(, exportBackup, "(Ljava/lang/String;)I");
+	FIND_METHOD(, importBackup, "(Ljava/lang/String;Ljava/lang/String;)I");
 
 	_jobj_egl = env->NewGlobalRef(egl);
 	_jobj_egl_display = env->NewGlobalRef(egl_display);
@@ -962,14 +964,7 @@ void JNI::setPause(JNIEnv *env, jobject self, jboolean value) {
 	if (!_system)
 		return;
 
-	if (g_engine) {
-		LOGD("pauseEngine: %d", value);
-
-		if (value)
-			JNI::_pauseToken = g_engine->pauseEngine();
-		else if (JNI::_pauseToken.isActive())
-			JNI::_pauseToken.clear();
-	}
+	_system->setPause(value);
 
 	if (pause != value) {
 		pause = value;
@@ -1069,14 +1064,14 @@ Common::Array<Common::String> JNI::getAllStorageLocations() {
 	return res;
 }
 
-jobject JNI::getNewSAFTree(bool folder, bool writable, const Common::String &initURI,
+jobject JNI::getNewSAFTree(bool writable, const Common::String &initURI,
                            const Common::String &prompt) {
 	JNIEnv *env = JNI::getEnv();
 	jstring javaInitURI = env->NewStringUTF(initURI.c_str());
 	jstring javaPrompt = env->NewStringUTF(prompt.c_str());
 
 	jobject tree = env->CallObjectMethod(_jobj, _MID_getNewSAFTree,
-	                                     folder, writable, javaInitURI, javaPrompt);
+	                                     writable, javaInitURI, javaPrompt);
 
 	if (env->ExceptionCheck()) {
 		LOGE("getNewSAFTree: error");
@@ -1139,4 +1134,54 @@ jobject JNI::findSAFTree(const Common::String &name) {
 	}
 
 	return tree;
+}
+
+int JNI::exportBackup(const Common::U32String &prompt) {
+	JNIEnv *env = JNI::getEnv();
+
+	jstring promptObj = convertToJString(env, prompt);
+
+	jint result = env->CallIntMethod(_jobj, _MID_exportBackup, promptObj);
+
+	env->DeleteLocalRef(promptObj);
+
+	if (env->ExceptionCheck()) {
+		LOGE("exportBackup: error");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+
+		// BackupManager.ERROR_INVALID_BACKUP
+		return -1;
+	}
+
+	return result;
+}
+
+int JNI::importBackup(const Common::U32String &prompt, const Common::String &path) {
+	JNIEnv *env = JNI::getEnv();
+
+	jstring promptObj = convertToJString(env, prompt);
+
+	jstring pathObj = nullptr;
+	if (!path.empty()) {
+		pathObj = env->NewStringUTF(path.c_str());
+	}
+
+	jint result = env->CallIntMethod(_jobj, _MID_importBackup, promptObj, pathObj);
+
+	env->DeleteLocalRef(pathObj);
+	env->DeleteLocalRef(promptObj);
+
+	if (env->ExceptionCheck()) {
+		LOGE("importBackup: error");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+
+		// BackupManager.ERROR_INVALID_BACKUP
+		return -1;
+	}
+
+	return result;
 }

@@ -28,6 +28,7 @@
 #include "audio/mixer.h"
 
 #include "graphics/cursorman.h"
+#include "graphics/macgamma.h"
 #include "graphics/paletteman.h"
 
 #include "scumm/file.h"
@@ -717,7 +718,7 @@ void SmushPlayer::handleDeltaPalette(int32 subSize, Common::SeekableReadStream &
 		b.readUint16LE();
 		for (int i = 0; i < 768; ++i) {
 			_shiftedDeltaPal[i] += _deltaPal[i];
-			
+
 			_pal[i] = CLIP<int32>(_shiftedDeltaPal[i] >> 7, 0, 255);
 		}
 
@@ -1013,6 +1014,7 @@ SmushFont *SmushPlayer::getFont(int font) {
 	} else {
 		int numFonts = (_vm->_game.id == GID_CMI && !(_vm->_game.features & GF_DEMO)) ? 5 : 4;
 		assert(font >= 0 && font < numFonts);
+		(void)numFonts;
 		Common::sprintf_s(file_font, "font%d.nut", font);
 		_sf[font] = new SmushFont(_vm, file_font, _vm->_game.id == GID_DIG && font != 0);
 	}
@@ -1040,6 +1042,7 @@ void SmushPlayer::parseNextFrame() {
 				const uint32 subType = _base->readUint32BE();
 				const int32 subSize = _base->readUint32BE();
 				const int32 subOffset = _base->pos();
+				(void)subType;
 				assert(subType == MKTAG('A','H','D','R'));
 				handleAnimHeader(subSize, *_base);
 				_base->seek(subOffset + subSize, SEEK_SET);
@@ -1291,7 +1294,7 @@ void SmushPlayer::play(const char *filename, int32 speed, int32 offset, int32 st
 
 					if (_vm->_useGammaCorrection) {
 						for (int i = 0; i < ARRAYSIZE(palette); i++) {
-							palette[i] = _vm->_macGammaCorrectionLookUp[_pal[i]];
+							palette[i] = Graphics::macGammaCorrectionLookUp[_pal[i]];
 						}
 					}
 

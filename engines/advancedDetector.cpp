@@ -54,8 +54,8 @@ public:
 
 	int listMembers(Common::ArchiveMemberList &list) const override {
 		int files = 0;
-		for (AdvancedMetaEngineDetectionBase::FileMap::const_iterator it = _fileMap.begin(); it != _fileMap.end(); ++it) {
-			list.push_back(Common::ArchiveMemberPtr(new Common::FSNode(it->_value)));
+		for (const auto &file : _fileMap) {
+			list.push_back(Common::ArchiveMemberPtr(new Common::FSNode(file._value)));
 			++files;
 		}
 
@@ -416,8 +416,8 @@ Common::Error AdvancedMetaEngineDetectionBase::identifyGame(DetectedGame &game, 
 		Common::StringArray dirs = getPathsFromEntry(agdDesc.desc);
 		Common::FSNode gameDataDir = Common::FSNode(ConfMan.getPath("path"));
 
-		for (auto d = dirs.begin(); d != dirs.end(); ++d)
-			SearchMan.addSubDirectoryMatching(gameDataDir, *d, 0, _fullPathGlobsDepth);
+		for (auto &curDir : dirs)
+			SearchMan.addSubDirectoryMatching(gameDataDir, curDir, 0, _fullPathGlobsDepth);
 	}
 
 	game = toDetectedGame(agdDesc);
@@ -433,16 +433,16 @@ void AdvancedMetaEngineDetectionBase::composeFileHashMap(FileMap &allFiles, cons
 	if (fslist.empty())
 		return;
 
-	for (Common::FSList::const_iterator file = fslist.begin(); file != fslist.end(); ++file) {
-		Common::String efname = Common::punycode_encodefilename(file->getName());
+	for (const auto &file : fslist) {
+		Common::String efname = Common::punycode_encodefilename(file.getName());
 		Common::Path tstr = ((_flags & kADFlagMatchFullPaths) ? parentName : Common::Path()).appendComponent(efname);
 
-		if (file->isDirectory()) {
+		if (file.isDirectory()) {
 			if (!_globsMap.contains(efname))
 				continue;
 
 			Common::FSList files;
-			if (!file->getChildren(files, Common::FSNode::kListAll))
+			if (!file.getChildren(files, Common::FSNode::kListAll))
 				continue;
 
 			composeFileHashMap(allFiles, files, depth - 1, tstr);
@@ -457,8 +457,8 @@ void AdvancedMetaEngineDetectionBase::composeFileHashMap(FileMap &allFiles, cons
 
 		debugC(9, kDebugGlobalDetection, "$$ ['%s'] ['%s'] in '%s", tstr.toString().c_str(), efname.c_str(), firstPathComponents(fslist.front().getPath().toString(), '/').c_str());
 
-		allFiles[tstr] = *file;		// Record the presence of this file
-		allFiles[Common::Path(efname, Common::Path::kNoSeparator)] = *file;	// ...and its file name
+		allFiles[tstr] = file;		// Record the presence of this file
+		allFiles[Common::Path(efname, Common::Path::kNoSeparator)] = file;	// ...and its file name
 	}
 }
 
@@ -491,7 +491,7 @@ static MD5Properties gameFileToMD5Props(const ADGameFileDescription *fileEntry, 
 	}
 
 	if (gameFlags & ADGF_MACRESFORK) {
-		ret = (MD5Properties)(ret | kMD5MacResOrDataFork);
+		ret = (MD5Properties)(ret | kMD5MacResFork);
 	}
 
 	if (gameFlags & ADGF_TAILMD5) {
@@ -507,10 +507,6 @@ Common::String md5PropToGameFile(MD5Properties flags) {
 	switch (flags & kMD5MacMask) {
 	case kMD5MacDataFork:
 		res = "d";
-		break;
-
-	case kMD5MacResOrDataFork:
-		res = "m";
 		break;
 
 	case kMD5MacResFork:
@@ -562,7 +558,7 @@ bool AdvancedMetaEngineBase::getFilePropertiesExtern(uint md5Bytes, const FileMa
 static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngineBase::FileMap &allFiles, MD5Properties md5prop, const Common::Path &fname, FileProperties &fileProps) {
 	if (md5prop & (kMD5MacResFork | kMD5MacDataFork)) {
 		FileMapArchive fileMapArchive(allFiles);
-		bool is_legacy = ((md5prop & kMD5MacMask) == kMD5MacResOrDataFork);
+
 		if (md5prop & kMD5MacResFork) {
 			Common::MacResManager macResMan;
 
@@ -580,8 +576,7 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngineBase:
 
 		if (md5prop & kMD5MacDataFork) {
 			Common::SeekableReadStream *dataFork = Common::MacResManager::openFileOrDataFork(fname, fileMapArchive);
-			// Logically 0-sized data fork is valid but legacy code continues fallback
-			if (dataFork && (dataFork->size() || !is_legacy)) {
+			if (dataFork) {
 				fileProps.size = dataFork->size();
 				fileProps.md5 = Common::computeStreamMD5AsString(*dataFork, md5Bytes);
 				fileProps.md5prop = (MD5Properties)((md5prop & kMD5Tail) | kMD5MacDataFork);
@@ -591,9 +586,8 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngineBase:
 			delete dataFork;
 		}
 
-		// In modern case stop here
-		if (!is_legacy)
-			return false;
+		// We have no forks
+		return false;
 	}
 
 	Common::ScopedPtr<Common::SeekableReadStream> testFile;
@@ -668,23 +662,6 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngineBase:
 	return true;
 }
 
-// Add backslash before double quotes (") and backslashes themselves (\)
-Common::String escapeString(const char *string) {
-	if (string == nullptr)
-		return "";
-
-	Common::String res = "";
-
-	for (int i = 0; string[i] != '\0'; i++) {
-		if (string[i] == '"' || string[i] == '\\')
-			res += "\\";
-
-		res += string[i];
-	}
-
-	return res;
-}
-
 void AdvancedMetaEngineDetectionBase::dumpDetectionEntries() const {
 	const byte *descPtr;
 
@@ -706,15 +683,16 @@ void AdvancedMetaEngineDetectionBase::dumpDetectionEntries() const {
 
 		for (auto fileDesc = g->filesDescriptions; fileDesc->fileName; fileDesc++) {
 			const char *fname = fileDesc->fileName;
-			int64 fsize = fileDesc->fileSize == AD_NO_SIZE ? -1 : fileDesc->fileSize;
+			int64 fsize = fileDesc->fileSize == AD_NO_SIZE ? -1ll : fileDesc->fileSize;
 			Common::String md5 = fileDesc->md5;
 			MD5Properties md5prop = gameFileToMD5Props(fileDesc, g->flags);
+			Common::String sizeSuffix = (md5prop & kMD5MacResFork) ? "-rd" : "";
 			Common::String md5Prefix = md5PropToGameFile(md5prop);
 			Common::String key = md5;
 			if (md5Prefix != "" && md5.find(':') == Common::String::npos)
 				key = md5Prefix + ':' + md5;
 
-			printf("\trom ( name \"%s\" size %lld md5-%d %s )\n", escapeString(fname).c_str(), static_cast<long long int>(fsize), _md5Bytes, key.c_str());
+			printf("\trom ( name \"%s\" size%s %lld md5-%d %s )\n", escapeString(fname).c_str(), sizeSuffix.c_str(), static_cast<long long int>(fsize), _md5Bytes, key.c_str());
 		}
 		printf(")\n\n"); // Closing for 'game ('
 	}
@@ -1167,8 +1145,8 @@ Common::Error AdvancedMetaEngineBase::createInstance(OSystem *syst, Engine **eng
 
 	debug("Running %s", gameDescriptor.description.c_str());
 	Common::Array<Common::Path> filenames;
-	for (FilePropertiesMap::const_iterator i = gameDescriptor.matchedFiles.begin(); i != gameDescriptor.matchedFiles.end(); ++i) {
-		filenames.push_back(i->_key);
+	for (const auto &file : gameDescriptor.matchedFiles) {
+		filenames.push_back(file._key);
 	}
 	Common::sort(filenames.begin(), filenames.end());
 	for (uint i = 0; i < filenames.size(); ++i) {

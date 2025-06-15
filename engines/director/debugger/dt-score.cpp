@@ -29,6 +29,7 @@
 #include "director/movie.h"
 #include "director/score.h"
 #include "director/sprite.h"
+#include "director/window.h"
 
 namespace Director {
 namespace DT {
@@ -587,7 +588,17 @@ void showChannels() {
 				ImGui::TableNextRow();
 
 				ImGui::TableNextColumn();
-				ImGui::Text("%-3d", i + 1);
+
+				bool isSelected = (_state->_selectedChannel == i + 1);
+				if (ImGui::Selectable(Common::String::format("%-3d", i + 1).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns)) {
+					if (isSelected) {
+						_state->_selectedChannel = -1;
+						g_director->getCurrentWindow()->render(true);
+					 } else {
+						_state->_selectedChannel = i + 1;
+					 }
+				}
+
 				ImGui::TableNextColumn();
 
 				if (sprite._castId.member) {
@@ -616,13 +627,24 @@ void showChannels() {
 					ImGui::TableNextColumn();
 					ImGui::Text("%d (%s)", sprite._spriteType, spriteType2str(sprite._spriteType));
 					ImGui::TableNextColumn();
+					ImGui::PushID(i + 1);
 					ImGui::Text("%3d", sprite._foreColor); ImGui::SameLine();
 					ImGui::ColorButton("foreColor", convertColor(sprite._foreColor));
+					ImGui::PopID();
 					ImGui::TableNextColumn();
+					ImGui::PushID(i + 1);
 					ImGui::Text("%3d", sprite._backColor); ImGui::SameLine();
 					ImGui::ColorButton("backColor", convertColor(sprite._backColor));
+					ImGui::PopID();
 					ImGui::TableNextColumn();
-					displayScriptRef(sprite._scriptId);
+					// Check early for non integer script ids
+					if (sprite._scriptId.member) {
+						displayScriptRef(sprite._scriptId);
+					} else {
+						ImGui::PushID(i + 1);
+						ImGui::Selectable("  ");
+						ImGui::PopID();
+					}
 					ImGui::TableNextColumn();
 					ImGui::Text("0x%x", sprite._colorcode);
 					ImGui::TableNextColumn();

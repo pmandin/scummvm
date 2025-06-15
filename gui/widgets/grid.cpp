@@ -491,7 +491,7 @@ const Graphics::ManagedSurface *GridWidget::platformToSurface(Common::Platform p
 	return _platformIcons[platformCode];
 }
 
-const Graphics::ManagedSurface *GridWidget::demoToSurface(const Common::String extraString, Graphics::AlphaType &alphaType) {
+const Graphics::ManagedSurface *GridWidget::demoToSurface(const Common::String &extraString, Graphics::AlphaType &alphaType) {
 	if (! extraString.contains("Demo") )
 		return nullptr;
 	alphaType = _extraIconsAlpha[0];
@@ -888,12 +888,11 @@ void GridWidget::assignEntriesToItems() {
 	}
 }
 
-int GridWidget::getNextPos(int oldSel) {
+int GridWidget::getItemPos(int item) {
 	int pos = 0;
 
-	// Find the next item in the grid
 	for (uint i = 0; i < _sortedEntryList.size(); i++) {
-		if (_sortedEntryList[i]->entryID == oldSel) {
+		if (_sortedEntryList[i]->entryID == item) {
 			return pos;
 		} else if (!_sortedEntryList[i]->isHeader) {
 			pos++;

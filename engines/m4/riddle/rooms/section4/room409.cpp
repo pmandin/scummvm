@@ -158,7 +158,7 @@ void Room409::daemon() {
 	case 366:
 		sendWSMessage_10000(1, _ripley, _seriesTalker, 1, 4, -1, _seriesTalker, 1, 4, 1);
 		digi_play("409r01a", 1, 255, 367);
-		midi_play("ATONING", 255, 1, -1, 949);
+		midi_play("ATONING", 255, true, -1, 949);
 		break;
 
 	case 367:
@@ -242,7 +242,7 @@ void Room409::daemon() {
 		break;
 
 	case 403:
-		setGlobals1(1, _seriesReachHand, 10, 10, 10, 0, 10, 1, 1, 1);
+		setGlobals1(_seriesReachHand, 1, 10, 10, 10, 0, 10, 1, 1, 1);
 		sendWSMessage_110000(405);
 		break;
 

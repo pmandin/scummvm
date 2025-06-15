@@ -52,7 +52,6 @@
 #include "backends/graphics/openglsdl/openglsdl-graphics.h"
 #endif
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
-#include "backends/graphics3d/openglsdl/openglsdl-graphics3d.h"
 #include "graphics/opengl/context.h"
 #endif
 #if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
@@ -79,6 +78,7 @@
 #include <SDL_clipboard.h>
 #endif
 
+#if (defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)) && !USE_FORCED_GLES2
 #if SDL_VERSION_ATLEAST(3, 0, 0)
 static bool sdlGetAttribute(SDL_GLAttr attr, int *value) {
 	return SDL_GL_GetAttribute(attr, value);
@@ -87,6 +87,7 @@ static bool sdlGetAttribute(SDL_GLAttr attr, int *value) {
 static bool sdlGetAttribute(SDL_GLattr attr, int *value) {
 	return SDL_GL_GetAttribute(attr, value) == 0;
 }
+#endif
 #endif
 
 OSystem_SDL::OSystem_SDL()
@@ -219,9 +220,9 @@ bool OSystem_SDL::hasFeature(Feature f) {
 		return _eventSource->isJoystickConnected();
 	}
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
-	/* Even if we are using the 2D graphics manager,
+	/* Even if we are using the SDL graphics manager,
 	 * we are at one initGraphics3d call of supporting OpenGL */
-	if (f == kFeatureOpenGLForGame) return true;
+	if (f == kFeatureOpenGLForGame) return _oglType != OpenGL::kContextNone && OpenGLContext.type != OpenGL::kContextGLES;
 	if (f == kFeatureShadersForGame) return _supportsShaders;
 #endif
 #if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
@@ -400,12 +401,10 @@ void OSystem_SDL::initBackend() {
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 void OSystem_SDL::detectOpenGLFeaturesSupport() {
 	_oglType = OpenGL::kContextNone;
-	_supportsFrameBuffer = false;
 	_supportsShaders = false;
 #if USE_FORCED_GLES2
 	// Framebuffers and shaders are always available with GLES2
 	_oglType = OpenGL::kContextGLES2;
-	_supportsFrameBuffer = true;
 	_supportsShaders = true;
 #else
 	// Spawn a 32x32 window off-screen with a GL context to test if framebuffers are supported
@@ -451,7 +450,6 @@ void OSystem_SDL::detectOpenGLFeaturesSupport() {
 	}
 
 	OpenGLContext.initialize(_oglType);
-	_supportsFrameBuffer = OpenGLContext.framebufferObjectSupported;
 	_supportsShaders = OpenGLContext.enginesShadersSupported;
 	OpenGLContext.reset();
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -467,7 +465,6 @@ void OSystem_SDL::detectOpenGLFeaturesSupport() {
 	// SDL 1.2 only supports OpenGL
 	_oglType = OpenGL::kContextGL;
 	OpenGLContext.initialize(_oglType);
-	_supportsFrameBuffer = OpenGLContext.framebufferObjectSupported;
 	_supportsShaders = OpenGLContext.enginesShadersSupported;
 	OpenGLContext.reset();
 #endif
@@ -725,7 +722,7 @@ Common::String OSystem_SDL::getSystemLanguage() const {
 		SDL_Locale *locales = *pLocales;
 		if (locales[0].language != NULL) {
 			Common::String str = Common::String::format("%s_%s", locales[0].country, locales[0].language);
-			SDL_free(locales);
+			SDL_free(pLocales);
 			return str;
 		}
 		SDL_free(pLocales);
@@ -996,36 +993,42 @@ bool OSystem_SDL::setGraphicsMode(int mode, uint flags) {
 	// It's also used to restore state from 3D to 2D GFX manager
 	SdlGraphicsManager *sdlGraphicsManager = dynamic_cast<SdlGraphicsManager *>(_graphicsManager);
 	_gfxManagerState = sdlGraphicsManager->getState();
-	bool supports3D = sdlGraphicsManager->hasFeature(kFeatureOpenGLForGame);
 
 	bool switchedManager = false;
 
 	// If the new mode and the current mode are not from the same graphics
 	// manager, delete and create the new mode graphics manager
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
-	if (render3d && !supports3D) {
-		debug(1, "switching to OpenGL 3D graphics");
-		sdlGraphicsManager->deactivateManager();
-		delete sdlGraphicsManager;
-		_graphicsManager = sdlGraphicsManager = new OpenGLSdlGraphics3dManager(_eventSource, _window, _supportsFrameBuffer);
-		switchedManager = true;
-	} else
-#endif
-	{
-		for (uint i = 0; i < GraphicsManagerCount; ++i) {
+	if (render3d) {
+		uint best3DSupport = -1;
+		uint i;
+		// Make sure the requested mode supports 3D
+		for (i = 0; i < GraphicsManagerCount; ++i) {
+			if (_supports3D[i]) {
+				best3DSupport = i;
+			}
 			if (!(mode >= _firstMode[i] && mode <= _lastMode[i]))
 				continue;
-			if (_graphicsMode >= _firstMode[i] && _graphicsMode <= _lastMode[i] && !supports3D)
+			if (_supports3D[i])
 				break;
-			debug(1, "switching graphics manager");
-			if (sdlGraphicsManager) {
-				sdlGraphicsManager->deactivateManager();
-				delete sdlGraphicsManager;
-			}
-			_graphicsManager = sdlGraphicsManager = createGraphicsManager(_eventSource, _window, (GraphicsManagerType)i);
-			switchedManager = true;
-			break;
 		}
+		if (i == GraphicsManagerCount) {
+			mode = _firstMode[best3DSupport];
+		}
+	}
+
+	for (uint i = 0; i < GraphicsManagerCount; ++i) {
+		if (!(mode >= _firstMode[i] && mode <= _lastMode[i]))
+			continue;
+		if (_graphicsMode >= _firstMode[i] && _graphicsMode <= _lastMode[i])
+			break;
+		debug(1, "switching graphics manager");
+		if (sdlGraphicsManager) {
+			sdlGraphicsManager->deactivateManager();
+			delete sdlGraphicsManager;
+		}
+		_graphicsManager = sdlGraphicsManager = createGraphicsManager(_eventSource, _window, (GraphicsManagerType)i);
+		switchedManager = true;
+		break;
 	}
 
 	_graphicsMode = mode;
@@ -1100,6 +1103,7 @@ void OSystem_SDL::setupGraphicsModes() {
 			srcMode++;
 		}
 		_lastMode[i] = _graphicsModes.size() - 1;
+		_supports3D[i] = manager->hasFeature(kFeatureOpenGLForGame);
 		delete manager;
 		assert(_defaultMode[i] != -1);
 	}

@@ -51,7 +51,7 @@ static const DebugChannelDef debugFlagList[] = {
 	{Sci::kDebugLevelTime, "Time", "Time debugging"},
 	{Sci::kDebugLevelRoom, "Room", "Room number debugging"},
 	{Sci::kDebugLevelAvoidPath, "Pathfinding", "Pathfinding debugging"},
-	{Sci::kDebugLevelDclInflate, "DCL", "DCL inflate debugging"},
+	{Sci::kDebugLevelDclImplode, "DCL", "DCL implode debugging"},
 	{Sci::kDebugLevelVM, "VM", "VM debugging"},
 	{Sci::kDebugLevelScripts, "Scripts", "Notifies when scripts are unloaded"},
 	{Sci::kDebugLevelPatcher, "Patcher", "Notifies when scripts or resources are patched"},
@@ -296,7 +296,7 @@ ADDetectedGame SciMetaEngineDetection::fallbackDetect(const FileMap &allFiles, c
 		}
 	} else if (allFiles.contains("Data1")) {
 		// add Mac volumes
-		md5Prop = (MD5Properties)(md5Prop | kMD5MacResOrDataFork);
+		md5Prop = (MD5Properties)(md5Prop | kMD5MacResFork);
 		for (int i = 1; i <= 13; i++) {
 			Common::String volume = Common::String::format("Data%d", i);
 			addFileToDetectedGame(Common::Path(volume), allFiles, md5Prop, game);

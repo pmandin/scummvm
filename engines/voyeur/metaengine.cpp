@@ -39,6 +39,7 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	{
 		GAMEOPTION_COPY_PROTECTION,
 		{
+			// I18N: lockout is code to start the game
 			_s("Enable lockout system"),
 			_s("Require a lockout code to start the game."),
 			"copy_protection",
@@ -111,21 +112,19 @@ Common::Error VoyeurMetaEngine::createInstance(OSystem *syst, Engine **engine, c
 
 SaveStateList VoyeurMetaEngine::listSaves(const char *target) const {
 	Common::SaveFileManager *saveFileMan = g_system->getSavefileManager();
-	Common::StringArray filenames;
 	Common::String saveDesc;
 	Common::String pattern = Common::String::format("%s.0##", target);
-
-	filenames = saveFileMan->listSavefiles(pattern);
+	Common::StringArray filenames = saveFileMan->listSavefiles(pattern);
 
 	SaveStateList saveList;
 	Voyeur::VoyeurSavegameHeader header;
 
-	for (Common::StringArray::const_iterator file = filenames.begin(); file != filenames.end(); ++file) {
-		const char *ext = strrchr(file->c_str(), '.');
+	for (const auto &filename : filenames) {
+		const char *ext = strrchr(filename.c_str(), '.');
 		int slot = ext ? atoi(ext + 1) : -1;
 
 		if (slot >= 0 && slot <= MAX_SAVES) {
-			Common::InSaveFile *in = g_system->getSavefileManager()->openForLoading(*file);
+			Common::InSaveFile *in = g_system->getSavefileManager()->openForLoading(filename);
 
 			if (in) {
 				if (header.read(in)) {

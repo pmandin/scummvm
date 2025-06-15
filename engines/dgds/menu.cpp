@@ -26,7 +26,6 @@
 #include "graphics/font.h"
 #include "graphics/fontman.h"
 #include "graphics/managed_surface.h"
-#include "graphics/palette.h"
 #include "graphics/surface.h"
 
 #include "dgds/includes.h"
@@ -152,9 +151,26 @@ Menu::~Menu() {
 	_screenBuffer.free();
 }
 
+uint16 Menu::mapMenuNum(uint16 num) const {
+	// The DE version of Heart of China used different menu IDs for some things.
+	// Instead of putting mappings all through the game, just translate them on
+	// load to match the other game versions.
+	DgdsEngine *engine = DgdsEngine::getInstance();
+	if (engine->getGameId() == GID_HOC && engine->getGameLang() == Common::DE_DEU) {
+		switch (num) {
+		case 50: return kMenuMain;
+		case 80: return kMenuSkipPlayIntro;
+		case 82: return kMenuSkipArcade;
+		default: return num;
+		}
+	} else {
+		return num;
+	}
+}
+
 void Menu::setRequestData(const REQFileData &data) {
 	for (auto &req : data._requests) {
-		_menuRequests[req._fileNum] = req;
+		_menuRequests[mapMenuNum(req._fileNum)] = req;
 	}
 }
 
@@ -491,6 +507,8 @@ void Menu::onMouseLUp(const Common::Point &mouse) {
 		case kMenuSliderControlsDetailLevel:
 			engine->setDetailLevel(static_cast<DgdsDetailLevel>(setting));
 			break;
+		default:
+			break;
 		}
 		drawMenu(_curMenu);
 		_dragGadget = nullptr;
@@ -508,7 +526,7 @@ void Menu::onMouseLUp(const Common::Point &mouse) {
 	if (dynamic_cast<ButtonGadget *>(gadget) && !_vcrHelpMode) {
 		gadget->toggle(false);
 		if (_curMenu == kMenuOptions)
-			isToggle = updateOptionsGadget(gadget);
+			/*isToggle = */updateOptionsGadget(gadget);
 		drawMenu(_curMenu, false);
 		g_system->delayMillis(300);
 		gadget->toggle(true);
@@ -615,8 +633,6 @@ bool Menu::handleClick(const Common::Point &mouse) {
 		break;
 	//case kMenuCalibrateVCR: // NOTE: same ID as kMenuIntroPlay
 	case kMenuIntroPlay:
-		drawMenu(kMenuMain);
-		break;
 	case kMenuControlsVCR:
 	case kMenuOptionsVCR:
 	//case kMenuCalibrateVCRHoC:
@@ -740,17 +756,12 @@ bool Menu::handleClick(const Common::Point &mouse) {
 		if (currentScene == 73)
 			engine->changeScene(12);	// skip tank mini-game
 		else if (currentScene == 84)
-			engine->changeScene(106);	// skip train mini-game
+			engine->changeScene(57);	// skip train mini-game, return to travel map
 		break;
 	case kMenuTankTrainPlayArcade:
-		if (currentScene == 73) {
-			// Tank game - not implemented.
-			warning("TODO: Play tank mini-game");
-			drawMenu(_curMenu);
-		} else if (currentScene == 84) {
-			// Play train game - open the "save before arcade" menu.
-			drawMenu(kMenuSaveBeforeArcade);
-		}
+		// Open the "save before arcade" menu before playing the tank
+		// or train mini-games.
+		drawMenu(kMenuSaveBeforeArcade);
 		break;
 	case kMainMenuWillySoundsOnOff:
 		_toggleSoundType(Audio::Mixer::kSFXSoundType);
@@ -806,6 +817,7 @@ void Menu::doVcrHelp(int16 button) {
 			helpText._x = msgAreaLeft + (msgAreaWidth - msgLen) / 2;
 			helpText._y = msgTop;
 			helpText._txt = line;
+			ARRAYCLEAR(helpText._vals);
 			msgTop += font->getFontHeight();
 			helpRequest._textItemList.push_back(helpText);
 		}

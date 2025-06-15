@@ -102,7 +102,7 @@ class Engine;
 */
 class PauseToken {
 public:
-	PauseToken();
+	constexpr PauseToken() : _engine(nullptr) {}
 	/**
 	 * Construct a pause token.
 	 */
@@ -132,7 +132,7 @@ public:
 	bool isActive() const { return _engine != nullptr; }
 
 private:
-	PauseToken(Engine *);
+	constexpr PauseToken(Engine *engine) : _engine(engine) {}
 
 	Engine *_engine;
 	/**
@@ -201,6 +201,11 @@ private:
 	 * The time when the pause was started.
 	 */
 	uint32 _pauseStartTime;
+
+	/**
+	 * The screen change ID when the pause was started
+	 */
+	int _pauseScreenChangeID;
 
 	/**
 	 * The time when the engine was started.
@@ -699,7 +704,7 @@ public:
 	/** Clear the chained games manager of any games. */
 	void clear();
 	/** Load a game into a slot in the chained games manager. */
-	void push(const Common::String target, const int slot = -1);
+	void push(const Common::String &target, const int slot = -1);
 	/** Pop the last game loaded into the chained games manager. */
 	bool pop(Common::String &target, int &slot);
 	/** Returns true if the chained games manager has no elements in the queue. */

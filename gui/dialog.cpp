@@ -170,7 +170,11 @@ void Dialog::drawDialog(DrawLayer layerToDraw) {
 
 	g_gui.theme()->disableClipRect();
 	g_gui.theme()->_layerToDraw = layerToDraw;
-	g_gui.theme()->drawDialogBackground(Common::Rect(_x, _y, _x + _w, _y + _h), _backgroundType);
+	int16 x = _x;
+	if (g_gui.useRTL()) {
+		x = g_system->getOverlayWidth() - _x - _w;
+	}
+	g_gui.theme()->drawDialogBackground(Common::Rect(x, _y, x + _w, _y + _h), _backgroundType);
 
 	markWidgetsAsDirty();
 
@@ -403,6 +407,10 @@ Widget *Dialog::findWidget(int x, int y) {
 
 Widget *Dialog::findWidget(const char *name) {
 	return Widget::findWidgetInChain(_firstWidget, name);
+}
+
+Widget *Dialog::findWidget(uint32 type) {
+	return Widget::findWidgetInChain(_firstWidget, type);
 }
 
 void Dialog::removeWidget(Widget *del) {

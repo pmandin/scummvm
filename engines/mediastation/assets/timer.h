@@ -23,21 +23,21 @@
 #define MEDIASTATION_TIMER_H
 
 #include "mediastation/asset.h"
-#include "mediastation/assetheader.h"
-#include "mediastation/mediascript/operand.h"
+#include "mediastation/mediascript/scriptvalue.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
 class Timer : public Asset {
 public:
-	Timer(AssetHeader *header) : Asset(header) {};
+	Timer() : Asset(kAssetTypeTimer) {};
 
-	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
+	virtual ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) override;
 	virtual void process() override;
 
 private:
-	// Method implementations.
+	bool _isPlaying = false;
+
 	void timePlay();
 	void timeStop();
 };

@@ -71,14 +71,14 @@ public:
 	bool flip() override;
 	bool indicatorFlip() override;
 	bool forcedFlip() override;
-	bool fill(byte r, byte g, byte b, Common::Rect *rect = nullptr) override;
+	bool clear() override;
 	Graphics::PixelFormat getPixelFormat() const override;
 	void fade(uint16 alpha) override;
 	void fadeToColor(byte r, byte g, byte b, byte a) override;
 
-	bool drawLine(int x1, int y1, int x2, int y2, uint32 color) override;
+	bool fillRect(int x, int y, int w, int h, uint32 color) override;
 
-	BaseImage *takeScreenshot() override;
+	BaseImage *takeScreenshot(int newWidth = 0, int newHeight = 0) override;
 	void onWindowChange() override;
 	void setWindowed(bool windowed) override;
 
@@ -101,8 +101,6 @@ public:
 	void modTargetRect(Common::Rect *rect);
 	void pointFromScreen(Point32 *point);
 	void pointToScreen(Point32 *point);
-
-	void dumpData(const char *filename) override;
 
 	float getScaleRatioX() const override {
 		return _ratioX;
@@ -136,7 +134,6 @@ private:
 	RenderQueueIterator _lastFrameIter;
 	Common::Rect _renderRect;
 	Graphics::Surface *_renderSurface;
-	Graphics::Surface *_blankSurface;
 
 	int _borderLeft;
 	int _borderTop;

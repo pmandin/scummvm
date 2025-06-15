@@ -65,9 +65,9 @@ void setGlobals3(int series, int val1, int val2) {
 
 void setGlobals4(int series, int val2, int val3, int val4) {
 	_G(globals)[GLB_TEMP_1] = series << 24;
-	_G(globals)[GLB_TEMP_2] = val2;
-	_G(globals)[GLB_TEMP_3] = val3;
-	_G(globals)[GLB_TEMP_4] = val4;
+	_G(globals)[GLB_TEMP_2] = val2 << 16;
+	_G(globals)[GLB_TEMP_3] = val3 << 16;
+	_G(globals)[GLB_TEMP_4] = val4 << 16;
 }
 
 machine *triggerMachineByHash_3000(int myHash, int dataHash, int normalDir, int shadowDir,
@@ -314,7 +314,7 @@ void sendWSMessage_3840000(machine *machine, int32 trigger) {
 }
 
 void sendWSMessage_3860000(machine *mach, int32 trigger) {
-	_G(globals[GLB_TEMP_1]) = kernel_trigger_create(trigger);
+	_G(globals[GLB_TEMP_1]) = kernel_trigger_create(trigger) << 16;
 	sendWSMessage(ACTION_902 << 16, 0, mach, 0, nullptr, 1);
 }
 

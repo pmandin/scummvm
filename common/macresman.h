@@ -55,6 +55,7 @@ namespace Common {
 
 typedef Array<uint16> MacResIDArray;
 typedef Array<uint32> MacResTagArray;
+typedef bool (* ProgressUpdateCallback)(void *, int);
 
 /**
  * Class containing the raw data bytes for a Macintosh Finder Info data block.
@@ -213,6 +214,12 @@ public:
 	bool hasDataFork() const;
 
 	/**
+	 * Query whether the file is one of the Mac formats.
+	 * @return True if the file is in MacBinary format or has a resource fork
+	 */
+	bool isMacFile() const { return _mode != kResForkNone; }
+
+	/**
 	 * Read resource from the MacBinary file
 	 * @param typeID FourCC of the type
 	 * @param resID Resource ID to fetch
@@ -266,7 +273,7 @@ public:
 	 * @param tail Calculate length from the tail
 	 * @return The MD5 checksum of the resource fork
 	 */
-	String computeResForkMD5AsString(uint32 length = 0, bool tail = false) const;
+	String computeResForkMD5AsString(uint32 length = 0, bool tail = false, ProgressUpdateCallback progressUpdateCallback = nullptr, void *callbackParameter = nullptr) const;
 
 	/**
 	 * Get the base file name of the data/resource fork pair

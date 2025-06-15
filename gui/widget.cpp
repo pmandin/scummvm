@@ -113,13 +113,6 @@ void Widget::draw() {
 		if (g_gui.useRTL()) {
 			_x = g_system->getOverlayWidth() - _x - _w;
 
-			if (this->_name.contains("GameOptions") || this->_name.contains("GlobalOptions") || this->_name.contains("Browser") || this->_name.empty()) {
-				/** The dialogs named above are the stacked dialogs for which the left+right paddings need to be adjusted for RTL.
-					The _name is empty for some special widgets - like RemapWidgets, NavBars, ScrollBars and they need to be adjusted too.
-				*/
-				_x = _x + g_gui.getOverlayOffset();
-			}
-
 			clip.moveTo(_x, clip.top);
 			g_gui.theme()->swapClipRect(clip);
 		}
@@ -178,6 +171,16 @@ Widget *Widget::findWidgetInChain(Widget *w, int x, int y) {
 Widget *Widget::findWidgetInChain(Widget *w, const char *name) {
 	while (w) {
 		if (w->_name == name) {
+			return w;
+		}
+		w = w->_next;
+	}
+	return nullptr;
+}
+
+Widget *Widget::findWidgetInChain(Widget *w, uint32 type) {
+	while (w) {
+		if (w->_type == type) {
 			return w;
 		}
 		w = w->_next;
@@ -264,9 +267,9 @@ uint8 Widget::parseHotkey(const Common::U32String &label) {
 Common::U32String Widget::cleanupHotkey(const Common::U32String &label) {
 	Common::U32String res("");
 
-	for (Common::U32String::const_iterator itr = label.begin(); itr != label.end(); itr++) {
-		if (*itr != '~') {
-			res += *itr;
+	for (const auto &itr : label) {
+		if (itr != '~') {
+			res += itr;
 		}
 	}
 

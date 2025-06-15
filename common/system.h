@@ -76,6 +76,8 @@ class HardwareInputSet;
 class Keymap;
 class KeymapperDefaultBindings;
 
+enum RotationMode : int;
+
 typedef Array<Keymap *> KeymapArray;
 }
 
@@ -513,17 +515,6 @@ public:
 		 * tearing is enabled.
 		 */
 		kFeatureVSync,
-
-		/**
-		 * When a backend supports this feature, it guarantees the graphics
-		 * context is not destroyed when switching to and from fullscreen.
-		 *
-		 * For OpenGL, that means the context is kept with all of its content:
-		 * texture, programs, etc.
-		 *
-		 * For TinyGL, that means the backbuffer surface is kept.
-		 */
-		kFeatureFullscreenToggleKeepsContext,
 
 		/**
 		 * The presence of this feature indicates whether the displayLogFile()
@@ -1004,6 +995,28 @@ public:
 	virtual int getStretchMode() const { return 0; }
 
 	/**
+	 * Switch to the specified rotation
+	 *
+	 * If switching to the new rotation fails, this method returns false.
+	 *
+	 * @param rotation Rotation angle
+	 *
+	 * @return True if the switch was successful, false otherwise.
+	 */
+	virtual bool setRotationMode(Common::RotationMode rotation) { return false; }
+
+	/**
+	 * Switch to the specified rotation with the given int
+	 *
+	 * If switching to the new rotation fails, this method returns false.
+	 *
+	 * @param rotation Rotation angle
+	 *
+	 * @return True if the switch was successful, false otherwise.
+	 */
+	bool setRotationMode(int rotation);
+
+	/**
 	 * Return the ID of the 'default' scaler.
 	 *
 	 * This mode is set by the client code when no user overrides
@@ -1281,6 +1294,11 @@ public:
 	 * <https://wiki.scummvm.org/index.php/HOWTO-Backends#updateScreen.28.29_method>
 	 */
 	virtual void updateScreen() = 0;
+
+	/**
+	 * When in 3D mode, forces a rendering pass to let the engine read back pixels.
+	 */
+	virtual void presentBuffer() {}
 
 	/**
 	 * Set current shake position, a feature needed for screen effects in some

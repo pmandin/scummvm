@@ -29,7 +29,6 @@
 
 #include "dgds/ads.h"
 #include "dgds/console.h"
-#include "dgds/decompress.h"
 #include "dgds/dgds.h"
 #include "dgds/globals.h"
 #include "dgds/includes.h"
@@ -74,10 +73,10 @@ bool Console::cmdFileSearch(int argc, const char **argv) {
 	}
 
 	const ResourceList &resources = _vm->getResourceManager()->getResources();
-	for (ResourceList::const_iterator i = resources.begin(), end = resources.end(); i != end; ++i) {
-		if (i->_key.contains(argv[1])) {
-			Resource res = i->_value;
-			debugPrintf("Resource: %s, volume: %d, position: %d, size: %d, checksum: %d\n", i->_key.c_str(), res.volume, res.pos, res.size, res.checksum);
+	for (const auto &resource : resources) {
+		if (resource._key.contains(argv[1])) {
+			Resource res = resource._value;
+			debugPrintf("Resource: %s, volume: %d, position: %d, size: %d, checksum: %d\n", resource._key.c_str(), res.volume, res.pos, res.size, res.checksum);
 		}
 	}
 

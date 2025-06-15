@@ -196,7 +196,7 @@ _debug_build=auto
 _release_build=auto
 _optimizations=auto
 _verbose_build=no
-_werror_build=no
+_werror_build=auto
 _text_console=no
 _mt32emu=yes
 _lua=yes
@@ -984,7 +984,8 @@ Optional Features:
   --enable-detection-dynamic build detection features into a library
   --disable-detection-full add detection only for the engines which were enabled
   --disable-debug          disable building with debugging symbols
-  --enable-Werror          treat warnings as errors
+  --enable-Werror          treat all warnings as errors
+  --disable-Werror         disable default promotion of some warnings to errors
   --enable-release         enable building in release mode (this activates
                            optimizations)
   --enable-release-mode    enable building in release mode (without optimizations)
@@ -1542,6 +1543,9 @@ for ac_option in $@; do
 		;;
 	--enable-Werror)
 		_werror_build=yes
+		;;
+	--disable-Werror)
+		_werror_build=no
 		;;
 	--enable-release-mode)
 		_release_build=yes
@@ -2379,6 +2383,12 @@ if test "$have_gcc" = yes; then
 
 		if test $_cxx_major -ge 5; then
 			append_var CXXFLAGS "-Wshadow"
+			if test $_cxx_major -ge 7; then
+				append_var CXXFLAGS "-Wno-stringop-overflow"
+				if test $_cxx_major -ge 8; then
+					append_var CXXFLAGS "-Wno-stringop-truncation"
+				fi
+			fi
 		else
 			append_var CXXFLAGS "-Wno-missing-field-initializers"
 
@@ -2390,9 +2400,8 @@ if test "$have_gcc" = yes; then
 					append_var CXXFLAGS "-Wno-array-bounds"
 				fi
 
-				if test $_cxx_minor -le 8; then
-					append_var CXXFLAGS "-Wno-maybe-uninitialized"
-				fi
+				# Many false positives with Common::Serializer
+				append_var CXXFLAGS "-Wno-maybe-uninitialized"
 			fi
 		fi
 	fi
@@ -2720,6 +2729,11 @@ EOF
 # so that the checks below can be done, even with LTO on.
 test "$have_gcc" = yes && no_lto_regular_machine_code_removal=-ffat-lto-objects
 $CXX $LDFLAGS $CXXFLAGS $no_lto_regular_machine_code_removal -o $TMPO$HOSTEXEEXT tmp_endianness_check.cpp >> "$TMPLOG" 2>&1
+# The flag may not exist in some older Clang releases (e.g. "Apple LLVM
+# version 6.0 (based on LLVM 3.5svn)")
+if test "$?" -ne 0 && test "$have_gcc" = yes; then
+	$CXX $LDFLAGS $CXXFLAGS -o $TMPO$HOSTEXEEXT tmp_endianness_check.cpp >> "$TMPLOG" 2>&1
+fi
 if $_strings $TMPO$HOSTEXEEXT 2>> "$TMPLOG"| grep BIGenDianSyS >/dev/null; then
 	_endian=big
 elif $_strings $TMPO$HOSTEXEEXT 2>> "$TMPLOG" | grep LiTTleEnDian >/dev/null; then
@@ -3797,6 +3811,8 @@ if test -n "$_host"; then
 			_strip=$_host-strip
 			if `which $_host-peldd >/dev/null 2>&1`; then
 				_ldd="$_host-peldd -t --ignore-errors"
+			elif `which peldd >/dev/null 2>&1`; then
+				_ldd="peldd -t --ignore-errors"
 			fi
 			;;
 		mips-sgi*)
@@ -5234,6 +5250,11 @@ EOF
 int main(void) { return 0; }
 EOF
 			cc_check -ObjC++ -lobjc && _tts=yes
+			;;
+		
+		emscripten)
+			# Emscripten has the "Web Speech API" available
+			_tts=yes
 			;;
 	esac
 fi
@@ -7086,6 +7107,10 @@ else
 		echo "osx"
 		_tts=yes
 		;;
+	emscripten)
+		echo "Web Speech API"
+		_tts=yes
+		;;
 	*)
 		echo "no"
 		_tts=no
@@ -7543,12 +7568,20 @@ case $_host_os in
 		;;
 esac
 
-
+# Promote any warning to an error, only if explicitly asked
 if test "$_werror_build" = yes; then
 	# --enable-Werror shouldn't be applied before being done testing all system
 	# features and libraries. Otherwise, some of them could just end up being silently
 	# disabled, when any small warning appears in a test.
 	append_var CXXFLAGS "-Werror"
+fi
+
+# Promote some selected warnings to errors, by default
+#
+# Some warnings can reveal some serious issues that shouldn't remain
+# unnoticed. Flags added here shouldn't trigger false positives, though.
+if test "$_werror_build" != no; then
+	append_var CXXFLAGS "-Werror=return-type"
 fi
 
 #

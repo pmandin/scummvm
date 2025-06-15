@@ -52,11 +52,17 @@ rm -rf dist-generic
 make dist-generic
 
 # create symbol file and strip
+rm dist-generic/scummvm/scummvm.ttp
+cp -a scummvm.ttp dist-generic/scummvm/scummvm.ttp
 ${PLATFORM}-nm -C dist-generic/scummvm/scummvm.ttp | grep -vF ' .L' | grep ' [TtWV] ' | ${PLATFORM}-c++filt | sort -u > dist-generic/scummvm/scummvm.sym
 ${PLATFORM}-strip -s dist-generic/scummvm/scummvm.ttp
 
 # remove unused files
 rm dist-generic/scummvm/data/*.zip dist-generic/scummvm/data/{achievements,encoding,gui-icons,macgui,shaders}.dat
+
+# rename remaining files still not fitting into the 8+3 limit (this has to be supported by the backend, too)
+mv dist-generic/scummvm/data/supernova.dat dist-generic/scummvm/data/supernov.dat
+mv dist-generic/scummvm/data/teenagent.dat dist-generic/scummvm/data/teenagen.dat
 
 # readme.txt
 cp ../backends/platform/atari/readme.txt dist-generic/scummvm

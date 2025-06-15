@@ -36,13 +36,13 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "shveik", "The Adventures of the Good Soldier Schweik" }, // Похождения бравого солдата Швейка
 	{ "klepa", "Klepa: Symbolic Rivets" },  // Клёпа: Символические Заклепки
 	{ "3mice2", "Marvellous Mice Adventures: Sea Rat's Birthday" }, // Три маленькие белые мышки. День рождения морской крысы
-	{ "dogncat", "Dog-n-cat: Island of Dr Ratiarty" }, // Агентство "КотоПес": Остров доктора Крысарди
-	{ "dogncat2", "Dog-n-cat: In the Footsteps of Unprecedented Beasts" }, // Агентство "КотоПес": По следам невиданных зверей
+	{ "dogncat", "Dog-n-cat: In the Footsteps of Unprecedented Beasts" }, // Агентство "КотоПес": По следам невиданных зверей
+	{ "dogncat2", "Dog-n-cat: Island of Dr Ratiarty" }, // Агентство "КотоПес": Остров доктора Крысарди
 
 	{ 0, 0 }
 };
 
-#define SUPPORT_STATUS ADGF_UNSTABLE
+#define SUPPORT_STATUS ADGF_TESTING
 
 #define GAMEelf(id,extra,md5,size,exefile,exemd5,exesize,lang,flags) { \
         id, \
@@ -84,7 +84,7 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 	//		"qd_game.exe", "???", 909312, Common::SK_SVK),
 
 #undef SUPPORT_STATUS
-#define SUPPORT_STATUS ADGF_UNSTABLE
+#define SUPPORT_STATUS ADGF_TESTING
 
 	// Братья Пилоты. Обратная сторона Земли
 	// 2004/06/11. K D-Lab / Pipe Studio
@@ -144,7 +144,7 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 			"shveik.exe", "a56cb058b46e47754019652d27d974b3", 962560),
 
 #undef SUPPORT_STATUS
-#define SUPPORT_STATUS ADGF_UNSTABLE
+#define SUPPORT_STATUS ADGF_TESTING
 
 	// Клёпа: Символические Заклепки
 	// 2007/10/19. K-D Logic
@@ -179,7 +179,7 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 		GUIO1(GUIO_NONE)
 	},
 
-	{ // Demo2, original
+	{ // Demo2, recoded
 	  // Video is recoded with: ffmpeg -i martha.mpg -b:v 6000k -maxrate:v 9000k martha-new.mpeg
 	  // The full game has this video also broken: the video frames get frozen at the last several seconds
 		"3mice2",
@@ -189,19 +189,19 @@ const ADGameDescription GAME_DESCRIPTIONS[] = {
 				   "Resource/Video/martha.mpg", "4dc93c37c0cdd75c01c58412f68e4874", 32499712),
 		Common::RU_RUS,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM | ADGF_DEMO,
+		ADGF_DROPPLATFORM | ADGF_DEMO,
 		GUIO1(GUIO_NONE)
 	},
 
 #undef SUPPORT_STATUS
-#define SUPPORT_STATUS ADGF_UNSTABLE
-	// Агентство "КотоПес": Остров доктора Крысарди
-	// 2008/09/19 KD Vision Games
+#define SUPPORT_STATUS ADGF_TESTING
+	// Агентство "КотоПес": По следам невиданных зверей
+	// 2008/03/21 KD Vision Games
 	GAME("dogncat", "db4e0081fdaf575e82910cf7399cef62", 17759363,
 			"qd_game.exe", "ed659f0fc79e772f1f1ff8107fa94dea", 962560),
 
-	// Агентство "КотоПес": По следам невиданных зверей
-	// 2008/03/21 KD Vision Games
+	// Агентство "КотоПес": Остров доктора Крысарди
+	// 2008/09/19 KD Vision Games
 	GAME("dogncat2", "c250f79a8e404b13a588e6a03e3a6d20", 10483617,
 			"qd_game.exe", "ed659f0fc79e772f1f1ff8107fa94dea", 962560),
 

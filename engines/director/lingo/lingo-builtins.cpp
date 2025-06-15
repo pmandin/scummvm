@@ -450,7 +450,18 @@ void LB::b_integer(int nargs) {
 		Common::String src = d.asString();
 		char *endPtr = nullptr;
 		int result = (int)strtol(src.c_str(), &endPtr, 10);
-		if (endPtr && endPtr != src.c_str() && (*endPtr == '\0' || *endPtr == ' ')) {
+		// Stop conditions found by probing D4 for windows:
+		// repeat with i = 0 to 255
+		//   put i & " = " & integer("12345" & numToChar(i))
+		// end repeat
+		if (endPtr && endPtr != src.c_str() && (
+			(*endPtr >= 0 && *endPtr < 45) ||
+			(*endPtr == 47) ||
+			(*endPtr >= 58 && *endPtr < 65) ||
+			(*endPtr >= 91 && *endPtr < 95) ||
+			(*endPtr == 96) ||
+			(*endPtr >= 123))
+		) {
 			res = result;
 		}
 	} else {
@@ -612,6 +623,7 @@ void LB::b_value(int nargs) {
 	}
 
 	Common::String expr = d.asString();
+	expr.trim();
 	if (expr.empty()) {
 		g_lingo->push(Datum(0));
 		return;
@@ -1975,7 +1987,6 @@ void LB::b_return(int nargs) {
 	Datum retVal;
 	if (nargs > 0) {
 		retVal = g_lingo->pop();
-		g_lingo->_theResult = retVal;	// Store result for possible reference
 	}
 
 	// clear any temp values from loops
@@ -2116,6 +2127,12 @@ void LB::b_voidP(int nargs) {
 // Misc
 ///////////////////
 void LB::b_alert(int nargs) {
+	// Let the movie know not to record mouse and key events
+	// While there is an GUI alert box being shown
+	// It may happen the user clicks on the button on the GUI message and
+	// due to it getting recorded as a movie event, causes unpredictable changes
+	g_director->getCurrentMovie()->_inGuiMessageBox = true;
+
 	Datum d = g_lingo->pop();
 
 	Common::String alert = d.asString();
@@ -2132,6 +2149,9 @@ void LB::b_alert(int nargs) {
 		GUI::MessageDialog dialog(alert.c_str(), _("OK"));
 		dialog.runModal();
 	}
+
+	// Movie can process events as normal now
+	g_director->getCurrentMovie()->_inGuiMessageBox = false;
 }
 
 void LB::b_clearGlobals(int nargs) {
@@ -2402,7 +2422,7 @@ void LB::b_importFileInto(int nargs) {
 	movie->createOrReplaceCastMember(memberID, bitmapCast);
 	bitmapCast->setModified(true);
 	const Graphics::Surface *surf = img->getSurface();
-	bitmapCast->_size = surf->pitch * surf->h + img->getPaletteColorCount() * 3;
+	bitmapCast->_size = surf->pitch * surf->h + img->getPalette().size() * 3;
 	score->refreshPointersForCastMemberID(dst.asMemberID());
 }
 
@@ -2960,7 +2980,7 @@ void LB::b_rollOver(int nargs) {
 
 	Common::Point pos = g_director->getCurrentWindow()->getMousePos();
 
-	if (score->checkSpriteIntersection(arg, pos))
+	if (score->checkSpriteRollOver(arg, pos))
 		res.u.i = 1; // TRUE
 
 	g_lingo->push(res);
@@ -3529,8 +3549,6 @@ void LB::b_castLib(int nargs) {
 }
 
 void LB::b_member(int nargs) {
-	Movie *movie = g_director->getCurrentMovie();
-
 	CastMemberID res;
 	if (nargs == 1) {
 		Datum member = g_lingo->pop();
@@ -3541,8 +3559,8 @@ void LB::b_member(int nargs) {
 		res = g_lingo->toCastMemberID(member, library);
 	}
 
-	if (!movie->getCastMember(res)) {
-		g_lingo->lingoError("No match found for cast member");
+	if (res.member > g_lingo->getMembersNum(res.castLib)) {
+		g_lingo->lingoError("b_member: Cast member ID out of range");
 		return;
 	}
 	g_lingo->push(res);
@@ -3663,10 +3681,26 @@ void LB::b_scrollByPage(int nargs) {
 }
 
 void LB::b_lineHeight(int nargs) {
-	g_lingo->printSTUBWithArglist("b_lineHeight", nargs);
-	g_lingo->dropStack(nargs);
-	Datum res(1);
-	g_lingo->push(res);
+	Datum lineNum = g_lingo->pop();
+	Datum castRef = g_lingo->pop();
+
+	if (castRef.type != CASTREF) {
+		g_lingo->lingoError("Incorrect argument type for lineHeight");
+		g_lingo->push(1);
+        return;
+	}
+
+	CastMember *member = g_director->getCurrentMovie()->getCastMember(*castRef.u.cast);
+
+	if (member->_type != kCastText) {
+		g_lingo->lingoError("Incorrect member type for lineHeight");
+		g_lingo->push(1);
+		return;
+	}
+
+	// MacText::getLineHeigt() is zero-indexed, we are one-indexed
+	int lineHeight = ((TextCastMember *)member)->getLineHeight(lineNum.u.i - 1);
+	g_lingo->push(lineHeight);
 }
 
 void LB::b_numberofchars(int nargs) {

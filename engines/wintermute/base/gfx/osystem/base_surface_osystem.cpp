@@ -75,9 +75,7 @@ BaseSurfaceOSystem::~BaseSurfaceOSystem() {
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseSurfaceOSystem::create(const Common::String &filename, bool defaultCK, byte ckRed, byte ckGreen, byte ckBlue, int lifeTime, bool keepLoaded) {
-	/*  BaseRenderOSystem *renderer = static_cast<BaseRenderOSystem *>(_gameRef->_renderer); */
 	_filename = filename;
-//	const Graphics::Surface *surface = image->getSurface();
 
 	if (defaultCK) {
 		ckRed   = 255;
@@ -112,12 +110,6 @@ bool BaseSurfaceOSystem::finishLoad() {
 	_width = image->getSurface()->w;
 	_height = image->getSurface()->h;
 
-	bool isSaveGameGrayscale = _filename.matchString("savegame:*g", true);
-	if (isSaveGameGrayscale) {
-		warning("grayscaleConversion not yet implemented");
-		// FIBITMAP *newImg = FreeImage_ConvertToGreyscale(img); TODO
-	}
-
 	_surface->free();
 	delete _surface;
 
@@ -135,17 +127,27 @@ bool BaseSurfaceOSystem::finishLoad() {
 		_surface->copyFrom(*image->getSurface());
 	}
 
-	if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
+	if (_filename.matchString("savegame:*g", true)) {
+		uint8 r, g, b, a;
+		for (int x = 0; x < _surface->w; x++) {
+			for (int y = 0; y < _surface->h; y++) {
+				_surface->format.colorToARGB(_surface->getPixel(x, y), a, r, g, b);
+				uint8 grey = (uint8)((0.2126f * r + 0.7152f * g + 0.0722f * b) + 0.5f);
+				_surface->setPixel(x, y, _surface->format.ARGBToColor(a, grey, grey, grey));
+			}
+		}
+	}
+	
+	if (_filename.hasSuffix(".bmp")) {
+		// Ignores alpha channel for BMPs
+		needsColorKey = true;
+	} else if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
 		// WME 1.x always use colorkey, even for images with transparency
 		needsColorKey = true;
 		replaceAlpha = false;
 	} else if (BaseEngine::instance().isFoxTail()) {
 		// FoxTail does not use colorkey
 		needsColorKey = false;
-	} else if (_filename.hasSuffix(".bmp")) {
-		// generic WME Lite ignores alpha channel for BMPs
-		needsColorKey = true;
-		replaceAlpha = false;
 	} else if (image->getSurface()->format.aBits() == 0) {
 		// generic WME Lite does not use colorkey for non-BMPs with transparency
 		needsColorKey = true;
@@ -166,16 +168,17 @@ bool BaseSurfaceOSystem::finishLoad() {
 	// Some Rosemary sprites have non-fully transparent pixels
 	// In original WME it wasn't seen because sprites were downscaled
 	// Let's set alpha to 0 if it is smaller then some treshold
-	if (BaseEngine::instance().getGameId() == "rosemary" && _filename.hasPrefix("actors") && _surface->format.bytesPerPixel == 4) {
-		uint8 treshold = 16;
+	if (BaseEngine::instance().getGameId() == "rosemary" && _filename.hasPrefix("actors") &&
+	    _alphaType == Graphics::ALPHA_FULL && _surface->format.aBits() > 4) {
+		uint32 mask = _surface->format.ARGBToColor(255, 0, 0, 0);
+		uint32 treshold = _surface->format.ARGBToColor(16, 0, 0, 0);
+		uint32 blank = _surface->format.ARGBToColor(0, 0, 0, 0);
+
 		for (int x = 0; x < _surface->w; x++) {
 			for (int y = 0; y < _surface->h; y++) {
-				uint32 pixel = getPixelAt(_surface, x, y);
-				uint8 r, g, b, a;
-				_surface->format.colorToARGB(pixel, a, r, g, b);
-				if (a > 0 && a < treshold) {
-					uint32 *p = (uint32 *)_surface->getBasePtr(x, y);
-					*p = _surface->format.ARGBToColor(0, 0, 0, 0);
+				uint32 pixel = _surface->getPixel(x, y);
+				if ((pixel & mask) > blank && (pixel & mask) < treshold) {
+					_surface->setPixel(x, y, blank);
 				}
 			}
 		}
@@ -184,88 +187,6 @@ bool BaseSurfaceOSystem::finishLoad() {
 	_loaded = true;
 
 	return true;
-}
-
-//////////////////////////////////////////////////////////////////////////
-void BaseSurfaceOSystem::genAlphaMask(Graphics::Surface *surface) {
-	warning("BaseSurfaceOSystem::GenAlphaMask - Not ported yet");
-	return;
-	// TODO: Reimplement this
-	delete[] _alphaMask;
-	_alphaMask = nullptr;
-	if (!surface) {
-		return;
-	}
-
-	bool hasColorKey;
-	/* uint32 colorKey; */
-	uint8 ckRed, ckGreen, ckBlue;
-	/*  if (SDL_GetColorKey(surface, &colorKey) == 0) {
-	        hasColorKey = true;
-	        SDL_GetRGB(colorKey, surface->format, &ckRed, &ckGreen, &ckBlue);
-	    } else hasColorKey = false;
-	*/
-	_alphaMask = new byte[surface->w * surface->h];
-
-	bool hasTransparency = false;
-	for (int y = 0; y < surface->h; y++) {
-		for (int x = 0; x < surface->w; x++) {
-			uint32 pixel = getPixelAt(surface, x, y);
-
-			uint8 r, g, b, a;
-			surface->format.colorToARGB(pixel, a, r, g, b);
-			//SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
-
-			if (hasColorKey && r == ckRed && g == ckGreen && b == ckBlue) {
-				a = 0;
-			}
-
-			_alphaMask[y * surface->w + x] = a;
-			if (a < 255) {
-				hasTransparency = true;
-			}
-		}
-	}
-
-	if (!hasTransparency) {
-		delete[] _alphaMask;
-		_alphaMask = nullptr;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-uint32 BaseSurfaceOSystem::getPixelAt(Graphics::Surface *surface, int x, int y) {
-	int bpp = surface->format.bytesPerPixel;
-	/* Here p is the address to the pixel we want to retrieve */
-	uint8 *p = (uint8 *)surface->getBasePtr(x, y);
-
-	switch (bpp) {
-	case 1:
-		return *p;
-		break;
-
-	case 2:
-		return *(uint16 *)p;
-		break;
-
-	case 3:
-#ifdef SCUMM_BIG_ENDIAN
-		//  if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-		return p[0] << 16 | p[1] << 8 | p[2];
-#else
-		//else
-		return p[0] | p[1] << 8 | p[2] << 16;
-#endif
-		break;
-
-	case 4:
-		return *(uint32 *)p;
-		break;
-
-	default:
-		return 0;       /* shouldn't happen, but avoids warnings */
-	}
-	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -291,23 +212,18 @@ bool BaseSurfaceOSystem::isTransparentAtLite(int x, int y) {
 		return true;
 	}
 
-	if (_surface->format.bytesPerPixel == 4) {
-		uint32 pixel = *(uint32 *)_surface->getBasePtr(x, y);
-		uint8 r, g, b, a;
-		_surface->format.colorToARGB(pixel, a, r, g, b);
-		if (a <= 128) {
-			return true;
-		} else {
-			return false;
-		}
+	uint32 pixel = _surface->getPixel(x, y);
+	uint8 r, g, b, a;
+	_surface->format.colorToARGB(pixel, a, r, g, b);
+	if (a <= 128) {
+		return true;
+	} else {
+		return false;
 	}
-
-	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseSurfaceOSystem::startPixelOp() {
-	//SDL_LockTexture(_texture, nullptr, &_lockPixels, &_lockPitch);
 	// Any pixel-op makes the caching useless:
 	BaseRenderOSystem *renderer = static_cast<BaseRenderOSystem *>(_gameRef->_renderer);
 	renderer->invalidateTicketsFromSurface(this);
@@ -316,7 +232,6 @@ bool BaseSurfaceOSystem::startPixelOp() {
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseSurfaceOSystem::endPixelOp() {
-	//SDL_UnlockTexture(_texture);
 	return STATUS_OK;
 }
 
@@ -339,20 +254,20 @@ bool BaseSurfaceOSystem::displayTransZoom(int x, int y, Rect32 rect, float zoomX
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool BaseSurfaceOSystem::displayTransRotate(int x, int y, uint32 angle, int32 hotspotX, int32 hotspotY, Rect32 rect, float zoomX, float zoomY, uint32 alpha, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) {
+bool BaseSurfaceOSystem::displayTransRotate(int x, int y, float rotate, int32 hotspotX, int32 hotspotY, Rect32 rect, float zoomX, float zoomY, uint32 alpha, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) {
 	Common::Point newHotspot;
 	Common::Rect oldRect(rect.left, rect.top, rect.right, rect.bottom);
-	Graphics::TransformStruct transform = Graphics::TransformStruct(zoomX, zoomY, angle, hotspotX, hotspotY, blendMode, TS_COLOR(alpha), mirrorX, mirrorY, 0, 0);
+	Graphics::TransformStruct transform = Graphics::TransformStruct(zoomX, zoomY, rotate, hotspotX, hotspotY, blendMode, TS_COLOR(alpha), mirrorX, mirrorY, 0, 0);
 	Rect32 newRect = Graphics::TransformTools::newRect(oldRect, transform, &newHotspot);
 
 	x -= newHotspot.x;
 	y -= newHotspot.y;
 
-	_rotation = (uint32)transform._angle;
+	_rotation = transform._angle;
 	if (transform._angle < 0.0f) {
-		warning("Negative rotation: %d %d", transform._angle, _rotation);
-		_rotation = (uint32)(360.0f + transform._angle);
-		warning("Negative post rotation: %d %d", transform._angle, _rotation);
+		warning("Negative rotation: %d %d", (int32)transform._angle, (int32)_rotation);
+		_rotation = 360.0f + transform._angle;
+		warning("Negative post rotation: %d %d", (int32)transform._angle, (int32)_rotation);
 	}
 	return drawSprite(x, y, &rect, &newRect, transform);
 }
@@ -423,10 +338,8 @@ bool BaseSurfaceOSystem::drawSprite(int x, int y, Rect32 *rect, Rect32 *newRect,
 
 bool BaseSurfaceOSystem::putSurface(const Graphics::Surface &surface, bool hasAlpha) {
 	_loaded = true;
-	if (surface.format == _surface->format && surface.pitch == _surface->pitch && surface.h == _surface->h) {
-		const byte *src = (const byte *)surface.getBasePtr(0, 0);
-		byte *dst = (byte *)_surface->getBasePtr(0, 0);
-		memcpy(dst, src, surface.pitch * surface.h);
+	if (surface.format == _surface->format && surface.w == _surface->w && surface.h == _surface->h) {
+		_surface->copyRectToSurface(surface, 0, 0, Common::Rect(surface.w, surface.h));
 	} else {
 		_surface->free();
 		_surface->copyFrom(surface);

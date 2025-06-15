@@ -61,7 +61,7 @@ private:
 
 Globals::Globals(Clock &clock) :
 _lastOpcode1SceneChangeNum(0), _sceneOp12SceneNum(0), _currentSelectedItem(0),
-_gameMinsToAddOnLClick(0), _gameMinsToAddOnStartDrag(0), _gameMinsToAddOnRClick(0), _gameMinsToAddOnDragFinished(0),
+_gameMinsToAddOnUse(0), _gameMinsToAddOnPickUp(0), _gameMinsToAddOnLook(0), _gameMinsToAddOnDrop(0),
 _gameMinsToAddOnObjInteraction(0), _gameIsInteractiveGlobal(0), _sceneOpcode15FromScene(0),
 _sceneOpcode15ToScene(0) {
 	_globals.push_back(clock.getGameMinsAddedGlobal(1));
@@ -73,10 +73,10 @@ _sceneOpcode15ToScene(0) {
 	_globals.push_back(clock.getDaysGlobal(0x5F));
 	_globals.push_back(clock.getHoursGlobal(0x5E));
 	_globals.push_back(clock.getMinsGlobal(0x5D));
-	_globals.push_back(new RWI16Global(0x5C, &_gameMinsToAddOnLClick));
-	_globals.push_back(new RWI16Global(0x5B, &_gameMinsToAddOnStartDrag));
-	_globals.push_back(new RWI16Global(0x5A, &_gameMinsToAddOnRClick));
-	_globals.push_back(new RWI16Global(0x59, &_gameMinsToAddOnDragFinished));
+	_globals.push_back(new RWI16Global(0x5C, &_gameMinsToAddOnUse));
+	_globals.push_back(new RWI16Global(0x5B, &_gameMinsToAddOnPickUp));
+	_globals.push_back(new RWI16Global(0x5A, &_gameMinsToAddOnLook));
+	_globals.push_back(new RWI16Global(0x59, &_gameMinsToAddOnDrop));
 	_globals.push_back(new RWI16Global(0x58, &_gameMinsToAddOnObjInteraction));
 	_globals.push_back(new GameIsInteractiveGlobal(0x57, &_gameIsInteractiveGlobal));
 	_globals.push_back(clock.getDays2Global(0x56));
@@ -126,10 +126,10 @@ Common::Error Globals::syncState(Common::Serializer &s) {
 	s.syncAsSint16LE(_lastOpcode1SceneChangeNum);
 	s.syncAsSint16LE(_sceneOp12SceneNum);
 	s.syncAsSint16LE(_currentSelectedItem);
-	s.syncAsSint16LE(_gameMinsToAddOnLClick);
-	s.syncAsSint16LE(_gameMinsToAddOnStartDrag);
-	s.syncAsSint16LE(_gameMinsToAddOnRClick);
-	s.syncAsSint16LE(_gameMinsToAddOnDragFinished);
+	s.syncAsSint16LE(_gameMinsToAddOnUse);
+	s.syncAsSint16LE(_gameMinsToAddOnPickUp);
+	s.syncAsSint16LE(_gameMinsToAddOnLook);
+	s.syncAsSint16LE(_gameMinsToAddOnDrop);
 	s.syncAsSint16LE(_gameMinsToAddOnObjInteraction);
 	s.syncAsSint16LE(_gameIsInteractiveGlobal);
 	s.syncAsSint16LE(_sceneOpcode15FromScene);
@@ -237,16 +237,65 @@ public:
 	}
 };
 
+class HocDifficultyGlobal : public Global {
+public:
+	HocDifficultyGlobal(uint16 num) : Global(num) {}
+	int16 get() override { return DgdsEngine::getInstance()->getDifficulty(); }
+	int16 set(int16 val) override {
+		DgdsEngine::getInstance()->setDifficulty(val);
+		return DgdsEngine::getInstance()->getDetailLevel();
+	}
+	void setRaw(int16 val) override {
+		DgdsEngine::getInstance()->setDifficulty(val);
+	}
+};
 
-HocGlobals::HocGlobals(Clock &clock) : Globals(clock), _difficultyLevel(1), _unk55(0),
-	_unkDlgFileNum(0), _unkDlgDlgNum(0),  _currentCharacter2(0), _currentCharacter(0),
-	_tankFinished(0), _nativeGameState(0), _tankState(0), _unk47(0), _unk46(0), _unk45(0x3f), _sheckels(0),
+
+class HocPalFadeGlobal : public RWI16Global {
+public:
+	HocPalFadeGlobal(uint16 num, int16 *val) : RWI16Global(num, val), _lastWas0x41(false) {}
+	int16 set(int16 val) override {
+		const int16 oldVal = RWI16Global::get();
+		if (val < 0x40) {
+			if (oldVal == val)
+				return val;
+
+			const int step = (oldVal < val) ? 1 : -1;
+			for (int16 fade = oldVal; val + step != fade; fade = fade + step) {
+				int16 ncols;
+				int16 colno;
+				if (!_lastWas0x41) {
+					ncols = 0xc0;
+					colno = 0x40;
+				} else {
+					ncols = 0xe0;
+					colno = 0x20;
+				}
+				DgdsEngine::getInstance()->getGamePals()->setFade(colno, ncols, 0, fade * 4);
+				g_system->updateScreen();
+				g_system->delayMillis(5);
+			}
+		} else {
+			_lastWas0x41 = (val == 0x41);
+			val = 0x3f;
+		}
+		return RWI16Global::set(val);
+	}
+
+private:
+	bool _lastWas0x41;
+};
+
+
+HocGlobals::HocGlobals(Clock &clock) : Globals(clock), _unk55(0),
+	_partnerDlgFileNum(0), _partnerDlgDlgNum(0),  _currentCharacter2(0), _currentCharacter(0),
+	_tankFinished(0), _nativeGameState(0), _tankState(0), _unk47(0), _unk46(0), _palFade(0x3f), _sheckels(0),
 	_shellBet(0), _shellPea(0), _trainState(0), _startScene(3), _introState(0) {
 	_globals.push_back(new DetailLevelROGlobal(0x53));
-	_globals.push_back(new RWI16Global(0x52, &_difficultyLevel)); // TODO: Sync with difficulty in menu
+	_globals.push_back(new HocDifficultyGlobal(0x52));
 	_globals.push_back(new RWI16Global(0x37, &_unk55)); // TODO: Special update function FUN_1407_080d, sound init related.. sound bank?
-	_globals.push_back(new RWI16Global(0x36, &_unkDlgFileNum));
-	_globals.push_back(new RWI16Global(0x35, &_unkDlgDlgNum));
+	_globals.push_back(new RWI16Global(0x36, &_partnerDlgFileNum));
+	_globals.push_back(new RWI16Global(0x35, &_partnerDlgDlgNum));
 	_globals.push_back(new HocCharacterGlobal(0x34, &_currentCharacter));
 	_globals.push_back(new HocCharacterGlobal(0x33, &_currentCharacter2));
 	_globals.push_back(new RWI16Global(0x32, &_tankFinished));
@@ -254,7 +303,7 @@ HocGlobals::HocGlobals(Clock &clock) : Globals(clock), _difficultyLevel(1), _unk
 	_globals.push_back(new RWI16Global(0x30, &_tankState));
 	_globals.push_back(new RWI16Global(0x2F, &_unk47)); // tank related.. cows?
 	_globals.push_back(new RWI16Global(0x2E, &_unk46)); // tank related.. start point?
-	_globals.push_back(new RWI16Global(0x2D, &_unk45)); // TODO: Special update function FUN_1407_0784, palette related?
+	_globals.push_back(new HocPalFadeGlobal(0x2D, &_palFade));
 	_globals.push_back(new RWI16Global(0x2C, &_sheckels));	// used as currency in Istanbul
 	_globals.push_back(new RWI16Global(0x2B, &_shellBet));
 	_globals.push_back(new RWI16Global(0x2A, &_shellPea));
@@ -272,7 +321,7 @@ Common::Error HocGlobals::syncState(Common::Serializer &s) {
 	s.syncAsSint16LE(_shellPea);
 	s.syncAsSint16LE(_shellBet);
 	s.syncAsSint16LE(_sheckels);
-	s.syncAsSint16LE(_unk45);
+	s.syncAsSint16LE(_palFade);
 	s.syncAsSint16LE(_unk46);
 	s.syncAsSint16LE(_unk47);
 	s.syncAsSint16LE(_tankState);
@@ -280,10 +329,13 @@ Common::Error HocGlobals::syncState(Common::Serializer &s) {
 	s.syncAsSint16LE(_tankFinished);
 	s.syncAsSint16LE(_currentCharacter);
 	s.syncAsSint16LE(_currentCharacter2);
-	s.syncAsSint16LE(_unkDlgDlgNum);
-	s.syncAsSint16LE(_unkDlgFileNum);
+	s.syncAsSint16LE(_partnerDlgDlgNum);
+	s.syncAsSint16LE(_partnerDlgFileNum);
 	s.syncAsSint16LE(_unk55);
-	s.syncAsSint16LE(_difficultyLevel);
+
+	// This was a duplicate of difficulty level (replaced by HocDifficultyGlobal).
+	// Sync a 16-bit int for backward compatibility.
+	s.skip(2);
 
 	return Common::kNoError;
 }

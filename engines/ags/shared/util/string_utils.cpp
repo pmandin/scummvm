@@ -40,7 +40,7 @@ String StrUtil::IntToString(int d) {
 }
 
 int StrUtil::StringToInt(const String &s, int def_val) {
-	if (!s.GetCStr())
+	if (s.IsEmpty())
 		return def_val;
 	char *stop_ptr;
 	int val = strtol(s.GetCStr(), &stop_ptr, 0);
@@ -49,7 +49,7 @@ int StrUtil::StringToInt(const String &s, int def_val) {
 
 StrUtil::ConversionError StrUtil::StringToInt(const String &s, int &val, int def_val) {
 	val = def_val;
-	if (!s.GetCStr())
+	if (s.IsEmpty())
 		return StrUtil::kFailed;
 	char *stop_ptr;
 	_G(errnum) = 0;
@@ -63,7 +63,7 @@ StrUtil::ConversionError StrUtil::StringToInt(const String &s, int &val, int def
 }
 
 float StrUtil::StringToFloat(const String &s, float def_val) {
-	if (!s.GetCStr())
+	if (s.IsEmpty())
 		return def_val;
 	char *stop_ptr;
 	float val = strtof(s.GetCStr(), &stop_ptr);
@@ -148,6 +148,17 @@ void StrUtil::ReadString(char **cstr, Stream *in) {
 	if (len > 0)
 		in->Read(*cstr, len);
 	(*cstr)[len] = 0;
+}
+
+String StrUtil::ReadStringAligned(Stream *in) {
+	String s = ReadString(in);
+	size_t rem = s.GetLength() % sizeof(int32_t);
+	if (rem > 0) {
+		size_t pad = sizeof(int32_t) - rem;
+		for (size_t i = 0; i < pad; ++i)
+			in->ReadByte();
+	}
+	return s;
 }
 
 void StrUtil::SkipString(Stream *in) {

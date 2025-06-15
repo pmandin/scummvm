@@ -156,10 +156,8 @@ bool ws_InitCruncher(void) {
 }
 
 void ws_KillCruncher() {
-	Anim8 *myAnim8;
-
 	if (_GWS(cruncherInitialized)) {
-		myAnim8 = _GWS(myCruncher)->firstAnim8ToCrunch;
+		Anim8 *myAnim8 = _GWS(myCruncher)->firstAnim8ToCrunch;
 		while (myAnim8) {
 			_GWS(myCruncher)->firstAnim8ToCrunch = myAnim8->next;
 			if (myAnim8->myCCB) {
@@ -178,27 +176,26 @@ void ws_KillCruncher() {
 }
 
 Anim8 *ws_AddAnim8ToCruncher(machine *m, int32 sequHash) {
-	Anim8 *myAnim8;
-	frac16 *myRegs;
-	int32 numLocalVars;
-	int32 i;
-
 	// Make sure the cruncher has been initialized
 	VERIFY_INTIALIZED("ws_AddAnim8ToCruncher()");
 
 	// Allocate an anim8 structure
-	if ((myAnim8 = (Anim8 *)mem_alloc(sizeof(Anim8), "Anim8")) == nullptr) {
+	Anim8 *myAnim8 = (Anim8 *)mem_alloc(sizeof(Anim8), "Anim8");
+	if (myAnim8 == nullptr) {
 		ws_LogErrorMsg(FL, "Out of memory - mem requested: %d.", sizeof(Anim8));
 		return nullptr;
 	}
 
 	// Find the sequence
-	if ((myAnim8->sequHandle = ws_GetSEQU((uint32)sequHash, &numLocalVars, &myAnim8->pcOffset)) == nullptr) {
+	int32 numLocalVars;
+	myAnim8->sequHandle = ws_GetSEQU((uint32)sequHash, &numLocalVars, &myAnim8->pcOffset);
+	if (myAnim8->sequHandle == nullptr) {
 		return nullptr;
 	}
 
 	// Allocate an array of registers
-	if ((myRegs = (frac16 *)mem_alloc(sizeof(frac16) * (IDX_COUNT + numLocalVars), "Anim8 regs")) == nullptr) {
+	frac16 *my_regs = (frac16 *)mem_alloc(sizeof(frac16) * (IDX_COUNT + numLocalVars), "Anim8 regs");
+	if (my_regs == nullptr) {
 		ws_LogErrorMsg(FL, "Out of memory - mem requested: %d.", sizeof(frac16) * (IDX_COUNT + numLocalVars));
 		return nullptr;
 	}
@@ -217,7 +214,7 @@ Anim8 *ws_AddAnim8ToCruncher(machine *m, int32 sequHash) {
 	myAnim8->switchTime = 0;
 	myAnim8->flags = 0;
 	myAnim8->numLocalVars = numLocalVars;
-	myAnim8->myRegs = myRegs;
+	myAnim8->myRegs = my_regs;
 	myAnim8->returnStackIndex = 0;
 
 	// Link it into the execution list
@@ -242,7 +239,7 @@ Anim8 *ws_AddAnim8ToCruncher(machine *m, int32 sequHash) {
 	_GWS(myCruncher)->frontLayerAnim8 = myAnim8;
 
 	// Now clear the registers, but set the scale = 100%
-	for (i = 0; i < IDX_COUNT + numLocalVars; i++) {
+	for (int32 i = 0; i < IDX_COUNT + numLocalVars; i++) {
 		myAnim8->myRegs[i] = 0;
 	}
 	myAnim8->myRegs[IDX_S] = 0x10000;
@@ -252,9 +249,6 @@ Anim8 *ws_AddAnim8ToCruncher(machine *m, int32 sequHash) {
 }
 
 bool ws_ChangeAnim8Program(machine *m, int32 newSequHash) {
-	Anim8 *myAnim8;
-	int32 numLocalVars;
-
 	// Make sure the cruncher has been initialized
 	VERIFY_INTIALIZED("ws_ChangeAnim8Program()");
 
@@ -263,10 +257,12 @@ bool ws_ChangeAnim8Program(machine *m, int32 newSequHash) {
 		error_show(FL, 'WSMI');
 	}
 
-	myAnim8 = m->myAnim8;
+	Anim8 *myAnim8 = m->myAnim8;
 
 	// Find the sequence
-	if ((myAnim8->sequHandle = ws_GetSEQU((uint32)newSequHash, &numLocalVars, &myAnim8->pcOffset)) == nullptr) {
+	int32 numLocalVars;
+	myAnim8->sequHandle = ws_GetSEQU((uint32)newSequHash, &numLocalVars, &myAnim8->pcOffset);
+	if (myAnim8->sequHandle == nullptr) {
 		return false;
 	}
 
@@ -278,7 +274,7 @@ bool ws_ChangeAnim8Program(machine *m, int32 newSequHash) {
 
 	// Intialize the Anim8
 	myAnim8->switchTime = 0;
-	myAnim8->active = 1;
+	myAnim8->active = true;
 	myAnim8->eosReqOffset = -1;
 	myAnim8->sequHash = newSequHash;
 	myAnim8->returnStackIndex = 0;
@@ -287,8 +283,6 @@ bool ws_ChangeAnim8Program(machine *m, int32 newSequHash) {
 }
 
 void ws_RemoveAnim8FromCruncher(Anim8 *myAnim8) {
-	EOSreq *tempEOSreq;
-
 	// Make sure the cruncher has been initialized
 	VERIFY_INTIALIZED("ws_RemoveAnim8FromCruncher()");
 
@@ -296,7 +290,7 @@ void ws_RemoveAnim8FromCruncher(Anim8 *myAnim8) {
 		error_show(FL, 'WSAI');
 
 	// In case we are crunching the current list of EOS requests, remove any for this machine
-	tempEOSreq = _GWS(EOSreqList);
+	EOSreq *tempEOSreq = _GWS(EOSreqList);
 	while (tempEOSreq && (tempEOSreq->myAnim8 != myAnim8)) {
 		tempEOSreq = tempEOSreq->next;
 	}
@@ -431,7 +425,7 @@ static bool ExtractArg(Anim8 *myAnim8, int32 myFormat, int32 myData, frac16 **ar
 
 		case LOCAL_FMT_REG:
 			// Range check to make sure we don't index off into hyperspace
-			if ((myIndex >= IDX_COUNT + myAnim8->numLocalVars)) {
+			if (myIndex >= IDX_COUNT + myAnim8->numLocalVars) {
 				ws_LogErrorMsg(FL, "Register Index out of range - max: %d, requested %d.",
 					IDX_COUNT + myAnim8->numLocalVars, myIndex);
 				return false;
@@ -442,7 +436,7 @@ static bool ExtractArg(Anim8 *myAnim8, int32 myFormat, int32 myData, frac16 **ar
 
 		case LOCAL_FMT_DATA:
 			// Ensure we have a dataHandle
-			if ((!myAnim8->dataHandle) || (!*(myAnim8->dataHandle))) {
+			if (!myAnim8->dataHandle || !*(myAnim8->dataHandle)) {
 				ws_LogErrorMsg(FL, "Trying to access a DATA field when no DATA has been set");
 				return false;
 			}
@@ -455,6 +449,9 @@ static bool ExtractArg(Anim8 *myAnim8, int32 myFormat, int32 myData, frac16 **ar
 			*argPtr = argValue;
 			prefix += Common::String::format("DATA %d", myIndex);
 			dbg_AddParamToCurrMachInstr(prefix.c_str());
+			break;
+
+		default:
 			break;
 		}
 	} else if (myFormat == FMT_GLOBAL_SRC) {
@@ -478,9 +475,9 @@ static bool ExtractArg(Anim8 *myAnim8, int32 myFormat, int32 myData, frac16 **ar
 		// 15 bits of the data segment are shifted left, so the value requested is in frac16 format.
 		// The value is stored in the frac16 (dataArg1), and...
 		if (myData & OP_DATA_SIGN) {
-			*argValue = -(myData & OP_DATA_VALUE) << (dataFormats[myFormat - 3]);
+			*argValue = -(myData & OP_DATA_VALUE) << dataFormats[myFormat - 3];
 		} else {
-			*argValue = (myData & OP_DATA_VALUE) << (dataFormats[myFormat - 3]);
+			*argValue = (myData & OP_DATA_VALUE) << dataFormats[myFormat - 3];
 		}
 
 		// myArg1 will point to this location
@@ -493,28 +490,27 @@ static bool ExtractArg(Anim8 *myAnim8, int32 myFormat, int32 myData, frac16 **ar
 }
 
 int32 ws_PreProcessPcode(uint32 **PC, Anim8 *myAnim8) {
-	int32 myInstruction, myFormat, myData; // myIndex;
-	uint32 *myPC, opCode, word2;
+	uint32 word2;
 
 	if (!PC) {
 		ws_LogErrorMsg(FL, "INTERNAL ERROR - ws_PreProcessPcode() failed - An invalid PC was passed.");
 		return -1;
 	}
 
-	myPC = *PC;
+	uint32 *myPC = *PC;
 
 	// Get the opCode
-	opCode = FROM_LE_32(*myPC++);
+	const uint32 opCode = FROM_LE_32(*myPC++);
 
 	// Get the instruction number
-	myInstruction = (opCode & OP_INSTR) >> 25;
+	const int32 myInstruction = (opCode & OP_INSTR) >> 25;
 	dbg_AddOpcodeToMachineInstr(myInstruction);
 
 	// Get the format for the first arg 
-	myFormat = (opCode & OP_FORMAT1) >> 22;
+	int32 myFormat = (opCode & OP_FORMAT1) >> 22;
 
 	// Get the data for the first arg
-	myData = opCode & OP_LOW_DATA;
+	int32 myData = opCode & OP_LOW_DATA;
 
 	// Verify we have an argument
 	if (myFormat) {
@@ -534,7 +530,7 @@ int32 ws_PreProcessPcode(uint32 **PC, Anim8 *myAnim8) {
 	myFormat = (opCode & OP_FORMAT2) >> 19;
 	if (myFormat) {
 		word2 = FROM_LE_32(*myPC++);
-		myData = (word2 & OP_HIGH_DATA) >> 16;
+		myData = word2 >> 16;
 		if (!ExtractArg(myAnim8, myFormat, myData, &_GWS(myArg2), &_GWS(dataArg2))) {
 			return -1;
 		}
@@ -569,10 +565,8 @@ static void op_END(Anim8 *myAnim8) {
 }
 
 static void op_CLEAR(Anim8 *myAnim8) {
-	int32 i;
-
 	// Now clear the registers, but set the scale = 100%
-	for (i = 0; i <= IDX_COUNT + myAnim8->numLocalVars; i++) {
+	for (int32 i = 0; i <= IDX_COUNT + myAnim8->numLocalVars; i++) {
 		myAnim8->myRegs[i] = 0;
 	}
 	myAnim8->myRegs[IDX_S] = 0x10000;
@@ -801,9 +795,9 @@ static void op_FLOOR(Anim8 *myAnim8) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0251, "functionality: arg1 = floor(arg2)  or  arg1 = floor(rand(arg2,arg3))");
 	}
 	if (_GWS(myArg3)) {
-		*_GWS(myArg1) = (imath_ranged_rand16(*_GWS(myArg2), *_GWS(myArg3))) & 0xffff0000;
+		*_GWS(myArg1) = (imath_ranged_rand16(*_GWS(myArg2), *_GWS(myArg3)) >> 16) << 16;
 	} else {
-		*_GWS(myArg1) = (*_GWS(myArg2)) & 0xffff0000;
+		*_GWS(myArg1) = (*_GWS(myArg2) >> 16) << 16;
 	}
 }
 
@@ -818,9 +812,9 @@ static void op_ROUND(Anim8 *myAnim8) {
 		myArg = *_GWS(myArg2);
 	}
 	if ((myArg & 0xffff) >= 0x8000) {
-		*_GWS(myArg1) = (myArg + 0x10000) & 0xffff0000;
+		*_GWS(myArg1) = ((myArg + 0x10000) >> 16) << 16;
 	} else {
-		*_GWS(myArg1) = myArg & 0xffff0000;
+		*_GWS(myArg1) = (myArg >> 16) << 16;
 	}
 }
 
@@ -835,9 +829,9 @@ static void op_CEIL(Anim8 *myAnim8) {
 		myArg = *_GWS(myArg2);
 	}
 	if ((myArg & 0xffff) > 0) {
-		*_GWS(myArg1) = (myArg + 0x10000) & 0xffff0000;
+		*_GWS(myArg1) = ((myArg >> 16) << 16) + 0x10000;
 	} else {
-		*_GWS(myArg1) = myArg & 0xffff0000;
+		*_GWS(myArg1) = (myArg >> 16) << 16;
 	}
 }
 
@@ -849,12 +843,11 @@ static void op_POINT(Anim8 *myAnim8) {
 }
 
 static void op_DIST2D(Anim8 *myAnim8) {
-	int32 temp1, temp2;
 	if (!_GWS(myArg3)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0252, "functionality: arg1 = distance from (x, y) to (arg2, arg3)");
 	}
-	temp1 = (int32)(imath_abs(*_GWS(myArg2) - myAnim8->myRegs[IDX_X]));
-	temp2 = (int32)(imath_abs(*_GWS(myArg3) - myAnim8->myRegs[IDX_Y]));
+	int32 temp1 = (int32)(imath_abs(*_GWS(myArg2) - myAnim8->myRegs[IDX_X]));
+	int32 temp2 = (int32)(imath_abs(*_GWS(myArg3) - myAnim8->myRegs[IDX_Y]));
 	if ((temp1 >= 0x800000) || (temp2 >= 0x800000)) {
 		temp1 >>= 16;
 		temp2 >>= 16;
@@ -886,12 +879,10 @@ static void op_CRUNCH(Anim8 *myAnim8) {
 }
 
 static void op_BRANCH(Anim8 *myAnim8) {
-	int32 myOffset;
-
 	if (!_GWS(myArg2)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0251, "check the CCR, arg1 is the branch type, arg2 is the PC offset");
 	}
-	myOffset = *_GWS(myArg2) >> 14;
+	const int32 myOffset = *_GWS(myArg2) >> 14;
 	switch (*_GWS(myArg1) >> 16) {
 	case BRANCH_BR:
 		myAnim8->pcOffset += myOffset;
@@ -914,13 +905,13 @@ static void op_BRANCH(Anim8 *myAnim8) {
 	case BRANCH_BGT:
 		if (_GWS(compareCCR) > 0) myAnim8->pcOffset += myOffset;
 		break;
+	default:
+		break;
 	}
 }
 
 static void op_SETCEL(Anim8 *myAnim8) {
 	int32 myIndex;
-	CCB *myCCB;
-	frac16 *myRegs;
 
 	if (!_GWS(myArg2)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0251, "setcel(arg1, arg2)  or  setcel(arg1, rand(arg2, arg3))");
@@ -944,7 +935,7 @@ static void op_SETCEL(Anim8 *myAnim8) {
 		}
 	}
 
-	myCCB = myAnim8->myCCB;
+	CCB *myCCB = myAnim8->myCCB;
 	if (myCCB->flags & CCB_DISC_STREAM) {
 		ws_CloseSSstream(myCCB);
 	}
@@ -953,7 +944,7 @@ static void op_SETCEL(Anim8 *myAnim8) {
 	if ((myAnim8->myCCB = GetWSAssetCEL((uint32)(*_GWS(myArg1)) >> 24, (uint32)myIndex, myCCB)) == nullptr) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x025b, "setcel() failed.");
 	}
-	myRegs = myAnim8->myRegs;
+	frac16 *myRegs = myAnim8->myRegs;
 	if (myRegs[IDX_W] < 0) {
 		myRegs[IDX_W] = -myCCB->source->w << 16;
 	} else {
@@ -985,13 +976,12 @@ static void op_SEQ_SEND_MSG(Anim8 *myAnim8) {
 
 
 static void op_PUSH(Anim8 *myAnim8) {
-	uint32 *data;
-	int32 direction, numOfArgs, i; //,startReg
+	int32 numOfArgs;
 
 	if (!_GWS(myArg1)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0250, "functionality: push arg1  or start with arg1, and push a total of arg2 values");
 	}
-	direction = 1;
+	int32 direction = 1;
 	if (_GWS(myArg2)) {
 		if (*_GWS(myArg2) > 0) numOfArgs = (*_GWS(myArg2)) >> 16;
 		else {
@@ -1007,8 +997,8 @@ static void op_PUSH(Anim8 *myAnim8) {
 		return;
 	}
 	if (_GWS(myArg2)) {
-		data = (uint32 *)_GWS(myArg1);
-		for (i = 0; i < numOfArgs; i++) {
+		uint32 *data = (uint32 *)_GWS(myArg1);
+		for (int32 i = 0; i < numOfArgs; i++) {
 			*_GWS(stackTop)++ = *data;
 			data += direction;
 		}
@@ -1018,26 +1008,26 @@ static void op_PUSH(Anim8 *myAnim8) {
 }
 
 static void op_POP(Anim8 *myAnim8) {
-	uint32 *data;
-	int32 direction, numOfArgs, i;	// startReg,
+	int32 numOfArgs;
 
 	if (!_GWS(myArg1)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0250, "functionality: pop into arg1  or start with arg1, and pop a total of arg2 values");
 	}
-	direction = 1;
+	int32 direction = 1;
 	if (_GWS(myArg2)) {
 		if (*_GWS(myArg2) > 0) numOfArgs = (*_GWS(myArg2)) >> 16;
 		else {
 			numOfArgs = -(int)(*_GWS(myArg2)) >> 16;
 			direction = -1;
 		}
-	} else numOfArgs = 1;
+	} else
+		numOfArgs = 1;
 	if (((byte *)_GWS(stackTop) - (byte *)_GWS(stackBase)) < (numOfArgs << 2)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0255, "underflow during pop instruction");
 	}
 	if (_GWS(myArg2)) {
-		data = (uint32 *)_GWS(myArg1);
-		for (i = 0; i < numOfArgs; i++) {
+		uint32 *data = (uint32 *)_GWS(myArg1);
+		for (int32 i = 0; i < numOfArgs; i++) {
 			*data = *(--_GWS(stackTop));
 			data += direction;
 		}
@@ -1047,8 +1037,6 @@ static void op_POP(Anim8 *myAnim8) {
 }
 
 static void op_JSR(Anim8 *myAnim8) {
-	int32 dummy;
-
 	if (myAnim8->returnStackIndex >= JSR_STACK_MAX) {
 		ws_LogErrorMsg(FL, "Max number of nested jsr instructions is: %d", JSR_STACK_MAX);
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0256, "jsr() failed");
@@ -1058,7 +1046,9 @@ static void op_JSR(Anim8 *myAnim8) {
 	myAnim8->returnStackIndex++;
 
 	// Find the sequence
-	if ((myAnim8->sequHandle = ws_GetSEQU((uint32)*_GWS(myArg1) >> 16, &dummy, &myAnim8->pcOffset)) == nullptr) {
+	int32 dummy;
+	myAnim8->sequHandle = ws_GetSEQU((uint32)*_GWS(myArg1) >> 16, &dummy, &myAnim8->pcOffset);
+	if (myAnim8->sequHandle == nullptr) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x025f, "jsr() failed");
 	}
 	myAnim8->sequHash = (uint32)*_GWS(myArg1) >> 16;
@@ -1067,20 +1057,19 @@ static void op_JSR(Anim8 *myAnim8) {
 }
 
 static void op_RETURN(Anim8 *myAnim8) {
-	int32 dummy, dummy2;
-	uint32 returnSequHash, returnOffset;
-
 	if (myAnim8->returnStackIndex <= 0) {
 		op_END(myAnim8);
 		return;
 	}
 
 	myAnim8->returnStackIndex--;
-	returnSequHash = myAnim8->returnHashes[myAnim8->returnStackIndex];
-	returnOffset = myAnim8->returnOffsets[myAnim8->returnStackIndex];
+	const uint32 returnSequHash = myAnim8->returnHashes[myAnim8->returnStackIndex];
+	const uint32 returnOffset = myAnim8->returnOffsets[myAnim8->returnStackIndex];
 
 	// Find the sequence
-	if ((myAnim8->sequHandle = ws_GetSEQU((uint32)returnSequHash, &dummy, &dummy2)) == nullptr) {
+	int32 dummy, dummy2;
+	myAnim8->sequHandle = ws_GetSEQU((uint32)returnSequHash, &dummy, &dummy2);
+	if (myAnim8->sequHandle == nullptr) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x025f, "return() failed");
 	}
 	myAnim8->sequHash = returnSequHash;
@@ -1119,20 +1108,19 @@ static void op_SET_INDEX(Anim8 *myAnim8) {
 
 static void op_SET_LAYER(Anim8 *myAnim8) {
 	Anim8 *tempAnim8;
-	int32 myLayer, newLayer;
 	if (!_GWS(myArg1)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0250, "functionality: set_layer(arg1)");
 	}
 
-	newLayer = *_GWS(myArg1) >> 16;
-	myLayer = myAnim8->myLayer;
+	const int32 newLayer = *_GWS(myArg1) >> 16;
+	const int32 myLayer = myAnim8->myLayer;
 
 	if (myLayer == newLayer) {
 		return;
 	}
 
 	// If we are moving myAnim8 closer to the front (screen)	
-	if ((newLayer < myLayer) && (myAnim8->infront)) {
+	if ((newLayer < myLayer) && myAnim8->infront) {
 
 		//search "upward" to find the new position for myAnim8
 		tempAnim8 = myAnim8->infront;
@@ -1170,7 +1158,7 @@ static void op_SET_LAYER(Anim8 *myAnim8) {
 	}
 
 	// Else we are moving myAnim8 close to the back (further from the screen)
-	else if ((newLayer > myLayer) && (myAnim8->behind)) {
+	else if ((newLayer > myLayer) && myAnim8->behind) {
 
 		//search "downward" to find the new position for myAnim8
 		tempAnim8 = myAnim8->behind;
@@ -1238,8 +1226,6 @@ static void op_SET_DATA(Anim8 *myAnim8) {
 }
 
 static void op_OPEN_STREAM_SS(Anim8 *myAnim8) {
-	CCB *myCCB;
-
 	if (!_GWS(myArg1)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0250, "functionality: stream_series(arg1)");
 	}
@@ -1255,7 +1241,7 @@ static void op_OPEN_STREAM_SS(Anim8 *myAnim8) {
 		}
 	}
 
-	myCCB = myAnim8->myCCB;
+	CCB *myCCB = myAnim8->myCCB;
 	ShowCCB(myCCB);
 	myCCB->flags |= CCB_SKIP;
 
@@ -1273,11 +1259,10 @@ static void op_OPEN_STREAM_SS(Anim8 *myAnim8) {
 }
 
 static void op_NEXT_STREAM_SS(Anim8 *myAnim8) {
-	CCB *myCCB;
 	if (!myAnim8->myCCB) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0253, "next_ss_stream() failed.");
 	}
-	myCCB = myAnim8->myCCB;
+	CCB *myCCB = myAnim8->myCCB;
 	myCCB->flags |= CCB_SKIP;
 	if (!ws_GetNextSSstreamCel(myAnim8)) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x0259, "next_ss_stream() failed.");
@@ -1292,11 +1277,10 @@ static void op_NEXT_STREAM_SS(Anim8 *myAnim8) {
 }
 
 static void op_CLOSE_STREAM_SS(Anim8 *myAnim8) {
-	CCB *myCCB;
 	if (!myAnim8->myCCB) {
 		ws_Error(myAnim8->myMachine, ERR_SEQU, 0x02f3, "close_ss_stream() failed.");
 	}
-	myCCB = myAnim8->myCCB;
+	CCB *myCCB = myAnim8->myCCB;
 	ws_CloseSSstream(myCCB);
 	HideCCB(myCCB);
 }
@@ -1349,16 +1333,11 @@ void (*pCodeJmpTable[])(Anim8 *myAnim8) = {
 // The guts of the engine.  This proc executes an anim8s program.
 bool CrunchAnim8(Anim8 *myAnim8) {
 	bool moveTheCel = false;
-	frac16 timeElapsed, percentDist;
-	int32 tempAngle;
-	frac16 oldX, oldY, oldS;
-	int32 oldW, oldH, oldR;
-	int32 myInstruction;
-	frac16 *myRegs;
-	uint32 *myPC, *oldPC;
+	frac16 percentDist;
+	uint32 *myPC;
 
 	// Get the register set for myAnim8
-	myRegs = myAnim8->myRegs;
+	frac16 *myRegs = myAnim8->myRegs;
 
 	// Initialize the globals (flags, mostly) used in processing op codes
 	_GWS(keepProcessing) = false;
@@ -1367,12 +1346,12 @@ bool CrunchAnim8(Anim8 *myAnim8) {
 	_GWS(compareCCR) = 0;
 
 	//store the old values, so we can tell if we need to remap the Sprite
-	oldX = myRegs[IDX_X];
-	oldY = myRegs[IDX_Y];
-	oldS = myRegs[IDX_S];
-	oldW = myRegs[IDX_W] >> 16;
-	oldH = myRegs[IDX_H] >> 16;
-	oldR = myRegs[IDX_R] >> 16;
+	const frac16 oldX = myRegs[IDX_X];
+	const frac16 oldY = myRegs[IDX_Y];
+	const frac16 oldS = myRegs[IDX_S];
+	const int32 oldW = myRegs[IDX_W] >> 16;
+	const int32 oldH = myRegs[IDX_H] >> 16;
+	const int32 oldR = myRegs[IDX_R] >> 16;
 
 	// Check to see if we are still in an execution loop, or if it is time to 
 	// Interpret further instructions
@@ -1388,12 +1367,13 @@ bool CrunchAnim8(Anim8 *myAnim8) {
 		dbg_SetCurrSequInstr(myAnim8, _GWS(compareCCR));
 
 		myPC = (uint32 *)((intptr)*(myAnim8->sequHandle) + myAnim8->pcOffset);
-		oldPC = myPC;
+		uint32 *oldPC = myPC;
 		_GWS(pcOffsetOld) = myAnim8->pcOffset;
 
 		dbg_SetCurrMachInstr(myAnim8->myMachine, myAnim8->pcOffset, true);
 
-		if ((myInstruction = ws_PreProcessPcode(&myPC, myAnim8)) < 0) {
+		const int32 myInstruction = ws_PreProcessPcode(&myPC, myAnim8);
+		if (myInstruction < 0 || myInstruction > 39) {
 			ws_Error(myAnim8->myMachine, ERR_SEQU, 0x025c, nullptr);
 		}
 
@@ -1421,7 +1401,7 @@ bool CrunchAnim8(Anim8 *myAnim8) {
 	}
 
 	if (myAnim8->flags) {
-		timeElapsed = (_GWS(ws_globals)[GLB_TIME] - myAnim8->startTime) << 16;
+		const frac16 timeElapsed = (_GWS(ws_globals)[GLB_TIME] - myAnim8->startTime) << 16;
 
 		// This must be checked before TAG_TARGS because a bez path can use a target scale and rotate
 		// And we don't want to accidentally set up a target x or y.
@@ -1466,7 +1446,7 @@ bool CrunchAnim8(Anim8 *myAnim8) {
 				myAnim8->start_s = myRegs[IDX_S];
 				myAnim8->start_r = myRegs[IDX_R];
 			}
-			tempAngle = (myRegs[IDX_THETA] >> 16) & 0xff;
+			const int32 tempAngle = (myRegs[IDX_THETA] >> 16) & 0xff;
 			myRegs[IDX_DELTA_X] = MulSF16(myRegs[IDX_VELOCITY], sinTable[tempAngle]);
 			myRegs[IDX_DELTA_Y] = MulSF16(myRegs[IDX_VELOCITY], -(int)cosTable[tempAngle]);
 			myAnim8->flags |= (TAG_DELTAS << 16);
@@ -1525,8 +1505,6 @@ bool CrunchAnim8(Anim8 *myAnim8) {
 }
 
 void ws_CrunchAnim8s(int16 *depth_table) {
-	Anim8 *currAnim8;
-	EOSreq *tempEOSreq;
 
 	// Make sure the cruncher has been initialized
 	VERIFY_INTIALIZED("ws_CrunchAnim8s()");
@@ -1535,7 +1513,7 @@ void ws_CrunchAnim8s(int16 *depth_table) {
 	_GWS(myDepthTable) = depth_table;
 
 	_GWS(crunchNext) = nullptr;
-	currAnim8 = _GWS(myCruncher)->firstAnim8ToCrunch;
+	Anim8 *currAnim8 = _GWS(myCruncher)->firstAnim8ToCrunch;
 	while (currAnim8) {
 		_GWS(crunchNext) = currAnim8->next;
 		if (currAnim8->active) {
@@ -1546,7 +1524,9 @@ void ws_CrunchAnim8s(int16 *depth_table) {
 				if (currAnim8->eosReqOffset >= 0) {
 					// If the above field has a value, this implies that an On end sequence
 					//signal has been requested. If so, report back to the machine.
-					if ((tempEOSreq = (EOSreq *)mem_get_from_stash(_GWS(memtypeEOS), "+EOS")) == nullptr) return;
+					EOSreq *tempEOSreq = (EOSreq *)mem_get_from_stash(_GWS(memtypeEOS), "+EOS");
+					if (tempEOSreq == nullptr)
+						return;
 					tempEOSreq->myAnim8 = currAnim8;
 					tempEOSreq->prev = nullptr;
 					tempEOSreq->next = _GWS(EOSreqList);
@@ -1563,23 +1543,19 @@ void ws_CrunchAnim8s(int16 *depth_table) {
 }
 
 void ws_CrunchEOSreqs(void) {
-	int32 pcOffset, pcCount;
-	machine *myXM;
-	EOSreq *tempEOSreq;
-
 	// Make sure the cruncher has been initialized
 	VERIFY_INTIALIZED("ws_CrunchEOSreqs()");
 
 	// Loop through, and handle all the eos requests
-	tempEOSreq = _GWS(EOSreqList);
+	EOSreq *tempEOSreq = _GWS(EOSreqList);
 	while (tempEOSreq) {
 		_GWS(EOSreqList) = _GWS(EOSreqList)->next;
 		if (_GWS(EOSreqList)) {
 			_GWS(EOSreqList)->prev = nullptr;
 		}
-		pcOffset = tempEOSreq->myAnim8->eosReqOffset;
-		pcCount = tempEOSreq->myAnim8->eosReqCount;
-		myXM = tempEOSreq->myAnim8->myMachine;
+		const int32 pcOffset = tempEOSreq->myAnim8->eosReqOffset;
+		const int32 pcCount = tempEOSreq->myAnim8->eosReqCount;
+		machine *myXM = tempEOSreq->myAnim8->myMachine;
 		tempEOSreq->myAnim8->eosReqOffset = -1;
 		mem_free_to_stash((void *)tempEOSreq, _GWS(memtypeEOS));
 		ws_StepWhile(myXM, pcOffset, pcCount);

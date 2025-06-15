@@ -89,10 +89,10 @@ public:
 	virtual Common::Error syncState(Common::Serializer &s); // note: children should call parent first
 	Common::Array<Global *> &getAllGlobals() { return _globals; }
 
-	int16 getGameMinsToAddOnLClick() const { return _gameMinsToAddOnLClick; }
-	int16 getGameMinsToAddOnStartDrag() const { return _gameMinsToAddOnStartDrag; }
-	int16 getGameMinsToAddOnRClick() const { return _gameMinsToAddOnRClick; }
-	int16 getGameMinsToAddOnDragFinished() const { return _gameMinsToAddOnDragFinished; }
+	int16 getGameMinsToAddOnUse() const { return _gameMinsToAddOnUse; }
+	int16 getGameMinsToAddOnPickUp() const { return _gameMinsToAddOnPickUp; }
+	int16 getGameMinsToAddOnLook() const { return _gameMinsToAddOnLook; }
+	int16 getGameMinsToAddOnDrop() const { return _gameMinsToAddOnDrop; }
 	int16 getGameMinsToAddOnObjInteraction() const { return _gameMinsToAddOnObjInteraction; }
 	int16 getGameIsInteractiveGlobal() { return _gameIsInteractiveGlobal; }
 
@@ -105,10 +105,10 @@ protected:
 	int16 _lastOpcode1SceneChangeNum;
 	int16 _sceneOp12SceneNum;
 	int16 _currentSelectedItem;
-	int16 _gameMinsToAddOnLClick;
-	int16 _gameMinsToAddOnStartDrag;
-	int16 _gameMinsToAddOnRClick;
-	int16 _gameMinsToAddOnDragFinished;
+	int16 _gameMinsToAddOnUse;
+	int16 _gameMinsToAddOnPickUp;
+	int16 _gameMinsToAddOnLook;
+	int16 _gameMinsToAddOnDrop;
 	int16 _gameMinsToAddOnObjInteraction;
 	int16 _gameIsInteractiveGlobal; // used to decide if the game can start a "meanwhile" sequence
 	int16 _sceneOpcode15FromScene;
@@ -157,7 +157,6 @@ public:
 	int16 getSheckels() const { return _sheckels; }
 
 	int16 getShellBet() const { return _shellBet; }
-	void setShellBet(int16 bet) { _shellBet = bet; }
 
 	int16 getShellPea() const { return _shellPea; }
 	void setShellPea(int16 pea) { _shellPea = pea; }
@@ -179,7 +178,7 @@ private:
 	int16 _shellPea;
 	int16 _shellBet;
 	int16 _sheckels;
-	int16 _unk45;
+	int16 _palFade;
 	int16 _unk46;
 	int16 _unk47;
 	int16 _tankState;
@@ -187,10 +186,9 @@ private:
 	int16 _tankFinished;
 	int16 _currentCharacter;
 	int16 _currentCharacter2;
-	int16 _unkDlgDlgNum;
-	int16 _unkDlgFileNum;
+	int16 _partnerDlgDlgNum;	// Dialog shown when right-clicking
+	int16 _partnerDlgFileNum;	//  on character swap button
 	int16 _unk55;
-	int16 _difficultyLevel;
 
 	Common::Error syncState(Common::Serializer &s) override;
 };

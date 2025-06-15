@@ -133,7 +133,7 @@ void Room604::init() {
 	switch (_G(game).previous_room) {
 	case KERNEL_RESTORING_GAME:
 		if (_G(flags)[V203] == 8)
-			midi_play("tensions", 255, 1, -1, 949);
+			midi_play("tensions", 255, true, -1, 949);
 
 		_shedDoor = series_show("SHED DOOR OPENS", 0xf00, 16);
 
@@ -216,8 +216,8 @@ void Room604::daemon() {
 }
 
 void Room604::pre_parser() {
-	bool takeFlag = player_said("take");
-	bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
+	const bool takeFlag = player_said("take");
+	const bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
 
 	if (player_said("PULL CORD", "generator set"))
 		_G(player).resetWalk();
@@ -248,9 +248,9 @@ void Room604::pre_parser() {
 }
 
 void Room604::parser() {
-	bool lookFlag = player_said_any("look", "look at");
-	bool takeFlag = player_said("take");
-	bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
+	const bool lookFlag = player_said_any("look", "look at");
+	const bool takeFlag = player_said("take");
+	const bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
 
 	if (useFlag && player_said("WHALE BONE HORN") && useWhaleBoneHorn()) {
 		// No implementation
@@ -313,7 +313,7 @@ void Room604::parser() {
 		(player_said("generator set") && inv_object_is_here("PULL CORD"))
 	)) {
 		if (_G(flags)[V011]) {
-			digi_play("com115", 1);
+			digi_play("com115", 1, 255, -1, 997);
 		} else {
 			switch (_G(kernel).trigger) {
 			case -1:
@@ -356,7 +356,7 @@ void Room604::parser() {
 
 			case 3:
 				terminateMachineAndNull(_shedDoor);
-				_shedDoor = series_play("SEHD DOOR OPENS", 0x300, 16, 4);
+				_shedDoor = series_play("SHED DOOR OPENS", 0x300, 16, 4);
 				break;
 
 			case 4:
@@ -742,7 +742,7 @@ void Room604::parser() {
 		} else if (_G(flags)[V188]) {
 			digi_play("604r27", 1);
 		} else {
-			digi_play("604r27", 1);
+			digi_play("604r27", 1, 255, 1, -1);
 			player_set_commands_allowed(false);
 		}
 	} else if (lookFlag && player_said("pull cord") &&
@@ -798,11 +798,11 @@ bool Room604::useWhaleBoneHorn() {
 	switch (_G(kernel).trigger) {
 	case 5:
 		_ripley = series_play("BAD GUYS LOOK TO SHED", 0, 0, 6, 6);
-		return true;
+		return false;
 
 	case 6:
 		kernel_timing_trigger(30, 7);
-		return true;
+		return false;
 
 	case 7:
 		digi_play("604k01", 1);
@@ -829,7 +829,7 @@ void Room604::killRipley() {
 
 	case 1:
 		if (_G(flags)[V189] == 3) {
-			series_play("glass flowing out", 0x700, 0, 2, 5);
+			series_play("gas flowing out", 0x700, 0, 2, 5);
 
 			if (inv_object_is_here("LIGHTER")) {
 				kernel_timing_trigger(20, 30);

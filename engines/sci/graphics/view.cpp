@@ -23,7 +23,7 @@
 #include "sci/engine/state.h"
 #include "sci/graphics/drivers/gfxdriver.h"
 #include "sci/graphics/screen.h"
-#include "sci/graphics/palette.h"
+#include "sci/graphics/palette16.h"
 #include "sci/graphics/remap.h"
 #include "sci/graphics/coordadjuster.h"
 #include "sci/graphics/view.h"
@@ -458,6 +458,7 @@ void unpackCelData(const SciSpan<const byte> &inBuffer, SciSpan<byte> &celBitmap
 	const byte *literalPtr = inBuffer.getUnsafeDataAt(literalPos, inBuffer.size() - literalPos);
 	const byte *const endOfResource = inBuffer.getUnsafeDataAt(inBuffer.size(), 0);
 	int pixelNr = 0;
+	(void)endOfResource;
 
 	memset(celBitmap.getUnsafeDataAt(0), clearColor, celBitmap.size());
 

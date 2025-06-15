@@ -72,7 +72,8 @@ static void qd_show_load_progress(int percents_loaded, void *p);
 QDEngineEngine::QDEngineEngine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(syst),
 	_gameDescription(gameDesc), _randomSource("QDEngine") {
 	g_engine = this;
-	_pixelformat = Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0);
+
+	_pixelformat = Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
 
 	_screenW = 640;
 	_screenH = 480;
@@ -87,6 +88,7 @@ QDEngineEngine::QDEngineEngine(OSystem *syst, const ADGameDescription *gameDesc)
 	ConfMan.registerDefault("sound_volume", 255);
 	ConfMan.registerDefault("splash_enabled", true);
 	ConfMan.registerDefault("splash_time", 3000);
+	ConfMan.registerDefault("16bpp", false);
 
 	memset(_tagMap, 0, sizeof(_tagMap));
 }
@@ -192,6 +194,10 @@ Common::Error QDEngineEngine::run() {
 		sp.destroy();
 	}
 
+	if (debugChannelSet(-1, kDebug16BppMode) || ConfMan.getBool("16bpp")) {
+		_pixelformat = Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0);
+	}
+
 	init_graphics();
 
 	sndDispatcher *sndD = new sndDispatcher;
@@ -282,6 +288,7 @@ Common::Error QDEngineEngine::run() {
 				} else if (event.kbd.ascii == 'g')
 					qdGameConfig::get_config().toggle_show_grid();
 #endif
+				grDispatcher::instance()->handle_char_input(event.kbd.keycode);
 				break;
 			default:
 				break;
@@ -427,11 +434,11 @@ static int detectVersion(Common::String gameID) {
 	} else if (gameID == "nupogodi3" && g_engine->getLanguage() == Common::CS_CZE) {
 		return 20031014;		// QDSCR_TEXT_DB = 184, d864cc279 (repo-vss)
 	} else if (gameID == "nupogodi3" && g_engine->getLanguage() == Common::LT_LTU) {
-		return 20031206;		// QDSCR_TEXT_DB = 185
+		return 20031206;		// QDSCR_TEXT_DB = 185, 6c43cda6bf
 	} else if (gameID == "pilots3") {
-		return 20040519;		// QDSCR_GAME_TITLE = 203
+		return 20040519;		// QDSCR_GAME_TITLE = 203, b34ca47148
 	} else if (gameID == "rybalka") {
-		return 20040601;		// QDSCR_GAME_TITLE = 206
+		return 20040601;		// QDSCR_GAME_TITLE = 206, 9e41b636f6c9
 	} else if (gameID == "pilots3d") {
 		return 20040601;		// QDSCR_GAME_TITLE = 206
 	} else if (gameID == "pilots3d-2") {
@@ -443,7 +450,7 @@ static int detectVersion(Common::String gameID) {
 	} else if (gameID == "3mice1" && (g_engine->getFeatures() & ADGF_DEMO)) {
 		return 20060129;		// QDSCR_SCREEN_TRANSFORM = 232
 	} else if (gameID == "3mice1") {
-		return 20060715;		// QDSCR_SCREEN_TRANSFORM = 232
+		return 20060715;		// QDSCR_SCREEN_TRANSFORM = 232, 54f9af2166
 	} else if (gameID == "shveik") {
 		return 20070503;		// QDSCR_GAME_TITLE = 231, QDSCR_RESOURCE_COMPRESSION = 243
 	} else if (gameID == "klepa") {
@@ -467,7 +474,10 @@ void QDEngineEngine::init_graphics() {
 
 	grDispatcher::set_instance(_grD);
 
-	grDispatcher::instance()->init(g_engine->_screenW, g_engine->_screenH, GR_RGB565);
+	if (g_engine->_pixelformat.bytesPerPixel == 4)
+		grDispatcher::instance()->init(g_engine->_screenW, g_engine->_screenH, GR_RGBA8888);
+	else
+		grDispatcher::instance()->init(g_engine->_screenW, g_engine->_screenH, GR_RGB565);
 
 	grDispatcher::instance()->setClip();
 	grDispatcher::instance()->setClipMode(1);
@@ -553,9 +563,8 @@ void scan_qda() {
 // Translates cp-1251..utf-8
 byte *transCyrillic(const Common::String &str) {
 	const byte *s = (const byte *)str.c_str();
-	static byte tmp[1024];
+	static byte tmp[10240];
 
-#ifndef WIN32
 	static int trans[] = {
 		0xa0, 0xc2a0,
 		0xa8, 0xd081, 0xab, 0xc2ab, 0xb8, 0xd191, 0xbb, 0xc2bb, 0xc0, 0xd090,
@@ -575,24 +584,13 @@ byte *transCyrillic(const Common::String &str) {
 		0xf5, 0xd185, 0xf6, 0xd186, 0xf7, 0xd187, 0xf8, 0xd188,
 		0xf9, 0xd189, 0xfa, 0xd18a, 0xfb, 0xd18b, 0xfc, 0xd18c,
 		0xfd, 0xd18d, 0xfe, 0xd18e, 0xff, 0xd18f, 0x00 };
-#endif
 
 	int i = 0;
 
 	for (const byte *p = s; *p; p++) {
-#ifdef WIN32
-		// translate from cp1251 to cp866
-		byte c = *p;
-		if (c >= 0xC0 && c <= 0xEF)
-			c = c - 0xC0 + 0x80;
-		else if (c >= 0xF0)
-			c = c - 0xF0 + 0xE0;
-		else if (c == 0xA8)
-			c = 0xF0;
-		else if (c == 0xB8)
-			c = 0xF1;
-		tmp[i++] = c;
-#else
+		if (i >= 10240 - 5)
+			break;
+
 		if (*p < 128) {
 			tmp[i++] = *p;
 		} else {
@@ -628,10 +626,12 @@ byte *transCyrillic(const Common::String &str) {
 				}
 			}
 		}
-#endif
 	}
 
-	tmp[i] = 0;
+	if (i < 10240)
+		tmp[i] = 0;
+	else
+		tmp[10239] = 0;
 
 	return tmp;
 }

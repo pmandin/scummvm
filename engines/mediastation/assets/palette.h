@@ -22,18 +22,20 @@
 #ifndef MEDIASTATION_PALETTE_H
 #define MEDIASTATION_PALETTE_H
 
-#include "mediastation/assetheader.h"
 #include "mediastation/asset.h"
-#include "mediastation/mediascript/operand.h"
+#include "mediastation/mediascript/scriptvalue.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
 class Palette : public Asset {
 public:
-	Palette(AssetHeader *header) : Asset(header) {};
+	Palette() : Asset(kAssetTypePalette) {};
+	virtual ~Palette() override;
 
-	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
+	virtual void readParameter(Chunk &chunk, AssetHeaderSectionType paramType) override;
+
+	Graphics::Palette *_palette = nullptr;
 };
 
 } // End of namespace MediaStation

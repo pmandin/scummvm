@@ -1121,6 +1121,10 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/playground3d/shaders/playground3d_cube.vertex");
 			files.push_back("engines/playground3d/shaders/playground3d_fade.fragment");
 			files.push_back("engines/playground3d/shaders/playground3d_fade.vertex");
+			files.push_back("engines/playground3d/shaders/playground3d_offset.fragment");
+			files.push_back("engines/playground3d/shaders/playground3d_offset.vertex");
+			files.push_back("engines/playground3d/shaders/playground3d_viewport.fragment");
+			files.push_back("engines/playground3d/shaders/playground3d_viewport.vertex");
 		}
 		if (CONTAINS_DEFINE(setup.defines, "ENABLE_STARK")) {
 			files.push_back("engines/stark/shaders/stark_actor.fragment");
@@ -1139,8 +1143,6 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		if (CONTAINS_DEFINE(setup.defines, "ENABLE_WINTERMUTE")) {
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_fade.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_fade.vertex");
-			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_mask.fragment");
-			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_mask.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_modelx.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_modelx.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_geometry.fragment");
@@ -1149,10 +1151,14 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_line.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_modelx.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_modelx.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_postfilter.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_postfilter.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_mask.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_mask.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_simple_shadow.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_simple_shadow.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_sprite.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_sprite.vertex");
 		}
@@ -1161,6 +1167,8 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/freescape/shaders/freescape_bitmap.vertex");
 			files.push_back("engines/freescape/shaders/freescape_triangle.fragment");
 			files.push_back("engines/freescape/shaders/freescape_triangle.vertex");
+			files.push_back("engines/freescape/shaders/freescape_cubemap.fragment");
+			files.push_back("engines/freescape/shaders/freescape_cubemap.vertex");
 		}
 		if (CONTAINS_DEFINE(setup.defines, "USE_FLUIDSYNTH")) {
 			files.push_back("dists/soundfonts/Roland_SC-55.sf2");
@@ -1336,6 +1344,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	scummvm_WarningCFlags.push_back("-Wno-undefined-var-template");
 	scummvm_WarningCFlags.push_back("-Wno-pragma-pack");
 	scummvm_WarningCFlags.push_back("-Wc++11-extensions");
+	scummvm_WarningCFlags.push_back("-Werror=return-type");
 	ADD_SETTING_LIST(scummvm_Debug, "WARNING_CFLAGS", scummvm_WarningCFlags, kSettingsQuoteVariable | kSettingsAsList, 5);
 	ValueList scummvm_defines(_defines);
 	REMOVE_DEFINE(scummvm_defines, "MACOSX");

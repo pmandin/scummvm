@@ -21,10 +21,10 @@
 
 #include "mediastation/mediastation.h"
 #include "mediastation/context.h"
-#include "mediastation/datum.h"
 #include "mediastation/debugchannels.h"
 
 #include "mediastation/bitmap.h"
+#include "mediastation/mediascript/collection.h"
 #include "mediastation/assets/canvas.h"
 #include "mediastation/assets/palette.h"
 #include "mediastation/assets/image.h"
@@ -79,14 +79,14 @@ Context::Context(const Common::Path &path) : Datafile(path) {
 	// these and create the appropriate references.
 	for (auto it = _assets.begin(); it != _assets.end(); ++it) {
 		Asset *asset = it->_value;
-		uint referencedAssetId = asset->getHeader()->_assetReference;
+		uint referencedAssetId = asset->_assetReference;
 		if (referencedAssetId != 0) {
-			switch (asset->getHeader()->_type) {
+			switch (asset->type()) {
 			case kAssetTypeImage: {
 				Image *image = static_cast<Image *>(asset);
 				Image *referencedImage = static_cast<Image *>(getAssetById(referencedAssetId));
 				if (referencedImage == nullptr) {
-					error("Context::Context(): Asset %d references non-existent asset %d", asset->getHeader()->_id, referencedAssetId);
+					error("Context::Context(): Asset %d references non-existent asset %d", asset->id(), referencedAssetId);
 				}
 				image->_bitmap = referencedImage->_bitmap;
 				break;
@@ -96,14 +96,15 @@ Context::Context(const Common::Path &path) : Datafile(path) {
 				Sprite *sprite = static_cast<Sprite *>(asset);
 				Sprite *referencedSprite = static_cast<Sprite *>(getAssetById(referencedAssetId));
 				if (referencedSprite == nullptr) {
-					error("Context::Context(): Asset %d references non-existent asset %d", asset->getHeader()->_id, referencedAssetId);
+					error("Context::Context(): Asset %d references non-existent asset %d", asset->id(), referencedAssetId);
 				}
 				sprite->_frames = referencedSprite->_frames;
+				sprite->_clips = referencedSprite->_clips;
 				break;
 			}
 
 			default:
-				error("Context::Context(): Asset type %d referenced, but reference not implemented yet", asset->getHeader()->_type);
+				error("Context::Context(): Asset type %d referenced, but reference not implemented yet", asset->type());
 			}
 		}
 	}
@@ -112,9 +113,6 @@ Context::Context(const Common::Path &path) : Datafile(path) {
 Context::~Context() {
 	delete _palette;
 	_palette = nullptr;
-
-	delete _contextName;
-	_contextName = nullptr;
 
 	for (auto it = _assets.begin(); it != _assets.end(); ++it) {
 		delete it->_value;
@@ -127,6 +125,11 @@ Context::~Context() {
 		delete it->_value;
 	}
 	_functions.clear();
+
+	for (auto it = _variables.begin(); it != _variables.end(); ++it) {
+		delete it->_value;
+	}
+	_variables.clear();
 }
 
 Asset *Context::getAssetById(uint assetId) {
@@ -137,34 +140,29 @@ Asset *Context::getAssetByChunkReference(uint chunkReference) {
 	return _assetsByChunkReference.getValOrDefault(chunkReference);
 }
 
-
 Function *Context::getFunctionById(uint functionId) {
 	return _functions.getValOrDefault(functionId);
 }
 
-void Context::registerActiveAssets() {
-	for (auto it = _assets.begin(); it != _assets.end(); ++it) {
-		if (it->_value->isActive()) {
-			g_engine->addPlayingAsset(it->_value);
-		}
-	}
+ScriptValue *Context::getVariable(uint variableId) {
+	return _variables.getValOrDefault(variableId);
 }
 
-void Context::readParametersSection(Chunk &chunk) {
-	_fileNumber = Datum(chunk, kDatumTypeUint16_1).u.i;
+void Context::readCreateContextData(Chunk &chunk) {
+	_fileNumber = chunk.readTypedUint16();
 
-	ContextParametersSectionType sectionType = static_cast<ContextParametersSectionType>(Datum(chunk, kDatumTypeUint16_1).u.i);
+	ContextParametersSectionType sectionType = static_cast<ContextParametersSectionType>(chunk.readTypedUint16());
 	while (sectionType != kContextParametersEmptySection) {
 		debugC(5, kDebugLoading, "ContextParameters::ContextParameters: sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
 		switch (sectionType) {
 		case kContextParametersName: {
-			uint repeatedFileNumber = Datum(chunk, kDatumTypeUint16_1).u.i;
+			uint repeatedFileNumber = chunk.readTypedUint16();
 			if (repeatedFileNumber != _fileNumber) {
 				warning("ContextParameters::ContextParameters(): Repeated file number didn't match: %d != %d", repeatedFileNumber, _fileNumber);
 			}
-			_contextName = Datum(chunk, kDatumTypeString).u.string;
+			_contextName = chunk.readTypedString();
 
-			uint endingFlag = Datum(chunk, kDatumTypeUint16_1).u.i;
+			uint endingFlag = chunk.readTypedUint16();
 			if (endingFlag != 0) {
 				warning("ContextParameters::ContextParameters(): Got non-zero ending flag 0x%x", endingFlag);
 			}
@@ -177,20 +175,7 @@ void Context::readParametersSection(Chunk &chunk) {
 		}
 
 		case kContextParametersVariable: {
-			uint repeatedFileNumber = Datum(chunk, kDatumTypeUint16_1).u.i;
-			if (repeatedFileNumber != _fileNumber) {
-				warning("ContextParameters::ContextParameters(): Repeated file number didn't match: %d != %d", repeatedFileNumber, _fileNumber);
-			}
-			Variable *variable = new Variable(chunk);
-			if (g_engine->_variables.contains(variable->_id)) {
-				// Don't overwrite the variable if it already exists. This can happen if we have
-				// unloaded a screen but are returning to it later.
-				debugC(5, kDebugScript, "ContextParameters::ContextParameters(): Skipping re-creation of existing global variable %d (type: %s)", variable->_id, variableTypeToStr(variable->_type));
-				delete variable;
-			} else {
-				g_engine->_variables.setVal(variable->_id, variable);
-				debugC(5, kDebugScript, "ContextParameters::ContextParameters(): Created global variable %d (type: %s)", variable->_id, variableTypeToStr(variable->_type));
-			}
+			readCreateVariableData(chunk);
 			break;
 		}
 
@@ -204,8 +189,91 @@ void Context::readParametersSection(Chunk &chunk) {
 			error("ContextParameters::ContextParameters(): Unknown section type 0x%x", static_cast<uint>(sectionType));
 		}
 
-		sectionType = static_cast<ContextParametersSectionType>(Datum(chunk, kDatumTypeUint16_1).u.i);
+		sectionType = static_cast<ContextParametersSectionType>(chunk.readTypedUint16());
 	}
+}
+
+Asset *Context::readCreateAssetData(Chunk &chunk) {
+	uint contextId = chunk.readTypedUint16();
+	AssetType type = static_cast<AssetType>(chunk.readTypedUint16());
+	uint id = chunk.readTypedUint16();
+	debugC(4, kDebugLoading, "_type = 0x%x, _id = 0x%x", static_cast<uint>(type), id);
+
+	Asset *asset = nullptr;
+	switch (type) {
+	case kAssetTypeImage:
+		asset = new Image();
+		break;
+
+	case kAssetTypeMovie:
+		asset = new Movie();
+		break;
+
+	case kAssetTypeSound:
+		asset = new Sound();
+		break;
+
+	case kAssetTypePalette:
+		asset = new Palette();
+		break;
+
+	case kAssetTypePath:
+		asset = new Path();
+		break;
+
+	case kAssetTypeTimer:
+		asset = new Timer();
+		break;
+
+	case kAssetTypeHotspot:
+		asset = new Hotspot();
+		break;
+
+	case kAssetTypeSprite:
+		asset = new Sprite();
+		break;
+
+	case kAssetTypeCanvas:
+		asset = new Canvas();
+		break;
+
+	case kAssetTypeScreen:
+		asset = new Screen();
+		_screenAsset = static_cast<Screen *>(asset);
+		break;
+
+	case kAssetTypeFont:
+		asset = new Font();
+		break;
+
+	case kAssetTypeText:
+		asset = new Text();
+		break;
+
+	default:
+		error("No class for asset type 0x%x (@0x%llx)", static_cast<uint>(type), static_cast<long long int>(chunk.pos()));
+	}
+	asset->setId(id);
+	asset->setContextId(contextId);
+	asset->initFromParameterStream(chunk);
+	return asset;
+}
+
+void Context::readCreateVariableData(Chunk &chunk) {
+	uint repeatedFileNumber = chunk.readTypedUint16();
+	if (repeatedFileNumber != _fileNumber) {
+		warning("Context::readCreateVariableData(): Repeated file number didn't match: %d != %d", repeatedFileNumber, _fileNumber);
+	}
+
+	uint id = chunk.readTypedUint16();
+	if (g_engine->getVariable(id) != nullptr) {
+		error("Global variable %d already exists", id);
+	}
+
+	ScriptValue *value = new ScriptValue(&chunk);
+	_variables.setVal(id, value);
+	debugC(5, kDebugScript, "Created global variable %d (type: %s)",
+		id, scriptValueTypeToStr(value->getType()));
 }
 
 void Context::readOldStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
@@ -221,7 +289,7 @@ void Context::readNewStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
 	while (moreSectionsToRead) {
 		// Verify this chunk is a header.
 		// TODO: What are the situations when it's not?
-		uint16 sectionType = Datum(chunk, kDatumTypeUint16_1).u.i;
+		uint16 sectionType = chunk.readTypedUint16();
 		debugC(5, kDebugLoading, "Context::readNewStyleHeaderSections(): sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
 		bool chunkIsHeader = (sectionType == 0x000d);
 		if (!chunkIsHeader) {
@@ -229,7 +297,7 @@ void Context::readNewStyleHeaderSections(Subfile &subfile, Chunk &chunk) {
 		}
 
 		// Read this header section.
-		moreSectionsToRead = readHeaderSection(subfile, chunk);
+		moreSectionsToRead = readHeaderSection(chunk);
 		if (subfile.atEnd()) {
 			break;
 		} else {
@@ -277,12 +345,12 @@ void Context::readAssetFromLaterSubfile(Subfile &subfile) {
 	asset->readSubfile(subfile, chunk);
 }
 
-bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
-	uint16 sectionType = Datum(chunk, kDatumTypeUint16_1).u.i;
+bool Context::readHeaderSection(Chunk &chunk) {
+	uint16 sectionType = chunk.readTypedUint16();
 	debugC(5, kDebugLoading, "Context::readHeaderSection(): sectionType = 0x%x (@0x%llx)", static_cast<uint>(sectionType), static_cast<long long int>(chunk.pos()));
 	switch (sectionType) {
 	case kContextParametersSection: {
-		readParametersSection(chunk);
+		readCreateContextData(chunk);
 		break;
 	}
 
@@ -299,13 +367,13 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 		// TODO: Avoid the copying here!
 		const uint PALETTE_ENTRIES = 256;
 		const uint PALETTE_BYTES = PALETTE_ENTRIES * 3;
-		byte* buffer = new byte[PALETTE_BYTES];
+		byte *buffer = new byte[PALETTE_BYTES];
 		chunk.read(buffer, PALETTE_BYTES);
 		_palette = new Graphics::Palette(buffer, PALETTE_ENTRIES);
 		delete[] buffer;
 		debugC(5, kDebugLoading, "Context::readHeaderSection(): Read palette");
 		// This is likely just an ending flag that we expect to be zero.
-		uint endingFlag = Datum(chunk, kDatumTypeUint16_1).u.i;
+		uint endingFlag = chunk.readTypedUint16();
 		if (endingFlag != 0) {
 			warning("Context::readHeaderSection(): Got non-zero ending flag 0x%x", endingFlag);
 		}
@@ -313,79 +381,25 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 	}
 
 	case kContextAssetHeaderSection: {
-		Asset *asset = nullptr;
-		AssetHeader *header = new AssetHeader(chunk);
-		switch (header->_type) {
-		case kAssetTypeImage:
-			asset = new Image(header);
-			break;
-
-		case kAssetTypeMovie:
-			asset = new Movie(header);
-			break;
-
-		case kAssetTypeSound:
-			asset = new Sound(header);
-			break;
-
-		case kAssetTypePalette:
-			asset = new Palette(header);
-			break;
-
-		case kAssetTypePath:
-			asset = new Path(header);
-			break;
-
-		case kAssetTypeTimer:
-			asset = new Timer(header);
-			break;
-
-		case kAssetTypeHotspot:
-			asset = new Hotspot(header);
-			break;
-
-		case kAssetTypeSprite:
-			asset = new Sprite(header);
-			break;
-
-		case kAssetTypeCanvas:
-			asset = new Canvas(header);
-			break;
-
-		case kAssetTypeScreen:
-			asset = new Screen(header);
-			_screenAsset = header;
-			break;
-
-		case kAssetTypeFont:
-			asset = new Font(header);
-			break;
-
-		case kAssetTypeText:
-			asset = new Text(header);
-			break;
-
-		default:
-			error("Context::readHeaderSection(): No class for asset type 0x%x (@0x%llx)", static_cast<uint>(header->_type), static_cast<long long int>(chunk.pos()));
+		Asset *asset = readCreateAssetData(chunk);
+		_assets.setVal(asset->id(), asset);
+		g_engine->registerAsset(asset);
+		if (asset->_chunkReference != 0) {
+			debugC(5, kDebugLoading, "Context::readHeaderSection(): Storing asset with chunk ID \"%s\" (0x%x)", tag2str(asset->_chunkReference), asset->_chunkReference);
+			_assetsByChunkReference.setVal(asset->_chunkReference, asset);
 		}
 
-		if (g_engine->getAssetById(header->_id)) {
-			error("Context::readHeaderSection(): Asset with ID 0x%d was already defined in this title", header->_id);
-		}
-		_assets.setVal(header->_id, asset);
-		if (header->_chunkReference != 0) {
-			debugC(5, kDebugLoading, "Context::readHeaderSection(): Storing asset with chunk ID \"%s\" (0x%x)", tag2str(header->_chunkReference), header->_chunkReference);
-			_assetsByChunkReference.setVal(header->_chunkReference, asset);
-		}
-		// TODO: Store the movie chunk references better.
-		if (header->_audioChunkReference != 0) {
-			_assetsByChunkReference.setVal(header->_audioChunkReference, asset);
-		}
-		if (header->_animationChunkReference != 0) {
-			_assetsByChunkReference.setVal(header->_animationChunkReference, asset);
+		if (asset->type() == kAssetTypeMovie) {
+			Movie *movie = static_cast<Movie *>(asset);
+			if (movie->_audioChunkReference != 0) {
+				_assetsByChunkReference.setVal(movie->_audioChunkReference, asset);
+			}
+			if (movie->_animationChunkReference != 0) {
+				_assetsByChunkReference.setVal(movie->_animationChunkReference, asset);
+			}
 		}
 		// TODO: This datum only appears sometimes.
-		uint unk2 = Datum(chunk).u.i;
+		uint unk2 = chunk.readTypedUint16();
 		debugC(5, kDebugLoading, "Context::readHeaderSection(): Got unknown value at end of asset header section 0x%x", unk2);
 		break;
 	}
@@ -394,7 +408,7 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 		Function *function = new Function(chunk);
 		_functions.setVal(function->_id, function);
 		if (!g_engine->isFirstGenerationEngine()) {
-			uint endingFlag = Datum(chunk).u.i;
+			uint endingFlag = chunk.readTypedUint16();
 			if (endingFlag != 0) {
 				warning("Context::readHeaderSection(): Got non-zero ending flag 0x%x in function section", endingFlag);
 			}
@@ -403,8 +417,8 @@ bool Context::readHeaderSection(Subfile &subfile, Chunk &chunk) {
 	}
 
 	case kContextUnkAtEndSection: {
-		int unk1 = Datum(chunk).u.i;
-		int unk2 = Datum(chunk).u.i;
+		int unk1 = chunk.readTypedUint16();
+		int unk2 = chunk.readTypedUint16();
 		debugC(5, kDebugLoading, "Context::readHeaderSection(): unk1 = %d, unk2 = %d", unk1, unk2);
 		return false;
 	}

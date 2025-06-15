@@ -268,7 +268,6 @@ bool SurfaceSdlGraphicsManager::hasFeature(OSystem::Feature f) const {
 #endif
 		(f == OSystem::kFeatureFilteringMode) ||
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-		(f == OSystem::kFeatureFullscreenToggleKeepsContext) ||
 		(f == OSystem::kFeatureStretchMode) ||
 		(f == OSystem::kFeatureRotationMode) ||
 		(f == OSystem::kFeatureVSync) ||
@@ -302,9 +301,6 @@ void SurfaceSdlGraphicsManager::setFeatureState(OSystem::Feature f, bool enable)
 	case OSystem::kFeatureIconifyWindow:
 		if (enable)
 			_window->iconifyWindow();
-		break;
-	case OSystem::kFeatureRotationMode:
-		notifyResize(getWindowWidth(), getWindowHeight());
 		break;
 	default:
 		break;
@@ -1440,7 +1436,9 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 	}
 
 	// Only draw anything if necessary
+#if SDL_VERSION_ATLEAST(2, 0, 0)
 	bool doPresent = false;
+#endif
 	if (actualDirtyRects > 0 || _cursorNeedsRedraw) {
 		SDL_Rect *r;
 		SDL_Rect dst;
@@ -1638,7 +1636,9 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 		// Finally, blit all our changes to the screen
 		if (!_displayDisabled) {
 			updateScreen(_dirtyRectList, actualDirtyRects);
+#if SDL_VERSION_ATLEAST(2, 0, 0)
 			doPresent = true;
+#endif
 		}
 	}
 
@@ -2680,10 +2680,10 @@ void SurfaceSdlGraphicsManager::displayMessageOnOSD(const Common::U32String &msg
 	Common::Array<Common::U32String> lines;
 	Common::U32String::const_iterator strLineItrBegin = msg.begin();
 
-	for (Common::U32String::const_iterator itr = msg.begin(); itr != msg.end(); itr++) {
-		if (*itr == '\n') {
+	for (const auto &itr : msg) {
+		if (itr == '\n') {
 			lines.push_back(Common::U32String(strLineItrBegin, itr));
-			strLineItrBegin = itr + 1;
+			strLineItrBegin = &itr + 1;
 		}
 	}
 	if (strLineItrBegin != msg.end())
@@ -3227,20 +3227,22 @@ void SurfaceSdlGraphicsManager::SDL_UpdateRects(SDL_Surface *screen, int numrect
 	SDL_Rect viewport;
 
 	Common::Rect &drawRect = (_overlayVisible) ? _overlayDrawRect : _gameDrawRect;
-	viewport.x = drawRect.left;
-	viewport.y = drawRect.top;
 
-	int rotation = getRotationMode();
-	int rotangle = 0;
-	if (rotation == Common::kRotation90 || rotation == Common::kRotation270) {
-		int delta = (drawRect.width() - drawRect.height()) / 2;
-		viewport.x = drawRect.top - delta;
-		viewport.y = drawRect.left + delta;
+	/* Destination rectangle represents the texture before rotation */
+	if (_rotationMode == Common::kRotation90 || _rotationMode == Common::kRotation270) {
+		viewport.w = drawRect.height();
+		viewport.h = drawRect.width();
+		int delta = (viewport.w - viewport.h) / 2;
+		viewport.x = drawRect.left - delta;
+		viewport.y = drawRect.top + delta;
+	} else {
+		viewport.w = drawRect.width();
+		viewport.h = drawRect.height();
+		viewport.x = drawRect.left;
+		viewport.y = drawRect.top;
 	}
-	rotangle = rotation;
 
-	viewport.w = drawRect.width();
-	viewport.h = drawRect.height();
+	int rotangle = (int)_rotationMode;
 
 	SDL_RenderClear(_renderer);
 

@@ -24,21 +24,30 @@
 
 #include "director/castmember/castmember.h"
 
+namespace Graphics {
+class MacText;
+}
+
 namespace Director {
 
 class TextCastMember : public CastMember {
 public:
 	TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream, uint16 version, uint8 flags1 = 0, bool asButton = false);
 	TextCastMember(Cast *cast, uint16 castId, TextCastMember &source);
+
+	CastMember *duplicate(Cast *cast, uint16 castId) override { return (CastMember *)(new TextCastMember(cast, castId, *this)); }
+
 	void setColors(uint32 *fgcolor, uint32 *bgcolor) override;
 
 	Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) override;
 
-	Graphics::MacWidget *getWidget();
+	Graphics::MacText *getWidget();
+
+	CollisionTest isWithin(const Common::Rect &bbox, const Common::Point &pos, InkType ink) override;
 
 	bool isEditable() override { return _editable; }
 	void setEditable(bool editable) override { _editable = editable; }
-	void updateFromWidget(Graphics::MacWidget *widget) override;
+	void updateFromWidget(Graphics::MacWidget *widget, bool spriteEditable) override;
 	Graphics::TextAlign getAlignment();
 
 	uint32 getBackColor() override { return _bgcolor; }
@@ -57,6 +66,7 @@ public:
 	bool setChunkField(int field, int start, int end, const Datum &value);
 
 	int getLineCount();
+	int getLineHeight(int line);
 
 	int getTextHeight();
 
@@ -111,7 +121,7 @@ public:
 	void setRawText(const Common::String &text);
 
 private:
-	Graphics::MacWidget *createWindowOrWidget(Common::Rect &bbox, Channel *channel, Common::Rect dims, Graphics::MacFont *macFont);
+	Graphics::MacWidget *createWindowOrWidget(Common::Rect &bbox, Common::Rect dims, Graphics::MacFont *macFont);
 
 	uint32 _bgcolor;
 	uint32 _fgcolor;

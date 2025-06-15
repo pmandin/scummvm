@@ -21,6 +21,7 @@
 
 // This file was mostly copied from SCI with light modifications.
 
+#include "dgds/dgds.h"
 #include "dgds/sound/midiparser_sci.h"
 #include "dgds/sound/drivers/mididriver.h"
 
@@ -575,7 +576,7 @@ bool MidiParser_SCI::processEvent(const EventInfo &info, bool fireEvents) {
 	case 0xC:
 		if (info.channel() == 0xF) {// SCI special case
 			if (info.basic.param1 == kSetSignalLoop) {
-				_loopTick = _position._lastEventTime + info.delta;
+				_loopTick = _position._lastEventTick + info.delta;
 				return true;
 			}
 
@@ -692,7 +693,13 @@ bool MidiParser_SCI::processEvent(const EventInfo &info, bool fireEvents) {
 			// treats this case as an infinite loop (bug #5744).
 			if (_pSnd->loop || _pSnd->hold > 0) {
 				// Change from SCI: Don't stop current notes on loop.
-				jumpToTick(_loopTick, false, false);
+				if (!jumpToTick(_loopTick, false, false)) {
+					// Jumping to the specified tick failed. This means play
+					// position is still at the end of the MIDI data. Stop the
+					// sound to prevent reading out of bounds.
+					warning("Jump to tick at end of looping sound failed! Stopping sound.");
+					_music->soundStop(_pSnd);
+				}
 
 				// Done with this event.
 				return true;

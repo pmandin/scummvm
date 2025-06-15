@@ -26,21 +26,25 @@
 #include "common/array.h"
 
 #include "mediastation/asset.h"
-#include "mediastation/assetheader.h"
 #include "mediastation/datafile.h"
 #include "mediastation/bitmap.h"
-#include "mediastation/mediascript/operand.h"
+#include "mediastation/mediascript/scriptvalue.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
+struct SpriteClip {
+	uint id = 0;
+	uint firstFrameIndex = 0;
+	uint lastFrameIndex = 0;
+};
+
 class SpriteFrameHeader : public BitmapHeader {
 public:
 	SpriteFrameHeader(Chunk &chunk);
-	virtual ~SpriteFrameHeader() override;
 
 	uint _index;
-	Common::Point *_boundingBox;
+	Common::Point _boundingBox;
 };
 
 class SpriteFrame : public Bitmap {
@@ -60,38 +64,54 @@ private:
 
 // Sprites are somewhat like movies, but they strictly show one frame at a time
 // and don't have sound. They are intended for background/recurrent animations.
-class Sprite : public Asset {
+class Sprite : public SpatialEntity {
 friend class Context;
 
 public:
-	Sprite(AssetHeader *header);
+	Sprite() : SpatialEntity(kAssetTypeSprite) {};
 	~Sprite();
 
-	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
 	virtual void process() override;
 	virtual void redraw(Common::Rect &rect) override;
+
+	virtual void readParameter(Chunk &chunk, AssetHeaderSectionType paramType) override;
+	virtual ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) override;
+
+	virtual bool isVisible() const override { return _isVisible; }
 
 	virtual void readChunk(Chunk &chunk) override;
 
 private:
+	static const uint DEFAULT_CLIP_ID = 1200;
+	double _dissolveFactor = 0.0;
+	uint _loadType = 0;
+	uint _frameRate = 0;
+	uint _frameCount = 0;
+	Common::HashMap<uint, SpriteClip> _clips;
 	Common::Array<SpriteFrame *> _frames;
-	SpriteFrame *_activeFrame = nullptr;
-	bool _isShowing = false;
 	bool _isPlaying = false;
 	uint _currentFrameIndex = 0;
 	uint _nextFrameTime = 0;
+	SpriteClip _activeClip;
 
-	// Method implementations.
-	void spatialShow();
-	void spatialHide();
-	void timePlay();
-	void timeStop();
-	void movieReset();
-	void setCurrentClip();
+	void play();
+	void stop();
+	void setCurrentClip(uint clipId);
+
+	bool activateNextFrame();
+	bool activatePreviousFrame();
+
+	void dirtyIfVisible();
+	void setCurrentFrameToInitial();
+	void setCurrentFrameToFinal();
+
+	void scheduleNextFrame();
+	void scheduleNextTimerEvent();
+	void postMovieEndEventIfNecessary();
+	void setVisibility(bool visibility);
 
 	void updateFrameState();
-	void showFrame(SpriteFrame *frame);
-	Common::Rect getActiveFrameBoundingBox();
+	void timerEvent();
 };
 
 } // End of namespace MediaStation

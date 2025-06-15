@@ -38,6 +38,7 @@
 #include "director/sound.h"
 #include "director/sprite.h"
 #include "director/castmember/castmember.h"
+#include "director/debugger/debugtools.h"
 
 namespace Director {
 
@@ -52,7 +53,6 @@ Window::Window(int id, bool scrollable, bool resizable, bool editable, Graphics:
 	_lingoPlayState = nullptr;
 
 	_currentMovie = nullptr;
-	_mainArchive = nullptr;
 	_nextMovie.frameI = -1;
 	_newMovieStarted = true;
 
@@ -135,6 +135,19 @@ void Window::drawFrameCounter(Graphics::ManagedSurface *blitTo) {
 	font->drawString(blitTo, msg, blitTo->w - 2 - width, 2, width, _wm->_colorWhite);
 }
 
+void Window::drawChannelBox(Director::Movie *currentMovie, Graphics::ManagedSurface *blitTo, int selectedChannel) {
+	const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+	Channel *channel = currentMovie->getScore()->_channels[selectedChannel];
+
+	if (!channel->isEmpty()) {
+		Common::Rect bbox = channel->getBbox();
+		blitTo->frameRect(bbox, g_director->_wm->_colorWhite);
+
+		font->drawString(blitTo, Common::String::format("m: %d, ch: %d, fr: %d", channel->_sprite->_castId.member, selectedChannel, channel->_filmLoopFrame ? channel->_filmLoopFrame : channel->_movieTime), bbox.left + 3, bbox.top + 3, 128, g_director->_wm->_colorBlack);
+		font->drawString(blitTo, Common::String::format("m: %d, ch: %d, fr: %d", channel->_sprite->_castId.member, selectedChannel, channel->_filmLoopFrame ? channel->_filmLoopFrame : channel->_movieTime), bbox.left + 2, bbox.top + 2, 128, g_director->_wm->_colorWhite);
+	}
+}
+
 bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 	if (!_currentMovie)
 		return false;
@@ -165,7 +178,14 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 	debugC(7, kDebugImages, "Window::render(): Updating %d rects", _dirtyRects.size());
 
 	for (auto &i : _dirtyRects) {
-		const Common::Rect &r = i;
+		Common::Rect r = i;
+		// The inner dimensions are relative to the virtual desktop while
+		// r isn't, so we need to move the window to be relative to the
+		// same sapce.
+		Common::Rect windowRect = getInnerDimensions();
+		windowRect.moveTo(r.left, r.top);
+		r.clip(windowRect);
+
 		_dirtyChannels = _currentMovie->getScore()->getSpriteIntersections(r);
 
 		bool shouldClear = true;
@@ -211,6 +231,12 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 			}
 		}
 	}
+
+#ifdef USE_IMGUI
+	int selectedChannel = DT::getSelectedChannel();
+	if (selectedChannel > 0)
+		Window::drawChannelBox(_currentMovie, blitTo, selectedChannel);
+#endif
 
 	if (g_director->_debugDraw & kDebugDrawCast) {
 		const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
@@ -412,6 +438,9 @@ void Window::updateBorderType() {
 }
 
 void Window::loadNewSharedCast(Cast *previousSharedCast) {
+	if (g_director->getVersion() >= 500)
+		return;
+
 	Common::Path previousSharedCastPath;
 	Common::Path newSharedCastPath = getSharedCastPath();
 	if (previousSharedCast && previousSharedCast->getArchive()) {
@@ -503,8 +532,8 @@ bool Window::loadNextMovie() {
 	debug(0, "@@@@   Switching to movie '%s' in '%s'", utf8ToPrintable(_currentMovie->getMacName()).c_str(), _currentPath.c_str());
 	debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
-	g_director->setCurrentWindow(this);
-	loadNewSharedCast(previousSharedCast);
+	if (g_director->getVersion() < 500)
+		loadNewSharedCast(previousSharedCast);
 
 	return true;
 }
@@ -548,6 +577,9 @@ bool Window::step() {
 				debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
 				bool goodMovie = _currentMovie->loadArchive();
+				// If we've just started, switch to the default palette
+				if (g_director->_firstMovie)
+					g_director->setPalette(_currentMovie->getCast()->_defaultPalette);
 
 				// If we came in a loop, then skip as requested
 				if (!_nextMovie.frameS.empty()) {
@@ -569,6 +601,7 @@ bool Window::step() {
 					g_director->_firstMovie = false;
 					return true;
 				}
+				g_director->_firstMovie = false;
 
 				if (!goodMovie)
 					return false;
@@ -618,9 +651,6 @@ Common::Path Window::getSharedCastPath() {
 		}
 	} else if (_vm->getVersion() < 500) {
 		namesToTry.push_back("Shared.dir");
-	} else {
-		// TODO: Does D5 actually support D4-style shared cast?
-		namesToTry.push_back("Shared.cst");
 	}
 
 	Common::Path result;
@@ -706,11 +736,14 @@ void Window::moveLingoState(Window *target) {
 uint32 Window::frozenLingoRecursionCount() {
 	uint32 count = 0;
 
+	bool stepFrameCanRecurse = _vm->getVersion() < 500;
+
 	for (int i = (int)_frozenLingoStates.size() - 1; i >= 0; i--) {
 		LingoState *state = _frozenLingoStates[i];
 		CFrame *frame = state->callstack.front();
 		if (frame->sp.name->equalsIgnoreCase("enterFrame") ||
-				frame->sp.name->equalsIgnoreCase("stepMovie")) {
+				frame->sp.name->equalsIgnoreCase("stepMovie") ||
+				(!stepFrameCanRecurse && frame->sp.name->equalsIgnoreCase("stepFrame"))) {
 			count++;
 		} else {
 			break;

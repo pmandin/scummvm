@@ -170,7 +170,7 @@ void TestbedOptionsDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd,
 	GUI::Dialog::handleCommand(sender, cmd, data);
 }
 
-void TestbedInteractionDialog::addText(uint w, uint h, const Common::String text, Graphics::TextAlign textAlign, uint xOffset, uint yPadding) {
+void TestbedInteractionDialog::addText(uint w, uint h, const Common::String &text, Graphics::TextAlign textAlign, uint xOffset, uint yPadding) {
 	if (!xOffset) {
 		xOffset = _xOffset;
 	}
@@ -179,7 +179,7 @@ void TestbedInteractionDialog::addText(uint w, uint h, const Common::String text
 	_yOffset += h;
 }
 
-void TestbedInteractionDialog::addButton(uint w, uint h, const Common::String name, uint32 cmd, uint xOffset, uint yPadding) {
+void TestbedInteractionDialog::addButton(uint w, uint h, const Common::String &name, uint32 cmd, uint xOffset, uint yPadding) {
 	if (!xOffset) {
 		xOffset = _xOffset;
 	}
@@ -197,7 +197,7 @@ void TestbedInteractionDialog::addList(uint x, uint y, uint w, uint h, const Com
 	_yOffset += h;
 }
 
-void TestbedInteractionDialog::addButtonXY(uint x, uint /*y*/, uint w, uint h, const Common::String name, uint32 cmd) {
+void TestbedInteractionDialog::addButtonXY(uint x, uint /*y*/, uint w, uint h, const Common::String &name, uint32 cmd) {
 	_buttonArray.push_back(new GUI::ButtonWidget(this, x, _yOffset, w, h, true, name, Common::U32String(), cmd));
 }
 
@@ -208,7 +208,8 @@ void TestbedInteractionDialog::handleCommand(GUI::CommandSender *sender, uint32 
 void TestbedConfigManager::initDefaultConfiguration() {
 	// Default Configuration
 	// Add Global configuration Parameters here.
-	_configFileInterface.setKey("isSessionInteractive", "Global", "true");
+	ConfParams.setSessionAsInteractive(ConfMan.getBool("interactive-mode"));
+	_configFileInterface.setKey("isSessionInteractive", "Global", ConfParams.isSessionInteractive() ? "true" : "false");
 }
 
 void TestbedConfigManager::writeTestbedConfigToStream(Common::WriteStream *ws) {

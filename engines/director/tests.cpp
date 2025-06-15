@@ -119,7 +119,7 @@ void Window::testFontScaling() {
 		Image::PICTDecoder k;
 		k.loadStream(in);
 
-		Graphics::Surface *res = k.getSurface()->convertTo(_wm->_pixelformat, k.getPalette(), k.getPaletteSize(), _wm->getPalette(), _wm->getPaletteSize(), Graphics::kDitherNaive);
+		Graphics::Surface *res = k.getSurface()->convertTo(_wm->_pixelformat, k.getPalette().data(), k.getPalette().size(), _wm->getPalette(), _wm->getPaletteSize(), Graphics::kDitherNaive);
 		surface.blitFrom(*res, Common::Point(400, 280));
 		delete res;
 
@@ -324,13 +324,14 @@ void Window::runTests() {
 
 	initGraphics(640, 480);
 
-	_mainArchive = new RIFXArchive();
-	g_director->_allSeenResFiles.setVal("test.dir", _mainArchive);
-	if (!_mainArchive->openStream(stream, 0)) {
+	Archive *mainArchive = new RIFXArchive();
+	g_director->setMainArchive(mainArchive);
+	g_director->_allSeenResFiles.setVal("test.dir", mainArchive);
+	if (!mainArchive->openStream(stream, 0)) {
 		error("DirectorEngine::runTests(): Bad movie data");
 	}
 	_currentMovie = new Movie(this);
-	_currentMovie->setArchive(_mainArchive);
+	_currentMovie->setArchive(mainArchive);
 	_currentMovie->loadArchive();
 
 	if (debugChannelSet(-1, kDebugText)) {

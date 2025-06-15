@@ -22,9 +22,8 @@
 #ifndef MEDIASTATION_SCREEN_H
 #define MEDIASTATION_SCREEN_H
 
-#include "mediastation/assetheader.h"
 #include "mediastation/asset.h"
-#include "mediastation/mediascript/operand.h"
+#include "mediastation/mediascript/scriptvalue.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
@@ -34,9 +33,11 @@ namespace MediaStation {
 // then a Screen asset header.
 class Screen : public Asset {
 public:
-	Screen(AssetHeader *header) : Asset(header) {};
+	Screen() : Asset(kAssetTypeScreen) {};
 
-	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
+	virtual void readParameter(Chunk &chunk, AssetHeaderSectionType paramType) override;
+
+	uint _cursorResourceId = 0;
 };
 
 } // End of namespace MediaStation

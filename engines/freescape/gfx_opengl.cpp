@@ -88,14 +88,14 @@ void OpenGLRenderer::init() {
 
 void OpenGLRenderer::setViewport(const Common::Rect &rect) {
 	_viewport = Common::Rect(
-					_screenViewport.width() * rect.width() / _screenW,
-					_screenViewport.height() * rect.height() / _screenH
-					);
+	                _screenViewport.width() * rect.width() / _screenW,
+	                _screenViewport.height() * rect.height() / _screenH
+	            );
 
 	_viewport.translate(
-					_screenViewport.left + _screenViewport.width() * rect.left / _screenW,
-					_screenViewport.top + _screenViewport.height() * rect.top / _screenH
-					);
+	    _screenViewport.left + _screenViewport.width() * rect.left / _screenW,
+	    _screenViewport.top + _screenViewport.height() * rect.top / _screenH
+	);
 
 	_unscaledViewport = rect;
 	glViewport(_viewport.left, g_system->getHeight() - _viewport.bottom, _viewport.width(), _viewport.height());
@@ -215,19 +215,20 @@ void OpenGLRenderer::updateProjectionMatrix(float fov, float aspectRatio, float 
 	glLoadIdentity();
 }
 
-void OpenGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest) {
+void OpenGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vector3d &interest, float rollAngle) {
 	Math::Vector3d up_vec(0, 1, 0);
 
 	Math::Matrix4 lookMatrix = Math::makeLookAtMatrix(pos, interest, up_vec);
 	glMultMatrixf(lookMatrix.getData());
+	glRotatef(rollAngle, 0.0f, 0.0f, 1.0f);
 	glTranslatef(-pos.x(), -pos.y(), -pos.z());
 	glTranslatef(_shakeOffset.x, _shakeOffset.y, 0);
 }
 
-void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d target, const Common::Rect viewArea) {
+void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d target, const Common::Rect &viewArea) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-	glColor3ub(255, 255, 255);
+	glColor4ub(255, 255, 255, 255);
 
 	glLineWidth(20);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -242,7 +243,7 @@ void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, 
 	glDepthMask(GL_TRUE);
 }
 
-void OpenGLRenderer::renderCrossair(const Common::Point crossairPosition) {
+void OpenGLRenderer::renderCrossair(const Common::Point &crossairPosition) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, _screenW, _screenH, 0, 0, 1);
@@ -257,7 +258,7 @@ void OpenGLRenderer::renderCrossair(const Common::Point crossairPosition) {
 	useColor(255, 255, 255);
 
 	glLineWidth(MAX(2, g_system->getWidth() / 192)); // It will not work in every OpenGL implementation since the
-					 // spec doesn't require support for line widths other than 1
+	                                                 // spec doesn't require support for line widths other than 1
 	glEnableClientState(GL_VERTEX_ARRAY);
 	copyToVertexArray(0, Math::Vector3d(crossairPosition.x - 3, crossairPosition.y, 0));
 	copyToVertexArray(1, Math::Vector3d(crossairPosition.x - 1, crossairPosition.y, 0));
@@ -281,7 +282,7 @@ void OpenGLRenderer::renderCrossair(const Common::Point crossairPosition) {
 	glDepthMask(GL_TRUE);
 }
 
-void OpenGLRenderer::renderPlayerShootRay(byte color, const Common::Point position, const Common::Rect viewArea) {
+void OpenGLRenderer::renderPlayerShootRay(byte color, const Common::Point &position, const Common::Rect &viewArea) {
 	uint8 r, g, b;
 
 	glMatrixMode(GL_PROJECTION);
@@ -300,10 +301,10 @@ void OpenGLRenderer::renderPlayerShootRay(byte color, const Common::Point positi
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
 
-	glColor3ub(r, g, b);
+	glColor4ub(r, g, b, 255);
 
 	glLineWidth(5); // It will not work in every OpenGL implementation since the
-					 // spec doesn't require support for line widths other than 1
+	                // spec doesn't require support for line widths other than 1
 	glEnableClientState(GL_VERTEX_ARRAY);
 	copyToVertexArray(0, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top, 0));
 	copyToVertexArray(1, Math::Vector3d(position.x, position.y, 0));
@@ -339,14 +340,14 @@ void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, by
 	glPushMatrix();
 	GLfloat m[16];
 	glGetFloatv(GL_MODELVIEW_MATRIX, m);
-	for(int i = 1; i < 4; i++)
-		for(int j = 0; j < 4; j++ ) {
+	for (int i = 1; i < 4; i++)
+		for (int j = 0; j < 4; j++) {
 			if (i == 2)
 				continue;
 			if (i == j)
-				m[i*4 + j] = 1.0;
+				m[i * 4 + j] = 1.0;
 			else
-				m[i*4 + j] = 0.0;
+				m[i * 4 + j] = 0.0;
 		}
 
 	glLoadMatrixf(m);
@@ -360,11 +361,11 @@ void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, by
 	copyToVertexArray(0, position);
 	float adj = 1.25; // Perspective correction
 
-	for(int i = 0; i <= triangleAmount; i++) {
+	for (int i = 0; i <= triangleAmount; i++) {
 		copyToVertexArray(i + 1,
-			Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
-						position.z() + (adj * radius * sin(i * twicePi / triangleAmount)))
-		);
+		                  Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
+		                                 position.z() + (adj * radius * sin(i * twicePi / triangleAmount)))
+		                 );
 	}
 
 	glVertexPointer(3, GL_FLOAT, 0, _verts);
@@ -378,11 +379,11 @@ void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, by
 		glEnableClientState(GL_VERTEX_ARRAY);
 		copyToVertexArray(0, position);
 
-		for(int i = 0; i <= triangleAmount; i++) {
+		for (int i = 0; i <= triangleAmount; i++) {
 			copyToVertexArray(i + 1,
-				Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
-							position.z() + (adj * radius * sin(i * twicePi / triangleAmount)))
-			);
+			                  Math::Vector3d(position.x(), position.y() + (radius * cos(i *  twicePi / triangleAmount)),
+			                                 position.z() + (adj * radius * sin(i * twicePi / triangleAmount)))
+			                 );
 		}
 
 		glVertexPointer(3, GL_FLOAT, 0, _verts);
@@ -397,7 +398,7 @@ void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, by
 	glPopMatrix();
 }
 
-void OpenGLRenderer::renderPlayerShootBall(byte color, const Common::Point position, int frame, const Common::Rect viewArea) {
+void OpenGLRenderer::renderPlayerShootBall(byte color, const Common::Point &position, int frame, const Common::Rect &viewArea) {
 	uint8 r, g, b;
 
 	glMatrixMode(GL_PROJECTION);
@@ -416,7 +417,7 @@ void OpenGLRenderer::renderPlayerShootBall(byte color, const Common::Point posit
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
 
-	glColor3ub(r, g, b);
+	glColor4ub(r, g, b, 255);
 	int triangleAmount = 20;
 	float twicePi = (float)(2.0 * M_PI);
 	float coef = (9 - frame) / 9.0;
@@ -428,7 +429,7 @@ void OpenGLRenderer::renderPlayerShootBall(byte color, const Common::Point posit
 	glEnableClientState(GL_VERTEX_ARRAY);
 	copyToVertexArray(0, Math::Vector3d(ball_position.x, ball_position.y, 0));
 
-	for(int i = 0; i <= triangleAmount; i++) {
+	for (int i = 0; i <= triangleAmount; i++) {
 		float x = ball_position.x + (radius * cos(i *  twicePi / triangleAmount));
 		float y = ball_position.y + (radius * sin(i * twicePi / triangleAmount));
 		copyToVertexArray(i + 1, Math::Vector3d(x, y, 0));
@@ -516,9 +517,9 @@ void OpenGLRenderer::useStipple(bool enabled) {
 		glPolygonOffset(factor - 0.5f, -1.0f);
 		glEnable(GL_POLYGON_STIPPLE);
 		if (_renderMode == Common::kRenderZX    ||
-			_renderMode == Common::kRenderCPC   ||
-			_renderMode == Common::kRenderCGA   ||
-			_renderMode == Common::kRenderHercG)
+		        _renderMode == Common::kRenderCPC   ||
+		        _renderMode == Common::kRenderCGA   ||
+		        _renderMode == Common::kRenderHercG)
 			glPolygonStipple(_variableStippleArray);
 		else
 			glPolygonStipple(_defaultStippleArray);
@@ -530,7 +531,7 @@ void OpenGLRenderer::useStipple(bool enabled) {
 }
 
 void OpenGLRenderer::useColor(uint8 r, uint8 g, uint8 b) {
-	glColor3ub(r, g, b);
+	glColor4ub(r, g, b, 255);
 }
 
 void OpenGLRenderer::clear(uint8 r, uint8 g, uint8 b, bool ignoreViewport) {
@@ -546,7 +547,7 @@ void OpenGLRenderer::drawFloor(uint8 color) {
 	uint8 r1, g1, b1, r2, g2, b2;
 	byte *stipple;
 	assert(getRGBAt(color, 0, r1, g1, b1, r2, g2, b2, stipple)); // TODO: move check inside this function
-	glColor3ub(r1, g1, b1);
+	glColor4ub(r1, g1, b1, 255);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	copyToVertexArray(0, Math::Vector3d(-100000.0, 0.0, -100000.0));

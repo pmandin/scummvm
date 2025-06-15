@@ -19,6 +19,11 @@
  *
  */
 
+#include "common/debug.h"
+#include "common/file.h"
+#include "common/system.h"
+
+#include "qdengine/qdengine.h"
 #include "qdengine/minigames/adv/common.h"
 #include "qdengine/minigames/adv/m_karaoke.h"
 #include "qdengine/minigames/adv/RunTime.h"
@@ -39,16 +44,16 @@ Karaoke::Node::Node() {
 Karaoke::Karaoke(MinigameManager *runtime) {
 	_runtime = runtime;
 
-	controlName_ = _runtime->parameter("control_name", true);
-	if (!controlName_ || !*controlName_)
+	_controlName = _runtime->parameter("control_name", true);
+	if (!_controlName || !*_controlName)
 		return;
 
-	colorReaded_ = _runtime->parameter("color_first", true);
-	if (!colorReaded_ || !*colorReaded_)
+	_colorReaded = _runtime->parameter("color_first", true);
+	if (!_colorReaded || !*_colorReaded)
 		return;
 
 	struct Parse {
-		XStream &file;
+		Common::File &file;
 		Nodes &nodes;
 
 		float currentTime;
@@ -62,7 +67,7 @@ Karaoke::Karaoke(MinigameManager *runtime) {
 				Node node;
 				node.type = STRING;
 				node.time = currentTime;
-				node.text = string(begin, cur);
+				node.text = Common::String(begin, cur);
 				nodes.push_back(node);
 			} else if (putEmpty) {
 				Node node;
@@ -81,11 +86,11 @@ Karaoke::Karaoke(MinigameManager *runtime) {
 			return *cur++;
 		}
 
-		Parse(XStream&  _file, Nodes& _nodes) : file(_file), nodes(_nodes) {
+		Parse(Common::File&  _file, Nodes& _nodes) : file(_file), nodes(_nodes) {
 			currentTime = 0.f;
 			begin = cur = buf;
 			bool prevNumber = false;
-			while (!file.eof()) {
+			while (!file.eos()) {
 				switch (read()) {
 				case 0:
 					return;
@@ -98,16 +103,23 @@ Karaoke::Karaoke(MinigameManager *runtime) {
 					putLine(prevNumber);
 					prevNumber = true;
 
-					file.seek(-1, XS_CUR);
+					file.seek(-1, SEEK_CUR);
 					float tm = 0;
-					file >= tm;
+
+					char c;
+					do {
+						c = read();
+					} while ((c >= '0' && c <= '9') || c == '.');
+
+					cur = buf;
+					tm = strtod(cur, nullptr);
 
 					if (tm <= 0.f) {
 						currentTime = 0.f;
 						nodes.push_back(Node());
 					} else
 						currentTime = tm;
-					file.seek(-1, XS_CUR);
+					file.seek(-1, SEEK_CUR);
 					continue;
 				}
 				case '>':
@@ -125,75 +137,75 @@ Karaoke::Karaoke(MinigameManager *runtime) {
 	if (!fileName)
 		return;
 
-	XStream file(false);
-	if (!file.open(fileName, XS_IN)) {
-		xxassert(false, (XBuffer() < "Не удалось открыть файл \"" < fileName < "\"").c_str());
+	Common::File file;
+	if (!file.open(Common::Path((const char *)transCyrillic(fileName), '\\'))) {
+		assert(!(Common::String() + "Не удалось открыть файл \"" + fileName + "\"").c_str());
 		return;
 	}
 
-	Parse(file, nodes_);
-	debugC(2, kDebugMinigames, "read %d tags", nodes_.size());
+	Parse(file, _nodes);
+	debugC(2, kDebugMinigames, "read %d tags", _nodes.size());
 
-	startScreenTag_ = 0;
-	currentTag_ = 0;
+	_startScreenTag = 0;
+	_currentTag = 0;
 
-	startTime_ = 0.001f * GetTickCount();
-	startTagTime_ = 0.f;
+	_startTime = 0.001f * g_system->getMillis();
+	_startTagTime = 0.f;
 
 	setState(MinigameInterface::RUNNING);
 
 }
 
 void Karaoke::quant(float dt) {
-	float curTime = 0.001f * GetTickCount() - startTime_;
+	float curTime = 0.001f * g_system->getMillis() - _startTime;
 	if (curTime < 0.f)
 		curTime = 0.f;
 
-	Node& node = nodes_[currentTag_];
+	Node& node = _nodes[_currentTag];
 	if (node.type == CLEAR) {
-		++currentTag_;
-		if (currentTag_ == nodes_.size())
+		++_currentTag;
+		if ((uint)_currentTag == _nodes.size())
 			setState(MinigameInterface::GAME_WIN);
-		startScreenTag_ = currentTag_;
+		_startScreenTag = _currentTag;
 		return;
 	}
 
-	XBuffer outText;
-	outText < colorReaded_;
-	int idx = startScreenTag_;
-	while (idx < currentTag_) {
-		xassert(idx < nodes_.size());
-		xassert(nodes_[idx].type == STRING);
-		outText < nodes_[idx].text.c_str();
+	Common::String outText;
+	outText += _colorReaded;
+	int idx = _startScreenTag;
+	while (idx < _currentTag) {
+		assert((uint)idx < _nodes.size());
+		assert(_nodes[idx].type == STRING);
+		outText += _nodes[idx].text.c_str();
 		++idx;
 	}
 
-	float phase = (curTime - startTagTime_) / node.time;
-	xassert(phase >= 0.f);
+	float phase = (curTime - _startTagTime) / node.time;
+	assert(phase >= 0.f);
 	if (phase >= 1.f) {
-		outText < node.text.c_str() < "&>";
-		++currentTag_;
-		startTagTime_ += node.time;
-		if (currentTag_ == nodes_.size())
+		outText += node.text + "&>";
+		++_currentTag;
+		_startTagTime += node.time;
+		if ((uint)_currentTag == _nodes.size())
 			setState(MinigameInterface::GAME_WIN);
 	} else {
 		int part = phase * node.text.size();
-		outText < string(node.text.begin(), node.text.begin() + part).c_str() < "&>";
-		outText < string(node.text.begin() + part, node.text.end()).c_str();
+		outText += Common::String(node.text.begin(), node.text.begin() + part) + "&>";
+		outText += Common::String(node.text.begin() + part, node.text.end()).c_str();
 	}
 
 	++idx;
-	while (idx < nodes_.size()) {
-		if (nodes_[idx].type == CLEAR)
+	while ((uint)idx < _nodes.size()) {
+		if (_nodes[idx].type == CLEAR)
 			break;
-		outText < nodes_[idx].text.c_str();
+		outText += _nodes[idx].text.c_str();
 		++idx;
 	}
 
 	if (_runtime->mouseRightPressed())
 		debugC(2, kDebugMinigames, "%s", outText.c_str());
 
-	_runtime->setText(controlName_, outText.c_str());
+	_runtime->setText(_controlName, outText.c_str());
 }
 
 } // namespace QDEngine

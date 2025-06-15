@@ -78,7 +78,12 @@ qdGameObjectMoving::qdGameObjectMoving() :
 	_ignore_personages = false;
 	_is_selected = false;
 	set_flag(QD_OBJ_HAS_BOUND_FLAG);
-	_movement_mode = MOVEMENT_MODE_STOP;
+
+	if (g_engine->_gameVersion <= 20060129)
+		_movement_mode = MOVEMENT_MODE_NONE_EARLY;
+	else
+		_movement_mode = MOVEMENT_MODE_STOP;
+
 	_movement_mode_time = _movement_mode_time_current = 0.f;
 }
 
@@ -116,7 +121,10 @@ qdGameObjectMoving::qdGameObjectMoving(const qdGameObjectMoving &obj) : qdGameOb
 	_is_selected = false;
 	set_flag(QD_OBJ_HAS_BOUND_FLAG);
 
-	_movement_mode = MOVEMENT_MODE_STOP;
+	if (g_engine->_gameVersion <= 20060129)
+		_movement_mode = MOVEMENT_MODE_NONE_EARLY;
+	else
+		_movement_mode = MOVEMENT_MODE_STOP;
 	_movement_mode_time = _movement_mode_time_current = 0.f;
 
 	_circuit_objs = obj.const_ref_circuit_objs();
@@ -485,7 +493,7 @@ bool qdGameObjectMoving::find_path(const Vect3f target, bool lock_target) {
 	debugC(3, kDebugLog, "Optimised Path");
 	dump_vect(path_vect);
 
-	if (path_vect.size() >= 2 && (movement_type() == qdGameObjectStateWalk::MOVEMENT_FOUR_DIRS || movement_type() == qdGameObjectStateWalk::MOVEMENT_EIGHT_DIRS)) {
+	if (g_engine->_gameVersion > 20041201 && path_vect.size() >= 2 && (movement_type() == qdGameObjectStateWalk::MOVEMENT_FOUR_DIRS || movement_type() == qdGameObjectStateWalk::MOVEMENT_EIGHT_DIRS)) {
 		Std::vector<Vect3f> final_path;
 		finalize_path(R(), trg, path_vect, final_path);
 
@@ -502,10 +510,13 @@ bool qdGameObjectMoving::find_path(const Vect3f target, bool lock_target) {
 			_path[idx] = qdCamera::current_camera()->get_cell_coords(it->x, it->y);
 			idx ++;
 		}
-		_path[idx - 1] = trg;
+		if (g_engine->_gameVersion <= 20041201)
+			_path[idx] = trg;
+		else
+			_path[idx - 1] = trg;
 	}
 
-	_cur_path_index = (idx > 1) ? 1 : 0;
+	_cur_path_index = (g_engine->_gameVersion <= 20041201 || idx > 1) ? 1 : 0;
 	_path_length = idx;
 	move2position(_path[_cur_path_index++]);
 
@@ -524,26 +535,33 @@ bool qdGameObjectMoving::stop_movement() {
 		if (cur_state() == -1) return true;
 
 		qdGameObjectState *st = get_state(cur_state());
-//		if(_movement_mode == MOVEMENT_MODE_MOVE && is_movement_finished() && st->state_type() == qdGameObjectState::STATE_WALK){
-		if (is_movement_finished() && st->state_type() == qdGameObjectState::STATE_WALK) {
-			qdGameObjectStateWalk *wst = static_cast<qdGameObjectStateWalk *>(st);
-
-			if (qdAnimationSet * set = wst->animation_set()) {
-				qdAnimationInfo *inf = set->get_stop_animation_info(_direction_angle);
-				qdAnimation *anm;
-				if (inf && (anm = inf->animation())) {
-					_movement_mode = MOVEMENT_MODE_END;
-					float phase = get_animation()->cur_time_rel();
-					_movement_mode_time = anm->length() * (1.f - phase);
-					_movement_mode_time_current = 0.0f;
-					set_animation_info(inf);
-					get_animation()->set_time_rel(phase);
-					return true;
-				}
+		if (g_engine->_gameVersion <= 20060129) {
+			if (st->state_type() == qdGameObjectState::STATE_WALK) {
+				set_animation_info(static_cast<qdGameObjectStateWalk *>(st)->static_animation_info(_direction_angle));
+				st->stop_sound();
 			}
+		} else {
+	//		if(_movement_mode == MOVEMENT_MODE_MOVE && is_movement_finished() && st->state_type() == qdGameObjectState::STATE_WALK){
+			if (is_movement_finished() && st->state_type() == qdGameObjectState::STATE_WALK) {
+				qdGameObjectStateWalk *wst = static_cast<qdGameObjectStateWalk *>(st);
 
-			set_direction(_direction_angle);
-			st->stop_sound();
+				if (qdAnimationSet * set = wst->animation_set()) {
+					qdAnimationInfo *inf = set->get_stop_animation_info(_direction_angle);
+					qdAnimation *anm;
+					if (inf && (anm = inf->animation())) {
+						_movement_mode = MOVEMENT_MODE_END;
+						float phase = get_animation()->cur_time_rel();
+						_movement_mode_time = anm->length() * (1.f - phase);
+						_movement_mode_time_current = 0.0f;
+						set_animation_info(inf);
+						get_animation()->set_time_rel(phase);
+						return true;
+					}
+				}
+
+				set_direction(_direction_angle);
+				st->stop_sound();
+			}
 		}
 
 		return true;
@@ -719,11 +737,13 @@ Vect3f qdGameObjectMoving::get_future_r(float dt, bool &end_movement, bool real_
 			}
 		}
 		return R();
+	case MOVEMENT_MODE_NONE_EARLY: // _gameVersion <= 20060129
 	default:
 		break;
 	}
 
-	_movement_mode = MOVEMENT_MODE_MOVE;
+	if (_movement_mode != MOVEMENT_MODE_NONE_EARLY)
+		_movement_mode = MOVEMENT_MODE_MOVE;
 
 	float sp, a, sp_max;
 	get_speed_parameters(sp, sp_max, a);
@@ -860,7 +880,7 @@ void qdGameObjectMoving::quant(float dt) {
 		start_auto_move();
 
 	if (check_flag(QD_OBJ_MOVING_FLAG)) {
-		if (future_pos_correct(dt)) {
+		if (g_engine->_gameVersion <= 20041201 || future_pos_correct(dt)) {
 			bool end_movement = false;
 			Vect3f r = get_future_r(dt, end_movement, true);
 
@@ -878,7 +898,14 @@ void qdGameObjectMoving::quant(float dt) {
 					if (_target_angle >= 0.0f)
 						_direction_angle = _target_angle;
 
-					stop_movement();
+					if (g_engine->_gameVersion <= 20060129) {
+						drop_flag(QD_OBJ_MOVING_FLAG);
+						set_direction(_direction_angle);
+
+						if (get_cur_state())
+							get_cur_state()->stop_sound();
+					} else
+						stop_movement();
 				}
 			}
 		} else
@@ -1058,6 +1085,9 @@ bool qdGameObjectMoving::update_screen_pos() {
 				case MOVEMENT_MODE_END:
 					offs_type = qdGameObjectStateWalk::OFFSET_END;
 					break;
+				case MOVEMENT_MODE_NONE_EARLY: // _gameVersion <= 20060129
+					if (!check_flag(QD_OBJ_MOVING_FLAG))
+						offs_type = qdGameObjectStateWalk::OFFSET_STATIC;
 				}
 
 				offs += static_cast<qdGameObjectStateWalk *>(get_cur_state())->center_offset(_direction_angle, offs_type);
@@ -1088,7 +1118,7 @@ float qdGameObjectMoving::radius() const {
 	return qdGameObjectAnimated::radius() * calc_scale();
 }
 
-void qdGameObjectMoving::debug_redraw() const {
+void qdGameObjectMoving::drawDebugPath() const {
 	if (check_flag(QD_OBJ_MOVING_FLAG)) {
 		const int cl = grDispatcher::instance()->make_rgb(255, 255, 255);
 		Vect3f r = R();
@@ -1104,6 +1134,10 @@ void qdGameObjectMoving::debug_redraw() const {
 			v0 = v1;
 		}
 	}
+}
+
+void qdGameObjectMoving::debug_redraw() const {
+	drawDebugPath();
 
 	Common::String str = Common::String::format("movement_mode: %d", _movement_mode);
 	grDispatcher::instance()->drawText(10, 110, grDispatcher::instance()->make_rgb888(255, 255, 255), str.c_str());
@@ -1633,10 +1667,19 @@ float qdGameObjectMoving::calc_scale(const Vect3f &r) const {
 	if (!check_flag(QD_OBJ_NO_SCALE_FLAG)) {
 		float scale;
 
-		if (!check_flag(QD_OBJ_INVERSE_PERSPECTIVE_FLAG))
+		if (!check_flag(QD_OBJ_INVERSE_PERSPECTIVE_FLAG)) {
 			scale = qdCamera::current_camera()->get_scale(r) * _scale;
-		else
-			scale = _scale / qdCamera::current_camera()->get_scale(r);
+		} else {
+			float scale1 = qdCamera::current_camera()->get_scale(r);
+
+			if (scale1) {
+				// Если инверсная перспектива, то масштабируем по инверсной формуле
+				scale = 1.0f / scale1;
+			} else {
+				// Если нулевой масштаб, то не масштабируем
+				scale = 1.0f;
+			}
+		}
 
 		return scale;
 	}
@@ -2011,6 +2054,7 @@ bool qdGameObjectMoving::set_walk_animation() {
 				}
 			}
 			break;
+		case MOVEMENT_MODE_NONE_EARLY: // _gameVersion <= 20060129
 		default:
 			break;
 		}
@@ -2056,6 +2100,9 @@ bool qdGameObjectMoving::movement_impulse() {
 //	_direction_angle = _impulse_direction;
 	_impulse_direction = -1.0f;
 	_target_angle = -1.0f;
+
+	if (g_engine->_gameVersion <= 20060129)
+		set_walk_animation();
 
 	if (_movement_mode == MOVEMENT_MODE_STOP || _movement_mode == MOVEMENT_MODE_END)
 		_movement_mode = MOVEMENT_MODE_TURN;
@@ -2122,6 +2169,7 @@ void qdGameObjectMoving::optimize_path(Std::vector<Vect2i> &path) const {
 
 	auto itp = path.begin();
 	auto val = *itp;
+	opt_path.push_back(val);
 	itp++;
 
 	while (itp != path.end()) {
@@ -2266,8 +2314,8 @@ bool qdGameObjectMoving::del_coll_pts(Std::list<Vect2i> &path) const {
 }
 
 // Вспомогательная функция - пытается спрямить отрезок пути из четырех точек, начиная с cur
-/*
-bool qdGameObjectMoving::four_pts_eight_dir_straight(Std::list<Vect2i> path,
+
+bool qdGameObjectMoving::four_pts_eight_dir_straight_old(Std::list<Vect2i> path,
                                                      const Std::list<Vect2i>::iterator cur) const
 {
     // Извлекаем четыре точки
@@ -2279,6 +2327,9 @@ bool qdGameObjectMoving::four_pts_eight_dir_straight(Std::list<Vect2i> path,
         pts[i] = (*buf);
         ++buf;
     }
+
+	const double SQRT_2_DIV_2 = 0.7071067811865475244;
+
     // Проверяем - является ли четверка точек "вытянутым зигзагом"
     if ((fabs(vec_cos(pts[1] - pts[0], pts[2] - pts[1]) - SQRT_2_DIV_2) > 0.0001) ||
         (fabs(vec_cos(pts[2] - pts[1], pts[3] - pts[2]) - SQRT_2_DIV_2) > 0.0001) ||
@@ -2310,7 +2361,6 @@ bool qdGameObjectMoving::four_pts_eight_dir_straight(Std::list<Vect2i> path,
 
     return false;
 }
-*/
 
 bool qdGameObjectMoving::four_pts_eight_dir_straight(Std::list<Vect2i> &path, Std::list<Vect2i>::reverse_iterator cur) const {
 	// Извлекаем четыре точки
@@ -2351,13 +2401,27 @@ bool qdGameObjectMoving::four_pts_eight_dir_straight(Std::list<Vect2i> &path, St
 }
 
 void qdGameObjectMoving::optimize_path_eight_dirs(Std::list<Vect2i> &path) const {
-	// Спрямляем, пока спрямляется, но не более чем EIGHT_DIRS_OPT_ITER_MAX раз
+	if (g_engine->_gameVersion <= 20041201) {
+		bool changed;
+		int step = 0;
+		do {
+			step++;
+			del_coll_pts(path); // Для успешного спрямления путь не должен содержать более
+								// двух последовательных точек, лежащих на одной прямой
+			changed = false;
+			for (Std::list<Vect2i>::iterator it = path.begin(); it != path.end(); ++it)
+				if (four_pts_eight_dir_straight_old(path, it) && !changed)
+					changed = true;
+		} while (changed && (step < 2));
+	} else {
+		// Спрямляем, пока спрямляется, но не более чем EIGHT_DIRS_OPT_ITER_MAX раз
 
-	for (int i = 0; i < EIGHT_DIRS_OPT_ITER_MAX; i++) {
-		for (Std::list<Vect2i>::reverse_iterator it = path.rbegin(); it != path.rend(); ++it)
-			four_pts_eight_dir_straight(path, it);
+		for (int i = 0; i < EIGHT_DIRS_OPT_ITER_MAX; i++) {
+			for (Std::list<Vect2i>::reverse_iterator it = path.rbegin(); it != path.rend(); ++it)
+				four_pts_eight_dir_straight(path, it);
 
-		if (!del_coll_pts(path)) break;
+			if (!del_coll_pts(path)) break;
+		}
 	}
 }
 
@@ -2758,6 +2822,7 @@ static const char *movementList[] = {
 	defEnum(MOVEMENT_MODE_START),
 	defEnum(MOVEMENT_MODE_MOVE),
 	defEnum(MOVEMENT_MODE_END),
+	defEnum(MOVEMENT_MODE_NONE_EARLY),
 };
 
 Common::String qdGameObjectMoving::movement2str(int fl, bool truncate) {

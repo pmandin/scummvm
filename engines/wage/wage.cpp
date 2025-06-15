@@ -67,7 +67,7 @@ namespace Wage {
 WageEngine::WageEngine(OSystem *syst, const ADGameDescription *desc) : Engine(syst), _gameDescription(desc) {
 	_rnd = new Common::RandomSource("wage");
 
-	_aim = -1;
+	_aim = Chr::CHEST;
 	_opponentAim = -1;
 	_temporarilyHidden = false;
 	_isGameOver = false;
@@ -172,7 +172,25 @@ Common::Error WageEngine::run() {
 	return Common::kNoError;
 }
 
+// Resetting required variables
+void WageEngine::resetState() {
+	_aim = Chr::CHEST;
+	_opponentAim = -1;
+	_temporarilyHidden = false;
+	_isGameOver = false;
+	_monster = nullptr;
+	_running = nullptr;
+	_lastScene = nullptr;
+	_loopCount = 0;
+	_turn = 0;
+	_commandWasQuick = false;
+	_shouldQuit = false;
+	_offer = nullptr;
+}
+
 void WageEngine::restart() {
+	if (_isGameOver)
+		resetState();
 	_restartRequested = false;
 	delete _gui;
 	delete _world;
@@ -247,9 +265,12 @@ void WageEngine::setMenu(Common::String menu) {
 void WageEngine::appendText(const char *str) {
 	Common::String s(str);
 
-	s += '\n';
+	// HACK: Added here because sometimes empty strings would be passed, leading to extra newlines
+	if (!s.empty()){
+		s += '\n';
 
-	_gui->appendText(s.c_str());
+		_gui->appendText(s.c_str());
+	}
 
 	_inputText.clear();
 }

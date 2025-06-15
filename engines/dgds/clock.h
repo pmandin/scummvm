@@ -22,7 +22,6 @@
 #ifndef DGDS_CLOCK_H
 #define DGDS_CLOCK_H
 
-#include "common/types.h"
 #include "common/rect.h"
 #include "common/error.h"
 #include "common/serializer.h"
@@ -40,8 +39,6 @@ class Clock {
 public:
 	Clock();
 	void addGameTime(int mins);
-
-	void setTime(int16 month, int16 day, int16 hour, int16 minute);
 
 	Common::String getTimeStr() const;
 	void draw(Graphics::ManagedSurface &surf);

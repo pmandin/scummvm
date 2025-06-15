@@ -151,7 +151,7 @@ uint32 MacResManager::getResForkDataSize() const {
 	return _stream->readUint32BE();
 }
 
-String MacResManager::computeResForkMD5AsString(uint32 length, bool tail) const {
+String MacResManager::computeResForkMD5AsString(uint32 length, bool tail, ProgressUpdateCallback progressUpdateCallback, void *callbackParameter) const {
 	if (!hasResFork())
 		return String();
 
@@ -165,12 +165,9 @@ String MacResManager::computeResForkMD5AsString(uint32 length, bool tail) const 
 	if (tail && dataLength > length)
 		resForkStream.seek(-(int64)length, SEEK_END);
 
-	return computeStreamMD5AsString(resForkStream, MIN<uint32>(length, _resForkSize));
+	return computeStreamMD5AsString(resForkStream, MIN<uint32>(length, _resForkSize), progressUpdateCallback, callbackParameter);
 }
 
-bool MacResManager::open(const Path &fileName) {
-	return open(fileName, SearchMan);
-}
 
 SeekableReadStream *MacResManager::openAppleDoubleWithAppleOrOSXNaming(Archive& archive, const Path &fileName) {
 	SeekableReadStream *stream = archive.createReadStreamForMember(constructAppleDoubleName(fileName));
@@ -227,6 +224,10 @@ SeekableReadStream *MacResManager::openAppleDoubleWithAppleOrOSXNaming(Archive& 
 	}
 
 	return nullptr;
+}
+
+bool MacResManager::open(const Path &fileName) {
+    return open(fileName, SearchMan);
 }
 
 bool MacResManager::open(const Path &fileName, Archive &archive) {
@@ -539,8 +540,8 @@ void MacResManager::listFiles(Array<Path> &files, const Path &pattern) {
 	SearchMan.listMatchingMembers(memberList, pattern.append(".bin"));
 	SearchMan.listMatchingMembers(memberList, constructAppleDoubleName(pattern));
 
-	for (ArchiveMemberList::const_iterator i = memberList.begin(), end = memberList.end(); i != end; ++i) {
-		String filename = (*i)->getFileName();
+	for (const auto &member : memberList) {
+		String filename = member->getFileName();
 
 		// For raw resource forks and MacBinary files we strip the extension
 		// here to obtain a valid base name.
@@ -559,11 +560,11 @@ void MacResManager::listFiles(Array<Path> &files, const Path &pattern) {
 			// forks or MacBinary files but not being such around? This might
 			// depend on the pattern the client requests...
 			if (!scumm_stricmp(extension, "rsrc")) {
-				SeekableReadStream *stream = (*i)->createReadStream();
+				SeekableReadStream *stream = member->createReadStream();
 				removeExtension = stream && isRawFork(*stream);
 				delete stream;
 			} else if (!scumm_stricmp(extension, "bin")) {
-				SeekableReadStream *stream = (*i)->createReadStream();
+				SeekableReadStream *stream = member->createReadStream();
 				removeExtension = stream && isMacBinary(*stream);
 				delete stream;
 			}
@@ -579,7 +580,7 @@ void MacResManager::listFiles(Array<Path> &files, const Path &pattern) {
 				Common::Path(filename, Common::Path::kNoSeparator), &isAppleDoubleName);
 
 		if (isAppleDoubleName) {
-			SeekableReadStream *stream = (*i)->createReadStream();
+			SeekableReadStream *stream = member->createReadStream();
 			if (stream->readUint32BE() == 0x00051607) {
 				filename = filenameAppleDoubleStripped.baseName();
 			}
@@ -589,13 +590,13 @@ void MacResManager::listFiles(Array<Path> &files, const Path &pattern) {
 			delete stream;
 		}
 
-		Common::Path basePath((*i)->getPathInArchive().getParent().appendComponent(filename));
+		Common::Path basePath(member->getPathInArchive().getParent().appendComponent(filename));
 		baseNames[basePath] = true;
 	}
 
 	// Append resulting base names to list to indicate found files.
-	for (BaseNameSet::const_iterator i = baseNames.begin(), end = baseNames.end(); i != end; ++i) {
-		files.push_back(i->_key);
+	for (const auto &baseName : baseNames) {
+		files.push_back(baseName._key);
 	}
 }
 

@@ -96,6 +96,7 @@ Debugger::Debugger() : GUI::Debugger() {
 	registerCmd("GameMapGump::stopHighlightItems", WRAP_METHOD(Debugger, cmdStopHighlightItems));
 	registerCmd("GameMapGump::toggleHighlightItems", WRAP_METHOD(Debugger, cmdToggleHighlightItems));
 	registerCmd("GameMapGump::toggleFootpads", WRAP_METHOD(Debugger, cmdToggleFootpads));
+	registerCmd("GameMapGump::gridlines", WRAP_METHOD(Debugger, cmdGridlines));	
 	registerCmd("GameMapGump::dumpMap", WRAP_METHOD(Debugger, cmdDumpMap));
 	registerCmd("GameMapGump::dumpAllMaps", WRAP_METHOD(Debugger, cmdDumpAllMaps));
 	registerCmd("GameMapGump::incrementSortOrder", WRAP_METHOD(Debugger, cmdIncrementSortOrder));
@@ -304,13 +305,12 @@ bool Debugger::cmdListSFX(int argc, const char **argv) {
 		debugPrintf("Error: No AudioProcess\n");
 
 	} else {
-		Std::list<AudioProcess::SampleInfo>::const_iterator it;
-		for (it = ap->_sampleInfo.begin(); it != ap->_sampleInfo.end(); ++it) {
+		for (const auto &si : ap->_sampleInfo) {
 			debugPrintf("Sample: num %d, obj %d, loop %d, prio %d",
-				it->_sfxNum, it->_objId, it->_loops, it->_priority);
-			if (!it->_barked.empty()) {
+				si._sfxNum, si._objId, si._loops, si._priority);
+			if (!si._barked.empty()) {
 				debugPrintf(", speech: \"%s\"",
-					it->_barked.substr(it->_curSpeechStart, it->_curSpeechEnd - it->_curSpeechStart).c_str());
+					si._barked.substr(si._curSpeechStart, si._curSpeechEnd - si._curSpeechStart).c_str());
 			}
 			debugPrintf("\n");
 		}
@@ -632,6 +632,26 @@ bool Debugger::cmdToggleFootpads(int argc, const char **argv) {
 	return false;
 }
 
+bool Debugger::cmdGridlines(int argc, const char **argv) {
+	if (argc > 2) {
+		debugPrintf("usage: %s <number>\n", argv[0]);
+		return true;
+	}
+	
+	int gridlines = -1;
+	if (argc > 1) {
+		gridlines = atoi(argv[1]);
+	}
+
+	// ensure a sane minimum value
+	if (gridlines > 0 && gridlines < 8) {
+		gridlines = 8;
+	}
+
+	GameMapGump::setGridlines(gridlines);
+	return false;
+}
+
 void Debugger::dumpCurrentMap() {
 	// Increase number of available object IDs.
 	ObjectManager::get_instance()->allow64kObjects();
@@ -838,9 +858,7 @@ bool Debugger::cmdListProcesses(int argc, const char **argv) {
 		} else {
 			debugPrintf("Processes:\n");
 		}
-		for (ProcessIterator it = kern->_processes.begin();
-			it != kern->_processes.end(); ++it) {
-			Process *p = *it;
+		for (const auto *p : kern->_processes) {
 			if (argc == 1 || p->_itemNum == item) {
 				debugPrintf("%s\n", p->dumpInfo().c_str());
 			}
@@ -993,9 +1011,8 @@ bool Debugger::cmdListMarks(int argc, const char **argv) {
 	}
 
 	Common::sort(marks.begin(), marks.end());
-	Common::StringArray::const_iterator mit;
-	for (mit = marks.begin(); mit != marks.end(); ++mit) {
-		debugPrintf("%s\n", mit->c_str());
+	for (const auto &m : marks) {
+		debugPrintf("%s\n", m.c_str());
 	}
 
 	return true;

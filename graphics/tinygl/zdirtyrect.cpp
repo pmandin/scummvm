@@ -95,13 +95,12 @@ void GLContext::disposeResources() {
 }
 
 void GLContext::disposeDrawCallLists() {
-	typedef Common::List<DrawCall *>::const_iterator DrawCallIterator;
-	for (DrawCallIterator it = _previousFrameDrawCallsQueue.begin(); it != _previousFrameDrawCallsQueue.end(); ++it) {
-		delete *it;
+	for (const auto &drawCall : _previousFrameDrawCallsQueue) {
+		delete drawCall;
 	}
 	_previousFrameDrawCallsQueue.clear();
-	for (DrawCallIterator it = _drawCallsQueue.begin(); it != _drawCallsQueue.end(); ++it) {
-		delete *it;
+	for (auto &drawCall : _drawCallsQueue) {
+		delete drawCall;
 	}
 	_drawCallsQueue.clear();
 }
@@ -144,9 +143,9 @@ void GLContext::presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas) 
 	}
 
 	// This loop increases outer rectangle coordinates to favor merging of adjacent rectangles.
-	for (RectangleIterator it = rectangles.begin(); it != rectangles.end(); ++it) {
-		(*it).rectangle.right++;
-		(*it).rectangle.bottom++;
+	for (auto &rect : rectangles) {
+		rect.rectangle.right++;
+		rect.rectangle.bottom++;
 	}
 
 	// Merge coalesce dirty rects.
@@ -182,22 +181,22 @@ void GLContext::presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas) 
 		}
 	}
 
-	for (RectangleIterator it1 = rectangles.begin(); it1 != rectangles.end(); ++it1) {
-		(*it1).rectangle.clip(renderRect);
+	for (auto &rect : rectangles) {
+		rect.rectangle.clip(renderRect);
 	}
 
 	if (!rectangles.empty()) {
-		for (RectangleIterator itRect = rectangles.begin(); itRect != rectangles.end(); ++itRect) {
-			dirtyAreas.push_back((*itRect).rectangle);
+		for (auto &rect : rectangles) {
+			dirtyAreas.push_back(rect.rectangle);
 		}
 
 		// Execute draw calls.
-		for (DrawCallIterator it = _drawCallsQueue.begin(); it != _drawCallsQueue.end(); ++it) {
-			Common::Rect drawCallRegion = (*it)->getDirtyRegion();
-			for (RectangleIterator itRect = rectangles.begin(); itRect != rectangles.end(); ++itRect) {
-				Common::Rect dirtyRegion = (*itRect).rectangle;
+		for (auto &drawCall : _drawCallsQueue) {
+			Common::Rect drawCallRegion = drawCall->getDirtyRegion();
+			for (auto &rect : rectangles) {
+				Common::Rect dirtyRegion = rect.rectangle;
 				if (dirtyRegion.intersects(drawCallRegion)) {
-					(*it)->execute(dirtyRegion, true);
+					drawCall->execute(true, &dirtyRegion);
 				}
 			}
 		}
@@ -211,8 +210,8 @@ void GLContext::presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas) 
 			fb->enableBlending(false);
 			fb->enableAlphaTest(false);
 
-			for (RectangleIterator it = rectangles.begin(); it != rectangles.end(); ++it) {
-				debugDrawRectangle((*it).rectangle, (*it).r, (*it).g, (*it).b);
+			for (auto &rect : rectangles) {
+				debugDrawRectangle(rect.rectangle, rect.r, rect.g, rect.b);
 			}
 
 			fb->enableBlending(blending_enabled);
@@ -221,8 +220,8 @@ void GLContext::presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas) 
 	}
 
 	// Dispose not necessary draw calls.
-	for (DrawCallIterator it = _previousFrameDrawCallsQueue.begin(); it !=  _previousFrameDrawCallsQueue.end(); ++it) {
-		delete *it;
+	for (auto &p : _previousFrameDrawCallsQueue) {
+		delete p;
 	}
 
 	_previousFrameDrawCallsQueue = _drawCallsQueue;
@@ -235,13 +234,11 @@ void GLContext::presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas) 
 }
 
 void GLContext::presentBufferSimple(Common::List<Common::Rect> &dirtyAreas) {
-	typedef Common::List<DrawCall *>::const_iterator DrawCallIterator;
-
 	dirtyAreas.push_back(Common::Rect(fb->getPixelBufferWidth(), fb->getPixelBufferHeight()));
 
-	for (DrawCallIterator it = _drawCallsQueue.begin(); it != _drawCallsQueue.end(); ++it) {
-		(*it)->execute(true);
-		delete *it;
+	for (const auto &drawCall : _drawCallsQueue) {
+		drawCall->execute(true);
+		delete drawCall;
 	}
 
 	_drawCallsQueue.clear();
@@ -332,14 +329,14 @@ void RasterizationDrawCall::computeDirtyRegion() {
 	}
 }
 
-void RasterizationDrawCall::execute(bool restoreState) const {
+void RasterizationDrawCall::execute(bool restoreState, const Common::Rect *clippingRectangle) const {
 	GLContext *c = gl_get_context();
 
 	RasterizationDrawCall::RasterizationState backupState;
 	if (restoreState) {
 		backupState = captureState();
 	}
-	applyState(_state);
+	applyState(_state, clippingRectangle);
 
 	GLVertex *prevVertex = c->vertex;
 	int prevVertexCount = c->vertex_cnt;
@@ -392,7 +389,7 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 		}
 		break;
 	case TGL_TRIANGLE_FAN:
-		for(int i = 1; i < cnt; i += 2) {
+		for(int i = 1; i < cnt - 1; i++) {
 			c->gl_draw_triangle(&c->vertex[0], &c->vertex[i], &c->vertex[i + 1]);
 		}
 		break;
@@ -428,13 +425,14 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 	c->vertex_cnt = prevVertexCount;
 
 	if (restoreState) {
-		applyState(backupState);
+		applyState(backupState, nullptr);
 	}
 }
 
 RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() const {
 	RasterizationState state;
 	GLContext *c = gl_get_context();
+	state.enableScissor = c->scissor_test_enabled;
 	state.enableBlending = c->blending_enabled;
 	state.sfactor = c->source_blending_factor;
 	state.dfactor = c->destination_blending_factor;
@@ -478,6 +476,7 @@ RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() 
 	state.fogColorG = c->fog_color.Y;
 	state.fogColorB = c->fog_color.Z;
 
+	memcpy(state.scissor, c->scissor, sizeof(state.scissor));
 	memcpy(state.viewportScaling, c->viewport.scale._v, sizeof(c->viewport.scale._v));
 	memcpy(state.viewportTranslation, c->viewport.trans._v, sizeof(c->viewport.trans._v));
 	memcpy(state.polygonStipplePattern, c->polygon_stipple_pattern, sizeof(c->polygon_stipple_pattern));
@@ -485,8 +484,9 @@ RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() 
 	return state;
 }
 
-void RasterizationDrawCall::applyState(const RasterizationDrawCall::RasterizationState &state) const {
+void RasterizationDrawCall::applyState(const RasterizationDrawCall::RasterizationState &state, const Common::Rect *clippingRectangle) const {
 	GLContext *c = gl_get_context();
+	c->fb->setupScissor(state.enableScissor, state.scissor, clippingRectangle);
 	c->fb->enableBlending(state.enableBlending);
 	c->fb->setBlendingFactors(state.sfactor, state.dfactor);
 	c->fb->enableAlphaTest(state.alphaTestEnabled);
@@ -506,6 +506,7 @@ void RasterizationDrawCall::applyState(const RasterizationDrawCall::Rasterizatio
 	c->fb->setPolygonStipplePattern(state.polygonStipplePattern);
 	c->fb->enablePolygonStipple(state.polygonStippleEnabled);
 
+	c->scissor_test_enabled = state.enableScissor;
 	c->blending_enabled = state.enableBlending;
 	c->source_blending_factor = state.sfactor;
 	c->destination_blending_factor = state.dfactor;
@@ -545,15 +546,9 @@ void RasterizationDrawCall::applyState(const RasterizationDrawCall::Rasterizatio
 	c->fog_enabled = state.fogEnabled;
 	c->fog_color = Vector4(state.fogColorR, state.fogColorG, state.fogColorB, 1.0f);
 
+	memcpy(c->scissor, state.scissor, sizeof(c->scissor));
 	memcpy(c->viewport.scale._v, state.viewportScaling, sizeof(c->viewport.scale._v));
 	memcpy(c->viewport.trans._v, state.viewportTranslation, sizeof(c->viewport.trans._v));
-}
-
-void RasterizationDrawCall::execute(const Common::Rect &clippingRectangle, bool restoreState) const {
-	TinyGL::GLContext *c = gl_get_context();
-	c->fb->setScissorRectangle(clippingRectangle);
-	execute(restoreState);
-	c->fb->resetScissorRectangle();
 }
 
 bool RasterizationDrawCall::operator==(const RasterizationDrawCall &other) const {
@@ -585,12 +580,12 @@ BlittingDrawCall::~BlittingDrawCall() {
 	tglDeleteBlitImage(_image);
 }
 
-void BlittingDrawCall::execute(bool restoreState) const {
+void BlittingDrawCall::execute(bool restoreState, const Common::Rect *clippingRectangle) const {
 	BlittingState backupState;
 	if (restoreState) {
 		backupState = captureState();
 	}
-	applyState(_blitState);
+	applyState(_blitState, clippingRectangle);
 
 	switch (_mode) {
 	case BlittingDrawCall::BlitMode_Regular:
@@ -606,19 +601,14 @@ void BlittingDrawCall::execute(bool restoreState) const {
 		break;
 	}
 	if (restoreState) {
-		applyState(backupState);
+		applyState(backupState, nullptr);
 	}
-}
-
-void BlittingDrawCall::execute(const Common::Rect &clippingRectangle, bool restoreState) const {
-	Internal::tglBlitSetScissorRect(clippingRectangle);
-	execute(restoreState);
-	Internal::tglBlitResetScissorRect();
 }
 
 BlittingDrawCall::BlittingState BlittingDrawCall::captureState() const {
 	BlittingState state;
 	TinyGL::GLContext *c = gl_get_context();
+	state.enableScissor = c->scissor_test_enabled;
 	state.enableBlending = c->blending_enabled;
 	state.sfactor = c->source_blending_factor;
 	state.dfactor = c->destination_blending_factor;
@@ -626,17 +616,21 @@ BlittingDrawCall::BlittingState BlittingDrawCall::captureState() const {
 	state.alphaFunc = c->alpha_test_func;
 	state.alphaRefValue = c->alpha_test_ref_val;
 	state.depthTestEnabled = c->depth_test_enabled;
+
+	memcpy(state.scissor, c->scissor, sizeof(state.scissor));
 	return state;
 }
 
-void BlittingDrawCall::applyState(const BlittingState &state) const {
+void BlittingDrawCall::applyState(const BlittingState &state, const Common::Rect *clippingRectangle) const {
 	TinyGL::GLContext *c = gl_get_context();
+	c->fb->setupScissor(state.enableScissor, state.scissor, clippingRectangle);
 	c->fb->enableBlending(state.enableBlending);
 	c->fb->setBlendingFactors(state.sfactor, state.dfactor);
 	c->fb->enableAlphaTest(state.alphaTest);
 	c->fb->setAlphaTestFunc(state.alphaFunc, state.alphaRefValue);
 	c->fb->enableDepthTest(state.depthTestEnabled);
 
+	c->scissor_test_enabled = state.enableScissor;
 	c->blending_enabled = state.enableBlending;
 	c->source_blending_factor = state.sfactor;
 	c->destination_blending_factor = state.dfactor;
@@ -644,6 +638,8 @@ void BlittingDrawCall::applyState(const BlittingState &state) const {
 	c->alpha_test_func = state.alphaFunc;
 	c->alpha_test_ref_val = state.alphaRefValue;
 	c->depth_test_enabled = state.depthTestEnabled;
+
+	memcpy(c->scissor, state.scissor, sizeof(c->scissor));
 }
 
 void BlittingDrawCall::computeDirtyRegion() {
@@ -692,23 +688,42 @@ ClearBufferDrawCall::ClearBufferDrawCall(bool clearZBuffer, int zValue,
 	: _clearZBuffer(clearZBuffer), _clearColorBuffer(clearColorBuffer), _zValue(zValue),
 	  _rValue(rValue), _gValue(gValue), _bValue(bValue), _clearStencilBuffer(clearStencilBuffer),
 	  _stencilValue(stencilValue), DrawCall(DrawCall_Clear) {
+	_clearState = captureState();
 	TinyGL::GLContext *c = gl_get_context();
 	if (c->_enableDirtyRectangles) {
 		_dirtyRegion = c->renderRect;
 	}
 }
 
-void ClearBufferDrawCall::execute(bool restoreState) const {
+void ClearBufferDrawCall::execute(bool restoreState, const Common::Rect *clippingRectangle) const {
+	ClearBufferState backupState;
+	if (restoreState) {
+		backupState = captureState();
+	}
+	applyState(_clearState, clippingRectangle);
+
 	TinyGL::GLContext *c = gl_get_context();
 	c->fb->clear(_clearZBuffer, _zValue, _clearColorBuffer, _rValue, _gValue, _bValue, _clearStencilBuffer, _stencilValue);
+
+	if (restoreState) {
+		applyState(backupState, nullptr);
+	}
 }
 
-void ClearBufferDrawCall::execute(const Common::Rect &clippingRectangle, bool restoreState) const {
+ClearBufferDrawCall::ClearBufferState ClearBufferDrawCall::captureState() const {
+	ClearBufferState state;
 	TinyGL::GLContext *c = gl_get_context();
-	Common::Rect clearRect = clippingRectangle.findIntersectingRect(getDirtyRegion());
-	c->fb->clearRegion(clearRect.left, clearRect.top, clearRect.width(), clearRect.height(),
-	                   _clearZBuffer, _zValue, _clearColorBuffer, _rValue, _gValue, _bValue,
-	                   _clearStencilBuffer, _stencilValue);
+	state.enableScissor = c->scissor_test_enabled;
+	memcpy(state.scissor, c->scissor, sizeof(state.scissor));
+	return state;
+}
+
+void ClearBufferDrawCall::applyState(const ClearBufferState &state, const Common::Rect *clippingRectangle) const {
+	TinyGL::GLContext *c = gl_get_context();
+	c->fb->setupScissor(state.enableScissor, state.scissor, clippingRectangle);
+
+	c->scissor_test_enabled = state.enableScissor;
+	memcpy(c->scissor, state.scissor, sizeof(c->scissor));
 }
 
 bool ClearBufferDrawCall::operator==(const ClearBufferDrawCall &other) const {
@@ -720,12 +735,14 @@ bool ClearBufferDrawCall::operator==(const ClearBufferDrawCall &other) const {
 		_gValue == other._gValue &&
 		_bValue == other._bValue &&
 		_zValue == other._zValue &&
-		_stencilValue == other._stencilValue;
+		_stencilValue == other._stencilValue &&
+		_clearState == other._clearState;
 }
 
 
 bool RasterizationDrawCall::RasterizationState::operator==(const RasterizationState &other) const {
 	return
+		enableScissor == other.enableScissor &&
 		enableBlending == other.enableBlending &&
 		sfactor == other.sfactor &&
 		dfactor == other.dfactor &&
@@ -764,6 +781,10 @@ bool RasterizationDrawCall::RasterizationState::operator==(const RasterizationSt
 		fogColorR == other.fogColorR &&
 		fogColorG == other.fogColorG &&
 		fogColorB == other.fogColorB &&
+		scissor[0] == other.scissor[0] &&
+		scissor[1] == other.scissor[1] &&
+		scissor[2] == other.scissor[2] &&
+		scissor[3] == other.scissor[3] &&
 		viewportTranslation[0] == other.viewportTranslation[0] &&
 		viewportTranslation[1] == other.viewportTranslation[1] &&
 		viewportTranslation[2] == other.viewportTranslation[2] &&

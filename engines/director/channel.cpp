@@ -265,6 +265,15 @@ bool Channel::isDirty(Sprite *nextSprite) {
 	return isDirtyFlag;
 }
 
+Common::Rect Channel::getRollOverBbox() {
+	// In D4 and below, the rollOver command will check against whatever the last
+	// contents of the sprite were, regardless of whether the score has zeroed it out.
+	if (g_director->getVersion() < 500 && _sprite->_castId.member == 0) {
+		return _rollOverBbox;
+	}
+	return getBbox();
+}
+
 bool Channel::isStretched() {
 	return _sprite->_stretch;
 }
@@ -283,22 +292,19 @@ bool Channel::isActiveText() {
 	return false;
 }
 
-bool Channel::isMouseIn(const Common::Point &pos) {
+CollisionTest Channel::isMouseIn(const Common::Point &pos) {
 	if (!_visible)
-		return false;
+		return kCollisionNo;
 
-	Common::Rect bbox = getBbox();
-	if (!bbox.contains(pos))
-		return false;
+	const Common::Rect bbox = getBbox();
 
-	if (_sprite->_ink == kInkTypeMatte) {
-		if (_sprite->_cast && _sprite->_cast->_type == kCastBitmap) {
-			Graphics::Surface *matte = ((BitmapCastMember *)_sprite->_cast)->getMatte(bbox);
-			return matte ? *(byte *)(matte->getBasePtr(pos.x - bbox.left, pos.y - bbox.top)) : true;
-		}
+	if (_sprite->_cast) {
+		return _sprite->_cast->isWithin(bbox, pos, _sprite->_ink);
+	} else if (!bbox.contains(pos)) {
+		return kCollisionNo;
 	}
 
-	return true;
+	return kCollisionYes;
 }
 
 bool Channel::isMatteIntersect(Channel *channel) {
@@ -423,7 +429,7 @@ void Channel::setClean(Sprite *nextSprite, bool partial) {
 					((DigitalVideoCastMember *)nextSprite->_cast)->setChannel(this);
 					((DigitalVideoCastMember *)nextSprite->_cast)->startVideo();
 				}
-			} else if (nextSprite->_cast->_type == kCastFilmLoop) {
+			} else if (nextSprite->_cast->_type == kCastFilmLoop || nextSprite->_cast->_type == kCastMovie) {
 				// brand new film loop, reset the frame counter.
 				_filmLoopFrame = 1;
 			}
@@ -585,11 +591,17 @@ void Channel::replaceSprite(Sprite *nextSprite) {
 void Channel::setPosition(int x, int y, bool force) {
 	Common::Point newPos(x, y);
 	if (_constraint > 0 && _score && _constraint <= _score->_channels.size()) {
-		Common::Rect constraintBbox = _score->_channels[_constraint]->getBbox();
+		Common::Rect constraintBbox = _score->_channels[_constraint]->getRollOverBbox();
 		newPos.x = MIN(constraintBbox.right, MAX(constraintBbox.left, newPos.x));
 		newPos.y = MIN(constraintBbox.bottom, MAX(constraintBbox.top, newPos.y));
 	}
 	_sprite->setPosition(newPos.x, newPos.y);
+	// Update the dimensons on the widget
+	if (_widget) {
+		Common::Rect dims = _widget->getDimensions();
+		dims.translate(newPos.x - dims.left, newPos.y - dims.top);
+		_widget->setDimensions(dims);
+	}
 }
 
 // here is the place for deciding whether the widget can be keep or not
@@ -654,9 +666,13 @@ void Channel::replaceWidget(CastMemberID previousCastId, bool force) {
 }
 
 bool Channel::updateWidget() {
+	if (_sprite->_cast && (_sprite->_cast->_type == kCastDigitalVideo) && _sprite->_cast->isModified()) {
+		replaceWidget();
+		return true;
+	}
 	if (_widget && _widget->needsRedraw()) {
 		if (_sprite->_cast) {
-			_sprite->_cast->updateFromWidget(_widget);
+			_sprite->_cast->updateFromWidget(_widget, _sprite->_editable);
 		}
 		_widget->draw();
 		return true;
@@ -722,14 +738,14 @@ int Channel::getMouseLine(int x, int y) {
 }
 
 bool Channel::hasSubChannels() {
-	if ((_sprite->_cast) && (_sprite->_cast->_type == kCastFilmLoop)) {
+	if ((_sprite->_cast) && (_sprite->_cast->_type == kCastFilmLoop || _sprite->_cast->_type == kCastMovie)) {
 		return true;
 	}
 	return false;
 }
 
 Common::Array<Channel> *Channel::getSubChannels() {
-	if ((!_sprite->_cast) || (_sprite->_cast->_type != kCastFilmLoop)) {
+	if ((!_sprite->_cast) || (_sprite->_cast->_type != kCastFilmLoop && _sprite->_cast->_type != kCastMovie)) {
 		warning("Channel doesn't have any sub-channels");
 		return nullptr;
 	}

@@ -52,11 +52,6 @@ bool ModularGraphicsBackend::getFeatureState(Feature f) {
 	return _graphicsManager->getFeatureState(f);
 }
 
-GraphicsManager *ModularGraphicsBackend::getGraphicsManager() {
-	assert(_graphicsManager);
-	return (GraphicsManager *)_graphicsManager;
-}
-
 const OSystem::GraphicsMode *ModularGraphicsBackend::getSupportedGraphicsModes() const {
 	return _graphicsManager->getSupportedGraphicsModes();
 }
@@ -103,6 +98,10 @@ bool ModularGraphicsBackend::setStretchMode(int mode) {
 
 int ModularGraphicsBackend::getStretchMode() const {
 	return _graphicsManager->getStretchMode();
+}
+
+bool ModularGraphicsBackend::setRotationMode(Common::RotationMode rotation) {
+	return _graphicsManager->setRotationMode(rotation);
 }
 
 uint ModularGraphicsBackend::getDefaultScaler() const {
@@ -201,6 +200,10 @@ void ModularGraphicsBackend::updateScreen() {
 #ifdef ENABLE_EVENTRECORDER
 	g_eventRec.postDrawOverlayGui();
 #endif
+}
+
+void ModularGraphicsBackend::presentBuffer() {
+	_graphicsManager->presentBuffer();
 }
 
 void ModularGraphicsBackend::setShakePos(int shakeXOffset, int shakeYOffset) {

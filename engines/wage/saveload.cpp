@@ -92,8 +92,9 @@ namespace Wage {
 int WageEngine::getSceneIndex(Scene *scene) const {
 	assert(scene);
 	Common::Array<Scene *> &orderedScenes = _world->_orderedScenes;
-	for (uint32 i = 0; i < orderedScenes.size(); ++i) {
-		if (orderedScenes[i] == scene) return i-1;
+	for (int32 i = 0; i < (int)orderedScenes.size(); ++i) {
+		if (orderedScenes[i] == scene)
+			return i - 1;
 	}
 
 	warning("Scene's index not found");
@@ -501,10 +502,7 @@ int WageEngine::loadGame(int slotId) {
 	}
 	for (uint32 i = 0; i < orderedScenes.size(); ++i) {
 		Scene *scene = orderedScenes[i];
-		if (scene == _world->_storageScene) {
-			scene->_chrs.clear();
-			scene->_objs.clear();
-		} else {
+		if (scene != _world->_storageScene) {
 			int id = data->readSint16LE();
 
 			if (scene->_resourceId != id) {
@@ -526,6 +524,9 @@ int WageEngine::loadGame(int slotId) {
 			data->readByte();
 			scene->_visited = data->readByte() != 0;
 		}
+
+		scene->_chrs.clear();
+		scene->_objs.clear();
 	}
 
 	// update all char locations and stats

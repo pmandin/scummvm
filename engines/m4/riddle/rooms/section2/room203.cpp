@@ -605,7 +605,7 @@ void Room203::daemon() {
 		break;
 
 	case 66:
-		midi_play("HELMET", 255, 1, -1, 949);
+		midi_play("HELMET", 255, true, -1, 949);
 		break;
 
 	case 67:
@@ -669,7 +669,7 @@ void Room203::daemon() {
 	case 76:
 		digi_preload("203r21");
 		_stream1 = series_stream("old lady gives helmet", 5, 1, 79);
-		series_stream_break_on_frame(_stream1, 77, 62);
+		series_stream_break_on_frame(_stream1, 62, 77);
 		break;
 
 	case 77:
@@ -1145,7 +1145,7 @@ void Room203::daemon() {
 
 			case 4117:
 				_peasantSquatTo9 = series_load("peasant squat to 9");
-				_peasantFromSquat3 = series_load("shadow peskey from squat to pos3");
+				_peasantFromSquat3 = series_load("shadow pesky from squat to pos3");
 				_peasantSquat3 = series_load("peasant 3 to squat");
 				_peasantSquat9 = series_load("shadow pesky from 9 to squat");
 

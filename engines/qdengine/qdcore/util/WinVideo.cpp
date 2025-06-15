@@ -74,7 +74,7 @@ void winVideo::set_window(int x, int y, int xsize, int ysize) {
 		_tempSurf = new Graphics::ManagedSurface(xsize, ysize, g_engine->_pixelformat);
 }
 
-bool winVideo::open_file(const Common::Path fname) {
+bool winVideo::open_file(const Common::Path &fname) {
 	Common::String filename = (char *)transCyrillic(fname.toString());
 	debugC(3, kDebugLoad, "winVideo::open_file(%s)", filename.c_str());
 
@@ -85,6 +85,14 @@ bool winVideo::open_file(const Common::Path fname) {
 		delete _videostream;
 		_videostream = nullptr;
 		return false;
+	}
+
+	// WORKAROUND: Fix lagging audio in mng and rybalka
+	// videos by setting specific number of prebuffered packets
+	// for MPEG-PS demuxer.
+	Common::String gameId = g_engine->getGameId();
+	if (gameId == "mng" || gameId == "rybalka") {
+		_decoder->setPrebufferedPackets(600);
 	}
 
 	if (!_decoder->loadStream(_videostream)) {

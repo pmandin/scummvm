@@ -532,7 +532,7 @@ void Room303::daemon() {
 
 	case 124:
 		_G(globals)[GLB_TEMP_1] = 0;
-		_G(globals)[GLB_TEMP_2] = 0xFFFF0000;
+		_G(globals)[GLB_TEMP_2] = (int)-1 << 16;
 		sendWSMessage(0x200000, 0, _priestTalk, 0, nullptr, 1);
 		break;
 
@@ -1838,7 +1838,7 @@ void Room303::conv303a() {
 		} else if (who == 1) {
 			if ((node == 0 && entry != 0) || (node == 0 && entry == 1)) {
 				if (!_lonelyFlag) {
-					midi_play("ppstreet", 140, 1, -1, 949);
+					midi_play("ppstreet", 140, true, -1, 949);
 				}
 			}
 
@@ -1908,7 +1908,7 @@ void Room303::conv303b() {
 		} else if (who == 1) {
 			if ((node == 0 && entry == 0) || (node == 0 && entry == 1)) {
 				if (!_lonelyFlag) {
-					midi_play("lonelyme", 140, 1, -1, 949);
+					midi_play("lonelyme", 140, true, -1, 949);
 					_lonelyFlag = true;
 				}
 			}
@@ -2016,11 +2016,11 @@ void Room303::conv303b() {
 }
 
 void Room303::priestTalkCallback(frac16 myMessage, machine *sender) {
-	Room303 *room = (Room303 *)g_engine->_activeRoom;
-	const KernelTriggerType oldMode = _G(kernel).trigger_mode;
 	const int trigger = myMessage >> 16;
 
 	if (trigger > 0) {
+		Room303 *room = (Room303 *)g_engine->_activeRoom;
+		const KernelTriggerType oldMode = _G(kernel).trigger_mode;
 		_G(kernel).trigger_mode = room->_val12;
 		kernel_timing_trigger(1, trigger);
 		_G(kernel).trigger_mode = oldMode;

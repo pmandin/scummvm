@@ -616,7 +616,7 @@ public:
 	 *
 	 * The pixel format of the buffer must match the pixel format of the surface.
 	 */
-	void copyRectToSurface(const Graphics::Surface &srcSurface, int destX, int destY, const Common::Rect subRect) {
+	void copyRectToSurface(const Graphics::Surface &srcSurface, int destX, int destY, const Common::Rect &subRect) {
 		_innerSurface.copyRectToSurface(srcSurface, destX, destY, subRect);
 		addDirtyRect(Common::Rect(destX, destY, destX + subRect.width(), destY + subRect.height()));
 	}
@@ -636,7 +636,7 @@ public:
 	 *
 	 * The pixel format of the buffer must match the pixel format of the surface.
 	 */
-	void copyRectToSurfaceWithKey(const Graphics::Surface &srcSurface, int destX, int destY, const Common::Rect subRect, uint32 key) {
+	void copyRectToSurfaceWithKey(const Graphics::Surface &srcSurface, int destX, int destY, const Common::Rect &subRect, uint32 key) {
 		_innerSurface.copyRectToSurfaceWithKey(srcSurface, destX, destY, subRect, key);
 		addDirtyRect(Common::Rect(destX, destY, destX + subRect.width(), destY + subRect.height()));
 	}
@@ -745,7 +745,7 @@ public:
 	/**
 	 * Fill a rect with a given color.
 	 */
-	void fillRect(Common::Rect r, uint32 color) {
+	void fillRect(const Common::Rect &r, uint32 color) {
 		_innerSurface.fillRect(r, color);
 		addDirtyRect(r);
 	}

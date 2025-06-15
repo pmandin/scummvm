@@ -27,6 +27,8 @@
 
 namespace QDEngine {
 
+MinigameInterface *createMinigameScores(MinigameManager *runtime);
+
 class Scores : public MinigameInterface {
 public:
 	Scores(MinigameManager *runtime);
@@ -56,20 +58,23 @@ private:
 	typedef Std::vector<Level> Levels;
 	Levels levels_;
 
-	const char *_currentLevel;
-	const char *_bestScore;
-	const char *_bestTime;
-	const char *_lastScore;
-	const char *_lastTime;
+	const char *_currentLevel = nullptr;
+	const char *_bestScore = nullptr;
+	const char *_bestTime = nullptr;
+	const char *_lastScore = nullptr;
+	const char *_lastTime = nullptr;
+
+	const char *_timeFormat = nullptr;
 
 	QDObject _prev;
 	QDObject _next;
+	QDObject _gameBorder;
 	QDObject _outMaxLevel;
 
 	QDObjects _games;
 
-	int _preLevel;
-	int _level;
+	int _preLevel = -1;
+	int _level = -1;
 
 	Coords _positions;
 

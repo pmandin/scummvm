@@ -66,6 +66,7 @@ private:
 
 	void showMessageLog(int trigger);
 	void lookAtInventoryItem();
+	bool canLoadGameStateCurrently(Common::U32String *msg) override;
 
 protected:
 	/**
@@ -81,6 +82,8 @@ protected:
 public:
 	RiddleEngine(OSystem *syst, const M4GameDescription *gameDesc);
 	~RiddleEngine() override {}
+
+	void initializePath(const Common::FSNode &gamePath) override;
 
 	/**
 	 * Show the engine information

@@ -27,7 +27,7 @@
 #include "sci/engine/state.h"
 #include "sci/graphics/drivers/gfxdriver.h"
 #include "sci/graphics/screen.h"
-#include "sci/graphics/palette.h"
+#include "sci/graphics/palette16.h"
 #include "sci/graphics/transitions.h"
 
 namespace Sci {
@@ -281,7 +281,7 @@ void GfxTransitions::setNewScreen(bool blackoutFlag) {
 	}
 }
 
-void GfxTransitions::copyRectToScreen(const Common::Rect rect, bool blackoutFlag) {
+void GfxTransitions::copyRectToScreen(const Common::Rect &rect, bool blackoutFlag) {
 	if (!blackoutFlag) {
 		_screen->copyRectToScreen(rect);
 	} else {

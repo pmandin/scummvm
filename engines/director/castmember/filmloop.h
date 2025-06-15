@@ -38,10 +38,12 @@ public:
 	FilmLoopCastMember(Cast *cast, uint16 castId, FilmLoopCastMember &source);
 	~FilmLoopCastMember();
 
+	CastMember *duplicate(Cast *cast, uint16 castId) override { return (CastMember *)(new FilmLoopCastMember(cast, castId, *this)); }
+
 	bool isModified() override;
 	//Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) override;
 
-	Common::Array<Channel> *getSubChannels(Common::Rect &bbox, Channel *channel);
+	virtual Common::Array<Channel> *getSubChannels(Common::Rect &bbox, Channel *channel);
 
 	void loadFilmLoopDataD2(Common::SeekableReadStreamEndian &stream);
 	void loadFilmLoopDataD4(Common::SeekableReadStreamEndian &stream);

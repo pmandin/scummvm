@@ -54,6 +54,11 @@ void grTileAnimation::clear() {
 	_tileOffsets.clear();
 	TileOffsets(_tileOffsets).swap(_tileOffsets);
 
+	for (auto &i : _decompressedTiles) {
+		free((void *)i._value.data());
+	}
+	_decompressedTiles.clear();
+
 	_tileData.clear();
 	TileData(_tileData).swap(_tileData);
 }
@@ -128,6 +133,10 @@ grTileSprite grTileAnimation::getTile(int tile_index) const {
 	debugC(3, kDebugTemp, "The tile index is given by %d", tile_index);
 	static uint32 tile_buf[GR_TILE_SPRITE_SIZE];
 
+	if (_decompressedTiles.contains(tile_index)) {
+		return _decompressedTiles[tile_index];
+	}
+
 	switch (_compression) {
 	case TILE_UNCOMPRESSED:
 		return grTileSprite(&*_tileData.begin() + _tileOffsets[tile_index]);
@@ -145,7 +154,11 @@ grTileSprite grTileAnimation::getTile(int tile_index) const {
 		}
 	}
 
-	return grTileSprite(tile_buf);
+	uint32 *tempBuf = new uint32[GR_TILE_SPRITE_SIZE];
+	memcpy(tempBuf, tile_buf, GR_TILE_SPRITE_SIZE * sizeof(uint32));
+
+	_decompressedTiles[tile_index] = grTileSprite(tempBuf);
+	return _decompressedTiles[tile_index];
 }
 
 void grTileAnimation::addFrame(const uint32 *frame_data) {
@@ -613,6 +626,7 @@ Graphics::ManagedSurface *grTileAnimation::dumpFrameTiles(int frame_index, float
 	Graphics::ManagedSurface *dstSurf = new Graphics::ManagedSurface(w, h, g_engine->_pixelformat);
 
 	int idx = frameStart + frameTileSize.x * frameTileSize.y * frame_index;
+	int dx = grDispatcher::instance()->pixel_format() == GR_RGB565 ? 2 : 4;
 
 	for (int i = 0; i < frameTileSize.y; i++) {
 		for (int j = 0; j < frameTileSize.x; j++) {
@@ -624,11 +638,11 @@ Graphics::ManagedSurface *grTileAnimation::dumpFrameTiles(int frame_index, float
 			const byte *src = (const byte *)getTile(_frameIndex[idx++]).data();
 
 			for (int yy = 0; yy < GR_TILE_SPRITE_SIZE_Y; yy++) {
-				uint16 *dst = (uint16 *)dstSurf->getBasePtr(j * (GR_TILE_SPRITE_SIZE_X + 1), i * (GR_TILE_SPRITE_SIZE_Y + 1) + yy);
+				byte *dst = (byte *)dstSurf->getBasePtr(j * (GR_TILE_SPRITE_SIZE_X + 1), i * (GR_TILE_SPRITE_SIZE_Y + 1) + yy);
 
 				for (int xx = 0; xx < GR_TILE_SPRITE_SIZE_X; xx++) {
-					*dst = grDispatcher::instance()->make_rgb565u(src[2], src[1], src[0]);
-					dst++;
+					grDispatcher::instance()->setPixelFast(dst, grDispatcher::instance()->make_rgb(src[2], src[1], src[0]));
+					dst += dx;
 					src += 4;
 				}
 			}

@@ -437,6 +437,7 @@ void Score::updateCurrentFrame() {
 	}
 
 	_nextFrame = 0;
+	_vm->_skipFrameAdvance = false;
 
 	if (nextFrameNumberToLoad >= getFramesNum()) {
 		Window *window = _vm->getCurrentWindow();
@@ -470,6 +471,17 @@ void Score::updateCurrentFrame() {
 	}
 
 	if (_curFrameNumber != nextFrameNumberToLoad) {
+		// Cache the previous bounding box for the purposes of rollOver.
+		// If the sprite is blank, D4 and below will use whatever the previous valid bounding
+		// box was for rollOver testing.
+		if (g_director->getVersion() < 500) {
+			for (uint ch = 0; ch < _channels.size(); ch++) {
+				if (_channels[ch]->_sprite->_castId.member != 0) {
+					_channels[ch]->_rollOverBbox = _channels[ch]->getBbox();
+				}
+			}
+		}
+
 		// Load the current sprite information into the _currentFrame data store.
 		// This is specifically because of delta updates; loading the next frame
 		// in the score applies delta changes to _currentFrame, and ideally we want
@@ -482,6 +494,14 @@ void Score::updateCurrentFrame() {
 
 		// finally, update the channels and buffer any dirty rectangles
 		updateSprites(kRenderModeNormal, true);
+	} else if (!_vm->_playbackPaused) {
+		// Loading the same frame; e.g. "go to frame".
+		// This is mostly a no-op, however any sprite changes for
+		// non-puppet sprites will be reverted.
+
+		// If playback has been paused on a frame, the sprites aren't cleaned.
+		updateSprites(kRenderModeNormal, true);
+
 	}
 	return;
 }
@@ -563,7 +583,7 @@ void Score::update() {
 
 			// Don't process frozen script if we use jump instructions
 			// like "go to frame", or open a new movie.
-			if (!_nextFrame || _nextFrame == _curFrameNumber) {
+			if (!_nextFrame) {
 				processFrozenScripts();
 			}
 			return;
@@ -581,8 +601,6 @@ void Score::update() {
 			_exitFrameCalled = true;
 		}
 	}
-
-	_vm->_skipFrameAdvance = false;
 
 	// Check for delay
 	if (g_system->getMillis() < _nextFrameDelay) {
@@ -623,27 +641,45 @@ void Score::update() {
 
 	uint32 count = _window->frozenLingoStateCount();
 
-	// new frame, first call the perFrameHook (if one exists)
-	if (!_window->_newMovieStarted && !_vm->_playbackPaused) {
-		// Call the perFrameHook as soon as a frame switch is done.
-		// If there is a transition, the perFrameHook is called
-		// after each transition subframe instead of here.
-		if (_currentFrame->_mainChannels.transType == 0 && _currentFrame->_mainChannels.trans.isNull()) {
-			_lingo->executePerFrameHook(_curFrameNumber, 0);
+	// Director 4 and below will allow infinite recursion via the perFrameHook.
+	if (_vm->getVersion() < 500) {
+		// new frame, first call the perFrameHook (if one exists)
+		if (!_window->_newMovieStarted && !_vm->_playbackPaused) {
+			// Call the perFrameHook as soon as a frame switch is done.
+			// If there is a transition, the perFrameHook is called
+			// after each transition subframe instead of here.
+			if (_currentFrame->_mainChannels.transType == 0 && _currentFrame->_mainChannels.trans.isNull()) {
+				_lingo->executePerFrameHook(_curFrameNumber, 0);
+			}
 		}
+		if (_window->frozenLingoStateCount() > count)
+			return;
 	}
-	if (_window->frozenLingoStateCount() > count)
-		return;
 
 	// Check to see if we've hit the recursion limit
 	if (_vm->getVersion() >= 400 && _window->frozenLingoRecursionCount() >= 2) {
 		debugC(1, kDebugEvents, "Score::update(): hitting D4 recursion depth limit, defrosting");
 		processFrozenScripts(true);
-		// keep plowing on
+		return;
 	} else if (_window->frozenLingoStateCount() >= 64) {
 		warning("Score::update(): Stopping runaway script recursion. By this point D3 will have run out of stack space");
 		processFrozenScripts();
 		return;
+	}
+
+	// Director 5 and above actually check for recursion for the perFrameHook.
+	if (_vm->getVersion() >= 500) {
+		// new frame, first call the perFrameHook (if one exists)
+		if (!_window->_newMovieStarted && !_vm->_playbackPaused) {
+			// Call the perFrameHook as soon as a frame switch is done.
+			// If there is a transition, the perFrameHook is called
+			// after each transition subframe instead of here.
+			if (_currentFrame->_mainChannels.transType == 0 && _currentFrame->_mainChannels.trans.isNull()) {
+				_lingo->executePerFrameHook(_curFrameNumber, 0);
+			}
+		}
+		if (_window->frozenLingoStateCount() > count)
+			return;
 	}
 
 	if (_vm->getVersion() >= 600) {
@@ -667,6 +703,11 @@ void Score::update() {
 	if (_window->frozenLingoStateCount() > count)
 		return;
 
+	// If we've hit the recursion limit, don't enterFrame
+	if (_vm->getVersion() >= 400 && _window->frozenLingoRecursionCount() >= 2) {
+		debugC(1, kDebugEvents, "Score::update: exiting early due to recursion depth limit");
+		return;
+	}
 
 	// then call the enterFrame hook (if one exists)
 	count = _window->frozenLingoStateCount();
@@ -735,7 +776,7 @@ void Score::renderFrame(uint16 frameId, RenderMode mode) {
 	playQueuedSound(); // this is currently only used in FPlayXObj
 
 	if (_cursorDirty) {
-		renderCursor(_movie->getWindow()->getMousePos());
+		renderCursor(_movie->getWindow()->getMousePos(), true);
 		_cursorDirty = false;
 	}
 	uint32 end = g_system->getMillis(false);
@@ -770,12 +811,16 @@ bool Score::renderTransition(uint16 frameId, RenderMode mode) {
 
 void Score::incrementFilmLoops() {
 	for (auto &it : _channels) {
-		if (it->_sprite->_cast && it->_sprite->_cast->_type == kCastFilmLoop) {
+		if (it->_sprite->_cast && (it->_sprite->_cast->_type == kCastFilmLoop || it->_sprite->_cast->_type == kCastMovie)) {
 			FilmLoopCastMember *fl = ((FilmLoopCastMember *)it->_sprite->_cast);
 			if (!fl->_frames.empty()) {
 				// increment the film loop counter
-				it->_filmLoopFrame += 1;
-				it->_filmLoopFrame %= fl->_frames.size();
+				if (fl->_looping) {
+					it->_filmLoopFrame += 1;
+					it->_filmLoopFrame %= fl->_frames.size();
+				} else if (it->_filmLoopFrame < (fl->_frames.size() - 1)) {
+					it->_filmLoopFrame += 1;
+				}
 			} else {
 				warning("Score::updateFilmLoops(): invalid film loop in castId %s", it->_sprite->_castId.asString().c_str());
 			}
@@ -1272,11 +1317,15 @@ void Score::renderCursor(Common::Point pos, bool forceUpdate) {
 	if (!_channels.empty() && _playState != kPlayStopped) {
 		uint spriteId = 0;
 
-		for (int i = _channels.size() - 1; i >= 0; i--)
-			if (_channels[i]->isMouseIn(pos) && !_channels[i]->_cursor.isEmpty()) {
+		for (int i = _channels.size() - 1; i >= 0; i--) {
+			CollisionTest test = _channels[i]->isMouseIn(pos);
+			if (test == kCollisionYes && !_channels[i]->_cursor.isEmpty()) {
 				spriteId = i;
 				break;
+			} else if (test == kCollisionHole) {
+				break;
 			}
+		}
 
 		if (!_channels[spriteId]->_cursor.isEmpty()) {
 			if (!forceUpdate && _currentCursor == _channels[spriteId]->_cursor)
@@ -1343,7 +1392,7 @@ bool Score::checkShotSimilarity(const Graphics::Surface *oldSurface, const Graph
 				absolute_pixel_differences++;
 
 				for (int c = 0; c < 4; c++) {
-					if (ABS((newColor & 0xFF) - (oldColor & 0xFF)) > kShotColorDiffThreshold) {
+					if (ABS<int32>((newColor & 0xFF) - (oldColor & 0xFF)) > kShotColorDiffThreshold) {
 						different_pixel_count++;
 						break;
 					}
@@ -1462,31 +1511,42 @@ void Score::screenShot() {
 }
 
 uint16 Score::getSpriteIDFromPos(Common::Point pos) {
-	for (int i = _channels.size() - 1; i >= 0; i--)
-		if (_channels[i]->isMouseIn(pos))
+	for (int i = _channels.size() - 1; i >= 0; i--) {
+		CollisionTest test = _channels[i]->isMouseIn(pos);
+		if (test == kCollisionYes)
 			return i;
+		else if (test == kCollisionHole)
+			break;
+	}
 
 	return 0;
 }
 
 uint16 Score::getMouseSpriteIDFromPos(Common::Point pos) {
-	for (int i = _channels.size() - 1; i >= 0; i--)
-		if (_channels[i]->isMouseIn(pos) && _channels[i]->_sprite->respondsToMouse())
+	for (int i = _channels.size() - 1; i >= 0; i--) {
+		CollisionTest test = _channels[i]->isMouseIn(pos);
+		if (test == kCollisionYes && _channels[i]->_sprite->respondsToMouse())
 			return i;
+		else if (test == kCollisionHole)
+			break;
+	}
 
 	return 0;
 }
 
 uint16 Score::getActiveSpriteIDFromPos(Common::Point pos) {
-	for (int i = _channels.size() - 1; i >= 0; i--)
-		if (_channels[i]->isMouseIn(pos) && _channels[i]->_sprite->isActive())
+	for (int i = _channels.size() - 1; i >= 0; i--) {
+		CollisionTest test = _channels[i]->isMouseIn(pos);
+		if (test == kCollisionYes && _channels[i]->_sprite->isActive())
 			return i;
-
+		else if (test == kCollisionHole)
+			break;
+	}
 	return 0;
 }
 
-bool Score::checkSpriteIntersection(uint16 spriteId, Common::Point pos) {
-	if (_channels[spriteId]->getBbox().contains(pos))
+bool Score::checkSpriteRollOver(uint16 spriteId, Common::Point pos) {
+	if (_channels[spriteId]->getRollOverBbox().contains(pos))
 		return true;
 
 	return false;
@@ -1539,6 +1599,29 @@ bool Score::refreshPointersForCastMemberID(CastMemberID id) {
 		if (it->_castId == id) {
 			it->_cast = nullptr;
 			it->setCast(id);
+			hit = true;
+		}
+	}
+	return hit;
+}
+
+bool Score::refreshPointersForCastLib(uint16 castLib) {
+	// FIXME: This can be removed once Sprite is refactored to not
+	// keep a pointer to a CastMember.
+	bool hit = false;
+	for (auto &it : _channels) {
+		if (it->_sprite->_castId.castLib == castLib) {
+			it->_sprite->_cast = nullptr;
+			it->setCast(it->_sprite->_castId);
+			it->_dirty = true;
+			hit = true;
+		}
+	}
+
+	for (auto &it : _currentFrame->_sprites) {
+		if (it->_castId.castLib == castLib) {
+			it->_cast = nullptr;
+			it->setCast(it->_castId);
 			hit = true;
 		}
 	}
@@ -1933,7 +2016,7 @@ Common::String Score::formatChannelInfo() {
 	result += Common::String::format("SND: 2  sound2: %d, soundType2: %d\n", frame._mainChannels.sound2.member, frame._mainChannels.soundType2);
 	result += Common::String::format("LSCR:   actionId: %s\n", frame._mainChannels.actionId.asString().c_str());
 
-	for (int i = 0; i < frame._numChannels; i++) {
+	for (int i = 0; (i < frame._numChannels && ((i + 1) < (int)_channels.size())); i++) {
 		Channel &channel = *_channels[i + 1];
 		Sprite &sprite = *channel._sprite;
 		Common::Point position = channel.getPosition();

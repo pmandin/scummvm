@@ -43,7 +43,7 @@ void Room501::init() {
 	digi_play_loop("501_s01", 3, 30);
 	if (_G(game).previous_room != KERNEL_RESTORING_GAME) {
 		_val2 = 0;
-		_digiName = 0;
+		_digiName = nullptr;
 		_val4 = 0;
 	}
 
@@ -103,7 +103,7 @@ void Room501::daemon() {
 		player_update_info();
 		_shadow = series_show("SAFARI SHADOW 3", 0xf00, 128, -1, -1, 0,
 			_G(player_info).scale, _G(player_info).x, _G(player_info).y);
-		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
+		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, false,
 			triggerMachineByHashCallback, "Rip Delta Machine State");
 
 		switch (_ripleyShould) {
@@ -256,7 +256,7 @@ void Room501::daemon() {
 			case 18:
 				if (!_paper) {
 					_paper = series_place_sprite("one frame paper", 0, 0, 0, 100, 0x780);
-					_flag = 1;
+					_flag = true;
 				}
 
 				kernel_timing_trigger(1, 505);
@@ -276,8 +276,8 @@ void Room501::daemon() {
 					inv_give_to_player("US DOLLARS");
 
 				kernel_timing_trigger(1, 505);
-				sendWSMessage_10000(1, _ripley, _ripSignsPaper, 85, 85, 502,
-					_ripSignsPaper, 85, 85, 0);
+				sendWSMessage_10000(1, _ripley, _ripMoneyExchange, 85, 85, 502,
+									_ripMoneyExchange, 85, 85, 0);
 				_ripleyShould = 3;
 				break;
 			default:
@@ -335,7 +335,7 @@ void Room501::daemon() {
 		_xyzzy6 = -1;
 		_xyzzy7 = -1;
 		_xyzzy5 = -1;
-		_agent = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
+		_agent = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, false,
 			triggerMachineByHashCallback, "Agent at Desk");
 		sendWSMessage_10000(1, _agent, _agentTalkLoop, 1, 1, 506,
 			_agentTalkLoop, 1, 1, 0);
@@ -348,7 +348,7 @@ void Room501::daemon() {
 		_xyzzy6 = -1;
 		_xyzzy7 = -1;
 		_xyzzy5 = -1;
-		_agent = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
+		_agent = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, false,
 			triggerMachineByHashCallback, "Agent at Desk");
 		sendWSMessage_10000(1, _agent, _agentStridesForward, 15, 15, 506,
 			_agentStridesForward, 15, 15, 0);
@@ -748,17 +748,22 @@ void Room501::daemon() {
 	case 543: {
 		series_unload(_ripParcelExchange);
 
-		int item = conv_current_entry();
+		const int item = conv_current_entry();
 		if (item >= 0 && item <= 11) {
 			static const char *ITEMS[12] = {
 				"CRYSTAL SKULL", "STICK AND SHELL MAP",
 				"WHEELED TOY", "REBUS AMULET", "SHRUNKEN HEAD",
 				"SILVER BUTTERFLY", "POSTAGE STAMP",
 				"GERMAN BANKNOTE", "WHALE BONE HORN",
-				"CHISEL",  "INCENSE BURNER",  "INCENSE BURNER"
+				"CHISEL",  "INCENSE BURNER",  "ROMANOV EMERALD"
 			};
 
-			inv_move_object(ITEMS[item], (item == 11) ? NOWHERE : 305);
+			if (item != 11)
+				inv_move_object(ITEMS[item], 305);
+			else {
+				setFlag45();
+				inv_move_object(ITEMS[item], NOWHERE);
+			}
 		}
 		conv_resume();
 		break;
@@ -831,7 +836,7 @@ void Room501::daemon() {
 		break;
 
 	case 557:
-		_deltaPuffinMachine = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
+		_deltaPuffinMachine = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, false,
 			triggerMachineByHashCallback, "Delta Puffin Machine State");
 		_xyzzy3 = 1;
 		_xyzzy1 = 1;
@@ -862,7 +867,7 @@ void Room501::daemon() {
 		break;
 
 	case 562:
-		midi_play("SADBOY2", 255, 0, -1, 949);
+		midi_play("SADBOY2", 255, false, -1, 949);
 		_xyzzy10 = 0;
 		break;
 
@@ -1040,7 +1045,7 @@ void Room501::daemon() {
 		break;
 
 	case 596:
-		_deltaPuffinMachine = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, 0,
+		_deltaPuffinMachine = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 0, 0, 100, 0x700, false,
 			triggerMachineByHashCallback, "Delta Puffin Machine State");
 		_xyzzy3 = 1;
 		_xyzzy1 = 1;
@@ -1116,10 +1121,10 @@ void Room501::daemon() {
 }
 
 void Room501::parser() {
-	bool lookFlag = player_said_any("look", "look at");
-	bool takeFlag = player_said("take");
-	bool talkFlag = player_said_any("talk", "talk to");
-	bool useFlag = player_said("gear");
+	const bool lookFlag = player_said_any("look", "look at");
+	const bool takeFlag = player_said("take");
+	const bool talkFlag = player_said_any("talk", "talk to");
+	const bool useFlag = player_said("gear");
 
 	if (player_said("conv501a")) {
 		conv501a();
@@ -1292,9 +1297,9 @@ void Room501::parser() {
 
 void Room501::conv501a() {
 	const char *sound = conv_sound_to_play();
-	int who = conv_whos_talking();
-	int node = conv_current_node();
-	int entry = conv_current_entry();
+	const int who = conv_whos_talking();
+	const int node = conv_current_node();
+	const int entry = conv_current_entry();
 
 	if (node == 15) {
 		if (entry == 0)
@@ -1337,7 +1342,7 @@ void Room501::conv501a() {
 	} else {
 		if (who <= 0) {
 			if (node == 15 && entry == 5)
-				midi_play("SADBOY1", 255, 0, -1, 949);
+				midi_play("SADBOY1", 255, false, -1, 949);
 
 			if (node == 7 && entry == 0) {
 				_G(kernel).trigger_mode = KT_DAEMON;

@@ -22,24 +22,33 @@
 #ifndef MEDIASTATION_PATH_H
 #define MEDIASTATION_PATH_H
 
-#include "mediastation/assetheader.h"
 #include "mediastation/asset.h"
-#include "mediastation/mediascript/operand.h"
+#include "mediastation/mediascript/scriptvalue.h"
 #include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
 class Path : public Asset {
 public:
-	Path(AssetHeader *header) : Asset(header) {};
-	virtual ~Path() override;
+	Path() : Asset(kAssetTypePath) {};
 
 	virtual void process() override;
 
-	virtual Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) override;
+	virtual void readParameter(Chunk &chunk, AssetHeaderSectionType paramType) override;
+	virtual ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) override;
 
 private:
 	double _percentComplete = 0.0;
+	uint _totalSteps = 0;
+	uint _currentStep = 0;
+	uint _nextPathStepTime = 0;
+	uint _stepDurationInMilliseconds = 0;
+	bool _isPlaying = false;
+
+	Common::Point _startPoint;
+	Common::Point _endPoint;
+	uint32 _stepRate = 0;
+	uint32 _duration = 0;
 
 	// Method implementations.
 	void timePlay();

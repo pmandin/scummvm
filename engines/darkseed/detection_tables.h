@@ -36,7 +36,16 @@ const ADGameDescription gameDescriptions[] = {
 		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
-{
+	{ // version 1.2
+		"darkseed",
+		nullptr,
+		AD_ENTRY1s("TOS.EXE", "9fad9d0a4b5e7d0657172593750c7b81", 214784),
+		Common::DE_DEU,
+		Common::kPlatformDOS,
+		ADGF_TESTING,
+		GUIO1(GUIO_NONE)
+	},
+	{
 		"darkseed",
 		nullptr,
 		AD_ENTRY1s("TOS.EXE", "73854f950819beb0eb0d73bd52cc9030", 149412),
@@ -63,7 +72,7 @@ const ADGameDescription gameDescriptions[] = {
 		ADGF_TESTING,
 		GUIO1(GUIO_NONE)
 	},
-{
+	{
 		"darkseed",
 		nullptr,
 		AD_ENTRY1s("TOS.EXE", "62a636d3d6b19336d059cd2f8b1a365f", 154450),
@@ -99,7 +108,7 @@ const ADGameDescription gameDescriptions[] = {
 		ADGF_TESTING | ADGF_CD,
 		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
-{
+	{
 		"darkseed",
 		"CD",
 		AD_ENTRY1s("TOS.EXE", "9b8cdd3b4268d18babf7629fca6a271e", 143534),
@@ -108,7 +117,7 @@ const ADGameDescription gameDescriptions[] = {
 		ADGF_TESTING | ADGF_CD,
 		GUIO1(GAMEOPTION_FLOPPY_MUSIC)
 	},
-{
+	{
 		"darkseed",
 		"CD",
 		AD_ENTRY1s("TOS.EXE", "3c00f3e80fa2c40641278243f96b8398", 170944),
@@ -126,7 +135,15 @@ const ADGameDescription gameDescriptions[] = {
 		ADGF_UNSTABLE | ADGF_CD,
 		GUIO1(GUIO_NONE)
 	},
-
+	{
+		"darkseed",
+		"DEMO",
+		AD_ENTRY1s("TOS.EXE", "43014b73a2cc549bd13d65b18a6aefe4", 161184),
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_TESTING | ADGF_DEMO,
+		GUIO1(GUIO_NONE)
+	},
 	AD_TABLE_END_MARKER
 };
 

@@ -116,7 +116,7 @@ enum Flag {
 	V081 =  81, // Room 303 Torso Tomato : first look animation played
 	V082 =  82,
 	V083 =  83,
-	V084 =  84,
+	V084 =  84, // Room 304: 1 if cobra is dead, 2 if cobra has been caught alive
 	V085 =  85,
 	V086 =  86,
 	V087 =  87,
@@ -147,9 +147,9 @@ enum Flag {
 	V111 = 111,
 	V112 = 112,
 	V113 = 113,
-	V114 = 114,
+	V114 = 114, // Give marks to Wolf, room 402
 	V115 = 115,
-	V116 = 116,
+	V116 = 116, // Try to give to Wolf a foreign currency, room 402
 	V117 = 117,
 	V118 = 118,
 	V119 = 119,
@@ -222,7 +222,7 @@ enum Flag {
 	V186 = 186,
 	V187 = 187,
 	V188 = 188,
-	V189 = 189,
+	V189 = 189, // Room 604: 2= wire connected to pull 3= Also connected to the plug
 	V190 = 190,
 	V191 = 191,
 	V192 = 192,
@@ -352,7 +352,7 @@ enum Flag {
 	V314 = 314,
 	V315 = 315,
 	kCrackedMirror = 316,
-	V317 = 317,
+	V317 = 317, // Look at the game cabinet for the first time after opening it, room 406
 	V318 = 318,
 	V319 = 319,
 	V320 = 320,

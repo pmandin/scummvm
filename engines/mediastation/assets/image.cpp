@@ -25,14 +25,8 @@
 
 namespace MediaStation {
 
-Image::Image(AssetHeader *header) : Asset(header) {
-	if (header->_startup == kAssetStartupActive) {
-		_isActive = true;
-	}
-}
-
 Image::~Image() {
-	if (_header->_assetReference == 0) {
+	if (_assetReference == 0) {
 		// If we're just referencing another asset's bitmap,
 		// don't delete that bitmap.
 		delete _bitmap;
@@ -40,33 +34,66 @@ Image::~Image() {
 	_bitmap = nullptr;
 }
 
-Operand Image::callMethod(BuiltInMethod methodId, Common::Array<Operand> &args) {
+void Image::readParameter(Chunk &chunk, AssetHeaderSectionType paramType) {
+	switch (paramType) {
+	case kAssetHeaderChunkReference:
+		_chunkReference = chunk.readTypedChunkReference();
+		break;
+
+	case kAssetHeaderStartup:
+		_isVisible = static_cast<bool>(chunk.readTypedByte());
+		break;
+
+	case kAssetHeaderLoadType:
+		_loadType = chunk.readTypedByte();
+		break;
+
+	case kAssetHeaderDissolveFactor:
+		_dissolveFactor = chunk.readTypedDouble();
+		break;
+
+	case kAssetHeaderX:
+		_xOffset = chunk.readTypedUint16();
+		break;
+
+	case kAssetHeaderY:
+		_yOffset = chunk.readTypedUint16();
+		break;
+
+	default:
+		SpatialEntity::readParameter(chunk, paramType);
+	}
+}
+
+ScriptValue Image::callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) {
+	ScriptValue returnValue;
 	switch (methodId) {
 	case kSpatialShowMethod: {
 		assert(args.empty());
 		spatialShow();
-		return Operand();
+		return returnValue;
 	}
 
 	case kSpatialHideMethod: {
 		assert(args.empty());
 		spatialHide();
-		return Operand();
+		return returnValue;
 	}
 
 	case kSetDissolveFactorMethod: {
+		warning("STUB: setDissolveFactor");
 		assert(args.size() == 1);
-		warning("Image::callMethod(): setDissolveFactor not implemented yet");
-		return Operand();
+		_dissolveFactor = args[0].asFloat();
+		return returnValue;
 	}
 
 	default:
-		error("Image::callMethod(): Got unimplemented method ID %s (%d)", builtInMethodToStr(methodId), static_cast<uint>(methodId));
+		return SpatialEntity::callMethod(methodId, args);
 	}
 }
 
 void Image::redraw(Common::Rect &rect) {
-	if (!_isActive) {
+	if (!_isVisible) {
 		return;
 	}
 
@@ -76,25 +103,25 @@ void Image::redraw(Common::Rect &rect) {
 	if (!areaToRedraw.isEmpty()) {
 		Common::Point originOnScreen(areaToRedraw.left, areaToRedraw.top);
 		areaToRedraw.translate(-leftTop.x, -leftTop.y);
+		areaToRedraw.clip(Common::Rect(0, 0, _bitmap->width(), _bitmap->height()));
 		g_engine->_screen->simpleBlitFrom(_bitmap->_surface, areaToRedraw, originOnScreen);
 	}
 }
 
 void Image::spatialShow() {
-	_isActive = true;
-	g_engine->addPlayingAsset(this);
+	_isVisible = true;
 	Common::Rect bbox(getLeftTop(), _bitmap->width(), _bitmap->height());
 	g_engine->_dirtyRects.push_back(bbox);
 }
 
 void Image::spatialHide() {
-	_isActive = false;
+	_isVisible = false;
 	Common::Rect bbox(getLeftTop(), _bitmap->width(), _bitmap->height());
 	g_engine->_dirtyRects.push_back(bbox);
 }
 
 Common::Point Image::getLeftTop() {
-	return Common::Point(_header->_x + _header->_boundingBox->left, _header->_y + _header->_boundingBox->top);
+	return Common::Point(_xOffset + _boundingBox.left, _yOffset + _boundingBox.top);
 }
 
 void Image::readChunk(Chunk &chunk) {

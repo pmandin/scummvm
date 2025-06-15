@@ -121,7 +121,7 @@ static const char *const fontStyleSuffixes[] = {
 	"Extend"
 };
 
-int parseSlant(const Common::String fontname) {
+int parseSlant(const Common::String &fontname) {
 	int res = 0;
 
 	for (int i = 1; i < 7; i++)
@@ -131,7 +131,7 @@ int parseSlant(const Common::String fontname) {
 	return res;
 }
 
-Common::String cleanFontName(const Common::String fontname) {
+Common::String cleanFontName(const Common::String &fontname) {
 	const char *pos;
 	Common::String f = fontname;
 	for (int i = 0; i < 7; i++) {
@@ -184,7 +184,7 @@ MacFontManager::MacFontManager(uint32 mode, Common::Language language) : _mode(m
 MacFontManager::~MacFontManager() {
 	for (auto &it: _fontInfo)
 		delete it._value;
-	for (auto &it: _uniFonts)
+	for (auto &it: _uniFontRegistry)
 		delete it._value;
 	for (auto &it: _ttfData)
 		delete it._value;
@@ -231,8 +231,8 @@ void MacFontManager::loadFontsBDF() {
 	Common::ArchiveMemberList list;
 	dat->listMembers(list);
 
-	for (Common::ArchiveMemberList::iterator it = list.begin(); it != list.end(); ++it) {
-		Common::SeekableReadStream *stream = dat->createReadStreamForMember((*it)->getPathInArchive());
+	for (auto &archive : list) {
+		Common::SeekableReadStream *stream = dat->createReadStreamForMember(archive->getPathInArchive());
 
 		Graphics::BdfFont *font = Graphics::BdfFont::loadFont(*stream);
 
@@ -246,7 +246,7 @@ void MacFontManager::loadFontsBDF() {
 
 			macfont = new MacFont(_fontIds.getValOrDefault(font->getFamilyName(), kMacFontNonStandard), font->getFontSize(), parseFontSlant(font->getFontSlant()));
 		} else { // Get it from the file name
-			fontName = (*it)->getName();
+			fontName = archive->getName();
 
 			// Trim the .bdf extension
 			for (int i = fontName.size() - 1; i >= 0; --i) {
@@ -289,8 +289,8 @@ void MacFontManager::loadFonts() {
 	Common::ArchiveMemberList list;
 	dat->listMembers(list);
 
-	for (Common::ArchiveMemberList::iterator it = list.begin(); it != list.end(); ++it) {
-		Common::SeekableReadStream *stream = dat->createReadStreamForMember((*it)->getPathInArchive());
+	for (auto &archive : list) {
+		Common::SeekableReadStream *stream = dat->createReadStreamForMember(archive->getPathInArchive());
 
 		loadFonts(stream);
 	}
@@ -317,9 +317,9 @@ void MacFontManager::loadJapaneseFonts() {
 	Common::ArchiveMemberList list;
 	dat->listMembers(list);
 
-	for (Common::ArchiveMemberList::iterator it = list.begin(); it != list.end(); ++it) {
-		Common::SeekableReadStream *stream = dat->createReadStreamForMember((*it)->getPathInArchive());
-		Common::String fontName = (*it)->getName();
+	for (auto &archive : list) {
+		Common::SeekableReadStream *stream = dat->createReadStreamForMember(archive->getPathInArchive());
+		Common::String fontName = archive->getName();
 
 		// Trim the .ttf extension
 		for (int i = fontName.size() - 1; i >= 0; --i) {
@@ -362,12 +362,12 @@ void MacFontManager::loadFonts(const Common::Path &fileName) {
 }
 
 void MacFontManager::loadFonts(Common::MacResManager *fontFile) {
-	Common::MacResIDArray fonds = fontFile->getResIDArray(MKTAG('F','O','N','D'));
-	if (fonds.size() > 0) {
-		for (Common::Array<uint16>::iterator iterator = fonds.begin(); iterator != fonds.end(); ++iterator) {
-			Common::SeekableReadStream *fond = fontFile->getResource(MKTAG('F', 'O', 'N', 'D'), *iterator);
+	Common::MacResIDArray fonts = fontFile->getResIDArray(MKTAG('F','O','N','D'));
+	if (fonts.size() > 0) {
+		for (auto &curFont : fonts) {
+			Common::SeekableReadStream *fond = fontFile->getResource(MKTAG('F', 'O', 'N', 'D'), curFont);
 
-			Common::String familyName = fontFile->getResName(MKTAG('F', 'O', 'N', 'D'), *iterator);
+			Common::String familyName = fontFile->getResName(MKTAG('F', 'O', 'N', 'D'), curFont);
 			int familySlant = parseSlant(familyName);
 
 			familyName = cleanFontName(familyName);
@@ -503,6 +503,9 @@ const Font *MacFontManager::getFont(MacFont *macFont) {
 			macFont->setName(name);
 		}
 
+		if (_fontRegistry.contains(macFont->getName()))
+			return _fontRegistry[macFont->getName()]->getFont();
+
 		if (!_fontRegistry.contains(macFont->getName())) {
 			int id = macFont->getId();
 
@@ -555,32 +558,32 @@ const Font *MacFontManager::getFont(MacFont *macFont) {
 
 #ifdef USE_FREETYPE2
 	if (!font && !(_mode & MacGUIConstants::kWMModeForceMacFonts)) {
-		if (_mode & kWMModeUnicode) {
+
+		if (_uniFontRegistry.contains(macFont->getName())) {
+			return _uniFontRegistry[macFont->getName()];
+		}
+
+		// If font is not present in the registry, try to load and store it
+		int newId = macFont->getId();
+		int newSlant = macFont->getSlant();
+		int familyId = getFamilyId(newId, newSlant);
+
+		if ((_mode & kWMModeUnicode) &&
+				(((!_fontInfo.contains(familyId))) || (_mode & kWMModeForceMacFontsInWin95))) {
 			if (macFont->getSize() <= 0) {
 				debugC(1, kDebugLevelMacGUI, "MacFontManager::getFont() - Font size <= 0!");
 			}
-			Common::HashMap<int, const Graphics::Font *>::iterator pFont = _uniFonts.find(macFont->getSize());
-
-			if (pFont != _uniFonts.end()) {
-				font = pFont->_value;
-			} else {
-				int newId = macFont->getId();
-				int newSlant = macFont->getSlant();
-				int familyId = getFamilyId(newId, newSlant);
-				if (_fontInfo.contains(familyId) && !(_mode & kWMModeForceMacFontsInWin95)) {
-					font = Graphics::loadTTFFontFromArchive(_fontInfo[familyId]->name, macFont->getSize(), Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeMonochrome);
-					_uniFonts[macFont->getSize()] = font;
-				} else {
-					font = Graphics::loadTTFFontFromArchive("LiberationSans-Regular.ttf", macFont->getSize(), Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeMonochrome);
-					_uniFonts[macFont->getSize()] = font;
-				}
-			}
-		} else {
-			int newId = macFont->getId();
-			int newSlant = macFont->getSlant();
-			int familyId = getFamilyId(newId, newSlant);
+			font = Graphics::loadTTFFontFromArchive("LiberationSans-Regular.ttf", macFont->getSize(), Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeMonochrome);
+			if (font)
+				_uniFontRegistry.setVal(macFont->getName(), font);
+		} else if (_fontInfo.contains(familyId)) {
 			font = Graphics::loadTTFFontFromArchive(_fontInfo[familyId]->name, macFont->getSize(), Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeMonochrome);
-			_uniFonts[macFont->getSize()] = font;
+			if (font)
+				_uniFontRegistry.setVal(macFont->getName(), font);
+		} else {
+			font = Graphics::loadTTFFontFromArchive("LiberationSans-Regular.ttf", macFont->getSize(), Graphics::kTTFSizeModeCharacter, 0, 0, Graphics::kTTFRenderModeMonochrome);
+			if (font)
+				_uniFontRegistry.setVal(macFont->getName(), font);
 		}
 	}
 #endif
@@ -791,9 +794,9 @@ int MacFontManager::getFontIdByName(Common::String name) {
 	if (_fontIds.contains(name))
 		return _fontIds[name];
 
-	for (auto it = _fontIds.begin(); it != _fontIds.end(); it++) {
-		if (it->_key.equalsIgnoreCase(name)) {
-			return it->_value;
+	for (auto &fontId : _fontIds) {
+		if (fontId._key.equalsIgnoreCase(name)) {
+			return fontId._value;
 		}
 	}
 	return 1;
@@ -885,9 +888,9 @@ void MacFontManager::generateFontSubstitute(MacFont &macFont) {
 
 	// First we gather all font sizes for this font
 	Common::Array<MacFont *> sizes;
-	for (Common::HashMap<Common::String, MacFont *>::iterator i = _fontRegistry.begin(); i != _fontRegistry.end(); ++i) {
-		if (i->_value->getId() == macFont.getId() && i->_value->getSlant() == macFont.getSlant() && !i->_value->isGenerated())
-			sizes.push_back(i->_value);
+	for (auto &font : _fontRegistry) {
+		if (font._value->getId() == macFont.getId() && font._value->getSlant() == macFont.getSlant() && !font._value->isGenerated())
+			sizes.push_back(font._value);
 	}
 
 	if (sizes.empty()) {
@@ -897,9 +900,9 @@ void MacFontManager::generateFontSubstitute(MacFont &macFont) {
 		}
 
 		// Now let's try to find a regular font
-		for (Common::HashMap<Common::String, MacFont *>::iterator i = _fontRegistry.begin(); i != _fontRegistry.end(); ++i) {
-			if (i->_value->getId() == macFont.getId() && i->_value->getSlant() == kMacFontRegular && !i->_value->isGenerated())
-				sizes.push_back(i->_value);
+		for (auto &font : _fontRegistry) {
+			if (font._value->getId() == macFont.getId() && font._value->getSlant() == kMacFontRegular && !font._value->isGenerated())
+				sizes.push_back(font._value);
 		}
 
 		if (sizes.empty()) {
@@ -993,8 +996,8 @@ void MacFont::setFallback(const Font *font, Common::String name) {
 void MacFontManager::printFontRegistry(int debugLevel, uint32 channel) {
 		debugC(debugLevel, channel, "Font Registry: %d items", _fontRegistry.size());
 
-		for (Common::HashMap<Common::String, MacFont *>::iterator i = _fontRegistry.begin(); i != _fontRegistry.end(); ++i) {
-			MacFont *f = i->_value;
+		for (auto &font : _fontRegistry) {
+			MacFont *f = font._value;
 			debugC(debugLevel, channel, "name: '%s' gen:%c ttf:%c ID: %d size: %d slant: %d fallback: '%s'",
 				toPrintable(f->getName()).c_str(), f->isGenerated() ? 'y' : 'n', f->isTrueType() ? 'y' : 'n',
 				f->getId(), f->getSize(), f->getSlant(), toPrintable(f->getFallbackName()).c_str());

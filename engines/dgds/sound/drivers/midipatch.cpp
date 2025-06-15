@@ -23,7 +23,7 @@
 #include "common/config-manager.h"
 #include "common/file.h"
 #include "common/memstream.h"
-#include "common/system.h"
+#include "common/ptr.h"
 
 #include "dgds/sound/resource/sci_resource.h"
 #include "dgds/dgds.h"
@@ -49,12 +49,12 @@ SciResource *getMidiPatchData(int num) {
 	DgdsEngine *engine = DgdsEngine::getInstance();
 	ResourceManager *resource = engine->getResourceManager();
 	Decompressor *decomp = engine->getDecompressor();
-	ResourceManager *fddMgr = nullptr;
-	Common::SeekableReadStream *ovlStream;
+	Common::ScopedPtr<ResourceManager> fddMgr;
+	Common::ScopedPtr<Common::SeekableReadStream> ovlStream;
 
 	int resNum = 0;
 	for (; resNum < ARRAYSIZE(PATCH_RESOURCES); resNum++) {
-		ovlStream = resource->getResource(PATCH_RESOURCES[resNum]);
+		ovlStream.reset(resource->getResource(PATCH_RESOURCES[resNum]));
 		if (ovlStream)
 			break;
 	}
@@ -65,12 +65,11 @@ SciResource *getMidiPatchData(int num) {
 	// This is how the data comes arranged in the GOG version.
 	//
 	if (num == 1 && engine->getGameId() == GID_WILLY) {
-		fddMgr = new ResourceManager("FDD");
-		if (fddMgr->hasResource("SX.OVL")) {
+		fddMgr.reset(new ResourceManager("FDD"));
+		if (fddMgr.get()->hasResource("SX.OVL")) {
 			debug("Overriding MT32 patch data with patches from FDD version.");
-			delete ovlStream;
 			resNum = 2;
-			ovlStream = fddMgr->getResource("SX.OVL");
+			ovlStream.reset(fddMgr.get()->getResource("SX.OVL"));
 		}
 	}
 
@@ -79,7 +78,7 @@ SciResource *getMidiPatchData(int num) {
 		return nullptr;
 	}
 
-	DgdsChunkReader chunk(ovlStream);
+	DgdsChunkReader chunk(ovlStream.get());
 
 	const Common::String targetSection = Common::String::format("%03d:", num);
 
@@ -108,10 +107,6 @@ SciResource *getMidiPatchData(int num) {
 			chunk.skipContent();
 		}
 	}
-
-	delete ovlStream;
-	if (fddMgr)
-		delete fddMgr;
 
 	warning("Didn't find section %s in midi patch resource %s", targetSection.c_str(), PATCH_RESOURCES[resNum]);
 

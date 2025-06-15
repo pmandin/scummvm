@@ -403,7 +403,7 @@ void PrinceEngine::showLogo() {
 		_graph->draw(_graph->_frontScreen, logo.getSurface());
 		_graph->change();
 		_graph->update(_graph->_frontScreen);
-		setPalette(logo.getPalette());
+		setPalette(logo.getPalette().data());
 
 		uint32 logoStart = _system->getMillis();
 		while (_system->getMillis() < logoStart + 5000) {
@@ -449,10 +449,13 @@ Common::Error PrinceEngine::run() {
 
 void PrinceEngine::pauseEngineIntern(bool pause) {
 	Engine::pauseEngineIntern(pause);
-	if (pause) {
-		_midiPlayer->pause();
-	} else {
-		_midiPlayer->resume();
+
+	if (_midiPlayer) {
+		if (pause) {
+			_midiPlayer->pause();
+		} else {
+			_midiPlayer->resume();
+		}
 	}
 }
 

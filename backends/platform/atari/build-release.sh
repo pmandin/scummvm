@@ -10,7 +10,7 @@ PLATFORM=m68k-atari-mintelf
 FASTCALL=false
 
 export ASFLAGS="-m68020-60"
-export CXXFLAGS="-m68020-60 -DUSE_SUPERVIDEL -DUSE_SV_BLITTER"
+export CXXFLAGS="-m68020-60 -DUSE_MOVE16 -DUSE_SUPERVIDEL -DUSE_SV_BLITTER"
 export LDFLAGS="-m68020-60"
 export PKG_CONFIG_LIBDIR="$(${PLATFORM}-gcc -print-sysroot)/usr/lib/m68020-60/pkgconfig"
 
@@ -50,11 +50,19 @@ rm -rf dist-generic
 make dist-generic
 
 # create symbol file and strip
+rm dist-generic/scummvm/scummvm.ttp
+cp -a scummvm.ttp dist-generic/scummvm/scummvm.ttp
 ${PLATFORM}-nm -C dist-generic/scummvm/scummvm.ttp | grep -vF ' .L' | grep ' [TtWV] ' | ${PLATFORM}-c++filt | sort -u > dist-generic/scummvm/scummvm.sym
 ${PLATFORM}-strip -s dist-generic/scummvm/scummvm.ttp
 
 # remove unused files; absent gui-icons.dat massively speeds up startup time (used for the grid mode)
 rm dist-generic/scummvm/data/{achievements,encoding,gui-icons,macgui,shaders}.dat
+
+# rename remaining files still not fitting into the 8+3 limit (this has to be supported by the backend, too)
+mv dist-generic/scummvm/data/cryomni3d.dat dist-generic/scummvm/data/cryomni3.dat
+mv dist-generic/scummvm/data/neverhood.dat dist-generic/scummvm/data/neverhoo.dat
+mv dist-generic/scummvm/data/supernova.dat dist-generic/scummvm/data/supernov.dat
+mv dist-generic/scummvm/data/teenagent.dat dist-generic/scummvm/data/teenagen.dat
 
 # move themes into 'themes' folder (with compression level zero for faster depacking)
 mkdir -p dist-generic/scummvm/themes

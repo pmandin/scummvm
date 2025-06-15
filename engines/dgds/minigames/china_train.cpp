@@ -22,7 +22,6 @@
 #include "common/system.h"
 
 #include "dgds/dgds.h"
-#include "dgds/drawing.h"
 #include "dgds/globals.h"
 #include "dgds/game_palettes.h"
 #include "dgds/image.h"
@@ -836,7 +835,7 @@ void ChinaTrain::initScoreWindow() {
 	shadeLabel(0xfa, 0xa8, 0x2d, 9, "RETREAT");
 	shadeLabel(0x2a, 0x99, 0x1e, 9, "LIFE");
 	shadeLabel(0x67, 0x99, 0x2d, 9, "FATIGUE");
-	shadeLabel(0x42, 0xac, 0x31, 9, "FEROICTY");
+	shadeLabel(0x42, 0xac, 0x31, 9, "FEROCITY");
 	buf.fillRect(Common::Rect(Common::Point(0, 195), 320, 5), 0);
 }
 

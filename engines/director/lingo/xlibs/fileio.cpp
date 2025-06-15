@@ -143,6 +143,7 @@ const XlibFileDesc FileIO::fileNames[] = {
 	{ "shFILEIO",	nullptr }, // TD loads this up using openXLib("@:shFILEIO.DLL")
 	{ "FILE",		nullptr },
 	{ "FILEIO16",	nullptr },
+	{ "FileIOXtraFat",	nullptr },
 	{ nullptr,		nullptr },
 };
 
@@ -712,7 +713,10 @@ void FileIO::m_delete(int nargs) {
 
 	if (me->_filename) {
 		Common::String filename = *me->_filename;
-		me->dispose();
+		// Xtra version does not dispose handle on file delete
+		if (me->getObjType() == kXObj) {
+			me->dispose();
+		}
 		if (g_system->getSavefileManager()->removeSavefile(filename)) {
 			g_lingo->push(Datum(kErrorNone));
 		} else {

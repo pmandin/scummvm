@@ -79,6 +79,8 @@ WetEngine::WetEngine(OSystem *syst, const ADGameDescription *gd) : HypnoEngine(s
 	_c50LeftTurns = 0;
 	_c50RigthTurns = 0;
 
+	_rButtonUp = false;
+
 	const chapterEntry *entry = rawChapterTable;
 	while (entry->id) {
 		_ids.push_back(entry->id);
@@ -617,7 +619,7 @@ void WetEngine::showCredits() {
 	}
 }
 
-void WetEngine::loadFonts(const Common::String prefix) {
+void WetEngine::loadFonts(const Common::String &prefix) {
 	HypnoEngine::loadFonts(prefix);
 	if (_language == Common::KO_KOR) {
 		Common::File file;

@@ -19,39 +19,32 @@
  *
  */
 
-#include "mediastation/datum.h"
 #include "mediastation/bitmap.h"
 #include "mediastation/debugchannels.h"
 
 namespace MediaStation {
 
 BitmapHeader::BitmapHeader(Chunk &chunk) {
-	uint headerSizeInBytes = Datum(chunk, kDatumTypeUint16_1).u.i;
+	uint headerSizeInBytes = chunk.readTypedUint16();
 	debugC(5, kDebugLoading, "BitmapHeader::BitmapHeader(): headerSize = 0x%x", headerSizeInBytes);
-	_dimensions = Datum(chunk).u.point;
-	_compressionType = static_cast<BitmapCompressionType>(Datum(chunk, kDatumTypeUint16_1).u.i);
+	_dimensions = chunk.readTypedGraphicSize();
+	_compressionType = static_cast<BitmapCompressionType>(chunk.readTypedUint16());
 	debugC(5, kDebugLoading, "BitmapHeader::BitmapHeader(): _compressionType = 0x%x", static_cast<uint>(_compressionType));
 	// TODO: Figure out what this is.
 	// This has something to do with the width of the bitmap but is always
 	// a few pixels off from the width. And in rare cases it seems to be
 	// the true width!
-	unk2 = Datum(chunk, kDatumTypeUint16_1).u.i;
-}
-
-BitmapHeader::~BitmapHeader() {
-	delete _dimensions;
-	_dimensions = nullptr;
+	unk2 = chunk.readTypedUint16();
 }
 
 bool BitmapHeader::isCompressed() {
 	return (_compressionType != kUncompressedBitmap1) && (_compressionType != kUncompressedBitmap2);
 }
 
-Bitmap::Bitmap(Chunk &chunk, BitmapHeader *bitmapHeader) :
-	_bitmapHeader(bitmapHeader) {
+Bitmap::Bitmap(Chunk &chunk, BitmapHeader *bitmapHeader) : _bitmapHeader(bitmapHeader) {
 	// The header must be constructed beforehand.
-	uint16 width = _bitmapHeader->_dimensions->x;
-	uint16 height = _bitmapHeader->_dimensions->y;
+	int16 width = _bitmapHeader->_dimensions.x;
+	int16 height = _bitmapHeader->_dimensions.y;
 	_surface.create(width, height, Graphics::PixelFormat::createFormatCLUT8());
 	_surface.setTransparentColor(0);
 	uint8 *pixels = (uint8 *)_surface.getPixels();
@@ -76,12 +69,12 @@ Bitmap::~Bitmap() {
 	_bitmapHeader = nullptr;
 }
 
-uint16 Bitmap::width() {
-	return _bitmapHeader->_dimensions->x;
+int16 Bitmap::width() {
+	return _bitmapHeader->_dimensions.x;
 }
 
-uint16 Bitmap::height() {
-	return _bitmapHeader->_dimensions->y;
+int16 Bitmap::height() {
+	return _bitmapHeader->_dimensions.y;
 }
 
 void Bitmap::decompress(Chunk &chunk) {
@@ -110,9 +103,9 @@ void Bitmap::decompress(Chunk &chunk) {
 	// size_t transparencyRunTopYCoordinate = 0;
 	// size_t transparencyRunLeftXCoordinate = 0;
 	bool imageFullyRead = false;
-	size_t currentYCoordinate = 0;
+	int16 currentYCoordinate = 0;
 	while (currentYCoordinate < height()) {
-		size_t currentXCoordinate = 0;
+		int16 currentXCoordinate = 0;
 		bool readingTransparencyRun = false;
 		while (true) {
 			byte operation = chunk.readByte();
@@ -218,4 +211,4 @@ void Bitmap::decompress(Chunk &chunk) {
 	}
 }
 
-}
+} // End of namespace MediaStation

@@ -105,6 +105,9 @@ void run_function_on_non_blocking_thread(NonBlockingScriptFunction *funcToRun) {
 }
 
 int run_interaction_event(const ObjectEvent &obj_evt, Interaction *nint, int evnt, int chkAny, bool isInv) {
+	assert(nint);
+	if (!nint)
+		return 0;
 
 	if (evnt < 0 || (size_t)evnt >= nint->Events.size() ||
 	        (nint->Events[evnt].Response.get() == nullptr) || (nint->Events[evnt].Response->Cmds.size() == 0)) {
@@ -145,6 +148,9 @@ int run_interaction_event(const ObjectEvent &obj_evt, Interaction *nint, int evn
 // become invalid and don't run another interaction on it
 // (eg. a room change occurred)
 int run_interaction_script(const ObjectEvent &obj_evt, InteractionScripts *nint, int evnt, int chkAny) {
+	assert(nint);
+	if (!nint)
+		return 0;
 
 	if (evnt < 0 || static_cast<size_t>(evnt) >= nint->ScriptFuncNames.size() || nint->ScriptFuncNames[evnt].IsEmpty()) {
 		// no response defined for this event
@@ -696,7 +702,7 @@ int run_interaction_commandlist(const ObjectEvent &obj_evt, InteractionCommandLi
 	const int evblocknum = obj_evt.BlockID;
 	for (size_t i = 0; i < nicl->Cmds.size(); i++) {
 		cmdsrun[0] ++;
-		int room_was = _GP(play).room_changes;
+		const int room_was = _GP(play).room_changes;
 
 		switch (nicl->Cmds[i].Type) {
 		case 0:  // Do nothing
@@ -932,12 +938,12 @@ void run_unhandled_event(const ObjectEvent &obj_evt, int evnt) {
 		return;  // no unhandled_events for regions
 
 	// clicked Hotspot 0, so change the type code
-	if ((evtype == 1) & (evblocknum == 0) & (evnt != 0) & (evnt != 5) & (evnt != 6))
+	if ((evtype == 1) && (evblocknum == 0) && (evnt != 0) && (evnt != 5) && (evnt != 6))
 		evtype = 4;
-	if ((evtype == 1) & ((evnt == 0) | (evnt == 5) | (evnt == 6)))
+	if ((evtype == 1) && ((evnt == 0) || (evnt == 5) || (evnt == 6)))
 		;  // character stands on hotspot, mouse moves over hotspot, any click
-	else if ((evtype == 2) & (evnt == 4));  // any click on object
-	else if ((evtype == 3) & (evnt == 4));  // any click on character
+	else if ((evtype == 2) && (evnt == 4));  // any click on object
+	else if ((evtype == 3) && (evnt == 4));  // any click on character
 	else if (evtype > 0) {
 		can_run_delayed_command();
 		RuntimeScriptValue params[] = { evtype, evnt };

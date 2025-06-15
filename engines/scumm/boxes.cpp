@@ -786,7 +786,7 @@ int ScummEngine::getNextBox(byte from, byte to) {
 	// WORKAROUND #2: In addition to the above, we have to add this special
 	// case to fix the scene in Indy3 where Indy meets Hitler in Berlin.
 	// See bug #1017 and also bug #1052.
-	if ((_game.id == GID_INDY3) && _roomResource == 46 && from == 1 && to == 0)
+	if (_game.id == GID_INDY3 && _roomResource == 46 && from == 1 && to == 0 && enhancementEnabled(kEnhGameBreakingBugFixes))
 		return 0;
 
 	// Skip up to the matrix data for box 'from'
@@ -1061,6 +1061,7 @@ void ScummEngine::createBoxMatrix() {
 
 	byte *matrixStart = _res->createResource(rtMatrix, 1, BOX_MATRIX_SIZE);
 	const byte *matrixEnd = matrixStart + BOX_MATRIX_SIZE;
+	(void)matrixEnd;
 
 	#define addToMatrix(b)	do { *matrixStart++ = (b); assert(matrixStart < matrixEnd); } while (0)
 
@@ -1227,6 +1228,7 @@ bool ScummEngine_v0::areBoxesNeighbors(int box1nr, int box2nr) {
 	int i;
 	const int numOfBoxes = getNumBoxes();
 	const byte *boxm;
+	(void)numOfBoxes;
 
 	assert(box1nr < numOfBoxes);
 	assert(box2nr < numOfBoxes);

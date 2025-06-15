@@ -518,6 +518,11 @@ void qdGameScene::debug_redraw() {
 	if (g_engine->_debugDrawGrid)
 		_camera.draw_grid();
 
+	if (g_engine->_debugDrawPath) {
+		qdGameObjectMoving *personage = get_active_personage();
+		if (personage)
+			personage->drawDebugPath();
+	}
 }
 
 int qdGameScene::get_resources_size() {
@@ -890,6 +895,11 @@ void qdGameScene::set_active_personage(qdGameObjectMoving *p) {
 		_selected_object->toggle_selection(true);
 
 	_camera.set_default_object(p);
+
+	if (g_engine->_gameVersion <= 20040601) {
+		if (_selected_object)
+			_selected_object->set_last_move_order(_selected_object->R());
+	}
 
 	if (p && p->has_camera_mode()) {
 		_camera.set_mode(p->camera_mode(), p);
@@ -1520,7 +1530,7 @@ void qdGameScene::collision_quant() {
 				}
 			}
 
-			if (dr.norm() > dist) {
+			if (dr.norm() < dist) {
 				if (fabs(getDeltaAngle(angle, _selected_object->direction_angle())) < M_PI / 2.0f) {
 					if ((*it)->has_control_type(qdGameObjectMoving::CONTROL_AVOID_COLLISION))
 						(*it)->avoid_collision(_selected_object);
@@ -1714,7 +1724,7 @@ void qdGameScene::create_minigame_objects() {
 }
 
 bool qdGameScene::set_camera_mode(const qdCameraMode &mode, qdGameObjectAnimated *object) {
-	if (!_camera.can_change_mode())
+	if (g_engine->_gameVersion > 20040601 && !_camera.can_change_mode())
 		return false;
 
 	if (object && object->named_object_type() == QD_NAMED_OBJECT_MOVING_OBJ && object != _selected_object)

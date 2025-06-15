@@ -285,6 +285,8 @@ public:
 	virtual void missedTarget(Shoot *s, ArcadeShooting *arc);
 	virtual void missNoTarget(ArcadeShooting *arc);
 	virtual byte *getTargetColor(Common::String name, int levelId);
+	virtual bool checkRButtonUp();
+	virtual void setRButtonUp(const bool val);
 
 	// Segments
 	Segments _segments;
@@ -363,7 +365,7 @@ public:
 	// Fonts
 	Common::BitArray _font05;
 	Common::BitArray _font08;
-	virtual void loadFonts(const Common::String prefix = "");
+	virtual void loadFonts(const Common::String &prefix = "");
 	virtual void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c);
 
 	// Conversation
@@ -416,7 +418,7 @@ public:
 	void loadAssetsFullGame();
 	void loadAssetsNI();
 
-	void loadFonts(const Common::String prefix = "") override;
+	void loadFonts(const Common::String &prefix = "") override;
 	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
 	void changeCursor(const Common::String &cursor) override;
 
@@ -451,13 +453,16 @@ public:
 	void findNextSegment(ArcadeShooting *arc) override;
 	void initSegment(ArcadeShooting *arc) override;
 	byte *getTargetColor(Common::String name, int levelId) override;
+	bool checkRButtonUp() override;
+	void setRButtonUp(const bool val) override;
+
 
 	bool hasFeature(EngineFeature f) const override {
 		return (f == kSupportsReturnToLauncher);
 	}
 
 private:
-	Common::String getLocalizedString(const Common::String name);
+	Common::String getLocalizedString(const Common::String &name);
 	uint16 getNextChar(const Common::String &str, uint32 &c);
 	void drawGlyph(const Common::BitArray &font, int x, int y, int bitoffset, int width, int height, int pitch, uint32 color, bool invert);
 	void drawKoreanChar(uint16 chr, int &curx, int y, uint32 color);
@@ -486,6 +491,8 @@ private:
 	int _c40lastTurn;
 	int _c50LeftTurns;
 	int _c50RigthTurns;
+
+	bool _rButtonUp;
 };
 
 class SpiderEngine : public HypnoEngine {
@@ -516,7 +523,7 @@ public:
 	Common::String findNextLevel(const Common::String &level) override;
 	Common::String findNextLevel(const Transition *trans) override;
 
-	void loadFonts(const Common::String prefix = "") override;
+	void loadFonts(const Common::String &prefix = "") override;
 	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
 
 	void showConversation() override;
@@ -548,7 +555,7 @@ private:
 	void runLock(Code *code);
 	void runFuseBox(Code *code);
 	void runGiveUp();
-	void showScore(const Common::String prefix);
+	void showScore(const Common::String &prefix);
 
 	uint32 _currentPlayerPosition;
 	uint32 _lastPlayerPosition;

@@ -896,7 +896,7 @@ void Scene551::dispatch() {
 }
 
 /*--------------------------------------------------------------------------
- * Scene 550 - Study
+ * Scene 560 - Study
  *
  *--------------------------------------------------------------------------*/
 
@@ -953,7 +953,7 @@ void Scene560::Action2::signal() {
 		break;
 	case 2:
 		scene->_field380 = false;
-		scene->_deskChair.setPosition(Common::Point(81, 149));
+		scene->_deskChair.setPosition(Common::Point(81, 149), 44);
 		scene->_deskChair.setVisage(561);
 		scene->_deskChair.setStrip(3);
 		scene->_deskChair.setFrame(1);
@@ -1413,7 +1413,7 @@ void Scene560::postInit(SceneObjectList *OwnerList) {
 	_deskChair.postInit();
 	_deskChair.setVisage(561);
 	_deskChair.setStrip(3);
-	_deskChair.setPosition(Common::Point(81, 149));
+	_deskChair.setPosition(Common::Point(81, 149), 44);
 	_deskChair.fixPriority(151);
 	_deskChair.changeZoom(81);
 
@@ -1643,6 +1643,20 @@ void Scene570::PasswordEntry::process(Event &event) {
 	}
 	case EVENT_BUTTON_DOWN:
 		event.handled = true;
+		break;
+	case EVENT_CUSTOM_ACTIONSTART:
+		// Custom action to submit a password text.
+		// The code handling this custom action is identical
+		// to the code for handling event type EVENT_KEYPRESS
+		// when event.kdb.keycode == Common::KEYCODE_RETURN.
+		if (event.customType == kActionReturn)  {
+			// Finished entering password
+			_passwordText.remove();
+			_entryText.remove();
+
+			checkPassword();
+			remove();
+		}
 		break;
 	default:
 		break;

@@ -236,6 +236,8 @@ static Common::Error runGame(const Plugin *enginePlugin, OSystem &system, const 
 			ConfMan.removeGameDomain(target.c_str());
 		}
 
+		metaEngine.deleteInstance(engine, game, meDescriptor);
+
 		return err;
 	}
 
@@ -294,8 +296,8 @@ static Common::Error runGame(const Plugin *enginePlugin, OSystem &system, const 
 	// Initialize any game-specific keymaps
 	Common::KeymapArray gameKeymaps = metaEngine.initKeymaps(target.c_str());
 	Common::Keymapper *keymapper = system.getEventManager()->getKeymapper();
-	for (uint i = 0; i < gameKeymaps.size(); i++) {
-		keymapper->addGameKeymap(gameKeymaps[i]);
+	for (auto &gameKeymap : gameKeymaps) {
+		keymapper->addGameKeymap(gameKeymap);
 	}
 
 	system.applyBackendSettings();
@@ -346,6 +348,7 @@ static void setupGraphics(OSystem &system) {
 		system.setStretchMode(ConfMan.get("stretch_mode").c_str());
 		system.setScaler(ConfMan.get("scaler").c_str(), ConfMan.getInt("scale_factor"));
 		system.setShader(ConfMan.getPath("shader"));
+		system.setRotationMode(ConfMan.getInt("rotation_mode"));
 
 #if defined(OPENDINGUX) || defined(MIYOO) || defined(MIYOOMINI) || defined(ATARI)
 		// 0, 0 means "autodetect" but currently only SDL supports
@@ -391,8 +394,8 @@ static void setupKeymapper(OSystem &system) {
 
 	// Get the platform-specific global keymap (if it exists)
 	KeymapArray platformKeymaps = system.getGlobalKeymaps();
-	for (uint i = 0; i < platformKeymaps.size(); i++) {
-		mapper->addGlobalKeymap(platformKeymaps[i]);
+	for (auto &platformKeymap : platformKeymaps) {
+		mapper->addGlobalKeymap(platformKeymap);
 	}
 }
 
@@ -443,9 +446,9 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		// Merge additional settings and command with command line. Command line has priority.
 		if (command.empty())
 			command = additionalCommand;
-		for (Common::StringMap::const_iterator x = additionalSettings.begin(); x != additionalSettings.end(); ++x) {
-			if (!settings.contains(x->_key))
-				settings[x->_key] = x->_value;
+		for (const auto &additionalSetting : additionalSettings) {
+			if (!settings.contains(additionalSetting._key))
+				settings[additionalSetting._key] = additionalSetting._value;
 		}
 	}
 
@@ -868,7 +871,7 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		} else {
 			DebugMan.removeAllDebugChannels();
 
-			GUI::displayErrorDialog(_("Could not find any engine capable of running the selected game"));
+			GUI::displayErrorDialog(result, _("Error running game:"));
 
 			// Clear the active domain
 			ConfMan.setActiveDomain("");

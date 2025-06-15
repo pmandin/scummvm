@@ -488,10 +488,13 @@ int Character_IsCollidingWithChar(CharacterInfo *char1, CharacterInfo *char2) {
 	if (char2 == nullptr)
 		quit("!AreCharactersColliding: invalid char2");
 
-	if (char1->room != char2->room) return 0; // not colliding
+	if (char1->room != char2->room)
+		return 0; // not colliding
 
-	if ((char1->y > char2->y - 5) && (char1->y < char2->y + 5)) ;
-	else return 0;
+	if ((char1->y > char2->y - 5) && (char1->y < char2->y + 5))
+		;
+	else
+		return 0;
 
 	int w1 = game_to_data_coord(GetCharacterWidth(char1->index_id));
 	int w2 = game_to_data_coord(GetCharacterWidth(char2->index_id));
@@ -499,7 +502,9 @@ int Character_IsCollidingWithChar(CharacterInfo *char1, CharacterInfo *char2) {
 	int xps1 = char1->x - w1 / 2;
 	int xps2 = char2->x - w2 / 2;
 
-	if ((xps1 >= xps2 - w1) & (xps1 <= xps2 + w2)) return 1;
+	if ((xps1 >= xps2 - w1) && (xps1 <= xps2 + w2))
+		return 1;
+
 	return 0;
 }
 
@@ -663,7 +668,7 @@ void Character_LoseInventory(CharacterInfo *chap, ScriptInvItem *invi) {
 	if (chap->inv[inum] > 0)
 		chap->inv[inum]--;
 
-	if ((chap->activeinv == inum) & (chap->inv[inum] < 1)) {
+	if ((chap->activeinv == inum) && (chap->inv[inum] < 1)) {
 		chap->activeinv = -1;
 		if ((chap == _G(playerchar)) && (GetCursorMode() == MODE_USE))
 			set_cursor_mode(0);
@@ -879,7 +884,7 @@ void Character_SetSpeed(CharacterInfo *chaa, int xspeed, int yspeed) {
 	else
 		chaa->walkspeed_y = yspeed;
 
-	if (chaa->walking > 0) {
+	if (chaa->walking > 0 && (old_speedx != xspeed || old_speedy != yspeed)) {
 		recalculate_move_speeds(&_GP(mls)[chaa->walking % TURNING_AROUND], old_speedx, old_speedy, xspeed, yspeed);
 	}
 }
@@ -1664,7 +1669,8 @@ void walk_character(int chac, int tox, int toy, int ignwal, bool autoWalkAnims) 
 		_GP(mls)[mslot].direct = ignwal;
 		convert_move_path_to_room_resolution(&_GP(mls)[mslot]);
 
-		if (wasStepFrac > 0.f) {
+		// NOTE: unfortunately, some old game scripts might break because of smooth walk transition
+		if (wasStepFrac > 0.f && (_G(loaded_game_file_version) >= kGameVersion_361)) {
 			_GP(mls)[mslot].SetPixelUnitFraction(wasStepFrac);
 		}
 
@@ -1794,7 +1800,7 @@ void fix_player_sprite(MoveList *cmls, CharacterInfo *chinf) {
 // Check whether two characters have walked into each other
 int has_hit_another_character(int sourceChar) {
 
-	// if the character who's moving doesn't Bitmap *, don't bother checking
+	// if the character who's moving doesn't block, don't bother checking
 	if (_GP(game).chars[sourceChar].flags & CHF_NOBLOCKING)
 		return -1;
 
@@ -1804,7 +1810,7 @@ int has_hit_another_character(int sourceChar) {
 		if (ww == sourceChar) continue;
 		if (_GP(game).chars[ww].flags & CHF_NOBLOCKING) continue;
 
-		if (is_char_on_another(sourceChar, ww, nullptr, nullptr)) {
+		if (is_char_in_blocking_rect(sourceChar, ww, nullptr, nullptr)) {
 			// we are now overlapping character 'ww'
 			if ((_GP(game).chars[ww].walking) &&
 			        ((_GP(game).chars[ww].flags & CHF_AWAITINGMOVE) == 0))
@@ -2248,12 +2254,12 @@ void get_char_blocking_rect(int charid, int *x1, int *y1, int *width, int *y2) {
 		*y2 = char1->get_blocking_bottom();
 }
 
-// Check whether the source char has walked onto character ww
-int is_char_on_another(int sourceChar, int ww, int *fromxptr, int *cwidptr) {
+// Check whether the source char is standing inside otherChar's blocking rectangle
+int is_char_in_blocking_rect(int sourceChar, int otherChar, int *fromxptr, int *cwidptr) {
 
 	int fromx, cwidth;
 	int y1, y2;
-	get_char_blocking_rect(ww, &fromx, &y1, &cwidth, &y2);
+	get_char_blocking_rect(otherChar, &fromx, &y1, &cwidth, &y2);
 
 	if (fromxptr)
 		fromxptr[0] = fromx;

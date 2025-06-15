@@ -26,12 +26,16 @@
 
 namespace QDEngine {
 
-bool enumerateIniSections(const Common::Path fname, Common::INIFile::SectionList &sectionList) {
+bool enumerateIniSections(Common::INIFile& ini, const Common::Path &fname, Common::INIFile::SectionList &sectionList) {
 
-	Common::INIFile ini;
 	Common::Path iniFilePath(fname);
 	ini.allowNonEnglishCharacters();
-	ini.loadFromFile(iniFilePath);
+
+	if (!ini.loadFromFile(iniFilePath)) {
+		warning("Failed to load INI file: %s", iniFilePath.toString().c_str());
+		return false;
+	}
+
 	sectionList = ini.getSections();
 	int size = sectionList.size();
 
@@ -42,12 +46,9 @@ bool enumerateIniSections(const Common::Path fname, Common::INIFile::SectionList
 	return true;
 }
 
-const Common::String getIniKey(const Common::Path fname, const char *section, const char *key) {
-	Common::INIFile ini;
+const Common::String getIniKey(Common::INIFile& ini, const Common::Path &fname, const char *section, const char *key) {
 	Common::String buf;
 
-	ini.allowNonEnglishCharacters();
-	ini.loadFromFile(fname);
 	bool hasValue = ini.getKey(key, section, buf);
 
 	if (!hasValue) {

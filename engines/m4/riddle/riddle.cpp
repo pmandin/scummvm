@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "common/debug.h"
 #include "m4/riddle/gui/game_menu.h"
 #include "m4/riddle/riddle.h"
@@ -26,7 +27,6 @@
 #include "m4/riddle/console.h"
 #include "m4/riddle/vars.h"
 #include "m4/adv_r/other.h"
-#include "m4/core/errors.h"
 #include "m4/console.h"
 
 namespace M4 {
@@ -43,6 +43,11 @@ RiddleEngine::RiddleEngine(OSystem *syst, const M4GameDescription *gameDesc) :
 	_sections.push_back(&_section7);
 	_sections.push_back(&_section8);
 	_sections.push_back(&_section9);
+}
+
+void RiddleEngine::initializePath(const Common::FSNode &gamePath) {
+	M4Engine::initializePath(gamePath);
+	SearchMan.addDirectory(gamePath.getChild("option1"));
 }
 
 M4::Vars *RiddleEngine::createVars() {
@@ -768,5 +773,12 @@ void sketchInJournal(const char *digiName) {
 	}
 }
 
+bool RiddleEngine::canLoadGameStateCurrently(Common::U32String *msg) {
+	if (g_vars && _G(game).room_id == 494)
+		// Allow loading games from the main menu
+		return true;
+	else
+		return M4Engine::canLoadGameStateCurrently(msg);
+}
 } // namespace Riddle
 } // namespace M4

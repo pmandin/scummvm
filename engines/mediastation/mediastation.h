@@ -46,6 +46,7 @@
 namespace MediaStation {
 
 struct MediaStationGameDescription;
+class Hotspot;
 
 // Most Media Station titles follow this file structure from the root directory
 // of the CD-ROM:
@@ -80,20 +81,23 @@ public:
 	void redraw();
 
 	void setPalette(Asset *palette);
-	void addPlayingAsset(Asset *assetToAdd);
+	void registerAsset(Asset *assetToAdd);
 
 	Asset *getAssetById(uint assetId);
 	Asset *getAssetByChunkReference(uint chunkReference);
 	Function *getFunctionById(uint functionId);
+	ScriptValue *getVariable(uint variableId);
 
-	Operand callMethod(BuiltInMethod methodId, Common::Array<Operand> &args);
-	Operand callBuiltInFunction(BuiltInFunction function, Common::Array<Operand> &args);
-	Common::HashMap<uint32, Variable *> _variables;
+	ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args);
+	ScriptValue callBuiltInFunction(BuiltInFunction function, Common::Array<ScriptValue> &args);
+	Common::RandomSource _randomSource;
 
 	Graphics::Screen *_screen = nullptr;
 	Context *_currentContext = nullptr;
 
+	Common::Point _mousePos;
 	Common::Array<Common::Rect> _dirtyRects;
+	bool _needsHotspotRefresh = false;
 
 	// All Media Station titles run at 640x480.
 	const uint16 SCREEN_WIDTH = 640;
@@ -106,7 +110,6 @@ private:
 	Common::Event _event;
 	Common::FSNode _gameDataDir;
 	const ADGameDescription *_gameDescription;
-	Common::RandomSource _randomSource;
 
 	// In Media Station, only the cursors are stored in the executable; everything
 	// else is in the Context (*.CXT) data files.
@@ -114,19 +117,22 @@ private:
 	void setCursor(uint id);
 
 	Boot *_boot = nullptr;
-	Common::List<Asset *> _assetsPlaying;
+	Common::Array<Asset *> _assets;
+	Common::SortedArray<SpatialEntity *, const SpatialEntity *> _spatialEntities;
 	Common::HashMap<uint, Context *> _loadedContexts;
 	Asset *_currentHotspot = nullptr;
 
 	uint _requestedScreenBranchId = 0;
+	Common::Array<uint> _requestedContextReleaseId;
 	void doBranchToScreen();
 
 	Context *loadContext(uint32 contextId);
-	void setPaletteFromHeader(AssetHeader *header);
 	void releaseContext(uint32 contextId);
-	Asset *findAssetToAcceptMouseEvents(Common::Point point);
+	Asset *findAssetToAcceptMouseEvents();
 
-	void effectTransition(Common::Array<Operand> &args);
+	void effectTransition(Common::Array<ScriptValue> &args);
+
+	static int compareAssetByZIndex(const SpatialEntity *a, const SpatialEntity *b);
 };
 
 extern MediaStationEngine *g_engine;

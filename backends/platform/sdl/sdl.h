@@ -150,7 +150,6 @@ protected:
 	void detectAntiAliasingSupport();
 
 	OpenGL::ContextType _oglType;
-	bool _supportsFrameBuffer;
 	bool _supportsShaders;
 	Common::Array<uint> _antiAliasLevels;
 #endif
@@ -185,6 +184,7 @@ protected:
 	int _firstMode[GraphicsManagerCount];
 	int _lastMode[GraphicsManagerCount];
 	int _defaultMode[GraphicsManagerCount];
+	int _supports3D[GraphicsManagerCount];
 
 	/**
 	 * Create the merged graphics modes list.

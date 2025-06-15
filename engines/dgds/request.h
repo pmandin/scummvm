@@ -22,7 +22,6 @@
 #ifndef DGDS_REQUEST_H
 #define DGDS_REQUEST_H
 
-#include "common/stream.h"
 #include "common/array.h"
 
 #include "dgds/parser.h"
@@ -163,8 +162,6 @@ public:
 	///
 	int16 onClick(const Common::Point &mousePt);
 
-	// Returns true if the mouse is over the handle and a drag operation should start
-	bool onMouseDown(const Common::Point &mousePt);
 	void onDrag(const Common::Point &mousePt);
 	// returns the new value
 	int16 onDragFinish(const Common::Point &mousePt);

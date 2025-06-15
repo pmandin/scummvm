@@ -183,8 +183,11 @@ void ListWidget::setSelected(int item) {
 		// Notify clients that the selection changed.
 		sendCommand(kListSelectionChangedCmd, _selectedItem);
 
-		_currentPos = _selectedItem - _entriesPerPage / 2;
-		scrollToCurrent();
+		if (!isItemVisible(_selectedItem)) {
+			// scroll selected item to center if possible
+			_currentPos = _selectedItem - _entriesPerPage / 2;
+			scrollToCurrent();
+		}
 		markAsDirty();
 	}
 }
@@ -315,8 +318,7 @@ void ListWidget::handleMouseLeft(int button) {
 int ListWidget::findItem(int x, int y) const {
 	if (y < _topPadding) return -1;
 	int item = (y - _topPadding) / kLineHeight + _currentPos;
-	if (item >= _currentPos && item < _currentPos + _entriesPerPage &&
-		item < (int)_list.size())
+	if (isItemVisible(item) && item < (int)_list.size())
 		return item;
 	else
 		return -1;
@@ -362,8 +364,8 @@ bool ListWidget::handleKeyDown(Common::KeyState state) {
 			int newSelectedItem = 0;
 			int bestMatch = 0;
 			bool stop;
-			for (Common::U32StringArray::const_iterator i = _list.begin(); i != _list.end(); ++i) {
-				const int match = matchingCharsIgnoringCase(stripGUIformatting(*i).encode().c_str(), _quickSelectStr.c_str(), stop, _dictionarySelect);
+			for (const auto &entry : _list) {
+				const int match = matchingCharsIgnoringCase(stripGUIformatting(entry).encode().c_str(), _quickSelectStr.c_str(), stop, _dictionarySelect);
 				if (match > bestMatch || stop) {
 					_selectedItem = newSelectedItem;
 					bestMatch = match;

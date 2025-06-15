@@ -102,8 +102,6 @@ shaders/stark_shadow.vertex          FILE    "engines/stark/shaders/stark_shadow
 #if PLUGIN_ENABLED_STATIC(WINTERMUTE)
 shaders/wme_fade.fragment               FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_fade.fragment"
 shaders/wme_fade.vertex                 FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_fade.vertex"
-shaders/wme_flat_shadow_mask.fragment   FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_mask.fragment"
-shaders/wme_flat_shadow_mask.vertex     FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_mask.vertex"
 shaders/wme_flat_shadow_modelx.fragment FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_modelx.fragment"
 shaders/wme_flat_shadow_modelx.vertex   FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_modelx.vertex"
 shaders/wme_geometry.fragment           FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_geometry.fragment"
@@ -112,10 +110,14 @@ shaders/wme_line.fragment               FILE    "engines/wintermute/base/gfx/ope
 shaders/wme_line.vertex                 FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_line.vertex"
 shaders/wme_modelx.fragment             FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_modelx.fragment"
 shaders/wme_modelx.vertex               FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_modelx.vertex"
+shaders/wme_postfilter.fragment         FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_postfilter.fragment"
+shaders/wme_postfilter.vertex           FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_postfilter.vertex"
 shaders/wme_shadow_mask.fragment        FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_shadow_mask.fragment"
 shaders/wme_shadow_mask.vertex          FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_shadow_mask.vertex"
 shaders/wme_shadow_volume.fragment      FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.fragment"
 shaders/wme_shadow_volume.vertex        FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.vertex"
+shaders/wme_simple_shadow.fragment      FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_simple_shadow.fragment"
+shaders/wme_simple_shadow.vertex        FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_simple_shadow.vertex"
 shaders/wme_sprite.fragment             FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_sprite.fragment"
 shaders/wme_sprite.vertex               FILE    "engines/wintermute/base/gfx/opengl/shaders/wme_sprite.vertex"
 #endif
@@ -126,6 +128,10 @@ shaders/playground3d_cube.fragment      FILE    "engines/playground3d/shaders/pl
 shaders/playground3d_cube.vertex        FILE    "engines/playground3d/shaders/playground3d_cube.vertex"
 shaders/playground3d_fade.fragment      FILE    "engines/playground3d/shaders/playground3d_fade.fragment"
 shaders/playground3d_fade.vertex        FILE    "engines/playground3d/shaders/playground3d_fade.vertex"
+shaders/playground3d_offset.fragment    FILE    "engines/playground3d/shaders/playground3d_offset.fragment"
+shaders/playground3d_offset.vertex      FILE    "engines/playground3d/shaders/playground3d_offset.vertex"
+shaders/playground3d_viewport.fragment  FILE    "engines/playground3d/shaders/playground3d_viewport.fragment"
+shaders/playground3d_viewport.vertex    FILE    "engines/playground3d/shaders/playground3d_viewport.vertex"
 #endif
 #if PLUGIN_ENABLED_STATIC(HPL1)
 shaders/hpl1_Ambient_Color.fragment                    FILE   "engines/hpl1/engine/impl/shaders/hpl1_Ambient_Color.fragment"
@@ -208,6 +214,8 @@ shaders/freescape_bitmap.fragment    FILE    "engines/freescape/shaders/freescap
 shaders/freescape_bitmap.vertex      FILE    "engines/freescape/shaders/freescape_bitmap.vertex"
 shaders/freescape_triangle.fragment  FILE    "engines/freescape/shaders/freescape_triangle.fragment"
 shaders/freescape_triangle.vertex    FILE    "engines/freescape/shaders/freescape_triangle.vertex"
+shaders/freescape_cubemap.fragment   FILE    "engines/freescape/shaders/freescape_cubemap.fragment"
+shaders/freescape_cubemap.vertex     FILE    "engines/freescape/shaders/freescape_cubemap.vertex"
 #endif
 #endif
 #endif
