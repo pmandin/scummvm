@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-06-15 11:22+0000\n"
+"POT-Creation-Date: 2025-07-08 10:42+0000\n"
 "PO-Revision-Date: 2025-03-27 07:17+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Ukrainian <https://translations.scummvm.org/projects/scummvm/"
@@ -65,7 +65,7 @@ msgstr "Доступні движки:"
 #: engines/saga/metaengine.cpp:374 engines/scumm/help.cpp:126
 #: engines/scumm/help.cpp:141 engines/scumm/help.cpp:166
 #: engines/scumm/help.cpp:194 engines/scumm/help.cpp:212
-#: engines/twp/metaengine.cpp:179
+#: engines/supernova/metaengine.cpp:341 engines/twp/metaengine.cpp:179
 msgid "Close"
 msgstr "Закрити"
 
@@ -264,7 +264,7 @@ msgstr "Вставити код з буфера обміну"
 #: engines/parallaction/metaengine.cpp:125
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:388
 #: engines/tinsel/metaengine.cpp:329 engines/trecision/saveload.cpp:253
-#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:737
+#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:753
 msgid "Load"
 msgstr "Завантажити"
 
@@ -320,7 +320,7 @@ msgstr "Інше хмарне сховище вже є активним. Чи в
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:143
 #: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4216
-#: engines/toon/toon.cpp:1543
+#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:339
 msgid "Yes"
 msgstr "Так"
 
@@ -333,7 +333,7 @@ msgstr "Так"
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:149
 #: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4216
-#: engines/toon/toon.cpp:1543
+#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:340
 msgid "No"
 msgstr "Ні"
 
@@ -356,7 +356,7 @@ msgstr "Невірний формат JSON-коду."
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2149
+#: engines/director/lingo/lingo-builtins.cpp:2152
 #: engines/drascula/saveload.cpp:49 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
@@ -368,7 +368,7 @@ msgstr "Невірний формат JSON-коду."
 #: engines/sword1/control.cpp:2816 engines/sword1/logic.cpp:1738
 #: engines/sword2/animation.cpp:459 engines/sword2/animation.cpp:469
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
-#: engines/zvision/file/save_manager.cpp:225
+#: engines/zvision/file/save_manager.cpp:210
 msgid "OK"
 msgstr "OK"
 
@@ -571,7 +571,7 @@ msgid "GFX"
 msgstr "Грф"
 
 #: gui/editgamedialog.cpp:164 gui/options.cpp:2078 gui/options.cpp:2259
-#: backends/graphics/atari/atari-graphics.cpp:1061
+#: backends/graphics/atari/atari-graphics.cpp:1055
 #: backends/graphics/sdl/sdl-graphics.cpp:488
 msgid "Graphics"
 msgstr "Графіка"
@@ -867,7 +867,7 @@ msgstr "Обчислювання закінчено"
 msgid "Calculated %s %S / %s %S"
 msgstr "Обчислено %s %S з %s %S"
 
-#: gui/integrity-dialog.cpp:558
+#: gui/integrity-dialog.cpp:622
 msgid ""
 "### Results\n"
 "Your set of game files seems to be unknown to us.\n"
@@ -881,14 +881,14 @@ msgstr ""
 "У разі, якщо ви впевнені, що це є дійсно новий варіант, будь-ласка, "
 "надішліть наступний лист до integrity@scummvm.org"
 
-#: gui/integrity-dialog.cpp:582
+#: gui/integrity-dialog.cpp:646
 msgid ""
 "The game doesn't seem to have any files. Are you sure the path is correct?"
 msgstr ""
 "Виглядає, що гра взагалі не має файлів. Чи ви впевнені, що шлях вказано "
 "вірно?"
 
-#: gui/integrity-dialog.cpp:587
+#: gui/integrity-dialog.cpp:651
 msgid ""
 "The game doesn't seem to have any metadata associated with it, so it is "
 "unable to be matched. Please fill in the correct metadata for the game."
@@ -896,7 +896,7 @@ msgstr ""
 "Гра не має метаданих, тож нема з чим її порівняти. Будь-ласка, заповніть "
 "правильні метадані для гри."
 
-#: gui/integrity-dialog.cpp:614
+#: gui/integrity-dialog.cpp:678
 msgid "Files all OK"
 msgstr "Всі файли в порядку"
 
@@ -962,7 +962,7 @@ msgid "Sine"
 msgstr "Синусоїда"
 
 #: gui/fluidsynth-dialog.cpp:137 backends/platform/sdl/ps3/ps3.cpp:43
-#: backends/platform/sdl/psp2/psp2.cpp:46 engines/dragons/metaengine.cpp:189
+#: backends/platform/sdl/psp2/psp2.cpp:45 engines/dragons/metaengine.cpp:189
 msgid "Triangle"
 msgstr "Трикутник"
 
@@ -1013,7 +1013,10 @@ msgstr "GUI"
 #. I18N: Action in In Cold Blood
 #: gui/gui-manager.cpp:162 engines/hpl1/metaengine.cpp:91
 #: engines/icb/icb.cpp:95 engines/icb/icb.cpp:173 engines/mohawk/myst.cpp:572
-#: engines/mohawk/riven.cpp:853
+#: engines/mohawk/riven.cpp:853 engines/sludge/keymapper_tables.h:40
+#: engines/supernova/metaengine.cpp:226
+#: engines/ultima/ultima4/metaengine.cpp:42
+#: engines/ultima/ultima4/metaengine.cpp:144 engines/voyeur/metaengine.cpp:192
 msgid "Interact"
 msgstr "Взаємодія"
 
@@ -1023,8 +1026,11 @@ msgstr "Взаємодія"
 #: engines/freescape/movement.cpp:35 engines/got/metaengine.cpp:55
 #: engines/griffon/metaengine.cpp:121 engines/grim/grim.cpp:481
 #: engines/grim/grim.cpp:563 engines/icb/icb.cpp:68 engines/icb/icb.cpp:152
-#: engines/scumm/metaengine.cpp:1004 engines/twine/metaengine.cpp:430
-#: engines/twine/metaengine.cpp:497 engines/twp/metaengine.cpp:154
+#: engines/scumm/metaengine.cpp:1004 engines/supernova/metaengine.cpp:273
+#: engines/twine/metaengine.cpp:430 engines/twine/metaengine.cpp:497
+#: engines/twp/metaengine.cpp:154 engines/ultima/ultima4/metaengine.cpp:44
+#: engines/ultima/ultima4/metaengine.cpp:136
+#: engines/ultima/ultima4/metaengine.cpp:146
 #: engines/wintermute/keymapper_tables.h:1290
 #: engines/wintermute/keymapper_tables.h:1373
 #: engines/wintermute/keymapper_tables.h:1449
@@ -1039,8 +1045,11 @@ msgstr "Догори"
 #: engines/freescape/movement.cpp:42 engines/got/metaengine.cpp:56
 #: engines/griffon/metaengine.cpp:127 engines/grim/grim.cpp:486
 #: engines/grim/grim.cpp:568 engines/icb/icb.cpp:73 engines/icb/icb.cpp:157
-#: engines/scumm/metaengine.cpp:971 engines/twine/metaengine.cpp:437
-#: engines/twine/metaengine.cpp:505 engines/twp/metaengine.cpp:155
+#: engines/scumm/metaengine.cpp:971 engines/supernova/metaengine.cpp:279
+#: engines/twine/metaengine.cpp:437 engines/twine/metaengine.cpp:505
+#: engines/twp/metaengine.cpp:155 engines/ultima/ultima4/metaengine.cpp:45
+#: engines/ultima/ultima4/metaengine.cpp:137
+#: engines/ultima/ultima4/metaengine.cpp:147
 #: engines/wintermute/keymapper_tables.h:1296
 #: engines/wintermute/keymapper_tables.h:1379
 #: engines/wintermute/keymapper_tables.h:1456
@@ -1056,7 +1065,10 @@ msgstr "Донизу"
 #: engines/grim/grim.cpp:491 engines/grim/grim.cpp:573 engines/icb/icb.cpp:78
 #: engines/icb/icb.cpp:162 engines/scumm/metaengine.cpp:984
 #: engines/twine/metaengine.cpp:452 engines/twine/metaengine.cpp:520
-#: engines/twp/metaengine.cpp:152 engines/wintermute/keymapper_tables.h:320
+#: engines/twp/metaengine.cpp:152 engines/ultima/ultima4/metaengine.cpp:46
+#: engines/ultima/ultima4/metaengine.cpp:138
+#: engines/ultima/ultima4/metaengine.cpp:148
+#: engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1302
 #: engines/wintermute/keymapper_tables.h:1385
 #: engines/wintermute/keymapper_tables.h:1908
@@ -1072,7 +1084,10 @@ msgstr "Наліво"
 #: engines/grim/grim.cpp:496 engines/grim/grim.cpp:578 engines/icb/icb.cpp:83
 #: engines/icb/icb.cpp:167 engines/scumm/metaengine.cpp:991
 #: engines/twine/metaengine.cpp:444 engines/twine/metaengine.cpp:513
-#: engines/twp/metaengine.cpp:153 engines/wintermute/keymapper_tables.h:326
+#: engines/twp/metaengine.cpp:153 engines/ultima/ultima4/metaengine.cpp:47
+#: engines/ultima/ultima4/metaengine.cpp:139
+#: engines/ultima/ultima4/metaengine.cpp:149
+#: engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1308
 #: engines/wintermute/keymapper_tables.h:1391
 #: engines/wintermute/keymapper_tables.h:1914
@@ -1337,12 +1352,12 @@ msgstr "Попередній"
 msgid "Save Image..."
 msgstr "Зберегти зображення..."
 
-#: gui/imagealbum-dialog.cpp:263
+#: gui/imagealbum-dialog.cpp:260
 #, c-format
 msgid "%u of %u"
 msgstr "%u з %u"
 
-#: gui/imagealbum-dialog.cpp:376
+#: gui/imagealbum-dialog.cpp:373
 msgid "Save Image"
 msgstr "Зберегти зображ"
 
@@ -1507,7 +1522,7 @@ msgstr "Пошук:"
 #: gui/launcher.cpp:317 engines/dialogs.cpp:94 engines/engine.cpp:974
 #: engines/mm/xeen/saves.cpp:259 engines/nancy/state/loadsave.cpp:124
 #: engines/pegasus/pegasus.cpp:388 engines/trecision/saveload.cpp:253
-#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:737
+#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:753
 msgid "Load game:"
 msgstr "Завантажити гру:"
 
@@ -2611,6 +2626,7 @@ msgstr ""
 "Далі..."
 
 #: gui/options.cpp:2975 engines/engine.cpp:653
+#: engines/ultima/nuvie/metaengine.cpp:71
 msgid "Move"
 msgstr "Перенести"
 
@@ -3000,7 +3016,7 @@ msgstr ""
 "Кроки 1 та 6 необхідно повторити для кожної з ваших ігор."
 
 #: base/main.cpp:655 base/main.cpp:680
-#: engines/director/lingo/lingo-builtins.cpp:1466
+#: engines/director/lingo/lingo-builtins.cpp:1469
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -3284,8 +3300,13 @@ msgstr "Движок графічних квестів"
 #: engines/mohawk/myst_stacks/menu.cpp:317
 #: engines/mohawk/riven_stacks/aspit.cpp:454 engines/saga/metaengine.cpp:449
 #: engines/scumm/help.cpp:84 engines/scumm/help.cpp:86
-#: engines/tinsel/metaengine.cpp:335 engines/zvision/metaengine.cpp:272
-#: engines/zvision/metaengine.cpp:290
+#: engines/sludge/keymapper_tables.h:95 engines/sludge/keymapper_tables.h:144
+#: engines/sludge/keymapper_tables.h:223 engines/sludge/keymapper_tables.h:343
+#: engines/sludge/keymapper_tables.h:355 engines/sludge/keymapper_tables.h:416
+#: engines/sludge/keymapper_tables.h:429 engines/sludge/keymapper_tables.h:541
+#: engines/supernova/metaengine.cpp:267 engines/tinsel/metaengine.cpp:335
+#: engines/titanic/metaengine.cpp:302 engines/ultima/nuvie/metaengine.cpp:91
+#: engines/zvision/metaengine.cpp:292 engines/zvision/metaengine.cpp:310
 msgid "Quit"
 msgstr "Вихід"
 
@@ -3349,12 +3370,13 @@ msgstr "Готове"
 msgid "Mode change"
 msgstr "Зміна режиму"
 
-#: dists/android.strings.xml.cpp:50
+#: dists/android.strings.xml.cpp:50 engines/titanic/metaengine.cpp:211
 msgid "Shift"
 msgstr "Shift"
 
 #: dists/android.strings.xml.cpp:51 engines/dragons/metaengine.cpp:153
 #: engines/scumm/help.cpp:88 engines/scumm/help.cpp:91
+#: engines/ultima/ultima4/metaengine.cpp:53
 msgid "Enter"
 msgstr "Enter"
 
@@ -3509,7 +3531,7 @@ msgstr "~П~овер.в головне меню"
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:308 engines/toon/toon.cpp:3813
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:636
-#: engines/wage/saveload.cpp:747 engines/zvision/file/save_manager.cpp:48
+#: engines/wage/saveload.cpp:763 engines/zvision/file/save_manager.cpp:46
 msgid "Save game:"
 msgstr "Зберегти гру:"
 
@@ -3533,8 +3555,8 @@ msgstr "Зберегти гру:"
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/tinsel/metaengine.cpp:323 engines/toltecs/menu.cpp:308
 #: engines/toon/toon.cpp:3813 engines/trecision/saveload.cpp:67
-#: engines/tsage/scenes.cpp:636 engines/wage/saveload.cpp:747
-#: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:262
+#: engines/tsage/scenes.cpp:636 engines/wage/saveload.cpp:763
+#: engines/zvision/file/save_manager.cpp:46 engines/zvision/metaengine.cpp:282
 msgid "Save"
 msgstr "Записати"
 
@@ -3682,7 +3704,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ПОМИЛКА: Не вдалося скопіювати збереження ігри у новий слот"
 
 #: engines/engine.cpp:687 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:263 engines/mm/xeen/saves.cpp:293
+#: backends/platform/ios7/ios7_osys_main.cpp:260 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:218
 msgid "Autosave"
 msgstr "Автозбереження"
@@ -3768,65 +3790,78 @@ msgstr "Гру не реалізовано"
 msgid "Default game keymap"
 msgstr "Мапа клавіш за замовчунням"
 
-#: engines/metaengine.cpp:79 backends/platform/maemo/maemo.cpp:161
-#: engines/agos/metaengine.cpp:232 engines/asylum/metaengine.cpp:159
-#: engines/bbvs/metaengine.cpp:99 engines/cge/metaengine.cpp:203
-#: engines/cge2/metaengine.cpp:216 engines/cine/metaengine.cpp:264
-#: engines/composer/metaengine.cpp:113 engines/cruise/metaengine.cpp:147
-#: engines/draci/metaengine.cpp:141 engines/groovie/metaengine.cpp:205
+#: engines/metaengine.cpp:79 engines/agos/metaengine.cpp:232
+#: engines/asylum/metaengine.cpp:159 engines/bbvs/metaengine.cpp:99
+#: engines/cge/metaengine.cpp:203 engines/cge2/metaengine.cpp:216
+#: engines/cine/metaengine.cpp:264 engines/composer/metaengine.cpp:113
+#: engines/cruise/metaengine.cpp:173 engines/draci/metaengine.cpp:141
+#: engines/efh/metaengine.cpp:207 engines/groovie/metaengine.cpp:205
 #: engines/hdb/metaengine.cpp:207 engines/hopkins/metaengine.cpp:211
 #: engines/hugo/metaengine.cpp:97 engines/illusions/metaengine.cpp:94
+#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:502
 #: engines/lure/metaengine.cpp:177 engines/made/metaengine.cpp:107
 #: engines/mads/metaengine.cpp:280 engines/mtropolis/metaengine.cpp:161
-#: engines/parallaction/metaengine.cpp:112 engines/saga/metaengine.cpp:278
-#: engines/stark/metaengine.cpp:189 engines/sword1/metaengine.cpp:271
-#: engines/tinsel/metaengine.cpp:246 engines/toon/metaengine.cpp:86
-#: engines/touche/metaengine.cpp:122 engines/trecision/metaengine.cpp:125
-#: engines/tsage/metaengine.cpp:178 engines/tucker/metaengine.cpp:172
-#: engines/vcruise/metaengine.cpp:158 engines/wintermute/keymapper_tables.h:42
-#: engines/zvision/metaengine.cpp:183
-msgid "Left Click"
+#: engines/nancy/input.cpp:181 engines/parallaction/metaengine.cpp:112
+#: engines/saga/metaengine.cpp:278 engines/sludge/keymapper_tables.h:561
+#: engines/sludge/keymapper_tables.h:580 engines/stark/metaengine.cpp:189
+#: engines/sword1/metaengine.cpp:271 engines/tinsel/metaengine.cpp:246
+#: engines/toon/metaengine.cpp:86 engines/touche/metaengine.cpp:122
+#: engines/trecision/metaengine.cpp:125 engines/tsage/metaengine.cpp:178
+#: engines/tucker/metaengine.cpp:172 engines/ultima/ultima4/metaengine.cpp:224
+#: engines/ultima/nuvie/metaengine.cpp:235
+#: engines/ultima/ultima8/metaengine.cpp:139 engines/vcruise/metaengine.cpp:158
+#: engines/wintermute/keymapper_tables.h:42 engines/zvision/metaengine.cpp:203
+msgid "Left click"
 msgstr "Лівий клік"
 
-#: engines/metaengine.cpp:85 backends/platform/maemo/maemo.cpp:165
-#: engines/mtropolis/metaengine.cpp:173 engines/saga/metaengine.cpp:284
-#: engines/wintermute/keymapper_tables.h:256
+#: engines/metaengine.cpp:85 engines/mtropolis/metaengine.cpp:173
+#: engines/saga/metaengine.cpp:284 engines/wintermute/keymapper_tables.h:256
 #: engines/wintermute/keymapper_tables.h:300
 #: engines/wintermute/keymapper_tables.h:2166
-msgid "Middle Click"
+msgid "Middle click"
 msgstr "Середній клік"
 
-#: engines/metaengine.cpp:90 backends/platform/maemo/maemo.cpp:169
-#: engines/agos/metaengine.cpp:238 engines/asylum/metaengine.cpp:165
-#: engines/bbvs/metaengine.cpp:105 engines/cge/metaengine.cpp:209
-#: engines/cge2/metaengine.cpp:222 engines/cine/metaengine.cpp:270
-#: engines/composer/metaengine.cpp:119 engines/cruise/metaengine.cpp:153
-#: engines/draci/metaengine.cpp:147 engines/groovie/metaengine.cpp:211
+#: engines/metaengine.cpp:90 engines/agos/metaengine.cpp:238
+#: engines/asylum/metaengine.cpp:165 engines/bbvs/metaengine.cpp:105
+#: engines/cge/metaengine.cpp:209 engines/cge2/metaengine.cpp:222
+#: engines/cine/metaengine.cpp:270 engines/composer/metaengine.cpp:119
+#: engines/cruise/metaengine.cpp:179 engines/draci/metaengine.cpp:147
+#: engines/efh/metaengine.cpp:213 engines/groovie/metaengine.cpp:211
 #: engines/hopkins/metaengine.cpp:217 engines/hugo/metaengine.cpp:104
-#: engines/illusions/metaengine.cpp:101 engines/lure/metaengine.cpp:183
+#: engines/illusions/metaengine.cpp:101 engines/kyra/engine/eobcommon.cpp:368
+#: engines/kyra/engine/lol.cpp:503 engines/lure/metaengine.cpp:183
 #: engines/made/metaengine.cpp:114 engines/mads/metaengine.cpp:286
-#: engines/mtropolis/metaengine.cpp:167 engines/parallaction/metaengine.cpp:118
-#: engines/saga/metaengine.cpp:289 engines/stark/metaengine.cpp:195
-#: engines/sword1/metaengine.cpp:277 engines/tinsel/metaengine.cpp:252
-#: engines/toon/metaengine.cpp:92 engines/touche/metaengine.cpp:128
-#: engines/trecision/metaengine.cpp:131 engines/tsage/metaengine.cpp:184
-#: engines/tucker/metaengine.cpp:178 engines/wintermute/keymapper_tables.h:48
-#: engines/zvision/metaengine.cpp:189
-msgid "Right Click"
+#: engines/mtropolis/metaengine.cpp:167 engines/nancy/input.cpp:188
+#: engines/parallaction/metaengine.cpp:118 engines/saga/metaengine.cpp:289
+#: engines/sludge/keymapper_tables.h:567 engines/sludge/keymapper_tables.h:586
+#: engines/stark/metaengine.cpp:195 engines/sword1/metaengine.cpp:277
+#: engines/tinsel/metaengine.cpp:252 engines/toon/metaengine.cpp:92
+#: engines/touche/metaengine.cpp:128 engines/trecision/metaengine.cpp:131
+#: engines/tsage/metaengine.cpp:184 engines/tucker/metaengine.cpp:178
+#: engines/ultima/ultima4/metaengine.cpp:230
+#: engines/ultima/nuvie/metaengine.cpp:241
+#: engines/ultima/ultima8/metaengine.cpp:145
+#: engines/wintermute/keymapper_tables.h:48 engines/zvision/metaengine.cpp:209
+msgid "Right click"
 msgstr "Правий клік"
 
 #. I18N: Action in In Cold Blood
 #: engines/metaengine.cpp:96 engines/agos/metaengine.cpp:252
-#: engines/crab/input/input.cpp:261 engines/cruise/metaengine.cpp:191
+#: engines/crab/input/input.cpp:261 engines/cruise/metaengine.cpp:217
 #: engines/grim/grim.cpp:550 engines/hdb/metaengine.cpp:258
 #: engines/icb/icb.cpp:137 engines/icb/icb.cpp:203 engines/mohawk/myst.cpp:595
 #: engines/mohawk/riven.cpp:876 engines/sky/metaengine.cpp:126
+#: engines/sludge/keymapper_tables.h:52 engines/sludge/keymapper_tables.h:125
+#: engines/sludge/keymapper_tables.h:187 engines/sludge/keymapper_tables.h:243
+#: engines/sludge/keymapper_tables.h:262 engines/sludge/keymapper_tables.h:459
+#: engines/sludge/keymapper_tables.h:490 engines/supernova/metaengine.cpp:262
 #: engines/tucker/metaengine.cpp:184 engines/twine/metaengine.cpp:223
 #: engines/wintermute/keymapper_tables.h:1608
 msgid "Pause"
 msgstr "Пауза"
 
 #: engines/metaengine.cpp:102 engines/parallaction/metaengine.cpp:137
+#: engines/ultima/ultima8/metaengine.cpp:48
 msgid "Game menu"
 msgstr "Меню гри"
 
@@ -3846,6 +3881,7 @@ msgid "Skip"
 msgstr "Пропустити"
 
 #: engines/metaengine.cpp:116 engines/sky/metaengine.cpp:121
+#: engines/supernova/metaengine.cpp:315
 msgid "Skip line"
 msgstr "Пропустити рядок"
 
@@ -3854,7 +3890,7 @@ msgid "Predictive input dialog"
 msgstr "Діалог предиктивного вводу"
 
 #. I18N: This keymap works within the KIA Save Game screen
-#. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
+#. and allows confirming popup dialog prompts (eg. for save game deletion or overwriting)
 #. and also submitting a new save game name, or choosing an existing save game for overwriting.
 #: engines/metaengine.cpp:128 engines/bladerunner/metaengine.cpp:273
 #: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:539
@@ -4117,17 +4153,17 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "Режим дотику у тачскріні - Проліт (клік DPad)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:802
-#: backends/fs/android/android-saf-fs.cpp:806
+#: backends/fs/android/android-saf-fs.cpp:804
+#: backends/fs/android/android-saf-fs.cpp:808
 msgid "Add a new folder"
 msgstr "Додати нову папку"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:918
+#: backends/fs/android/android-saf-fs.cpp:924
 msgid "Choose a new folder"
 msgstr "Вибрати нову папку"
 
-#: backends/graphics/atari/atari-graphics.cpp:1065
+#: backends/graphics/atari/atari-graphics.cpp:1059
 #: backends/graphics/sdl/sdl-graphics.cpp:515
 msgid "Toggle aspect ratio correction"
 msgstr "Перемикання корекції співвідношення сторін"
@@ -4333,11 +4369,11 @@ msgstr "Лівий стік"
 msgid "Right Stick"
 msgstr "Правий стік"
 
-#: backends/keymapper/hardware-input.cpp:264 engines/dragons/metaengine.cpp:207
+#: backends/keymapper/hardware-input.cpp:264
 msgid "Left Shoulder"
 msgstr "Лівий курок"
 
-#: backends/keymapper/hardware-input.cpp:265 engines/dragons/metaengine.cpp:213
+#: backends/keymapper/hardware-input.cpp:265
 msgid "Right Shoulder"
 msgstr "Правий курок"
 
@@ -4347,7 +4383,7 @@ msgstr "Правий курок"
 #: backends/platform/sdl/miyoo/miyoo.cpp:74
 #: backends/platform/sdl/miyoo/miyoo.cpp:101
 #: backends/platform/sdl/opendingux/opendingux.cpp:64
-#: backends/platform/sdl/ps3/ps3.cpp:51 backends/platform/sdl/psp2/psp2.cpp:51
+#: backends/platform/sdl/ps3/ps3.cpp:51 backends/platform/sdl/psp2/psp2.cpp:50
 #: backends/platform/sdl/switch/switch.cpp:48
 msgid "D-pad Up"
 msgstr "Хрестовина уверх"
@@ -4358,7 +4394,7 @@ msgstr "Хрестовина уверх"
 #: backends/platform/sdl/miyoo/miyoo.cpp:75
 #: backends/platform/sdl/miyoo/miyoo.cpp:102
 #: backends/platform/sdl/opendingux/opendingux.cpp:65
-#: backends/platform/sdl/ps3/ps3.cpp:52 backends/platform/sdl/psp2/psp2.cpp:52
+#: backends/platform/sdl/ps3/ps3.cpp:52 backends/platform/sdl/psp2/psp2.cpp:51
 #: backends/platform/sdl/switch/switch.cpp:49
 msgid "D-pad Down"
 msgstr "Хрестовина донизу"
@@ -4369,7 +4405,7 @@ msgstr "Хрестовина донизу"
 #: backends/platform/sdl/miyoo/miyoo.cpp:76
 #: backends/platform/sdl/miyoo/miyoo.cpp:103
 #: backends/platform/sdl/opendingux/opendingux.cpp:66
-#: backends/platform/sdl/ps3/ps3.cpp:53 backends/platform/sdl/psp2/psp2.cpp:53
+#: backends/platform/sdl/ps3/ps3.cpp:53 backends/platform/sdl/psp2/psp2.cpp:52
 #: backends/platform/sdl/switch/switch.cpp:50
 msgid "D-pad Left"
 msgstr "Хрестовина вліво"
@@ -4380,7 +4416,7 @@ msgstr "Хрестовина вліво"
 #: backends/platform/sdl/miyoo/miyoo.cpp:77
 #: backends/platform/sdl/miyoo/miyoo.cpp:104
 #: backends/platform/sdl/opendingux/opendingux.cpp:67
-#: backends/platform/sdl/ps3/ps3.cpp:54 backends/platform/sdl/psp2/psp2.cpp:54
+#: backends/platform/sdl/ps3/ps3.cpp:54 backends/platform/sdl/psp2/psp2.cpp:53
 #: backends/platform/sdl/switch/switch.cpp:51
 msgid "D-pad Right"
 msgstr "Хрестовина вправо"
@@ -4399,26 +4435,26 @@ msgstr "Правий перемикач"
 
 #: backends/keymapper/hardware-input.cpp:277
 #: backends/platform/sdl/opendingux/opendingux.cpp:78
-#: backends/platform/sdl/ps3/ps3.cpp:61 backends/platform/sdl/psp2/psp2.cpp:59
+#: backends/platform/sdl/ps3/ps3.cpp:61 backends/platform/sdl/psp2/psp2.cpp:58
 #: backends/platform/sdl/switch/switch.cpp:58
 msgid "Left Stick X"
 msgstr "Лівий стік вісь X"
 
 #: backends/keymapper/hardware-input.cpp:278
 #: backends/platform/sdl/opendingux/opendingux.cpp:79
-#: backends/platform/sdl/ps3/ps3.cpp:62 backends/platform/sdl/psp2/psp2.cpp:60
+#: backends/platform/sdl/ps3/ps3.cpp:62 backends/platform/sdl/psp2/psp2.cpp:59
 #: backends/platform/sdl/switch/switch.cpp:59
 msgid "Left Stick Y"
 msgstr "Лівий стік вісь Y"
 
 #: backends/keymapper/hardware-input.cpp:279
-#: backends/platform/sdl/ps3/ps3.cpp:63 backends/platform/sdl/psp2/psp2.cpp:61
+#: backends/platform/sdl/ps3/ps3.cpp:63 backends/platform/sdl/psp2/psp2.cpp:60
 #: backends/platform/sdl/switch/switch.cpp:60
 msgid "Right Stick X"
 msgstr "Правий стік вісь X"
 
 #: backends/keymapper/hardware-input.cpp:280
-#: backends/platform/sdl/ps3/ps3.cpp:64 backends/platform/sdl/psp2/psp2.cpp:62
+#: backends/platform/sdl/ps3/ps3.cpp:64 backends/platform/sdl/psp2/psp2.cpp:61
 #: backends/platform/sdl/switch/switch.cpp:61
 msgid "Right Stick Y"
 msgstr "Правий стік вісь Y"
@@ -4705,9 +4741,10 @@ msgstr "Y"
 #: backends/platform/sdl/miyoo/miyoo.cpp:67
 #: backends/platform/sdl/miyoo/miyoo.cpp:94
 #: backends/platform/sdl/opendingux/opendingux.cpp:57
-#: backends/platform/sdl/ps3/ps3.cpp:44 backends/platform/sdl/psp2/psp2.cpp:47
+#: backends/platform/sdl/ps3/ps3.cpp:44 backends/platform/sdl/psp2/psp2.cpp:46
 #: engines/got/metaengine.cpp:61 engines/mm/mm1/metaengine.cpp:49
-#: engines/mm/mm1/metaengine.cpp:92
+#: engines/mm/mm1/metaengine.cpp:92 engines/supernova/metaengine.cpp:303
+#: engines/titanic/metaengine.cpp:233
 msgid "Select"
 msgstr "Вибір"
 
@@ -4717,7 +4754,8 @@ msgstr "Вибір"
 #: backends/platform/sdl/miyoo/miyoo.cpp:69
 #: backends/platform/sdl/miyoo/miyoo.cpp:96
 #: backends/platform/sdl/opendingux/opendingux.cpp:59
-#: backends/platform/sdl/ps3/ps3.cpp:46 backends/platform/sdl/psp2/psp2.cpp:48
+#: backends/platform/sdl/ps3/ps3.cpp:46 backends/platform/sdl/psp2/psp2.cpp:47
+#: engines/sludge/keymapper_tables.h:349
 msgid "Start"
 msgstr "Старт"
 
@@ -4737,7 +4775,7 @@ msgstr "ZR"
 #: backends/platform/sdl/miyoo/miyoo.cpp:71
 #: backends/platform/sdl/miyoo/miyoo.cpp:98
 #: backends/platform/sdl/opendingux/opendingux.cpp:61
-#: backends/platform/sdl/psp2/psp2.cpp:49
+#: backends/platform/sdl/psp2/psp2.cpp:48
 #: backends/platform/sdl/switch/switch.cpp:46
 msgid "L"
 msgstr "L"
@@ -4748,7 +4786,7 @@ msgstr "L"
 #: backends/platform/sdl/miyoo/miyoo.cpp:73
 #: backends/platform/sdl/miyoo/miyoo.cpp:100
 #: backends/platform/sdl/opendingux/opendingux.cpp:63
-#: backends/platform/sdl/psp2/psp2.cpp:50
+#: backends/platform/sdl/psp2/psp2.cpp:49
 #: backends/platform/sdl/switch/switch.cpp:47
 msgid "R"
 msgstr "R"
@@ -4831,12 +4869,12 @@ msgstr "Режим збільшення вимкнено. Вмикаю режи�
 msgid "Magnify Mode Off"
 msgstr "Режим збільшення вимкнено"
 
-#: backends/platform/android/android.cpp:1059
+#: backends/platform/android/android.cpp:1065
 #: backends/platform/ios7/ios7_osys_misc.mm:249
 msgid "Getting help"
 msgstr "Допомога"
 
-#: backends/platform/android/android.cpp:1062
+#: backends/platform/android/android.cpp:1068
 msgid ""
 "## Help, I'm lost!\n"
 "\n"
@@ -4876,13 +4914,13 @@ msgstr ""
 "навіть карколомні. Якщо ви застрягли в грі, можливо вам потрібно звернутися "
 "до її покрокового проходження. Успіхів!\n"
 
-#: backends/platform/android/android.cpp:1071
+#: backends/platform/android/android.cpp:1077
 #: backends/platform/ios7/ios7_osys_misc.mm:261
 #: backends/platform/ios7/ios7_osys_misc.mm:357
 msgid "Touch Controls"
 msgstr "Керування дотиком"
 
-#: backends/platform/android/android.cpp:1074
+#: backends/platform/android/android.cpp:1080
 msgid ""
 "## Touch control modes\n"
 "The touch control mode can be changed by tapping or clicking on the "
@@ -5018,13 +5056,13 @@ msgstr ""
 "   ![Піктограма клавіатури](keyboard.png \"Піктограма клавіатури\"){w=10em}\n"
 "\n"
 
-#: backends/platform/android/android.cpp:1130
+#: backends/platform/android/android.cpp:1136
 #: backends/platform/ios7/ios7_osys_misc.mm:336
 #: backends/platform/ios7/ios7_osys_misc.mm:380
 msgid "Adding Games"
 msgstr "Додавання ігор"
 
-#: backends/platform/android/android.cpp:1133
+#: backends/platform/android/android.cpp:1139
 msgid ""
 "## Adding Games \n"
 "\n"
@@ -5762,6 +5800,18 @@ msgstr ""
 msgid "Click Mode"
 msgstr "Режим кліків"
 
+#: backends/platform/maemo/maemo.cpp:161
+msgid "Left Click"
+msgstr "Лівий клік"
+
+#: backends/platform/maemo/maemo.cpp:165
+msgid "Middle Click"
+msgstr "Середній клік"
+
+#: backends/platform/maemo/maemo.cpp:169
+msgid "Right Click"
+msgstr "Правий клік"
+
 #: backends/platform/sdl/sdl.cpp:1140
 msgid "Keyboard"
 msgstr "Клавіатура"
@@ -5872,8 +5922,8 @@ msgstr "Мінімізувати"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ONLINE HELP
 #: backends/platform/sdl/macosx/appmenu_osx.mm:312
-#: engines/bladerunner/metaengine.cpp:321 engines/tucker/metaengine.cpp:215
-#: engines/zvision/metaengine.cpp:226
+#: engines/bladerunner/metaengine.cpp:321 engines/supernova/metaengine.cpp:238
+#: engines/tucker/metaengine.cpp:215 engines/zvision/metaengine.cpp:246
 msgid "Help"
 msgstr "Довідка"
 
@@ -5990,17 +6040,17 @@ msgstr "L3"
 msgid "R3"
 msgstr "R3"
 
-#: backends/platform/sdl/ps3/ps3.cpp:40 backends/platform/sdl/psp2/psp2.cpp:43
+#: backends/platform/sdl/ps3/ps3.cpp:40 backends/platform/sdl/psp2/psp2.cpp:42
 #: engines/dragons/metaengine.cpp:201
 msgid "Cross"
 msgstr "Хрест"
 
-#: backends/platform/sdl/ps3/ps3.cpp:41 backends/platform/sdl/psp2/psp2.cpp:44
+#: backends/platform/sdl/ps3/ps3.cpp:41 backends/platform/sdl/psp2/psp2.cpp:43
 #: engines/dragons/metaengine.cpp:195
 msgid "Circle"
 msgstr "Коло"
 
-#: backends/platform/sdl/ps3/ps3.cpp:42 backends/platform/sdl/psp2/psp2.cpp:45
+#: backends/platform/sdl/ps3/ps3.cpp:42 backends/platform/sdl/psp2/psp2.cpp:44
 #: engines/dragons/metaengine.cpp:183
 msgid "Square"
 msgstr "Квадрат"
@@ -6162,16 +6212,16 @@ msgstr "Перевірити оновлення..."
 #: engines/access/resources.cpp:43 engines/drascula/drascula.cpp:959
 #: engines/hugo/hugo.cpp:427 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:300 engines/sky/compact.cpp:129
-#: engines/supernova/supernova.cpp:463 engines/teenagent/resources.cpp:97
+#: engines/supernova/supernova.cpp:467 engines/teenagent/resources.cpp:97
 #: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5418
-#: engines/ultima/ultima8/ultima8.cpp:191
+#: engines/ultima/ultima8/ultima8.cpp:193
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "Не вдалося знайти файл даних движка %s."
 
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:975
 #: engines/hugo/hugo.cpp:439 engines/lure/lure.cpp:66
-#: engines/mortevielle/mortevielle.cpp:308 engines/supernova/supernova.cpp:468
+#: engines/mortevielle/mortevielle.cpp:308 engines/supernova/supernova.cpp:472
 #: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5431
 #, c-format
 msgid "The '%s' engine data file is corrupt."
@@ -6252,7 +6302,7 @@ msgstr ""
 #: engines/neverhood/dialogs.cpp:47 engines/sci/detection_options.h:107
 #: engines/sherlock/metaengine.cpp:39 engines/toltecs/metaengine.cpp:44
 #: engines/trecision/metaengine.cpp:41 engines/ultima/metaengine.cpp:52
-#: engines/zvision/metaengine.cpp:46
+#: engines/zvision/metaengine.cpp:42
 msgid "Use original save/load screens"
 msgstr "Використовувати ориг. екрани збереження/завантаження"
 
@@ -6265,7 +6315,7 @@ msgstr "Використовувати ориг. екрани збереженн
 #: engines/neverhood/dialogs.cpp:48 engines/sci/detection_options.h:108
 #: engines/sherlock/metaengine.cpp:40 engines/toltecs/metaengine.cpp:45
 #: engines/trecision/metaengine.cpp:42 engines/ultima/metaengine.cpp:53
-#: engines/zvision/metaengine.cpp:47
+#: engines/zvision/metaengine.cpp:43
 msgid "Use the original save/load screens instead of the ScummVM ones"
 msgstr ""
 "Використовувати оригінальні екрани збереження/завантаження замість ScummVM"
@@ -6340,30 +6390,40 @@ msgid "Add game speed menu (similar to PC version)"
 msgstr "Додати меню швидкості гри (подібно до версії PC)"
 
 #: engines/agi/metaengine.cpp:195 engines/agos/metaengine.cpp:44
-#: engines/awe/metaengine.cpp:35 engines/dreamweb/metaengine.cpp:36
-#: engines/gob/metaengine.cpp:42 engines/lure/metaengine.cpp:41
-#: engines/mads/metaengine.cpp:51 engines/mm/metaengine.cpp:46
-#: engines/saga/metaengine.cpp:52 engines/scumm/dialogs.cpp:1202
-#: engines/scumm/metaengine.cpp:821
+#: engines/dreamweb/metaengine.cpp:36 engines/gob/metaengine.cpp:42
+#: engines/lure/metaengine.cpp:41 engines/mads/metaengine.cpp:51
+#: engines/mm/metaengine.cpp:46 engines/saga/metaengine.cpp:52
+#: engines/scumm/dialogs.cpp:1202 engines/scumm/metaengine.cpp:821
 msgid "Enable copy protection"
 msgstr "Ввімкнути захист від копіювання"
 
 #: engines/agi/metaengine.cpp:196 engines/agos/metaengine.cpp:45
-#: engines/awe/metaengine.cpp:36 engines/dreamweb/metaengine.cpp:37
-#: engines/gob/metaengine.cpp:43 engines/lure/metaengine.cpp:42
-#: engines/mads/metaengine.cpp:52 engines/mm/metaengine.cpp:47
-#: engines/saga/metaengine.cpp:53 engines/scumm/dialogs.cpp:1203
-#: engines/scumm/metaengine.cpp:822
+#: engines/dreamweb/metaengine.cpp:37 engines/gob/metaengine.cpp:43
+#: engines/lure/metaengine.cpp:42 engines/mads/metaengine.cpp:52
+#: engines/mm/metaengine.cpp:47 engines/saga/metaengine.cpp:53
+#: engines/scumm/dialogs.cpp:1203 engines/scumm/metaengine.cpp:822
 msgid "Enable any copy protection that would otherwise be bypassed by default."
 msgstr "Ввімкнути захист від копіювання, який зазвичай перескакується."
 
-#: engines/agi/metaengine.cpp:421 engines/asylum/asylum.cpp:655
+#: engines/agi/metaengine.cpp:207
+msgid "Use PCjr's sound chip in 16-bit shift mode"
+msgstr ""
+
+#: engines/agi/metaengine.cpp:208
+msgid ""
+"In PCjr sound mode, emulate a non-standard SN76496 sound chip, similar to "
+"chips found in SEGA Master System consoles. Allows certain music effects, "
+"especially in fanmade games, but original Sierra music designed strictly for "
+"PCjr may sound wrong."
+msgstr ""
+
+#: engines/agi/metaengine.cpp:433 engines/asylum/asylum.cpp:655
 #: engines/buried/saveload.cpp:53 engines/mohawk/riven.cpp:759
 #: engines/petka/saveload.cpp:121
 msgid "This game does not support loading"
 msgstr "Ця гра не підтримує завантаження"
 
-#: engines/agi/metaengine.cpp:444 engines/asylum/asylum.cpp:666
+#: engines/agi/metaengine.cpp:456 engines/asylum/asylum.cpp:666
 #: engines/buried/saveload.cpp:64 engines/mohawk/riven.cpp:774
 #: engines/petka/saveload.cpp:101
 msgid "This game does not support saving"
@@ -6384,7 +6444,7 @@ msgstr "Ця гра не підтримує збереження"
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1261
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:278 engines/toon/toon.cpp:3907
-#: engines/zvision/file/save_manager.cpp:61
+#: engines/zvision/file/save_manager.cpp:59
 msgid "Restore game:"
 msgstr "Відновити гру:"
 
@@ -6404,7 +6464,7 @@ msgstr "Відновити гру:"
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1261
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:278 engines/toon/toon.cpp:3907
-#: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:267
+#: engines/zvision/file/save_manager.cpp:59 engines/zvision/metaengine.cpp:287
 msgid "Restore"
 msgstr "Відновити"
 
@@ -6504,15 +6564,16 @@ msgid "AGOS main"
 msgstr "Головна AGOS"
 
 #: engines/agos/metaengine.cpp:228 engines/bbvs/metaengine.cpp:93
-#: engines/cine/metaengine.cpp:258 engines/cruise/metaengine.cpp:143
+#: engines/cine/metaengine.cpp:258 engines/cruise/metaengine.cpp:169
 #: engines/draci/metaengine.cpp:137 engines/efh/metaengine.cpp:203
 #: engines/hopkins/metaengine.cpp:207 engines/hugo/metaengine.cpp:93
 #: engines/illusions/metaengine.cpp:90 engines/lure/metaengine.cpp:169
 #: engines/made/metaengine.cpp:103 engines/mads/metaengine.cpp:275
-#: engines/stark/metaengine.cpp:185 engines/sword1/metaengine.cpp:267
-#: engines/tinsel/metaengine.cpp:241 engines/toon/metaengine.cpp:82
-#: engines/touche/metaengine.cpp:119 engines/trecision/metaengine.cpp:121
-#: engines/tsage/metaengine.cpp:170 engines/tucker/metaengine.cpp:168
+#: engines/sludge/keymapper_tables.h:33 engines/stark/metaengine.cpp:185
+#: engines/sword1/metaengine.cpp:267 engines/tinsel/metaengine.cpp:241
+#: engines/toon/metaengine.cpp:82 engines/touche/metaengine.cpp:119
+#: engines/trecision/metaengine.cpp:121 engines/tsage/metaengine.cpp:170
+#: engines/tucker/metaengine.cpp:168
 msgid "Game keymappings"
 msgstr "Мапа клавіш гри"
 
@@ -6533,15 +6594,21 @@ msgid "Music volume up"
 msgstr "Гучність музики вище"
 
 #: engines/agos/metaengine.cpp:268 engines/vcruise/metaengine.cpp:201
-msgid "Toggle music on/off"
+#, fuzzy
+#| msgid "Toggle music on/off"
+msgid "Toggle music on / off"
 msgstr "Перемикання музики"
 
 #: engines/agos/metaengine.cpp:273 engines/vcruise/metaengine.cpp:206
-msgid "Toggle sound effects on/off"
+#, fuzzy
+#| msgid "Toggle sound effects on/off"
+msgid "Toggle sound effects on / off"
 msgstr "Перемикання звукових ефектів"
 
 #: engines/agos/metaengine.cpp:278 engines/sky/metaengine.cpp:131
-msgid "Toggle fast mode on/off"
+#, fuzzy
+#| msgid "Toggle fast mode on/off"
+msgid "Toggle fast mode on / off"
 msgstr "Перемикання швидкого режиму"
 
 #: engines/agos/metaengine.cpp:290
@@ -6552,19 +6619,27 @@ msgstr "Іти вперед"
 msgid "Turn backward"
 msgstr "Повернутися назад"
 
-#: engines/agos/metaengine.cpp:302 engines/mohawk/riven.cpp:901
+#: engines/agos/metaengine.cpp:302 engines/kyra/engine/eobcommon.cpp:373
+#: engines/kyra/engine/lol.cpp:514 engines/mm/mm1/metaengine.cpp:97
+#: engines/mohawk/riven.cpp:901 engines/pegasus/pegasus.cpp:2740
+#: engines/twine/metaengine.cpp:353 engines/ultima/ultima8/metaengine.cpp:49
 #: engines/wintermute/keymapper_tables.h:161
 #: engines/wintermute/keymapper_tables.h:741
 #: engines/wintermute/keymapper_tables.h:2122
 #: engines/wintermute/keymapper_tables.h:2223
+#: engines/zvision/metaengine.cpp:229
 msgid "Turn left"
 msgstr "Повернутися вліво"
 
-#: engines/agos/metaengine.cpp:308 engines/mohawk/riven.cpp:907
+#: engines/agos/metaengine.cpp:308 engines/kyra/engine/eobcommon.cpp:374
+#: engines/kyra/engine/lol.cpp:515 engines/mm/mm1/metaengine.cpp:98
+#: engines/mohawk/riven.cpp:907 engines/pegasus/pegasus.cpp:2747
+#: engines/twine/metaengine.cpp:346 engines/ultima/ultima8/metaengine.cpp:50
 #: engines/wintermute/keymapper_tables.h:167
 #: engines/wintermute/keymapper_tables.h:746
 #: engines/wintermute/keymapper_tables.h:2128
 #: engines/wintermute/keymapper_tables.h:2230
+#: engines/zvision/metaengine.cpp:235
 msgid "Turn right"
 msgstr "Повернутися вправо"
 
@@ -6591,7 +6666,9 @@ msgid "Show objects to interact"
 msgstr "Показувати об'єкти для взаємодії"
 
 #: engines/agos/metaengine.cpp:346
-msgid "Toggle background sounds on/off"
+#, fuzzy
+#| msgid "Toggle background sounds on/off"
+msgid "Toggle background sounds on / off"
 msgstr "Перемикання фонових звукових ефектів"
 
 #. I18N: Characters are game actors
@@ -6600,7 +6677,9 @@ msgid "Switch characters"
 msgstr "Переключити героїв"
 
 #: engines/agos/metaengine.cpp:361
-msgid "Toggle hitbox names on/off"
+#, fuzzy
+#| msgid "Toggle hitbox names on/off"
+msgid "Toggle hitbox names on / off"
 msgstr "Перемикання назви хіт-боксів"
 
 #: engines/agos/metaengine.cpp:368
@@ -6744,7 +6823,7 @@ msgstr ""
 "Використовувати шрифти зі згладжуванням, навіть коли гра цього не запитувала"
 
 #: engines/ags/dialogs.cpp:85 engines/grim/metaengine.cpp:48
-#: engines/zvision/metaengine.cpp:221
+#: engines/zvision/metaengine.cpp:241
 msgid "Show FPS"
 msgstr "Показати лічильник кадрів"
 
@@ -6780,11 +6859,20 @@ msgstr ""
 msgid "Show version"
 msgstr "Показувати версію"
 
-#: engines/asylum/metaengine.cpp:120 engines/wintermute/keymapper_tables.h:950
+#: engines/asylum/metaengine.cpp:120 engines/crab/input/input.cpp:271
+#: engines/sludge/keymapper_tables.h:308 engines/sludge/keymapper_tables.h:404
+#: engines/sludge/keymapper_tables.h:471 engines/sludge/keymapper_tables.h:502
+#: engines/ultima/nuvie/metaengine.cpp:90
+#: engines/wintermute/keymapper_tables.h:950
 msgid "Quick load"
 msgstr "Швидке завантаження"
 
-#: engines/asylum/metaengine.cpp:125 engines/wintermute/keymapper_tables.h:930
+#: engines/asylum/metaengine.cpp:125 engines/crab/input/input.cpp:266
+#: engines/sludge/keymapper_tables.h:64 engines/sludge/keymapper_tables.h:303
+#: engines/sludge/keymapper_tables.h:410 engines/sludge/keymapper_tables.h:465
+#: engines/sludge/keymapper_tables.h:496 engines/ultima/nuvie/metaengine.cpp:89
+#: engines/ultima/ultima8/metaengine.cpp:44
+#: engines/wintermute/keymapper_tables.h:930
 msgid "Quick save"
 msgstr "Швидке збереження"
 
@@ -6812,7 +6900,8 @@ msgstr "Відкрити інвентар героя"
 #: engines/asylum/metaengine.cpp:171 engines/asylum/metaengine.cpp:198
 #: engines/cine/metaengine.cpp:364 engines/efh/metaengine.cpp:231
 #: engines/hdb/metaengine.cpp:213 engines/nancy/input.cpp:195
-#: engines/tinsel/metaengine.cpp:263
+#: engines/tinsel/metaengine.cpp:263 engines/titanic/metaengine.cpp:324
+#: engines/ultima/ultima8/metaengine.cpp:53
 msgid "Move up"
 msgstr "Рухатись уверх"
 
@@ -6820,7 +6909,8 @@ msgstr "Рухатись уверх"
 #: engines/asylum/metaengine.cpp:177 engines/asylum/metaengine.cpp:205
 #: engines/cine/metaengine.cpp:371 engines/efh/metaengine.cpp:237
 #: engines/hdb/metaengine.cpp:219 engines/nancy/input.cpp:201
-#: engines/tinsel/metaengine.cpp:269
+#: engines/tinsel/metaengine.cpp:269 engines/titanic/metaengine.cpp:330
+#: engines/ultima/ultima8/metaengine.cpp:54
 msgid "Move down"
 msgstr "Рухатись вниз"
 
@@ -6828,8 +6918,10 @@ msgstr "Рухатись вниз"
 #. I18N: Move actor left during fight
 #: engines/asylum/metaengine.cpp:183 engines/asylum/metaengine.cpp:212
 #: engines/cine/metaengine.cpp:378 engines/efh/metaengine.cpp:243
-#: engines/hdb/metaengine.cpp:225 engines/lure/metaengine.cpp:218
-#: engines/nancy/input.cpp:207 engines/tinsel/metaengine.cpp:275
+#: engines/hdb/metaengine.cpp:225 engines/kyra/engine/eobcommon.cpp:371
+#: engines/lure/metaengine.cpp:218 engines/nancy/input.cpp:207
+#: engines/tinsel/metaengine.cpp:275 engines/titanic/metaengine.cpp:312
+#: engines/titanic/metaengine.cpp:390 engines/ultima/ultima8/metaengine.cpp:55
 msgid "Move left"
 msgstr "Рухатись наліво"
 
@@ -6837,13 +6929,17 @@ msgstr "Рухатись наліво"
 #. I18N: Move actor right during fight
 #: engines/asylum/metaengine.cpp:189 engines/asylum/metaengine.cpp:219
 #: engines/cine/metaengine.cpp:385 engines/efh/metaengine.cpp:249
-#: engines/hdb/metaengine.cpp:231 engines/lure/metaengine.cpp:226
-#: engines/nancy/input.cpp:213 engines/tinsel/metaengine.cpp:281
+#: engines/hdb/metaengine.cpp:231 engines/kyra/engine/eobcommon.cpp:372
+#: engines/lure/metaengine.cpp:226 engines/nancy/input.cpp:213
+#: engines/tinsel/metaengine.cpp:281 engines/titanic/metaengine.cpp:318
+#: engines/titanic/metaengine.cpp:396 engines/ultima/ultima8/metaengine.cpp:56
 msgid "Move right"
 msgstr "Рухатись направо"
 
 #: engines/asylum/metaengine.cpp:226
-msgid "Toggle animation on/off"
+#, fuzzy
+#| msgid "Toggle animation on/off"
+msgid "Toggle animation on / off"
 msgstr "Перемикання анімації"
 
 #: engines/asylum/metaengine.cpp:232
@@ -6884,6 +6980,19 @@ msgstr ""
 msgid "Load anyway"
 msgstr "Все одно зчитати"
 
+#: engines/awe/metaengine.cpp:35
+msgid "Enable title and copy protection screens (if present)"
+msgstr ""
+
+#: engines/awe/metaengine.cpp:36
+#, fuzzy
+#| msgid ""
+#| "Enable any copy protection that would otherwise be bypassed by default."
+msgid ""
+"Displays title and copy protection screens that would otherwise be bypassed "
+"by default."
+msgstr "Ввімкнути захист від копіювання, який зазвичай перескакується."
+
 #: engines/awe/metaengine.cpp:61
 msgid "Select/Kick/Run"
 msgstr ""
@@ -6914,15 +7023,16 @@ msgid "General Keys"
 msgstr "Загальні клавіші"
 
 #: engines/bbvs/metaengine.cpp:92 engines/cine/metaengine.cpp:257
-#: engines/cruise/metaengine.cpp:142 engines/draci/metaengine.cpp:136
+#: engines/cruise/metaengine.cpp:168 engines/draci/metaengine.cpp:136
 #: engines/hopkins/metaengine.cpp:206 engines/hugo/metaengine.cpp:92
 #: engines/illusions/metaengine.cpp:89 engines/lure/metaengine.cpp:168
 #: engines/made/metaengine.cpp:102 engines/mads/metaengine.cpp:274
 #: engines/playground3d/metaengine.cpp:51 engines/stark/metaengine.cpp:184
-#: engines/sword1/metaengine.cpp:266 engines/tinsel/metaengine.cpp:240
+#: engines/supernova/metaengine.cpp:217 engines/sword1/metaengine.cpp:266
+#: engines/tinsel/metaengine.cpp:240 engines/titanic/metaengine.cpp:172
 #: engines/toltecs/metaengine.cpp:212 engines/toon/metaengine.cpp:81
 #: engines/trecision/metaengine.cpp:120 engines/tsage/metaengine.cpp:169
-#: engines/tucker/metaengine.cpp:167
+#: engines/tucker/metaengine.cpp:167 engines/voyeur/metaengine.cpp:184
 msgid "Default keymappings"
 msgstr "Мапи клавіш за замовчунням"
 
@@ -6932,7 +7042,7 @@ msgid "Escape keymappings"
 msgstr "Мапа клавіш ESC"
 
 #. I18N: ESC key
-#: engines/bbvs/metaengine.cpp:111 engines/cruise/metaengine.cpp:197
+#: engines/bbvs/metaengine.cpp:111 engines/cruise/metaengine.cpp:223
 #: engines/freescape/movement.cpp:101 engines/got/metaengine.cpp:63
 #: engines/hugo/metaengine.cpp:160 engines/lure/metaengine.cpp:209
 #: engines/mads/metaengine.cpp:292 engines/mm/mm1/metaengine.cpp:41
@@ -6950,12 +7060,15 @@ msgstr "Відкрити інвентар"
 
 #: engines/bbvs/metaengine.cpp:124 engines/dgds/metaengine.cpp:83
 #: engines/scumm/help.cpp:167 engines/scumm/help.cpp:231
-#: engines/tinsel/metaengine.cpp:300 engines/tsage/metaengine.cpp:206
+#: engines/supernova/metaengine.cpp:326 engines/tinsel/metaengine.cpp:300
+#: engines/tsage/metaengine.cpp:206 engines/ultima/nuvie/metaengine.cpp:67
 msgid "Look"
 msgstr "Глянути"
 
 #: engines/bbvs/metaengine.cpp:130 engines/scumm/help.cpp:174
-#: engines/scumm/help.cpp:226 engines/tsage/metaengine.cpp:216
+#: engines/scumm/help.cpp:226 engines/supernova/metaengine.cpp:361
+#: engines/tsage/metaengine.cpp:216 engines/ultima/ultima4/metaengine.cpp:70
+#: engines/ultima/nuvie/metaengine.cpp:68
 msgid "Talk"
 msgstr "Говорити"
 
@@ -6966,8 +7079,11 @@ msgstr "Говорити"
 #: engines/scumm/help.cpp:153 engines/scumm/help.cpp:171
 #: engines/scumm/help.cpp:201 engines/scumm/help.cpp:216
 #: engines/scumm/help.cpp:227 engines/scumm/help.cpp:253
-#: engines/sky/metaengine.cpp:95 engines/tsage/metaengine.cpp:211
-#: engines/twp/metaengine.cpp:186 engines/wintermute/keymapper_tables.h:140
+#: engines/sky/metaengine.cpp:95 engines/sludge/keymapper_tables.h:333
+#: engines/supernova/metaengine.cpp:356 engines/tsage/metaengine.cpp:211
+#: engines/twp/metaengine.cpp:186 engines/ultima/ultima4/metaengine.cpp:71
+#: engines/ultima/nuvie/metaengine.cpp:69
+#: engines/wintermute/keymapper_tables.h:140
 #: engines/wintermute/keymapper_tables.h:1552
 msgid "Use"
 msgstr "Використати"
@@ -6978,15 +7094,15 @@ msgstr "Використати"
 msgid "Walk"
 msgstr "Іти"
 
-#: engines/bladerunner/bladerunner.cpp:405
+#: engines/bladerunner/bladerunner.cpp:396
 msgid "Failed to initialize resources"
 msgstr "Не вдалося ініціалізувати ресурси"
 
-#: engines/bladerunner/bladerunner.cpp:1177
+#: engines/bladerunner/bladerunner.cpp:1168
 msgid "A required game resource was not found"
 msgstr "Потрібний ігровий ресурс не знайдено"
 
-#: engines/bladerunner/bladerunner.cpp:2764
+#: engines/bladerunner/bladerunner.cpp:2755
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -6996,7 +7112,7 @@ msgstr ""
 "ви граєте в режимі оригінального вмісту. Режим буде налаштовано на "
 "Відновлений вміст для цього сеансу до повного виходу з гри."
 
-#: engines/bladerunner/bladerunner.cpp:2766
+#: engines/bladerunner/bladerunner.cpp:2757
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -7006,7 +7122,7 @@ msgstr ""
 "у режимі відновленого вирізаного вмісту. Для цього сеансу буде налаштовано "
 "режим оригінального вмісту до повного виходу з гри."
 
-#: engines/bladerunner/bladerunner.cpp:2768
+#: engines/bladerunner/bladerunner.cpp:2759
 msgid "Continue"
 msgstr "Продовжуйте"
 
@@ -7126,22 +7242,33 @@ msgstr "Ходити / Дивитись / Говорити / Вибирати / 
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. TOGGLE MCCOY'S COMBAT MODE
 #: engines/bladerunner/metaengine.cpp:220
-msgid "Toggle Combat"
+#: engines/ultima/nuvie/metaengine.cpp:73
+#, fuzzy
+#| msgid "Toggle Combat"
+msgid "Toggle combat"
 msgstr "Перемкнути режим бою"
 
 #. I18N: This keymap allows skipping video cutscenes
 #: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
-#: engines/scumm/metaengine.cpp:1030 engines/toltecs/metaengine.cpp:246
-#: engines/twp/metaengine.cpp:162 engines/zvision/metaengine.cpp:284
+#: engines/scumm/metaengine.cpp:1030 engines/supernova/metaengine.cpp:309
+#: engines/toltecs/metaengine.cpp:246 engines/twp/metaengine.cpp:162
+#: engines/zvision/metaengine.cpp:304
 msgid "Skip cutscene"
 msgstr "Пропустити ролік"
 
-#. I18N: This keymap allows skipping the current line of dialogue.
+#. I18N: This keymap allows skipping the current line of dialog.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
-#. SKIP PAST CURRENT LINE OF DIALOGUE
-#: engines/bladerunner/metaengine.cpp:242 engines/toltecs/metaengine.cpp:228
-msgid "Skip dialogue"
+#. SKIP PAST CURRENT LINE OF DIALOG
+#: engines/bladerunner/metaengine.cpp:242 engines/sludge/keymapper_tables.h:89
+#: engines/sludge/keymapper_tables.h:138 engines/sludge/keymapper_tables.h:194
+#: engines/sludge/keymapper_tables.h:268 engines/sludge/keymapper_tables.h:392
+#: engines/sludge/keymapper_tables.h:452 engines/sludge/keymapper_tables.h:484
+#: engines/sludge/keymapper_tables.h:535 engines/toltecs/metaengine.cpp:228
+#: engines/touche/metaengine.cpp:141
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Skip dialog"
 msgstr "Пропустити діалог"
 
 #. I18N: This keymap toggles between opening the KIA in the Game Options tab, and closing the KIA.
@@ -7149,7 +7276,9 @@ msgstr "Пропустити діалог"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. GAME OPTIONS
 #: engines/bladerunner/metaengine.cpp:253
-msgid "Game Options"
+#, fuzzy
+#| msgid "Game Options"
+msgid "Game options"
 msgstr "Налашт. гри"
 
 #. I18N: This keymap opens the KIA database on one of the investigation tabs,
@@ -7158,63 +7287,111 @@ msgstr "Налашт. гри"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ACTIVATE KIA CLUE DATABASE SYSTEM
 #: engines/bladerunner/metaengine.cpp:264
-msgid "Open KIA Database"
+#, fuzzy
+#| msgid "Open KIA Database"
+msgid "Open KIA database"
 msgstr "Відкрити базу KIA"
 
 #. I18N: This keymap works within the KIA Save Game screen
 #. and allows submitting a selected existing save game for deletion.
 #: engines/bladerunner/metaengine.cpp:282
-msgid "Delete Selected Saved Game"
+#, fuzzy
+#| msgid "Delete Selected Saved Game"
+msgid "Delete selected saved game"
 msgstr "Видалити обране збереження гри"
 
 #. I18N: This keymap allows scrolling texts and lists upwards
-#: engines/bladerunner/metaengine.cpp:296
-msgid "Scroll Up"
+#: engines/bladerunner/metaengine.cpp:296 engines/titanic/metaengine.cpp:218
+#: engines/wintermute/keymapper_tables.h:670
+#: engines/wintermute/keymapper_tables.h:871
+#: engines/wintermute/keymapper_tables.h:892
+#: engines/wintermute/keymapper_tables.h:1326
+#: engines/wintermute/keymapper_tables.h:1352
+#: engines/wintermute/keymapper_tables.h:1428
+#: engines/wintermute/keymapper_tables.h:1484
+#: engines/wintermute/keymapper_tables.h:1505
+#: engines/wintermute/keymapper_tables.h:1695
+#: engines/wintermute/keymapper_tables.h:1969
+#: engines/wintermute/keymapper_tables.h:2171
+msgid "Scroll up"
 msgstr "Прокручення догори"
 
 #. I18N: This keymap allows scrolling texts and lists downwards
-#: engines/bladerunner/metaengine.cpp:303
-msgid "Scroll Down"
+#: engines/bladerunner/metaengine.cpp:303 engines/titanic/metaengine.cpp:225
+#: engines/wintermute/keymapper_tables.h:677
+#: engines/wintermute/keymapper_tables.h:878
+#: engines/wintermute/keymapper_tables.h:899
+#: engines/wintermute/keymapper_tables.h:1333
+#: engines/wintermute/keymapper_tables.h:1359
+#: engines/wintermute/keymapper_tables.h:1435
+#: engines/wintermute/keymapper_tables.h:1491
+#: engines/wintermute/keymapper_tables.h:1512
+#: engines/wintermute/keymapper_tables.h:1702
+#: engines/wintermute/keymapper_tables.h:1976
+#: engines/wintermute/keymapper_tables.h:2176
+msgid "Scroll down"
 msgstr "Прокручення донизу"
 
 #. I18N: This keymap allows (in KIA only) for a clue to be set as private or public
 #. (only when the KIA is upgraded).
 #: engines/bladerunner/metaengine.cpp:311
-msgid "Toggle Clue Privacy"
+#, fuzzy
+#| msgid "Toggle Clue Privacy"
+msgid "Toggle clue privacy"
 msgstr "Перемкнути приватність підказок"
 
 #. I18N: This keymap opens KIA's SAVE GAME tab.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SAVE GAME
-#: engines/bladerunner/metaengine.cpp:330 engines/dgds/metaengine.cpp:75
-#: engines/freescape/games/castle/castle.cpp:246
+#: engines/bladerunner/metaengine.cpp:330 engines/cge/metaengine.cpp:221
+#: engines/cge2/metaengine.cpp:235 engines/dgds/metaengine.cpp:75
+#: engines/efh/metaengine.cpp:219 engines/freescape/games/castle/castle.cpp:246
 #: engines/freescape/games/dark/dark.cpp:186
 #: engines/freescape/games/driller/driller.cpp:135
-#: engines/freescape/games/eclipse/eclipse.cpp:206
-#: engines/pegasus/pegasus.cpp:2825
-msgid "Save Game"
+#: engines/freescape/games/eclipse/eclipse.cpp:231
+#: engines/hopkins/metaengine.cpp:236 engines/hugo/metaengine.cpp:128
+#: engines/lure/metaengine.cpp:191 engines/made/metaengine.cpp:162
+#: engines/mads/metaengine.cpp:305 engines/pegasus/pegasus.cpp:2825
+#: engines/saga/metaengine.cpp:442 engines/sludge/keymapper_tables.h:107
+#: engines/sludge/keymapper_tables.h:156 engines/stark/metaengine.cpp:208
+#: engines/titanic/metaengine.cpp:199 engines/toltecs/metaengine.cpp:234
+#: engines/toon/metaengine.cpp:112 engines/trecision/metaengine.cpp:169
+#: engines/tsage/metaengine.cpp:242 engines/ultima/ultima8/metaengine.cpp:45
+#: engines/vcruise/metaengine.cpp:175 engines/wintermute/keymapper_tables.h:920
+msgid "Save game"
 msgstr "Зберегти гру"
 
 #. I18N: This keymap opens KIA's LOAD GAME tab.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. LOAD GAME
-#: engines/bladerunner/metaengine.cpp:339 engines/dgds/metaengine.cpp:74
-#: engines/freescape/games/castle/castle.cpp:251
+#: engines/bladerunner/metaengine.cpp:339 engines/cge/metaengine.cpp:227
+#: engines/cge2/metaengine.cpp:241 engines/dgds/metaengine.cpp:74
+#: engines/efh/metaengine.cpp:225 engines/freescape/games/castle/castle.cpp:251
 #: engines/freescape/games/dark/dark.cpp:191
 #: engines/freescape/games/driller/driller.cpp:140
-#: engines/freescape/games/eclipse/eclipse.cpp:211
-#: engines/pegasus/pegasus.cpp:2831
-msgid "Load Game"
-msgstr "Завантажити збережену гру"
+#: engines/freescape/games/eclipse/eclipse.cpp:236
+#: engines/hopkins/metaengine.cpp:242 engines/made/metaengine.cpp:168
+#: engines/mohawk/myst_stacks/menu.cpp:283
+#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/pegasus/pegasus.cpp:2831
+#: engines/saga/metaengine.cpp:432 engines/stark/metaengine.cpp:213
+#: engines/titanic/metaengine.cpp:205 engines/toltecs/metaengine.cpp:240
+#: engines/toon/metaengine.cpp:118 engines/trecision/metaengine.cpp:175
+#: engines/ultima/ultima8/metaengine.cpp:46 engines/vcruise/metaengine.cpp:180
+#: engines/wintermute/keymapper_tables.h:925
+#: engines/wintermute/keymapper_tables.h:1265
+msgid "Load game"
+msgstr "Завантажити гру"
 
 #. I18N: This keymap opens KIA's CRIME SCENE DATABASE tab.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. CRIME SCENE DATABASE
 #: engines/bladerunner/metaengine.cpp:348
-msgid "Crime Scene Database"
+#, fuzzy
+#| msgid "Crime Scene Database"
+msgid "Crime scene database"
 msgstr "База даних злочинів"
 
 #. I18N: This keymap opens KIA's SUSPECT DATABASE tab.
@@ -7222,7 +7399,9 @@ msgstr "База даних злочинів"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SUSPECT DATABASE
 #: engines/bladerunner/metaengine.cpp:357
-msgid "Suspect Database"
+#, fuzzy
+#| msgid "Suspect Database"
+msgid "Suspect database"
 msgstr "База даних підозрюваних"
 
 #. I18N: This keymap opens KIA's CLUE DATABASE tab.
@@ -7230,7 +7409,9 @@ msgstr "База даних підозрюваних"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. CLUE DATABASE
 #: engines/bladerunner/metaengine.cpp:366
-msgid "Clue Database"
+#, fuzzy
+#| msgid "Clue Database"
+msgid "Clue database"
 msgstr "База даних доказів"
 
 #. I18N: This keymap opens KIA's QUIT GAME tab.
@@ -7242,10 +7423,12 @@ msgstr "База даних доказів"
 #: engines/freescape/games/castle/castle.cpp:259
 #: engines/freescape/games/dark/dark.cpp:196
 #: engines/freescape/games/driller/driller.cpp:145
-#: engines/freescape/games/eclipse/eclipse.cpp:216
-#: engines/sword1/metaengine.cpp:295
-msgid "Quit Game"
-msgstr "Вийти з ігри"
+#: engines/freescape/games/eclipse/eclipse.cpp:241
+#: engines/saga/metaengine.cpp:437 engines/sword1/metaengine.cpp:295
+#: engines/trecision/metaengine.cpp:156 engines/tsage/metaengine.cpp:231
+#: engines/vcruise/metaengine.cpp:190
+msgid "Quit game"
+msgstr "Вийти з гри"
 
 #: engines/buried/buried.cpp:590
 msgid "Are you sure you want to quit?"
@@ -7298,15 +7481,17 @@ msgstr "Режим без кольору"
 msgid "Enable Color Blind Mode by default"
 msgstr "Ввімкнути режим для людей з погіршенним сприяттям кольору"
 
-#: engines/cge/metaengine.cpp:56 engines/drascula/metaengine.cpp:51
-#: engines/glk/metaengine.cpp:193 engines/griffon/metaengine.cpp:40
-#: engines/mortevielle/metaengine.cpp:37 engines/sci/detection_options.h:223
-#: engines/supernova/metaengine.cpp:49 engines/teenagent/metaengine.cpp:45
+#: engines/cge/metaengine.cpp:56 engines/cruise/metaengine.cpp:45
+#: engines/drascula/metaengine.cpp:51 engines/glk/metaengine.cpp:193
+#: engines/griffon/metaengine.cpp:40 engines/mortevielle/metaengine.cpp:37
+#: engines/sci/detection_options.h:223 engines/supernova/metaengine.cpp:53
+#: engines/teenagent/metaengine.cpp:45 engines/wage/metaengine.cpp:51
 msgid "Enable Text to Speech"
 msgstr "Ввімкнути генератор мови"
 
-#: engines/cge/metaengine.cpp:57 engines/drascula/metaengine.cpp:52
-#: engines/mortevielle/metaengine.cpp:38 engines/teenagent/metaengine.cpp:46
+#: engines/cge/metaengine.cpp:57 engines/cruise/metaengine.cpp:46
+#: engines/drascula/metaengine.cpp:52 engines/mortevielle/metaengine.cpp:38
+#: engines/teenagent/metaengine.cpp:46
 msgid "Use TTS to read text in the game (if TTS is available)"
 msgstr "Використовувати автоматичний читач текста (якщо TTS доступне)"
 
@@ -7316,40 +7501,24 @@ msgstr "Мапа клавіш гри"
 
 #: engines/cge/metaengine.cpp:215 engines/hopkins/metaengine.cpp:223
 #: engines/sword1/metaengine.cpp:283
-msgid "Exit/Skip"
+#, fuzzy
+#| msgid "Exit/Skip"
+msgid "Exit / Skip"
 msgstr "Вийти/Пропустити"
-
-#: engines/cge/metaengine.cpp:221 engines/cge2/metaengine.cpp:235
-#: engines/efh/metaengine.cpp:219 engines/hopkins/metaengine.cpp:236
-#: engines/hugo/metaengine.cpp:128 engines/lure/metaengine.cpp:191
-#: engines/made/metaengine.cpp:162 engines/mads/metaengine.cpp:305
-#: engines/saga/metaengine.cpp:442 engines/stark/metaengine.cpp:208
-#: engines/toltecs/metaengine.cpp:234 engines/toon/metaengine.cpp:112
-#: engines/trecision/metaengine.cpp:169 engines/tsage/metaengine.cpp:242
-#: engines/vcruise/metaengine.cpp:175 engines/wintermute/keymapper_tables.h:920
-msgid "Save game"
-msgstr "Зберегти гру"
-
-#: engines/cge/metaengine.cpp:227 engines/cge2/metaengine.cpp:241
-#: engines/efh/metaengine.cpp:225 engines/hopkins/metaengine.cpp:242
-#: engines/made/metaengine.cpp:168 engines/mohawk/myst_stacks/menu.cpp:283
-#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/saga/metaengine.cpp:432
-#: engines/stark/metaengine.cpp:213 engines/toltecs/metaengine.cpp:240
-#: engines/toon/metaengine.cpp:118 engines/trecision/metaengine.cpp:175
-#: engines/vcruise/metaengine.cpp:180 engines/wintermute/keymapper_tables.h:925
-#: engines/wintermute/keymapper_tables.h:1265
-msgid "Load game"
-msgstr "Завантажити гру"
 
 #. I18N: 3-4 dialogs of game version info, (translation) credits, etc.
 #: engines/cge/metaengine.cpp:234 engines/cge2/metaengine.cpp:248
-msgid "Game Info"
+#, fuzzy
+#| msgid "Game Info"
+msgid "Game info"
 msgstr "Інфо гри"
 
 #. I18N: This opens a Quit Prompt where you have to choose
 #. [Confirm] or [Continue Playing] lines with Left Click.
 #: engines/cge/metaengine.cpp:242 engines/cge2/metaengine.cpp:256
-msgid "Quit Prompt"
+#, fuzzy
+#| msgid "Quit Prompt"
+msgid "Quit prompt"
 msgstr "Запит виходу з гри"
 
 #. I18N: Here ALTered Item refers to the dice that has been altered/changed.
@@ -7359,62 +7528,88 @@ msgid "ALTered Item"
 msgstr "АЛЬТернативна річ"
 
 #: engines/cge/metaengine.cpp:257
-msgid "Inventory Item 1 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 1 (Select/Deselect)"
+msgid "Inventory Item 1 (Select / Deselect)"
 msgstr "Інвентар 1 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:262
-msgid "Inventory Item 2 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 2 (Select/Deselect)"
+msgid "Inventory Item 2 (Select / Deselect)"
 msgstr "Інвентар 2 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:267
-msgid "Inventory Item 3 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 3 (Select/Deselect)"
+msgid "Inventory Item 3 (Select / Deselect)"
 msgstr "Інвентар 3 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:272
-msgid "Inventory Item 4 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 4 (Select/Deselect)"
+msgid "Inventory Item 4 (Select / Deselect)"
 msgstr "Інвентар 4 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:277
-msgid "Inventory Item 5 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 5 (Select/Deselect)"
+msgid "Inventory Item 5 (Select / Deselect)"
 msgstr "Інвентар 5 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:282
-msgid "Inventory Item 6 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 6 (Select/Deselect)"
+msgid "Inventory Item 6 (Select / Deselect)"
 msgstr "Інвентар 6 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:287
-msgid "Inventory Item 7 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 7 (Select/Deselect)"
+msgid "Inventory Item 7 (Select / Deselect)"
 msgstr "Інвентар 7 (Вибрати/Скасувати вибір)"
 
 #: engines/cge/metaengine.cpp:292
-msgid "Inventory Item 8 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 8 (Select/Deselect)"
+msgid "Inventory Item 8 (Select / Deselect)"
 msgstr "Інвентар 8 (Вибрати/Скасувати вибір)"
 
 #. I18N: There are 24 single-room/screen locations in the game.
 #. You switch between them from numbered buttons on interface.
 #. Sets the current access to only the first Location
 #: engines/cge/metaengine.cpp:300
-msgid "DEBUG: Access to Location 1"
+#, fuzzy
+#| msgid "DEBUG: Access to Location 1"
+msgid "DEBUG: Access to location 1"
 msgstr "ВІДЛАДКА: Доступ до локації 1"
 
 #. I18N: Sets the current access to Locations 1 to 8.
 #: engines/cge/metaengine.cpp:306
-msgid "DEBUG: Access to Locations 1-8"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-8"
+msgid "DEBUG: Access to locations 1-8"
 msgstr "ВІДЛАДКА: Доступ до локацій 1-8"
 
 #. I18N: Sets the current access to Locations 1 to 16.
 #: engines/cge/metaengine.cpp:312
-msgid "DEBUG: Access to Locations 1-16"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-16"
+msgid "DEBUG: Access to locations 1-16"
 msgstr "ВІДЛАДКА: Доступ до локацій 1-16"
 
 #. I18N: Sets the current access to Locations 1 to 23.
 #: engines/cge/metaengine.cpp:318
-msgid "DEBUG: Access to Locations 1-23"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-23"
+msgid "DEBUG: Access to locations 1-23"
 msgstr "ВІДЛАДКА: Доступ до локацій 1-23"
 
 #. I18N: Sets the current access to Locations 1 to 24.
 #: engines/cge/metaengine.cpp:324
-msgid "DEBUG: Access to Locations 1-24"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-24"
+msgid "DEBUG: Access to locations 1-24"
 msgstr "ВІДЛАДКА: Доступ до локацій 1-24"
 
 #: engines/cge2/metaengine.cpp:59
@@ -7424,8 +7619,8 @@ msgstr "Ввімкнути генератор мови для об'єктів т
 #: engines/cge2/metaengine.cpp:60 engines/dreamweb/metaengine.cpp:74
 #: engines/griffon/metaengine.cpp:41 engines/lure/metaengine.cpp:54
 #: engines/mads/metaengine.cpp:125 engines/sci/detection_options.h:224
-#: engines/sherlock/metaengine.cpp:113 engines/supernova/metaengine.cpp:50
-#: engines/twine/metaengine.cpp:145
+#: engines/sherlock/metaengine.cpp:113 engines/supernova/metaengine.cpp:54
+#: engines/twine/metaengine.cpp:145 engines/wage/metaengine.cpp:52
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr "Використовувати автоматичний читач текста (якщо TTS доступне)"
 
@@ -7438,9 +7633,11 @@ msgid "Use TTS to read the subtitles (if TTS is available)"
 msgstr ""
 "Використовувати автоматичний читач текста для субтитрів (якщо TTS доступне)"
 
-#. I18N: This closes the Dialogue/text box.
+#. I18N: This closes the Dialog/text box.
 #: engines/cge2/metaengine.cpp:229
-msgid "Close the Dialogue box"
+#, fuzzy
+#| msgid "Close the Dialogue box"
+msgid "Close the dialog box"
 msgstr "Закрити вікно діалогу"
 
 #: engines/cine/metaengine.cpp:57
@@ -7501,25 +7698,30 @@ msgstr "Скоріша швидкість гри"
 
 #: engines/cine/metaengine.cpp:314 engines/grim/grim.cpp:506
 #: engines/hpl1/metaengine.cpp:90 engines/scumm/help.cpp:242
-#: engines/scumm/help.cpp:250
+#: engines/scumm/help.cpp:250 engines/sludge/keymapper_tables.h:313
 msgid "Examine"
 msgstr "Розглянути"
 
 #: engines/cine/metaengine.cpp:319 engines/saga/metaengine.cpp:394
+#: engines/supernova/metaengine.cpp:331
 msgid "Take"
 msgstr "Взяти"
 
 #. I18N: Action in In Cold Blood
 #: engines/cine/metaengine.cpp:324 engines/crab/input/input.cpp:251
-#: engines/cruise/metaengine.cpp:166 engines/draci/metaengine.cpp:178
+#: engines/cruise/metaengine.cpp:192 engines/draci/metaengine.cpp:178
 #: engines/dragons/metaengine.cpp:148 engines/griffon/metaengine.cpp:152
 #: engines/grim/grim.cpp:521 engines/grim/grim.cpp:621
 #: engines/hdb/metaengine.cpp:251 engines/hpl1/metaengine.cpp:94
 #: engines/icb/icb.cpp:101 engines/icb/icb.cpp:179 engines/scumm/help.cpp:228
 #: engines/scumm/help.cpp:237 engines/scumm/help.cpp:244
-#: engines/scumm/help.cpp:252 engines/stark/metaengine.cpp:267
-#: engines/tinsel/metaengine.cpp:313 engines/twine/metaengine.cpp:370
-#: engines/zvision/metaengine.cpp:232
+#: engines/scumm/help.cpp:252 engines/sludge/keymapper_tables.h:58
+#: engines/sludge/keymapper_tables.h:119 engines/sludge/keymapper_tables.h:168
+#: engines/sludge/keymapper_tables.h:181 engines/sludge/keymapper_tables.h:217
+#: engines/sludge/keymapper_tables.h:256 engines/stark/metaengine.cpp:267
+#: engines/tinsel/metaengine.cpp:313 engines/titanic/metaengine.cpp:244
+#: engines/titanic/metaengine.cpp:297 engines/twine/metaengine.cpp:370
+#: engines/zvision/metaengine.cpp:252
 msgid "Inventory"
 msgstr "Інвентар"
 
@@ -7545,22 +7747,22 @@ msgid "Show collisions"
 msgstr "Показати зіткнення"
 
 #. I18N: Move Actor to top-left direction
-#: engines/cine/metaengine.cpp:392
+#: engines/cine/metaengine.cpp:392 engines/efh/metaengine.cpp:255
 msgid "Move up-left"
 msgstr "Рухатись догори-наліво"
 
 #. I18N: Move Actor to top-right direction
-#: engines/cine/metaengine.cpp:398
+#: engines/cine/metaengine.cpp:398 engines/efh/metaengine.cpp:260
 msgid "Move up-right"
 msgstr "Рухатись догори-направо"
 
 #. I18N: Move Actor to bottom-left direction
-#: engines/cine/metaengine.cpp:404
+#: engines/cine/metaengine.cpp:404 engines/efh/metaengine.cpp:265
 msgid "Move down-left"
 msgstr "Рухатись донизу-наліво"
 
 #. I18N: Move Actor to bottom-right direction
-#: engines/cine/metaengine.cpp:410
+#: engines/cine/metaengine.cpp:410 engines/efh/metaengine.cpp:270
 msgid "Move down-right"
 msgstr "Рухатись донизу-направо"
 
@@ -7583,12 +7785,16 @@ msgstr ""
 "Stealth з самого початку, використовуючи нові збережені ігри."
 
 #: engines/crab/input/input.cpp:119
-msgid "Talk/Interact"
+#, fuzzy
+#| msgid "Talk/Interact"
+msgid "Talk / Interact"
 msgstr "Говорити/Взаємодіятя"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/crab/input/input.cpp:125 engines/griffon/metaengine.cpp:145
 #: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:1017
+#: engines/ultima/ultima4/metaengine.cpp:48
+#: engines/ultima/nuvie/metaengine.cpp:74
 msgid "Attack"
 msgstr "Атака"
 
@@ -7630,11 +7836,24 @@ msgid "Reply 6"
 msgstr "Відповідь 6"
 
 #: engines/crab/input/input.cpp:221 engines/twine/metaengine.cpp:460
-msgid "Next Page"
+#: engines/wintermute/keymapper_tables.h:190
+#: engines/wintermute/keymapper_tables.h:207
+#: engines/wintermute/keymapper_tables.h:638
+#: engines/wintermute/keymapper_tables.h:913
+#: engines/wintermute/keymapper_tables.h:1110
+#: engines/wintermute/keymapper_tables.h:1236
+#: engines/wintermute/keymapper_tables.h:1260
+msgid "Next page"
 msgstr "Наступна сторінка"
 
-#: engines/crab/input/input.cpp:226
-msgid "Previous Page"
+#: engines/crab/input/input.cpp:226 engines/wintermute/keymapper_tables.h:183
+#: engines/wintermute/keymapper_tables.h:199
+#: engines/wintermute/keymapper_tables.h:630
+#: engines/wintermute/keymapper_tables.h:906
+#: engines/wintermute/keymapper_tables.h:1103
+#: engines/wintermute/keymapper_tables.h:1231
+#: engines/wintermute/keymapper_tables.h:1255
+msgid "Previous page"
 msgstr "Попередня сторінка"
 
 #: engines/crab/input/input.cpp:241
@@ -7649,33 +7868,25 @@ msgstr "Журнал"
 msgid "Traits"
 msgstr "Риси"
 
-#: engines/crab/input/input.cpp:266
-msgid "Quick Save"
-msgstr "Швидке збереження"
-
-#: engines/crab/input/input.cpp:271
-msgid "Quick Load"
-msgstr "Швидке завантаження"
-
 #. I18N: Game runs at faster speed
-#: engines/cruise/metaengine.cpp:160 engines/tucker/metaengine.cpp:196
+#: engines/cruise/metaengine.cpp:186 engines/tucker/metaengine.cpp:196
 msgid "Fast mode"
 msgstr "Хуткий режим"
 
 #. I18N: Opens menu with player commands
-#: engines/cruise/metaengine.cpp:173
+#: engines/cruise/metaengine.cpp:199
 msgid "Player menu"
 msgstr "Меню гравця"
 
-#: engines/cruise/metaengine.cpp:179
+#: engines/cruise/metaengine.cpp:205
 msgid "Increase game speed"
 msgstr "Підвищити швидкість гри"
 
-#: engines/cruise/metaengine.cpp:185
+#: engines/cruise/metaengine.cpp:211
 msgid "Decrease game speed"
 msgstr "Сповільнити швидкість гри"
 
-#: engines/cruise/metaengine.cpp:203 engines/mads/metaengine.cpp:361
+#: engines/cruise/metaengine.cpp:229 engines/mads/metaengine.cpp:361
 #: engines/stark/metaengine.cpp:280
 msgid "Exit game"
 msgstr "Вийти з гри"
@@ -7707,11 +7918,15 @@ msgid "Action"
 msgstr "Дія"
 
 #: engines/darkseed/metaengine.cpp:81 engines/dragons/metaengine.cpp:142
-msgid "Change Command"
+#, fuzzy
+#| msgid "Change Command"
+msgid "Change command"
 msgstr "Змінити команду"
 
 #: engines/darkseed/metaengine.cpp:87
-msgid "Time Advance"
+#, fuzzy
+#| msgid "Time Advance"
+msgid "Time advance"
 msgstr "Перескочити час"
 
 #: engines/dgds/metaengine.cpp:76
@@ -7775,7 +7990,9 @@ msgstr ""
 "Використовувати шрифти зі згладжуванням, навіть коли гра цього не запитувала"
 
 #: engines/draci/metaengine.cpp:153
-msgid "Skip intro/Exit map or inventory"
+#, fuzzy
+#| msgid "Skip intro/Exit map or inventory"
+msgid "Skip intro / Exit map or inventory"
 msgstr "Пропустити вступ/Вийти з мапи чи з інвентарю"
 
 #: engines/draci/metaengine.cpp:159
@@ -7838,8 +8055,22 @@ msgstr ""
 "\n"
 "Дивіться %s"
 
+#: engines/dragons/metaengine.cpp:207
+#, fuzzy
+#| msgid "Left Shoulder"
+msgid "Left shoulder"
+msgstr "Лівий курок"
+
+#: engines/dragons/metaengine.cpp:213
+#, fuzzy
+#| msgid "Right Shoulder"
+msgid "Right shoulder"
+msgstr "Правий курок"
+
 #: engines/dragons/metaengine.cpp:219
-msgid "Debug Graphics"
+#, fuzzy
+#| msgid "Debug Graphics"
+msgid "Debug graphics"
 msgstr "Відладка графіки"
 
 #: engines/drascula/saveload.cpp:47
@@ -7870,38 +8101,6 @@ msgstr "Відображення графіки з використанням я
 #: engines/dreamweb/metaengine.cpp:73
 msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgstr "Ввімкнути генератор мови для об'єктів, налаштувань та біблійної цитати"
-
-#: engines/efh/metaengine.cpp:207
-msgid "Left click"
-msgstr "Лівий клік"
-
-#: engines/efh/metaengine.cpp:213
-msgid "Right click"
-msgstr "Правий клік"
-
-#: engines/efh/metaengine.cpp:255
-#, fuzzy
-#| msgid "Move up-left"
-msgid "Move up left"
-msgstr "Рухатись догори-наліво"
-
-#: engines/efh/metaengine.cpp:260
-#, fuzzy
-#| msgid "Move up-right"
-msgid "Move up right"
-msgstr "Рухатись догори-направо"
-
-#: engines/efh/metaengine.cpp:265
-#, fuzzy
-#| msgid "Move down-left"
-msgid "Move down left"
-msgstr "Рухатись донизу-наліво"
-
-#: engines/efh/metaengine.cpp:270
-#, fuzzy
-#| msgid "Move down-right"
-msgid "Move down right"
-msgstr "Рухатись донизу-направо"
 
 #: engines/efh/metaengine.cpp:275
 #, fuzzy
@@ -7994,13 +8193,11 @@ msgstr "Ввімкнути подорож через каміння"
 msgid "Enable traveling using a rock shoot at start"
 msgstr "Вмикає подорожування за допомогою каменю на старті"
 
-#: engines/freescape/movement.cpp:49 engines/hpl1/metaengine.cpp:78
-#: engines/mm/mm1/metaengine.cpp:99
+#: engines/freescape/movement.cpp:49
 msgid "Strafe Left"
 msgstr "Стрейф наліво"
 
-#: engines/freescape/movement.cpp:56 engines/hpl1/metaengine.cpp:79
-#: engines/mm/mm1/metaengine.cpp:100
+#: engines/freescape/movement.cpp:56
 msgid "Strafe Right"
 msgstr "Стрейфувати направо"
 
@@ -8041,21 +8238,21 @@ msgstr "Вибрати Принцесу"
 #: engines/freescape/games/castle/castle.cpp:264
 #: engines/freescape/games/dark/dark.cpp:206
 #: engines/freescape/games/driller/driller.cpp:153
-#: engines/freescape/games/eclipse/eclipse.cpp:224
+#: engines/freescape/games/eclipse/eclipse.cpp:249
 msgid "Toggle Sound"
 msgstr "Перемкнути звук"
 
 #: engines/freescape/games/castle/castle.cpp:269
 #: engines/freescape/games/dark/dark.cpp:212
 #: engines/freescape/games/driller/driller.cpp:159
-#: engines/freescape/games/eclipse/eclipse.cpp:229
+#: engines/freescape/games/eclipse/eclipse.cpp:254
 msgid "Rotate Left"
 msgstr "Обертання наліво"
 
 #: engines/freescape/games/castle/castle.cpp:274
 #: engines/freescape/games/dark/dark.cpp:217
 #: engines/freescape/games/driller/driller.cpp:164
-#: engines/freescape/games/eclipse/eclipse.cpp:234
+#: engines/freescape/games/eclipse/eclipse.cpp:259
 msgid "Rotate Right"
 msgstr "Обертання направо"
 
@@ -8064,6 +8261,7 @@ msgstr "Обертання направо"
 #: engines/freescape/games/castle/castle.cpp:279 engines/grim/grim.cpp:501
 #: engines/grim/grim.cpp:596 engines/hpl1/metaengine.cpp:82
 #: engines/icb/icb.cpp:131 engines/icb/icb.cpp:197
+#: engines/ultima/ultima8/metaengine.cpp:57
 msgid "Run"
 msgstr "Бігти"
 
@@ -8072,12 +8270,13 @@ msgid "Crawl"
 msgstr "Повзти"
 
 #: engines/freescape/games/castle/castle.cpp:296
-#: engines/freescape/games/eclipse/eclipse.cpp:261
+#: engines/freescape/games/eclipse/eclipse.cpp:286
 msgid "Face Forward"
 msgstr "Повернутись уперед"
 
 #: engines/freescape/games/dark/dark.cpp:222
 #: engines/freescape/games/driller/driller.cpp:198
+#: engines/ultima/ultima8/metaengine.cpp:98
 #, fuzzy
 #| msgid "Move left"
 msgid "Roll left"
@@ -8085,6 +8284,7 @@ msgstr "Рухатись наліво"
 
 #: engines/freescape/games/dark/dark.cpp:227
 #: engines/freescape/games/driller/driller.cpp:203
+#: engines/ultima/ultima8/metaengine.cpp:99
 #, fuzzy
 #| msgid "Move right"
 msgid "Roll right"
@@ -8142,22 +8342,24 @@ msgid "Collect drilling rig"
 msgstr "Взяти обладнання буріння"
 
 #. I18N: Illustrates the angle at which you turn left or right.
-#: engines/freescape/games/eclipse/eclipse.cpp:240
+#: engines/freescape/games/eclipse/eclipse.cpp:265
 msgid "Change Angle"
 msgstr "Змінити вугол"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/eclipse/eclipse.cpp:246
+#: engines/freescape/games/eclipse/eclipse.cpp:271
 msgid "Change Step Size"
 msgstr "Змінити розмір кроку"
 
-#: engines/freescape/games/eclipse/eclipse.cpp:251
+#: engines/freescape/games/eclipse/eclipse.cpp:276
 msgid "Toggle Height"
 msgstr "Перемкнути висоту"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/freescape/games/eclipse/eclipse.cpp:256
+#: engines/freescape/games/eclipse/eclipse.cpp:281
 #: engines/kyra/engine/lol.cpp:516 engines/mm/mm1/metaengine.cpp:109
+#: engines/ultima/nuvie/metaengine.cpp:192
+#: engines/ultima/nuvie/metaengine.cpp:197
 msgid "Rest"
 msgstr "Відпочити"
 
@@ -8268,7 +8470,7 @@ msgid "Failed to load saved game from file."
 msgstr "Не вдалося завантажити збережену гру з файлу."
 
 #: engines/gob/inter_geisha.cpp:268 engines/gob/inter_v2.cpp:1590
-#: engines/gob/inter_v7.cpp:1917 engines/tinsel/saveload.cpp:603
+#: engines/gob/inter_v7.cpp:1930 engines/tinsel/saveload.cpp:603
 msgid "Failed to save game to file."
 msgstr "Не вдалося зберегти гру у файл."
 
@@ -8278,6 +8480,7 @@ msgstr "Не вдалося видалити файл."
 
 #. I18N: Action in In Cold Blood
 #: engines/got/metaengine.cpp:59 engines/icb/icb.cpp:89
+#: engines/ultima/ultima4/metaengine.cpp:55
 msgid "Fire"
 msgstr "Вогонь"
 
@@ -8286,7 +8489,9 @@ msgid "Magic"
 msgstr "Магія"
 
 #: engines/got/metaengine.cpp:64
-msgid "Thor Dies"
+#, fuzzy
+#| msgid "Thor Dies"
+msgid "Thor dies"
 msgstr "Тор помирає"
 
 #: engines/got/got.cpp:188 engines/got/got.cpp:198
@@ -8298,7 +8503,9 @@ msgid "Menu / Skip"
 msgstr "Меню / Пропустити"
 
 #: engines/griffon/metaengine.cpp:159
-msgid "Speed Up Cutscene"
+#, fuzzy
+#| msgid "Speed Up Cutscene"
+msgid "Speed up cutscene"
 msgstr "Прискорити ролік"
 
 #: engines/grim/grim.cpp:361
@@ -8314,11 +8521,15 @@ msgstr ""
 "Чи ви все ж таки хочете запустити %s?"
 
 #: engines/grim/grim.cpp:511 engines/grim/grim.cpp:611
-msgid "Use/Talk"
+#, fuzzy
+#| msgid "Use/Talk"
+msgid "Use / Talk"
 msgstr "Ужити/Говорити"
 
 #: engines/grim/grim.cpp:516 engines/grim/grim.cpp:616
-msgid "Pick up/Put away"
+#, fuzzy
+#| msgid "Pick up/Put away"
+msgid "Pick up / Put away"
 msgstr "Підібрати/Відкласти"
 
 #: engines/grim/grim.cpp:526 engines/grim/grim.cpp:626
@@ -8327,20 +8538,28 @@ msgstr "Пропустити рядки діалогу"
 
 #. I18N: Cycle means rotate through
 #: engines/grim/grim.cpp:584
-msgid "Cycle Objects Up"
+#, fuzzy
+#| msgid "Cycle Objects Up"
+msgid "Cycle objects up"
 msgstr "Прокрутити об'єкти догори"
 
 #. I18N: Cycle means rotate through
 #: engines/grim/grim.cpp:590
-msgid "Cycle Objects Down"
+#, fuzzy
+#| msgid "Cycle Objects Down"
+msgid "Cycle objects down"
 msgstr "Прокрутити об'єкти донизу"
 
 #: engines/grim/grim.cpp:601
-msgid "Quick Room Exit"
+#, fuzzy
+#| msgid "Quick Room Exit"
+msgid "Quick room exit"
 msgstr "Швидко вийти з кімнати"
 
 #: engines/grim/grim.cpp:606
-msgid "Examine/Look"
+#, fuzzy
+#| msgid "Examine/Look"
+msgid "Examine / Look"
 msgstr "Розглянути/Дивитись"
 
 #: engines/grim/grim.cpp:1394
@@ -8556,9 +8775,12 @@ msgstr "Режим з кров'ю"
 msgid "Enable Gore Mode when available"
 msgstr "Ввімкнути режим з кров'ю, якщо є доступний"
 
-#: engines/hopkins/metaengine.cpp:248
-msgid "Option dialog"
-msgstr "Діалог опцій"
+#: engines/hopkins/metaengine.cpp:248 engines/tinsel/metaengine.cpp:307
+#: engines/twine/metaengine.cpp:307
+#, fuzzy
+#| msgid "Options Menu"
+msgid "Options menu"
+msgstr "Меню налаштування"
 
 #: engines/hpl1/metaengine.cpp:76
 msgid "Forward"
@@ -8568,12 +8790,28 @@ msgstr "Вперед"
 msgid "Backward"
 msgstr "Назад"
 
+#: engines/hpl1/metaengine.cpp:78 engines/mm/mm1/metaengine.cpp:99
+#, fuzzy
+#| msgid "Strafe Left"
+msgid "Strafe left"
+msgstr "Стрейф наліво"
+
+#: engines/hpl1/metaengine.cpp:79 engines/mm/mm1/metaengine.cpp:100
+#, fuzzy
+#| msgid "Strafe Right"
+msgid "Strafe right"
+msgstr "Стрейфувати направо"
+
 #: engines/hpl1/metaengine.cpp:80
-msgid "Lean Left"
+#, fuzzy
+#| msgid "Lean Left"
+msgid "Lean left"
 msgstr "Нахил вліво"
 
 #: engines/hpl1/metaengine.cpp:81
-msgid "Lean Right"
+#, fuzzy
+#| msgid "Lean Right"
+msgid "Lean right"
 msgstr "Нахил вправо"
 
 #. I18N: Action in In Cold Blood
@@ -8583,11 +8821,15 @@ msgid "Crouch"
 msgstr "Повзання"
 
 #: engines/hpl1/metaengine.cpp:87
-msgid "Interact Mode"
+#, fuzzy
+#| msgid "Interact Mode"
+msgid "Interact mode"
 msgstr "Режим взаємодії"
 
 #: engines/hpl1/metaengine.cpp:88
-msgid "Look Mode"
+#, fuzzy
+#| msgid "Look Mode"
+msgid "Look mode"
 msgstr "Режим огляду"
 
 #: engines/hpl1/metaengine.cpp:89
@@ -8599,7 +8841,9 @@ msgid "Notebook"
 msgstr "Записник"
 
 #: engines/hpl1/metaengine.cpp:96
-msgid "Personal Notes"
+#, fuzzy
+#| msgid "Personal Notes"
+msgid "Personal notes"
 msgstr "Особисті відмітки"
 
 #: engines/hpl1/metaengine.cpp:97
@@ -8741,7 +8985,9 @@ msgstr "Ремора"
 
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:125 engines/icb/icb.cpp:191
-msgid "Side Step"
+#, fuzzy
+#| msgid "Side Step"
+msgid "Side step"
 msgstr "Крок в сторону"
 
 #: engines/illusions/metaengine.cpp:108
@@ -8893,27 +9139,15 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "Підтримку для Eye of Beholder не скомпільовано"
 
-#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:502
-#: engines/ultima/ultima4/metaengine.cpp:224
-#: engines/ultima/nuvie/metaengine.cpp:222
-#: engines/ultima/ultima8/metaengine.cpp:145
-msgid "Interact via Left Click"
-msgstr "Взаємодія через лівий клік"
-
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:503
-#: engines/ultima/ultima4/metaengine.cpp:230
-#: engines/ultima/nuvie/metaengine.cpp:228
-#: engines/ultima/ultima8/metaengine.cpp:151
-msgid "Interact via Right Click"
-msgstr "Взаємодія через правий клік"
-
 #: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:510
-#: engines/mohawk/riven.cpp:881 engines/twine/metaengine.cpp:332
+#: engines/mohawk/riven.cpp:881 engines/titanic/metaengine.cpp:336
+#: engines/titanic/metaengine.cpp:378 engines/twine/metaengine.cpp:332
+#: engines/ultima/ultima8/metaengine.cpp:51
 #: engines/wintermute/keymapper_tables.h:149
 #: engines/wintermute/keymapper_tables.h:731
 #: engines/wintermute/keymapper_tables.h:2116
 #: engines/wintermute/keymapper_tables.h:2216
-msgid "Move Forward"
+msgid "Move forward"
 msgstr "Рухатись уперед"
 
 #: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:511
@@ -8921,35 +9155,21 @@ msgstr "Рухатись уперед"
 #: engines/wintermute/keymapper_tables.h:155
 #: engines/wintermute/keymapper_tables.h:736
 #: engines/wintermute/keymapper_tables.h:2238
-msgid "Move Backwards"
+#, fuzzy
+#| msgid "Move backwards"
+msgid "Move backwards"
 msgstr "Рухатись назад"
 
-#: engines/kyra/engine/eobcommon.cpp:371
-msgid "Move Left"
-msgstr "Рухатись наліво"
-
-#: engines/kyra/engine/eobcommon.cpp:372
-msgid "Move Right"
-msgstr "Рухатись направо"
-
-#: engines/kyra/engine/eobcommon.cpp:373 engines/kyra/engine/lol.cpp:514
-#: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2740
-#: engines/twine/metaengine.cpp:353 engines/zvision/metaengine.cpp:209
-msgid "Turn Left"
-msgstr "Повернутися наліво"
-
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:515
-#: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2747
-#: engines/twine/metaengine.cpp:346 engines/zvision/metaengine.cpp:215
-msgid "Turn Right"
-msgstr "Повернутися направо"
-
 #: engines/kyra/engine/eobcommon.cpp:375
-msgid "Open/Close Inventory"
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Open / Close inventory"
 msgstr "Відкрити/закрити інвентар"
 
 #: engines/kyra/engine/eobcommon.cpp:376
-msgid "Switch Inventory/Character screen"
+#, fuzzy
+#| msgid "Switch Inventory/Character screen"
+msgid "Switch inventory / Character screen"
 msgstr "Переключити екран Інвентар/Герой"
 
 #: engines/kyra/engine/eobcommon.cpp:377
@@ -8957,31 +9177,45 @@ msgid "Camp"
 msgstr "Табір"
 
 #: engines/kyra/engine/eobcommon.cpp:378 engines/mm/mm1/metaengine.cpp:102
-msgid "Cast Spell"
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast spell"
 msgstr "Використати закляття"
 
 #: engines/kyra/engine/eobcommon.cpp:381
-msgid "Spell Level 1"
+#, fuzzy
+#| msgid "Spell Level 1"
+msgid "Spell level 1"
 msgstr "Закляття 1-го рівня"
 
 #: engines/kyra/engine/eobcommon.cpp:382
-msgid "Spell Level 2"
+#, fuzzy
+#| msgid "Spell Level 2"
+msgid "Spell level 2"
 msgstr "Закляття 2-го рівня"
 
 #: engines/kyra/engine/eobcommon.cpp:383
-msgid "Spell Level 3"
+#, fuzzy
+#| msgid "Spell Level 3"
+msgid "Spell level 3"
 msgstr "Закляття 3-го рівня"
 
 #: engines/kyra/engine/eobcommon.cpp:384
-msgid "Spell Level 4"
+#, fuzzy
+#| msgid "Spell Level 4"
+msgid "Spell level 4"
 msgstr "Закляття 4-го рівня"
 
 #: engines/kyra/engine/eobcommon.cpp:385
-msgid "Spell Level 5"
+#, fuzzy
+#| msgid "Spell Level 5"
+msgid "Spell level 5"
 msgstr "Закляття 5-го рівня"
 
 #: engines/kyra/engine/eobcommon.cpp:387
-msgid "Spell Level 6"
+#, fuzzy
+#| msgid "Spell Level 6"
+msgid "Spell level 6"
 msgstr "Закляття 6-го рівня"
 
 #: engines/kyra/engine/lol.cpp:506
@@ -8997,15 +9231,25 @@ msgid "Attack 3"
 msgstr "Атака 3"
 
 #: engines/kyra/engine/lol.cpp:509 engines/mm/mm1/metaengine.cpp:103
-msgid "Show Map"
+#: engines/mohawk/myst.cpp:606 engines/wintermute/keymapper_tables.h:1526
+#: engines/wintermute/keymapper_tables.h:1673
+#: engines/wintermute/keymapper_tables.h:1722
+#: engines/wintermute/keymapper_tables.h:1745
+#: engines/wintermute/keymapper_tables.h:1764
+#: engines/wintermute/keymapper_tables.h:1797
+msgid "Show map"
 msgstr "Показати мапу"
 
 #: engines/kyra/engine/lol.cpp:512
-msgid "Slide Left"
+#, fuzzy
+#| msgid "Slide Left"
+msgid "Slide left"
 msgstr "Ковзати наліво"
 
 #: engines/kyra/engine/lol.cpp:513
-msgid "Slide Right"
+#, fuzzy
+#| msgid "Slide Right"
+msgid "Slide right"
 msgstr "Ковзати направо"
 
 #: engines/kyra/engine/lol.cpp:517
@@ -9013,7 +9257,9 @@ msgid "Options"
 msgstr "Налаштування"
 
 #: engines/kyra/engine/lol.cpp:518
-msgid "Choose Spell"
+#, fuzzy
+#| msgid "Choose Spell"
+msgid "Choose spell"
 msgstr "Вибрати закляття"
 
 #: engines/kyra/gui/saveload_eob.cpp:611
@@ -9329,31 +9575,44 @@ msgid "Replace a colored gem with bars for hit points and spell points."
 msgstr "Замінити кольоровий камінь на смужки очок здоров'я та очок заклинань."
 
 #: engines/mm/mm1/metaengine.cpp:54
-msgid "View Party Member 1"
+#, fuzzy
+#| msgid "View Party Member 1"
+msgid "View party member 1"
 msgstr "Дивитись члена №1 в команді"
 
 #: engines/mm/mm1/metaengine.cpp:55
-msgid "View Party Member 2"
+#, fuzzy
+#| msgid "View Party Member 2"
+msgid "View party member 2"
 msgstr "Дивитись члена №2 в команді"
 
 #: engines/mm/mm1/metaengine.cpp:56
-msgid "View Party Member 3"
+#, fuzzy
+#| msgid "View Party Member 3"
+msgid "View party member 3"
 msgstr "Дивитись члена №3 в команді"
 
 #: engines/mm/mm1/metaengine.cpp:57
-msgid "View Party Member 4"
+#, fuzzy
+#| msgid "View Party Member 4"
+msgid "View party member 4"
 msgstr "Дивитись члена №4 в команді"
 
 #: engines/mm/mm1/metaengine.cpp:58
-msgid "View Party Member 5"
+#, fuzzy
+#| msgid "View Party Member 5"
+msgid "View party member 5"
 msgstr "Дивитись члена №5 в команді"
 
 #: engines/mm/mm1/metaengine.cpp:59
-msgid "View Party Member 6"
+#, fuzzy
+#| msgid "View Party Member 6"
+msgid "View party member 6"
 msgstr "Дивитись члена №6 в команді"
 
 #. I18N: Combat command in Might & Magic 1
-#: engines/mm/mm1/metaengine.cpp:69
+#: engines/mm/mm1/metaengine.cpp:69 engines/ultima/ultima4/metaengine.cpp:50
+#: engines/ultima/nuvie/metaengine.cpp:191
 msgid "Cast"
 msgstr "Чарувати"
 
@@ -9369,7 +9628,9 @@ msgstr "Бійка"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:75 engines/mm/mm1/metaengine.cpp:116
-msgid "Quick Reference"
+#, fuzzy
+#| msgid "Quick Reference"
+msgid "Quick reference"
 msgstr "Швидкий огляд"
 
 #. I18N: Combat command in Might & Magic 1
@@ -9399,15 +9660,19 @@ msgid "Backwards"
 msgstr "Назад"
 
 #: engines/mm/mm1/metaengine.cpp:104
-msgid "Toggle Minimap"
+#, fuzzy
+#| msgid "Toggle Minimap"
+msgid "Toggle minimap"
 msgstr "Перемкнути мапу"
 
 #: engines/mm/mm1/metaengine.cpp:105
-msgid "Reorder Party"
+#, fuzzy
+#| msgid "Reorder Party"
+msgid "Reorder party"
 msgstr "Змінити порядок команди"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/mm/mm1/metaengine.cpp:111
+#: engines/mm/mm1/metaengine.cpp:111 engines/ultima/ultima4/metaengine.cpp:68
 msgid "Search"
 msgstr "Пошук"
 
@@ -9421,7 +9686,7 @@ msgstr "Лупцювати"
 msgid "Unlock"
 msgstr "Відкрити"
 
-#: engines/mm/mm1/metaengine.cpp:122
+#: engines/mm/mm1/metaengine.cpp:122 engines/ultima/ultima4/metaengine.cpp:109
 msgid "Goto location"
 msgstr "Перейти у локацію"
 
@@ -9624,15 +9889,6 @@ msgstr "Показати меню налаштування"
 msgid "Drop page"
 msgstr "Викинути сторінку"
 
-#: engines/mohawk/myst.cpp:606 engines/wintermute/keymapper_tables.h:1526
-#: engines/wintermute/keymapper_tables.h:1673
-#: engines/wintermute/keymapper_tables.h:1722
-#: engines/wintermute/keymapper_tables.h:1745
-#: engines/wintermute/keymapper_tables.h:1764
-#: engines/wintermute/keymapper_tables.h:1797
-msgid "Show map"
-msgstr "Показати мапу"
-
 #: engines/mohawk/myst_stacks/menu.cpp:282
 #: engines/mohawk/riven_stacks/aspit.cpp:348
 msgid ""
@@ -9696,11 +9952,11 @@ msgstr "Рухатись уперед-вліво"
 msgid "Move forward right"
 msgstr "Рухатись уперед-вправо"
 
-#: engines/mohawk/riven.cpp:913
+#: engines/mohawk/riven.cpp:913 engines/zvision/metaengine.cpp:217
 msgid "Look up"
 msgstr "Глянути догори"
 
-#: engines/mohawk/riven.cpp:918
+#: engines/mohawk/riven.cpp:918 engines/zvision/metaengine.cpp:223
 msgid "Look down"
 msgstr "Глянути донизу"
 
@@ -9885,21 +10141,13 @@ msgstr ""
 "Патчі можна завантажити з:\n"
 "%s"
 
-#: engines/myst3/myst3.cpp:1640 engines/pegasus/pegasus.cpp:749
+#: engines/myst3/myst3.cpp:1636 engines/pegasus/pegasus.cpp:749
 msgid "Invalid file name for saving"
 msgstr "Неправильне ім'я файлу для запису"
 
 #: engines/nancy/input.cpp:178
 msgid "Nancy Drew"
 msgstr "Ненсі Дру"
-
-#: engines/nancy/input.cpp:181
-msgid "Left Click Interact"
-msgstr "Взаємодія лівим кліком"
-
-#: engines/nancy/input.cpp:188
-msgid "Right Click Interact"
-msgstr "Взаємодія правим кліком"
 
 #: engines/nancy/input.cpp:219
 msgid "Fast move modifier"
@@ -9910,7 +10158,9 @@ msgid "Nancy Drew - Maze"
 msgstr "Ненсі Дру - Лабіринт"
 
 #: engines/nancy/input.cpp:236
-msgid "Show/hide maze map"
+#, fuzzy
+#| msgid "Show/hide maze map"
+msgid "Show / hide maze map"
 msgstr "Показати/сховати мапу лабіринту"
 
 #: engines/nancy/metaengine.cpp:38
@@ -10071,11 +10321,15 @@ msgstr ""
 "Будь ласка, повідомте про це команді."
 
 #: engines/pegasus/pegasus.cpp:2724
-msgid "Up/Zoom In/Move Forward/Open Doors"
+#, fuzzy
+#| msgid "Up/Zoom In/Move Forward/Open Doors"
+msgid "Up / Zoom in / Move forward / Open door"
 msgstr "Догори/Зменшити масштаб/Вперед/Відчинити двері"
 
 #: engines/pegasus/pegasus.cpp:2732
-msgid "Down/Zoom Out"
+#, fuzzy
+#| msgid "Down/Zoom Out"
+msgid "Down / Zoom out"
 msgstr "Донизу/Збіл. масштаб"
 
 #: engines/pegasus/pegasus.cpp:2754
@@ -10083,24 +10337,34 @@ msgid "Action/Select"
 msgstr "Дія/Вибір"
 
 #: engines/pegasus/pegasus.cpp:2774
-msgid "Display/Hide Inventory Tray"
-msgstr "Показати/Сховати інвентар"
+#, fuzzy
+#| msgid "Toggle Inventory/IQ Points display"
+msgid "Toggle inventory tray"
+msgstr "Перемикання показування інвентарю або значення IQ"
 
 #: engines/pegasus/pegasus.cpp:2781
-msgid "Display/Hide Biochip Tray"
-msgstr "Показати/Сховати біочіп"
+#, fuzzy
+#| msgid "Toggle Height"
+msgid "Toggle biochip tray"
+msgstr "Перемкнути висоту"
 
 #: engines/pegasus/pegasus.cpp:2789
-msgid "Toggle Center Data Display"
+#, fuzzy
+#| msgid "Toggle Center Data Display"
+msgid "Toggle center data display"
 msgstr "Перемикання показування даних в центрі екрану"
 
 #: engines/pegasus/pegasus.cpp:2796
-msgid "Display/Hide Info Screen"
-msgstr "Показати/Сховати інфоекран"
+#, fuzzy
+#| msgid "Toggle fullscreen"
+msgid "Toggle info screen"
+msgstr "Перемикання повноекранного режиму"
 
 #: engines/pegasus/pegasus.cpp:2803
-msgid "Display/Hide Pause Menu"
-msgstr "Показувати/Сховати меню паузи"
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle pause menu"
+msgstr "Перемикання швидкого режиму"
 
 #: engines/pegasus/pegasus.cpp:2810
 msgid "Toggle Chatty AI"
@@ -10226,9 +10490,9 @@ msgid "Conversation position - Down"
 msgstr "Позиція у діалозі - Донизу"
 
 #: engines/saga/metaengine.cpp:333 engines/scumm/help.cpp:80
-#: engines/stark/metaengine.cpp:286 engines/sword1/metaengine.cpp:289
-#: engines/trecision/metaengine.cpp:150 engines/tsage/metaengine.cpp:252
-#: engines/vcruise/metaengine.cpp:195
+#: engines/sludge/keymapper_tables.h:573 engines/stark/metaengine.cpp:286
+#: engines/sword1/metaengine.cpp:289 engines/trecision/metaengine.cpp:150
+#: engines/tsage/metaengine.cpp:252 engines/vcruise/metaengine.cpp:195
 msgid "Pause game"
 msgstr "Пауза гри"
 
@@ -10237,7 +10501,9 @@ msgid "Abort speech"
 msgstr "Перервати озвучку"
 
 #: engines/saga/metaengine.cpp:344
-msgid "Show dialogue"
+#, fuzzy
+#| msgid "Show dialogue"
+msgid "Show dialog"
 msgstr "Показати діалог"
 
 #. I18N: Walk to where cursor points
@@ -10257,14 +10523,16 @@ msgstr "Глянути на"
 #: engines/saga/metaengine.cpp:359 engines/scumm/help.cpp:144
 #: engines/scumm/help.cpp:169 engines/scumm/help.cpp:198
 #: engines/scumm/help.cpp:213 engines/scumm/help.cpp:230
-#: engines/twp/metaengine.cpp:181 engines/wintermute/keymapper_tables.h:134
+#: engines/sludge/keymapper_tables.h:318 engines/twp/metaengine.cpp:181
+#: engines/wintermute/keymapper_tables.h:134
 #: engines/wintermute/keymapper_tables.h:1546
 msgid "Pick up"
 msgstr "Підібрати"
 
 #: engines/saga/metaengine.cpp:364 engines/scumm/help.cpp:199
 #: engines/scumm/help.cpp:215 engines/scumm/help.cpp:251
-#: engines/twp/metaengine.cpp:183 engines/wintermute/keymapper_tables.h:128
+#: engines/sludge/keymapper_tables.h:323 engines/twp/metaengine.cpp:183
+#: engines/wintermute/keymapper_tables.h:128
 #: engines/wintermute/keymapper_tables.h:1558
 msgid "Talk to"
 msgstr "Говорити до"
@@ -10272,20 +10540,20 @@ msgstr "Говорити до"
 #: engines/saga/metaengine.cpp:369 engines/scumm/help.cpp:125
 #: engines/scumm/help.cpp:140 engines/scumm/help.cpp:165
 #: engines/scumm/help.cpp:193 engines/scumm/help.cpp:211
-#: engines/twp/metaengine.cpp:178
+#: engines/supernova/metaengine.cpp:336 engines/twp/metaengine.cpp:178
 msgid "Open"
 msgstr "Відкрити"
 
 #: engines/saga/metaengine.cpp:384 engines/scumm/help.cpp:124
 #: engines/scumm/help.cpp:139 engines/scumm/help.cpp:164
 #: engines/scumm/help.cpp:200 engines/scumm/help.cpp:210
-#: engines/twp/metaengine.cpp:180
+#: engines/supernova/metaengine.cpp:366 engines/twp/metaengine.cpp:180
 msgid "Give"
 msgstr "Дати"
 
 #: engines/saga/metaengine.cpp:389 engines/scumm/help.cpp:122
 #: engines/scumm/help.cpp:137 engines/scumm/help.cpp:162
-#: engines/twp/metaengine.cpp:184
+#: engines/supernova/metaengine.cpp:346 engines/twp/metaengine.cpp:184
 msgid "Push"
 msgstr "Штовхати"
 
@@ -10313,11 +10581,6 @@ msgstr "Змінити озвучку"
 #: engines/saga/metaengine.cpp:427
 msgid "Continue game"
 msgstr "Продовжити гру"
-
-#: engines/saga/metaengine.cpp:437 engines/trecision/metaengine.cpp:156
-#: engines/tsage/metaengine.cpp:231 engines/vcruise/metaengine.cpp:190
-msgid "Quit game"
-msgstr "Вийти з гри"
 
 #: engines/saga/metaengine.cpp:454
 msgid "Cancel quit"
@@ -11187,7 +11450,8 @@ msgid "Main game controls:"
 msgstr "Основні опції керування:"
 
 #: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
-#: engines/scumm/help.cpp:163 engines/twp/metaengine.cpp:185
+#: engines/scumm/help.cpp:163 engines/supernova/metaengine.cpp:351
+#: engines/twp/metaengine.cpp:185
 msgid "Pull"
 msgstr "Тягнути"
 
@@ -11195,7 +11459,7 @@ msgstr "Тягнути"
 msgid "Go to"
 msgstr "Йти до"
 
-#: engines/scumm/help.cpp:128
+#: engines/scumm/help.cpp:128 engines/ultima/nuvie/metaengine.cpp:70
 msgid "Get"
 msgstr "Отримати"
 
@@ -11428,7 +11692,7 @@ msgid "Fighting controls (numpad):"
 msgstr "Керування бійкою (numpad):"
 
 #: engines/scumm/help.cpp:309 engines/scumm/help.cpp:310
-#: engines/scumm/help.cpp:311
+#: engines/scumm/help.cpp:311 engines/ultima/ultima8/metaengine.cpp:97
 msgid "Step back"
 msgstr "Крок назад"
 
@@ -11686,19 +11950,27 @@ msgid "Enable ambience sounds."
 msgstr "Ввімкнути фонові звуки."
 
 #: engines/scumm/metaengine.cpp:965
-msgid "Down Left"
+#, fuzzy
+#| msgid "Down Left"
+msgid "Down left"
 msgstr "Донизу-наліво"
 
 #: engines/scumm/metaengine.cpp:978
-msgid "Down Right"
+#, fuzzy
+#| msgid "Down Right"
+msgid "Down right"
 msgstr "Донизу-направо"
 
 #: engines/scumm/metaengine.cpp:998
-msgid "Up Left"
-msgstr "Догори-наліво"
+#, fuzzy
+#| msgid "Upper left item"
+msgid "Up left"
+msgstr "Верхня ліва річ"
 
 #: engines/scumm/metaengine.cpp:1011
-msgid "Up Right"
+#, fuzzy
+#| msgid "Up Right"
+msgid "Up right"
 msgstr "Догори-направо"
 
 #: engines/scumm/metaengine.cpp:1023
@@ -12055,7 +12327,9 @@ msgid "Open control panel"
 msgstr "Відкрити панель керування"
 
 #: engines/sky/metaengine.cpp:136
-msgid "Toggle really fast mode on/off"
+#, fuzzy
+#| msgid "Toggle really fast mode on/off"
+msgid "Toggle really fast mode on / off"
 msgstr "Перемикання дуже швидкого режиму"
 
 #: engines/sky/metaengine.cpp:156
@@ -12069,6 +12343,138 @@ msgstr "Використовувати введення з флоппі-верс
 #: engines/sky/metaengine.cpp:235
 msgid "WARNING: Deleting the autosave slot is not supported by this engine"
 msgstr "УВАГА: Видалення слоту автозбереження не підтримується цим движком"
+
+#: engines/sludge/keymapper_tables.h:34
+#, fuzzy
+#| msgid "Default keymappings"
+msgid "Debug keymappings"
+msgstr "Мапи клавіш за замовчунням"
+
+#: engines/sludge/keymapper_tables.h:35 engines/supernova/metaengine.cpp:218
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Menu keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/sludge/keymapper_tables.h:36
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Minigame keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/sludge/keymapper_tables.h:46
+#, fuzzy
+#| msgid "Change game options"
+msgid "Change action"
+msgstr "Змінити налаштування гри"
+
+#: engines/sludge/keymapper_tables.h:70 engines/sludge/keymapper_tables.h:293
+#, fuzzy
+#| msgid "Select dialogue"
+msgid "Speed up dialog"
+msgstr "Видбрати діалог"
+
+#: engines/sludge/keymapper_tables.h:76 engines/sludge/keymapper_tables.h:298
+#, fuzzy
+#| msgid "Slow down virtual mouse"
+msgid "Slow down dialog"
+msgstr "Уповільнити віртуальну мишу"
+
+#: engines/sludge/keymapper_tables.h:83 engines/sludge/keymapper_tables.h:132
+#: engines/sludge/keymapper_tables.h:175 engines/sludge/keymapper_tables.h:211
+#: engines/sludge/keymapper_tables.h:231 engines/sludge/keymapper_tables.h:250
+#: engines/sludge/keymapper_tables.h:275 engines/sludge/keymapper_tables.h:386
+#: engines/sludge/keymapper_tables.h:446 engines/sludge/keymapper_tables.h:478
+#: engines/sludge/keymapper_tables.h:529
+#, fuzzy
+#| msgid "Move left"
+msgid "Move / Interact"
+msgstr "Рухатись наліво"
+
+#: engines/sludge/keymapper_tables.h:101 engines/sludge/keymapper_tables.h:150
+#, fuzzy
+#| msgid "Unnamed autosave"
+msgid "Load auto save"
+msgstr "Автозбереження без імені"
+
+#: engines/sludge/keymapper_tables.h:113 engines/sludge/keymapper_tables.h:162
+#, fuzzy
+#| msgid "Load Game"
+msgid "Load save"
+msgstr "Завантажити збережену гру"
+
+#: engines/sludge/keymapper_tables.h:200 engines/sludge/keymapper_tables.h:435
+#: engines/sludge/keymapper_tables.h:552
+msgid "DEBUG: Show floor"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:205 engines/sludge/keymapper_tables.h:440
+#: engines/sludge/keymapper_tables.h:547
+msgid "DEBUG: Show boxes"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:237
+#, fuzzy
+#| msgid "Inventory"
+msgid "Inventory / Examine"
+msgstr "Інвентар"
+
+#: engines/sludge/keymapper_tables.h:281
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Examine / Skip dialog"
+msgstr "Пропустити діалог"
+
+#: engines/sludge/keymapper_tables.h:287 engines/sludge/keymapper_tables.h:398
+#: engines/sludge/keymapper_tables.h:522
+#, fuzzy
+#| msgid "Skip cutscene"
+msgid "Pause / Skip cutscene"
+msgstr "Пропустити ролік"
+
+#: engines/sludge/keymapper_tables.h:328
+msgid "Smell"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:338
+msgid "Consume"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:361
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast earth spell"
+msgstr "Використати закляття"
+
+#: engines/sludge/keymapper_tables.h:367
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast air spell"
+msgstr "Використати закляття"
+
+#: engines/sludge/keymapper_tables.h:373
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast fire spell"
+msgstr "Використати закляття"
+
+#: engines/sludge/keymapper_tables.h:379
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast water spell"
+msgstr "Використати закляття"
+
+#: engines/sludge/keymapper_tables.h:423 engines/sludge/keymapper_tables.h:510
+#, fuzzy
+#| msgid "Go to next dialogue"
+msgid "Move / Interact / Skip dialog"
+msgstr "Перейти до наступного діалогу"
+
+#: engines/sludge/keymapper_tables.h:516
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Inventory / Skip dialog"
+msgstr "Пропустити діалог"
 
 #: engines/stark/metaengine.cpp:41
 msgid "Load modded assets"
@@ -12152,27 +12558,39 @@ msgid "Scroll down in inventory"
 msgstr "Прокрутити інвентар донизу"
 
 #: engines/stark/metaengine.cpp:306
-msgid "Scroll up in your dialogues"
+#, fuzzy
+#| msgid "Scroll up in your dialogues"
+msgid "Scroll up in your dialogs"
 msgstr "Прокрутити діалоги догори"
 
 #: engines/stark/metaengine.cpp:312
-msgid "Scroll down in your dialogues"
+#, fuzzy
+#| msgid "Scroll down in your dialogues"
+msgid "Scroll down in your dialogs"
 msgstr "Прокрутити діалоги донизу"
 
 #: engines/stark/metaengine.cpp:318
-msgid "Go to next dialogue"
+#, fuzzy
+#| msgid "Go to next dialogue"
+msgid "Go to next dialog"
 msgstr "Перейти до наступного діалогу"
 
 #: engines/stark/metaengine.cpp:323
-msgid "Go to previous dialogues"
+#, fuzzy
+#| msgid "Go to previous dialogues"
+msgid "Go to previous dialogs"
 msgstr "Перейти до попереднього діалогу"
 
 #: engines/stark/metaengine.cpp:328
-msgid "Select dialogue"
+#, fuzzy
+#| msgid "Select dialogue"
+msgid "Select dialog"
 msgstr "Видбрати діалог"
 
 #: engines/stark/metaengine.cpp:335
-msgid "Skip video sequence or dialogue"
+#, fuzzy
+#| msgid "Skip video sequence or dialogue"
+msgid "Skip video sequence or dialog"
 msgstr "Пропустити відеоряд або діалог"
 
 #: engines/stark/stark.cpp:106
@@ -12212,29 +12630,29 @@ msgid "'game.exe' is recommended to get styled confirmation dialogs."
 msgstr ""
 "Файл 'game.exe' рекомендований, щоби отримати стилізовані діалогові вікна."
 
-#: engines/supernova/supernova.cpp:191
+#: engines/supernova/supernova.cpp:193
 #, c-format
 msgid "Unable to locate the text for %s language in engine data file."
 msgstr "Не вдалося знайти текст для мови %s у даних движка."
 
-#: engines/supernova/supernova.cpp:475
+#: engines/supernova/supernova.cpp:479
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d but got %d."
 msgstr ""
 "Знайдено невірну версію даних движка '%s'. Очікувана %d, але знайдено %d."
 
-#: engines/supernova/supernova.cpp:485
+#: engines/supernova/supernova.cpp:489
 #, c-format
 msgid "Unable to find block for part %d"
 msgstr "Неможливо знайти блок для частини %d"
 
-#: engines/supernova/supernova.cpp:528
+#: engines/supernova/supernova.cpp:532
 #, c-format
 msgid "Unable to find '%s' in game folder or the engine data file."
 msgstr "Не вдалося знайти '%s' у папці гри або файлі даних движка."
 
-#: engines/supernova/supernova.cpp:832
+#: engines/supernova/supernova.cpp:852
 msgid ""
 "Failed to save temporary game state. Make sure your save game directory is "
 "set in ScummVM and that you can write to it."
@@ -12242,20 +12660,112 @@ msgstr ""
 "Не вдалося зберегти тимчасове збереження гри. Упевніться в тому, що папка "
 "для збережень правильно вказана у ScummVM, і ви можете туди писати."
 
-#: engines/supernova/supernova.cpp:833
+#: engines/supernova/supernova.cpp:853
 msgid "Failed to load temporary game state."
 msgstr "Не вдалося завантажити тимчасове збереження гри."
 
-#: engines/supernova/metaengine.cpp:37
+#: engines/supernova/metaengine.cpp:41
 msgid "Improved mode"
 msgstr "Покращений режим"
 
-#: engines/supernova/metaengine.cpp:38
+#: engines/supernova/metaengine.cpp:42
 msgid ""
 "Removes some repetitive actions, adds possibility to change verbs by keyboard"
 msgstr ""
 "Видаляє деякі повторювані дії, додає можливість змінювати дієслова за "
 "допомогою клавіатури"
+
+#: engines/supernova/metaengine.cpp:219 engines/voyeur/metaengine.cpp:185
+#, fuzzy
+#| msgid "Exit screen keymappings"
+msgid "Cutscene keymappings"
+msgstr "Мапа клавіш виходу з екрану"
+
+#: engines/supernova/metaengine.cpp:220
+#, fuzzy
+#| msgid "Index keymappings"
+msgid "Improved mode keymappings"
+msgstr "Мапи клавіш"
+
+#: engines/supernova/metaengine.cpp:221
+#, fuzzy
+#| msgid "Exit screen keymappings"
+msgid "Text reader keymappings"
+msgstr "Мапа клавіш виходу з екрану"
+
+#: engines/supernova/metaengine.cpp:222
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Computer keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/supernova/metaengine.cpp:232
+#, fuzzy
+#| msgid "Look at"
+msgid "Perform default action"
+msgstr "Глянути на"
+
+#: engines/supernova/metaengine.cpp:244
+#, fuzzy
+#| msgid "Interpolation:"
+msgid "Instructions"
+msgstr "Інтерполяція:"
+
+#: engines/supernova/metaengine.cpp:250
+#, fuzzy
+#| msgid "General Information"
+msgid "Information"
+msgstr "Загальна інформація"
+
+#: engines/supernova/metaengine.cpp:256
+#, fuzzy
+#| msgid "Text speed - Fast"
+msgid "Text speed"
+msgstr "Швидкість тексту - швидше"
+
+#: engines/supernova/metaengine.cpp:285
+#, fuzzy
+#| msgid "Rotate up"
+msgid "Page up"
+msgstr "Повернути догори"
+
+#: engines/supernova/metaengine.cpp:291
+#, fuzzy
+#| msgid "Rotate down"
+msgid "Page down"
+msgstr "Повернути донизу"
+
+#. I18N: Exits the game
+#: engines/supernova/metaengine.cpp:297 engines/supernova/metaengine.cpp:373
+#: engines/ultima/ultima4/metaengine.cpp:54 engines/voyeur/metaengine.cpp:198
+#: engines/voyeur/metaengine.cpp:229 engines/wintermute/keymapper_tables.h:720
+#: engines/wintermute/keymapper_tables.h:1849
+msgid "Exit"
+msgstr "Вихід"
+
+#: engines/supernova/metaengine.cpp:321
+#, fuzzy
+#| msgid "Good"
+msgid "Go"
+msgstr "Хороша"
+
+#: engines/supernova/metaengine.cpp:379
+#, fuzzy
+#| msgid "Open Files manager"
+msgid "Office manager"
+msgstr "Відкрити менеджер файлів"
+
+#: engines/supernova/metaengine.cpp:385
+msgid "Phone"
+msgstr ""
+
+#: engines/supernova/metaengine.cpp:391
+msgid "ProText"
+msgstr ""
+
+#: engines/supernova/metaengine.cpp:397
+msgid "Calculata"
+msgstr ""
 
 #: engines/sword1/animation.cpp:566 engines/sword2/animation.cpp:459
 msgid ""
@@ -12361,7 +12871,9 @@ msgid "Additional options:"
 msgstr "Додаткові налаштування:"
 
 #: engines/sword1/metaengine.cpp:301
-msgid "Main Menu"
+#, fuzzy
+#| msgid "Main Menu"
+msgid "Main menu"
 msgstr "Головне меню"
 
 #: engines/sword2/detection_tables.h:419
@@ -12429,28 +12941,170 @@ msgstr ""
 msgid "Save/Load keymappings"
 msgstr "Зберегти/Прочитати мапи клавіш гри"
 
-#: engines/tinsel/metaengine.cpp:307
-msgid "Options Dialog"
-msgstr "Діалог налаштувань"
-
 #: engines/tinsel/metaengine.cpp:341
-msgid "Page Up in save/load menu"
+#, fuzzy
+#| msgid "Page Up in save/load menu"
+msgid "Page up in save / load menu"
 msgstr "Попередня сторінка в меню збереження/завантаження"
 
 #: engines/tinsel/metaengine.cpp:347
-msgid "Page down in save/load menu"
+#, fuzzy
+#| msgid "Page down in save/load menu"
+msgid "Page down in save / load menu"
 msgstr "Наступна сторінка в меню збереження/завантаження"
 
 #: engines/tinsel/metaengine.cpp:353
-msgid "Go to start of save/load menu"
+#, fuzzy
+#| msgid "Go to start of save/load menu"
+msgid "Go to start of save / load menu"
 msgstr "Перейти до початку меню збереження/завантаження"
 
 #: engines/tinsel/metaengine.cpp:359
-msgid "Go to end of save/load menu"
+#, fuzzy
+#| msgid "Go to end of save/load menu"
+msgid "Go to end of save / load menu"
 msgstr "Перейти до кінця меню збереження/завантаження"
 
 #: engines/tinsel/tinsel.cpp:1040
 msgid "Discworld Noir needs ScummVM with TinyGL enabled"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:173
+#, fuzzy
+#| msgid "Escape keymappings"
+msgid "PET keymappings"
+msgstr "Мапа клавіш ESC"
+
+#: engines/titanic/metaengine.cpp:174
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Real Life keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/titanic/metaengine.cpp:175
+#, fuzzy
+#| msgid "KIA only shortcuts"
+msgid "Inventory shortcut"
+msgstr "Опції керування для KIA"
+
+#: engines/titanic/metaengine.cpp:176
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Continue game dialogue keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/titanic/metaengine.cpp:177
+#, fuzzy
+#| msgid "Start menu keymappings"
+msgid "Star Map keymappings"
+msgstr "Мапа клавіш стартового меню"
+
+#: engines/titanic/metaengine.cpp:178
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Movement keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/titanic/metaengine.cpp:182
+#, fuzzy
+#| msgid "Interact Mode"
+msgid "Select / Interact / Move"
+msgstr "Режим взаємодії"
+
+#: engines/titanic/metaengine.cpp:188
+#, fuzzy
+#| msgid "Go to next dialogue"
+msgid "Select / Interact / Quick move"
+msgstr "Перейти до наступного діалогу"
+
+#: engines/titanic/metaengine.cpp:194
+#, fuzzy
+#| msgid "Game menu"
+msgid "Cheat menu"
+msgstr "Меню гри"
+
+#: engines/titanic/metaengine.cpp:239
+#, fuzzy
+#| msgid "Conversation log"
+msgid "Conversation"
+msgstr "Журнал розмов"
+
+#: engines/titanic/metaengine.cpp:249
+#, fuzzy
+#| msgid "Remove"
+msgid "Remote"
+msgstr "Видалити"
+
+#: engines/titanic/metaengine.cpp:254
+#, fuzzy
+#| msgid "Room:"
+msgid "Rooms"
+msgstr "Кімната:"
+
+#: engines/titanic/metaengine.cpp:259
+msgid "Real life"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:264
+#, fuzzy
+#| msgid "Scroll up"
+msgid "Scroll up page"
+msgstr "Прокручення догори"
+
+#: engines/titanic/metaengine.cpp:271
+#, fuzzy
+#| msgid "Scroll down"
+msgid "Scroll down page"
+msgstr "Прокручення донизу"
+
+#: engines/titanic/metaengine.cpp:278
+#, fuzzy
+#| msgid "Scroll list up"
+msgid "Scroll to top"
+msgstr "Прокручення списку догори"
+
+#: engines/titanic/metaengine.cpp:284
+#, fuzzy
+#| msgid "Move to bottom"
+msgid "Scroll to bottom"
+msgstr "Рухатись до долу"
+
+#: engines/titanic/metaengine.cpp:291
+#, fuzzy
+#| msgid "Transitions:"
+msgid "Translation"
+msgstr "Переходи:"
+
+#: engines/titanic/metaengine.cpp:307
+msgid "Toggle between Star Map and photo of your home"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:343 engines/titanic/metaengine.cpp:384
+#, fuzzy
+#| msgid "Move backwards"
+msgid "Move backward"
+msgstr "Рухатись назад"
+
+#: engines/titanic/metaengine.cpp:350
+msgid "Stop moving"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:356
+msgid "Lock coordinate"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:362
+msgid "Unlock coordinate"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:368
+#, fuzzy
+#| msgid "Exit conversation"
+msgid "View constellations"
+msgstr "Вийти з діалогу"
+
+#: engines/titanic/metaengine.cpp:373
+msgid "View boundaries"
 msgstr ""
 
 #: engines/toltecs/metaengine.cpp:216
@@ -12460,7 +13114,7 @@ msgid "Move / Select"
 msgstr "Рухатись наліво"
 
 #: engines/toltecs/metaengine.cpp:222
-msgid "Move / Perform Default Action"
+msgid "Move / Perform default action"
 msgstr ""
 
 #: engines/toltecs/metaengine.cpp:258
@@ -12474,7 +13128,7 @@ msgstr "Пропустити відео"
 msgid "Font variant not present in '%s' engine data file."
 msgstr "Варіант шрифту відстутній у файлі движка %s."
 
-#: engines/toon/metaengine.cpp:98
+#: engines/toon/metaengine.cpp:98 engines/voyeur/metaengine.cpp:235
 msgid "Skip intro"
 msgstr "Пропустити вступ"
 
@@ -12525,12 +13179,10 @@ msgid "Unable to locate the '%s' data file."
 msgstr "Не вдалося знайти файл даних '%s'."
 
 #: engines/touche/metaengine.cpp:135
-msgid "Skip sequence/open quit dialogue"
+#, fuzzy
+#| msgid "Skip sequence/open quit dialogue"
+msgid "Skip sequence / open quit dialog"
 msgstr "Пропустити відеоряд/відкрити діалог виходу"
-
-#: engines/touche/metaengine.cpp:141
-msgid "Skip Dialogue"
-msgstr "Пропустити діалог"
 
 #: engines/touche/metaengine.cpp:147
 msgid "Open options menu"
@@ -12551,7 +13203,9 @@ msgid "Toggle fast mode"
 msgstr "Перемикання швидкого режиму"
 
 #: engines/touche/metaengine.cpp:173
-msgid "Toggle between voice/text/text and voice"
+#, fuzzy
+#| msgid "Toggle between voice/text/text and voice"
+msgid "Toggle between voice / text / text and voice"
 msgstr "Перемикання між озвучкою/текстом/текстом і озвучкою"
 
 #: engines/touche/metaengine.cpp:182
@@ -12593,11 +13247,15 @@ msgid "Crawl South"
 msgstr "Повзти на південь"
 
 #: engines/tsage/metaengine.cpp:278
-msgid "Turn Left/Crawl West"
+#, fuzzy
+#| msgid "Turn Left/Crawl West"
+msgid "Turn left / Crawl West"
 msgstr "Повернути наліво/Повзти на захід"
 
 #: engines/tsage/metaengine.cpp:285
-msgid "Turn Right/Crawl East"
+#, fuzzy
+#| msgid "Turn Right/Crawl East"
+msgid "Turn right / Crawl East"
 msgstr "Повернути направо/Повзти на схід"
 
 #: engines/tsage/metaengine.cpp:292
@@ -12722,55 +13380,75 @@ msgid "Enable a higher resolution for the game"
 msgstr "Ввімкнути високе розгалуження для гри"
 
 #: engines/twine/metaengine.cpp:228
-msgid "Debug Grid Camera Up"
+#, fuzzy
+#| msgid "Debug Grid Camera Up"
+msgid "Debug grid camera up"
 msgstr "Відладка: Камеру сітки вгору"
 
 #: engines/twine/metaengine.cpp:233
-msgid "Debug Grid Camera Down"
+#, fuzzy
+#| msgid "Debug Grid Camera Down"
+msgid "Debug grid camera down"
 msgstr "Відладка: Камеру сітки донизу"
 
 #: engines/twine/metaengine.cpp:238
-msgid "Debug Grid Camera Left"
+#, fuzzy
+#| msgid "Debug Grid Camera Left"
+msgid "Debug grid camera left"
 msgstr "Відладка: Камеру сітки вліво"
 
 #: engines/twine/metaengine.cpp:244
-msgid "Debug Grid Camera Right"
+#, fuzzy
+#| msgid "Debug Grid Camera Right"
+msgid "Debug grid camera right"
 msgstr "Відладка: Камеру сітки вправо"
 
 #: engines/twine/metaengine.cpp:249 engines/twine/metaengine.cpp:269
-msgid "Normal Behaviour"
+#, fuzzy
+#| msgid "Normal Behaviour"
+msgid "Normal behavior"
 msgstr "Нормальна поведінка"
 
 #: engines/twine/metaengine.cpp:254 engines/twine/metaengine.cpp:274
-msgid "Athletic Behaviour"
+#, fuzzy
+#| msgid "Athletic Behaviour"
+msgid "Athletic behavior"
 msgstr "Атлетична поведінка"
 
 #: engines/twine/metaengine.cpp:259 engines/twine/metaengine.cpp:279
-msgid "Aggressive Behaviour"
+#, fuzzy
+#| msgid "Aggressive Behaviour"
+msgid "Aggressive behavior"
 msgstr "Агресивна поведінка"
 
 #: engines/twine/metaengine.cpp:264 engines/twine/metaengine.cpp:284
-msgid "Discreet Behaviour"
+#, fuzzy
+#| msgid "Discreet Behaviour"
+msgid "Discreet behavior"
 msgstr "Розсудлива поведінка"
 
 #: engines/twine/metaengine.cpp:289
-msgid "Behaviour Action"
+#, fuzzy
+#| msgid "Behaviour Action"
+msgid "Behavior action"
 msgstr "Дія поведінки"
 
 #: engines/twine/metaengine.cpp:295
-msgid "Change Behaviour"
+#, fuzzy
+#| msgid "Change Behaviour"
+msgid "Change behavior"
 msgstr "Змінити поведінку"
 
-#: engines/twine/metaengine.cpp:307
-msgid "Options Menu"
-msgstr "Меню налаштування"
-
 #: engines/twine/metaengine.cpp:319
-msgid "Use Selected Object"
+#, fuzzy
+#| msgid "Use Selected Object"
+msgid "Use selected object"
 msgstr "Використати обраний об'єкт"
 
 #: engines/twine/metaengine.cpp:325
-msgid "Throw Magic Ball"
+#, fuzzy
+#| msgid "Throw Magic Ball"
+msgid "Throw magic ball"
 msgstr "Кинути магічну кулю"
 
 #: engines/twine/metaengine.cpp:360
@@ -12782,11 +13460,15 @@ msgid "Open Holomap"
 msgstr "Відкрити голомапу"
 
 #: engines/twine/metaengine.cpp:378
-msgid "Special Action"
+#, fuzzy
+#| msgid "Special Action"
+msgid "Special action"
 msgstr "Спеціальна дія"
 
 #: engines/twine/metaengine.cpp:384
-msgid "Scenery Zoom"
+#, fuzzy
+#| msgid "Scenery Zoom"
+msgid "Scenery zoom"
 msgstr "Збільшити сцену"
 
 #: engines/twine/metaengine.cpp:527
@@ -12872,75 +13554,111 @@ msgid "Go to next object"
 msgstr "Перейти на наступний об'єкт"
 
 #: engines/twp/metaengine.cpp:158
-msgid "Select verb/item Left"
+#, fuzzy
+#| msgid "Select verb/item Left"
+msgid "Select verb / item left"
 msgstr "Вибрати дію/предмет наліво"
 
 #: engines/twp/metaengine.cpp:159
-msgid "Select verb/item Right"
+#, fuzzy
+#| msgid "Select verb/item Right"
+msgid "Select verb / item right"
 msgstr "Вибрати дію/предмет направо"
 
 #: engines/twp/metaengine.cpp:160
-msgid "Select verb/item Up"
+#, fuzzy
+#| msgid "Select verb/item Up"
+msgid "Select verb / item up"
 msgstr "Вибрати дію/предмет догори"
 
 #: engines/twp/metaengine.cpp:161
-msgid "Select verb/item Down"
+#, fuzzy
+#| msgid "Select verb/item Down"
+msgid "Select verb / item down"
 msgstr "Вибрати дію/предмет донизу"
 
 #: engines/twp/metaengine.cpp:163
-msgid "Select Actor 1"
+#, fuzzy
+#| msgid "Select Actor 1"
+msgid "Select actor 1"
 msgstr "Вибрати Актора 1"
 
 #: engines/twp/metaengine.cpp:164
-msgid "Select Actor 2"
+#, fuzzy
+#| msgid "Select Actor 2"
+msgid "Select actor 2"
 msgstr "Вибрати Актора 2"
 
 #: engines/twp/metaengine.cpp:165
-msgid "Select Actor 3"
+#, fuzzy
+#| msgid "Select Actor 3"
+msgid "Select actor 3"
 msgstr "Вибрати Актора 3"
 
 #: engines/twp/metaengine.cpp:166
-msgid "Select Actor 4"
+#, fuzzy
+#| msgid "Select Actor 4"
+msgid "Select actor 4"
 msgstr "Вибрати Актора 4"
 
 #: engines/twp/metaengine.cpp:167
-msgid "Select Actor 5"
+#, fuzzy
+#| msgid "Select Actor 5"
+msgid "Select actor 5"
 msgstr "Вибрати Актора 5"
 
 #: engines/twp/metaengine.cpp:168
-msgid "Select Choice 1"
+#, fuzzy
+#| msgid "Select Choice 1"
+msgid "Select choice 1"
 msgstr "Вибрати Опцію 1"
 
 #: engines/twp/metaengine.cpp:169
-msgid "Select Choice 2"
+#, fuzzy
+#| msgid "Select Choice 2"
+msgid "Select choice 2"
 msgstr "Вибрати Опцію 2"
 
 #: engines/twp/metaengine.cpp:170
-msgid "Select Choice 3"
+#, fuzzy
+#| msgid "Select Choice 3"
+msgid "Select choice 3"
 msgstr "Вибрати Опцію 3"
 
 #: engines/twp/metaengine.cpp:171
-msgid "Select Choice 4"
+#, fuzzy
+#| msgid "Select Choice 4"
+msgid "Select choice 4"
 msgstr "Вибрати Опцію 4"
 
 #: engines/twp/metaengine.cpp:172
-msgid "Select Choice 5"
+#, fuzzy
+#| msgid "Select Choice 5"
+msgid "Select choice 5"
 msgstr "Вибрати Опцію 5"
 
 #: engines/twp/metaengine.cpp:173
-msgid "Select Choice 6"
+#, fuzzy
+#| msgid "Select Choice 6"
+msgid "Select choice 6"
 msgstr "Вибрати Опцію 6"
 
 #: engines/twp/metaengine.cpp:174
-msgid "Select Next Actor"
+#, fuzzy
+#| msgid "Select Next Actor"
+msgid "Select next Actor"
 msgstr "Вибрати наступного Актора"
 
 #: engines/twp/metaengine.cpp:175
-msgid "Select Previous Actor"
+#, fuzzy
+#| msgid "Select Previous Actor"
+msgid "Select previous actor"
 msgstr "Вибрати попереднього Актора"
 
 #: engines/twp/metaengine.cpp:176
-msgid "Skip Text"
+#, fuzzy
+#| msgid "Skip Text"
+msgid "Skip text"
 msgstr "Пропустити текст"
 
 #: engines/twp/metaengine.cpp:177
@@ -13025,6 +13743,289 @@ msgstr "Ввімкнути різдвяну музику у будь-яку по
 msgid "Could not find correct ultima.dat datafile"
 msgstr "Не можу знайти коректний файл ultima.dat"
 
+#: engines/ultima/ultima4/metaengine.cpp:43
+#: engines/ultima/ultima4/metaengine.cpp:130
+#: engines/ultima/ultima4/metaengine.cpp:135
+#: engines/ultima/ultima4/metaengine.cpp:145
+#, fuzzy
+#| msgid "Next action"
+msgid "Abort action"
+msgstr "Наступна дія"
+
+#: engines/ultima/ultima4/metaengine.cpp:49
+#, fuzzy
+#| msgid "Keyboard"
+msgid "Board"
+msgstr "Клавіатура"
+
+#: engines/ultima/ultima4/metaengine.cpp:51
+msgid "Climb"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:52
+#: engines/ultima/ultima8/metaengine.cpp:108
+msgid "Descend"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:56
+#, fuzzy
+#| msgid "Fight cheat"
+msgid "Get chest"
+msgstr "Чіт для бійок"
+
+#: engines/ultima/ultima4/metaengine.cpp:57
+msgid "Hole up & camp"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:58
+msgid "Jimmy"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:59
+msgid "Ignite"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:60
+#, fuzzy
+#| msgid "Look at"
+msgid "Locate position"
+msgstr "Глянути на"
+
+#: engines/ultima/ultima4/metaengine.cpp:61
+msgid "Mix reagents"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:62
+#, fuzzy
+#| msgid "New kid"
+msgid "New order"
+msgstr "Нова дитина"
+
+#: engines/ultima/ultima4/metaengine.cpp:63
+#, fuzzy
+#| msgid "Open Holomap"
+msgid "Open door"
+msgstr "Відкрити голомапу"
+
+#: engines/ultima/ultima4/metaengine.cpp:64
+#, fuzzy
+#| msgid "Password:"
+msgid "Pass"
+msgstr "Пароль:"
+
+#: engines/ultima/ultima4/metaengine.cpp:65
+msgid "Peer"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:66
+#, fuzzy
+#| msgid "Quick save"
+msgid "Quit and save"
+msgstr "Швидке збереження"
+
+#: engines/ultima/ultima4/metaengine.cpp:67
+#, fuzzy
+#| msgid "Next action"
+msgid "Ready weapon"
+msgstr "Наступна дія"
+
+#: engines/ultima/ultima4/metaengine.cpp:69
+#, fuzzy
+#| msgid "Status:"
+msgid "Stats"
+msgstr "Стан:"
+
+#: engines/ultima/ultima4/metaengine.cpp:72
+msgid "Wear armor"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:73
+msgid "Yell"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:79
+#, fuzzy
+#| msgid "Speed:"
+msgid "Speed up"
+msgstr "Швидкість:"
+
+#: engines/ultima/ultima4/metaengine.cpp:80
+#, fuzzy
+#| msgid "Move down"
+msgid "Speed down"
+msgstr "Рухатись вниз"
+
+#: engines/ultima/ultima4/metaengine.cpp:81
+#, fuzzy
+#| msgid "Speech Only"
+msgid "Speed normal"
+msgstr "Тільки озвучка"
+
+#: engines/ultima/ultima4/metaengine.cpp:82
+msgid "Combat speed up"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:83
+#, fuzzy
+#| msgid "Rotate down"
+msgid "Combat speed down"
+msgstr "Повернути донизу"
+
+#: engines/ultima/ultima4/metaengine.cpp:84
+msgid "Combat speed normal"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:90
+msgid "Party - None"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:91
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #1"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:92
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #2"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:93
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #3"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:94
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #4"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:95
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #5"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:96
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #6"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:97
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #7"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:98
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #8"
+msgstr "Перенести героя"
+
+#: engines/ultima/ultima4/metaengine.cpp:104
+msgid "Destroy all creatures"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:105
+#, fuzzy
+#| msgctxt "Options menu"
+#| msgid "Wall collision on"
+msgid "Toggle collision handling"
+msgstr "Зіткнення зі стінами увімкнено"
+
+#: engines/ultima/ultima4/metaengine.cpp:106
+#, fuzzy
+#| msgid "Next object"
+msgid "Destroy object"
+msgstr "Наступний об'єкт"
+
+#: engines/ultima/ultima4/metaengine.cpp:107
+msgid "Full equipment"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:108
+#, fuzzy
+#| msgid "Toggle Combat"
+msgid "Flee combat"
+msgstr "Перемкнути режим бою"
+
+#: engines/ultima/ultima4/metaengine.cpp:110
+msgid "Help - Teleport to Lord British"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:111
+msgid "Give items"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:112
+msgid "List karma"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:113
+#, fuzzy
+#| msgid "Next location"
+msgid "Leave location"
+msgstr "Наступна локація"
+
+#: engines/ultima/ultima4/metaengine.cpp:114
+msgid "Give mixtures"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:115
+msgid "Combat encounters"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:116
+#, fuzzy
+#| msgid "Toggle Drag Mode"
+msgid "Toggle overhead view"
+msgstr "Перемикання режиму протягування"
+
+#: engines/ultima/ultima4/metaengine.cpp:117
+msgid "Full party"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:118
+msgid "Give reagents"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:119
+msgid "Full stats"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:120
+#, fuzzy
+#| msgid "Create directory"
+msgid "Create transport"
+msgstr "Створення каталогу"
+
+#: engines/ultima/ultima4/metaengine.cpp:121
+#, fuzzy
+#| msgid "Debug level:"
+msgid "Up level"
+msgstr "Рівень відладки:"
+
+#: engines/ultima/ultima4/metaengine.cpp:122
+#, fuzzy
+#| msgid "Debug level:"
+msgid "Down level"
+msgstr "Рівень відладки:"
+
+#: engines/ultima/ultima4/metaengine.cpp:123
+msgid "Grant virtue"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:124
+#, fuzzy
+#| msgid "Change sound"
+msgid "Change wind"
+msgstr "Змінити звук"
+
 #: engines/ultima/nuvie/nuvie.cpp:403
 #, c-format
 msgid "loading quick save %d"
@@ -13039,15 +14040,515 @@ msgstr "записую швидке збереження %d"
 msgid "Original Save"
 msgstr "Оригінальне збереження"
 
-#: engines/ultima/nuvie/metaengine.cpp:211
+#: engines/ultima/nuvie/metaengine.cpp:59
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk west"
+msgstr "Іти до"
+
+#: engines/ultima/nuvie/metaengine.cpp:60
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk east"
+msgstr "Іти до"
+
+#: engines/ultima/nuvie/metaengine.cpp:61
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk north"
+msgstr "Іти до"
+
+#: engines/ultima/nuvie/metaengine.cpp:62
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk south"
+msgstr "Іти до"
+
+#: engines/ultima/nuvie/metaengine.cpp:63
+msgid "Walk north-east"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:64
+msgid "Walk south-east"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:65
+msgid "Walk north-west"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:66
+msgid "Walk south-west"
+msgstr ""
+
+#. I18N: It's a Tetris game clone, this action drops current tetris item
+#: engines/ultima/nuvie/metaengine.cpp:72
+#: engines/wintermute/keymapper_tables.h:2035
+msgid "Drop"
+msgstr "Викинути"
+
+#: engines/ultima/nuvie/metaengine.cpp:75
+msgid "Multi-use"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:76
+#, fuzzy
+#| msgid "Select shader"
+msgid "Select command bar"
+msgstr "Виберіть шейдер"
+
+#: engines/ultima/nuvie/metaengine.cpp:77
+#, fuzzy
+#| msgid "Select Next Actor"
+msgid "Select new command bar"
+msgstr "Вибрати наступного Актора"
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:79
+#, fuzzy
+#| msgid "Scroll up"
+msgid "Doll gump"
+msgstr "Прокручення догори"
+
+#: engines/ultima/nuvie/metaengine.cpp:80
+#, fuzzy
+#| msgid "Previous page"
+msgid "Previous party member"
+msgstr "Попередня сторінка"
+
+#: engines/ultima/nuvie/metaengine.cpp:81
+#, fuzzy
+#| msgid "View Party Member 1"
+msgid "Next party member"
+msgstr "Дивитись члена №1 в команді"
+
+#: engines/ultima/nuvie/metaengine.cpp:82
+#, fuzzy
+#| msgid "Boss key"
+msgid "Home key"
+msgstr "Клавіша Начальника"
+
+#: engines/ultima/nuvie/metaengine.cpp:83
+msgid "End key"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:84
+#, fuzzy
+#| msgid "Toggle between voice/text/text and voice"
+msgid "Toggle between inventory and actor view"
+msgstr "Перемикання між озвучкою/текстом/текстом і озвучкою"
+
+#: engines/ultima/nuvie/metaengine.cpp:85
+#, fuzzy
+#| msgid "List view"
+msgid "Party view"
+msgstr "Вигляд списку"
+
+#: engines/ultima/nuvie/metaengine.cpp:86
+#, fuzzy
+#| msgid "Shorty mode"
+msgid "Party mode"
+msgstr "Режим ліліпутів"
+
+#: engines/ultima/nuvie/metaengine.cpp:87
+#, fuzzy
+#| msgid "Game menu"
+msgid "Save menu"
+msgstr "Меню гри"
+
+#: engines/ultima/nuvie/metaengine.cpp:88
+#, fuzzy
+#| msgid "Unnamed autosave"
+msgid "Load latest save"
+msgstr "Автозбереження без імені"
+
+#: engines/ultima/nuvie/metaengine.cpp:93
+msgid "Show game menu; Cancel action if in middle of action"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:95
+#, fuzzy
+#| msgid "Toggle Clock"
+msgid "Toggle Cursor"
+msgstr "Перемкнути годинник"
+
+#: engines/ultima/nuvie/metaengine.cpp:96
+#, fuzzy
+#| msgid "Toggle Combat"
+msgid "Toggle combat strategy"
+msgstr "Перемкнути режим бою"
+
+#: engines/ultima/nuvie/metaengine.cpp:97
+#, fuzzy
+#| msgid "Max frames per second limit"
+msgid "Toggle frames per second display"
+msgstr "Ліміт кадрів на секунду"
+
+#: engines/ultima/nuvie/metaengine.cpp:98
+#, fuzzy
+#| msgid "Toggle Sound"
+msgid "Toggle audio"
+msgstr "Перемкнути звук"
+
+#: engines/ultima/nuvie/metaengine.cpp:99
+#, fuzzy
+#| msgid "Toggle mute"
+msgid "Toggle music"
+msgstr "Перемкнути звук"
+
+#: engines/ultima/nuvie/metaengine.cpp:100
+#, fuzzy
+#| msgid "Toggle sound"
+msgid "Toggle sfx"
+msgstr "Перемкнути звук"
+
+#: engines/ultima/nuvie/metaengine.cpp:101
+msgid "Toggle original style command bar"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:102
+#, fuzzy
+#| msgid "Droid's action"
+msgid "Do action"
+msgstr "Дія дроїда"
+
+#: engines/ultima/nuvie/metaengine.cpp:103
+#, fuzzy
+#| msgid "Change game options"
+msgid "Cancel action"
+msgstr "Змінити налаштування гри"
+
+#: engines/ultima/nuvie/metaengine.cpp:104
+#, fuzzy
+#| msgid "Scroll up"
+msgid "Msg scroll up"
+msgstr "Прокручення догори"
+
+#: engines/ultima/nuvie/metaengine.cpp:105
+#, fuzzy
+#| msgid "Scroll down"
+msgid "Msg scroll down"
+msgstr "Прокручення донизу"
+
+#: engines/ultima/nuvie/metaengine.cpp:106
+#, fuzzy
+#| msgid "Show quotes"
+msgid "Show keys"
+msgstr "Показувати цитати"
+
+#: engines/ultima/nuvie/metaengine.cpp:107
+#, fuzzy
+#| msgid "Decrease speed"
+msgid "Decrease debug"
+msgstr "Зменшити швидкість"
+
+#: engines/ultima/nuvie/metaengine.cpp:108
+#, fuzzy
+#| msgid "Increase speed"
+msgid "Increase debug"
+msgstr "Збільшити швидкість"
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:110
+#, fuzzy
+#| msgid "Close popup"
+msgid "Close gumps"
+msgstr "Закрити вискакуючий список"
+
+#: engines/ultima/nuvie/metaengine.cpp:112
+msgid "Enter ALT code (hold)"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:113
+msgid "ALT code 0"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:114
+msgid "ALT code 1"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:115
+msgid "ALT code 2"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:116
+msgid "ALT code 3"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:117
+msgid "ALT code 4"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:118
+msgid "ALT code 5"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:119
+msgid "ALT code 6"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:120
+msgid "ALT code 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:121
+msgid "ALT code 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:122
+msgid "ALT code 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:126
+msgid "Open the asset viewer"
+msgstr ""
+
+#. I18N: Eggs are in-game hatchable objects that are normally invisible
+#: engines/ultima/nuvie/metaengine.cpp:128
+#, fuzzy
+#| msgid "Show quotes"
+msgid "Show eggs"
+msgstr "Показувати цитати"
+
+#: engines/ultima/nuvie/metaengine.cpp:129
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle hack move"
+msgstr "Перемикання швидкого режиму"
+
+#. I18N: Eggs are in-game hatchable objects that are normally invisible
+#: engines/ultima/nuvie/metaengine.cpp:131
+#, fuzzy
+#| msgid "Toggle Menu"
+msgid "Toggle egg spawn"
+msgstr "Перемкнути меню"
+
+#: engines/ultima/nuvie/metaengine.cpp:132
+#, fuzzy
+#| msgid "Toggle mouse capture"
+msgid "Toggle no darkness"
+msgstr "Перемикання захоплення миші"
+
+#: engines/ultima/nuvie/metaengine.cpp:133
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle pickpocket mode"
+msgstr "Перемикання швидкого режиму"
+
+#: engines/ultima/nuvie/metaengine.cpp:134
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle god mode"
+msgstr "Перемикання швидкого режиму"
+
+#: engines/ultima/nuvie/metaengine.cpp:135
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle ethereal mode"
+msgstr "Перемикання швидкого режиму"
+
+#: engines/ultima/nuvie/metaengine.cpp:136
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle X-ray mode"
+msgstr "Перемикання швидкого режиму"
+
+#: engines/ultima/nuvie/metaengine.cpp:137
+msgid "Heal party"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:138
+#, fuzzy
+#| msgid "Regular cursor"
+msgid "Teleport to cursor"
+msgstr "Звичайний курсор"
+
+#: engines/ultima/nuvie/metaengine.cpp:139
+#, fuzzy
+#| msgid "Enable cheats"
+msgid "Toggle cheats"
+msgstr "Ввімкнути чіти"
+
+#: engines/ultima/nuvie/metaengine.cpp:143
+msgid "Solo mode as Avatar"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:144
+#, fuzzy
+#| msgid "View Party Member 2"
+msgid "Solo mode as party member 2"
+msgstr "Дивитись члена №2 в команді"
+
+#: engines/ultima/nuvie/metaengine.cpp:145
+#, fuzzy
+#| msgid "View Party Member 3"
+msgid "Solo mode as party member 3"
+msgstr "Дивитись члена №3 в команді"
+
+#: engines/ultima/nuvie/metaengine.cpp:146
+#, fuzzy
+#| msgid "View Party Member 4"
+msgid "Solo mode as party member 4"
+msgstr "Дивитись члена №4 в команді"
+
+#: engines/ultima/nuvie/metaengine.cpp:147
+#, fuzzy
+#| msgid "View Party Member 5"
+msgid "Solo mode as party member 5"
+msgstr "Дивитись члена №5 в команді"
+
+#: engines/ultima/nuvie/metaengine.cpp:148
+#, fuzzy
+#| msgid "View Party Member 6"
+msgid "Solo mode as party member 6"
+msgstr "Дивитись члена №6 в команді"
+
+#: engines/ultima/nuvie/metaengine.cpp:149
+msgid "Solo mode as party member 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:150
+msgid "Solo mode as party member 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:151
+msgid "Solo mode as party member 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:152
+msgid "Show stats for Avatar"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:153
+msgid "Show stats for party member 2"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:154
+msgid "Show stats for party member 3"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:155
+msgid "Show stats for party member 4"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:156
+msgid "Show stats for party member 5"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:157
+msgid "Show stats for party member 6"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:158
+msgid "Show stats for party member 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:159
+msgid "Show stats for party member 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:160
+msgid "Show stats for party member 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:161
+#, fuzzy
+#| msgid "Show inventory"
+msgid "Show inventory for Avatar"
+msgstr "Показати інвентар"
+
+#: engines/ultima/nuvie/metaengine.cpp:162
+msgid "Show inventory for party member 2"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:163
+msgid "Show inventory for party member 3"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:164
+msgid "Show inventory for party member 4"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:165
+msgid "Show inventory for party member 5"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:166
+msgid "Show inventory for party member 6"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:167
+msgid "Show inventory for party member 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:168
+msgid "Show inventory for party member 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:169
+msgid "Show inventory for party member 9"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:171
+msgid "Show doll gump for Avatar"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:173
+msgid "Show doll gump for party member 2"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:175
+msgid "Show doll gump for party member 3"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:177
+msgid "Show doll gump for party member 4"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:179
+msgid "Show doll gump for party member 5"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:181
+msgid "Show doll gump for party member 6"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:183
+msgid "Show doll gump for party member 7"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:185
+msgid "Show doll gump for party member 8"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:187
+msgid "Show doll gump for party member 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:193
+#: engines/ultima/nuvie/metaengine.cpp:198
+#, fuzzy
+#| msgid "Toggle linear filtered scaling"
+msgid "Toggle unlimited casting"
+msgstr "Перемикання фільтра лінийний"
+
+#: engines/ultima/nuvie/metaengine.cpp:224
 msgid "Ultima VI"
 msgstr "Ultima VI"
 
-#: engines/ultima/nuvie/metaengine.cpp:213
+#: engines/ultima/nuvie/metaengine.cpp:226
 msgid "Martian Dreams"
 msgstr "Марсіанські сни"
 
-#: engines/ultima/nuvie/metaengine.cpp:215
+#: engines/ultima/nuvie/metaengine.cpp:228
 msgid "The Savage Empire"
 msgstr "Дика імперія"
 
@@ -13055,19 +14556,234 @@ msgstr "Дика імперія"
 msgid "Transfer Character"
 msgstr "Перенести героя"
 
-#: engines/ultima/ultima8/metaengine.cpp:138
+#: engines/ultima/ultima8/metaengine.cpp:47
+msgid "Draw weapon / Combat"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:52
+#, fuzzy
+#| msgid "Move Back"
+msgid "Move back"
+msgstr "Рухатись назад"
+
+#: engines/ultima/ultima8/metaengine.cpp:58
+#, fuzzy
+#| msgid "Highlight next dialogue"
+msgid "Highlight items"
+msgstr "Виділити наступний діалог"
+
+#: engines/ultima/ultima8/metaengine.cpp:64
+msgid "Use bedroll"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:65
+#, fuzzy
+#| msgid "Backspace"
+msgid "Open backpack"
+msgstr "Backspace"
+
+#: engines/ultima/ultima8/metaengine.cpp:66
+#, fuzzy
+#| msgid "Use RGB rendering"
+msgid "Use keyring"
+msgstr "Використовувати RGB для малювання"
+
+#: engines/ultima/ultima8/metaengine.cpp:67
+#, fuzzy
+#| msgid "Open map"
+msgid "Open minimap"
+msgstr "Відкрити мапу"
+
+#: engines/ultima/ultima8/metaengine.cpp:68
+msgid "Use recall"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:69
+#, fuzzy
+#| msgid "Open inventory"
+msgid "Open inventory & statistics"
+msgstr "Відкрити інвентар"
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/ultima8/metaengine.cpp:71
+msgid "Close all displays"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:72
+msgid "Jump (fake both-button-click)"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:73
+msgid "Careful step"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:79
+#, fuzzy
+#| msgid "Cycle back through inventory cursor items"
+msgid "Cycle through weapon inventory"
+msgstr "Прокрутка назад через курсори предметів інвентарю"
+
+#: engines/ultima/ultima8/metaengine.cpp:80
+#, fuzzy
+#| msgid "Cycle through stretch modes"
+msgid "Cycle through item inventory"
+msgstr "Перемикання між режимів розтягування"
+
+#: engines/ultima/ultima8/metaengine.cpp:81
+#, fuzzy
+#| msgid "Inventory"
+msgid "Use inventory item"
+msgstr "Інвентар"
+
+#: engines/ultima/ultima8/metaengine.cpp:82
+msgid "Use medikit"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:83
+#, fuzzy
+#| msgid "Inventory"
+msgid "Use energy cube"
+msgstr "Інвентар"
+
+#: engines/ultima/ultima8/metaengine.cpp:84
+msgid "Detonate bomb"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:86
+#, fuzzy
+#| msgid "Drop page"
+msgid "Drop weapon"
+msgstr "Викинути сторінку"
+
+#: engines/ultima/ultima8/metaengine.cpp:87
+#, fuzzy
+#| msgid "Select a Theme"
+msgid "Search / Select item"
+msgstr "Виберіть тему"
+
+#: engines/ultima/ultima8/metaengine.cpp:88
+#, fuzzy
+#| msgid "Next action"
+msgid "Use selection"
+msgstr "Наступна дія"
+
+#: engines/ultima/ultima8/metaengine.cpp:89
+msgid "Grab items"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:90
+#, fuzzy
+#| msgid "Next action"
+msgid "Fire weapon"
+msgstr "Наступна дія"
+
+#: engines/ultima/ultima8/metaengine.cpp:91
+#, fuzzy
+#| msgid "Camera moves with Silencer"
+msgid "Center screen on Silencer"
+msgstr "Камера переміщується разом з Сайленсером"
+
+#: engines/ultima/ultima8/metaengine.cpp:92
+msgid "Jump / Roll / Crouch"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:93
+#, fuzzy
+#| msgid "Shorty mode"
+msgid "Short jump"
+msgstr "Режим ліліпутів"
+
+#: engines/ultima/ultima8/metaengine.cpp:94
+#, fuzzy
+#| msgid "Slide Left"
+msgid "Sidestep left"
+msgstr "Ковзати наліво"
+
+#: engines/ultima/ultima8/metaengine.cpp:95
+#, fuzzy
+#| msgid "Slide Right"
+msgid "Sidestep right"
+msgstr "Ковзати направо"
+
+#: engines/ultima/ultima8/metaengine.cpp:96
+#, fuzzy
+#| msgid "Face Forward"
+msgid "Step forward"
+msgstr "Повернутись уперед"
+
+#: engines/ultima/ultima8/metaengine.cpp:100
+#, fuzzy
+#| msgid "Toggle Clock"
+msgid "Toggle crouch"
+msgstr "Перемкнути годинник"
+
+#: engines/ultima/ultima8/metaengine.cpp:101
+msgid "Side step / Advance / Retreat"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:106
+#, fuzzy
+#| msgid "Toggle Clock"
+msgid "Toggle clipping"
+msgstr "Перемкнути годинник"
+
+#: engines/ultima/ultima8/metaengine.cpp:107
+msgid "Ascend"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:115
+#, fuzzy
+#| msgid "Show hints"
+msgid "Show touching items"
+msgstr "Показувати підказки"
+
+#: engines/ultima/ultima8/metaengine.cpp:116
+#, fuzzy
+#| msgid "Show quotes"
+msgid "Show editor items"
+msgstr "Показувати цитати"
+
+#: engines/ultima/ultima8/metaengine.cpp:117
+msgid "Decrement map sort order"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:118
+msgid "Increment map sort order"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:119
+#, fuzzy
+#| msgid "Toggle panel style"
+msgid "Toggle frame by frame"
+msgstr "Перемикання стилю панелі"
+
+#: engines/ultima/ultima8/metaengine.cpp:120
+msgid "Advance frame"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:121
+msgid "Toggle Avatar in stasis"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:122
+#, fuzzy
+#| msgid "Image Viewer"
+msgid "Show shape viewer"
+msgstr "Переглядач зображень"
+
+#: engines/ultima/ultima8/metaengine.cpp:132
 msgid "Ultima VIII"
 msgstr "Ultima VIII"
 
-#: engines/ultima/ultima8/metaengine.cpp:138
+#: engines/ultima/ultima8/metaengine.cpp:132
 msgid "Crusader"
 msgstr "Crusader"
 
-#: engines/ultima/ultima8/metaengine.cpp:181
+#: engines/ultima/ultima8/metaengine.cpp:175
 msgid "Ultima VIII Cheats"
 msgstr "Ultima VIII Чіти"
 
-#: engines/ultima/ultima8/metaengine.cpp:196
+#: engines/ultima/ultima8/metaengine.cpp:190
 msgid "Ultima VIII Debug"
 msgstr "Ultima VIII Відладка"
 
@@ -13212,13 +14928,51 @@ msgid "An unknown error occurred while attempting to load the saved game."
 msgstr "Виникла невідома помилка під час спроби завантаження збереження гри."
 
 #. I18N: lockout is code to start the game
-#: engines/voyeur/metaengine.cpp:43
+#: engines/voyeur/metaengine.cpp:47
 msgid "Enable lockout system"
 msgstr "Ввімкнути систему блокування"
 
-#: engines/voyeur/metaengine.cpp:44
+#: engines/voyeur/metaengine.cpp:48
 msgid "Require a lockout code to start the game."
 msgstr "Вимагати код блокування, щоб почати гру."
+
+#: engines/voyeur/metaengine.cpp:186
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Room keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/voyeur/metaengine.cpp:187
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Camera keymappings"
+msgstr "Мапа клавіш гри"
+
+#: engines/voyeur/metaengine.cpp:188
+#, fuzzy
+#| msgid "Index keymappings"
+msgid "Intro keymappings"
+msgstr "Мапи клавіш"
+
+#: engines/voyeur/metaengine.cpp:204
+#, fuzzy
+#| msgid "Skip cutscene"
+msgid "Skip scene"
+msgstr "Пропустити ролік"
+
+#: engines/voyeur/metaengine.cpp:211
+msgid "View evidence"
+msgstr ""
+
+#: engines/voyeur/metaengine.cpp:217
+msgid "Exit / Put away evidence"
+msgstr ""
+
+#: engines/voyeur/metaengine.cpp:223
+#, fuzzy
+#| msgid "Enter"
+msgid "Enter room"
+msgstr "Enter"
 
 #: engines/wintermute/metaengine.cpp:42
 msgid "Show FPS-counter"
@@ -13284,26 +15038,6 @@ msgstr ""
 #: engines/wintermute/keymapper_tables.h:1855
 msgid "Show scene geometry"
 msgstr "Показувати геометрію сцени"
-
-#: engines/wintermute/keymapper_tables.h:183
-#: engines/wintermute/keymapper_tables.h:199
-#: engines/wintermute/keymapper_tables.h:630
-#: engines/wintermute/keymapper_tables.h:906
-#: engines/wintermute/keymapper_tables.h:1103
-#: engines/wintermute/keymapper_tables.h:1231
-#: engines/wintermute/keymapper_tables.h:1255
-msgid "Previous page"
-msgstr "Попередня сторінка"
-
-#: engines/wintermute/keymapper_tables.h:190
-#: engines/wintermute/keymapper_tables.h:207
-#: engines/wintermute/keymapper_tables.h:638
-#: engines/wintermute/keymapper_tables.h:913
-#: engines/wintermute/keymapper_tables.h:1110
-#: engines/wintermute/keymapper_tables.h:1236
-#: engines/wintermute/keymapper_tables.h:1260
-msgid "Next page"
-msgstr "Наступна сторінка"
 
 #: engines/wintermute/keymapper_tables.h:239
 #: engines/wintermute/keymapper_tables.h:262
@@ -13463,34 +15197,6 @@ msgstr "Кнопка телефону #"
 msgid "Show help"
 msgstr "Показати допомогу"
 
-#: engines/wintermute/keymapper_tables.h:670
-#: engines/wintermute/keymapper_tables.h:871
-#: engines/wintermute/keymapper_tables.h:892
-#: engines/wintermute/keymapper_tables.h:1326
-#: engines/wintermute/keymapper_tables.h:1352
-#: engines/wintermute/keymapper_tables.h:1428
-#: engines/wintermute/keymapper_tables.h:1484
-#: engines/wintermute/keymapper_tables.h:1505
-#: engines/wintermute/keymapper_tables.h:1695
-#: engines/wintermute/keymapper_tables.h:1969
-#: engines/wintermute/keymapper_tables.h:2171
-msgid "Scroll up"
-msgstr "Прокручення догори"
-
-#: engines/wintermute/keymapper_tables.h:677
-#: engines/wintermute/keymapper_tables.h:878
-#: engines/wintermute/keymapper_tables.h:899
-#: engines/wintermute/keymapper_tables.h:1333
-#: engines/wintermute/keymapper_tables.h:1359
-#: engines/wintermute/keymapper_tables.h:1435
-#: engines/wintermute/keymapper_tables.h:1491
-#: engines/wintermute/keymapper_tables.h:1512
-#: engines/wintermute/keymapper_tables.h:1702
-#: engines/wintermute/keymapper_tables.h:1976
-#: engines/wintermute/keymapper_tables.h:2176
-msgid "Scroll down"
-msgstr "Прокручення донизу"
-
 #: engines/wintermute/keymapper_tables.h:690
 msgid "Change shadow type"
 msgstr "Змінити тип тіні"
@@ -13513,12 +15219,6 @@ msgstr "Показати відладочний парсер"
 #: engines/wintermute/keymapper_tables.h:1878
 msgid "Debug print"
 msgstr "Відладочний друк"
-
-#. I18N: Exits the game
-#: engines/wintermute/keymapper_tables.h:720
-#: engines/wintermute/keymapper_tables.h:1849
-msgid "Exit"
-msgstr "Вихід"
 
 #. I18N: Displays a debug interface that changes light settings
 #: engines/wintermute/keymapper_tables.h:726
@@ -13719,19 +15419,27 @@ msgid "Settings"
 msgstr "Налаштування"
 
 #: engines/wintermute/keymapper_tables.h:1619
-msgid "Dialogue answer 1"
+#, fuzzy
+#| msgid "Dialogue answer 1"
+msgid "Dialog answer 1"
 msgstr "Діалог відповідь 1"
 
 #: engines/wintermute/keymapper_tables.h:1624
-msgid "Dialogue answer 2"
+#, fuzzy
+#| msgid "Dialogue answer 2"
+msgid "Dialog answer 2"
 msgstr "Діалог відповідь 2"
 
 #: engines/wintermute/keymapper_tables.h:1629
-msgid "Dialogue answer 3"
+#, fuzzy
+#| msgid "Dialogue answer 3"
+msgid "Dialog answer 3"
 msgstr "Діалог відповідь 3"
 
 #: engines/wintermute/keymapper_tables.h:1634
-msgid "Dialogue answer 4"
+#, fuzzy
+#| msgid "Dialogue answer 4"
+msgid "Dialog answer 4"
 msgstr "Діалог відповідь 4"
 
 #. I18N: This game is called "Pole Chudes" and it features a wheel similar to "Wheel of Fortune" TV show
@@ -13771,11 +15479,6 @@ msgstr "Дія дроїда"
 #: engines/wintermute/keymapper_tables.h:2009
 msgid "Rotate"
 msgstr "Повернути"
-
-#. I18N: It's a Tetris game clone, this action drops current tetris item
-#: engines/wintermute/keymapper_tables.h:2035
-msgid "Drop"
-msgstr "Викинути"
 
 #: engines/wintermute/keymapper_tables.h:2043
 msgid "Player 1: Up"
@@ -13822,7 +15525,7 @@ msgstr "F1"
 msgid "Key i"
 msgstr "Кнопка i"
 
-#: engines/zvision/file/save_manager.cpp:221
+#: engines/zvision/file/save_manager.cpp:206
 #, c-format
 msgid ""
 "This saved game uses version %u, but this engine only supports up to version "
@@ -13832,69 +15535,85 @@ msgstr ""
 "версію до %d. Вам потрібна поновлена версія ScummVM для завантаження цього "
 "файлу."
 
-#: engines/zvision/metaengine.cpp:58
+#: engines/zvision/metaengine.cpp:54
 msgid "Double FPS"
 msgstr "Подвійна FPS"
 
-#: engines/zvision/metaengine.cpp:59
+#: engines/zvision/metaengine.cpp:55
 msgid "Increase framerate from 30 to 60 FPS"
 msgstr "Підвищити кількість кадрів на секунду з 30 до 60"
 
-#: engines/zvision/metaengine.cpp:70
+#: engines/zvision/metaengine.cpp:66
 msgid "Enable Venus"
 msgstr "Ввімкнути Venus"
 
-#: engines/zvision/metaengine.cpp:71
+#: engines/zvision/metaengine.cpp:67
 msgid "Enable the Venus help system"
 msgstr "Ввімкнути допоміжну систему Venus"
 
-#: engines/zvision/metaengine.cpp:82
+#: engines/zvision/metaengine.cpp:78
 msgid "Disable animation while turning"
 msgstr "Вимкнути анімацію під час поворотів"
 
-#: engines/zvision/metaengine.cpp:83
+#: engines/zvision/metaengine.cpp:79
 msgid "Disable animation while turning in panorama mode"
 msgstr "Вимикає анімацію під час поворотів у режимі панорами"
 
-#: engines/zvision/metaengine.cpp:94
+#: engines/zvision/metaengine.cpp:90
 msgid "Use high resolution MPEG video"
 msgstr "Використовувати відео MPEG з підвищеною роздільністю"
 
-#: engines/zvision/metaengine.cpp:95
+#: engines/zvision/metaengine.cpp:91
 msgid "Use MPEG video from the DVD version instead of lower resolution AVI"
 msgstr ""
 "Використовувати відео MPEG з DVD-версії замість файлів AVI з ніжчою "
 "роздільною здатністю"
 
-#: engines/zvision/metaengine.cpp:197
-msgid "Look Up"
-msgstr "Глянути догори"
+#: engines/zvision/metaengine.cpp:102
+#, fuzzy
+#| msgid "Game id not supported"
+msgid "Enable widescreen support"
+msgstr "Game id не підтримується"
 
-#: engines/zvision/metaengine.cpp:203
-msgid "Look Down"
-msgstr "Глянути донизу"
+#: engines/zvision/metaengine.cpp:103
+msgid ""
+"Rearrange placement of menus & subtitles so as to make better use of modern "
+"wide aspect ratio displays"
+msgstr ""
 
-#: engines/zvision/metaengine.cpp:238
+#: engines/zvision/metaengine.cpp:114
+#, fuzzy
+#| msgid "Enable hit point bar graphs"
+msgid "Enable high quality panoramas"
+msgstr "Ввімкнути графічні стовпчики здоров'я"
+
+#: engines/zvision/metaengine.cpp:115
+#, fuzzy
+#| msgid "Apply bilinear filtering to individual sprites"
+msgid "Apply bilinear filtering to panoramic backgrounds"
+msgstr "Застосувати білінійну фільтрацію до окремих спрайтів"
+
+#: engines/zvision/metaengine.cpp:258
 msgid "Spellbook"
 msgstr "Книга заклять"
 
-#: engines/zvision/metaengine.cpp:244
+#: engines/zvision/metaengine.cpp:264
 msgid "Score"
 msgstr "Рахунок"
 
-#: engines/zvision/metaengine.cpp:250
+#: engines/zvision/metaengine.cpp:270
 msgid "Put away object"
 msgstr "Відкласти об'єкт"
 
-#: engines/zvision/metaengine.cpp:256
+#: engines/zvision/metaengine.cpp:276
 msgid "Extract coin"
 msgstr "Дістати монету"
 
-#: engines/zvision/metaengine.cpp:277
+#: engines/zvision/metaengine.cpp:297
 msgid "Preferences"
 msgstr "Уподобання"
 
-#: engines/zvision/zvision.cpp:302
+#: engines/zvision/zvision.cpp:319
 msgid ""
 "Before playing this game, you'll need to copy the required fonts into "
 "ScummVM's extras directory, or into the game directory. On Windows, you'll "
@@ -13910,6 +15629,174 @@ msgstr ""
 "Century Schoolbook, Garamond, Courier New та Arial. Також ви можете "
 "завантажити Liberation Fonts. Вам будуть потрібні всі шрифти з пакету, який "
 "ви оберете, тобто, LiberationMono, LiberationSans та LiberationSerif."
+
+#: engines/zvision/zvision.cpp:334
+msgid ""
+"MIDI playback is not available, or else improperly configured. Zork Nemesis "
+"contains several music puzzles which require MIDI audio in order to be "
+"solved.  These puzzles may alternatively be solved using subtitles, if "
+"supported. Continue launching game?"
+msgstr ""
+
+#~ msgid "Scroll Up"
+#~ msgstr "Прокручення догори"
+
+#~ msgid "Scroll Down"
+#~ msgstr "Прокручення донизу"
+
+#~ msgid "Save Game"
+#~ msgstr "Зберегти гру"
+
+#~ msgid "Load Game"
+#~ msgstr "Завантажити збережену гру"
+
+#~ msgid "Quit Game"
+#~ msgstr "Вийти з ігри"
+
+#~ msgid "Next Page"
+#~ msgstr "Наступна сторінка"
+
+#~ msgid "Previous Page"
+#~ msgstr "Попередня сторінка"
+
+#~ msgid "Quick Save"
+#~ msgstr "Швидке збереження"
+
+#~ msgid "Quick Load"
+#~ msgstr "Швидке завантаження"
+
+#, fuzzy
+#~| msgid "Move up-left"
+#~ msgid "Move up left"
+#~ msgstr "Рухатись догори-наліво"
+
+#, fuzzy
+#~| msgid "Move up-right"
+#~ msgid "Move up right"
+#~ msgstr "Рухатись догори-направо"
+
+#, fuzzy
+#~| msgid "Move down-left"
+#~ msgid "Move down left"
+#~ msgstr "Рухатись донизу-наліво"
+
+#, fuzzy
+#~| msgid "Move down-right"
+#~ msgid "Move down right"
+#~ msgstr "Рухатись донизу-направо"
+
+#~ msgid "Option dialog"
+#~ msgstr "Діалог опцій"
+
+#~ msgid "Interact via Left Click"
+#~ msgstr "Взаємодія через лівий клік"
+
+#~ msgid "Interact via Right Click"
+#~ msgstr "Взаємодія через правий клік"
+
+#~ msgid "Move Forward"
+#~ msgstr "Рухатись уперед"
+
+#~ msgid "Move Backwards"
+#~ msgstr "Рухатись назад"
+
+#~ msgid "Move Left"
+#~ msgstr "Рухатись наліво"
+
+#~ msgid "Move Right"
+#~ msgstr "Рухатись направо"
+
+#~ msgid "Turn Left"
+#~ msgstr "Повернутися наліво"
+
+#~ msgid "Turn Right"
+#~ msgstr "Повернутися направо"
+
+#~ msgid "Show Map"
+#~ msgstr "Показати мапу"
+
+#~ msgid "Left Click Interact"
+#~ msgstr "Взаємодія лівим кліком"
+
+#~ msgid "Right Click Interact"
+#~ msgstr "Взаємодія правим кліком"
+
+#~ msgid "Display/Hide Inventory Tray"
+#~ msgstr "Показати/Сховати інвентар"
+
+#~ msgid "Display/Hide Biochip Tray"
+#~ msgstr "Показати/Сховати біочіп"
+
+#~ msgid "Display/Hide Info Screen"
+#~ msgstr "Показати/Сховати інфоекран"
+
+#~ msgid "Display/Hide Pause Menu"
+#~ msgstr "Показувати/Сховати меню паузи"
+
+#~ msgid "Up Left"
+#~ msgstr "Догори-наліво"
+
+#, fuzzy
+#~| msgid "Pause game"
+#~ msgid "Pause Game"
+#~ msgstr "Пауза гри"
+
+#~ msgid "Options Dialog"
+#~ msgstr "Діалог налаштувань"
+
+#~ msgid "Skip Dialogue"
+#~ msgstr "Пропустити діалог"
+
+#, fuzzy
+#~| msgid "Game menu"
+#~ msgid "Game Menu"
+#~ msgstr "Меню гри"
+
+#, fuzzy
+#~| msgid "Move up"
+#~ msgid "Move Up"
+#~ msgstr "Рухатись уверх"
+
+#, fuzzy
+#~| msgid "Move down"
+#~ msgid "Move Down"
+#~ msgstr "Рухатись вниз"
+
+#, fuzzy
+#~| msgid "Step back"
+#~ msgid "Step Back"
+#~ msgstr "Крок назад"
+
+#, fuzzy
+#~| msgid "Move left"
+#~ msgid "Roll Left"
+#~ msgstr "Рухатись наліво"
+
+#, fuzzy
+#~| msgid "Move right"
+#~ msgid "Roll Right"
+#~ msgstr "Рухатись направо"
+
+#~ msgid "Look Up"
+#~ msgstr "Глянути догори"
+
+#~ msgid "Look Down"
+#~ msgstr "Глянути донизу"
+
+#, fuzzy
+#~| msgid "Toggle Combat"
+#~ msgid "Combat"
+#~ msgstr "Перемкнути режим бою"
+
+#, fuzzy
+#~| msgid "Side Step"
+#~ msgid "Step"
+#~ msgstr "Крок в сторону"
+
+#, fuzzy
+#~| msgid "Animated inventory items"
+#~ msgid "Next Inventory Item"
+#~ msgstr "Анімований інвентар"
 
 #~ msgid "Could not find any engine capable of running the selected game"
 #~ msgstr "Не можу знайти движок для запуску вибраної гри"
@@ -13958,10 +15845,6 @@ msgstr ""
 #~ msgstr "Високе розгалуження вимкнено"
 
 #~ msgctxt "Options menu"
-#~ msgid "Wall collision on"
-#~ msgstr "Зіткнення зі стінами увімкнено"
-
-#~ msgctxt "Options menu"
 #~ msgid "Wall collision off"
 #~ msgstr "Зіткнення зі стінами вимкнено"
 
@@ -13987,18 +15870,6 @@ msgstr ""
 
 #~ msgid "Toggle sound effect on/off"
 #~ msgstr "Перемикання звукових ефектів"
-
-#~ msgid "Move Back"
-#~ msgstr "Рухатись назад"
-
-#~ msgid "Move forward"
-#~ msgstr "Рухатись уперед"
-
-#~ msgid "Move backwards"
-#~ msgstr "Рухатись назад"
-
-#~ msgid "Middle click"
-#~ msgstr "Середній клік"
 
 #~ msgid "Pickup"
 #~ msgstr "Підібрати"
@@ -14068,11 +15939,6 @@ msgstr ""
 #~ msgstr "Перемикання звукових ефектів"
 
 #, fuzzy
-#~| msgid "Pause game"
-#~ msgid "Pause Game"
-#~ msgstr "Пауза гри"
-
-#, fuzzy
 #~| msgid "The game in '%s' seems to be unknown."
 #~ msgid "Your set of game files seems to be unknown to us."
 #~ msgstr "Гра у '%s' невідома."
@@ -14099,11 +15965,6 @@ msgstr ""
 #~ msgstr "Наступна дія"
 
 #, fuzzy
-#~| msgid "Look at"
-#~ msgid "Look at action"
-#~ msgstr "Глянути на"
-
-#, fuzzy
 #~| msgid "Talk to"
 #~ msgid "Talk to action"
 #~ msgstr "Говорити до"
@@ -14117,11 +15978,6 @@ msgstr ""
 #~| msgid "Previous action"
 #~ msgid "Pull action"
 #~ msgstr "Попередня дія"
-
-#, fuzzy
-#~| msgid "Next action"
-#~ msgid "Use action"
-#~ msgstr "Наступна дія"
 
 #~ msgid "Open 3DS Settings"
 #~ msgstr "Відкрити налаштування 3DS"
@@ -14363,9 +16219,6 @@ msgstr ""
 
 #~ msgid "DXA cutscenes found but ScummVM has been built without zlib"
 #~ msgstr "Знайдено ролики DXA, але ScummVM було побудовано без підтримки zlib"
-
-#~ msgid "Fight cheat"
-#~ msgstr "Чіт для бійок"
 
 #~ msgid "Override global shader settings"
 #~ msgstr "Перекрити глобальні налаштування шейдерів"

@@ -138,7 +138,10 @@ bool Score::processFrozenPlayScript() {
 	if (g_lingo->_playDone) {
 		g_lingo->_playDone = false;
 		if (_window->thawLingoPlayState()) {
-			Symbol currentScript = _window->getLingoState()->callstack.front()->sp;
+			Symbol currentScript;
+			LingoState *state = _window->getLingoState();
+			if (state && !state->callstack.empty())
+				currentScript = state->callstack.front()->sp;
 			g_lingo->switchStateFromWindow();
 			bool completed = g_lingo->execute();
 			if (!completed) {
@@ -166,7 +169,9 @@ bool Score::processFrozenScripts(bool recursion, int count) {
 	while (remainCount && (limit ? count > 0 : true)) {
 		_window->thawLingoState();
 		LingoState *state = _window->getLingoState();
-		Symbol currentScript = state->callstack.front()->sp;
+		Symbol currentScript;
+		if (state && !state->callstack.empty())
+			currentScript = state->callstack.front()->sp;
 		g_lingo->switchStateFromWindow();
 		bool completed = g_lingo->execute();
 		if (!completed || (recursion ? _window->frozenLingoRecursionCount() : _window->frozenLingoStateCount()) >= remainCount) {
@@ -245,7 +250,7 @@ void Score::gotoLoop() {
 		_nextFrame = _currentLabel;
 	}
 
-	_vm->_skipFrameAdvance = true;
+	_window->_skipFrameAdvance = true;
 }
 
 int Score::getCurrentLabelNumber() {
@@ -437,7 +442,7 @@ void Score::updateCurrentFrame() {
 	}
 
 	_nextFrame = 0;
-	_vm->_skipFrameAdvance = false;
+	_window->_skipFrameAdvance = false;
 
 	if (nextFrameNumberToLoad >= getFramesNum()) {
 		Window *window = _vm->getCurrentWindow();
@@ -595,7 +600,7 @@ void Score::update() {
 		// When Lingo::func_goto* is called, _nextFrame is set
 		// and _skipFrameAdvance is set to true.
 		// exitFrame is not called in this case.
-		if (!_vm->_skipFrameAdvance && !_exitFrameCalled) {
+		if (!_window->_skipFrameAdvance && !_exitFrameCalled) {
 			// Exit the current frame. This can include scopeless ScoreScripts.
 			_movie->processEvent(kEventExitFrame);
 			_exitFrameCalled = true;
@@ -1425,7 +1430,7 @@ void Score::screenShot() {
 #else
 
 	Graphics::Surface rawSurface = _window->getSurface()->rawSurface();
-	const Graphics::PixelFormat requiredFormat_4byte(4, 8, 8, 8, 8, 0, 8, 16, 24);
+	const Graphics::PixelFormat requiredFormat_4byte = Graphics::PixelFormat::createFormatRGBA32();
 	Graphics::Surface *newSurface = rawSurface.convertTo(requiredFormat_4byte, _vm->getPalette());
 
 	Common::String currentPath = _vm->getCurrentPath().c_str();
@@ -1551,6 +1556,16 @@ bool Score::checkSpriteRollOver(uint16 spriteId, Common::Point pos) {
 
 	return false;
 }
+
+uint16 Score::getRollOverSpriteIDFromPos(Common::Point pos) {
+	for (int i = _channels.size() - 1; i >= 0; i--) {
+		if (_channels[i]->getRollOverBbox().contains(pos))
+			return i;
+	}
+
+	return 0;
+}
+
 
 Common::List<Channel *> Score::getSpriteIntersections(const Common::Rect &r) {
 	Common::List<Channel *> intersections;

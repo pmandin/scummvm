@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-06-15 11:22+0000\n"
-"PO-Revision-Date: 2025-05-01 16:19+0000\n"
+"POT-Creation-Date: 2025-07-08 10:42+0000\n"
+"PO-Revision-Date: 2025-06-28 10:25+0000\n"
 "Last-Translator: VAN-Gluon <van.gluonp@gmail.com>\n"
 "Language-Team: Japanese <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ja/>\n"
@@ -63,7 +63,7 @@ msgstr "利用可能なエンジン："
 #: engines/saga/metaengine.cpp:374 engines/scumm/help.cpp:126
 #: engines/scumm/help.cpp:141 engines/scumm/help.cpp:166
 #: engines/scumm/help.cpp:194 engines/scumm/help.cpp:212
-#: engines/twp/metaengine.cpp:179
+#: engines/supernova/metaengine.cpp:341 engines/twp/metaengine.cpp:179
 msgid "Close"
 msgstr "閉じる"
 
@@ -262,7 +262,7 @@ msgstr "クリップボードから貼り付ける"
 #: engines/parallaction/metaengine.cpp:125
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:388
 #: engines/tinsel/metaengine.cpp:329 engines/trecision/saveload.cpp:253
-#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:737
+#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:753
 msgid "Load"
 msgstr "ロート"
 
@@ -318,7 +318,7 @@ msgstr "すでに別のストレージが使用されています。切断しま
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:143
 #: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4216
-#: engines/toon/toon.cpp:1543
+#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:339
 msgid "Yes"
 msgstr "はい"
 
@@ -331,7 +331,7 @@ msgstr "はい"
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:149
 #: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:4216
-#: engines/toon/toon.cpp:1543
+#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:340
 msgid "No"
 msgstr "いいえ"
 
@@ -354,7 +354,7 @@ msgstr "JSONコードの内容が不正です。"
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2149
+#: engines/director/lingo/lingo-builtins.cpp:2152
 #: engines/drascula/saveload.cpp:49 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
@@ -366,7 +366,7 @@ msgstr "JSONコードの内容が不正です。"
 #: engines/sword1/control.cpp:2816 engines/sword1/logic.cpp:1738
 #: engines/sword2/animation.cpp:459 engines/sword2/animation.cpp:469
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
-#: engines/zvision/file/save_manager.cpp:225
+#: engines/zvision/file/save_manager.cpp:210
 msgid "OK"
 msgstr "OK"
 
@@ -567,7 +567,7 @@ msgid "GFX"
 msgstr "GFX"
 
 #: gui/editgamedialog.cpp:164 gui/options.cpp:2078 gui/options.cpp:2259
-#: backends/graphics/atari/atari-graphics.cpp:1061
+#: backends/graphics/atari/atari-graphics.cpp:1055
 #: backends/graphics/sdl/sdl-graphics.cpp:488
 msgid "Graphics"
 msgstr "画像"
@@ -859,7 +859,7 @@ msgstr "計算完了"
 msgid "Calculated %s %S / %s %S"
 msgstr "計算済 %s %S / %s %S"
 
-#: gui/integrity-dialog.cpp:558
+#: gui/integrity-dialog.cpp:622
 msgid ""
 "### Results\n"
 "Your set of game files seems to be unknown to us.\n"
@@ -872,12 +872,12 @@ msgstr ""
 "\n"
 "これが有効なバリアントである場合は、integrity@scummvm.orgまでお知らせください"
 
-#: gui/integrity-dialog.cpp:582
+#: gui/integrity-dialog.cpp:646
 msgid ""
 "The game doesn't seem to have any files. Are you sure the path is correct?"
 msgstr "ゲームのファイルが見つかりません。正しいパスですか?"
 
-#: gui/integrity-dialog.cpp:587
+#: gui/integrity-dialog.cpp:651
 msgid ""
 "The game doesn't seem to have any metadata associated with it, so it is "
 "unable to be matched. Please fill in the correct metadata for the game."
@@ -885,7 +885,7 @@ msgstr ""
 "このゲームにはメタデータが関連付けられていないようです。正しいデータを記入し"
 "てください。"
 
-#: gui/integrity-dialog.cpp:614
+#: gui/integrity-dialog.cpp:678
 msgid "Files all OK"
 msgstr "全て正常"
 
@@ -951,7 +951,7 @@ msgid "Sine"
 msgstr "サイン"
 
 #: gui/fluidsynth-dialog.cpp:137 backends/platform/sdl/ps3/ps3.cpp:43
-#: backends/platform/sdl/psp2/psp2.cpp:46 engines/dragons/metaengine.cpp:189
+#: backends/platform/sdl/psp2/psp2.cpp:45 engines/dragons/metaengine.cpp:189
 msgid "Triangle"
 msgstr "三角"
 
@@ -1000,7 +1000,10 @@ msgstr "GUI"
 #. I18N: Action in In Cold Blood
 #: gui/gui-manager.cpp:162 engines/hpl1/metaengine.cpp:91
 #: engines/icb/icb.cpp:95 engines/icb/icb.cpp:173 engines/mohawk/myst.cpp:572
-#: engines/mohawk/riven.cpp:853
+#: engines/mohawk/riven.cpp:853 engines/sludge/keymapper_tables.h:40
+#: engines/supernova/metaengine.cpp:226
+#: engines/ultima/ultima4/metaengine.cpp:42
+#: engines/ultima/ultima4/metaengine.cpp:144 engines/voyeur/metaengine.cpp:192
 msgid "Interact"
 msgstr "作用"
 
@@ -1010,8 +1013,11 @@ msgstr "作用"
 #: engines/freescape/movement.cpp:35 engines/got/metaengine.cpp:55
 #: engines/griffon/metaengine.cpp:121 engines/grim/grim.cpp:481
 #: engines/grim/grim.cpp:563 engines/icb/icb.cpp:68 engines/icb/icb.cpp:152
-#: engines/scumm/metaengine.cpp:1004 engines/twine/metaengine.cpp:430
-#: engines/twine/metaengine.cpp:497 engines/twp/metaengine.cpp:154
+#: engines/scumm/metaengine.cpp:1004 engines/supernova/metaengine.cpp:273
+#: engines/twine/metaengine.cpp:430 engines/twine/metaengine.cpp:497
+#: engines/twp/metaengine.cpp:154 engines/ultima/ultima4/metaengine.cpp:44
+#: engines/ultima/ultima4/metaengine.cpp:136
+#: engines/ultima/ultima4/metaengine.cpp:146
 #: engines/wintermute/keymapper_tables.h:1290
 #: engines/wintermute/keymapper_tables.h:1373
 #: engines/wintermute/keymapper_tables.h:1449
@@ -1026,8 +1032,11 @@ msgstr "上"
 #: engines/freescape/movement.cpp:42 engines/got/metaengine.cpp:56
 #: engines/griffon/metaengine.cpp:127 engines/grim/grim.cpp:486
 #: engines/grim/grim.cpp:568 engines/icb/icb.cpp:73 engines/icb/icb.cpp:157
-#: engines/scumm/metaengine.cpp:971 engines/twine/metaengine.cpp:437
-#: engines/twine/metaengine.cpp:505 engines/twp/metaengine.cpp:155
+#: engines/scumm/metaengine.cpp:971 engines/supernova/metaengine.cpp:279
+#: engines/twine/metaengine.cpp:437 engines/twine/metaengine.cpp:505
+#: engines/twp/metaengine.cpp:155 engines/ultima/ultima4/metaengine.cpp:45
+#: engines/ultima/ultima4/metaengine.cpp:137
+#: engines/ultima/ultima4/metaengine.cpp:147
 #: engines/wintermute/keymapper_tables.h:1296
 #: engines/wintermute/keymapper_tables.h:1379
 #: engines/wintermute/keymapper_tables.h:1456
@@ -1043,7 +1052,10 @@ msgstr "下"
 #: engines/grim/grim.cpp:491 engines/grim/grim.cpp:573 engines/icb/icb.cpp:78
 #: engines/icb/icb.cpp:162 engines/scumm/metaengine.cpp:984
 #: engines/twine/metaengine.cpp:452 engines/twine/metaengine.cpp:520
-#: engines/twp/metaengine.cpp:152 engines/wintermute/keymapper_tables.h:320
+#: engines/twp/metaengine.cpp:152 engines/ultima/ultima4/metaengine.cpp:46
+#: engines/ultima/ultima4/metaengine.cpp:138
+#: engines/ultima/ultima4/metaengine.cpp:148
+#: engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1302
 #: engines/wintermute/keymapper_tables.h:1385
 #: engines/wintermute/keymapper_tables.h:1908
@@ -1059,7 +1071,10 @@ msgstr "左"
 #: engines/grim/grim.cpp:496 engines/grim/grim.cpp:578 engines/icb/icb.cpp:83
 #: engines/icb/icb.cpp:167 engines/scumm/metaengine.cpp:991
 #: engines/twine/metaengine.cpp:444 engines/twine/metaengine.cpp:513
-#: engines/twp/metaengine.cpp:153 engines/wintermute/keymapper_tables.h:326
+#: engines/twp/metaengine.cpp:153 engines/ultima/ultima4/metaengine.cpp:47
+#: engines/ultima/ultima4/metaengine.cpp:139
+#: engines/ultima/ultima4/metaengine.cpp:149
+#: engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1308
 #: engines/wintermute/keymapper_tables.h:1391
 #: engines/wintermute/keymapper_tables.h:1914
@@ -1269,12 +1284,12 @@ msgstr "前"
 msgid "Save Image..."
 msgstr "画像を保存..."
 
-#: gui/imagealbum-dialog.cpp:263
+#: gui/imagealbum-dialog.cpp:260
 #, c-format
 msgid "%u of %u"
 msgstr "%u of %u"
 
-#: gui/imagealbum-dialog.cpp:376
+#: gui/imagealbum-dialog.cpp:373
 msgid "Save Image"
 msgstr "画像を保存"
 
@@ -1439,7 +1454,7 @@ msgstr "検索："
 #: gui/launcher.cpp:317 engines/dialogs.cpp:94 engines/engine.cpp:974
 #: engines/mm/xeen/saves.cpp:259 engines/nancy/state/loadsave.cpp:124
 #: engines/pegasus/pegasus.cpp:388 engines/trecision/saveload.cpp:253
-#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:737
+#: engines/tsage/scenes.cpp:638 engines/wage/saveload.cpp:753
 msgid "Load game:"
 msgstr "ゲームをロード："
 
@@ -2522,6 +2537,7 @@ msgstr ""
 "続きを表示..."
 
 #: gui/options.cpp:2975 engines/engine.cpp:653
+#: engines/ultima/nuvie/metaengine.cpp:71
 msgid "Move"
 msgstr "移動"
 
@@ -2907,7 +2923,7 @@ msgstr ""
 "ゲーム毎に上記を繰り返します。"
 
 #: base/main.cpp:655 base/main.cpp:680
-#: engines/director/lingo/lingo-builtins.cpp:1466
+#: engines/director/lingo/lingo-builtins.cpp:1469
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -3192,8 +3208,13 @@ msgstr "グラフィックアドベンチャーエンジン"
 #: engines/mohawk/myst_stacks/menu.cpp:317
 #: engines/mohawk/riven_stacks/aspit.cpp:454 engines/saga/metaengine.cpp:449
 #: engines/scumm/help.cpp:84 engines/scumm/help.cpp:86
-#: engines/tinsel/metaengine.cpp:335 engines/zvision/metaengine.cpp:272
-#: engines/zvision/metaengine.cpp:290
+#: engines/sludge/keymapper_tables.h:95 engines/sludge/keymapper_tables.h:144
+#: engines/sludge/keymapper_tables.h:223 engines/sludge/keymapper_tables.h:343
+#: engines/sludge/keymapper_tables.h:355 engines/sludge/keymapper_tables.h:416
+#: engines/sludge/keymapper_tables.h:429 engines/sludge/keymapper_tables.h:541
+#: engines/supernova/metaengine.cpp:267 engines/tinsel/metaengine.cpp:335
+#: engines/titanic/metaengine.cpp:302 engines/ultima/nuvie/metaengine.cpp:91
+#: engines/zvision/metaengine.cpp:292 engines/zvision/metaengine.cpp:310
 msgid "Quit"
 msgstr "終了"
 
@@ -3257,12 +3278,13 @@ msgstr "実行"
 msgid "Mode change"
 msgstr "モード切替"
 
-#: dists/android.strings.xml.cpp:50
+#: dists/android.strings.xml.cpp:50 engines/titanic/metaengine.cpp:211
 msgid "Shift"
 msgstr "シフト"
 
 #: dists/android.strings.xml.cpp:51 engines/dragons/metaengine.cpp:153
 #: engines/scumm/help.cpp:88 engines/scumm/help.cpp:91
+#: engines/ultima/ultima4/metaengine.cpp:53
 msgid "Enter"
 msgstr "Enter"
 
@@ -3416,7 +3438,7 @@ msgstr "メインメニューに戻る(~R~)"
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:308 engines/toon/toon.cpp:3813
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:636
-#: engines/wage/saveload.cpp:747 engines/zvision/file/save_manager.cpp:48
+#: engines/wage/saveload.cpp:763 engines/zvision/file/save_manager.cpp:46
 msgid "Save game:"
 msgstr "ゲームをセーブ："
 
@@ -3440,8 +3462,8 @@ msgstr "ゲームをセーブ："
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/tinsel/metaengine.cpp:323 engines/toltecs/menu.cpp:308
 #: engines/toon/toon.cpp:3813 engines/trecision/saveload.cpp:67
-#: engines/tsage/scenes.cpp:636 engines/wage/saveload.cpp:747
-#: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:262
+#: engines/tsage/scenes.cpp:636 engines/wage/saveload.cpp:763
+#: engines/zvision/file/save_manager.cpp:46 engines/zvision/metaengine.cpp:282
 msgid "Save"
 msgstr "セーブ"
 
@@ -3578,7 +3600,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "エラー：セーブデータを新規スロットへコピーできませんでした"
 
 #: engines/engine.cpp:687 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:263 engines/mm/xeen/saves.cpp:293
+#: backends/platform/ios7/ios7_osys_main.cpp:260 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:218
 msgid "Autosave"
 msgstr "自動セーブ"
@@ -3660,65 +3682,78 @@ msgstr "未実装のゲーム"
 msgid "Default game keymap"
 msgstr "キーマッピング(デフォルト)"
 
-#: engines/metaengine.cpp:79 backends/platform/maemo/maemo.cpp:161
-#: engines/agos/metaengine.cpp:232 engines/asylum/metaengine.cpp:159
-#: engines/bbvs/metaengine.cpp:99 engines/cge/metaengine.cpp:203
-#: engines/cge2/metaengine.cpp:216 engines/cine/metaengine.cpp:264
-#: engines/composer/metaengine.cpp:113 engines/cruise/metaengine.cpp:147
-#: engines/draci/metaengine.cpp:141 engines/groovie/metaengine.cpp:205
+#: engines/metaengine.cpp:79 engines/agos/metaengine.cpp:232
+#: engines/asylum/metaengine.cpp:159 engines/bbvs/metaengine.cpp:99
+#: engines/cge/metaengine.cpp:203 engines/cge2/metaengine.cpp:216
+#: engines/cine/metaengine.cpp:264 engines/composer/metaengine.cpp:113
+#: engines/cruise/metaengine.cpp:173 engines/draci/metaengine.cpp:141
+#: engines/efh/metaengine.cpp:207 engines/groovie/metaengine.cpp:205
 #: engines/hdb/metaengine.cpp:207 engines/hopkins/metaengine.cpp:211
 #: engines/hugo/metaengine.cpp:97 engines/illusions/metaengine.cpp:94
+#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:502
 #: engines/lure/metaengine.cpp:177 engines/made/metaengine.cpp:107
 #: engines/mads/metaengine.cpp:280 engines/mtropolis/metaengine.cpp:161
-#: engines/parallaction/metaengine.cpp:112 engines/saga/metaengine.cpp:278
-#: engines/stark/metaengine.cpp:189 engines/sword1/metaengine.cpp:271
-#: engines/tinsel/metaengine.cpp:246 engines/toon/metaengine.cpp:86
-#: engines/touche/metaengine.cpp:122 engines/trecision/metaengine.cpp:125
-#: engines/tsage/metaengine.cpp:178 engines/tucker/metaengine.cpp:172
-#: engines/vcruise/metaengine.cpp:158 engines/wintermute/keymapper_tables.h:42
-#: engines/zvision/metaengine.cpp:183
-msgid "Left Click"
+#: engines/nancy/input.cpp:181 engines/parallaction/metaengine.cpp:112
+#: engines/saga/metaengine.cpp:278 engines/sludge/keymapper_tables.h:561
+#: engines/sludge/keymapper_tables.h:580 engines/stark/metaengine.cpp:189
+#: engines/sword1/metaengine.cpp:271 engines/tinsel/metaengine.cpp:246
+#: engines/toon/metaengine.cpp:86 engines/touche/metaengine.cpp:122
+#: engines/trecision/metaengine.cpp:125 engines/tsage/metaengine.cpp:178
+#: engines/tucker/metaengine.cpp:172 engines/ultima/ultima4/metaengine.cpp:224
+#: engines/ultima/nuvie/metaengine.cpp:235
+#: engines/ultima/ultima8/metaengine.cpp:139 engines/vcruise/metaengine.cpp:158
+#: engines/wintermute/keymapper_tables.h:42 engines/zvision/metaengine.cpp:203
+msgid "Left click"
 msgstr "左クリック"
 
-#: engines/metaengine.cpp:85 backends/platform/maemo/maemo.cpp:165
-#: engines/mtropolis/metaengine.cpp:173 engines/saga/metaengine.cpp:284
-#: engines/wintermute/keymapper_tables.h:256
+#: engines/metaengine.cpp:85 engines/mtropolis/metaengine.cpp:173
+#: engines/saga/metaengine.cpp:284 engines/wintermute/keymapper_tables.h:256
 #: engines/wintermute/keymapper_tables.h:300
 #: engines/wintermute/keymapper_tables.h:2166
-msgid "Middle Click"
+msgid "Middle click"
 msgstr "中クリック"
 
-#: engines/metaengine.cpp:90 backends/platform/maemo/maemo.cpp:169
-#: engines/agos/metaengine.cpp:238 engines/asylum/metaengine.cpp:165
-#: engines/bbvs/metaengine.cpp:105 engines/cge/metaengine.cpp:209
-#: engines/cge2/metaengine.cpp:222 engines/cine/metaengine.cpp:270
-#: engines/composer/metaengine.cpp:119 engines/cruise/metaengine.cpp:153
-#: engines/draci/metaengine.cpp:147 engines/groovie/metaengine.cpp:211
+#: engines/metaengine.cpp:90 engines/agos/metaengine.cpp:238
+#: engines/asylum/metaengine.cpp:165 engines/bbvs/metaengine.cpp:105
+#: engines/cge/metaengine.cpp:209 engines/cge2/metaengine.cpp:222
+#: engines/cine/metaengine.cpp:270 engines/composer/metaengine.cpp:119
+#: engines/cruise/metaengine.cpp:179 engines/draci/metaengine.cpp:147
+#: engines/efh/metaengine.cpp:213 engines/groovie/metaengine.cpp:211
 #: engines/hopkins/metaengine.cpp:217 engines/hugo/metaengine.cpp:104
-#: engines/illusions/metaengine.cpp:101 engines/lure/metaengine.cpp:183
+#: engines/illusions/metaengine.cpp:101 engines/kyra/engine/eobcommon.cpp:368
+#: engines/kyra/engine/lol.cpp:503 engines/lure/metaengine.cpp:183
 #: engines/made/metaengine.cpp:114 engines/mads/metaengine.cpp:286
-#: engines/mtropolis/metaengine.cpp:167 engines/parallaction/metaengine.cpp:118
-#: engines/saga/metaengine.cpp:289 engines/stark/metaengine.cpp:195
-#: engines/sword1/metaengine.cpp:277 engines/tinsel/metaengine.cpp:252
-#: engines/toon/metaengine.cpp:92 engines/touche/metaengine.cpp:128
-#: engines/trecision/metaengine.cpp:131 engines/tsage/metaengine.cpp:184
-#: engines/tucker/metaengine.cpp:178 engines/wintermute/keymapper_tables.h:48
-#: engines/zvision/metaengine.cpp:189
-msgid "Right Click"
+#: engines/mtropolis/metaengine.cpp:167 engines/nancy/input.cpp:188
+#: engines/parallaction/metaengine.cpp:118 engines/saga/metaengine.cpp:289
+#: engines/sludge/keymapper_tables.h:567 engines/sludge/keymapper_tables.h:586
+#: engines/stark/metaengine.cpp:195 engines/sword1/metaengine.cpp:277
+#: engines/tinsel/metaengine.cpp:252 engines/toon/metaengine.cpp:92
+#: engines/touche/metaengine.cpp:128 engines/trecision/metaengine.cpp:131
+#: engines/tsage/metaengine.cpp:184 engines/tucker/metaengine.cpp:178
+#: engines/ultima/ultima4/metaengine.cpp:230
+#: engines/ultima/nuvie/metaengine.cpp:241
+#: engines/ultima/ultima8/metaengine.cpp:145
+#: engines/wintermute/keymapper_tables.h:48 engines/zvision/metaengine.cpp:209
+msgid "Right click"
 msgstr "右クリック"
 
 #. I18N: Action in In Cold Blood
 #: engines/metaengine.cpp:96 engines/agos/metaengine.cpp:252
-#: engines/crab/input/input.cpp:261 engines/cruise/metaengine.cpp:191
+#: engines/crab/input/input.cpp:261 engines/cruise/metaengine.cpp:217
 #: engines/grim/grim.cpp:550 engines/hdb/metaengine.cpp:258
 #: engines/icb/icb.cpp:137 engines/icb/icb.cpp:203 engines/mohawk/myst.cpp:595
 #: engines/mohawk/riven.cpp:876 engines/sky/metaengine.cpp:126
+#: engines/sludge/keymapper_tables.h:52 engines/sludge/keymapper_tables.h:125
+#: engines/sludge/keymapper_tables.h:187 engines/sludge/keymapper_tables.h:243
+#: engines/sludge/keymapper_tables.h:262 engines/sludge/keymapper_tables.h:459
+#: engines/sludge/keymapper_tables.h:490 engines/supernova/metaengine.cpp:262
 #: engines/tucker/metaengine.cpp:184 engines/twine/metaengine.cpp:223
 #: engines/wintermute/keymapper_tables.h:1608
 msgid "Pause"
 msgstr "一時停止"
 
 #: engines/metaengine.cpp:102 engines/parallaction/metaengine.cpp:137
+#: engines/ultima/ultima8/metaengine.cpp:48
 msgid "Game menu"
 msgstr "ゲームメニュー"
 
@@ -3738,6 +3773,7 @@ msgid "Skip"
 msgstr "スキップ"
 
 #: engines/metaengine.cpp:116 engines/sky/metaengine.cpp:121
+#: engines/supernova/metaengine.cpp:315
 msgid "Skip line"
 msgstr "行単位でスキップ"
 
@@ -3746,7 +3782,7 @@ msgid "Predictive input dialog"
 msgstr "予測変換"
 
 #. I18N: This keymap works within the KIA Save Game screen
-#. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
+#. and allows confirming popup dialog prompts (eg. for save game deletion or overwriting)
 #. and also submitting a new save game name, or choosing an existing save game for overwriting.
 #: engines/metaengine.cpp:128 engines/bladerunner/metaengine.cpp:273
 #: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:539
@@ -4011,17 +4047,17 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "タッチパネル(タップモード) - ホバー(十字キー)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:802
-#: backends/fs/android/android-saf-fs.cpp:806
+#: backends/fs/android/android-saf-fs.cpp:804
+#: backends/fs/android/android-saf-fs.cpp:808
 msgid "Add a new folder"
 msgstr "新規フォルダー作成"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:918
+#: backends/fs/android/android-saf-fs.cpp:924
 msgid "Choose a new folder"
 msgstr "新規フォルダー選択"
 
-#: backends/graphics/atari/atari-graphics.cpp:1065
+#: backends/graphics/atari/atari-graphics.cpp:1059
 #: backends/graphics/sdl/sdl-graphics.cpp:515
 msgid "Toggle aspect ratio correction"
 msgstr "縦横比修正の切替"
@@ -4227,11 +4263,11 @@ msgstr "左スティック"
 msgid "Right Stick"
 msgstr "右スティック"
 
-#: backends/keymapper/hardware-input.cpp:264 engines/dragons/metaengine.cpp:207
+#: backends/keymapper/hardware-input.cpp:264
 msgid "Left Shoulder"
 msgstr "LBボタン"
 
-#: backends/keymapper/hardware-input.cpp:265 engines/dragons/metaengine.cpp:213
+#: backends/keymapper/hardware-input.cpp:265
 msgid "Right Shoulder"
 msgstr "RBボタン"
 
@@ -4241,7 +4277,7 @@ msgstr "RBボタン"
 #: backends/platform/sdl/miyoo/miyoo.cpp:74
 #: backends/platform/sdl/miyoo/miyoo.cpp:101
 #: backends/platform/sdl/opendingux/opendingux.cpp:64
-#: backends/platform/sdl/ps3/ps3.cpp:51 backends/platform/sdl/psp2/psp2.cpp:51
+#: backends/platform/sdl/ps3/ps3.cpp:51 backends/platform/sdl/psp2/psp2.cpp:50
 #: backends/platform/sdl/switch/switch.cpp:48
 msgid "D-pad Up"
 msgstr "十字キー(上)"
@@ -4252,7 +4288,7 @@ msgstr "十字キー(上)"
 #: backends/platform/sdl/miyoo/miyoo.cpp:75
 #: backends/platform/sdl/miyoo/miyoo.cpp:102
 #: backends/platform/sdl/opendingux/opendingux.cpp:65
-#: backends/platform/sdl/ps3/ps3.cpp:52 backends/platform/sdl/psp2/psp2.cpp:52
+#: backends/platform/sdl/ps3/ps3.cpp:52 backends/platform/sdl/psp2/psp2.cpp:51
 #: backends/platform/sdl/switch/switch.cpp:49
 msgid "D-pad Down"
 msgstr "十字キー(下)"
@@ -4263,7 +4299,7 @@ msgstr "十字キー(下)"
 #: backends/platform/sdl/miyoo/miyoo.cpp:76
 #: backends/platform/sdl/miyoo/miyoo.cpp:103
 #: backends/platform/sdl/opendingux/opendingux.cpp:66
-#: backends/platform/sdl/ps3/ps3.cpp:53 backends/platform/sdl/psp2/psp2.cpp:53
+#: backends/platform/sdl/ps3/ps3.cpp:53 backends/platform/sdl/psp2/psp2.cpp:52
 #: backends/platform/sdl/switch/switch.cpp:50
 msgid "D-pad Left"
 msgstr "十字キー(左)"
@@ -4274,7 +4310,7 @@ msgstr "十字キー(左)"
 #: backends/platform/sdl/miyoo/miyoo.cpp:77
 #: backends/platform/sdl/miyoo/miyoo.cpp:104
 #: backends/platform/sdl/opendingux/opendingux.cpp:67
-#: backends/platform/sdl/ps3/ps3.cpp:54 backends/platform/sdl/psp2/psp2.cpp:54
+#: backends/platform/sdl/ps3/ps3.cpp:54 backends/platform/sdl/psp2/psp2.cpp:53
 #: backends/platform/sdl/switch/switch.cpp:51
 msgid "D-pad Right"
 msgstr "十字キー(右)"
@@ -4293,26 +4329,26 @@ msgstr "右トリガー"
 
 #: backends/keymapper/hardware-input.cpp:277
 #: backends/platform/sdl/opendingux/opendingux.cpp:78
-#: backends/platform/sdl/ps3/ps3.cpp:61 backends/platform/sdl/psp2/psp2.cpp:59
+#: backends/platform/sdl/ps3/ps3.cpp:61 backends/platform/sdl/psp2/psp2.cpp:58
 #: backends/platform/sdl/switch/switch.cpp:58
 msgid "Left Stick X"
 msgstr "左スティック横"
 
 #: backends/keymapper/hardware-input.cpp:278
 #: backends/platform/sdl/opendingux/opendingux.cpp:79
-#: backends/platform/sdl/ps3/ps3.cpp:62 backends/platform/sdl/psp2/psp2.cpp:60
+#: backends/platform/sdl/ps3/ps3.cpp:62 backends/platform/sdl/psp2/psp2.cpp:59
 #: backends/platform/sdl/switch/switch.cpp:59
 msgid "Left Stick Y"
 msgstr "左スティック縦"
 
 #: backends/keymapper/hardware-input.cpp:279
-#: backends/platform/sdl/ps3/ps3.cpp:63 backends/platform/sdl/psp2/psp2.cpp:61
+#: backends/platform/sdl/ps3/ps3.cpp:63 backends/platform/sdl/psp2/psp2.cpp:60
 #: backends/platform/sdl/switch/switch.cpp:60
 msgid "Right Stick X"
 msgstr "右スティック横"
 
 #: backends/keymapper/hardware-input.cpp:280
-#: backends/platform/sdl/ps3/ps3.cpp:64 backends/platform/sdl/psp2/psp2.cpp:62
+#: backends/platform/sdl/ps3/ps3.cpp:64 backends/platform/sdl/psp2/psp2.cpp:61
 #: backends/platform/sdl/switch/switch.cpp:61
 msgid "Right Stick Y"
 msgstr "右スティック縦"
@@ -4599,9 +4635,10 @@ msgstr "Y"
 #: backends/platform/sdl/miyoo/miyoo.cpp:67
 #: backends/platform/sdl/miyoo/miyoo.cpp:94
 #: backends/platform/sdl/opendingux/opendingux.cpp:57
-#: backends/platform/sdl/ps3/ps3.cpp:44 backends/platform/sdl/psp2/psp2.cpp:47
+#: backends/platform/sdl/ps3/ps3.cpp:44 backends/platform/sdl/psp2/psp2.cpp:46
 #: engines/got/metaengine.cpp:61 engines/mm/mm1/metaengine.cpp:49
-#: engines/mm/mm1/metaengine.cpp:92
+#: engines/mm/mm1/metaengine.cpp:92 engines/supernova/metaengine.cpp:303
+#: engines/titanic/metaengine.cpp:233
 msgid "Select"
 msgstr "セレクト"
 
@@ -4611,7 +4648,8 @@ msgstr "セレクト"
 #: backends/platform/sdl/miyoo/miyoo.cpp:69
 #: backends/platform/sdl/miyoo/miyoo.cpp:96
 #: backends/platform/sdl/opendingux/opendingux.cpp:59
-#: backends/platform/sdl/ps3/ps3.cpp:46 backends/platform/sdl/psp2/psp2.cpp:48
+#: backends/platform/sdl/ps3/ps3.cpp:46 backends/platform/sdl/psp2/psp2.cpp:47
+#: engines/sludge/keymapper_tables.h:349
 msgid "Start"
 msgstr "スタート"
 
@@ -4631,7 +4669,7 @@ msgstr "ZR"
 #: backends/platform/sdl/miyoo/miyoo.cpp:71
 #: backends/platform/sdl/miyoo/miyoo.cpp:98
 #: backends/platform/sdl/opendingux/opendingux.cpp:61
-#: backends/platform/sdl/psp2/psp2.cpp:49
+#: backends/platform/sdl/psp2/psp2.cpp:48
 #: backends/platform/sdl/switch/switch.cpp:46
 msgid "L"
 msgstr "L"
@@ -4642,7 +4680,7 @@ msgstr "L"
 #: backends/platform/sdl/miyoo/miyoo.cpp:73
 #: backends/platform/sdl/miyoo/miyoo.cpp:100
 #: backends/platform/sdl/opendingux/opendingux.cpp:63
-#: backends/platform/sdl/psp2/psp2.cpp:50
+#: backends/platform/sdl/psp2/psp2.cpp:49
 #: backends/platform/sdl/switch/switch.cpp:47
 msgid "R"
 msgstr "R"
@@ -4724,12 +4762,12 @@ msgstr "拡大モードOFF。ドラッグモードを有効にしています...
 msgid "Magnify Mode Off"
 msgstr "拡大モードOFF"
 
-#: backends/platform/android/android.cpp:1059
+#: backends/platform/android/android.cpp:1065
 #: backends/platform/ios7/ios7_osys_misc.mm:249
 msgid "Getting help"
 msgstr "ヘルプを得る"
 
-#: backends/platform/android/android.cpp:1062
+#: backends/platform/android/android.cpp:1068
 msgid ""
 "## Help, I'm lost!\n"
 "\n"
@@ -4751,13 +4789,13 @@ msgid ""
 "checking out a game walkthrough. Good luck!\n"
 msgstr ""
 
-#: backends/platform/android/android.cpp:1071
+#: backends/platform/android/android.cpp:1077
 #: backends/platform/ios7/ios7_osys_misc.mm:261
 #: backends/platform/ios7/ios7_osys_misc.mm:357
 msgid "Touch Controls"
 msgstr "タッチ操作"
 
-#: backends/platform/android/android.cpp:1074
+#: backends/platform/android/android.cpp:1080
 msgid ""
 "## Touch control modes\n"
 "The touch control mode can be changed by tapping or clicking on the "
@@ -4886,13 +4924,13 @@ msgstr ""
 "  ![Keyboard icon](keyboard.png \"Keyboard icon\"){w=10em}\n"
 "\n"
 
-#: backends/platform/android/android.cpp:1130
+#: backends/platform/android/android.cpp:1136
 #: backends/platform/ios7/ios7_osys_misc.mm:336
 #: backends/platform/ios7/ios7_osys_misc.mm:380
 msgid "Adding Games"
 msgstr "ゲームを追加"
 
-#: backends/platform/android/android.cpp:1133
+#: backends/platform/android/android.cpp:1139
 msgid ""
 "## Adding Games \n"
 "\n"
@@ -5076,11 +5114,11 @@ msgstr "バックアップ先を選択"
 
 #: backends/platform/android/options.cpp:276
 msgid "The backup has been saved successfully."
-msgstr ""
+msgstr "バックアップは正常に完了しました。"
 
 #: backends/platform/android/options.cpp:278
 msgid "The backup has been saved successfully to the Downloads folder."
-msgstr ""
+msgstr "バックアップがダウンロードフォルダーに保存されました。"
 
 #: backends/platform/android/options.cpp:280
 #: backends/platform/android/options.cpp:313
@@ -5100,6 +5138,8 @@ msgid ""
 "Restoring a backup will erase the current configuration and overwrite "
 "existing saves. Do you want to proceed?"
 msgstr ""
+"バックアップを復元すると、現在の設定は削除され、既存のデータが上書きされま"
+"す。続行しますか?"
 
 #: backends/platform/android/options.cpp:294
 #, fuzzy
@@ -5109,7 +5149,7 @@ msgstr "テーマを選ぶ"
 
 #: backends/platform/android/options.cpp:311
 msgid "The backup has been restored successfully."
-msgstr ""
+msgstr "バックアップが正常に復元されました。"
 
 #: backends/platform/android/options.cpp:315
 #, fuzzy
@@ -5546,6 +5586,18 @@ msgstr ""
 msgid "Click Mode"
 msgstr "クリックモード"
 
+#: backends/platform/maemo/maemo.cpp:161
+msgid "Left Click"
+msgstr "左クリック"
+
+#: backends/platform/maemo/maemo.cpp:165
+msgid "Middle Click"
+msgstr "中クリック"
+
+#: backends/platform/maemo/maemo.cpp:169
+msgid "Right Click"
+msgstr "右クリック"
+
 #: backends/platform/sdl/sdl.cpp:1140
 msgid "Keyboard"
 msgstr "キーボード"
@@ -5653,8 +5705,8 @@ msgstr "最小化"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ONLINE HELP
 #: backends/platform/sdl/macosx/appmenu_osx.mm:312
-#: engines/bladerunner/metaengine.cpp:321 engines/tucker/metaengine.cpp:215
-#: engines/zvision/metaengine.cpp:226
+#: engines/bladerunner/metaengine.cpp:321 engines/supernova/metaengine.cpp:238
+#: engines/tucker/metaengine.cpp:215 engines/zvision/metaengine.cpp:246
 msgid "Help"
 msgstr "ヘルプ"
 
@@ -5771,17 +5823,17 @@ msgstr "L3"
 msgid "R3"
 msgstr "R3"
 
-#: backends/platform/sdl/ps3/ps3.cpp:40 backends/platform/sdl/psp2/psp2.cpp:43
+#: backends/platform/sdl/ps3/ps3.cpp:40 backends/platform/sdl/psp2/psp2.cpp:42
 #: engines/dragons/metaengine.cpp:201
 msgid "Cross"
 msgstr "×"
 
-#: backends/platform/sdl/ps3/ps3.cpp:41 backends/platform/sdl/psp2/psp2.cpp:44
+#: backends/platform/sdl/ps3/ps3.cpp:41 backends/platform/sdl/psp2/psp2.cpp:43
 #: engines/dragons/metaengine.cpp:195
 msgid "Circle"
 msgstr "○"
 
-#: backends/platform/sdl/ps3/ps3.cpp:42 backends/platform/sdl/psp2/psp2.cpp:45
+#: backends/platform/sdl/ps3/ps3.cpp:42 backends/platform/sdl/psp2/psp2.cpp:44
 #: engines/dragons/metaengine.cpp:183
 msgid "Square"
 msgstr "□"
@@ -5943,16 +5995,16 @@ msgstr "アップデートを確認中..."
 #: engines/access/resources.cpp:43 engines/drascula/drascula.cpp:959
 #: engines/hugo/hugo.cpp:427 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:300 engines/sky/compact.cpp:129
-#: engines/supernova/supernova.cpp:463 engines/teenagent/resources.cpp:97
+#: engines/supernova/supernova.cpp:467 engines/teenagent/resources.cpp:97
 #: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5418
-#: engines/ultima/ultima8/ultima8.cpp:191
+#: engines/ultima/ultima8/ultima8.cpp:193
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "%sエンジンのデータファイルが見つかりません。"
 
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:975
 #: engines/hugo/hugo.cpp:439 engines/lure/lure.cpp:66
-#: engines/mortevielle/mortevielle.cpp:308 engines/supernova/supernova.cpp:468
+#: engines/mortevielle/mortevielle.cpp:308 engines/supernova/supernova.cpp:472
 #: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5431
 #, c-format
 msgid "The '%s' engine data file is corrupt."
@@ -6034,7 +6086,7 @@ msgstr ""
 #: engines/neverhood/dialogs.cpp:47 engines/sci/detection_options.h:107
 #: engines/sherlock/metaengine.cpp:39 engines/toltecs/metaengine.cpp:44
 #: engines/trecision/metaengine.cpp:41 engines/ultima/metaengine.cpp:52
-#: engines/zvision/metaengine.cpp:46
+#: engines/zvision/metaengine.cpp:42
 msgid "Use original save/load screens"
 msgstr "オリジナルのセーブ/ロード画面を使用する"
 
@@ -6047,7 +6099,7 @@ msgstr "オリジナルのセーブ/ロード画面を使用する"
 #: engines/neverhood/dialogs.cpp:48 engines/sci/detection_options.h:108
 #: engines/sherlock/metaengine.cpp:40 engines/toltecs/metaengine.cpp:45
 #: engines/trecision/metaengine.cpp:42 engines/ultima/metaengine.cpp:53
-#: engines/zvision/metaengine.cpp:47
+#: engines/zvision/metaengine.cpp:43
 msgid "Use the original save/load screens instead of the ScummVM ones"
 msgstr "ScummVMの代わりに、オリジナルのセーブ/ロード画面を使用する"
 
@@ -6115,30 +6167,43 @@ msgid "Add game speed menu (similar to PC version)"
 msgstr "ゲームスピードメニューを追加(PC版と同様)"
 
 #: engines/agi/metaengine.cpp:195 engines/agos/metaengine.cpp:44
-#: engines/awe/metaengine.cpp:35 engines/dreamweb/metaengine.cpp:36
-#: engines/gob/metaengine.cpp:42 engines/lure/metaengine.cpp:41
-#: engines/mads/metaengine.cpp:51 engines/mm/metaengine.cpp:46
-#: engines/saga/metaengine.cpp:52 engines/scumm/dialogs.cpp:1202
-#: engines/scumm/metaengine.cpp:821
+#: engines/dreamweb/metaengine.cpp:36 engines/gob/metaengine.cpp:42
+#: engines/lure/metaengine.cpp:41 engines/mads/metaengine.cpp:51
+#: engines/mm/metaengine.cpp:46 engines/saga/metaengine.cpp:52
+#: engines/scumm/dialogs.cpp:1202 engines/scumm/metaengine.cpp:821
 msgid "Enable copy protection"
 msgstr "コピープロテクト有効化"
 
 #: engines/agi/metaengine.cpp:196 engines/agos/metaengine.cpp:45
-#: engines/awe/metaengine.cpp:36 engines/dreamweb/metaengine.cpp:37
-#: engines/gob/metaengine.cpp:43 engines/lure/metaengine.cpp:42
-#: engines/mads/metaengine.cpp:52 engines/mm/metaengine.cpp:47
-#: engines/saga/metaengine.cpp:53 engines/scumm/dialogs.cpp:1203
-#: engines/scumm/metaengine.cpp:822
+#: engines/dreamweb/metaengine.cpp:37 engines/gob/metaengine.cpp:43
+#: engines/lure/metaengine.cpp:42 engines/mads/metaengine.cpp:52
+#: engines/mm/metaengine.cpp:47 engines/saga/metaengine.cpp:53
+#: engines/scumm/dialogs.cpp:1203 engines/scumm/metaengine.cpp:822
 msgid "Enable any copy protection that would otherwise be bypassed by default."
 msgstr "デフォルトではバイパスされるコピープロテクトを有効化します。"
 
-#: engines/agi/metaengine.cpp:421 engines/asylum/asylum.cpp:655
+#: engines/agi/metaengine.cpp:207
+msgid "Use PCjr's sound chip in 16-bit shift mode"
+msgstr "PCjrの音源チップを16ビットシフトで使用"
+
+#: engines/agi/metaengine.cpp:208
+msgid ""
+"In PCjr sound mode, emulate a non-standard SN76496 sound chip, similar to "
+"chips found in SEGA Master System consoles. Allows certain music effects, "
+"especially in fanmade games, but original Sierra music designed strictly for "
+"PCjr may sound wrong."
+msgstr ""
+"PCjrのサウンドモードでは、SEGA Master Systemと類似したSN76496クローンをエミュ"
+"レートできます。同人ゲームなどで特定の効果を再現しますが、PCjr専用に設計され"
+"たオリジナルのSierra音楽は正しく再生されない場合があります。"
+
+#: engines/agi/metaengine.cpp:433 engines/asylum/asylum.cpp:655
 #: engines/buried/saveload.cpp:53 engines/mohawk/riven.cpp:759
 #: engines/petka/saveload.cpp:121
 msgid "This game does not support loading"
 msgstr "このゲームはロード非対応です"
 
-#: engines/agi/metaengine.cpp:444 engines/asylum/asylum.cpp:666
+#: engines/agi/metaengine.cpp:456 engines/asylum/asylum.cpp:666
 #: engines/buried/saveload.cpp:64 engines/mohawk/riven.cpp:774
 #: engines/petka/saveload.cpp:101
 msgid "This game does not support saving"
@@ -6159,7 +6224,7 @@ msgstr "このゲームはセーブ非対応です"
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1261
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:278 engines/toon/toon.cpp:3907
-#: engines/zvision/file/save_manager.cpp:61
+#: engines/zvision/file/save_manager.cpp:59
 msgid "Restore game:"
 msgstr "ゲームを復元する:"
 
@@ -6179,7 +6244,7 @@ msgstr "ゲームを復元する:"
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1261
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:278 engines/toon/toon.cpp:3907
-#: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:267
+#: engines/zvision/file/save_manager.cpp:59 engines/zvision/metaengine.cpp:287
 msgid "Restore"
 msgstr "復元"
 
@@ -6279,15 +6344,16 @@ msgid "AGOS main"
 msgstr "AGOSメイン"
 
 #: engines/agos/metaengine.cpp:228 engines/bbvs/metaengine.cpp:93
-#: engines/cine/metaengine.cpp:258 engines/cruise/metaengine.cpp:143
+#: engines/cine/metaengine.cpp:258 engines/cruise/metaengine.cpp:169
 #: engines/draci/metaengine.cpp:137 engines/efh/metaengine.cpp:203
 #: engines/hopkins/metaengine.cpp:207 engines/hugo/metaengine.cpp:93
 #: engines/illusions/metaengine.cpp:90 engines/lure/metaengine.cpp:169
 #: engines/made/metaengine.cpp:103 engines/mads/metaengine.cpp:275
-#: engines/stark/metaengine.cpp:185 engines/sword1/metaengine.cpp:267
-#: engines/tinsel/metaengine.cpp:241 engines/toon/metaengine.cpp:82
-#: engines/touche/metaengine.cpp:119 engines/trecision/metaengine.cpp:121
-#: engines/tsage/metaengine.cpp:170 engines/tucker/metaengine.cpp:168
+#: engines/sludge/keymapper_tables.h:33 engines/stark/metaengine.cpp:185
+#: engines/sword1/metaengine.cpp:267 engines/tinsel/metaengine.cpp:241
+#: engines/toon/metaengine.cpp:82 engines/touche/metaengine.cpp:119
+#: engines/trecision/metaengine.cpp:121 engines/tsage/metaengine.cpp:170
+#: engines/tucker/metaengine.cpp:168
 msgid "Game keymappings"
 msgstr "ゲームのキーマップ"
 
@@ -6308,15 +6374,21 @@ msgid "Music volume up"
 msgstr "BGMの音量アップ"
 
 #: engines/agos/metaengine.cpp:268 engines/vcruise/metaengine.cpp:201
-msgid "Toggle music on/off"
+#, fuzzy
+#| msgid "Toggle music on/off"
+msgid "Toggle music on / off"
 msgstr "BGM ON/OFFの切替"
 
 #: engines/agos/metaengine.cpp:273 engines/vcruise/metaengine.cpp:206
-msgid "Toggle sound effects on/off"
+#, fuzzy
+#| msgid "Toggle sound effects on/off"
+msgid "Toggle sound effects on / off"
 msgstr "SE ON/OFFの切替"
 
 #: engines/agos/metaengine.cpp:278 engines/sky/metaengine.cpp:131
-msgid "Toggle fast mode on/off"
+#, fuzzy
+#| msgid "Toggle fast mode on/off"
+msgid "Toggle fast mode on / off"
 msgstr "高速モードの切り替え"
 
 #: engines/agos/metaengine.cpp:290
@@ -6327,19 +6399,27 @@ msgstr "前に歩く"
 msgid "Turn backward"
 msgstr "後退"
 
-#: engines/agos/metaengine.cpp:302 engines/mohawk/riven.cpp:901
+#: engines/agos/metaengine.cpp:302 engines/kyra/engine/eobcommon.cpp:373
+#: engines/kyra/engine/lol.cpp:514 engines/mm/mm1/metaengine.cpp:97
+#: engines/mohawk/riven.cpp:901 engines/pegasus/pegasus.cpp:2740
+#: engines/twine/metaengine.cpp:353 engines/ultima/ultima8/metaengine.cpp:49
 #: engines/wintermute/keymapper_tables.h:161
 #: engines/wintermute/keymapper_tables.h:741
 #: engines/wintermute/keymapper_tables.h:2122
 #: engines/wintermute/keymapper_tables.h:2223
+#: engines/zvision/metaengine.cpp:229
 msgid "Turn left"
 msgstr "左へ"
 
-#: engines/agos/metaengine.cpp:308 engines/mohawk/riven.cpp:907
+#: engines/agos/metaengine.cpp:308 engines/kyra/engine/eobcommon.cpp:374
+#: engines/kyra/engine/lol.cpp:515 engines/mm/mm1/metaengine.cpp:98
+#: engines/mohawk/riven.cpp:907 engines/pegasus/pegasus.cpp:2747
+#: engines/twine/metaengine.cpp:346 engines/ultima/ultima8/metaengine.cpp:50
 #: engines/wintermute/keymapper_tables.h:167
 #: engines/wintermute/keymapper_tables.h:746
 #: engines/wintermute/keymapper_tables.h:2128
 #: engines/wintermute/keymapper_tables.h:2230
+#: engines/zvision/metaengine.cpp:235
 msgid "Turn right"
 msgstr "右へ"
 
@@ -6366,7 +6446,9 @@ msgid "Show objects to interact"
 msgstr "相互作用オブジェクトの表示"
 
 #: engines/agos/metaengine.cpp:346
-msgid "Toggle background sounds on/off"
+#, fuzzy
+#| msgid "Toggle background sounds on/off"
+msgid "Toggle background sounds on / off"
 msgstr "環境音 ON/OFFの切替"
 
 #. I18N: Characters are game actors
@@ -6375,7 +6457,9 @@ msgid "Switch characters"
 msgstr "キャラを切り替え"
 
 #: engines/agos/metaengine.cpp:361
-msgid "Toggle hitbox names on/off"
+#, fuzzy
+#| msgid "Toggle hitbox names on/off"
+msgid "Toggle hitbox names on / off"
 msgstr "判定名 ON/OFFの切替"
 
 #: engines/agos/metaengine.cpp:368
@@ -6522,7 +6606,7 @@ msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr "ゲームが要求していない場合でも、テキストにアンチエイリアシングを使用"
 
 #: engines/ags/dialogs.cpp:85 engines/grim/metaengine.cpp:48
-#: engines/zvision/metaengine.cpp:221
+#: engines/zvision/metaengine.cpp:241
 msgid "Show FPS"
 msgstr "FPSを表示"
 
@@ -6544,23 +6628,34 @@ msgstr ""
 
 #: engines/alg/metaengine.cpp:34
 msgid "Use lower quality single speed CD-ROM video"
-msgstr ""
+msgstr "低品質な単一速度のCD-ROMビデオを使用"
 
 #: engines/alg/metaengine.cpp:35
 msgid ""
 "These videos are of lower quality, the default version uses double speed CD-"
 "ROM videos which are of better quality"
 msgstr ""
+"これらの動画は低画質です。デフォルトのバージョンでは、より高画質な2倍速CD-ROM"
+"動画が使用されます"
 
 #: engines/asylum/metaengine.cpp:115
 msgid "Show version"
 msgstr "バージョンを表示"
 
-#: engines/asylum/metaengine.cpp:120 engines/wintermute/keymapper_tables.h:950
+#: engines/asylum/metaengine.cpp:120 engines/crab/input/input.cpp:271
+#: engines/sludge/keymapper_tables.h:308 engines/sludge/keymapper_tables.h:404
+#: engines/sludge/keymapper_tables.h:471 engines/sludge/keymapper_tables.h:502
+#: engines/ultima/nuvie/metaengine.cpp:90
+#: engines/wintermute/keymapper_tables.h:950
 msgid "Quick load"
 msgstr "クイックロード"
 
-#: engines/asylum/metaengine.cpp:125 engines/wintermute/keymapper_tables.h:930
+#: engines/asylum/metaengine.cpp:125 engines/crab/input/input.cpp:266
+#: engines/sludge/keymapper_tables.h:64 engines/sludge/keymapper_tables.h:303
+#: engines/sludge/keymapper_tables.h:410 engines/sludge/keymapper_tables.h:465
+#: engines/sludge/keymapper_tables.h:496 engines/ultima/nuvie/metaengine.cpp:89
+#: engines/ultima/ultima8/metaengine.cpp:44
+#: engines/wintermute/keymapper_tables.h:930
 msgid "Quick save"
 msgstr "クイックセーブ"
 
@@ -6588,7 +6683,8 @@ msgstr "キャラインベントリーを開く"
 #: engines/asylum/metaengine.cpp:171 engines/asylum/metaengine.cpp:198
 #: engines/cine/metaengine.cpp:364 engines/efh/metaengine.cpp:231
 #: engines/hdb/metaengine.cpp:213 engines/nancy/input.cpp:195
-#: engines/tinsel/metaengine.cpp:263
+#: engines/tinsel/metaengine.cpp:263 engines/titanic/metaengine.cpp:324
+#: engines/ultima/ultima8/metaengine.cpp:53
 msgid "Move up"
 msgstr "上"
 
@@ -6596,7 +6692,8 @@ msgstr "上"
 #: engines/asylum/metaengine.cpp:177 engines/asylum/metaengine.cpp:205
 #: engines/cine/metaengine.cpp:371 engines/efh/metaengine.cpp:237
 #: engines/hdb/metaengine.cpp:219 engines/nancy/input.cpp:201
-#: engines/tinsel/metaengine.cpp:269
+#: engines/tinsel/metaengine.cpp:269 engines/titanic/metaengine.cpp:330
+#: engines/ultima/ultima8/metaengine.cpp:54
 msgid "Move down"
 msgstr "下"
 
@@ -6604,8 +6701,10 @@ msgstr "下"
 #. I18N: Move actor left during fight
 #: engines/asylum/metaengine.cpp:183 engines/asylum/metaengine.cpp:212
 #: engines/cine/metaengine.cpp:378 engines/efh/metaengine.cpp:243
-#: engines/hdb/metaengine.cpp:225 engines/lure/metaengine.cpp:218
-#: engines/nancy/input.cpp:207 engines/tinsel/metaengine.cpp:275
+#: engines/hdb/metaengine.cpp:225 engines/kyra/engine/eobcommon.cpp:371
+#: engines/lure/metaengine.cpp:218 engines/nancy/input.cpp:207
+#: engines/tinsel/metaengine.cpp:275 engines/titanic/metaengine.cpp:312
+#: engines/titanic/metaengine.cpp:390 engines/ultima/ultima8/metaengine.cpp:55
 msgid "Move left"
 msgstr "左に行く"
 
@@ -6613,13 +6712,17 @@ msgstr "左に行く"
 #. I18N: Move actor right during fight
 #: engines/asylum/metaengine.cpp:189 engines/asylum/metaengine.cpp:219
 #: engines/cine/metaengine.cpp:385 engines/efh/metaengine.cpp:249
-#: engines/hdb/metaengine.cpp:231 engines/lure/metaengine.cpp:226
-#: engines/nancy/input.cpp:213 engines/tinsel/metaengine.cpp:281
+#: engines/hdb/metaengine.cpp:231 engines/kyra/engine/eobcommon.cpp:372
+#: engines/lure/metaengine.cpp:226 engines/nancy/input.cpp:213
+#: engines/tinsel/metaengine.cpp:281 engines/titanic/metaengine.cpp:318
+#: engines/titanic/metaengine.cpp:396 engines/ultima/ultima8/metaengine.cpp:56
 msgid "Move right"
 msgstr "右に行く"
 
 #: engines/asylum/metaengine.cpp:226
-msgid "Toggle animation on/off"
+#, fuzzy
+#| msgid "Toggle animation on/off"
+msgid "Toggle animation on / off"
 msgstr "アニメ ON/OFFの切替"
 
 #: engines/asylum/metaengine.cpp:232
@@ -6658,9 +6761,22 @@ msgstr "警告: 旧バージョンのセーブをロードしようとしてい�
 msgid "Load anyway"
 msgstr "とにかくロードする"
 
+#: engines/awe/metaengine.cpp:35
+msgid "Enable title and copy protection screens (if present)"
+msgstr ""
+
+#: engines/awe/metaengine.cpp:36
+#, fuzzy
+#| msgid ""
+#| "Enable any copy protection that would otherwise be bypassed by default."
+msgid ""
+"Displays title and copy protection screens that would otherwise be bypassed "
+"by default."
+msgstr "デフォルトではバイパスされるコピープロテクトを有効化します。"
+
 #: engines/awe/metaengine.cpp:61
 msgid "Select/Kick/Run"
-msgstr ""
+msgstr "選択/キック/走る"
 
 #: engines/awe/metaengine.cpp:62 engines/hpl1/metaengine.cpp:83
 msgid "Jump"
@@ -6668,7 +6784,7 @@ msgstr "ジャンプ"
 
 #: engines/awe/metaengine.cpp:63
 msgid "Enter Level Code"
-msgstr ""
+msgstr "レベルを入力"
 
 #: engines/awe/metaengine.cpp:88 engines/dgds/metaengine.cpp:87
 #: engines/got/metaengine.cpp:90
@@ -6690,15 +6806,16 @@ msgid "General Keys"
 msgstr "キー全般"
 
 #: engines/bbvs/metaengine.cpp:92 engines/cine/metaengine.cpp:257
-#: engines/cruise/metaengine.cpp:142 engines/draci/metaengine.cpp:136
+#: engines/cruise/metaengine.cpp:168 engines/draci/metaengine.cpp:136
 #: engines/hopkins/metaengine.cpp:206 engines/hugo/metaengine.cpp:92
 #: engines/illusions/metaengine.cpp:89 engines/lure/metaengine.cpp:168
 #: engines/made/metaengine.cpp:102 engines/mads/metaengine.cpp:274
 #: engines/playground3d/metaengine.cpp:51 engines/stark/metaengine.cpp:184
-#: engines/sword1/metaengine.cpp:266 engines/tinsel/metaengine.cpp:240
+#: engines/supernova/metaengine.cpp:217 engines/sword1/metaengine.cpp:266
+#: engines/tinsel/metaengine.cpp:240 engines/titanic/metaengine.cpp:172
 #: engines/toltecs/metaengine.cpp:212 engines/toon/metaengine.cpp:81
 #: engines/trecision/metaengine.cpp:120 engines/tsage/metaengine.cpp:169
-#: engines/tucker/metaengine.cpp:167
+#: engines/tucker/metaengine.cpp:167 engines/voyeur/metaengine.cpp:184
 msgid "Default keymappings"
 msgstr "デフォルトのキーマップ"
 
@@ -6708,7 +6825,7 @@ msgid "Escape keymappings"
 msgstr "キーマッピング終了"
 
 #. I18N: ESC key
-#: engines/bbvs/metaengine.cpp:111 engines/cruise/metaengine.cpp:197
+#: engines/bbvs/metaengine.cpp:111 engines/cruise/metaengine.cpp:223
 #: engines/freescape/movement.cpp:101 engines/got/metaengine.cpp:63
 #: engines/hugo/metaengine.cpp:160 engines/lure/metaengine.cpp:209
 #: engines/mads/metaengine.cpp:292 engines/mm/mm1/metaengine.cpp:41
@@ -6726,12 +6843,15 @@ msgstr "インベントリーを開く"
 
 #: engines/bbvs/metaengine.cpp:124 engines/dgds/metaengine.cpp:83
 #: engines/scumm/help.cpp:167 engines/scumm/help.cpp:231
-#: engines/tinsel/metaengine.cpp:300 engines/tsage/metaengine.cpp:206
+#: engines/supernova/metaengine.cpp:326 engines/tinsel/metaengine.cpp:300
+#: engines/tsage/metaengine.cpp:206 engines/ultima/nuvie/metaengine.cpp:67
 msgid "Look"
 msgstr "見る"
 
 #: engines/bbvs/metaengine.cpp:130 engines/scumm/help.cpp:174
-#: engines/scumm/help.cpp:226 engines/tsage/metaengine.cpp:216
+#: engines/scumm/help.cpp:226 engines/supernova/metaengine.cpp:361
+#: engines/tsage/metaengine.cpp:216 engines/ultima/ultima4/metaengine.cpp:70
+#: engines/ultima/nuvie/metaengine.cpp:68
 msgid "Talk"
 msgstr "話す"
 
@@ -6742,8 +6862,11 @@ msgstr "話す"
 #: engines/scumm/help.cpp:153 engines/scumm/help.cpp:171
 #: engines/scumm/help.cpp:201 engines/scumm/help.cpp:216
 #: engines/scumm/help.cpp:227 engines/scumm/help.cpp:253
-#: engines/sky/metaengine.cpp:95 engines/tsage/metaengine.cpp:211
-#: engines/twp/metaengine.cpp:186 engines/wintermute/keymapper_tables.h:140
+#: engines/sky/metaengine.cpp:95 engines/sludge/keymapper_tables.h:333
+#: engines/supernova/metaengine.cpp:356 engines/tsage/metaengine.cpp:211
+#: engines/twp/metaengine.cpp:186 engines/ultima/ultima4/metaengine.cpp:71
+#: engines/ultima/nuvie/metaengine.cpp:69
+#: engines/wintermute/keymapper_tables.h:140
 #: engines/wintermute/keymapper_tables.h:1552
 msgid "Use"
 msgstr "使用"
@@ -6754,15 +6877,15 @@ msgstr "使用"
 msgid "Walk"
 msgstr "歩く"
 
-#: engines/bladerunner/bladerunner.cpp:405
+#: engines/bladerunner/bladerunner.cpp:396
 msgid "Failed to initialize resources"
 msgstr "リソースの初期化に失敗しました"
 
-#: engines/bladerunner/bladerunner.cpp:1177
+#: engines/bladerunner/bladerunner.cpp:1168
 msgid "A required game resource was not found"
 msgstr "必要なゲームリソースが見つかりませんでした"
 
-#: engines/bladerunner/bladerunner.cpp:2764
+#: engines/bladerunner/bladerunner.cpp:2755
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -6772,7 +6895,7 @@ msgstr ""
 "ナルモードでプレイ中です。ゲームを完全に終了するまで、ディレクターズカット"
 "モードとして調整されます。"
 
-#: engines/bladerunner/bladerunner.cpp:2766
+#: engines/bladerunner/bladerunner.cpp:2757
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -6782,7 +6905,7 @@ msgstr ""
 "カットモードでプレイ中です。ゲームを完全に終了するまで、オリジナルモードとし"
 "て調整されます。"
 
-#: engines/bladerunner/bladerunner.cpp:2768
+#: engines/bladerunner/bladerunner.cpp:2759
 msgid "Continue"
 msgstr "つづく"
 
@@ -6895,22 +7018,33 @@ msgstr "歩く / 見る / 話す / 選ぶ / 撃つ"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. TOGGLE MCCOY'S COMBAT MODE
 #: engines/bladerunner/metaengine.cpp:220
-msgid "Toggle Combat"
+#: engines/ultima/nuvie/metaengine.cpp:73
+#, fuzzy
+#| msgid "Toggle Combat"
+msgid "Toggle combat"
 msgstr "モードの切替"
 
 #. I18N: This keymap allows skipping video cutscenes
 #: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
-#: engines/scumm/metaengine.cpp:1030 engines/toltecs/metaengine.cpp:246
-#: engines/twp/metaengine.cpp:162 engines/zvision/metaengine.cpp:284
+#: engines/scumm/metaengine.cpp:1030 engines/supernova/metaengine.cpp:309
+#: engines/toltecs/metaengine.cpp:246 engines/twp/metaengine.cpp:162
+#: engines/zvision/metaengine.cpp:304
 msgid "Skip cutscene"
 msgstr "ムービーをスキップ"
 
-#. I18N: This keymap allows skipping the current line of dialogue.
+#. I18N: This keymap allows skipping the current line of dialog.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
-#. SKIP PAST CURRENT LINE OF DIALOGUE
-#: engines/bladerunner/metaengine.cpp:242 engines/toltecs/metaengine.cpp:228
-msgid "Skip dialogue"
+#. SKIP PAST CURRENT LINE OF DIALOG
+#: engines/bladerunner/metaengine.cpp:242 engines/sludge/keymapper_tables.h:89
+#: engines/sludge/keymapper_tables.h:138 engines/sludge/keymapper_tables.h:194
+#: engines/sludge/keymapper_tables.h:268 engines/sludge/keymapper_tables.h:392
+#: engines/sludge/keymapper_tables.h:452 engines/sludge/keymapper_tables.h:484
+#: engines/sludge/keymapper_tables.h:535 engines/toltecs/metaengine.cpp:228
+#: engines/touche/metaengine.cpp:141
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Skip dialog"
 msgstr "ダイアログをスキップ"
 
 #. I18N: This keymap toggles between opening the KIA in the Game Options tab, and closing the KIA.
@@ -6918,7 +7052,9 @@ msgstr "ダイアログをスキップ"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. GAME OPTIONS
 #: engines/bladerunner/metaengine.cpp:253
-msgid "Game Options"
+#, fuzzy
+#| msgid "Game Options"
+msgid "Game options"
 msgstr "ゲーム設定"
 
 #. I18N: This keymap opens the KIA database on one of the investigation tabs,
@@ -6927,55 +7063,101 @@ msgstr "ゲーム設定"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ACTIVATE KIA CLUE DATABASE SYSTEM
 #: engines/bladerunner/metaengine.cpp:264
-msgid "Open KIA Database"
+#, fuzzy
+#| msgid "Open KIA Database"
+msgid "Open KIA database"
 msgstr "KIAのDBを開く"
 
 #. I18N: This keymap works within the KIA Save Game screen
 #. and allows submitting a selected existing save game for deletion.
 #: engines/bladerunner/metaengine.cpp:282
-msgid "Delete Selected Saved Game"
+#, fuzzy
+#| msgid "Delete Selected Saved Game"
+msgid "Delete selected saved game"
 msgstr "選択したセーブを削除"
 
 #. I18N: This keymap allows scrolling texts and lists upwards
-#: engines/bladerunner/metaengine.cpp:296
-msgid "Scroll Up"
+#: engines/bladerunner/metaengine.cpp:296 engines/titanic/metaengine.cpp:218
+#: engines/wintermute/keymapper_tables.h:670
+#: engines/wintermute/keymapper_tables.h:871
+#: engines/wintermute/keymapper_tables.h:892
+#: engines/wintermute/keymapper_tables.h:1326
+#: engines/wintermute/keymapper_tables.h:1352
+#: engines/wintermute/keymapper_tables.h:1428
+#: engines/wintermute/keymapper_tables.h:1484
+#: engines/wintermute/keymapper_tables.h:1505
+#: engines/wintermute/keymapper_tables.h:1695
+#: engines/wintermute/keymapper_tables.h:1969
+#: engines/wintermute/keymapper_tables.h:2171
+msgid "Scroll up"
 msgstr "上にスクロール"
 
 #. I18N: This keymap allows scrolling texts and lists downwards
-#: engines/bladerunner/metaengine.cpp:303
-msgid "Scroll Down"
+#: engines/bladerunner/metaengine.cpp:303 engines/titanic/metaengine.cpp:225
+#: engines/wintermute/keymapper_tables.h:677
+#: engines/wintermute/keymapper_tables.h:878
+#: engines/wintermute/keymapper_tables.h:899
+#: engines/wintermute/keymapper_tables.h:1333
+#: engines/wintermute/keymapper_tables.h:1359
+#: engines/wintermute/keymapper_tables.h:1435
+#: engines/wintermute/keymapper_tables.h:1491
+#: engines/wintermute/keymapper_tables.h:1512
+#: engines/wintermute/keymapper_tables.h:1702
+#: engines/wintermute/keymapper_tables.h:1976
+#: engines/wintermute/keymapper_tables.h:2176
+msgid "Scroll down"
 msgstr "下にスクロール"
 
 #. I18N: This keymap allows (in KIA only) for a clue to be set as private or public
 #. (only when the KIA is upgraded).
 #: engines/bladerunner/metaengine.cpp:311
-msgid "Toggle Clue Privacy"
+#, fuzzy
+#| msgid "Toggle Clue Privacy"
+msgid "Toggle clue privacy"
 msgstr "手がかり表示の切替"
 
 #. I18N: This keymap opens KIA's SAVE GAME tab.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SAVE GAME
-#: engines/bladerunner/metaengine.cpp:330 engines/dgds/metaengine.cpp:75
-#: engines/freescape/games/castle/castle.cpp:246
+#: engines/bladerunner/metaengine.cpp:330 engines/cge/metaengine.cpp:221
+#: engines/cge2/metaengine.cpp:235 engines/dgds/metaengine.cpp:75
+#: engines/efh/metaengine.cpp:219 engines/freescape/games/castle/castle.cpp:246
 #: engines/freescape/games/dark/dark.cpp:186
 #: engines/freescape/games/driller/driller.cpp:135
-#: engines/freescape/games/eclipse/eclipse.cpp:206
-#: engines/pegasus/pegasus.cpp:2825
-msgid "Save Game"
+#: engines/freescape/games/eclipse/eclipse.cpp:231
+#: engines/hopkins/metaengine.cpp:236 engines/hugo/metaengine.cpp:128
+#: engines/lure/metaengine.cpp:191 engines/made/metaengine.cpp:162
+#: engines/mads/metaengine.cpp:305 engines/pegasus/pegasus.cpp:2825
+#: engines/saga/metaengine.cpp:442 engines/sludge/keymapper_tables.h:107
+#: engines/sludge/keymapper_tables.h:156 engines/stark/metaengine.cpp:208
+#: engines/titanic/metaengine.cpp:199 engines/toltecs/metaengine.cpp:234
+#: engines/toon/metaengine.cpp:112 engines/trecision/metaengine.cpp:169
+#: engines/tsage/metaengine.cpp:242 engines/ultima/ultima8/metaengine.cpp:45
+#: engines/vcruise/metaengine.cpp:175 engines/wintermute/keymapper_tables.h:920
+msgid "Save game"
 msgstr "ゲームをセーブ"
 
 #. I18N: This keymap opens KIA's LOAD GAME tab.
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. LOAD GAME
-#: engines/bladerunner/metaengine.cpp:339 engines/dgds/metaengine.cpp:74
-#: engines/freescape/games/castle/castle.cpp:251
+#: engines/bladerunner/metaengine.cpp:339 engines/cge/metaengine.cpp:227
+#: engines/cge2/metaengine.cpp:241 engines/dgds/metaengine.cpp:74
+#: engines/efh/metaengine.cpp:225 engines/freescape/games/castle/castle.cpp:251
 #: engines/freescape/games/dark/dark.cpp:191
 #: engines/freescape/games/driller/driller.cpp:140
-#: engines/freescape/games/eclipse/eclipse.cpp:211
-#: engines/pegasus/pegasus.cpp:2831
-msgid "Load Game"
+#: engines/freescape/games/eclipse/eclipse.cpp:236
+#: engines/hopkins/metaengine.cpp:242 engines/made/metaengine.cpp:168
+#: engines/mohawk/myst_stacks/menu.cpp:283
+#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/pegasus/pegasus.cpp:2831
+#: engines/saga/metaengine.cpp:432 engines/stark/metaengine.cpp:213
+#: engines/titanic/metaengine.cpp:205 engines/toltecs/metaengine.cpp:240
+#: engines/toon/metaengine.cpp:118 engines/trecision/metaengine.cpp:175
+#: engines/ultima/ultima8/metaengine.cpp:46 engines/vcruise/metaengine.cpp:180
+#: engines/wintermute/keymapper_tables.h:925
+#: engines/wintermute/keymapper_tables.h:1265
+msgid "Load game"
 msgstr "ゲームをロード"
 
 #. I18N: This keymap opens KIA's CRIME SCENE DATABASE tab.
@@ -6983,7 +7165,9 @@ msgstr "ゲームをロード"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. CRIME SCENE DATABASE
 #: engines/bladerunner/metaengine.cpp:348
-msgid "Crime Scene Database"
+#, fuzzy
+#| msgid "Crime Scene Database"
+msgid "Crime scene database"
 msgstr "犯罪現場データベース"
 
 #. I18N: This keymap opens KIA's SUSPECT DATABASE tab.
@@ -6991,7 +7175,9 @@ msgstr "犯罪現場データベース"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SUSPECT DATABASE
 #: engines/bladerunner/metaengine.cpp:357
-msgid "Suspect Database"
+#, fuzzy
+#| msgid "Suspect Database"
+msgid "Suspect database"
 msgstr "容疑者データベース"
 
 #. I18N: This keymap opens KIA's CLUE DATABASE tab.
@@ -6999,7 +7185,9 @@ msgstr "容疑者データベース"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. CLUE DATABASE
 #: engines/bladerunner/metaengine.cpp:366
-msgid "Clue Database"
+#, fuzzy
+#| msgid "Clue Database"
+msgid "Clue database"
 msgstr "手がかりデータベース"
 
 #. I18N: This keymap opens KIA's QUIT GAME tab.
@@ -7011,10 +7199,12 @@ msgstr "手がかりデータベース"
 #: engines/freescape/games/castle/castle.cpp:259
 #: engines/freescape/games/dark/dark.cpp:196
 #: engines/freescape/games/driller/driller.cpp:145
-#: engines/freescape/games/eclipse/eclipse.cpp:216
-#: engines/sword1/metaengine.cpp:295
-msgid "Quit Game"
-msgstr "ゲームを終了する"
+#: engines/freescape/games/eclipse/eclipse.cpp:241
+#: engines/saga/metaengine.cpp:437 engines/sword1/metaengine.cpp:295
+#: engines/trecision/metaengine.cpp:156 engines/tsage/metaengine.cpp:231
+#: engines/vcruise/metaengine.cpp:190
+msgid "Quit game"
+msgstr "ゲーム終了"
 
 #: engines/buried/buried.cpp:590
 msgid "Are you sure you want to quit?"
@@ -7065,15 +7255,17 @@ msgstr "色覚特性モード"
 msgid "Enable Color Blind Mode by default"
 msgstr "デフォルトで色覚多様性モードを有効化"
 
-#: engines/cge/metaengine.cpp:56 engines/drascula/metaengine.cpp:51
-#: engines/glk/metaengine.cpp:193 engines/griffon/metaengine.cpp:40
-#: engines/mortevielle/metaengine.cpp:37 engines/sci/detection_options.h:223
-#: engines/supernova/metaengine.cpp:49 engines/teenagent/metaengine.cpp:45
+#: engines/cge/metaengine.cpp:56 engines/cruise/metaengine.cpp:45
+#: engines/drascula/metaengine.cpp:51 engines/glk/metaengine.cpp:193
+#: engines/griffon/metaengine.cpp:40 engines/mortevielle/metaengine.cpp:37
+#: engines/sci/detection_options.h:223 engines/supernova/metaengine.cpp:53
+#: engines/teenagent/metaengine.cpp:45 engines/wage/metaengine.cpp:51
 msgid "Enable Text to Speech"
 msgstr "音声合成をオンにする"
 
-#: engines/cge/metaengine.cpp:57 engines/drascula/metaengine.cpp:52
-#: engines/mortevielle/metaengine.cpp:38 engines/teenagent/metaengine.cpp:46
+#: engines/cge/metaengine.cpp:57 engines/cruise/metaengine.cpp:46
+#: engines/drascula/metaengine.cpp:52 engines/mortevielle/metaengine.cpp:38
+#: engines/teenagent/metaengine.cpp:46
 msgid "Use TTS to read text in the game (if TTS is available)"
 msgstr "音声合成を使用してゲーム内のテキストを読み上げる(利用可能な場合のみ)"
 
@@ -7083,40 +7275,24 @@ msgstr "キーマッピング"
 
 #: engines/cge/metaengine.cpp:215 engines/hopkins/metaengine.cpp:223
 #: engines/sword1/metaengine.cpp:283
-msgid "Exit/Skip"
+#, fuzzy
+#| msgid "Exit/Skip"
+msgid "Exit / Skip"
 msgstr "終了/スキップ"
-
-#: engines/cge/metaengine.cpp:221 engines/cge2/metaengine.cpp:235
-#: engines/efh/metaengine.cpp:219 engines/hopkins/metaengine.cpp:236
-#: engines/hugo/metaengine.cpp:128 engines/lure/metaengine.cpp:191
-#: engines/made/metaengine.cpp:162 engines/mads/metaengine.cpp:305
-#: engines/saga/metaengine.cpp:442 engines/stark/metaengine.cpp:208
-#: engines/toltecs/metaengine.cpp:234 engines/toon/metaengine.cpp:112
-#: engines/trecision/metaengine.cpp:169 engines/tsage/metaengine.cpp:242
-#: engines/vcruise/metaengine.cpp:175 engines/wintermute/keymapper_tables.h:920
-msgid "Save game"
-msgstr "ゲームをセーブ"
-
-#: engines/cge/metaengine.cpp:227 engines/cge2/metaengine.cpp:241
-#: engines/efh/metaengine.cpp:225 engines/hopkins/metaengine.cpp:242
-#: engines/made/metaengine.cpp:168 engines/mohawk/myst_stacks/menu.cpp:283
-#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/saga/metaengine.cpp:432
-#: engines/stark/metaengine.cpp:213 engines/toltecs/metaengine.cpp:240
-#: engines/toon/metaengine.cpp:118 engines/trecision/metaengine.cpp:175
-#: engines/vcruise/metaengine.cpp:180 engines/wintermute/keymapper_tables.h:925
-#: engines/wintermute/keymapper_tables.h:1265
-msgid "Load game"
-msgstr "ゲームをロード"
 
 #. I18N: 3-4 dialogs of game version info, (translation) credits, etc.
 #: engines/cge/metaengine.cpp:234 engines/cge2/metaengine.cpp:248
-msgid "Game Info"
+#, fuzzy
+#| msgid "Game Info"
+msgid "Game info"
 msgstr "ゲーム情報"
 
 #. I18N: This opens a Quit Prompt where you have to choose
 #. [Confirm] or [Continue Playing] lines with Left Click.
 #: engines/cge/metaengine.cpp:242 engines/cge2/metaengine.cpp:256
-msgid "Quit Prompt"
+#, fuzzy
+#| msgid "Quit Prompt"
+msgid "Quit prompt"
 msgstr "プロンプト終了"
 
 #. I18N: Here ALTered Item refers to the dice that has been altered/changed.
@@ -7126,62 +7302,88 @@ msgid "ALTered Item"
 msgstr "変更されたダイス"
 
 #: engines/cge/metaengine.cpp:257
-msgid "Inventory Item 1 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 1 (Select/Deselect)"
+msgid "Inventory Item 1 (Select / Deselect)"
 msgstr "在庫アイテム1(選択/解除)"
 
 #: engines/cge/metaengine.cpp:262
-msgid "Inventory Item 2 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 2 (Select/Deselect)"
+msgid "Inventory Item 2 (Select / Deselect)"
 msgstr "在庫アイテム2(選択/解除)"
 
 #: engines/cge/metaengine.cpp:267
-msgid "Inventory Item 3 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 3 (Select/Deselect)"
+msgid "Inventory Item 3 (Select / Deselect)"
 msgstr "在庫アイテム3(選択/解除)"
 
 #: engines/cge/metaengine.cpp:272
-msgid "Inventory Item 4 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 4 (Select/Deselect)"
+msgid "Inventory Item 4 (Select / Deselect)"
 msgstr "在庫アイテム4(選択/解除)"
 
 #: engines/cge/metaengine.cpp:277
-msgid "Inventory Item 5 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 5 (Select/Deselect)"
+msgid "Inventory Item 5 (Select / Deselect)"
 msgstr "在庫アイテム5(選択/解除)"
 
 #: engines/cge/metaengine.cpp:282
-msgid "Inventory Item 6 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 6 (Select/Deselect)"
+msgid "Inventory Item 6 (Select / Deselect)"
 msgstr "在庫アイテム6(選択/解除)"
 
 #: engines/cge/metaengine.cpp:287
-msgid "Inventory Item 7 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 7 (Select/Deselect)"
+msgid "Inventory Item 7 (Select / Deselect)"
 msgstr "在庫アイテム7(選択/解除)"
 
 #: engines/cge/metaengine.cpp:292
-msgid "Inventory Item 8 (Select/Deselect)"
+#, fuzzy
+#| msgid "Inventory Item 8 (Select/Deselect)"
+msgid "Inventory Item 8 (Select / Deselect)"
 msgstr "在庫アイテム8(選択/解除)"
 
 #. I18N: There are 24 single-room/screen locations in the game.
 #. You switch between them from numbered buttons on interface.
 #. Sets the current access to only the first Location
 #: engines/cge/metaengine.cpp:300
-msgid "DEBUG: Access to Location 1"
+#, fuzzy
+#| msgid "DEBUG: Access to Location 1"
+msgid "DEBUG: Access to location 1"
 msgstr "デバッグ: Location 1にアクセス"
 
 #. I18N: Sets the current access to Locations 1 to 8.
 #: engines/cge/metaengine.cpp:306
-msgid "DEBUG: Access to Locations 1-8"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-8"
+msgid "DEBUG: Access to locations 1-8"
 msgstr "デバッグ: Location 1~8にアクセス"
 
 #. I18N: Sets the current access to Locations 1 to 16.
 #: engines/cge/metaengine.cpp:312
-msgid "DEBUG: Access to Locations 1-16"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-16"
+msgid "DEBUG: Access to locations 1-16"
 msgstr "デバッグ: Location 1~16にアクセス"
 
 #. I18N: Sets the current access to Locations 1 to 23.
 #: engines/cge/metaengine.cpp:318
-msgid "DEBUG: Access to Locations 1-23"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-23"
+msgid "DEBUG: Access to locations 1-23"
 msgstr "デバッグ: Location 1~23にアクセス"
 
 #. I18N: Sets the current access to Locations 1 to 24.
 #: engines/cge/metaengine.cpp:324
-msgid "DEBUG: Access to Locations 1-24"
+#, fuzzy
+#| msgid "DEBUG: Access to Locations 1-24"
+msgid "DEBUG: Access to locations 1-24"
 msgstr "デバッグ: Location 1~24にアクセス"
 
 #: engines/cge2/metaengine.cpp:59
@@ -7191,8 +7393,8 @@ msgstr "オブジェクト、オプションを読み上げる"
 #: engines/cge2/metaengine.cpp:60 engines/dreamweb/metaengine.cpp:74
 #: engines/griffon/metaengine.cpp:41 engines/lure/metaengine.cpp:54
 #: engines/mads/metaengine.cpp:125 engines/sci/detection_options.h:224
-#: engines/sherlock/metaengine.cpp:113 engines/supernova/metaengine.cpp:50
-#: engines/twine/metaengine.cpp:145
+#: engines/sherlock/metaengine.cpp:113 engines/supernova/metaengine.cpp:54
+#: engines/twine/metaengine.cpp:145 engines/wage/metaengine.cpp:52
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr "音声合成を使用して詳細を読み上げる(利用可能な場合のみ)"
 
@@ -7204,9 +7406,11 @@ msgstr "字幕の音声読み上げを有効化"
 msgid "Use TTS to read the subtitles (if TTS is available)"
 msgstr "音声合成で字幕を読み上げる(利用可能な場合のみ)"
 
-#. I18N: This closes the Dialogue/text box.
+#. I18N: This closes the Dialog/text box.
 #: engines/cge2/metaengine.cpp:229
-msgid "Close the Dialogue box"
+#, fuzzy
+#| msgid "Close the Dialogue box"
+msgid "Close the dialog box"
 msgstr "ダイアログを閉じる"
 
 #: engines/cine/metaengine.cpp:57
@@ -7267,25 +7471,30 @@ msgstr "ゲームスピードを高速化"
 
 #: engines/cine/metaengine.cpp:314 engines/grim/grim.cpp:506
 #: engines/hpl1/metaengine.cpp:90 engines/scumm/help.cpp:242
-#: engines/scumm/help.cpp:250
+#: engines/scumm/help.cpp:250 engines/sludge/keymapper_tables.h:313
 msgid "Examine"
 msgstr "調べる"
 
 #: engines/cine/metaengine.cpp:319 engines/saga/metaengine.cpp:394
+#: engines/supernova/metaengine.cpp:331
 msgid "Take"
 msgstr "取る"
 
 #. I18N: Action in In Cold Blood
 #: engines/cine/metaengine.cpp:324 engines/crab/input/input.cpp:251
-#: engines/cruise/metaengine.cpp:166 engines/draci/metaengine.cpp:178
+#: engines/cruise/metaengine.cpp:192 engines/draci/metaengine.cpp:178
 #: engines/dragons/metaengine.cpp:148 engines/griffon/metaengine.cpp:152
 #: engines/grim/grim.cpp:521 engines/grim/grim.cpp:621
 #: engines/hdb/metaengine.cpp:251 engines/hpl1/metaengine.cpp:94
 #: engines/icb/icb.cpp:101 engines/icb/icb.cpp:179 engines/scumm/help.cpp:228
 #: engines/scumm/help.cpp:237 engines/scumm/help.cpp:244
-#: engines/scumm/help.cpp:252 engines/stark/metaengine.cpp:267
-#: engines/tinsel/metaengine.cpp:313 engines/twine/metaengine.cpp:370
-#: engines/zvision/metaengine.cpp:232
+#: engines/scumm/help.cpp:252 engines/sludge/keymapper_tables.h:58
+#: engines/sludge/keymapper_tables.h:119 engines/sludge/keymapper_tables.h:168
+#: engines/sludge/keymapper_tables.h:181 engines/sludge/keymapper_tables.h:217
+#: engines/sludge/keymapper_tables.h:256 engines/stark/metaengine.cpp:267
+#: engines/tinsel/metaengine.cpp:313 engines/titanic/metaengine.cpp:244
+#: engines/titanic/metaengine.cpp:297 engines/twine/metaengine.cpp:370
+#: engines/zvision/metaengine.cpp:252
 msgid "Inventory"
 msgstr "インベントリー"
 
@@ -7311,22 +7520,22 @@ msgid "Show collisions"
 msgstr "判定を表示"
 
 #. I18N: Move Actor to top-left direction
-#: engines/cine/metaengine.cpp:392
+#: engines/cine/metaengine.cpp:392 engines/efh/metaengine.cpp:255
 msgid "Move up-left"
 msgstr "左上に動く"
 
 #. I18N: Move Actor to top-right direction
-#: engines/cine/metaengine.cpp:398
+#: engines/cine/metaengine.cpp:398 engines/efh/metaengine.cpp:260
 msgid "Move up-right"
 msgstr "右上に動く"
 
 #. I18N: Move Actor to bottom-left direction
-#: engines/cine/metaengine.cpp:404
+#: engines/cine/metaengine.cpp:404 engines/efh/metaengine.cpp:265
 msgid "Move down-left"
 msgstr "左下に動く"
 
 #. I18N: Move Actor to bottom-right direction
-#: engines/cine/metaengine.cpp:410
+#: engines/cine/metaengine.cpp:410 engines/efh/metaengine.cpp:270
 msgid "Move down-right"
 msgstr "右下に動く"
 
@@ -7349,12 +7558,16 @@ msgstr ""
 "検討してください。"
 
 #: engines/crab/input/input.cpp:119
-msgid "Talk/Interact"
+#, fuzzy
+#| msgid "Talk/Interact"
+msgid "Talk / Interact"
 msgstr "会話/作用"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/crab/input/input.cpp:125 engines/griffon/metaengine.cpp:145
 #: engines/mm/mm1/metaengine.cpp:65 engines/scumm/metaengine.cpp:1017
+#: engines/ultima/ultima4/metaengine.cpp:48
+#: engines/ultima/nuvie/metaengine.cpp:74
 msgid "Attack"
 msgstr "攻撃"
 
@@ -7396,11 +7609,24 @@ msgid "Reply 6"
 msgstr "返信6"
 
 #: engines/crab/input/input.cpp:221 engines/twine/metaengine.cpp:460
-msgid "Next Page"
+#: engines/wintermute/keymapper_tables.h:190
+#: engines/wintermute/keymapper_tables.h:207
+#: engines/wintermute/keymapper_tables.h:638
+#: engines/wintermute/keymapper_tables.h:913
+#: engines/wintermute/keymapper_tables.h:1110
+#: engines/wintermute/keymapper_tables.h:1236
+#: engines/wintermute/keymapper_tables.h:1260
+msgid "Next page"
 msgstr "次のページ"
 
-#: engines/crab/input/input.cpp:226
-msgid "Previous Page"
+#: engines/crab/input/input.cpp:226 engines/wintermute/keymapper_tables.h:183
+#: engines/wintermute/keymapper_tables.h:199
+#: engines/wintermute/keymapper_tables.h:630
+#: engines/wintermute/keymapper_tables.h:906
+#: engines/wintermute/keymapper_tables.h:1103
+#: engines/wintermute/keymapper_tables.h:1231
+#: engines/wintermute/keymapper_tables.h:1255
+msgid "Previous page"
 msgstr "前のページ"
 
 #: engines/crab/input/input.cpp:241
@@ -7415,33 +7641,25 @@ msgstr "日記"
 msgid "Traits"
 msgstr "特性"
 
-#: engines/crab/input/input.cpp:266
-msgid "Quick Save"
-msgstr "クイックセーブ"
-
-#: engines/crab/input/input.cpp:271
-msgid "Quick Load"
-msgstr "クイックロード"
-
 #. I18N: Game runs at faster speed
-#: engines/cruise/metaengine.cpp:160 engines/tucker/metaengine.cpp:196
+#: engines/cruise/metaengine.cpp:186 engines/tucker/metaengine.cpp:196
 msgid "Fast mode"
 msgstr "高速モード"
 
 #. I18N: Opens menu with player commands
-#: engines/cruise/metaengine.cpp:173
+#: engines/cruise/metaengine.cpp:199
 msgid "Player menu"
 msgstr "プレイヤーメニュー"
 
-#: engines/cruise/metaengine.cpp:179
+#: engines/cruise/metaengine.cpp:205
 msgid "Increase game speed"
 msgstr "ゲーム速度を増加"
 
-#: engines/cruise/metaengine.cpp:185
+#: engines/cruise/metaengine.cpp:211
 msgid "Decrease game speed"
 msgstr "ゲーム速度を減少"
 
-#: engines/cruise/metaengine.cpp:203 engines/mads/metaengine.cpp:361
+#: engines/cruise/metaengine.cpp:229 engines/mads/metaengine.cpp:361
 #: engines/stark/metaengine.cpp:280
 msgid "Exit game"
 msgstr "ゲーム終了"
@@ -7465,6 +7683,8 @@ msgid ""
 "Use the music from the floppy version. The floppy version's music files must "
 "be copied to the SOUND directory."
 msgstr ""
+"FD版の音楽を使用します。そのサウンドファイルは、SOUNDディレクトリーに配置する"
+"必要があります。"
 
 #. I18N: Perform action on object where cursor points
 #: engines/darkseed/metaengine.cpp:75 engines/dragons/metaengine.cpp:136
@@ -7473,11 +7693,15 @@ msgid "Action"
 msgstr "アクション"
 
 #: engines/darkseed/metaengine.cpp:81 engines/dragons/metaengine.cpp:142
-msgid "Change Command"
+#, fuzzy
+#| msgid "Change Command"
+msgid "Change command"
 msgstr "コマンドを変更"
 
 #: engines/darkseed/metaengine.cpp:87
-msgid "Time Advance"
+#, fuzzy
+#| msgid "Time Advance"
+msgid "Time advance"
 msgstr "時間経過"
 
 #: engines/dgds/metaengine.cpp:76
@@ -7529,11 +7753,11 @@ msgstr "縦横比修正適用"
 
 #: engines/director/metaengine.cpp:71
 msgid "Brighten the graphics to simulate a Macintosh monitor"
-msgstr ""
+msgstr "明るさを上げてMacintoshのモニターをシミュレート"
 
 #: engines/director/metaengine.cpp:81
 msgid "Force true color"
-msgstr ""
+msgstr "True Colorを強制"
 
 #: engines/director/metaengine.cpp:82
 #, fuzzy
@@ -7542,7 +7766,9 @@ msgid "Use true color graphics mode, even if the game is not designed for it"
 msgstr "ゲームが要求していない場合でも、テキストにアンチエイリアシングを使用"
 
 #: engines/draci/metaengine.cpp:153
-msgid "Skip intro/Exit map or inventory"
+#, fuzzy
+#| msgid "Skip intro/Exit map or inventory"
+msgid "Skip intro / Exit map or inventory"
 msgstr "イントロスキップ / マップ・インベントリーを終了"
 
 #: engines/draci/metaengine.cpp:159
@@ -7565,7 +7791,7 @@ msgstr "メインメニューを開く"
 
 #: engines/draci/metaengine.cpp:190
 msgid "Toggle between mouse pointer and the last game item"
-msgstr ""
+msgstr "マウスポインターと最後に使用したアイテムを切替"
 
 #: engines/draci/metaengine.cpp:196
 #, fuzzy
@@ -7609,8 +7835,22 @@ msgstr ""
 "\n"
 "詳細は%sを参照してください"
 
+#: engines/dragons/metaengine.cpp:207
+#, fuzzy
+#| msgid "Left Shoulder"
+msgid "Left shoulder"
+msgstr "LBボタン"
+
+#: engines/dragons/metaengine.cpp:213
+#, fuzzy
+#| msgid "Right Shoulder"
+msgid "Right shoulder"
+msgstr "RBボタン"
+
 #: engines/dragons/metaengine.cpp:219
-msgid "Debug Graphics"
+#, fuzzy
+#| msgid "Debug Graphics"
+msgid "Debug graphics"
 msgstr "デバッググラフィック"
 
 #: engines/drascula/saveload.cpp:47
@@ -7640,38 +7880,6 @@ msgstr "ゲームの明るいパレットモードを使用してグラフィッ
 #: engines/dreamweb/metaengine.cpp:73
 msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgstr "オブジェクト、オプション、聖書の引用の読み上げを有効化"
-
-#: engines/efh/metaengine.cpp:207
-msgid "Left click"
-msgstr "左クリック"
-
-#: engines/efh/metaengine.cpp:213
-msgid "Right click"
-msgstr "右クリック"
-
-#: engines/efh/metaengine.cpp:255
-#, fuzzy
-#| msgid "Move up-left"
-msgid "Move up left"
-msgstr "左上に動く"
-
-#: engines/efh/metaengine.cpp:260
-#, fuzzy
-#| msgid "Move up-right"
-msgid "Move up right"
-msgstr "右上に動く"
-
-#: engines/efh/metaengine.cpp:265
-#, fuzzy
-#| msgid "Move down-left"
-msgid "Move down left"
-msgstr "左下に動く"
-
-#: engines/efh/metaengine.cpp:270
-#, fuzzy
-#| msgid "Move down-right"
-msgid "Move down right"
-msgstr "右下に動く"
 
 #: engines/efh/metaengine.cpp:275
 #, fuzzy
@@ -7763,15 +7971,13 @@ msgstr "有効にする"
 
 #: engines/freescape/metaengine.cpp:131
 msgid "Enable traveling using a rock shoot at start"
-msgstr ""
+msgstr "開始時に岩の射出を使用して移動"
 
-#: engines/freescape/movement.cpp:49 engines/hpl1/metaengine.cpp:78
-#: engines/mm/mm1/metaengine.cpp:99
+#: engines/freescape/movement.cpp:49
 msgid "Strafe Left"
 msgstr "左ステップ"
 
-#: engines/freescape/movement.cpp:56 engines/hpl1/metaengine.cpp:79
-#: engines/mm/mm1/metaengine.cpp:100
+#: engines/freescape/movement.cpp:56
 msgid "Strafe Right"
 msgstr "右ステップ"
 
@@ -7816,7 +8022,7 @@ msgstr "Princessを選択"
 #: engines/freescape/games/castle/castle.cpp:264
 #: engines/freescape/games/dark/dark.cpp:206
 #: engines/freescape/games/driller/driller.cpp:153
-#: engines/freescape/games/eclipse/eclipse.cpp:224
+#: engines/freescape/games/eclipse/eclipse.cpp:249
 #, fuzzy
 #| msgid "Toggle mute"
 msgid "Toggle Sound"
@@ -7825,14 +8031,14 @@ msgstr "消音の切替"
 #: engines/freescape/games/castle/castle.cpp:269
 #: engines/freescape/games/dark/dark.cpp:212
 #: engines/freescape/games/driller/driller.cpp:159
-#: engines/freescape/games/eclipse/eclipse.cpp:229
+#: engines/freescape/games/eclipse/eclipse.cpp:254
 msgid "Rotate Left"
 msgstr "左回転"
 
 #: engines/freescape/games/castle/castle.cpp:274
 #: engines/freescape/games/dark/dark.cpp:217
 #: engines/freescape/games/driller/driller.cpp:164
-#: engines/freescape/games/eclipse/eclipse.cpp:234
+#: engines/freescape/games/eclipse/eclipse.cpp:259
 msgid "Rotate Right"
 msgstr "右回転"
 
@@ -7841,6 +8047,7 @@ msgstr "右回転"
 #: engines/freescape/games/castle/castle.cpp:279 engines/grim/grim.cpp:501
 #: engines/grim/grim.cpp:596 engines/hpl1/metaengine.cpp:82
 #: engines/icb/icb.cpp:131 engines/icb/icb.cpp:197
+#: engines/ultima/ultima8/metaengine.cpp:57
 msgid "Run"
 msgstr "走る"
 
@@ -7849,7 +8056,7 @@ msgid "Crawl"
 msgstr "這う"
 
 #: engines/freescape/games/castle/castle.cpp:296
-#: engines/freescape/games/eclipse/eclipse.cpp:261
+#: engines/freescape/games/eclipse/eclipse.cpp:286
 #, fuzzy
 #| msgid "Move Forward"
 msgid "Face Forward"
@@ -7857,6 +8064,7 @@ msgstr "前に進む"
 
 #: engines/freescape/games/dark/dark.cpp:222
 #: engines/freescape/games/driller/driller.cpp:198
+#: engines/ultima/ultima8/metaengine.cpp:98
 #, fuzzy
 #| msgid "Move left"
 msgid "Roll left"
@@ -7864,6 +8072,7 @@ msgstr "左に行く"
 
 #: engines/freescape/games/dark/dark.cpp:227
 #: engines/freescape/games/driller/driller.cpp:203
+#: engines/ultima/ultima8/metaengine.cpp:99
 #, fuzzy
 #| msgid "Move right"
 msgid "Roll right"
@@ -7927,28 +8136,30 @@ msgid "Collect drilling rig"
 msgstr ""
 
 #. I18N: Illustrates the angle at which you turn left or right.
-#: engines/freescape/games/eclipse/eclipse.cpp:240
+#: engines/freescape/games/eclipse/eclipse.cpp:265
 #, fuzzy
 #| msgid "Change mode"
 msgid "Change Angle"
 msgstr "モード変更"
 
 #. I18N: STEP SIZE: Measures the size of one movement in the direction you are facing (1-250 standard distance units (SDUs))
-#: engines/freescape/games/eclipse/eclipse.cpp:246
+#: engines/freescape/games/eclipse/eclipse.cpp:271
 #, fuzzy
 #| msgid "Change font size"
 msgid "Change Step Size"
 msgstr "フォントサイズの変更"
 
-#: engines/freescape/games/eclipse/eclipse.cpp:251
+#: engines/freescape/games/eclipse/eclipse.cpp:276
 #, fuzzy
 #| msgid "Toggle mute"
 msgid "Toggle Height"
 msgstr "消音の切替"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/freescape/games/eclipse/eclipse.cpp:256
+#: engines/freescape/games/eclipse/eclipse.cpp:281
 #: engines/kyra/engine/lol.cpp:516 engines/mm/mm1/metaengine.cpp:109
+#: engines/ultima/nuvie/metaengine.cpp:192
+#: engines/ultima/nuvie/metaengine.cpp:197
 msgid "Rest"
 msgstr "休む"
 
@@ -8059,7 +8270,7 @@ msgid "Failed to load saved game from file."
 msgstr "セーブファイルのロードに失敗しました。"
 
 #: engines/gob/inter_geisha.cpp:268 engines/gob/inter_v2.cpp:1590
-#: engines/gob/inter_v7.cpp:1917 engines/tinsel/saveload.cpp:603
+#: engines/gob/inter_v7.cpp:1930 engines/tinsel/saveload.cpp:603
 msgid "Failed to save game to file."
 msgstr "セーブファイルの出力に失敗しました。"
 
@@ -8069,6 +8280,7 @@ msgstr "ファイルを削除できません。"
 
 #. I18N: Action in In Cold Blood
 #: engines/got/metaengine.cpp:59 engines/icb/icb.cpp:89
+#: engines/ultima/ultima4/metaengine.cpp:55
 msgid "Fire"
 msgstr "ショット"
 
@@ -8077,7 +8289,7 @@ msgid "Magic"
 msgstr ""
 
 #: engines/got/metaengine.cpp:64
-msgid "Thor Dies"
+msgid "Thor dies"
 msgstr ""
 
 #: engines/got/got.cpp:188 engines/got/got.cpp:198
@@ -8091,7 +8303,9 @@ msgid "Menu / Skip"
 msgstr "メニュー/スキップ"
 
 #: engines/griffon/metaengine.cpp:159
-msgid "Speed Up Cutscene"
+#, fuzzy
+#| msgid "Speed Up Cutscene"
+msgid "Speed up cutscene"
 msgstr "ムービーをスピードアップ"
 
 #: engines/grim/grim.cpp:361
@@ -8107,11 +8321,15 @@ msgstr ""
 "それでも%sを実行しますか?"
 
 #: engines/grim/grim.cpp:511 engines/grim/grim.cpp:611
-msgid "Use/Talk"
+#, fuzzy
+#| msgid "Use/Talk"
+msgid "Use / Talk"
 msgstr "使う／話す"
 
 #: engines/grim/grim.cpp:516 engines/grim/grim.cpp:616
-msgid "Pick up/Put away"
+#, fuzzy
+#| msgid "Pick up/Put away"
+msgid "Pick up / Put away"
 msgstr "拾う／片付ける"
 
 #: engines/grim/grim.cpp:526 engines/grim/grim.cpp:626
@@ -8120,20 +8338,28 @@ msgstr "ダイアログを行単位でスキップする"
 
 #. I18N: Cycle means rotate through
 #: engines/grim/grim.cpp:584
-msgid "Cycle Objects Up"
+#, fuzzy
+#| msgid "Cycle Objects Up"
+msgid "Cycle objects up"
 msgstr "オブジェクトをサイクルアップする"
 
 #. I18N: Cycle means rotate through
 #: engines/grim/grim.cpp:590
-msgid "Cycle Objects Down"
+#, fuzzy
+#| msgid "Cycle Objects Down"
+msgid "Cycle objects down"
 msgstr "オブジェクトをサイクルダウンする"
 
 #: engines/grim/grim.cpp:601
-msgid "Quick Room Exit"
+#, fuzzy
+#| msgid "Quick Room Exit"
+msgid "Quick room exit"
 msgstr "クイックルームを終了する"
 
 #: engines/grim/grim.cpp:606
-msgid "Examine/Look"
+#, fuzzy
+#| msgid "Examine/Look"
+msgid "Examine / Look"
 msgstr "調べる/見る"
 
 #: engines/grim/grim.cpp:1394
@@ -8348,11 +8574,12 @@ msgstr "ゴアモード"
 msgid "Enable Gore Mode when available"
 msgstr "利用可能ならゴアモードを有効にする"
 
-#: engines/hopkins/metaengine.cpp:248
+#: engines/hopkins/metaengine.cpp:248 engines/tinsel/metaengine.cpp:307
+#: engines/twine/metaengine.cpp:307
 #, fuzzy
-#| msgid "Skip dialogue"
-msgid "Option dialog"
-msgstr "ダイアログをスキップ"
+#| msgid "Options Menu"
+msgid "Options menu"
+msgstr "設定"
 
 #: engines/hpl1/metaengine.cpp:76
 msgid "Forward"
@@ -8362,12 +8589,28 @@ msgstr "前方"
 msgid "Backward"
 msgstr "後方"
 
+#: engines/hpl1/metaengine.cpp:78 engines/mm/mm1/metaengine.cpp:99
+#, fuzzy
+#| msgid "Strafe Left"
+msgid "Strafe left"
+msgstr "左ステップ"
+
+#: engines/hpl1/metaengine.cpp:79 engines/mm/mm1/metaengine.cpp:100
+#, fuzzy
+#| msgid "Strafe Right"
+msgid "Strafe right"
+msgstr "右ステップ"
+
 #: engines/hpl1/metaengine.cpp:80
-msgid "Lean Left"
+#, fuzzy
+#| msgid "Lean Left"
+msgid "Lean left"
 msgstr "左傾"
 
 #: engines/hpl1/metaengine.cpp:81
-msgid "Lean Right"
+#, fuzzy
+#| msgid "Lean Right"
+msgid "Lean right"
 msgstr "右傾"
 
 #. I18N: Action in In Cold Blood
@@ -8377,11 +8620,15 @@ msgid "Crouch"
 msgstr "かがむ"
 
 #: engines/hpl1/metaengine.cpp:87
-msgid "Interact Mode"
+#, fuzzy
+#| msgid "Interact Mode"
+msgid "Interact mode"
 msgstr "作用モード"
 
 #: engines/hpl1/metaengine.cpp:88
-msgid "Look Mode"
+#, fuzzy
+#| msgid "Look Mode"
+msgid "Look mode"
 msgstr "注視モード"
 
 #: engines/hpl1/metaengine.cpp:89
@@ -8393,7 +8640,9 @@ msgid "Notebook"
 msgstr "ノート"
 
 #: engines/hpl1/metaengine.cpp:96
-msgid "Personal Notes"
+#, fuzzy
+#| msgid "Personal Notes"
+msgid "Personal notes"
 msgstr "個人メモ"
 
 #: engines/hpl1/metaengine.cpp:97
@@ -8559,7 +8808,9 @@ msgstr "妨害"
 
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:125 engines/icb/icb.cpp:191
-msgid "Side Step"
+#, fuzzy
+#| msgid "Side Step"
+msgid "Side step"
 msgstr "横ステップ"
 
 #: engines/illusions/metaengine.cpp:108
@@ -8713,28 +8964,16 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "Eye of Beholderのサポートはコンパイルされていません"
 
-#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:502
-#: engines/ultima/ultima4/metaengine.cpp:224
-#: engines/ultima/nuvie/metaengine.cpp:222
-#: engines/ultima/ultima8/metaengine.cpp:145
-msgid "Interact via Left Click"
-msgstr "左クリックでインタラクト"
-
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:503
-#: engines/ultima/ultima4/metaengine.cpp:230
-#: engines/ultima/nuvie/metaengine.cpp:228
-#: engines/ultima/ultima8/metaengine.cpp:151
-msgid "Interact via Right Click"
-msgstr "右クリックでインタラクト"
-
 #: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:510
-#: engines/mohawk/riven.cpp:881 engines/twine/metaengine.cpp:332
+#: engines/mohawk/riven.cpp:881 engines/titanic/metaengine.cpp:336
+#: engines/titanic/metaengine.cpp:378 engines/twine/metaengine.cpp:332
+#: engines/ultima/ultima8/metaengine.cpp:51
 #: engines/wintermute/keymapper_tables.h:149
 #: engines/wintermute/keymapper_tables.h:731
 #: engines/wintermute/keymapper_tables.h:2116
 #: engines/wintermute/keymapper_tables.h:2216
-msgid "Move Forward"
-msgstr "前に進む"
+msgid "Move forward"
+msgstr "前進"
 
 #: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:511
 #: engines/mohawk/riven.cpp:895 engines/twine/metaengine.cpp:339
@@ -8742,36 +8981,20 @@ msgstr "前に進む"
 #: engines/wintermute/keymapper_tables.h:736
 #: engines/wintermute/keymapper_tables.h:2238
 #, fuzzy
-#| msgid "Move Backward"
-msgid "Move Backwards"
-msgstr "後方へ移動"
-
-#: engines/kyra/engine/eobcommon.cpp:371
-msgid "Move Left"
-msgstr "左に行く"
-
-#: engines/kyra/engine/eobcommon.cpp:372
-msgid "Move Right"
-msgstr "右に行く"
-
-#: engines/kyra/engine/eobcommon.cpp:373 engines/kyra/engine/lol.cpp:514
-#: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2740
-#: engines/twine/metaengine.cpp:353 engines/zvision/metaengine.cpp:209
-msgid "Turn Left"
-msgstr "左に曲がる"
-
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:515
-#: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2747
-#: engines/twine/metaengine.cpp:346 engines/zvision/metaengine.cpp:215
-msgid "Turn Right"
-msgstr "右に曲がる"
+#| msgid "Move backwards"
+msgid "Move backwards"
+msgstr "後退"
 
 #: engines/kyra/engine/eobcommon.cpp:375
-msgid "Open/Close Inventory"
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Open / Close inventory"
 msgstr "インベントリーを開く/閉じる"
 
 #: engines/kyra/engine/eobcommon.cpp:376
-msgid "Switch Inventory/Character screen"
+#, fuzzy
+#| msgid "Switch Inventory/Character screen"
+msgid "Switch inventory / Character screen"
 msgstr "インベントリー/キャラクター画面の切り替え"
 
 #: engines/kyra/engine/eobcommon.cpp:377
@@ -8779,31 +9002,45 @@ msgid "Camp"
 msgstr "キャンプ"
 
 #: engines/kyra/engine/eobcommon.cpp:378 engines/mm/mm1/metaengine.cpp:102
-msgid "Cast Spell"
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast spell"
 msgstr "魔法を詠唱"
 
 #: engines/kyra/engine/eobcommon.cpp:381
-msgid "Spell Level 1"
+#, fuzzy
+#| msgid "Spell Level 1"
+msgid "Spell level 1"
 msgstr "魔法レベル１"
 
 #: engines/kyra/engine/eobcommon.cpp:382
-msgid "Spell Level 2"
+#, fuzzy
+#| msgid "Spell Level 2"
+msgid "Spell level 2"
 msgstr "魔法レベル２"
 
 #: engines/kyra/engine/eobcommon.cpp:383
-msgid "Spell Level 3"
+#, fuzzy
+#| msgid "Spell Level 3"
+msgid "Spell level 3"
 msgstr "魔法レベル３"
 
 #: engines/kyra/engine/eobcommon.cpp:384
-msgid "Spell Level 4"
+#, fuzzy
+#| msgid "Spell Level 4"
+msgid "Spell level 4"
 msgstr "魔法レベル４"
 
 #: engines/kyra/engine/eobcommon.cpp:385
-msgid "Spell Level 5"
+#, fuzzy
+#| msgid "Spell Level 5"
+msgid "Spell level 5"
 msgstr "魔法レベル５"
 
 #: engines/kyra/engine/eobcommon.cpp:387
-msgid "Spell Level 6"
+#, fuzzy
+#| msgid "Spell Level 6"
+msgid "Spell level 6"
 msgstr "魔法レベル６"
 
 #: engines/kyra/engine/lol.cpp:506
@@ -8819,15 +9056,25 @@ msgid "Attack 3"
 msgstr "攻撃３"
 
 #: engines/kyra/engine/lol.cpp:509 engines/mm/mm1/metaengine.cpp:103
-msgid "Show Map"
+#: engines/mohawk/myst.cpp:606 engines/wintermute/keymapper_tables.h:1526
+#: engines/wintermute/keymapper_tables.h:1673
+#: engines/wintermute/keymapper_tables.h:1722
+#: engines/wintermute/keymapper_tables.h:1745
+#: engines/wintermute/keymapper_tables.h:1764
+#: engines/wintermute/keymapper_tables.h:1797
+msgid "Show map"
 msgstr "地図を表示"
 
 #: engines/kyra/engine/lol.cpp:512
-msgid "Slide Left"
+#, fuzzy
+#| msgid "Slide Left"
+msgid "Slide left"
 msgstr "左へスライド"
 
 #: engines/kyra/engine/lol.cpp:513
-msgid "Slide Right"
+#, fuzzy
+#| msgid "Slide Right"
+msgid "Slide right"
 msgstr "右へスライド"
 
 #: engines/kyra/engine/lol.cpp:517
@@ -8835,7 +9082,9 @@ msgid "Options"
 msgstr "設定"
 
 #: engines/kyra/engine/lol.cpp:518
-msgid "Choose Spell"
+#, fuzzy
+#| msgid "Choose Spell"
+msgid "Choose spell"
 msgstr "魔法を選択"
 
 #: engines/kyra/gui/saveload_eob.cpp:611
@@ -9194,31 +9443,44 @@ msgid "Replace a colored gem with bars for hit points and spell points."
 msgstr "色付きの宝石を、HPやSPのバーと交換します。"
 
 #: engines/mm/mm1/metaengine.cpp:54
-msgid "View Party Member 1"
+#, fuzzy
+#| msgid "View Party Member 1"
+msgid "View party member 1"
 msgstr "パーティー1を見る"
 
 #: engines/mm/mm1/metaengine.cpp:55
-msgid "View Party Member 2"
+#, fuzzy
+#| msgid "View Party Member 2"
+msgid "View party member 2"
 msgstr "パーティー2を見る"
 
 #: engines/mm/mm1/metaengine.cpp:56
-msgid "View Party Member 3"
+#, fuzzy
+#| msgid "View Party Member 3"
+msgid "View party member 3"
 msgstr "パーティー3を見る"
 
 #: engines/mm/mm1/metaengine.cpp:57
-msgid "View Party Member 4"
+#, fuzzy
+#| msgid "View Party Member 4"
+msgid "View party member 4"
 msgstr "パーティー4を見る"
 
 #: engines/mm/mm1/metaengine.cpp:58
-msgid "View Party Member 5"
+#, fuzzy
+#| msgid "View Party Member 5"
+msgid "View party member 5"
 msgstr "パーティー5を見る"
 
 #: engines/mm/mm1/metaengine.cpp:59
-msgid "View Party Member 6"
+#, fuzzy
+#| msgid "View Party Member 6"
+msgid "View party member 6"
 msgstr "パーティー6を見る"
 
 #. I18N: Combat command in Might & Magic 1
-#: engines/mm/mm1/metaengine.cpp:69
+#: engines/mm/mm1/metaengine.cpp:69 engines/ultima/ultima4/metaengine.cpp:50
+#: engines/ultima/nuvie/metaengine.cpp:191
 msgid "Cast"
 msgstr "キャスト"
 
@@ -9234,7 +9496,9 @@ msgstr "戦闘"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:75 engines/mm/mm1/metaengine.cpp:116
-msgid "Quick Reference"
+#, fuzzy
+#| msgid "Quick Reference"
+msgid "Quick reference"
 msgstr "簡易マニュアル"
 
 #. I18N: Combat command in Might & Magic 1
@@ -9264,15 +9528,19 @@ msgid "Backwards"
 msgstr "後ろへ"
 
 #: engines/mm/mm1/metaengine.cpp:104
-msgid "Toggle Minimap"
+#, fuzzy
+#| msgid "Toggle Minimap"
+msgid "Toggle minimap"
 msgstr "ミニマップの切替"
 
 #: engines/mm/mm1/metaengine.cpp:105
-msgid "Reorder Party"
+#, fuzzy
+#| msgid "Reorder Party"
+msgid "Reorder party"
 msgstr "再編成"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/mm/mm1/metaengine.cpp:111
+#: engines/mm/mm1/metaengine.cpp:111 engines/ultima/ultima4/metaengine.cpp:68
 msgid "Search"
 msgstr "サーチ"
 
@@ -9286,7 +9554,7 @@ msgstr "バッシュ"
 msgid "Unlock"
 msgstr "解く"
 
-#: engines/mm/mm1/metaengine.cpp:122
+#: engines/mm/mm1/metaengine.cpp:122 engines/ultima/ultima4/metaengine.cpp:109
 msgid "Goto location"
 msgstr "そこへ移動"
 
@@ -9486,15 +9754,6 @@ msgstr "オプションメニューを表示"
 msgid "Drop page"
 msgstr "ページをドロップ"
 
-#: engines/mohawk/myst.cpp:606 engines/wintermute/keymapper_tables.h:1526
-#: engines/wintermute/keymapper_tables.h:1673
-#: engines/wintermute/keymapper_tables.h:1722
-#: engines/wintermute/keymapper_tables.h:1745
-#: engines/wintermute/keymapper_tables.h:1764
-#: engines/wintermute/keymapper_tables.h:1797
-msgid "Show map"
-msgstr "地図を表示"
-
 #: engines/mohawk/myst_stacks/menu.cpp:282
 #: engines/mohawk/riven_stacks/aspit.cpp:348
 msgid ""
@@ -9555,11 +9814,11 @@ msgstr "左に進む"
 msgid "Move forward right"
 msgstr "右に進む"
 
-#: engines/mohawk/riven.cpp:913
+#: engines/mohawk/riven.cpp:913 engines/zvision/metaengine.cpp:217
 msgid "Look up"
 msgstr "上を見る"
 
-#: engines/mohawk/riven.cpp:918
+#: engines/mohawk/riven.cpp:918 engines/zvision/metaengine.cpp:223
 msgid "Look down"
 msgstr "下を見る"
 
@@ -9741,21 +10000,13 @@ msgstr ""
 "公式パッチは、以下からダウンロードできます：\n"
 "%s"
 
-#: engines/myst3/myst3.cpp:1640 engines/pegasus/pegasus.cpp:749
+#: engines/myst3/myst3.cpp:1636 engines/pegasus/pegasus.cpp:749
 msgid "Invalid file name for saving"
 msgstr "無効なセーブファイル名です"
 
 #: engines/nancy/input.cpp:178
 msgid "Nancy Drew"
 msgstr "ナンシー・ドリュー"
-
-#: engines/nancy/input.cpp:181
-msgid "Left Click Interact"
-msgstr "左クリックで会話"
-
-#: engines/nancy/input.cpp:188
-msgid "Right Click Interact"
-msgstr "右クリックで会話"
 
 #: engines/nancy/input.cpp:219
 msgid "Fast move modifier"
@@ -9766,7 +10017,9 @@ msgid "Nancy Drew - Maze"
 msgstr "ナンシー・ドリュー - 迷路"
 
 #: engines/nancy/input.cpp:236
-msgid "Show/hide maze map"
+#, fuzzy
+#| msgid "Show/hide maze map"
+msgid "Show / hide maze map"
 msgstr "マップを表示/非表示"
 
 #: engines/nancy/metaengine.cpp:38
@@ -9924,11 +10177,15 @@ msgstr ""
 "開発チームに内容を報告してください。"
 
 #: engines/pegasus/pegasus.cpp:2724
-msgid "Up/Zoom In/Move Forward/Open Doors"
+#, fuzzy
+#| msgid "Up/Zoom In/Move Forward/Open Doors"
+msgid "Up / Zoom in / Move forward / Open door"
 msgstr "上/ズームイン/前方へ移動/ドアを開ける"
 
 #: engines/pegasus/pegasus.cpp:2732
-msgid "Down/Zoom Out"
+#, fuzzy
+#| msgid "Down/Zoom Out"
+msgid "Down / Zoom out"
 msgstr "下/ズームアウト"
 
 #: engines/pegasus/pegasus.cpp:2754
@@ -9936,24 +10193,34 @@ msgid "Action/Select"
 msgstr "アクション/セレクト"
 
 #: engines/pegasus/pegasus.cpp:2774
-msgid "Display/Hide Inventory Tray"
-msgstr "インベントリートレイの表示/非表示"
+#, fuzzy
+#| msgid "Toggle Inventory/IQ Points display"
+msgid "Toggle inventory tray"
+msgstr "インベントリー/IQポイント表示の切り替え"
 
 #: engines/pegasus/pegasus.cpp:2781
-msgid "Display/Hide Biochip Tray"
-msgstr "バイオチップトレイの表示/非表示"
+#, fuzzy
+#| msgid "Toggle mute"
+msgid "Toggle biochip tray"
+msgstr "消音の切替"
 
 #: engines/pegasus/pegasus.cpp:2789
-msgid "Toggle Center Data Display"
+#, fuzzy
+#| msgid "Toggle Center Data Display"
+msgid "Toggle center data display"
 msgstr "センターディスプレイの切り替え"
 
 #: engines/pegasus/pegasus.cpp:2796
-msgid "Display/Hide Info Screen"
-msgstr "情報スクリーンの表示/非表示"
+#, fuzzy
+#| msgid "Toggle fullscreen"
+msgid "Toggle info screen"
+msgstr "全面モードの切替"
 
 #: engines/pegasus/pegasus.cpp:2803
-msgid "Display/Hide Pause Menu"
-msgstr "ポーズメニューの表示/非表示"
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle pause menu"
+msgstr "高速モードの切り替え"
 
 #: engines/pegasus/pegasus.cpp:2810
 msgid "Toggle Chatty AI"
@@ -10083,9 +10350,9 @@ msgid "Conversation position - Down"
 msgstr ""
 
 #: engines/saga/metaengine.cpp:333 engines/scumm/help.cpp:80
-#: engines/stark/metaengine.cpp:286 engines/sword1/metaengine.cpp:289
-#: engines/trecision/metaengine.cpp:150 engines/tsage/metaengine.cpp:252
-#: engines/vcruise/metaengine.cpp:195
+#: engines/sludge/keymapper_tables.h:573 engines/stark/metaengine.cpp:286
+#: engines/sword1/metaengine.cpp:289 engines/trecision/metaengine.cpp:150
+#: engines/tsage/metaengine.cpp:252 engines/vcruise/metaengine.cpp:195
 msgid "Pause game"
 msgstr "ポーズ"
 
@@ -10098,7 +10365,7 @@ msgstr "音声"
 #: engines/saga/metaengine.cpp:344
 #, fuzzy
 #| msgid "Skip dialogue"
-msgid "Show dialogue"
+msgid "Show dialog"
 msgstr "ダイアログをスキップ"
 
 #. I18N: Walk to where cursor points
@@ -10118,14 +10385,16 @@ msgstr "見る"
 #: engines/saga/metaengine.cpp:359 engines/scumm/help.cpp:144
 #: engines/scumm/help.cpp:169 engines/scumm/help.cpp:198
 #: engines/scumm/help.cpp:213 engines/scumm/help.cpp:230
-#: engines/twp/metaengine.cpp:181 engines/wintermute/keymapper_tables.h:134
+#: engines/sludge/keymapper_tables.h:318 engines/twp/metaengine.cpp:181
+#: engines/wintermute/keymapper_tables.h:134
 #: engines/wintermute/keymapper_tables.h:1546
 msgid "Pick up"
 msgstr "拾う"
 
 #: engines/saga/metaengine.cpp:364 engines/scumm/help.cpp:199
 #: engines/scumm/help.cpp:215 engines/scumm/help.cpp:251
-#: engines/twp/metaengine.cpp:183 engines/wintermute/keymapper_tables.h:128
+#: engines/sludge/keymapper_tables.h:323 engines/twp/metaengine.cpp:183
+#: engines/wintermute/keymapper_tables.h:128
 #: engines/wintermute/keymapper_tables.h:1558
 msgid "Talk to"
 msgstr "話す"
@@ -10133,20 +10402,20 @@ msgstr "話す"
 #: engines/saga/metaengine.cpp:369 engines/scumm/help.cpp:125
 #: engines/scumm/help.cpp:140 engines/scumm/help.cpp:165
 #: engines/scumm/help.cpp:193 engines/scumm/help.cpp:211
-#: engines/twp/metaengine.cpp:178
+#: engines/supernova/metaengine.cpp:336 engines/twp/metaengine.cpp:178
 msgid "Open"
 msgstr "開く"
 
 #: engines/saga/metaengine.cpp:384 engines/scumm/help.cpp:124
 #: engines/scumm/help.cpp:139 engines/scumm/help.cpp:164
 #: engines/scumm/help.cpp:200 engines/scumm/help.cpp:210
-#: engines/twp/metaengine.cpp:180
+#: engines/supernova/metaengine.cpp:366 engines/twp/metaengine.cpp:180
 msgid "Give"
 msgstr "上げる"
 
 #: engines/saga/metaengine.cpp:389 engines/scumm/help.cpp:122
 #: engines/scumm/help.cpp:137 engines/scumm/help.cpp:162
-#: engines/twp/metaengine.cpp:184
+#: engines/supernova/metaengine.cpp:346 engines/twp/metaengine.cpp:184
 msgid "Push"
 msgstr "押す"
 
@@ -10174,11 +10443,6 @@ msgstr "音声を変更"
 #: engines/saga/metaengine.cpp:427
 msgid "Continue game"
 msgstr "ゲームを続行"
-
-#: engines/saga/metaengine.cpp:437 engines/trecision/metaengine.cpp:156
-#: engines/tsage/metaengine.cpp:231 engines/vcruise/metaengine.cpp:190
-msgid "Quit game"
-msgstr "ゲーム終了"
 
 #: engines/saga/metaengine.cpp:454
 msgid "Cancel quit"
@@ -11024,7 +11288,8 @@ msgid "Main game controls:"
 msgstr "メインゲームの操作:"
 
 #: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
-#: engines/scumm/help.cpp:163 engines/twp/metaengine.cpp:185
+#: engines/scumm/help.cpp:163 engines/supernova/metaengine.cpp:351
+#: engines/twp/metaengine.cpp:185
 msgid "Pull"
 msgstr "引く"
 
@@ -11032,7 +11297,7 @@ msgstr "引く"
 msgid "Go to"
 msgstr "行く"
 
-#: engines/scumm/help.cpp:128
+#: engines/scumm/help.cpp:128 engines/ultima/nuvie/metaengine.cpp:70
 msgid "Get"
 msgstr "取る"
 
@@ -11265,7 +11530,7 @@ msgid "Fighting controls (numpad):"
 msgstr "戦闘の操作(テンキー)："
 
 #: engines/scumm/help.cpp:309 engines/scumm/help.cpp:310
-#: engines/scumm/help.cpp:311
+#: engines/scumm/help.cpp:311 engines/ultima/ultima8/metaengine.cpp:97
 msgid "Step back"
 msgstr "後ろに下がる"
 
@@ -11534,19 +11799,27 @@ msgid "Enable ambience sounds."
 msgstr "音声を有効にする"
 
 #: engines/scumm/metaengine.cpp:965
-msgid "Down Left"
+#, fuzzy
+#| msgid "Down Left"
+msgid "Down left"
 msgstr "左下"
 
 #: engines/scumm/metaengine.cpp:978
-msgid "Down Right"
+#, fuzzy
+#| msgid "Down Right"
+msgid "Down right"
 msgstr "右下"
 
 #: engines/scumm/metaengine.cpp:998
-msgid "Up Left"
-msgstr "左上"
+#, fuzzy
+#| msgid "Upper left item"
+msgid "Up left"
+msgstr "左上のアイテム"
 
 #: engines/scumm/metaengine.cpp:1011
-msgid "Up Right"
+#, fuzzy
+#| msgid "Up Right"
+msgid "Up right"
 msgstr "右上"
 
 #: engines/scumm/metaengine.cpp:1023
@@ -11898,7 +12171,7 @@ msgstr "コントロールパネルを開く"
 #: engines/sky/metaengine.cpp:136
 #, fuzzy
 #| msgid "Toggle really fast mode"
-msgid "Toggle really fast mode on/off"
+msgid "Toggle really fast mode on / off"
 msgstr "超高速モードの切り替え"
 
 #: engines/sky/metaengine.cpp:156
@@ -11913,6 +12186,138 @@ msgstr "FD版のイントロを使用する(CD版のみ)"
 msgid "WARNING: Deleting the autosave slot is not supported by this engine"
 msgstr ""
 "警告：オートセーブスロットの削除は、このエンジンではサポートしていません"
+
+#: engines/sludge/keymapper_tables.h:34
+#, fuzzy
+#| msgid "Default keymappings"
+msgid "Debug keymappings"
+msgstr "デフォルトのキーマップ"
+
+#: engines/sludge/keymapper_tables.h:35 engines/supernova/metaengine.cpp:218
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Menu keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/sludge/keymapper_tables.h:36
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Minigame keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/sludge/keymapper_tables.h:46
+#, fuzzy
+#| msgid "Change game options"
+msgid "Change action"
+msgstr "ゲームの設定を変える"
+
+#: engines/sludge/keymapper_tables.h:70 engines/sludge/keymapper_tables.h:293
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Speed up dialog"
+msgstr "ダイアログをスキップ"
+
+#: engines/sludge/keymapper_tables.h:76 engines/sludge/keymapper_tables.h:298
+#, fuzzy
+#| msgid "Slow down virtual mouse"
+msgid "Slow down dialog"
+msgstr "仮想マウスをゆっくりにする"
+
+#: engines/sludge/keymapper_tables.h:83 engines/sludge/keymapper_tables.h:132
+#: engines/sludge/keymapper_tables.h:175 engines/sludge/keymapper_tables.h:211
+#: engines/sludge/keymapper_tables.h:231 engines/sludge/keymapper_tables.h:250
+#: engines/sludge/keymapper_tables.h:275 engines/sludge/keymapper_tables.h:386
+#: engines/sludge/keymapper_tables.h:446 engines/sludge/keymapper_tables.h:478
+#: engines/sludge/keymapper_tables.h:529
+#, fuzzy
+#| msgid "Move left"
+msgid "Move / Interact"
+msgstr "左に行く"
+
+#: engines/sludge/keymapper_tables.h:101 engines/sludge/keymapper_tables.h:150
+#, fuzzy
+#| msgid "Unnamed autosave"
+msgid "Load auto save"
+msgstr "無名のオートセーブ"
+
+#: engines/sludge/keymapper_tables.h:113 engines/sludge/keymapper_tables.h:162
+#, fuzzy
+#| msgid "Load Game"
+msgid "Load save"
+msgstr "ゲームをロード"
+
+#: engines/sludge/keymapper_tables.h:200 engines/sludge/keymapper_tables.h:435
+#: engines/sludge/keymapper_tables.h:552
+msgid "DEBUG: Show floor"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:205 engines/sludge/keymapper_tables.h:440
+#: engines/sludge/keymapper_tables.h:547
+msgid "DEBUG: Show boxes"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:237
+#, fuzzy
+#| msgid "Inventory"
+msgid "Inventory / Examine"
+msgstr "インベントリー"
+
+#: engines/sludge/keymapper_tables.h:281
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Examine / Skip dialog"
+msgstr "ダイアログをスキップ"
+
+#: engines/sludge/keymapper_tables.h:287 engines/sludge/keymapper_tables.h:398
+#: engines/sludge/keymapper_tables.h:522
+#, fuzzy
+#| msgid "Skip cutscene"
+msgid "Pause / Skip cutscene"
+msgstr "ムービーをスキップ"
+
+#: engines/sludge/keymapper_tables.h:328
+msgid "Smell"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:338
+msgid "Consume"
+msgstr ""
+
+#: engines/sludge/keymapper_tables.h:361
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast earth spell"
+msgstr "魔法を詠唱"
+
+#: engines/sludge/keymapper_tables.h:367
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast air spell"
+msgstr "魔法を詠唱"
+
+#: engines/sludge/keymapper_tables.h:373
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast fire spell"
+msgstr "魔法を詠唱"
+
+#: engines/sludge/keymapper_tables.h:379
+#, fuzzy
+#| msgid "Cast Spell"
+msgid "Cast water spell"
+msgstr "魔法を詠唱"
+
+#: engines/sludge/keymapper_tables.h:423 engines/sludge/keymapper_tables.h:510
+#, fuzzy
+#| msgid "Highlight next dialogue"
+msgid "Move / Interact / Skip dialog"
+msgstr "次のダイアログをハイライト"
+
+#: engines/sludge/keymapper_tables.h:516
+#, fuzzy
+#| msgid "Skip dialogue"
+msgid "Inventory / Skip dialog"
+msgstr "ダイアログをスキップ"
 
 #: engines/stark/metaengine.cpp:41
 msgid "Load modded assets"
@@ -12012,33 +12417,37 @@ msgid "Scroll down in inventory"
 msgstr "インベントリーを表示"
 
 #: engines/stark/metaengine.cpp:306
-msgid "Scroll up in your dialogues"
-msgstr ""
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Scroll up in your dialogs"
+msgstr "インベントリーを開く/閉じる"
 
 #: engines/stark/metaengine.cpp:312
-msgid "Scroll down in your dialogues"
-msgstr ""
+#, fuzzy
+#| msgid "Show inventory"
+msgid "Scroll down in your dialogs"
+msgstr "インベントリーを表示"
 
 #: engines/stark/metaengine.cpp:318
 #, fuzzy
 #| msgid "Highlight next dialogue"
-msgid "Go to next dialogue"
+msgid "Go to next dialog"
 msgstr "次のダイアログをハイライト"
 
 #: engines/stark/metaengine.cpp:323
 #, fuzzy
 #| msgid "Go to previous directory level"
-msgid "Go to previous dialogues"
+msgid "Go to previous dialogs"
 msgstr "上のフォルダーへ移動"
 
 #: engines/stark/metaengine.cpp:328
 #, fuzzy
 #| msgid "Skip dialogue"
-msgid "Select dialogue"
+msgid "Select dialog"
 msgstr "ダイアログをスキップ"
 
 #: engines/stark/metaengine.cpp:335
-msgid "Skip video sequence or dialogue"
+msgid "Skip video sequence or dialog"
 msgstr ""
 
 #: engines/stark/stark.cpp:106
@@ -12073,12 +12482,12 @@ msgstr ""
 msgid "'game.exe' is recommended to get styled confirmation dialogs."
 msgstr "スタイルが適用された確認ダイアログを使用するには、game.exeが必要です。"
 
-#: engines/supernova/supernova.cpp:191
+#: engines/supernova/supernova.cpp:193
 #, c-format
 msgid "Unable to locate the text for %s language in engine data file."
 msgstr "%s語用のテキストがエンジンデータファイル内に存在しません。"
 
-#: engines/supernova/supernova.cpp:475
+#: engines/supernova/supernova.cpp:479
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d but got %d."
@@ -12086,17 +12495,17 @@ msgstr ""
 "エンジン%sの、正しくないバージョンのデータを発見しました。想定バージョンは%d"
 "ですが、取得されたのは%dです。"
 
-#: engines/supernova/supernova.cpp:485
+#: engines/supernova/supernova.cpp:489
 #, c-format
 msgid "Unable to find block for part %d"
 msgstr "パーツ%dのブロックが見つかりません"
 
-#: engines/supernova/supernova.cpp:528
+#: engines/supernova/supernova.cpp:532
 #, c-format
 msgid "Unable to find '%s' in game folder or the engine data file."
 msgstr "ゲームフォルダー、またはエンジンのデータファイルに%sが見つかりません。"
 
-#: engines/supernova/supernova.cpp:832
+#: engines/supernova/supernova.cpp:852
 msgid ""
 "Failed to save temporary game state. Make sure your save game directory is "
 "set in ScummVM and that you can write to it."
@@ -12104,18 +12513,110 @@ msgstr ""
 "一時セーブに失敗しました。ディレクトリーがScummVMに設定されており、書き込み可"
 "能である事を確認してください。"
 
-#: engines/supernova/supernova.cpp:833
+#: engines/supernova/supernova.cpp:853
 msgid "Failed to load temporary game state."
 msgstr "一時保存データのロードに失敗しました。"
 
-#: engines/supernova/metaengine.cpp:37
+#: engines/supernova/metaengine.cpp:41
 msgid "Improved mode"
 msgstr "改善モード"
 
-#: engines/supernova/metaengine.cpp:38
+#: engines/supernova/metaengine.cpp:42
 msgid ""
 "Removes some repetitive actions, adds possibility to change verbs by keyboard"
 msgstr "いくつかの反復操作を削除し、キーボードで動詞を変更可能にする"
+
+#: engines/supernova/metaengine.cpp:219 engines/voyeur/metaengine.cpp:185
+#, fuzzy
+#| msgid "Exit screen keymappings"
+msgid "Cutscene keymappings"
+msgstr "終了画面のキーマッピング"
+
+#: engines/supernova/metaengine.cpp:220
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Improved mode keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/supernova/metaengine.cpp:221
+#, fuzzy
+#| msgid "Exit screen keymappings"
+msgid "Text reader keymappings"
+msgstr "終了画面のキーマッピング"
+
+#: engines/supernova/metaengine.cpp:222
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Computer keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/supernova/metaengine.cpp:232
+#, fuzzy
+#| msgid "Look at"
+msgid "Perform default action"
+msgstr "見る"
+
+#: engines/supernova/metaengine.cpp:244
+#, fuzzy
+#| msgid "Interpolation:"
+msgid "Instructions"
+msgstr "補間："
+
+#: engines/supernova/metaengine.cpp:250
+#, fuzzy
+#| msgid "General Information"
+msgid "Information"
+msgstr "総合案内"
+
+#: engines/supernova/metaengine.cpp:256
+#, fuzzy
+#| msgid "Text speed - Fast"
+msgid "Text speed"
+msgstr "テキスト - 速い"
+
+#: engines/supernova/metaengine.cpp:285
+#, fuzzy
+#| msgid "Rotate"
+msgid "Page up"
+msgstr "回す"
+
+#: engines/supernova/metaengine.cpp:291
+#, fuzzy
+#| msgid "Rotate"
+msgid "Page down"
+msgstr "回す"
+
+#. I18N: Exits the game
+#: engines/supernova/metaengine.cpp:297 engines/supernova/metaengine.cpp:373
+#: engines/ultima/ultima4/metaengine.cpp:54 engines/voyeur/metaengine.cpp:198
+#: engines/voyeur/metaengine.cpp:229 engines/wintermute/keymapper_tables.h:720
+#: engines/wintermute/keymapper_tables.h:1849
+msgid "Exit"
+msgstr "終了"
+
+#: engines/supernova/metaengine.cpp:321
+#, fuzzy
+#| msgid "Good"
+msgid "Go"
+msgstr "良"
+
+#: engines/supernova/metaengine.cpp:379
+#, fuzzy
+#| msgid "Open Files manager"
+msgid "Office manager"
+msgstr "ファイルマネージャーを開く"
+
+#: engines/supernova/metaengine.cpp:385
+msgid "Phone"
+msgstr ""
+
+#: engines/supernova/metaengine.cpp:391
+msgid "ProText"
+msgstr ""
+
+#: engines/supernova/metaengine.cpp:397
+msgid "Calculata"
+msgstr ""
 
 #: engines/sword1/animation.cpp:566 engines/sword2/animation.cpp:459
 msgid ""
@@ -12228,7 +12729,7 @@ msgstr "方向ボタン："
 #: engines/sword1/metaengine.cpp:301
 #, fuzzy
 #| msgid "Main Men~u~"
-msgid "Main Menu"
+msgid "Main menu"
 msgstr "メインメニュー(~u~)"
 
 #: engines/sword2/detection_tables.h:419
@@ -12291,38 +12792,170 @@ msgstr ""
 msgid "Save/Load keymappings"
 msgstr "Yes / Noキーマップ"
 
-#: engines/tinsel/metaengine.cpp:307
-#, fuzzy
-#| msgid "Skip dialogue"
-msgid "Options Dialog"
-msgstr "ダイアログをスキップ"
-
 #: engines/tinsel/metaengine.cpp:341
 #, fuzzy
 #| msgid "Go to save/load menu"
-msgid "Page Up in save/load menu"
+msgid "Page up in save / load menu"
 msgstr "セーブ/ロードメニューへ"
 
 #: engines/tinsel/metaengine.cpp:347
 #, fuzzy
 #| msgid "Go to save/load menu"
-msgid "Page down in save/load menu"
+msgid "Page down in save / load menu"
 msgstr "セーブ/ロードメニューへ"
 
 #: engines/tinsel/metaengine.cpp:353
 #, fuzzy
 #| msgid "Go to save/load menu"
-msgid "Go to start of save/load menu"
+msgid "Go to start of save / load menu"
 msgstr "セーブ/ロードメニューへ"
 
 #: engines/tinsel/metaengine.cpp:359
 #, fuzzy
 #| msgid "Go to save/load menu"
-msgid "Go to end of save/load menu"
+msgid "Go to end of save / load menu"
 msgstr "セーブ/ロードメニューへ"
 
 #: engines/tinsel/tinsel.cpp:1040
 msgid "Discworld Noir needs ScummVM with TinyGL enabled"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:173
+#, fuzzy
+#| msgid "Escape keymappings"
+msgid "PET keymappings"
+msgstr "キーマッピング終了"
+
+#: engines/titanic/metaengine.cpp:174
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Real Life keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/titanic/metaengine.cpp:175
+#, fuzzy
+#| msgid "KIA only shortcuts"
+msgid "Inventory shortcut"
+msgstr "KIA用ショートカット"
+
+#: engines/titanic/metaengine.cpp:176
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Continue game dialogue keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/titanic/metaengine.cpp:177
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Star Map keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/titanic/metaengine.cpp:178
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Movement keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/titanic/metaengine.cpp:182
+#, fuzzy
+#| msgid "Interact Mode"
+msgid "Select / Interact / Move"
+msgstr "作用モード"
+
+#: engines/titanic/metaengine.cpp:188
+#, fuzzy
+#| msgid "Highlight next dialogue"
+msgid "Select / Interact / Quick move"
+msgstr "次のダイアログをハイライト"
+
+#: engines/titanic/metaengine.cpp:194
+#, fuzzy
+#| msgid "Game menu"
+msgid "Cheat menu"
+msgstr "ゲームメニュー"
+
+#: engines/titanic/metaengine.cpp:239
+#, fuzzy
+#| msgid "Next location"
+msgid "Conversation"
+msgstr "次の地点"
+
+#: engines/titanic/metaengine.cpp:249
+#, fuzzy
+#| msgid "Remove"
+msgid "Remote"
+msgstr "削除"
+
+#: engines/titanic/metaengine.cpp:254
+#, fuzzy
+#| msgid "Room:"
+msgid "Rooms"
+msgstr "部屋："
+
+#: engines/titanic/metaengine.cpp:259
+msgid "Real life"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:264
+#, fuzzy
+#| msgid "Scroll up"
+msgid "Scroll up page"
+msgstr "上にスクロール"
+
+#: engines/titanic/metaengine.cpp:271
+#, fuzzy
+#| msgid "Scroll down"
+msgid "Scroll down page"
+msgstr "下にスクロール"
+
+#: engines/titanic/metaengine.cpp:278
+#, fuzzy
+#| msgid "Scroll list up"
+msgid "Scroll to top"
+msgstr "リストを上へスクロール"
+
+#: engines/titanic/metaengine.cpp:284
+#, fuzzy
+#| msgid "Move left"
+msgid "Scroll to bottom"
+msgstr "左に行く"
+
+#: engines/titanic/metaengine.cpp:291
+#, fuzzy
+#| msgid "Transitions:"
+msgid "Translation"
+msgstr "トランジション："
+
+#: engines/titanic/metaengine.cpp:307
+msgid "Toggle between Star Map and photo of your home"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:343 engines/titanic/metaengine.cpp:384
+#, fuzzy
+#| msgid "Move backwards"
+msgid "Move backward"
+msgstr "後退"
+
+#: engines/titanic/metaengine.cpp:350
+msgid "Stop moving"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:356
+msgid "Lock coordinate"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:362
+msgid "Unlock coordinate"
+msgstr ""
+
+#: engines/titanic/metaengine.cpp:368
+#, fuzzy
+#| msgid "Next location"
+msgid "View constellations"
+msgstr "次の地点"
+
+#: engines/titanic/metaengine.cpp:373
+msgid "View boundaries"
 msgstr ""
 
 #: engines/toltecs/metaengine.cpp:216
@@ -12332,7 +12965,7 @@ msgid "Move / Select"
 msgstr "左に行く"
 
 #: engines/toltecs/metaengine.cpp:222
-msgid "Move / Perform Default Action"
+msgid "Move / Perform default action"
 msgstr ""
 
 #: engines/toltecs/metaengine.cpp:258
@@ -12346,7 +12979,7 @@ msgstr "行単位でスキップ"
 msgid "Font variant not present in '%s' engine data file."
 msgstr "異なるフォントはエンジンデータファイル'%s'に存在しません。"
 
-#: engines/toon/metaengine.cpp:98
+#: engines/toon/metaengine.cpp:98 engines/voyeur/metaengine.cpp:235
 #, fuzzy
 #| msgid "Skip line"
 msgid "Skip intro"
@@ -12407,14 +13040,8 @@ msgid "Unable to locate the '%s' data file."
 msgstr "データファイル'%s'の場所が特定できません。"
 
 #: engines/touche/metaengine.cpp:135
-msgid "Skip sequence/open quit dialogue"
+msgid "Skip sequence / open quit dialog"
 msgstr ""
-
-#: engines/touche/metaengine.cpp:141
-#, fuzzy
-#| msgid "Skip dialogue"
-msgid "Skip Dialogue"
-msgstr "ダイアログをスキップ"
 
 #: engines/touche/metaengine.cpp:147
 #, fuzzy
@@ -12441,7 +13068,9 @@ msgid "Toggle fast mode"
 msgstr "高速モードの切り替え"
 
 #: engines/touche/metaengine.cpp:173
-msgid "Toggle between voice/text/text and voice"
+#, fuzzy
+#| msgid "Toggle between voice/text/text and voice"
+msgid "Toggle between voice / text / text and voice"
 msgstr "ボイス/テキスト/両方の切り替え"
 
 #: engines/touche/metaengine.cpp:182
@@ -12502,13 +13131,13 @@ msgstr "南"
 #: engines/tsage/metaengine.cpp:278
 #, fuzzy
 #| msgid "Turn left fast"
-msgid "Turn Left/Crawl West"
+msgid "Turn left / Crawl West"
 msgstr "高速で左折"
 
 #: engines/tsage/metaengine.cpp:285
 #, fuzzy
 #| msgid "Turn right fast"
-msgid "Turn Right/Crawl East"
+msgid "Turn right / Crawl East"
 msgstr "高速で右折"
 
 #: engines/tsage/metaengine.cpp:292
@@ -12650,55 +13279,75 @@ msgid "Enable a higher resolution for the game"
 msgstr "ゲームのハイレゾを有効化"
 
 #: engines/twine/metaengine.cpp:228
-msgid "Debug Grid Camera Up"
+#, fuzzy
+#| msgid "Debug Grid Camera Up"
+msgid "Debug grid camera up"
 msgstr "グリッドカメラを上へ"
 
 #: engines/twine/metaengine.cpp:233
-msgid "Debug Grid Camera Down"
+#, fuzzy
+#| msgid "Debug Grid Camera Down"
+msgid "Debug grid camera down"
 msgstr "グリッドカメラを下へ"
 
 #: engines/twine/metaengine.cpp:238
-msgid "Debug Grid Camera Left"
+#, fuzzy
+#| msgid "Debug Grid Camera Left"
+msgid "Debug grid camera left"
 msgstr "グリッドカメラを左へ"
 
 #: engines/twine/metaengine.cpp:244
-msgid "Debug Grid Camera Right"
+#, fuzzy
+#| msgid "Debug Grid Camera Right"
+msgid "Debug grid camera right"
 msgstr "グリッドカメラを右へ"
 
 #: engines/twine/metaengine.cpp:249 engines/twine/metaengine.cpp:269
-msgid "Normal Behaviour"
+#, fuzzy
+#| msgid "Normal Behaviour"
+msgid "Normal behavior"
 msgstr "通常の行動"
 
 #: engines/twine/metaengine.cpp:254 engines/twine/metaengine.cpp:274
-msgid "Athletic Behaviour"
+#, fuzzy
+#| msgid "Athletic Behaviour"
+msgid "Athletic behavior"
 msgstr "競技用の行動"
 
 #: engines/twine/metaengine.cpp:259 engines/twine/metaengine.cpp:279
-msgid "Aggressive Behaviour"
+#, fuzzy
+#| msgid "Aggressive Behaviour"
+msgid "Aggressive behavior"
 msgstr "攻撃的な行動"
 
 #: engines/twine/metaengine.cpp:264 engines/twine/metaengine.cpp:284
-msgid "Discreet Behaviour"
+#, fuzzy
+#| msgid "Discreet Behaviour"
+msgid "Discreet behavior"
 msgstr "慎重な行動"
 
 #: engines/twine/metaengine.cpp:289
-msgid "Behaviour Action"
+#, fuzzy
+#| msgid "Behaviour Action"
+msgid "Behavior action"
 msgstr "行動を実行"
 
 #: engines/twine/metaengine.cpp:295
-msgid "Change Behaviour"
+#, fuzzy
+#| msgid "Change Behaviour"
+msgid "Change behavior"
 msgstr "行動を変更"
 
-#: engines/twine/metaengine.cpp:307
-msgid "Options Menu"
-msgstr "設定"
-
 #: engines/twine/metaengine.cpp:319
-msgid "Use Selected Object"
+#, fuzzy
+#| msgid "Use Selected Object"
+msgid "Use selected object"
 msgstr "選択したオブジェクトを使用"
 
 #: engines/twine/metaengine.cpp:325
-msgid "Throw Magic Ball"
+#, fuzzy
+#| msgid "Throw Magic Ball"
+msgid "Throw magic ball"
 msgstr "マジックボールを投げる"
 
 #: engines/twine/metaengine.cpp:360
@@ -12710,11 +13359,15 @@ msgid "Open Holomap"
 msgstr "ホログラムマップを開く"
 
 #: engines/twine/metaengine.cpp:378
-msgid "Special Action"
+#, fuzzy
+#| msgid "Special Action"
+msgid "Special action"
 msgstr "スペシャルアクション"
 
 #: engines/twine/metaengine.cpp:384
-msgid "Scenery Zoom"
+#, fuzzy
+#| msgid "Scenery Zoom"
+msgid "Scenery zoom"
 msgstr "風景ズーム"
 
 #: engines/twine/metaengine.cpp:527
@@ -12800,75 +13453,111 @@ msgid "Go to next object"
 msgstr "次のオブジェクトへ"
 
 #: engines/twp/metaengine.cpp:158
-msgid "Select verb/item Left"
+#, fuzzy
+#| msgid "Select verb/item Left"
+msgid "Select verb / item left"
 msgstr "左の動詞/アイテムを選択"
 
 #: engines/twp/metaengine.cpp:159
-msgid "Select verb/item Right"
+#, fuzzy
+#| msgid "Select verb/item Right"
+msgid "Select verb / item right"
 msgstr "右の動詞/アイテムを選択"
 
 #: engines/twp/metaengine.cpp:160
-msgid "Select verb/item Up"
+#, fuzzy
+#| msgid "Select verb/item Up"
+msgid "Select verb / item up"
 msgstr "上の動詞/アイテムを選択"
 
 #: engines/twp/metaengine.cpp:161
-msgid "Select verb/item Down"
+#, fuzzy
+#| msgid "Select verb/item Down"
+msgid "Select verb / item down"
 msgstr "下の動詞/アイテムを選択"
 
 #: engines/twp/metaengine.cpp:163
-msgid "Select Actor 1"
+#, fuzzy
+#| msgid "Select Actor 1"
+msgid "Select actor 1"
 msgstr "役者1を選択"
 
 #: engines/twp/metaengine.cpp:164
-msgid "Select Actor 2"
+#, fuzzy
+#| msgid "Select Actor 2"
+msgid "Select actor 2"
 msgstr "役者2を選択"
 
 #: engines/twp/metaengine.cpp:165
-msgid "Select Actor 3"
+#, fuzzy
+#| msgid "Select Actor 3"
+msgid "Select actor 3"
 msgstr "役者3を選択"
 
 #: engines/twp/metaengine.cpp:166
-msgid "Select Actor 4"
+#, fuzzy
+#| msgid "Select Actor 4"
+msgid "Select actor 4"
 msgstr "役者4を選択"
 
 #: engines/twp/metaengine.cpp:167
-msgid "Select Actor 5"
+#, fuzzy
+#| msgid "Select Actor 5"
+msgid "Select actor 5"
 msgstr "役者5を選択"
 
 #: engines/twp/metaengine.cpp:168
-msgid "Select Choice 1"
+#, fuzzy
+#| msgid "Select Choice 1"
+msgid "Select choice 1"
 msgstr "1を選択"
 
 #: engines/twp/metaengine.cpp:169
-msgid "Select Choice 2"
+#, fuzzy
+#| msgid "Select Choice 2"
+msgid "Select choice 2"
 msgstr "2を選択"
 
 #: engines/twp/metaengine.cpp:170
-msgid "Select Choice 3"
+#, fuzzy
+#| msgid "Select Choice 3"
+msgid "Select choice 3"
 msgstr "3を選択"
 
 #: engines/twp/metaengine.cpp:171
-msgid "Select Choice 4"
+#, fuzzy
+#| msgid "Select Choice 4"
+msgid "Select choice 4"
 msgstr "4を選択"
 
 #: engines/twp/metaengine.cpp:172
-msgid "Select Choice 5"
+#, fuzzy
+#| msgid "Select Choice 5"
+msgid "Select choice 5"
 msgstr "5を選択"
 
 #: engines/twp/metaengine.cpp:173
-msgid "Select Choice 6"
+#, fuzzy
+#| msgid "Select Choice 6"
+msgid "Select choice 6"
 msgstr "6を選択"
 
 #: engines/twp/metaengine.cpp:174
-msgid "Select Next Actor"
+#, fuzzy
+#| msgid "Select Next Actor"
+msgid "Select next Actor"
 msgstr "次の役者を選択"
 
 #: engines/twp/metaengine.cpp:175
-msgid "Select Previous Actor"
+#, fuzzy
+#| msgid "Select Previous Actor"
+msgid "Select previous actor"
 msgstr "前の役者を選択"
 
 #: engines/twp/metaengine.cpp:176
-msgid "Skip Text"
+#, fuzzy
+#| msgid "Skip Text"
+msgid "Skip text"
 msgstr "スキップ"
 
 #: engines/twp/metaengine.cpp:177
@@ -12951,6 +13640,289 @@ msgstr "Christmas musicを通年で有効化します。"
 msgid "Could not find correct ultima.dat datafile"
 msgstr "正しいデータファイルultima.datが見つかりません"
 
+#: engines/ultima/ultima4/metaengine.cpp:43
+#: engines/ultima/ultima4/metaengine.cpp:130
+#: engines/ultima/ultima4/metaengine.cpp:135
+#: engines/ultima/ultima4/metaengine.cpp:145
+#, fuzzy
+#| msgid "Next action"
+msgid "Abort action"
+msgstr "次の行動"
+
+#: engines/ultima/ultima4/metaengine.cpp:49
+#, fuzzy
+#| msgid "Keyboard"
+msgid "Board"
+msgstr "キーボード"
+
+#: engines/ultima/ultima4/metaengine.cpp:51
+msgid "Climb"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:52
+#: engines/ultima/ultima8/metaengine.cpp:108
+msgid "Descend"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:56
+#, fuzzy
+#| msgid "Fight cheat"
+msgid "Get chest"
+msgstr "戦闘チート"
+
+#: engines/ultima/ultima4/metaengine.cpp:57
+msgid "Hole up & camp"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:58
+msgid "Jimmy"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:59
+msgid "Ignite"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:60
+#, fuzzy
+#| msgid "Look at"
+msgid "Locate position"
+msgstr "見る"
+
+#: engines/ultima/ultima4/metaengine.cpp:61
+msgid "Mix reagents"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:62
+#, fuzzy
+#| msgid "New kid"
+msgid "New order"
+msgstr "新しい子供"
+
+#: engines/ultima/ultima4/metaengine.cpp:63
+#, fuzzy
+#| msgid "Open Holomap"
+msgid "Open door"
+msgstr "ホログラムマップを開く"
+
+#: engines/ultima/ultima4/metaengine.cpp:64
+#, fuzzy
+#| msgid "Password:"
+msgid "Pass"
+msgstr "パスワード："
+
+#: engines/ultima/ultima4/metaengine.cpp:65
+msgid "Peer"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:66
+#, fuzzy
+#| msgid "Quick save"
+msgid "Quit and save"
+msgstr "クイックセーブ"
+
+#: engines/ultima/ultima4/metaengine.cpp:67
+#, fuzzy
+#| msgid "Next action"
+msgid "Ready weapon"
+msgstr "次の行動"
+
+#: engines/ultima/ultima4/metaengine.cpp:69
+#, fuzzy
+#| msgid "Status:"
+msgid "Stats"
+msgstr "ステータス："
+
+#: engines/ultima/ultima4/metaengine.cpp:72
+msgid "Wear armor"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:73
+msgid "Yell"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:79
+#, fuzzy
+#| msgid "Speed:"
+msgid "Speed up"
+msgstr "速さ："
+
+#: engines/ultima/ultima4/metaengine.cpp:80
+#, fuzzy
+#| msgid "Move down"
+msgid "Speed down"
+msgstr "下"
+
+#: engines/ultima/ultima4/metaengine.cpp:81
+#, fuzzy
+#| msgid "Speech Only"
+msgid "Speed normal"
+msgstr "音声のみ"
+
+#: engines/ultima/ultima4/metaengine.cpp:82
+msgid "Combat speed up"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:83
+#, fuzzy
+#| msgid "Rotate"
+msgid "Combat speed down"
+msgstr "回す"
+
+#: engines/ultima/ultima4/metaengine.cpp:84
+msgid "Combat speed normal"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:90
+msgid "Party - None"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:91
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #1"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:92
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #2"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:93
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #3"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:94
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #4"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:95
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #5"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:96
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #6"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:97
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #7"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:98
+#, fuzzy
+#| msgid "Transfer Character"
+msgid "Party - Character #8"
+msgstr "キャラクターを転送"
+
+#: engines/ultima/ultima4/metaengine.cpp:104
+msgid "Destroy all creatures"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:105
+#, fuzzy
+#| msgctxt "Options menu"
+#| msgid "Wall collision on"
+msgid "Toggle collision handling"
+msgstr "壁の衝突判定ON"
+
+#: engines/ultima/ultima4/metaengine.cpp:106
+#, fuzzy
+#| msgid "Next object"
+msgid "Destroy object"
+msgstr "次のオブジェクト"
+
+#: engines/ultima/ultima4/metaengine.cpp:107
+msgid "Full equipment"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:108
+#, fuzzy
+#| msgid "Toggle Combat"
+msgid "Flee combat"
+msgstr "モードの切替"
+
+#: engines/ultima/ultima4/metaengine.cpp:110
+msgid "Help - Teleport to Lord British"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:111
+msgid "Give items"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:112
+msgid "List karma"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:113
+#, fuzzy
+#| msgid "Next location"
+msgid "Leave location"
+msgstr "次の地点"
+
+#: engines/ultima/ultima4/metaengine.cpp:114
+msgid "Give mixtures"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:115
+msgid "Combat encounters"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:116
+#, fuzzy
+#| msgid "Toggle Drag Mode"
+msgid "Toggle overhead view"
+msgstr "ドラッグモードへ切り替え"
+
+#: engines/ultima/ultima4/metaengine.cpp:117
+msgid "Full party"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:118
+msgid "Give reagents"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:119
+msgid "Full stats"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:120
+#, fuzzy
+#| msgid "Create directory"
+msgid "Create transport"
+msgstr "ディレクトリーを生成"
+
+#: engines/ultima/ultima4/metaengine.cpp:121
+#, fuzzy
+#| msgid "Debug level:"
+msgid "Up level"
+msgstr "デバッグLV："
+
+#: engines/ultima/ultima4/metaengine.cpp:122
+#, fuzzy
+#| msgid "Debug level:"
+msgid "Down level"
+msgstr "デバッグLV："
+
+#: engines/ultima/ultima4/metaengine.cpp:123
+msgid "Grant virtue"
+msgstr ""
+
+#: engines/ultima/ultima4/metaengine.cpp:124
+#, fuzzy
+#| msgid "Change sound"
+msgid "Change wind"
+msgstr "SEを変更"
+
 #: engines/ultima/nuvie/nuvie.cpp:403
 #, c-format
 msgid "loading quick save %d"
@@ -12965,15 +13937,513 @@ msgstr "%dにクイックセーブしています"
 msgid "Original Save"
 msgstr "オリジナルセーブ"
 
-#: engines/ultima/nuvie/metaengine.cpp:211
+#: engines/ultima/nuvie/metaengine.cpp:59
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk west"
+msgstr "歩く"
+
+#: engines/ultima/nuvie/metaengine.cpp:60
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk east"
+msgstr "歩く"
+
+#: engines/ultima/nuvie/metaengine.cpp:61
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk north"
+msgstr "歩く"
+
+#: engines/ultima/nuvie/metaengine.cpp:62
+#, fuzzy
+#| msgid "Walk to"
+msgid "Walk south"
+msgstr "歩く"
+
+#: engines/ultima/nuvie/metaengine.cpp:63
+msgid "Walk north-east"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:64
+msgid "Walk south-east"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:65
+msgid "Walk north-west"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:66
+msgid "Walk south-west"
+msgstr ""
+
+#. I18N: It's a Tetris game clone, this action drops current tetris item
+#: engines/ultima/nuvie/metaengine.cpp:72
+#: engines/wintermute/keymapper_tables.h:2035
+msgid "Drop"
+msgstr "落とす"
+
+#: engines/ultima/nuvie/metaengine.cpp:75
+msgid "Multi-use"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:76
+#, fuzzy
+#| msgid "Select shader"
+msgid "Select command bar"
+msgstr "シェーダーを選択"
+
+#: engines/ultima/nuvie/metaengine.cpp:77
+#, fuzzy
+#| msgid "Select Next Actor"
+msgid "Select new command bar"
+msgstr "次の役者を選択"
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:79
+#, fuzzy
+#| msgid "Scroll up"
+msgid "Doll gump"
+msgstr "上にスクロール"
+
+#: engines/ultima/nuvie/metaengine.cpp:80
+#, fuzzy
+#| msgid "Previous page"
+msgid "Previous party member"
+msgstr "前のページ"
+
+#: engines/ultima/nuvie/metaengine.cpp:81
+#, fuzzy
+#| msgid "View Party Member 1"
+msgid "Next party member"
+msgstr "パーティー1を見る"
+
+#: engines/ultima/nuvie/metaengine.cpp:82
+msgid "Home key"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:83
+msgid "End key"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:84
+#, fuzzy
+#| msgid "Toggle between voice/text/text and voice"
+msgid "Toggle between inventory and actor view"
+msgstr "ボイス/テキスト/両方の切り替え"
+
+#: engines/ultima/nuvie/metaengine.cpp:85
+#, fuzzy
+#| msgid "List view"
+msgid "Party view"
+msgstr "リストで表示"
+
+#: engines/ultima/nuvie/metaengine.cpp:86
+#, fuzzy
+#| msgid "Shorty mode"
+msgid "Party mode"
+msgstr "ショーティーモード"
+
+#: engines/ultima/nuvie/metaengine.cpp:87
+#, fuzzy
+#| msgid "Game menu"
+msgid "Save menu"
+msgstr "ゲームメニュー"
+
+#: engines/ultima/nuvie/metaengine.cpp:88
+#, fuzzy
+#| msgid "Unnamed autosave"
+msgid "Load latest save"
+msgstr "無名のオートセーブ"
+
+#: engines/ultima/nuvie/metaengine.cpp:93
+msgid "Show game menu; Cancel action if in middle of action"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:95
+#, fuzzy
+#| msgid "Toggle Clock"
+msgid "Toggle Cursor"
+msgstr "時計を切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:96
+#, fuzzy
+#| msgid "Toggle Combat"
+msgid "Toggle combat strategy"
+msgstr "モードの切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:97
+#, fuzzy
+#| msgid "Max frames per second limit"
+msgid "Toggle frames per second display"
+msgstr "fpsの上限"
+
+#: engines/ultima/nuvie/metaengine.cpp:98
+#, fuzzy
+#| msgid "Toggle mute"
+msgid "Toggle audio"
+msgstr "消音の切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:99
+#, fuzzy
+#| msgid "Toggle mute"
+msgid "Toggle music"
+msgstr "消音の切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:100
+#, fuzzy
+#| msgid "Toggle mute"
+msgid "Toggle sfx"
+msgstr "消音の切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:101
+msgid "Toggle original style command bar"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:102
+#, fuzzy
+#| msgid "Droid's action"
+msgid "Do action"
+msgstr "ドロイドのアクション"
+
+#: engines/ultima/nuvie/metaengine.cpp:103
+#, fuzzy
+#| msgid "Change game options"
+msgid "Cancel action"
+msgstr "ゲームの設定を変える"
+
+#: engines/ultima/nuvie/metaengine.cpp:104
+#, fuzzy
+#| msgid "Scroll up"
+msgid "Msg scroll up"
+msgstr "上にスクロール"
+
+#: engines/ultima/nuvie/metaengine.cpp:105
+#, fuzzy
+#| msgid "Scroll down"
+msgid "Msg scroll down"
+msgstr "下にスクロール"
+
+#: engines/ultima/nuvie/metaengine.cpp:106
+#, fuzzy
+#| msgid "Speech Options"
+msgid "Show keys"
+msgstr "スピーチオプション"
+
+#: engines/ultima/nuvie/metaengine.cpp:107
+#, fuzzy
+#| msgid "Decrease the scale factor"
+msgid "Decrease debug"
+msgstr "スケールを縮小する"
+
+#: engines/ultima/nuvie/metaengine.cpp:108
+#, fuzzy
+#| msgid "Increase the scale factor"
+msgid "Increase debug"
+msgstr "スケールを拡大する"
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:110
+#, fuzzy
+#| msgid "Close popup"
+msgid "Close gumps"
+msgstr "ポップアップを閉じる"
+
+#: engines/ultima/nuvie/metaengine.cpp:112
+msgid "Enter ALT code (hold)"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:113
+msgid "ALT code 0"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:114
+msgid "ALT code 1"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:115
+msgid "ALT code 2"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:116
+msgid "ALT code 3"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:117
+msgid "ALT code 4"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:118
+msgid "ALT code 5"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:119
+msgid "ALT code 6"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:120
+msgid "ALT code 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:121
+msgid "ALT code 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:122
+msgid "ALT code 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:126
+msgid "Open the asset viewer"
+msgstr ""
+
+#. I18N: Eggs are in-game hatchable objects that are normally invisible
+#: engines/ultima/nuvie/metaengine.cpp:128
+#, fuzzy
+#| msgid "Speech Options"
+msgid "Show eggs"
+msgstr "スピーチオプション"
+
+#: engines/ultima/nuvie/metaengine.cpp:129
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle hack move"
+msgstr "高速モードの切り替え"
+
+#. I18N: Eggs are in-game hatchable objects that are normally invisible
+#: engines/ultima/nuvie/metaengine.cpp:131
+#, fuzzy
+#| msgid "Toggle Menu"
+msgid "Toggle egg spawn"
+msgstr "メニュー切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:132
+#, fuzzy
+#| msgid "Toggle mouse capture"
+msgid "Toggle no darkness"
+msgstr "マウスキャプチャーの切替"
+
+#: engines/ultima/nuvie/metaengine.cpp:133
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle pickpocket mode"
+msgstr "高速モードの切り替え"
+
+#: engines/ultima/nuvie/metaengine.cpp:134
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle god mode"
+msgstr "高速モードの切り替え"
+
+#: engines/ultima/nuvie/metaengine.cpp:135
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle ethereal mode"
+msgstr "高速モードの切り替え"
+
+#: engines/ultima/nuvie/metaengine.cpp:136
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle X-ray mode"
+msgstr "高速モードの切り替え"
+
+#: engines/ultima/nuvie/metaengine.cpp:137
+msgid "Heal party"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:138
+#, fuzzy
+#| msgid "Regular cursor"
+msgid "Teleport to cursor"
+msgstr "レギュラーカーソル"
+
+#: engines/ultima/nuvie/metaengine.cpp:139
+#, fuzzy
+#| msgid "Enable cheats"
+msgid "Toggle cheats"
+msgstr "チートを有効化"
+
+#: engines/ultima/nuvie/metaengine.cpp:143
+msgid "Solo mode as Avatar"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:144
+#, fuzzy
+#| msgid "View Party Member 2"
+msgid "Solo mode as party member 2"
+msgstr "パーティー2を見る"
+
+#: engines/ultima/nuvie/metaengine.cpp:145
+#, fuzzy
+#| msgid "View Party Member 3"
+msgid "Solo mode as party member 3"
+msgstr "パーティー3を見る"
+
+#: engines/ultima/nuvie/metaengine.cpp:146
+#, fuzzy
+#| msgid "View Party Member 4"
+msgid "Solo mode as party member 4"
+msgstr "パーティー4を見る"
+
+#: engines/ultima/nuvie/metaengine.cpp:147
+#, fuzzy
+#| msgid "View Party Member 5"
+msgid "Solo mode as party member 5"
+msgstr "パーティー5を見る"
+
+#: engines/ultima/nuvie/metaengine.cpp:148
+#, fuzzy
+#| msgid "View Party Member 6"
+msgid "Solo mode as party member 6"
+msgstr "パーティー6を見る"
+
+#: engines/ultima/nuvie/metaengine.cpp:149
+msgid "Solo mode as party member 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:150
+msgid "Solo mode as party member 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:151
+msgid "Solo mode as party member 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:152
+msgid "Show stats for Avatar"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:153
+msgid "Show stats for party member 2"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:154
+msgid "Show stats for party member 3"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:155
+msgid "Show stats for party member 4"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:156
+msgid "Show stats for party member 5"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:157
+msgid "Show stats for party member 6"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:158
+msgid "Show stats for party member 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:159
+msgid "Show stats for party member 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:160
+msgid "Show stats for party member 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:161
+#, fuzzy
+#| msgid "Show inventory"
+msgid "Show inventory for Avatar"
+msgstr "インベントリーを表示"
+
+#: engines/ultima/nuvie/metaengine.cpp:162
+msgid "Show inventory for party member 2"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:163
+msgid "Show inventory for party member 3"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:164
+msgid "Show inventory for party member 4"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:165
+msgid "Show inventory for party member 5"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:166
+msgid "Show inventory for party member 6"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:167
+msgid "Show inventory for party member 7"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:168
+msgid "Show inventory for party member 8"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:169
+msgid "Show inventory for party member 9"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:171
+msgid "Show doll gump for Avatar"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:173
+msgid "Show doll gump for party member 2"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:175
+msgid "Show doll gump for party member 3"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:177
+msgid "Show doll gump for party member 4"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:179
+msgid "Show doll gump for party member 5"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:181
+msgid "Show doll gump for party member 6"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:183
+msgid "Show doll gump for party member 7"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:185
+msgid "Show doll gump for party member 8"
+msgstr ""
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/nuvie/metaengine.cpp:187
+msgid "Show doll gump for party member 9"
+msgstr ""
+
+#: engines/ultima/nuvie/metaengine.cpp:193
+#: engines/ultima/nuvie/metaengine.cpp:198
+#, fuzzy
+#| msgid "Toggle linear filtered scaling"
+msgid "Toggle unlimited casting"
+msgstr "線形フィルタースケーリングの切り替え"
+
+#: engines/ultima/nuvie/metaengine.cpp:224
 msgid "Ultima VI"
 msgstr "ウルティマVI"
 
-#: engines/ultima/nuvie/metaengine.cpp:213
+#: engines/ultima/nuvie/metaengine.cpp:226
 msgid "Martian Dreams"
 msgstr "火星人の夢"
 
-#: engines/ultima/nuvie/metaengine.cpp:215
+#: engines/ultima/nuvie/metaengine.cpp:228
 msgid "The Savage Empire"
 msgstr "恐竜帝国"
 
@@ -12981,19 +14451,234 @@ msgstr "恐竜帝国"
 msgid "Transfer Character"
 msgstr "キャラクターを転送"
 
-#: engines/ultima/ultima8/metaengine.cpp:138
+#: engines/ultima/ultima8/metaengine.cpp:47
+msgid "Draw weapon / Combat"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:52
+#, fuzzy
+#| msgid "Move Back"
+msgid "Move back"
+msgstr "去る"
+
+#: engines/ultima/ultima8/metaengine.cpp:58
+#, fuzzy
+#| msgid "Highlight next dialogue"
+msgid "Highlight items"
+msgstr "次のダイアログをハイライト"
+
+#: engines/ultima/ultima8/metaengine.cpp:64
+msgid "Use bedroll"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:65
+#, fuzzy
+#| msgid "Backspace"
+msgid "Open backpack"
+msgstr "バックスペース"
+
+#: engines/ultima/ultima8/metaengine.cpp:66
+#, fuzzy
+#| msgid "Use RGB rendering"
+msgid "Use keyring"
+msgstr "RGBレンダリングを使用する"
+
+#: engines/ultima/ultima8/metaengine.cpp:67
+#, fuzzy
+#| msgid "Open map"
+msgid "Open minimap"
+msgstr "マップを開く"
+
+#: engines/ultima/ultima8/metaengine.cpp:68
+msgid "Use recall"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:69
+#, fuzzy
+#| msgid "Open inventory"
+msgid "Open inventory & statistics"
+msgstr "インベントリーを開く"
+
+#. I18N: gump is Graphical User Menu Pop-up
+#: engines/ultima/ultima8/metaengine.cpp:71
+msgid "Close all displays"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:72
+msgid "Jump (fake both-button-click)"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:73
+msgid "Careful step"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:79
+#, fuzzy
+#| msgid "Cycle through stretch modes"
+msgid "Cycle through weapon inventory"
+msgstr "ストレッチモードを繰り返し切り替える"
+
+#: engines/ultima/ultima8/metaengine.cpp:80
+#, fuzzy
+#| msgid "Cycle through stretch modes"
+msgid "Cycle through item inventory"
+msgstr "ストレッチモードを繰り返し切り替える"
+
+#: engines/ultima/ultima8/metaengine.cpp:81
+#, fuzzy
+#| msgid "Inventory"
+msgid "Use inventory item"
+msgstr "インベントリー"
+
+#: engines/ultima/ultima8/metaengine.cpp:82
+msgid "Use medikit"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:83
+#, fuzzy
+#| msgid "Inventory"
+msgid "Use energy cube"
+msgstr "インベントリー"
+
+#: engines/ultima/ultima8/metaengine.cpp:84
+msgid "Detonate bomb"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:86
+#, fuzzy
+#| msgid "Drop page"
+msgid "Drop weapon"
+msgstr "ページをドロップ"
+
+#: engines/ultima/ultima8/metaengine.cpp:87
+#, fuzzy
+#| msgid "Select a Theme"
+msgid "Search / Select item"
+msgstr "テーマを選ぶ"
+
+#: engines/ultima/ultima8/metaengine.cpp:88
+#, fuzzy
+#| msgid "Next action"
+msgid "Use selection"
+msgstr "次の行動"
+
+#: engines/ultima/ultima8/metaengine.cpp:89
+msgid "Grab items"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:90
+#, fuzzy
+#| msgid "Next action"
+msgid "Fire weapon"
+msgstr "次の行動"
+
+#: engines/ultima/ultima8/metaengine.cpp:91
+#, fuzzy
+#| msgid "Camera moves with Silencer"
+msgid "Center screen on Silencer"
+msgstr "カメラをSilencerに追随させる"
+
+#: engines/ultima/ultima8/metaengine.cpp:92
+msgid "Jump / Roll / Crouch"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:93
+#, fuzzy
+#| msgid "Shorty mode"
+msgid "Short jump"
+msgstr "ショーティーモード"
+
+#: engines/ultima/ultima8/metaengine.cpp:94
+#, fuzzy
+#| msgid "Slide Left"
+msgid "Sidestep left"
+msgstr "左へスライド"
+
+#: engines/ultima/ultima8/metaengine.cpp:95
+#, fuzzy
+#| msgid "Slide Right"
+msgid "Sidestep right"
+msgstr "右へスライド"
+
+#: engines/ultima/ultima8/metaengine.cpp:96
+#, fuzzy
+#| msgid "Move Forward"
+msgid "Step forward"
+msgstr "前に進む"
+
+#: engines/ultima/ultima8/metaengine.cpp:100
+#, fuzzy
+#| msgid "Toggle Clock"
+msgid "Toggle crouch"
+msgstr "時計を切替"
+
+#: engines/ultima/ultima8/metaengine.cpp:101
+msgid "Side step / Advance / Retreat"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:106
+#, fuzzy
+#| msgid "Toggle Clock"
+msgid "Toggle clipping"
+msgstr "時計を切替"
+
+#: engines/ultima/ultima8/metaengine.cpp:107
+msgid "Ascend"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:115
+#, fuzzy
+#| msgid "Show hints"
+msgid "Show touching items"
+msgstr "ヒントを表示"
+
+#: engines/ultima/ultima8/metaengine.cpp:116
+#, fuzzy
+#| msgid "Speech Options"
+msgid "Show editor items"
+msgstr "スピーチオプション"
+
+#: engines/ultima/ultima8/metaengine.cpp:117
+msgid "Decrement map sort order"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:118
+msgid "Increment map sort order"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:119
+#, fuzzy
+#| msgid "Toggle fast mode"
+msgid "Toggle frame by frame"
+msgstr "高速モードの切り替え"
+
+#: engines/ultima/ultima8/metaengine.cpp:120
+msgid "Advance frame"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:121
+msgid "Toggle Avatar in stasis"
+msgstr ""
+
+#: engines/ultima/ultima8/metaengine.cpp:122
+#, fuzzy
+#| msgid "Image Viewer"
+msgid "Show shape viewer"
+msgstr "イメージビューアー"
+
+#: engines/ultima/ultima8/metaengine.cpp:132
 msgid "Ultima VIII"
 msgstr "ウルティマ VIII"
 
-#: engines/ultima/ultima8/metaengine.cpp:138
+#: engines/ultima/ultima8/metaengine.cpp:132
 msgid "Crusader"
 msgstr "クルセイダー"
 
-#: engines/ultima/ultima8/metaengine.cpp:181
+#: engines/ultima/ultima8/metaengine.cpp:175
 msgid "Ultima VIII Cheats"
 msgstr "Ultima VIIIのチート"
 
-#: engines/ultima/ultima8/metaengine.cpp:196
+#: engines/ultima/ultima8/metaengine.cpp:190
 msgid "Ultima VIII Debug"
 msgstr "Ultima VIIIのデバッグ"
 
@@ -13133,13 +14818,51 @@ msgid "An unknown error occurred while attempting to load the saved game."
 msgstr "セーブデータの読み込み時、不明なエラーが発生しました。"
 
 #. I18N: lockout is code to start the game
-#: engines/voyeur/metaengine.cpp:43
+#: engines/voyeur/metaengine.cpp:47
 msgid "Enable lockout system"
 msgstr "ロックアウトを有効化"
 
-#: engines/voyeur/metaengine.cpp:44
+#: engines/voyeur/metaengine.cpp:48
 msgid "Require a lockout code to start the game."
 msgstr "開始にはロックアウトコードが必要です。"
+
+#: engines/voyeur/metaengine.cpp:186
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Room keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/voyeur/metaengine.cpp:187
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Camera keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/voyeur/metaengine.cpp:188
+#, fuzzy
+#| msgid "Game keymappings"
+msgid "Intro keymappings"
+msgstr "ゲームのキーマップ"
+
+#: engines/voyeur/metaengine.cpp:204
+#, fuzzy
+#| msgid "Skip cutscene"
+msgid "Skip scene"
+msgstr "ムービーをスキップ"
+
+#: engines/voyeur/metaengine.cpp:211
+msgid "View evidence"
+msgstr ""
+
+#: engines/voyeur/metaengine.cpp:217
+msgid "Exit / Put away evidence"
+msgstr ""
+
+#: engines/voyeur/metaengine.cpp:223
+#, fuzzy
+#| msgid "Enter"
+msgid "Enter room"
+msgstr "Enter"
 
 #: engines/wintermute/metaengine.cpp:42
 msgid "Show FPS-counter"
@@ -13205,26 +14928,6 @@ msgstr ""
 #: engines/wintermute/keymapper_tables.h:1855
 msgid "Show scene geometry"
 msgstr "シーンのジオメトリーを表示"
-
-#: engines/wintermute/keymapper_tables.h:183
-#: engines/wintermute/keymapper_tables.h:199
-#: engines/wintermute/keymapper_tables.h:630
-#: engines/wintermute/keymapper_tables.h:906
-#: engines/wintermute/keymapper_tables.h:1103
-#: engines/wintermute/keymapper_tables.h:1231
-#: engines/wintermute/keymapper_tables.h:1255
-msgid "Previous page"
-msgstr "前のページ"
-
-#: engines/wintermute/keymapper_tables.h:190
-#: engines/wintermute/keymapper_tables.h:207
-#: engines/wintermute/keymapper_tables.h:638
-#: engines/wintermute/keymapper_tables.h:913
-#: engines/wintermute/keymapper_tables.h:1110
-#: engines/wintermute/keymapper_tables.h:1236
-#: engines/wintermute/keymapper_tables.h:1260
-msgid "Next page"
-msgstr "次のページ"
 
 #: engines/wintermute/keymapper_tables.h:239
 #: engines/wintermute/keymapper_tables.h:262
@@ -13384,34 +15087,6 @@ msgstr "電話の#ボタン"
 msgid "Show help"
 msgstr "ヘルプを表示"
 
-#: engines/wintermute/keymapper_tables.h:670
-#: engines/wintermute/keymapper_tables.h:871
-#: engines/wintermute/keymapper_tables.h:892
-#: engines/wintermute/keymapper_tables.h:1326
-#: engines/wintermute/keymapper_tables.h:1352
-#: engines/wintermute/keymapper_tables.h:1428
-#: engines/wintermute/keymapper_tables.h:1484
-#: engines/wintermute/keymapper_tables.h:1505
-#: engines/wintermute/keymapper_tables.h:1695
-#: engines/wintermute/keymapper_tables.h:1969
-#: engines/wintermute/keymapper_tables.h:2171
-msgid "Scroll up"
-msgstr "上にスクロール"
-
-#: engines/wintermute/keymapper_tables.h:677
-#: engines/wintermute/keymapper_tables.h:878
-#: engines/wintermute/keymapper_tables.h:899
-#: engines/wintermute/keymapper_tables.h:1333
-#: engines/wintermute/keymapper_tables.h:1359
-#: engines/wintermute/keymapper_tables.h:1435
-#: engines/wintermute/keymapper_tables.h:1491
-#: engines/wintermute/keymapper_tables.h:1512
-#: engines/wintermute/keymapper_tables.h:1702
-#: engines/wintermute/keymapper_tables.h:1976
-#: engines/wintermute/keymapper_tables.h:2176
-msgid "Scroll down"
-msgstr "下にスクロール"
-
 #: engines/wintermute/keymapper_tables.h:690
 msgid "Change shadow type"
 msgstr "影の付き方を変更"
@@ -13434,12 +15109,6 @@ msgstr "デバッグパーサーを表示"
 #: engines/wintermute/keymapper_tables.h:1878
 msgid "Debug print"
 msgstr "デバッグを表示"
-
-#. I18N: Exits the game
-#: engines/wintermute/keymapper_tables.h:720
-#: engines/wintermute/keymapper_tables.h:1849
-msgid "Exit"
-msgstr "終了"
 
 #. I18N: Displays a debug interface that changes light settings
 #: engines/wintermute/keymapper_tables.h:726
@@ -13640,19 +15309,27 @@ msgid "Settings"
 msgstr "設定"
 
 #: engines/wintermute/keymapper_tables.h:1619
-msgid "Dialogue answer 1"
+#, fuzzy
+#| msgid "Dialogue answer 1"
+msgid "Dialog answer 1"
 msgstr "回答ダイアログ1"
 
 #: engines/wintermute/keymapper_tables.h:1624
-msgid "Dialogue answer 2"
+#, fuzzy
+#| msgid "Dialogue answer 2"
+msgid "Dialog answer 2"
 msgstr "回答ダイアログ2"
 
 #: engines/wintermute/keymapper_tables.h:1629
-msgid "Dialogue answer 3"
+#, fuzzy
+#| msgid "Dialogue answer 3"
+msgid "Dialog answer 3"
 msgstr "回答ダイアログ3"
 
 #: engines/wintermute/keymapper_tables.h:1634
-msgid "Dialogue answer 4"
+#, fuzzy
+#| msgid "Dialogue answer 4"
+msgid "Dialog answer 4"
 msgstr "回答ダイアログ4"
 
 #. I18N: This game is called "Pole Chudes" and it features a wheel similar to "Wheel of Fortune" TV show
@@ -13692,11 +15369,6 @@ msgstr "ドロイドのアクション"
 #: engines/wintermute/keymapper_tables.h:2009
 msgid "Rotate"
 msgstr "回す"
-
-#. I18N: It's a Tetris game clone, this action drops current tetris item
-#: engines/wintermute/keymapper_tables.h:2035
-msgid "Drop"
-msgstr "落とす"
 
 #: engines/wintermute/keymapper_tables.h:2043
 msgid "Player 1: Up"
@@ -13743,7 +15415,7 @@ msgstr "F1"
 msgid "Key i"
 msgstr "iキー"
 
-#: engines/zvision/file/save_manager.cpp:221
+#: engines/zvision/file/save_manager.cpp:206
 #, c-format
 msgid ""
 "This saved game uses version %u, but this engine only supports up to version "
@@ -13752,67 +15424,83 @@ msgstr ""
 "セーブされたゲームのエンジンはバージョン%uですが、ScummVMはバージョン%d以降の"
 "み対応しています。エンジンをバージョンアップしてください。"
 
-#: engines/zvision/metaengine.cpp:58
+#: engines/zvision/metaengine.cpp:54
 msgid "Double FPS"
 msgstr "FPSを倍にする"
 
-#: engines/zvision/metaengine.cpp:59
+#: engines/zvision/metaengine.cpp:55
 msgid "Increase framerate from 30 to 60 FPS"
 msgstr "フレームレートを30→60fpsへ引き上げる"
 
-#: engines/zvision/metaengine.cpp:70
+#: engines/zvision/metaengine.cpp:66
 msgid "Enable Venus"
 msgstr "ヴィーナスを有効化"
 
-#: engines/zvision/metaengine.cpp:71
+#: engines/zvision/metaengine.cpp:67
 msgid "Enable the Venus help system"
 msgstr "ヴィーナスヘルプシステムを有効化"
 
-#: engines/zvision/metaengine.cpp:82
+#: engines/zvision/metaengine.cpp:78
 msgid "Disable animation while turning"
 msgstr "回転中はアニメーション無効"
 
-#: engines/zvision/metaengine.cpp:83
+#: engines/zvision/metaengine.cpp:79
 msgid "Disable animation while turning in panorama mode"
 msgstr "パノラマモードで回転中はアニメーション無効"
 
-#: engines/zvision/metaengine.cpp:94
+#: engines/zvision/metaengine.cpp:90
 msgid "Use high resolution MPEG video"
 msgstr "高解像度なMPEGファイルを使用する"
 
-#: engines/zvision/metaengine.cpp:95
+#: engines/zvision/metaengine.cpp:91
 msgid "Use MPEG video from the DVD version instead of lower resolution AVI"
 msgstr "低解像度なAVIファイルを、DVD版のMPEGファイルで代替する"
 
-#: engines/zvision/metaengine.cpp:197
-msgid "Look Up"
-msgstr "上を見る"
+#: engines/zvision/metaengine.cpp:102
+#, fuzzy
+#| msgid "Game id not supported"
+msgid "Enable widescreen support"
+msgstr "未対応のゲームID"
 
-#: engines/zvision/metaengine.cpp:203
-msgid "Look Down"
-msgstr "下を見る"
+#: engines/zvision/metaengine.cpp:103
+msgid ""
+"Rearrange placement of menus & subtitles so as to make better use of modern "
+"wide aspect ratio displays"
+msgstr ""
 
-#: engines/zvision/metaengine.cpp:238
+#: engines/zvision/metaengine.cpp:114
+#, fuzzy
+#| msgid "Enable hit point bar graphs"
+msgid "Enable high quality panoramas"
+msgstr "HPバーの表示を有効にする"
+
+#: engines/zvision/metaengine.cpp:115
+#, fuzzy
+#| msgid "Apply bilinear filtering to individual sprites"
+msgid "Apply bilinear filtering to panoramic backgrounds"
+msgstr "スプライト単位でバイリニアフィルタリングを適用"
+
+#: engines/zvision/metaengine.cpp:258
 msgid "Spellbook"
 msgstr "スペルブック"
 
-#: engines/zvision/metaengine.cpp:244
+#: engines/zvision/metaengine.cpp:264
 msgid "Score"
 msgstr "スコア"
 
-#: engines/zvision/metaengine.cpp:250
+#: engines/zvision/metaengine.cpp:270
 msgid "Put away object"
 msgstr "オブジェクトを片付ける"
 
-#: engines/zvision/metaengine.cpp:256
+#: engines/zvision/metaengine.cpp:276
 msgid "Extract coin"
 msgstr "コインを抽出"
 
-#: engines/zvision/metaengine.cpp:277
+#: engines/zvision/metaengine.cpp:297
 msgid "Preferences"
 msgstr "環境設定"
 
-#: engines/zvision/zvision.cpp:302
+#: engines/zvision/zvision.cpp:319
 msgid ""
 "Before playing this game, you'll need to copy the required fonts into "
 "ScummVM's extras directory, or into the game directory. On Windows, you'll "
@@ -13827,6 +15515,182 @@ msgstr ""
 "使用する場合、Times New Roman、Century Schoolbook、Garamond、Courier New、"
 "Arialが必要です。Liberation Fontsを使用する場合、LiberationMono、"
 "LiberationSans、LiberationSerifが必要です。"
+
+#: engines/zvision/zvision.cpp:334
+msgid ""
+"MIDI playback is not available, or else improperly configured. Zork Nemesis "
+"contains several music puzzles which require MIDI audio in order to be "
+"solved.  These puzzles may alternatively be solved using subtitles, if "
+"supported. Continue launching game?"
+msgstr ""
+
+#~ msgid "Scroll Up"
+#~ msgstr "上にスクロール"
+
+#~ msgid "Scroll Down"
+#~ msgstr "下にスクロール"
+
+#~ msgid "Save Game"
+#~ msgstr "ゲームをセーブ"
+
+#~ msgid "Load Game"
+#~ msgstr "ゲームをロード"
+
+#~ msgid "Quit Game"
+#~ msgstr "ゲームを終了する"
+
+#~ msgid "Next Page"
+#~ msgstr "次のページ"
+
+#~ msgid "Previous Page"
+#~ msgstr "前のページ"
+
+#~ msgid "Quick Save"
+#~ msgstr "クイックセーブ"
+
+#~ msgid "Quick Load"
+#~ msgstr "クイックロード"
+
+#, fuzzy
+#~| msgid "Move up-left"
+#~ msgid "Move up left"
+#~ msgstr "左上に動く"
+
+#, fuzzy
+#~| msgid "Move up-right"
+#~ msgid "Move up right"
+#~ msgstr "右上に動く"
+
+#, fuzzy
+#~| msgid "Move down-left"
+#~ msgid "Move down left"
+#~ msgstr "左下に動く"
+
+#, fuzzy
+#~| msgid "Move down-right"
+#~ msgid "Move down right"
+#~ msgstr "右下に動く"
+
+#, fuzzy
+#~| msgid "Skip dialogue"
+#~ msgid "Option dialog"
+#~ msgstr "ダイアログをスキップ"
+
+#~ msgid "Interact via Left Click"
+#~ msgstr "左クリックでインタラクト"
+
+#~ msgid "Interact via Right Click"
+#~ msgstr "右クリックでインタラクト"
+
+#~ msgid "Move Forward"
+#~ msgstr "前に進む"
+
+#, fuzzy
+#~| msgid "Move Backward"
+#~ msgid "Move Backwards"
+#~ msgstr "後方へ移動"
+
+#~ msgid "Move Left"
+#~ msgstr "左に行く"
+
+#~ msgid "Move Right"
+#~ msgstr "右に行く"
+
+#~ msgid "Turn Left"
+#~ msgstr "左に曲がる"
+
+#~ msgid "Turn Right"
+#~ msgstr "右に曲がる"
+
+#~ msgid "Show Map"
+#~ msgstr "地図を表示"
+
+#~ msgid "Left Click Interact"
+#~ msgstr "左クリックで会話"
+
+#~ msgid "Right Click Interact"
+#~ msgstr "右クリックで会話"
+
+#~ msgid "Display/Hide Inventory Tray"
+#~ msgstr "インベントリートレイの表示/非表示"
+
+#~ msgid "Display/Hide Biochip Tray"
+#~ msgstr "バイオチップトレイの表示/非表示"
+
+#~ msgid "Display/Hide Info Screen"
+#~ msgstr "情報スクリーンの表示/非表示"
+
+#~ msgid "Display/Hide Pause Menu"
+#~ msgstr "ポーズメニューの表示/非表示"
+
+#~ msgid "Up Left"
+#~ msgstr "左上"
+
+#, fuzzy
+#~| msgid "Pause game"
+#~ msgid "Pause Game"
+#~ msgstr "ポーズ"
+
+#, fuzzy
+#~| msgid "Skip dialogue"
+#~ msgid "Options Dialog"
+#~ msgstr "ダイアログをスキップ"
+
+#, fuzzy
+#~| msgid "Skip dialogue"
+#~ msgid "Skip Dialogue"
+#~ msgstr "ダイアログをスキップ"
+
+#, fuzzy
+#~| msgid "Game menu"
+#~ msgid "Game Menu"
+#~ msgstr "ゲームメニュー"
+
+#, fuzzy
+#~| msgid "Move up"
+#~ msgid "Move Up"
+#~ msgstr "上"
+
+#, fuzzy
+#~| msgid "Move down"
+#~ msgid "Move Down"
+#~ msgstr "下"
+
+#, fuzzy
+#~| msgid "Step back"
+#~ msgid "Step Back"
+#~ msgstr "後ろに下がる"
+
+#, fuzzy
+#~| msgid "Move left"
+#~ msgid "Roll Left"
+#~ msgstr "左に行く"
+
+#, fuzzy
+#~| msgid "Move right"
+#~ msgid "Roll Right"
+#~ msgstr "右に行く"
+
+#~ msgid "Look Up"
+#~ msgstr "上を見る"
+
+#~ msgid "Look Down"
+#~ msgstr "下を見る"
+
+#, fuzzy
+#~| msgid "Toggle Combat"
+#~ msgid "Combat"
+#~ msgstr "モードの切替"
+
+#, fuzzy
+#~| msgid "Side Step"
+#~ msgid "Step"
+#~ msgstr "横ステップ"
+
+#, fuzzy
+#~| msgid "Animated inventory items"
+#~ msgid "Next Inventory Item"
+#~ msgstr "アニメーション化された在庫アイテム"
 
 #~ msgid "Could not find any engine capable of running the selected game"
 #~ msgstr "選択されたゲームに対応するエンジンが見つかりません"
@@ -13890,10 +15754,6 @@ msgstr ""
 #~ msgstr "ハイレゾOFF"
 
 #~ msgctxt "Options menu"
-#~ msgid "Wall collision on"
-#~ msgstr "壁の衝突判定ON"
-
-#~ msgctxt "Options menu"
 #~ msgid "Wall collision off"
 #~ msgstr "壁の衝突判定OFF"
 
@@ -13919,18 +15779,6 @@ msgstr ""
 
 #~ msgid "Toggle sound effect on/off"
 #~ msgstr "SE ON/OFFの切替"
-
-#~ msgid "Move Back"
-#~ msgstr "去る"
-
-#~ msgid "Move forward"
-#~ msgstr "前進"
-
-#~ msgid "Move backwards"
-#~ msgstr "後退"
-
-#~ msgid "Middle click"
-#~ msgstr "中クリック"
 
 #~ msgid "Pickup"
 #~ msgstr "拾う"
@@ -14000,11 +15848,6 @@ msgstr ""
 #~ msgid "Toggle Sound effect on/off"
 #~ msgstr "SE ON/OFFの切替"
 
-#, fuzzy
-#~| msgid "Pause game"
-#~ msgid "Pause Game"
-#~ msgstr "ポーズ"
-
 #~ msgid "Minimal Volume"
 #~ msgstr "最小の音量"
 
@@ -14029,11 +15872,6 @@ msgstr ""
 #~ msgstr "次の行動"
 
 #, fuzzy
-#~| msgid "Look at"
-#~ msgid "Look at action"
-#~ msgstr "見る"
-
-#, fuzzy
 #~| msgid "Talk to"
 #~ msgid "Talk to action"
 #~ msgstr "話す"
@@ -14047,11 +15885,6 @@ msgstr ""
 #~| msgid "Previous action"
 #~ msgid "Pull action"
 #~ msgstr "前の行動"
-
-#, fuzzy
-#~| msgid "Next action"
-#~ msgid "Use action"
-#~ msgstr "次の行動"
 
 #~ msgid "Open 3DS Settings"
 #~ msgstr "3DSの設定を開く"
@@ -14432,9 +16265,6 @@ msgstr ""
 #~ msgid "DXA cutscenes found but ScummVM has been built without zlib"
 #~ msgstr ""
 #~ "DXA形式のムービーが見つかりましたが、ScummVMはzlibを同梱していません"
-
-#~ msgid "Fight cheat"
-#~ msgstr "戦闘チート"
 
 #~ msgid "Override global shader settings"
 #~ msgstr "グローバルシェーダー設定を上書き"

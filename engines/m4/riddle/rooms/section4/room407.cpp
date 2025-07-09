@@ -1587,9 +1587,9 @@ void Room407::daemon() {
 }
 
 void Room407::pre_parser() {
-	bool lookFlag = player_said_any("look", "look at");
-	bool takeFlag = player_said("take");
-	bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
+	const bool lookFlag = player_said_any("look", "look at");
+	const bool takeFlag = player_said("take");
+	const bool useFlag = player_said_any("push", "pull", "gear", "open", "close");
 
 	if ((player_said("SURGICAL TUBE", "FAUCET PIPE") || player_said("TUBE/HOSE", "FAUCET PIPE")) &&
 			_faucetPipeState == 1100) {
@@ -2024,19 +2024,15 @@ void Room407::parser() {
 			_airValveState == 1100 && inv_object_is_here("FAUCET HANDLE")) {
 		if (_frotz2) {
 			digi_play("407r99e", 1);
-		} else if (_faucetPipeState == 1100) {
-			if (_periodicTableState == 1120)
-				digi_play("407r99o", 1);
-			else
-				useFaucet();
-		} else if (_tubeState == 1130 && _faucetPipeState != 1130) {
+		} else if (_faucetPipeState == 1100 || (_tubeState == 1130 && _faucetPipeState != 1130)) {
 			if (_periodicTableState == 1120)
 				digi_play("407r99o", 1);
 			else
 				useFaucet();
 		} else if (_faucetHookedToJar) {
 			useFaucet();
-		} else if (_faucetPipeState == 1100 || _tubeState == 1130 || _faucetHookedToJar) {
+		} else if (_tubeState == 1130) {
+			// The original is doing two additional checks on _faucetHookedToJar and (_faucetPipeState == 1100 which are useless at this point (already covered)
 			digi_play("407r99e", 1);
 		} else {
 			digi_play("407r99n", 1);
@@ -3104,7 +3100,7 @@ void Room407::gardenHoseSurgicalTube2() {
 			"407 TUBE AND HOSE INTO SINK", 0, 0, 0, 100, 0xe00);
 		hotspot_set_active("GARDEN HOSE  ", true);
 
-		if (_hoseState == 1061) {
+		if (_hoseState != 1061) {
 			inv_move_object("GARDEN HOSE", 407);
 		} else {
 			_faucetPipe = series_place_sprite("407 FAUCET IN SINK",
@@ -3430,6 +3426,7 @@ void Room407::faucetPipeGlassJar() {
 		break;
 
 	case 777:
+		player_set_commands_allowed(false);
 		ws_walk(_G(my_walker), 436, 331, nullptr, 70, 1);
 		break;
 

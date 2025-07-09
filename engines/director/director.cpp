@@ -156,7 +156,6 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 	}
 
 	_playbackPaused = false;
-	_skipFrameAdvance = false;
 	_centerStage = true;
 
 	_surface = nullptr;
@@ -382,6 +381,12 @@ Common::Error DirectorEngine::run() {
 #ifdef USE_IMGUI
 	_system->setImGuiCallbacks(ImGuiCallbacks());
 #endif
+
+	if (debugChannelSet(-1, kDebugSaving)) {
+		Common::Path writePath("./dumps/writtenMovie.dir");
+		_mainArchive->writeToFile(writePath);
+		getCurrentMovie()->getCast()->saveCast();
+	}
 
 	return Common::kNoError;
 }

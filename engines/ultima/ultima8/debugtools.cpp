@@ -21,12 +21,18 @@
 
 #include "ultima/ultima8/debugtools.h"
 #include "backends/imgui/imgui.h"
+#include "backends/imgui/imgui_utils.h"
 #include "ultima/ultima.h"
 #include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/games/game_data.h"
+#include "ultima/ultima8/gfx/palette.h"
+#include "ultima/ultima8/gfx/palette_manager.h"
+#include "ultima/ultima8/gumps/game_map_gump.h"
 #include "ultima/ultima8/gumps/item_relative_gump.h"
 #include "ultima/ultima8/gumps/target_gump.h"
 #include "ultima/ultima8/usecode/usecode.h"
+#include "ultima/ultima8/world/actors/main_actor.h"
+#include "ultima/ultima8/world/actors/quick_avatar_mover_process.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/item.h"
 #include "ultima/ultima8/misc/debugger.h"
@@ -35,7 +41,8 @@ namespace Ultima {
 namespace Ultima8 {
 
 typedef struct ImGuiState {
-	bool _itemStats = false;
+	bool _itemStatsWindow = false;
+	bool _paletteWindow = false;
 	uint32 _targetItemId = kMainActorId;
 	ObjId _targetGumpId = 0;
 } ImGuiState;
@@ -43,13 +50,13 @@ typedef struct ImGuiState {
 ImGuiState *_state = nullptr;
 
 void showItemStats() {
-	if (!_state->_itemStats)
+	if (!_state->_itemStatsWindow)
 		return;
 
 	ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(300, 550), ImGuiCond_FirstUseEver);
 
-	if (ImGui::Begin("Item Stats", &_state->_itemStats)) {
+	if (ImGui::Begin("Item Stats", &_state->_itemStatsWindow)) {
 		if (_state->_targetGumpId) {
 			// Check if gump still exists and has a result
 			Gump *gump = getGump(_state->_targetGumpId);
@@ -311,6 +318,40 @@ void showItemStats() {
 	ImGui::End();
 }
 
+static void showPalette() {
+	if (!_state->_paletteWindow) {
+		return;
+	}
+
+	ImGui::SetNextWindowSize(ImVec2(320, 550), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Palettes", &_state->_paletteWindow)) {
+		PaletteManager  *pm = PaletteManager::get_instance();
+		Palette *p = pm->getPalette(PaletteManager::Pal_Game);
+		if (p) {
+			ImGui::SeparatorText("Game palette");
+			ImGui::PushID("palette_0");
+			ImGuiEx::Palette(*p);
+			ImGui::PopID();
+			ImGui::NewLine();
+		}
+
+		for (uint i = 1; i < pm->getNumPalettes(); i++) {
+			p = pm->getPalette(static_cast<PaletteManager::PalIndex>(i));
+			if (p) {
+				Common::String text = Common::String::format("Palette %d", i);
+				Common::String id = Common::String::format("palette_%d", i);
+				ImGui::SeparatorText(text.c_str());
+				ImGui::PushID(id.c_str());
+				ImGuiEx::Palette(*p);
+				ImGui::PopID();
+				ImGui::NewLine();
+			}
+		}
+	}
+	ImGui::End();
+}
+
 void onImGuiInit() {
 	_state = new ImGuiState();
 }
@@ -327,15 +368,61 @@ void onImGuiRender() {
 
 	io.ConfigFlags &= ~(ImGuiConfigFlags_NoMouseCursorChange | ImGuiConfigFlags_NoMouse);
 
+	Ultima8Engine *engine = Ultima8Engine::get_instance();
+
 	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("Toggles")) {
+			if (ImGui::MenuItem("Cheats", NULL, engine->areCheatsEnabled())) {
+				bool flag = engine->areCheatsEnabled();
+				engine->setCheatMode(!flag);
+			}
+			if (ImGui::MenuItem("Editor Items", NULL, engine->isShowEditorItems())) {
+				bool flag = engine->isShowEditorItems();
+				engine->setShowEditorItems(!flag);
+			}
+			if (ImGui::MenuItem("Footpads", NULL, GameMapGump::getShowFootpads())) {
+				bool flag = GameMapGump::getShowFootpads();
+				GameMapGump::setShowFootpads(!flag);
+			}
+			if (ImGui::BeginMenu("Gridlines")) {
+				int gridlines = GameMapGump::getGridlines();
+				if (ImGui::MenuItem("Auto", NULL, gridlines == -1)) {
+					GameMapGump::setGridlines(gridlines == -1 ? 0 : -1);
+				}
+				if (ImGui::MenuItem("128 x 128", NULL, gridlines == 128)) {
+					GameMapGump::setGridlines(gridlines == 128 ? 0 : 128);
+				}
+				if (ImGui::MenuItem("256 x 256", NULL, gridlines == 256)) {
+					GameMapGump::setGridlines(gridlines == 256 ? 0 : 256);
+				}
+				if (ImGui::MenuItem("512 x 512", NULL, gridlines == 512)) {
+					GameMapGump::setGridlines(gridlines == 512 ? 0 : 512);
+				}
+				if (ImGui::MenuItem("1024 x 1024", NULL, gridlines == 1024)) {
+					GameMapGump::setGridlines(gridlines == 1024 ? 0 : 1024);
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::MenuItem("Hack Mover", NULL, engine->isHackMoverEnabled())) {
+				bool flag = engine->isHackMoverEnabled();
+				engine->setHackMoverEnabled(!flag);
+			}
+			if (ImGui::MenuItem("Quick Movement", NULL, QuickAvatarMoverProcess::isEnabled())) {
+				bool flag = QuickAvatarMoverProcess::isEnabled();
+				QuickAvatarMoverProcess::setEnabled(!flag);
+			}
+			ImGui::EndMenu();
+		}
 		if (ImGui::BeginMenu("View")) {
-			ImGui::MenuItem("Item Stats", NULL, &_state->_itemStats);
+			ImGui::MenuItem("Item Stats", NULL, &_state->_itemStatsWindow);
+			ImGui::MenuItem("Palette", NULL, &_state->_paletteWindow);
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 
 	showItemStats();
+	showPalette();
 }
 
 void onImGuiCleanup() {

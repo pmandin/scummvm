@@ -364,6 +364,7 @@ bool SXFile::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 			return STATUS_OK;
 		}
 		bool val;
+		STATIC_ASSERT(sizeof(val) == 1, bool_is_not_1_byte);
 		if (_readFile->read(&val, sizeof(bool)) == sizeof(bool)) {
 			stack->pushBool(val);
 		} else {
@@ -442,8 +443,7 @@ bool SXFile::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 			stack->pushNULL();
 			return STATUS_OK;
 		}
-		float val;
-		WRITE_UINT32(&val, _readFile->readUint32LE());
+		float val = _readFile->readFloatLE();
 		if (!_readFile->err()) {
 			stack->pushFloat(val);
 		} else {
@@ -456,16 +456,15 @@ bool SXFile::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 	//////////////////////////////////////////////////////////////////////////
 	// ReadDouble
 	//////////////////////////////////////////////////////////////////////////
-	else if (strcmp(name, "ReadDouble") == 0) { // TODO: Solve reading a 8 byte double.
-		error("SXFile::ReadDouble - Not endian safe yet");
+	else if (strcmp(name, "ReadDouble") == 0) {
 		stack->correctParams(0);
 		if (_textMode || !_readFile) {
 			script->runtimeError("File.%s: File must be open for reading in binary mode.", name);
 			stack->pushNULL();
 			return STATUS_OK;
 		}
-		double val;
-		if (_readFile->read(&val, sizeof(double)) == sizeof(double)) {
+		double val = _readFile->readDoubleLE();
+		if (!_readFile->err()) {
 			stack->pushFloat(val);
 		} else {
 			stack->pushNULL();
@@ -598,16 +597,15 @@ bool SXFile::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 	// WriteDouble
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "WriteDouble") == 0) {
-		error("SXFile::WriteDouble - Not endian safe yet");
 		stack->correctParams(1);
-		/* double val = */ stack->pop()->getFloat();
+		double val = stack->pop()->getFloat();
 
 		if (_textMode || !_writeFile) {
 			script->runtimeError("File.%s: File must be open for writing in binary mode.", name);
 			stack->pushBool(false);
 			return STATUS_OK;
 		}
-		//fwrite(&val, sizeof(val), 1, (FILE *)_writeFile);
+		_writeFile->writeDoubleLE(val);
 		stack->pushBool(true);
 
 		return STATUS_OK;

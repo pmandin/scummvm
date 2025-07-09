@@ -186,8 +186,11 @@ static void drawSprite(CCB *myCCB, Anim8 *myAnim8, Buffer *halScrnBuf, Buffer *s
 
 void ws_DoDisplay(Buffer *background, int16 *depth_table, Buffer *screenCodeBuff,
 		uint8 *myPalette, uint8 *ICT, bool updateVideo) {
+
+	if (!background)
+		error("ws_DoDisplay : background not set");
+
 	CCB *myCCB;
-	ScreenContext *myScreen;
 	RectList *myRect;
 	RectList *drawRectList;
 	int32 status;
@@ -195,7 +198,8 @@ void ws_DoDisplay(Buffer *background, int16 *depth_table, Buffer *screenCodeBuff
 	M4Rect *currRect;
 	bool breakFlag;
 
-	if (((myScreen = vmng_screen_find(_G(gameDrawBuff), &status)) == nullptr) || (status != SCRN_ACTIVE)) {
+	ScreenContext *myScreen = vmng_screen_find(_G(gameDrawBuff), &status);
+	if ((myScreen == nullptr) || (status != SCRN_ACTIVE)) {
 		return;
 	}
 
@@ -239,7 +243,7 @@ void ws_DoDisplay(Buffer *background, int16 *depth_table, Buffer *screenCodeBuff
 
 	// The drawRectList now contains all the areas of the screen that need the background updated
 	// Update the background behind the current rect list - if we are in greyMode, we do this later
-	if (!greyMode && background && background->data) {
+	if (!greyMode && background->data) {
 		myRect = drawRectList;
 
 		while (myRect) {
@@ -310,7 +314,7 @@ void ws_DoDisplay(Buffer *background, int16 *depth_table, Buffer *screenCodeBuff
 	} while (!breakFlag);
 
 	// Handle update background rect area
-	if (greyMode && background && background->data) {
+	if (greyMode && background->data) {
 		myRect = drawRectList;
 
 		while (myRect) {
@@ -361,11 +365,10 @@ void ws_DoDisplay(Buffer *background, int16 *depth_table, Buffer *screenCodeBuff
 
 void ws_hal_RefreshWoodscriptBuffer(cruncher *myCruncher, Buffer *background,
 		int16 *depth_table, Buffer *screenCodes, uint8 *myPalette, uint8 *ICT) {
-	uint8 myDepth;
 	Buffer drawSpriteBuff;
 	DrawRequest spriteDrawReq;
 
-	if ((!background) || (!background->data))
+	if (!background || !background->data)
 		return;
 
 	term_message("Refresh");
@@ -405,10 +408,13 @@ void ws_hal_RefreshWoodscriptBuffer(cruncher *myCruncher, Buffer *background,
 				drawSpriteBuff.encoding = (uint8)myCCB->source->encoding;
 			drawSpriteBuff.data = myCCB->source->data;
 
-			if (!depth_table || !screenCodes || !screenCodes->data)
-				myDepth = 0;
-			else
-				myDepth = (uint8)(myCCB->layer >> 8);
+			if (!depth_table || !screenCodes || !screenCodes->data) {
+				spriteDrawReq.srcDepth = 0;
+				spriteDrawReq.depthCode = nullptr;
+			} else {
+				spriteDrawReq.srcDepth = (uint8)(myCCB->layer >> 8);
+				spriteDrawReq.depthCode = screenCodes->data;
+			}
 
 			spriteDrawReq.Src = (Buffer *)&drawSpriteBuff;
 			spriteDrawReq.Dest = halScrnBuf;
@@ -416,8 +422,6 @@ void ws_hal_RefreshWoodscriptBuffer(cruncher *myCruncher, Buffer *background,
 			spriteDrawReq.y = myCCB->currLocation->y1;
 			spriteDrawReq.scaleX = myCCB->scaleX;
 			spriteDrawReq.scaleY = myCCB->scaleY;
-			spriteDrawReq.srcDepth = myDepth;
-			spriteDrawReq.depthCode = screenCodes->data;
 			spriteDrawReq.Pal = myPalette;
 			spriteDrawReq.ICT = ICT;
 

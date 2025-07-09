@@ -43,7 +43,6 @@ public:
 	bool _valid;
 	int32 _lifeTime;
 
-	bool _pixelOpReady;
 	BaseSurface(BaseGame *inGame);
 	~BaseSurface() override;
 
@@ -57,15 +56,16 @@ public:
 	virtual bool restore();
 	virtual bool create(const Common::String &filename, bool defaultCK, byte ckRed, byte ckGreen, byte ckBlue, int lifeTime = -1, bool keepLoaded = false) = 0;
 	virtual bool create(int width, int height);
+	virtual bool setAlphaImage(const Common::String &filename) {
+		return STATUS_FAILED;
+	}
 	virtual bool putSurface(const Graphics::Surface &surface, bool hasAlpha = false) {
 		return STATUS_FAILED;
 	}
-	virtual bool putPixel(int x, int y, byte r, byte g, byte b, int a = -1);
-	virtual bool getPixel(int x, int y, byte *r, byte *g, byte *b, byte *a = nullptr);
-	virtual bool comparePixel(int x, int y, byte r, byte g, byte b, int a = -1);
-	virtual bool startPixelOp();
-	virtual bool endPixelOp();
-	virtual bool isTransparentAtLite(int x, int y);
+	virtual bool startPixelOp() = 0;
+	virtual bool endPixelOp() = 0;
+	virtual bool getPixel(int x, int y, byte *r, byte *g, byte *b, byte *a = nullptr) const = 0;
+	virtual bool isTransparentAtLite(int x, int y) const = 0;
 	void setSize(int width, int height);
 
 	int _referenceCount;

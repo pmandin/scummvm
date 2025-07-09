@@ -93,6 +93,7 @@ enum {
 	kDebugImGui,
 	kDebugPaused,
 	kDebugPauseOnLoad,
+	kDebugSaving,
 };
 
 enum {
@@ -266,7 +267,6 @@ public:
 	Common::HashMap<int, int> _KeyCodes;
 	int _machineType;
 	bool _playbackPaused;
-	bool _skipFrameAdvance;
 	bool _centerStage;
 	char _dirSeparator;
 	bool _fixStageSize;

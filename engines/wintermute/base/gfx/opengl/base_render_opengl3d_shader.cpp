@@ -272,8 +272,6 @@ bool BaseRenderOpenGL3DShader::setup3D(Camera3D *camera, bool force) {
 	if (_state != RSTATE_3D || force) {
 		_state = RSTATE_3D;
 
-		glEnable(GL_NORMALIZE);
-
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
@@ -736,11 +734,7 @@ void BaseRenderOpenGL3DShader::fadeToColor(byte r, byte g, byte b, byte a) {
 BaseImage *BaseRenderOpenGL3DShader::takeScreenshot(int newWidth, int newHeight) {
 	BaseImage *screenshot = new BaseImage();
 	Graphics::Surface *surface = new Graphics::Surface();
-#ifdef SCUMM_BIG_ENDIAN
-	Graphics::PixelFormat format(4, 8, 8, 8, 8, 24, 16, 8, 0);
-#else
-	Graphics::PixelFormat format(4, 8, 8, 8, 8, 0, 8, 16, 24);
-#endif
+	Graphics::PixelFormat format = Graphics::PixelFormat::createFormatRGBA32();
 	surface->create(_viewportRect.width(), _viewportRect.height(), format);
 
 	glReadPixels(_viewportRect.left, _viewportRect.height() - _viewportRect.bottom,
@@ -1129,9 +1123,9 @@ void BaseRenderOpenGL3DShader::postfilter() {
 		glUniform1i(_postfilterShader->getUniformLocation("tex"), 0);
 
 		if (_postFilterMode == kPostFilterSepia) {
-			_postfilterShader->setUniform1f("sepiaMode", true);
+			_postfilterShader->setUniform("sepiaMode", true);
 		} else {
-			_postfilterShader->setUniform1f("sepiaMode", false);
+			_postfilterShader->setUniform("sepiaMode", false);
 		}
 
 		g_system->presentBuffer();

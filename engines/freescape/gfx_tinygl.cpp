@@ -40,6 +40,7 @@ Renderer *CreateGfxTinyGL(int screenW, int screenH, Common::RenderMode renderMod
 TinyGLRenderer::TinyGLRenderer(int screenW, int screenH, Common::RenderMode renderMode) : Renderer(screenW, screenH, renderMode, true) {
 	_verts = (Vertex *)malloc(sizeof(Vertex) * kVertexArraySize);
 	_texCoord = (Coord *)malloc(sizeof(Coord) * kVertexArraySize);
+	// TODO: Select this based on the screen format
 	_texturePixelFormat = getRGBAPixelFormat();
 	_variableStippleArray = nullptr;
 }
@@ -335,7 +336,8 @@ void TinyGLRenderer::useStipple(bool enabled) {
 	_stippleEnabled = enabled;
 
 	if (enabled) {
-		assert(_variableStippleArray);
+		if (!_variableStippleArray)
+			_variableStippleArray = _defaultStippleArray;
 	} else {
 		_stippleTexture = nullptr;
 	}

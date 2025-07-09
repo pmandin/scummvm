@@ -351,15 +351,67 @@ Common::Array<Common::StringArray> IntegrityDialog::generateChecksums(Common::Pa
 	if (fileList.empty())
 		return {};
 
+	// First, we go through the list and check any Mac files
+	Common::HashMap<Common::Path, bool, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> macFiles;
+	Common::HashMap<Common::Path, bool, Common::Path::IgnoreCase_Hash, Common::Path::IgnoreCase_EqualTo> toRemove;
+	Common::List<Common::Path> tmpFileList;
+
+	for (const auto &entry : fileList) {
+		if (entry.isDirectory())
+			continue;
+
+		Common::Path filename(entry.getPath().relativeTo(gamePath));
+		const Common::Path originalFileName = filename;
+		filename.removeExtension(".bin");
+		filename.removeExtension(".rsrc");
+
+		auto macFile = Common::MacResManager();
+
+		if (macFile.open(filename) && macFile.isMacFile()) {
+			macFiles[originalFileName] = true;
+
+			switch (macFile.getMode()) {
+			case Common::MacResManager::kResForkRaw:
+				toRemove[filename.append(".rsrc")] = true;
+				toRemove[filename.append(".data")] = true;
+				toRemove[filename.append(".finf")] = true;
+				break;
+			case Common::MacResManager::kResForkMacBinary:
+				toRemove[filename.append(".bin")] = true;
+				break;
+			case Common::MacResManager::kResForkAppleDouble:
+				toRemove[Common::MacResManager::constructAppleDoubleName(filename)] = true;
+				toRemove[filename.getParent().append("__MACOSX")] = true;
+				break;
+			default:
+				error("Unsupported MacResManager mode: %d", macFile.getMode());
+			}
+
+			tmpFileList.push_back(filename);
+		} else {
+			if (!toRemove.contains(originalFileName))
+				tmpFileList.push_back(originalFileName);
+		}
+	}
+
 	// Process the files and subdirectories in the current directory recursively
 	for (const auto &entry : fileList) {
+		Common::Path filename(entry.getPath().relativeTo(gamePath));
+
+		if (macFiles.contains(filename)) {
+			filename.removeExtension(".bin");
+			filename.removeExtension(".rsrc");
+		}
+
+		if (toRemove.contains(filename))
+			continue;
+
 		if (entry.isDirectory()) {
 			generateChecksums(entry.getPath(), fileChecksums, gamePath);
 
 			continue;
 		}
 
-		const Common::Path filename(entry.getPath().relativeTo(gamePath));
 		auto macFile = Common::MacResManager();
 
 		if (macFile.open(filename) && macFile.isMacFile()) {
@@ -370,23 +422,39 @@ Common::Array<Common::StringArray> IntegrityDialog::generateChecksums(Common::Pa
 			// Data fork
 			// Various checksizes
 			for (auto size : {0, 5000, 1024 * 1024}) {
+				Common::String sz = size ? Common::String::format("-%d", size) : "";
+				fileChecksum.push_back(Common::String::format("md5-d%s", sz.c_str()));
 				fileChecksum.push_back(Common::computeStreamMD5AsString(*dataForkStream, size, progressUpdateCallback, this));
 				dataForkStream->seek(0);
 			}
 			// Tail checksums with checksize 5000
 			dataForkStream->seek(-5000, SEEK_END);
+			fileChecksum.push_back("md5-dt-5000");
 			fileChecksum.push_back(Common::computeStreamMD5AsString(*dataForkStream, 0, progressUpdateCallback, this).c_str());
 
 			// Resource fork
 			if (macFile.hasResFork()) {
 				// Various checksizes
 				for (auto size : {0, 5000, 1024 * 1024}) {
+					Common::String sz = size ? Common::String::format("-%d", size) : "";
+					fileChecksum.push_back(Common::String::format("md5-r%s", sz.c_str()));
 					fileChecksum.push_back(macFile.computeResForkMD5AsString(size, false, progressUpdateCallback, this));
 				}
 				// Tail checksums with checksize 5000
+				fileChecksum.push_back("md5-rt-5000");
 				fileChecksum.push_back(macFile.computeResForkMD5AsString(5000, true, progressUpdateCallback, this).c_str());
-				fileChecksums.push_back(fileChecksum);
 			}
+
+			fileChecksum.push_back("size");
+			fileChecksum.push_back(Common::String::format("%llu", (unsigned long long)macFile.getDataForkSize()));
+
+			fileChecksum.push_back("size-r");
+			fileChecksum.push_back(Common::String::format("%llu", (unsigned long long)macFile.getResForkSize()));
+
+			fileChecksum.push_back("size-rd");
+			fileChecksum.push_back(Common::String::format("%llu", (unsigned long long)macFile.getResForkDataSize()));
+
+			fileChecksums.push_back(fileChecksum);
 
 			g_checksum_state->calculatedSize += dataForkStream->size();
 
@@ -404,18 +472,25 @@ Common::Array<Common::StringArray> IntegrityDialog::generateChecksums(Common::Pa
 		Common::Array<Common::String> fileChecksum = {filename.toString()};
 		// Various checksizes
 		for (auto size : {0, 5000, 1024 * 1024}) {
+			Common::String sz = size ? Common::String::format("-%d", size) : "";
+			fileChecksum.push_back(Common::String::format("md5%s", sz.c_str()));
 			fileChecksum.push_back(Common::computeStreamMD5AsString(file, size, progressUpdateCallback, this).c_str());
 			file.seek(0);
 		}
 		// Tail checksums with checksize 5000
 		file.seek(-5000, SEEK_END);
+		fileChecksum.push_back("md5-t-5000");
 		fileChecksum.push_back(Common::computeStreamMD5AsString(file, 0, progressUpdateCallback, this).c_str());
+
+		fileChecksum.push_back("size");
+		fileChecksum.push_back(Common::String::format("%llu", (unsigned long long)file.size()));
 
 		file.close();
 		fileChecksums.push_back(fileChecksum);
 	}
 
-	setState(kChecksumComplete);
+	if (currentPath == gamePath) // Enter "checksum complete" state only once the whole root directory has been processed
+		setState(kChecksumComplete);
 	return fileChecksums;
 }
 
@@ -442,36 +517,25 @@ Common::JSONValue *IntegrityDialog::generateJSONRequest(Common::Path gamePath, C
 		Common::Path relativePath = Common::Path(fileChecksum[0]).relativeTo(gamePath);
 		file.setVal("name", new Common::JSONValue(relativePath.toConfig()));
 
-		Common::File tempFile;
-		if (!tempFile.open(Common::Path(fileChecksum[0])))
-			continue;
-		uint64 fileSize = tempFile.size();
-		tempFile.close();
-
-		file.setVal("size", new Common::JSONValue((long long)fileSize));
-
 		Common::JSONArray checksums;
 		Common::StringArray checkcodes;
-		if (fileChecksum.size() == 9)
-			checkcodes = {"md5-d", "md5-d-5000", "md5-d-1M", "md5-dt-5000", "md5-r", "md5-r-5000", "md5-r-1M", "md5-rt-5000"};
-		else
-			checkcodes = {"md5", "md5-5000", "md5-1M", "md5-t-5000"};
 
-		int index = -1;
-		for (Common::String val : fileChecksum) {
-			index++;
-
+		uint i;
+		for (i = 1; i < fileChecksum.size(); i += 2) {
 			Common::JSONObject checksum;
-			if (index < 1) {
-				continue;
-			}
 
-			checksum.setVal("type", new Common::JSONValue(checkcodes[index - 1]));
-			checksum.setVal("checksum", new Common::JSONValue(val));
+			checksum.setVal("type", new Common::JSONValue(fileChecksum[i]));
+			checksum.setVal("checksum", new Common::JSONValue(fileChecksum[i + 1]));
+
+			if (fileChecksum[i].hasPrefix("size"))
+				break;
 
 			checksums.push_back(new Common::JSONValue(checksum));
 		}
 		file.setVal("checksums", new Common::JSONValue(checksums));
+
+		for (; i < fileChecksum.size(); i += 2)
+			file.setVal(fileChecksum[i], new Common::JSONValue(fileChecksum[i + 1]));
 
 		filesObject.push_back(new Common::JSONValue(file));
 	}

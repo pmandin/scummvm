@@ -1664,6 +1664,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "hydrahead", "Hydra's Head" },
 	{ "hydrahead2", "Hydra's Head 2" },
 	{ "hydrahead3", "Hydra's Head 3" },
+	{ "hydraheadprequel", "Hydra's Head Prequel" },
 	{ "hydrate", "HYDRATE" },
 	{ "hypnotoad", "Hypnotoad" },
 	{ "iamjason", "IAMJASON" },
@@ -1911,6 +1912,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "legendofseththebard", "The Legend of Seth the Bard" },
 	{ "legendofskystones", "Legend Of Sky Stones" },
 	{ "legendsofmardaram", "Legends of Mardaram" },
+	{ "leisuresuitlarry1", "Leisure Suit Larry in the Land of the Lounge Lizards AGI+ Remake" },
 	{ "leisuresuitlarry2", "Leisure Suit Larry 2 - Point and Click Remake" },
 	{ "leisuresuitlarrylil", "Leisure Suit Larry: Lost in Love!" },
 	{ "lelac", "Le Lac" },
@@ -2739,6 +2741,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "ratchannel", "Rat Channel" },
 	{ "ratpackcastle", "The Rat Pack Do Cheesy Castle" },
 	{ "ratplaying", "Rat Playing Game" },
+	{ "rattimbbcap1", "I Ratti di Sentina e la Maledizione del Bicchiere Bucato - Cap. 1" },
 	{ "ravench1", "Raven - Chapter 1: The Commands of Eurybia" },
 	{ "rayandtheguitar", "Ray and the Guitar" },
 	{ "raybexter", "Ray Bexter" },
@@ -3368,6 +3371,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "thereaper", "The Reaper" },
 	{ "therebirth", "The Rebirth" },
 	{ "therent", "The Rent / L'Affitto" },
+	{ "theriver", "The River" },
 	{ "theroadtomurder", "Laura Bow in: The Road to Murder" },
 	{ "theroadtrip", "The Road Trip" },
 	{ "therobolovers", "The Robolovers" },
@@ -3422,6 +3426,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "thistall", "You must be this tall" },
 	{ "thisway", "This is the Way" },
 	{ "threeguyswalkintoheaven", "Three Guys Walk Into Heaven" },
+	{ "threelions", "Three Lions" },
 	{ "threepwoodnightmare", "Threepwood's Nightmare" },
 	{ "throwme", "Throw Me in the River" },
 	{ "thrymly", "Thrymly Disguised" },
@@ -3492,6 +3497,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "tsomi2", "The Secret of Monkey Island 2" },
 	{ "tunnelvision", "Tunnel Vision" },
 	{ "turtlesintime", "Turtles Ninja in Time" },
+	{ "tuulipuku", "Tuulipuku-Tauno Darrassa" },  // Windbreaker-Willy has a Hangover
 	{ "tvabroder", "Two Brothers / Två bröder" },
 	{ "tvquest2015", "Tv Quest" },
 	{ "twelvethirteense", "Twelve Thirteen - Special Edition" },
@@ -3545,6 +3551,8 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "valhallaextinction", "Valhalla Extinction" },
 	{ "valis", "Valis" },
 	{ "vankairbreak", "van K. Airbreak" },
+	{ "vasafasa", "The Vasa Fasa" },
+	{ "vasiletemplar", "Vasile The Templar" },
 	{ "vectorvendetta", "Vector Vendetta" },
 	{ "vegetablepatch", "Vegetable Patch Extreem Turbo" },
 	{ "vegetablepatch2", "Vegetable Patch Extreem Turbo 2" },
@@ -4262,6 +4270,9 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	UNSUPPORTED_GAME_ENTRY_EN("beachbelly", "BeachBellyBloodbath.ags", "08d7ab12e0844b2217171b9f16f87062", 11267330),  // Post-Jam
 	UNSUPPORTED_GAME_ENTRY_EN("beachbelly", "BeachBellyBloodbath.ags", "b9e0b0bbbb82a04d9c83efa455610eda", 11728709),  // Post-Jam v11
 	UNSUPPORTED_GAME_ENTRY_EN("burncloset", "BurnDownTheCLoset.ags", "adfdd31c0cfa9ae131da1f1071e75a7a", 4734045),
+	UNSUPPORTED_GAME_ENTRY("leisuresuitlarry1", "Leisure Suit Larry 1 AGI+ Remake.ags", "054602686ccc228b3cf19dda3d015887", 4486500),  // v1.0.2.8 Eng-Hebrew
+	UNSUPPORTED_GAME_ENTRY_EN("shardsofgod", "Shards of God.ags", "dafcc09ca5a4f4d4ba721f905dc9f366", 79014256),  // v1.3
+	UNSUPPORTED_GAME_ENTRY_EN("vasafasa", "The Vasa Fasa.ags", "0bffe4b12ae8f62bf7c0b9b51f7173e8", 50323076),
 	UNSUPPORTED_GAME_ENTRY_EN("weightgravity", "Weight of Gravity.ags", "d5532595b86ca80fb656d4343063ab15", 245545607),
 
 	// AGS 4 games
@@ -4327,8 +4338,10 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN_STEAM("azazelxmas", "Azazels_Christmas_Fable.exe", "46fcfdc2aa113c05f3ba95ad356e1a63", 408594796),
 	GAME_ENTRY_EN("beekeeperpicnic", "beekeeperspicnic.exe", "031b525706d93c172a2329894d255feb", 250051066),  // Win v1.0
 	GAME_ENTRY_EN("beekeeperpicnic", "beekeeperspicnic.exe", "031b525706d93c172a2329894d255feb", 250052667),  // Win v1.1
+	GAME_ENTRY_EN("beekeeperpicnic", "beekeeperspicnic.exe", "031b525706d93c172a2329894d255feb", 250077784),  // Win v1.13.2
 	GAME_ENTRY_EN("beekeeperpicnic", "beekeeperspicnic.ags", "f98bc7b344c75e6ed5513cc4e04eeb44", 246874086),  // Linux v1.0
 	GAME_ENTRY_EN("beekeeperpicnic", "beekeeperspicnic.ags", "523256421463b5660db305cf4db5d9cc", 246875687),  // Linux v1.1
+	GAME_ENTRY_EN("beekeeperpicnic", "beekeeperspicnic.ags", "e659ea3ff2ef6130ec6fd0c5777985cf", 246900804),  // Linux v1.13.2
 	GAME_ENTRY_EN_STEAM("beer", "beer!.exe", "6f201fd7a19869c85f49c7c471d0479a", 5055091), // Windows
 	GAME_ENTRY_EN_STEAM("beer", "beer!.ags", "4a751c43af8699aabdb0b9ebcc2024d3", 2145485), // Eng Win v1.5
 	GAME_ENTRY_EN_STEAM("beer", "Beer!.ags", "6f201fd7a19869c85f49c7c471d0479a", 5042748), // Linux
@@ -4523,16 +4536,19 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219796992, 0),  //v3.1a
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219796990, 0),  //v3.2
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219797080, 0),  //v3.3
+	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219797616, 0),  //v3.4b
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.ags", "3c999468155295d3e0809c04b2e53cff", 216579565, 0),  //Linux v3.0
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.ags", "1f174c44bfa6725ceb6b80aa9cc69d7e", 216583148, 0),  //Linux v3.1a
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.ags", "ff5e37e618eb9ed86c4a40de806e9a4a", 216583146, 0),  //Linux v3.2
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.ags", "836738be511b4854c2e22b8519aa27fa", 216583236, 0),  //Linux v3.3
+	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "deception.ags", "122ce61f1697dfcca1e4d56fe4ab6a3d", 216583772, 0),  //Linux v3.3c
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "agsgame.dat", "1c0bf79d9720d0a81219e8778fb7e231", 304040703, 0), // Linux
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "05a3a5ff709a5764d2b4a5dc301107d6", 302140480, 0), // Mac
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "3c999468155295d3e0809c04b2e53cff", 216579565, 0), // Mac v3.0
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "e08b56307a597c1384e45b7e6e25d14c", 216582921, 0), // Mac v3.1a
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "ff5e37e618eb9ed86c4a40de806e9a4a", 216583146, 0), // Mac v3.2
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "836738be511b4854c2e22b8519aa27fa", 216583236, 0), // Mac v3.4-v3.5
+	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "122ce61f1697dfcca1e4d56fe4ab6a3d", 216583772, 0), // Mac v3.5d
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "b3b192cf20a2f7666ddea3410dbd87cc", 304076138, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "499c3261a1f73c5b78125beeca1c2d08", 305215631, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "8f7335b030b38b610637b3033859f828", 305293936, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
@@ -4541,14 +4557,17 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219796765, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219796763, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219796853, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
+	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.exe", "9cca5df9331a98e910cce4d5b4ea24f0", 219797389, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "8492a5cf8a91044a8505bc62bc1e9dfc", 216579330, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),  // Mac
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "1f174c44bfa6725ceb6b80aa9cc69d7e", 216583148, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),  // Mac
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "fa0be2343abc9833940630b40dbc0042", 216582919, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),  // Mac
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "bfa4de81ea9cf6654a399a92f7148e32", 216583009, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),  // Mac
+	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "ac2game.dat", "061394fb335c11ee1994c03bd620b7a3", 216583545, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE),  // Mac
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.ags", "8492a5cf8a91044a8505bc62bc1e9dfc", 216579330, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE), // Linux
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.ags", "e08b56307a597c1384e45b7e6e25d14c", 216582921, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE), // Linux
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.ags", "fa0be2343abc9833940630b40dbc0042", 216582919, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE), // Linux
 	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.ags", "bfa4de81ea9cf6654a399a92f7148e32", 216583009, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE), // Linux
+	GAME_ENTRY_PLUGIN_STEAM_EN_NOAUTOSAVE("blackwell4", "deception.ags", "061394fb335c11ee1994c03bd620b7a3", 216583545, GAMEFLAG_PLUGINS_AGSTEAM_WADJETEYE), // Linux
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell5", "epiphany.exe", "c1cddd6fcdbcd030beda9f10d4e4270a", 281849897, 0),
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell5", "epiphany.exe", "c3f7a995bbea7ce4ba7a2a97995c677e", 283092455, 0),  //v2.2
 	GAME_ENTRY_PLUGIN_GOG_EN_NOAUTOSAVE("blackwell5", "epiphany.exe", "c3f7a995bbea7ce4ba7a2a97995c677e", 283092983, 0),  //v2.3
@@ -4760,12 +4779,15 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DETECTION_ENTRY_GUIO("kathyrain", "kathyrain.exe", "d2b1ba151c3d209b50331127032f96f6", 197489719, Common::UNK_LANG , "GOG.com", GUIO3(GUIO_NOLANG, GUIO_NOLAUNCHLOAD, GAMEOPTION_NO_AUTOSAVE), ADGF_NO_FLAGS, GAMEFLAG_PLUGINS_AGSSPRITEFONT_CLIFFTOP),
 	DETECTION_ENTRY_GUIO("kathyrain", "kathyrain.exe", "4bec9449bb53b0eea78cd5818b870f43", 197485875, Common::UNK_LANG , "Amazon Games", GUIO3(GUIO_NOLANG, GUIO_NOLAUNCHLOAD, GAMEOPTION_NO_AUTOSAVE), ADGF_NO_FLAGS, GAMEFLAG_PLUGINS_AGSSPRITEFONT_CLIFFTOP),
 	GAME_ENTRY_STEAM("killyourself", "ky.exe", "4e0d0aca04563b21a47e8a0cc56605fc", 18567658),  // En-De-Es-It-Nl
-	GAME_ENTRY_PLUGIN_GOG_NOAUTOSAVE("lamplightcity", "lamplight city.exe", "0cb636e2235e2b7cff4ece5898653e18", 981897178, 0), // Version 1.10  En-De
+	GAME_ENTRY_PLUGIN_GOG_NOAUTOSAVE("lamplightcity", "lamplight city.exe", "0cb636e2235e2b7cff4ece5898653e18", 981897178, 0), // v1.10  En-De
+	GAME_ENTRY_PLUGIN_GOG_NOAUTOSAVE("lamplightcity", "lamplight city.exe", "3df12ff26f3501f8e2018e431e96d257", 828000046, 0), // v1.13
 	GAME_ENTRY_PLUGIN_GOG_NOAUTOSAVE("lamplightcity", "lamplight city.ags", "70a52d0ba7e5975df40aef460142f770", 979393622, 0), // Linux
 	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "lamplight city.exe", "4b18403fd1d150321f50cff9232d7b28", 982468239, 0),
-	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "lamplight city.exe", "fc707a8a169b7beabacb4f246a3acfc9", 827966541, 0),
-	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "lamplight city.ags", "69936bd2263616bb0bd64fa6b4fe5a8d", 979409133, 0),
+	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "lamplight city.exe", "fc707a8a169b7beabacb4f246a3acfc9", 827966541, 0),  // v1.13
+	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "lamplight city.ags", "69936bd2263616bb0bd64fa6b4fe5a8d", 979409133, 0),  // Linux
+	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "lamplight city.ags", "9242eb3bf7fec4f14be4843a5d362928", 824764985, 0),  // Linux v1.13
 	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "ac2game.dat", "0cb636e2235e2b7cff4ece5898653e18", 981897178, 0), // Mac
+	GAME_ENTRY_PLUGIN_STEAM_NOAUTOSAVE("lamplightcity", "ac2game.dat", "fc707a8a169b7beabacb4f246a3acfc9", 827966541, 0), // Mac v1.13
 	GAME_ENTRY_EN_STEAM("lancelothangover", "Lancelot.exe", "72df0ed89f7359b1466b0ea51f1f8ed4", 22506826),
 	GAME_ENTRY("larrylotter", "Warthogs.exe", "9c49b6fa0460f36d6e7558281f142683", 12448793),  // Multilang
 	GAME_ENTRY("larrylotter", "warthogs.exe", "cbe62572ed082a3063a49d594612ac0b", 12397280), // v1.7
@@ -5815,6 +5837,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY_EN("untilihaveyou", "Until I Have You Demo.exe", "cda1d7e36993dd55ba5513c1c43e5b2b", 479749741),
 	DEMO_ENTRY_EN("updatequest", "U-Quest.exe", "06a03fe35791b0578068ab1873455463", 1776804),
 	DEMO_ENTRY_EN("valis", "valis 0.70.exe", "0710e2ec71042617f565c01824f0cf3c", 4348394),
+	DEMO_ENTRY("vasiletemplar", "Vasile Templar.ags", "3827d5d05565ecf3224dd9430f410b86", 789356279),
 	DEMO_ENTRY_LANG("villard", "VMF_DEMO 2.0.1.exe", "534f936a0fac0c6f72b6ce6aaa6c9ce2", 653406938, Common::IT_ITA),
 	DEMO_ENTRY_LANG("vohaulsrevenge2", "SQ XII.exe", "465f972675db2da6040518221af5b0ba", 17313307, Common::RU_RUS),
 	DEMO_ENTRY_EN("vorezkor", "The VOREZKOR Hack.exe", "f3c6c85fd477033f539b95515fdf8520", 119247356),  // v0.21
@@ -7366,6 +7389,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("hydrahead", "Hydra.ags", "6283040a165e21b0c2dc4faa020a1861", 185123953),
 	GAME_ENTRY_EN("hydrahead2", "HH2.ags", "540e3621845b004129a6247a8a7e8d68", 405115833),
 	GAME_ENTRY_EN("hydrahead3", "Hydra3.ags", "bdc6fb9b2f42f4f3f552cf2c005e2e33", 387364845),
+	// filesize is 4435517779
+	{{ "hydraheadprequel", 0, AD_ENTRY1("HHP.ags", "b78de7cca0fcb89c4bac3cabc52ba7ad"), Common::EN_ANY, Common::kPlatformUnknown, ADGF_NO_FLAGS, GUIO1(GUIO_NOLANG) }, 0 },
 	GAME_ENTRY_EN("hydrate", "Hydrate.exe", "b3ba6cb504a31fd2ce43e86280eb06a7", 3968325),  // Windows
 	GAME_ENTRY_EN("hydrate", "Hydrate.ags", "eb7203ea3e432183394a36f0b58d7d88", 1470261),  // Linux
 	GAME_ENTRY_EN("hypnotoad", "Hypnotoad.exe", "06a03fe35791b0578068ab1873455463", 1947740),
@@ -7671,6 +7696,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("legendofskystones", "Ludum Dare 45.ags", "38cfb1d9b153efbd94528f3c711ca5a0", 8869946),  // Linux
 	GAME_ENTRY_EN("legendofskystones", "Ludum Dare 45.exe", "8aff96231ca059cd61fe5ce68b83f50f", 11356746),  // Windows
 	GAME_ENTRY_LANG("legendsofmardaram", "LOM.exe", "0710e2ec71042617f565c01824f0cf3c", 50183544, Common::DE_DEU),
+	GAME_ENTRY_EN("leisuresuitlarry1", "Leisure Suit Larry 1 AGI+ Remake.ags", "de742a8db461bab4b1abae44b052493f", 4364303),  // v1.0.0.1
 	GAME_ENTRY_EN("leisuresuitlarry2", "Larry 2.exe", "949f7440e3692b7366c2029979dee9a0", 11971760),
 	GAME_ENTRY_EN("lelac", "Le Lac - EN.exe", "4eed763ae52a4acd9c231f09ece7b914", 188867790),
 	GAME_ENTRY_LANG("lelac", "Le Lac.exe", "389f0ba58d77f1c203dc4c68b80dad44", 95040881, Common::FR_FRA),
@@ -8668,6 +8694,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY("ratchannel", "Rat Channel.exe", "c5d2c54c20cb606519b86d3890ee7fc0", 303946606),  // Eng-Deu
 	GAME_ENTRY_EN_PLATFORM("ratplaying", "Rat Playing Game.exe", "6b1702aec6d0a44bda59ef8f229956c5", 16414235, "Beta"),
 	GAME_ENTRY_EN_PLATFORM("ratplaying", "Rat Playing Game.ags", "600bdacdcb296799312bece57f6a5625", 13928459, "Beta"),
+	GAME_ENTRY_LANG("rattimbbcap1", "rds.ags", "c83aaf6e31d03af6f827d6f9a6dc1535", 23182278, Common::IT_ITA),
 	GAME_ENTRY_EN("ravench1", "Raven.exe", "620b3d82af532d9550c30b7c69d61600", 2287413),
 	GAME_ENTRY_EN("rayandtheguitar", "The Band.exe", "465f972675db2da6040518221af5b0ba", 1518249),
 	GAME_ENTRY_EN("raysrods", "Rays Rods.exe", "06a03fe35791b0578068ab1873455463", 7507467),
@@ -9474,6 +9501,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("there", "There.exe", "82da2565c456dcfb265ded6fe3189c0b", 131075666),
 	GAME_ENTRY_EN("thereaper", "The Reaper.exe", "05f7ff300b322bc431e7cda6a07b5976", 9922339),
 	GAME_ENTRY("therent", "L'Affitto.exe", "d25c3cb8a42c5565634dfef76b3cf83e", 4452748),  // Eng-Ita
+	GAME_ENTRY_EN("theriver", "TheRiver.exe", "baaf246dbf8bf6ed0ce85978173c7447", 38409228),  // v1.0.2
+	GAME_ENTRY_EN("theriver", "TheRiver.exe", "baaf246dbf8bf6ed0ce85978173c7447", 38415515),  // v1.0.3
 	GAME_ENTRY_EN("theroadtomurder", "lbb.exe", "465f972675db2da6040518221af5b0ba", 1020984),
 	GAME_ENTRY_EN("theroadtrip", "The RoadTrip.ags", "45c1f184bf50b4880bd591fb36e734e5", 3452180),
 	GAME_ENTRY_EN("theroadtrip", "The RoadTrip.exe", "ae2e93ae61a612dd8cad1290bd5f7443", 6564136),
@@ -9543,6 +9572,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("thistall", "YouMustBe.exe", "06a03fe35791b0578068ab1873455463", 6968891),
 	GAME_ENTRY_EN("thisway", "This is the Way.exe", "9da85cf72af670ca88f9aea5a43c6b14", 64194258),
 	GAME_ENTRY_EN("threeguyswalkintoheaven", "Three Guys Walk Into Heaven.exe", "c45653d1c856f002ceb59a5b865ab187", 2896291),
+	GAME_ENTRY_EN("threelions", "Three Lions.ags", "5ac72361e345d0629fc21256b968883e", 9984021),
 	GAME_ENTRY_EN("throwme", "throwmeinriver.exe", "23a67b6de10ec35e9f5a4dfc7d928222", 101323436),
 	GAME_ENTRY_EN("thrymly", "Thrymly Disguised.exe", "5d3eaccd432b93d4387fd6c20838c18b", 15301211),
 	GAME_ENTRY_EN("tigerhawk", "Tiger Hawk Fighter.exe", "afe40dc1416dd51e896ee0444d799f07", 36051983),
@@ -9627,6 +9657,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("tunnelvision", "TunnelVision.exe", "aa8082a7cc63d9b14d6be5dac69f10ac", 27915669),  // Win/Mac
 	GAME_ENTRY_EN("tunnelvision", "TunnelVision.ags", "ca92226f62424c66bff8ccfbe7faffc2", 24755338),  // Linux
 	GAME_ENTRY_EN("turtlesintime", "Turtles.exe", "465f972675db2da6040518221af5b0ba", 2309552),
+	GAME_ENTRY("tuulipuku", "Tauno1_AGS.ags", "3e40c09aceed34b28c2c41a78740dbdd", 35193710),  // Eng-Fin
 	GAME_ENTRY("tvabroder", "TvaBroder.exe", "7a669a96e488653db661d285bbc12783", 17875297),  // En-Sw
 	GAME_ENTRY_EN("tvquest2015", "TvQuest.exe", "c3b72132686c4a102b3365d380c8ae3a", 10999697),
 	GAME_ENTRY_EN("twelvethirteenep1", "1213.exe", "3b7cceb3e4bdb031dc5d8f290936e94b", 2940069),

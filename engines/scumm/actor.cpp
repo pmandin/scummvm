@@ -499,7 +499,7 @@ void Actor::setActorWalkSpeed(uint newSpeedX, uint newSpeedY) {
 	_speedy = newSpeedY;
 
 	if (_moving) {
-		if (_vm->_game.version == 8 && (_moving & MF_IN_LEG) == 0)
+		if ((_vm->_game.id == GID_CMI || _vm->_game.id == GID_DIG) && (_moving & MF_IN_LEG) == 0)
 			return;
 		calcMovementFactor(_walkdata.next);
 	}
@@ -633,7 +633,7 @@ int Actor_v3::calcMovementFactor(const Common::Point& next) {
 int Actor::actorWalkStep() {
 	_needRedraw = true;
 
-	if (_vm->_game.heversion >= 70) {
+	if (_vm->_game.heversion >= 62) {
 		_needBgReset = true;
 	}
 
@@ -1743,7 +1743,7 @@ void Actor::putActor(int dstX, int dstY, int newRoom) {
 	_room = newRoom;
 	_needRedraw = true;
 
-	if (_vm->_game.heversion >= 70)
+	if (_vm->_game.heversion >= 62)
 		_needBgReset = true;
 
 	if (_vm->VAR(_vm->VAR_EGO) == _number) {
@@ -2451,7 +2451,7 @@ void ScummEngine::processActors() {
 						continue;
 				}
 
-				if (_game.heversion >= 71) {
+				if (_game.heversion >= 62) {
 					// Check if this new actor eclipsed another one...
 					for (int i = 0; i < _gdi->_numStrips; i++) {
 						int strip = _screenStartStrip + i;
@@ -2539,8 +2539,7 @@ void Actor::drawActorCostume(bool hitTestMode) {
 	if (bcr->drawCostume(_vm->_virtscr[kMainVirtScreen], _vm->_gdi->_numStrips, this, _drawToBackBuf) & 1) {
 		_needRedraw = (_vm->_game.version <= 6);
 
-		// TODO: Eventually check if true for HE6*
-		if (_vm->_game.heversion >= 70)
+		if (_vm->_game.heversion >= 62)
 			_needBgReset = true;
 	}
 
@@ -2734,7 +2733,7 @@ void Actor::startAnimActor(int f) {
 		}
 	}
 
-	assert(f != 0x3E);
+	assert(f != CHORE_FACE_DIR);
 
 	if (isInCurrentRoom() && _costume != 0) {
 		_animProgress = 0;
@@ -2756,7 +2755,7 @@ void Actor::startAnimActor(int f) {
 		_frame = f;
 	}
 
-	if (_vm->_game.heversion >= 70)
+	if (_vm->_game.heversion >= 62)
 		_needBgReset = true;
 }
 
@@ -2887,7 +2886,7 @@ void Actor::animateCostume() {
 		_vm->_costumeLoader->loadCostume(_costume);
 		if (_vm->_costumeLoader->increaseAnims(this)) {
 			_needRedraw = true;
-			if (_vm->_game.heversion >= 70) {
+			if (_vm->_game.heversion >= 62) {
 				_needBgReset = true;
 			}
 		}
@@ -3103,6 +3102,20 @@ void ScummEngine::resetActorBgs() {
 }
 
 void ScummEngine_v70he::resetActorBgs() {
+	// FIXME: This function represent the exact behavior any HE70+ game should have.
+	//        This also needs the walk code to be in a certain way. The walk code is
+	//        basically used only on Fatty Bear, all other games ditched "normal" walking
+	//        in favour of special walking animations.
+	//
+	//        In order to have a walk without a couple of rare erase glitches in Fatty Bear,
+	//        we temporarily use the old function. That is, until I rewrite the walk code,
+	//        which could potentially never happen since it's used only for this game and this
+	//        exact version...
+	if (_game.id == GID_FBEAR && _game.heversion == 70) {
+		ScummEngine::resetActorBgs();
+		return;
+	}
+
 	for (int i = 0; i < _gdi->_numStrips; i++) {
 		int strip = _screenStartStrip + i;
 		clearGfxUsageBit(strip, USAGE_BIT_DIRTY);
@@ -3602,7 +3615,7 @@ void ActorHE::setActorCostume(int c) {
 	if (_vm->_game.heversion >= 61 && (c == -1  || c == -2)) {
 		_heSkipLimbs = (c == -1);
 		_needRedraw = true;
-		if (_vm->_game.heversion >= 70) {
+		if (_vm->_game.heversion >= 62) {
 			_needBgReset = true;
 		}
 

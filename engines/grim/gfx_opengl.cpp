@@ -1088,11 +1088,7 @@ void GfxOpenGL::createBitmap(BitmapData *bitmap) {
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, bitmap->_width);
 
 		const Graphics::PixelFormat format_16bpp(2, 5, 6, 5, 0, 11, 5, 0, 0);
-#ifdef SCUMM_BIG_ENDIAN
-		const Graphics::PixelFormat format_32bpp(4, 8, 8, 8, 8, 24, 16, 8, 0);
-#else
-		const Graphics::PixelFormat format_32bpp(4, 8, 8, 8, 8, 0, 8, 16, 24);
-#endif
+		const Graphics::PixelFormat format_32bpp = Graphics::PixelFormat::createFormatRGBA32();
 
 		for (int pic = 0; pic < bitmap->_numImages; pic++) {
 			const Graphics::Surface &imageData = bitmap->getImageData(pic);
@@ -1421,6 +1417,10 @@ void GfxOpenGL::createTextObject(TextObject *text) {
 	//error("Could not get font userdata");
 	const Font *font = text->getFont();
 
+	const Graphics::PixelFormat format = Graphics::PixelFormat::createFormatRGBA32();
+	const uint32 blackColor = format.RGBToColor(0, 0, 0);
+	const uint32 whiteColor = format.RGBToColor(0xff, 0xff, 0xff);
+
 	if (font->is8Bit())
 		return;
 
@@ -1431,8 +1431,8 @@ void GfxOpenGL::createTextObject(TextObject *text) {
 	for (int i = 0; i < numLines; i++) {
 		Graphics::Surface surface;
 
-		font->render(surface, text->getLines()[i], Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24),
-			     0xFF000000, 0xFFFFFFFF, 0x00000000);
+		font->render(surface, text->getLines()[i], format,
+			     blackColor, whiteColor, 0);
 
 		byte *bitmap = (byte *)surface.getPixels();
 
@@ -1679,11 +1679,7 @@ void GfxOpenGL::drawDepthBitmap(int x, int y, int w, int h, const char *data) {
 }
 
 const Graphics::PixelFormat GfxOpenGL::getMovieFormat() const {
-#ifdef SCUMM_BIG_ENDIAN
-	return Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
-#else
-	return Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
-#endif
+	return Graphics::PixelFormat::createFormatRGBA32();
 }
 
 void GfxOpenGL::prepareMovieFrame(Graphics::Surface *frame) {
@@ -1871,11 +1867,7 @@ void GfxOpenGL::drawEmergString(int x, int y, const char *text, const Color &fgC
 
 Bitmap *GfxOpenGL::getScreenshot(int w, int h, bool useStored) {
 	Graphics::Surface src;
-#ifdef SCUMM_BIG_ENDIAN
-	src.create(_screenWidth, _screenHeight, Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
-#else
-	src.create(_screenWidth, _screenHeight, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
-#endif
+	src.create(_screenWidth, _screenHeight, Graphics::PixelFormat::createFormatRGBA32());
 	if (useStored) {
 		memcpy(src.getPixels(), _storedDisplay, _screenWidth * _screenHeight * 4);
 	} else {

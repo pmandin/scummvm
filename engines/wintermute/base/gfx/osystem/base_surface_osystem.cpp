@@ -49,26 +49,29 @@ namespace Wintermute {
 //////////////////////////////////////////////////////////////////////////
 BaseSurfaceOSystem::BaseSurfaceOSystem(BaseGame *inGame) : BaseSurface(inGame) {
 	_surface = new Graphics::Surface();
+	_pixelOpReady = false;
 	_alphaMask = nullptr;
 	_alphaType = Graphics::ALPHA_FULL;
-	_lockPixels = nullptr;
-	_lockPitch = 0;
-	_loaded = false;
+	_alphaMaskType = Graphics::ALPHA_OPAQUE;
 	_rotation = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
 BaseSurfaceOSystem::~BaseSurfaceOSystem() {
 	if (_surface) {
+		if (_valid)
+			_gameRef->addMem(-_width * _height * 4);
 		_surface->free();
 		delete _surface;
 		_surface = nullptr;
 	}
 
-	delete[] _alphaMask;
-	_alphaMask = nullptr;
+	if (_alphaMask) {
+		_alphaMask->free();
+		delete _alphaMask;
+		_alphaMask = nullptr;
+	}
 
-	_gameRef->addMem(-_width * _height * 4);
 	BaseRenderOSystem *renderer = static_cast<BaseRenderOSystem *>(_gameRef->_renderer);
 	renderer->invalidateTicketsFromSurface(this);
 }
@@ -107,11 +110,16 @@ bool BaseSurfaceOSystem::finishLoad() {
 		return false;
 	}
 
+	if (_surface) {
+		if (_valid)
+			_gameRef->addMem(-_width * _height * 4);
+		_surface->free();
+		delete _surface;
+		_surface = nullptr;
+	}
+
 	_width = image->getSurface()->w;
 	_height = image->getSurface()->h;
-
-	_surface->free();
-	delete _surface;
 
 	bool needsColorKey = false;
 	bool replaceAlpha = true;
@@ -127,6 +135,8 @@ bool BaseSurfaceOSystem::finishLoad() {
 		_surface->copyFrom(*image->getSurface());
 	}
 
+	_gameRef->addMem(_width * _height * 4);
+
 	if (_filename.matchString("savegame:*g", true)) {
 		uint8 r, g, b, a;
 		for (int x = 0; x < _surface->w; x++) {
@@ -141,6 +151,9 @@ bool BaseSurfaceOSystem::finishLoad() {
 	if (_filename.hasSuffix(".bmp")) {
 		// Ignores alpha channel for BMPs
 		needsColorKey = true;
+	} else if (_filename.hasSuffix(".jpg")) {
+		// Ignores alpha channel for JPEGs
+		needsColorKey = true;
 	} else if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
 		// WME 1.x always use colorkey, even for images with transparency
 		needsColorKey = true;
@@ -154,13 +167,19 @@ bool BaseSurfaceOSystem::finishLoad() {
 	}
 
 	if (needsColorKey) {
-		_surface->applyColorKey(_ckRed, _ckGreen, _ckBlue, replaceAlpha);
+		// We set the pixel color to transparent black,
+		// like D3DX, if it matches the color key.
+		bool applied = _surface->applyColorKey(_ckRed, _ckGreen, _ckBlue, replaceAlpha, 0, 0, 0);
+
+		if (replaceAlpha || image->getSurface()->format.aBits() == 0 || image->getSurface()->format.isCLUT8())
+			_alphaType = applied ? Graphics::ALPHA_BINARY : Graphics::ALPHA_OPAQUE;
+		else
+			_alphaType = _surface->detectAlpha();
+	} else {
+		_alphaType = image->getSurface()->detectAlpha();
 	}
 
-	_alphaType = _surface->detectAlpha();
 	_valid = true;
-
-	_gameRef->addMem(_width * _height * 4);
 
 	delete image;
 
@@ -184,16 +203,20 @@ bool BaseSurfaceOSystem::finishLoad() {
 		}
 	}
 
-	_loaded = true;
 
 	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseSurfaceOSystem::create(int width, int height) {
+	if (_valid)
+		_gameRef->addMem(-_width * _height * 4);
+	_surface->free();
+
 	_width = width;
 	_height = height;
 
+	_surface->create(_width, _height, g_system->getScreenFormat());
 	_gameRef->addMem(_width * _height * 4);
 
 	_valid = true;
@@ -202,12 +225,26 @@ bool BaseSurfaceOSystem::create(int width, int height) {
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool BaseSurfaceOSystem::isTransparentAt(int x, int y) {
-	return isTransparentAtLite(x, y);
+bool BaseSurfaceOSystem::invalidate() {
+	if (_pixelOpReady) {
+		return STATUS_FAILED;
+	}
+
+	if (_valid) {
+		_gameRef->addMem(-_width * _height * 4);
+		_surface->free();
+		_valid = false;
+	}
+
+	return STATUS_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool BaseSurfaceOSystem::isTransparentAtLite(int x, int y) {
+bool BaseSurfaceOSystem::isTransparentAtLite(int x, int y) const {
+	if (!_pixelOpReady) {
+		return false;
+	}
+
 	if (x < 0 || x >= _surface->w || y < 0 || y >= _surface->h) {
 		return true;
 	}
@@ -224,14 +261,19 @@ bool BaseSurfaceOSystem::isTransparentAtLite(int x, int y) {
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseSurfaceOSystem::startPixelOp() {
-	// Any pixel-op makes the caching useless:
-	BaseRenderOSystem *renderer = static_cast<BaseRenderOSystem *>(_gameRef->_renderer);
-	renderer->invalidateTicketsFromSurface(this);
+	if (!_valid) {
+		if (DID_FAIL(finishLoad())) {
+			return STATUS_FAILED;
+		}
+	}
+	_pixelOpReady = true;
 	return STATUS_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////
 bool BaseSurfaceOSystem::endPixelOp() {
+	_lastUsedTime = _gameRef->getLiveTimer()->getTime();
+	_pixelOpReady = false;
 	return STATUS_OK;
 }
 
@@ -283,7 +325,10 @@ bool BaseSurfaceOSystem::displayTiled(int x, int y, Rect32 rect, int numTimesX, 
 bool BaseSurfaceOSystem::drawSprite(int x, int y, Rect32 *rect, Rect32 *newRect, Graphics::TransformStruct transform) {
 	BaseRenderOSystem *renderer = static_cast<BaseRenderOSystem *>(_gameRef->_renderer);
 
-	if (!_loaded) {
+	_lastUsedTime = _gameRef->getLiveTimer()->getTime();
+
+	// TODO: Skip this check if we can reuse an existing ticket?
+	if (!_valid) {
 		finishLoad();
 	}
 
@@ -328,7 +373,8 @@ bool BaseSurfaceOSystem::drawSprite(int x, int y, Rect32 *rect, Rect32 *newRect,
 
 	// Optimize by not doing alpha-blits if we lack alpha
 	// If angle is not 0, then transparent regions are added near the corners
-	if (_alphaType == Graphics::ALPHA_OPAQUE && transform._angle == 0) {
+	if (_alphaType == Graphics::ALPHA_OPAQUE && _alphaMaskType == Graphics::ALPHA_OPAQUE &&
+			transform._angle == 0) {
 		transform._alphaDisable = true;
 	}
 
@@ -337,22 +383,69 @@ bool BaseSurfaceOSystem::drawSprite(int x, int y, Rect32 *rect, Rect32 *newRect,
 }
 
 bool BaseSurfaceOSystem::putSurface(const Graphics::Surface &surface, bool hasAlpha) {
-	_loaded = true;
-	if (surface.format == _surface->format && surface.w == _surface->w && surface.h == _surface->h) {
-		_surface->copyRectToSurface(surface, 0, 0, Common::Rect(surface.w, surface.h));
-	} else {
-		_surface->free();
-		_surface->copyFrom(surface);
-	}
+	_surface->copyRectToSurface(surface, 0, 0, Common::Rect(surface.w, surface.h));
+	writeAlpha(_surface, _alphaMask);
+
 	if (hasAlpha) {
-		_alphaType = Graphics::ALPHA_FULL;
+		_alphaType = _surface->detectAlpha();
 	} else {
-		_alphaType = Graphics::ALPHA_OPAQUE;
+		_alphaType = _alphaMaskType;
 	}
 	BaseRenderOSystem *renderer = static_cast<BaseRenderOSystem *>(_gameRef->_renderer);
 	renderer->invalidateTicketsFromSurface(this);
 
 	return STATUS_OK;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool BaseSurfaceOSystem::setAlphaImage(const Common::String &filename) {
+	BaseImage *alphaImage = new BaseImage();
+	if (!alphaImage->loadFile(filename)) {
+		delete alphaImage;
+		return false;
+	}
+
+	if (_alphaMask) {
+		_alphaMask->free();
+		delete _alphaMask;
+		_alphaMask = nullptr;
+	}
+
+	_alphaMaskType = alphaImage->getSurface()->detectAlpha();
+	if (_alphaMaskType != Graphics::ALPHA_OPAQUE) {
+		_alphaMask = alphaImage->getSurface()->convertTo(g_system->getScreenFormat());
+	}
+
+	delete alphaImage;
+
+	return true;
+}
+
+void BaseSurfaceOSystem::writeAlpha(Graphics::Surface *surface, const Graphics::Surface *mask) {
+	if (mask && surface->w == mask->w && surface->h == mask->h) {
+		assert(mask->pitch == mask->w * 4);
+		assert(mask->format.bytesPerPixel == 4);
+		assert(surface->pitch == surface->w * 4);
+		assert(surface->format.bytesPerPixel == 4);
+		const byte *alphaData = (const byte *)mask->getPixels();
+#ifdef SCUMM_LITTLE_ENDIAN
+		int alphaPlace = (mask->format.aShift / 8);
+#else
+		int alphaPlace = 3 - (mask->format.aShift / 8);
+#endif
+		alphaData += alphaPlace;
+		byte *imgData = (byte *)surface->getPixels();
+#ifdef SCUMM_LITTLE_ENDIAN
+		imgData += (surface->format.aShift / 8);
+#else
+		imgData += 3 - (surface->format.aShift / 8);
+#endif
+		for (int i = 0; i < surface->w * surface->h; i++) {
+			*imgData = *alphaData;
+			alphaData += 4;
+			imgData += 4;
+		}
+	}
 }
 
 } // End of namespace Wintermute

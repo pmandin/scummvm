@@ -111,7 +111,7 @@ void GameMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 
 	uint32 gametick = Kernel::get_instance()->getFrameNum();
 
-	bool paintEditorItems = Ultima8Engine::get_instance()->isPaintEditorItems();
+	bool showEditorItems = Ultima8Engine::get_instance()->isShowEditorItems();
 
 	// Get all the required items
 	for (int cy = 0; cy < MAP_NUM_CHUNKS; cy++) {
@@ -134,7 +134,7 @@ void GameMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 
 				if (item->getZ() >= zlimit && !item->getShapeInfo()->is_draw())
 					continue;
-				if (!paintEditorItems && item->getShapeInfo()->is_editor())
+				if (!showEditorItems && item->getShapeInfo()->is_editor())
 					continue;
 				if (item->hasFlags(Item::FLG_INVISIBLE)) {
 					// special case: invisible avatar _is_ drawn
@@ -163,7 +163,12 @@ void GameMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 		                      _draggingFlags, Item::EXT_TRANSPARENT);
 	}
 
-	_displayList->PaintDisplayList(surf, _highlightItems, _showFootpads, _gridlines);
+	int gridlines = _gridlines;
+	if (gridlines < 0) {
+		gridlines = map->getChunkSize();
+	}
+
+	_displayList->PaintDisplayList(surf, _highlightItems, _showFootpads, gridlines);
 }
 
 // Trace a click, and return ObjId
@@ -380,10 +385,15 @@ void GameMapGump::IncSortOrder(int count) {
 bool GameMapGump::StartDraggingItem(Item *item, int mx, int my) {
 //	ParentToGump(mx, my);
 
-	if (!item->canDrag()) return false;
+	bool hackMover = Ultima8Engine::get_instance()->isHackMoverEnabled();
+	if (!hackMover) {
+		if (!item->canDrag())
+			return false;
 
-	MainActor *avatar = getMainActor();
-	if (!avatar->canReach(item, 128)) return false;  // CONSTANT!
+		MainActor *avatar = getMainActor();
+		if (!avatar->canReach(item, 128))
+			return false;  // CONSTANT!
+	}
 
 	// get item offset
 	int32 itemx = 0;
@@ -417,19 +427,25 @@ bool GameMapGump::DraggingItem(Item *item, int mx, int my) {
 		return  backpack->CanAddItem(item, true);
 	}
 
+	bool hackMover = Ultima8Engine::get_instance()->isHackMoverEnabled();
+	if (hackMover) {
+		Mouse::get_instance()->setMouseCursor(Mouse::MOUSE_TARGET);
+		return true;
+	}
+
 	bool throwing = false;
 	if (!avatar->canReach(item, 128, // CONSTANT!
 	                      _draggingPos.x, _draggingPos.y, _draggingPos.z)) {
 		// can't reach, so see if we can throw
 		int throwrange = item->getThrowRange();
 		if (throwrange && avatar->canReach(item, throwrange, _draggingPos.x,
-		                                   _draggingPos.y, _draggingPos.z)) {
+										   _draggingPos.y, _draggingPos.z)) {
 			int speed = 64 - item->getTotalWeight() + avatar->getStr();
 			if (speed < 1) speed = 1;
 			Point3 pt = avatar->getLocation();
 			MissileTracker t(item, 1, pt.x, pt.y, pt.z,
-			                 _draggingPos.x, _draggingPos.y, _draggingPos.z,
-			                 speed, 4);
+							 _draggingPos.x, _draggingPos.y, _draggingPos.z,
+							 speed, 4);
 			if (t.isPathClear())
 				throwing = true;
 			else
@@ -473,6 +489,10 @@ void GameMapGump::DropItem(Item *item, int mx, int my) {
 	Item *targetitem = getItem(trace);
 	bool canReach = avatar->canReach(item, 128, // CONSTANT!
 									_draggingPos.x, _draggingPos.y, _draggingPos.z);
+
+	bool hackMover = Ultima8Engine::get_instance()->isHackMoverEnabled();
+	if (hackMover)
+		canReach = true;
 
 	if (item->getShapeInfo()->hasQuantity()) {
 		if (item->getQuality() > 1) {
@@ -576,24 +596,6 @@ void GameMapGump::DropItem(Item *item, int mx, int my) {
 		item->collideMove(_draggingPos.x, _draggingPos.y, _draggingPos.z,
 		                  true, true); // teleport item
 		item->fall();
-	}
-}
-
-void GameMapGump::setGridlines(int gridlines) {
-	if (gridlines >= 0) {
-		_gridlines = gridlines;
-	} else if (_gridlines > 0) {
-		_gridlines = 0;
-	} else {
-		World *world = World::get_instance();
-		if (!world)
-			return;
-
-		CurrentMap *map = world->getCurrentMap();
-		if (!map)
-			return;
-
-		_gridlines = map->getChunkSize();
 	}
 }
 

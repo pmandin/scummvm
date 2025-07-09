@@ -235,8 +235,7 @@ void Room303::init() {
 
 			_fengLi = TriggerMachineByHash(1, 1, 0, 0, 0, 0, 480, 256, 86, 0xc00, true,
 				triggerMachineByHashCallback, "fl");
-			sendWSMessage_10000(1, _fengLi, _feng4, 1, 16, 400,
-				_feng4, 1, 6, 0);
+			sendWSMessage_10000(1, _fengLi, _feng4, 1, 1, 400, _feng4, 1, 6, 0);
 
 			_fengMode = _fengShould = 1;
 			setShadow5(true);
@@ -254,6 +253,7 @@ void Room303::init() {
 		} else {
 			_ripBends = series_load("RIP BENDS TO SEE CREATURE");
 			setGlobals1(_ripBends, 26, 1, 1, 1);
+			sendWSMessage_110000(60);
 		}
 		break;
 
@@ -532,7 +532,7 @@ void Room303::daemon() {
 
 	case 124:
 		_G(globals)[GLB_TEMP_1] = 0;
-		_G(globals)[GLB_TEMP_2] = (int)-1 << 16;
+		_G(globals)[GLB_TEMP_2] = (int)-1 & ~0xFFFF;
 		sendWSMessage(0x200000, 0, _priestTalk, 0, nullptr, 1);
 		break;
 
@@ -1594,7 +1594,7 @@ void Room303::parser() {
 			}
 		}
 	} else if (lookFlag && player_said("cobra case")) {
-		digi_play(player_been_here(201) ? "203r38" : "303r32", 1);
+		digi_play(player_been_here(201) ? "303r38" : "303r32", 1);
 	} else if ((lookFlag || player_said("peer into")) &&
 			player_said("copper tank viewer")) {
 		if (player_been_here(301)) {
@@ -1644,7 +1644,7 @@ void Room303::parser() {
 		_ripGesture = series_load("RIP HNDS HIPS GEST TALK");
 		player_update_info();
 		ws_hide_walker();
-
+		
 		_ripsh2 = series_show("ripsh2", 0xf00, 128, -1, -1, 0,
 			_G(player_info).scale, _G(player_info).x, _G(player_info).y);
 		_ripley = TriggerMachineByHash(1, 1, 0, 0, 0, 0,

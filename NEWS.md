@@ -20,6 +20,10 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Dog-n-cat: In the Footsteps of Unprecedented Beasts.
    - Added support for Dog-n-cat: Island of Dr Ratiarty.
    - Added support for Out of this World (Another World).
+   - Added support for SLUDGE-based games, such as Out of Order,
+     The Secret of Tremendous Corporation, Robin's Rescue and
+     others, 12 titles so far.
+   - Added support for Adibou 2: Nature & Sciences.
 
  Drascula:
    - Fixed displaying accented characters.
@@ -27,6 +31,9 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Freescape:
    - Added roll rotation to Driller and Dark Side.
+
+ Lure:
+   - Added Russian version support to lure.dat.
 
  Nuvie:
    - Added "Transfer a Character" feature to main menu.
@@ -48,6 +55,9 @@ For a more comprehensive changelog of the latest experimental code, see:
  V-Cruise:
    - Fixed text rendering in Chinese and Japanese localizations.
    - Added support for Japanese DVD version of Schizm: Mysterious Journey.
+
+ Wintermute:
+   - 3D renderer enabled by default for 2D games.
 
 #### 2.9.1 "Slappin da BASS" (2025-05-25)
 

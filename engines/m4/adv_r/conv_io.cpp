@@ -99,7 +99,7 @@ void conv_resume() {
 	conv_resume(conv_get_handle());
 }
 
-int conv_is_event_ready(void) {
+int conv_is_event_ready() {
 	return _GC(event_ready);
 }
 
@@ -108,7 +108,7 @@ void conv_set_event(int e) {
 	_GC(event_ready) = 1;
 }
 
-int conv_get_event(void) {
+int conv_get_event() {
 	_GC(event_ready) = 0;
 	return _GC(event);
 }
@@ -132,23 +132,22 @@ int32 conv_current_entry() {
 }
 
 void conv_reset(const char *filename) {
-	Conv *c = nullptr;
 	_GC(restore_conv) = 0;
 
-	c = conv_load(filename, 1, 1, -1, false);
+	Conv *c = conv_load(filename, 1, 1, -1, false);
 	conv_unload(c);
 }
 
 
-void conv_reset_all(void) {
+void conv_reset_all() {
 	_G(conversations).conv_reset_all();
 }
 
-const char *conv_sound_to_play(void) {
+const char *conv_sound_to_play() {
 	return _G(cdd).mesg_snd_file;
 }
 
-int32 conv_whos_talking(void) {
+int32 conv_whos_talking() {
 	return _G(cdd).player_non_player;
 }
 
@@ -169,54 +168,41 @@ int conv_toggle_flags(entry_chunk *entry) {
 }
 
 int32 conv_get_decl_val(Conv *c, decl_chunk *decl) {
-	switch (decl->flags) {
-	case DECL_POINTER:
+	if (decl->flags == DECL_POINTER)
 		return *c->_pointers[decl->addrIndex];
 
-	default:
-		return decl->val;
-	}
+	return decl->val;
 }
 
 void conv_set_decl_val(Conv *c, decl_chunk *decl, int32 val) {
-	switch (decl->flags) {
-	case DECL_POINTER:
+	if (decl->flags == DECL_POINTER) {
 		decl->val = val;
 		*c->_pointers[decl->addrIndex] = val;
-		break;
-
-	default:
+	} else {
 		decl->val = val;
-		break;
 	}
 }
 
 void conv_export_value(Conv *c, int32 val, int index) {
-	int32 ent = 0, tag = 0, next;
-	int32 ent_old = 0;
+	int32 tag = 0, next;
 	int i = 0;
 
 	if (!c)
 		return;
 
-	ent_old = c->myCNode;
-	ent = 0;
+	const int32 ent_old = c->myCNode;
+	int32 ent = 0;
 	c->myCNode = 0;
 
 	while (ent < c->chunkSize) {
 		conv_ops_get_entry(ent, &next, &tag, c);
 
-		switch (tag) {
-		case DECL_CHUNK:
+		if (tag == DECL_CHUNK) {
 			if (i == index) {
 				decl_chunk *decl = get_decl(c, ent);
 				conv_set_decl_val(c, decl, val);
 			}
 			i++;
-			break;
-
-		default:
-			break;
 		}
 		ent = next;
 	}
@@ -228,15 +214,14 @@ void conv_export_value_curr(int32 val, int index) {
 }
 
 void conv_export_pointer(Conv *c, int32 *val, int index) {
-	int32 ent = 0, tag = 0, next;
-	int32 ent_old = 0;
+	int32 tag = 0, next;
 	int	i = 0;
 
 	if (!c)
 		return;
 
-	ent_old = c->myCNode;
-	ent = 0;
+	const int32 ent_old = c->myCNode;
+	int32 ent = 0;
 	c->myCNode = 0;
 
 	while (ent < c->chunkSize) {
@@ -313,22 +298,16 @@ handled:
 
 void find_and_set_conv_name(Conv *c) {
 	int32 ent = 0, tag = 0, next = 0;
-	conv_chunk *conv;
 
 	c->myCNode = 0;
 
 	while (ent < c->chunkSize) {
 		conv_ops_get_entry(ent, &next, &tag, c);
 
-		switch (tag) {
-		case CONV_CHUNK:
-			conv = get_conv(c, ent);
+		if (tag == CONV_CHUNK) {
+			conv_chunk *conv = get_conv(c, ent);
 			assert(conv);
 			Common::strcpy_s(_GC(conv_name), get_string(c, c->myCNode + ent + sizeof(conv_chunk)));
-			break;
-
-		default:
-			break;
 		}
 		ent = next;
 	}
@@ -408,16 +387,14 @@ static void conv_save_state(Conv *c) {
 
 		if (offset != -1) {
 			overwrite_file = true;
-			int32 prev_size = READ_LE_UINT32(&conv_save_buff[offset]);
-			prev_size += NAME_SIZE + sizeof(int32);
+			/* int32 prev_size = */ READ_LE_UINT32(&conv_save_buff[offset]);
+			/* prev_size += NAME_SIZE + sizeof(int32);*/
 			offset += sizeof(int32);	// Skip header. (name + size)
 		} else {
 			// Append
 			offset = 0;
 
-			if (conv_save_buff)
-				mem_free(conv_save_buff);
-
+			mem_free(conv_save_buff);
 			conv_save_buff = (char *)mem_alloc(amt_to_write + NAME_SIZE + sizeof(int32), "conv save buff");
 			if (!conv_save_buff)
 				error_show(FL, 'OOM!');
@@ -465,8 +442,8 @@ static void conv_save_state(Conv *c) {
 	ent = 0;
 	c->myCNode = 0;
 
-	int32 val = 0;
-	entry_chunk *entry = nullptr;
+	int32 val;
+	entry_chunk *entry;
 
 	while (ent < c->chunkSize) {
 		conv_ops_get_entry(ent, &next, &tag, c);
@@ -479,7 +456,6 @@ static void conv_save_state(Conv *c) {
 
 			WRITE_LE_UINT32(&conv_save_buff[offset], val);
 			offset += sizeof(int32);
-
 			size += sizeof(int32);
 			break;
 
@@ -515,11 +491,11 @@ static void conv_save_state(Conv *c) {
 	// Copy the flags
 	if (flag_index != 0) {
 		WRITE_LE_UINT32(&conv_save_buff[offset], e_flags);
-		offset += sizeof(int32);
+		// offset += sizeof(int32);
 		size += sizeof(int32);
 	}
 
-	if ((amt_to_write != size))
+	if (amt_to_write != size)
 		error_show(FL, 'CNVS', "save_state: error! size written != size (%d %d)", amt_to_write, size);
 
 	// Finally, write out the conversation data
@@ -542,18 +518,15 @@ static void conv_save_state(Conv *c) {
 static Conv *conv_restore_state(Conv *c) {
 	int32 tag, next;
 
-	entry_chunk *entry;
-	decl_chunk *decl;
-
 	short flag_index = 0;
 	int32 val;
 	int32 e_flags = 0;
 	int32 myCNode;
-	
+
 	char fname[13];
 	int file_size;
 
-	int32 ent = 0;
+	int32 ent;
 	c->myCNode = 0;
 
 	find_and_set_conv_name(c);
@@ -598,17 +571,12 @@ static Conv *conv_restore_state(Conv *c) {
 	while (ent < c->chunkSize) {
 		conv_ops_get_entry(ent, &next, &tag, c);
 
-		switch (tag) {
-		case DECL_CHUNK:
+		if (tag == DECL_CHUNK) {
 			val = READ_LE_UINT32(&conv_save_buff[offset]);
 			offset += sizeof(int32);
-			decl = get_decl(c, ent);
+			decl_chunk *decl = get_decl(c, ent);
 
 			conv_set_decl_val(c, decl, val);
-			break;
-
-		default:
-			break;
 		}
 
 		ent = next;
@@ -620,13 +588,8 @@ static Conv *conv_restore_state(Conv *c) {
 	while (ent < c->chunkSize) {
 		conv_ops_get_entry(ent, &next, &tag, c);
 
-		switch (tag) {
-		case LNODE_CHUNK:
-		case NODE_CHUNK:
-			break;
-
-		case ENTRY_CHUNK:
-			entry = get_entry(c, ent);
+		if (tag == ENTRY_CHUNK) {
+			entry_chunk *entry = get_entry(c, ent);
 
 			if (flag_index == 32) {
 				flag_index = 0;
@@ -642,10 +605,6 @@ static Conv *conv_restore_state(Conv *c) {
 			entry->status = val;
 
 			flag_index += 4;
-			break;
-
-		default:
-			break;
 		}
 
 		ent = next;
@@ -716,7 +675,7 @@ static void conv_set_disp_default(void) {
 }
 
 Conv *conv_load(const char *filename, int x1, int y1, int32 myTrigger, bool want_box) {
-	char fullpathname[MAX_FILENAME_SIZE];
+	char fullPathname[MAX_FILENAME_SIZE];
 
 	term_message("conv_load");
 
@@ -741,14 +700,14 @@ Conv *conv_load(const char *filename, int x1, int y1, int32 myTrigger, bool want
 	// if not in rooms.db, use actual filename
 	char *str = env_find(filename);
 	if (str)
-		Common::strcpy_s(fullpathname, str);
+		Common::strcpy_s(fullPathname, str);
 	else
-		Common::sprintf_s(fullpathname, "%s.chk", filename);
+		Common::sprintf_s(fullPathname, "%s.chk", filename);
 
-	SysFile fp(fullpathname);
+	SysFile fp(fullPathname);
 	if (!fp.exists()) {
 		// Force the file open
-		error_show(FL, 'CNVL', "couldn't conv_load %s", fullpathname);
+		error_show(FL, 'CNVL', "couldn't conv_load %s", fullPathname);
 	}
 
 	const int32 cSize = fp.size();
@@ -847,8 +806,7 @@ void conv_unload() {
 // only called if node is visible.
 // gets the TEXT chunks inside a node.
 int conv_get_text(int32 offset, int32 size, Conv *c) {
-	int32 i = offset, tag, next, text_len, text_width;
-	text_chunk *text;
+	int32 i = offset, tag, next;
 	int	result = 0;
 
 	size -= sizeof(entry_chunk);
@@ -856,25 +814,21 @@ int conv_get_text(int32 offset, int32 size, Conv *c) {
 	while (i < offset + size) {
 		conv_ops_get_entry(i, &next, &tag, c);
 
-		switch (tag) {
-		case TEXT_CHUNK:
+		if (tag == TEXT_CHUNK) {
 			result = 1;
-			text = get_text(c, i);
+			text_chunk *text = get_text(c, i);
 			assert(text);
-			text_len = conv_ops_text_strlen(get_string(c, c->myCNode + i + sizeof(text_chunk)));
+			const int32 text_len = conv_ops_text_strlen(get_string(c, c->myCNode + i + sizeof(text_chunk)));
 			_G(cdd).snd_files[_G(cdd).num_txt_ents] = get_string(c, c->myCNode + i + sizeof(text_chunk));
 			_G(cdd).text[_G(cdd).num_txt_ents] = get_string(c, c->myCNode + i + sizeof(text_chunk) + text_len);
 
-			text_width = gr_font_string_width(_G(cdd).text[_G(cdd).num_txt_ents], 1);
+			const int32 text_width = gr_font_string_width(_G(cdd).text[_G(cdd).num_txt_ents], 1);
 			if (text_width > _GC(width))
 				_GC(width) = text_width;
 
 			_G(cdd).num_txt_ents++;
-			break;
-
-		default:
-			break;
 		}
+
 		i = next;
 	}
 	return result;
