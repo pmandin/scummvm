@@ -634,6 +634,21 @@ bool ScScript::executeInstruction() {
 		}
 
 		if (DID_FAIL(res)) {
+
+			// W/A: The Sprite class instance is released earlier,
+			// but a native variable still holds a reference to it,
+			// leading to call on a non-existent (freed) instance.
+			if (BaseEngine::instance().getGameId() == "alphapolaris" &&
+			        var->isNative() &&
+					strcmp(methodName, "Reset") == 0 &&
+			        strcmp(_filename, "scenes\\Out_door\\scr\\barrel.script") == 0) {
+
+				_stack->correctParams(0);
+				_stack->pushNULL();
+				delete[] methodName;
+				break;
+			}
+
 			if (var->isNative() && var->getNative()->canHandleMethod(methodName)) {
 				if (!_unbreakable) {
 					_waitScript = var->getNative()->invokeMethodThread(methodName);
@@ -1500,7 +1515,7 @@ bool ScScript::copyParameters(ScStack *stack) {
 
 //////////////////////////////////////////////////////////////////////////
 bool ScScript::finishThreads() {
-	for (uint32 i = 0; i < _engine->_scripts.size(); i++) {
+	for (uint32 i = 0; i < _engine->_scripts.getSize(); i++) {
 		ScScript *scr = _engine->_scripts[i];
 		if (scr->_thread && scr->_state != SCRIPT_FINISHED && scr->_owner == _owner && scumm_stricmp(scr->_filename, _filename) == 0) {
 			scr->finish(true);

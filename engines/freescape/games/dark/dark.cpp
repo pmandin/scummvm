@@ -818,6 +818,33 @@ void DarkEngine::drawBinaryClock(Graphics::Surface *surface, int xPosition, int 
 	}
 }
 
+void DarkEngine::drawVerticalCompass(Graphics::Surface *surface, int x, int y, float angle, uint32 color) {
+	int pitch = int(angle / 1.65);
+	Common::Array<int> xpoints;
+	Common::Array<int> ypoints;
+
+	xpoints.push_back(x);
+	xpoints.push_back(x + 3);
+	xpoints.push_back(x + 3);
+	xpoints.push_back(x);
+
+	ypoints.push_back(y - pitch);
+	ypoints.push_back(y + 3 - pitch);
+	ypoints.push_back(y - 4 - pitch);
+	ypoints.push_back(y - pitch);
+
+	surface->drawPolygonScan(xpoints.data(), ypoints.data(), 4, Common::Rect(0, 0, surface->w, surface->h), color);
+}
+
+void DarkEngine::drawHorizontalCompass(int x, int y, float angle, uint32 front, uint32 back, Graphics::Surface *surface) {
+	// TODO implement different compass styles for C64, Amiga and Atari ST
+	uint32 transparent = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0x00, 0x00, 0x00);
+	int delta = (angle - 180) / 5.5;
+	drawStringInSurface("-N-E-S-W-N-E-S", delta + x, y, front, back, surface);
+	surface->fillRect(Common::Rect(x - 20, y - 5, x + 40, y + 10), transparent);
+	surface->fillRect(Common::Rect(x + 80, y - 5, 320, y + 10), transparent);
+}
+
 void DarkEngine::drawIndicator(Graphics::Surface *surface, int xPosition, int yPosition) {
 	if (_indicators.size() == 0)
 		return;

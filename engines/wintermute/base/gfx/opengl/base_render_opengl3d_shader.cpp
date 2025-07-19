@@ -203,6 +203,8 @@ bool BaseRenderOpenGL3DShader::initRenderer(int width, int height, bool windowed
 
 	_active = true;
 
+	_gameRef->_supportsRealTimeShadows = true;
+
 	return true;
 }
 
@@ -250,9 +252,6 @@ bool BaseRenderOpenGL3DShader::setup2D(bool force) {
 	if (_state != RSTATE_2D || force) {
 		_state = RSTATE_2D;
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
 		glDisable(GL_DEPTH_TEST);
 
 		glEnable(GL_BLEND);
@@ -271,9 +270,6 @@ bool BaseRenderOpenGL3DShader::setup2D(bool force) {
 bool BaseRenderOpenGL3DShader::setup3D(Camera3D *camera, bool force) {
 	if (_state != RSTATE_3D || force) {
 		_state = RSTATE_3D;
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 		glEnable(GL_DEPTH_TEST);
 		// WME uses 8 as a reference value and Direct3D expects it to be in the range [0, 255]
@@ -746,7 +742,6 @@ BaseImage *BaseRenderOpenGL3DShader::takeScreenshot(int newWidth, int newHeight)
 }
 
 bool BaseRenderOpenGL3DShader::enableShadows() {
-	_gameRef->_supportsRealTimeShadows = true;
 	return true;
 }
 
@@ -911,21 +906,21 @@ void BaseRenderOpenGL3DShader::renderSceneGeometry(const BaseArray<AdWalkplane *
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 
-	for (uint i = 0; i < planes.size(); i++) {
+	for (uint i = 0; i < planes.getSize(); i++) {
 		if (planes[i]->_active) {
 			planes[i]->_mesh->render(true);
 		}
 	}
 
 	// render blocks
-	for (uint i = 0; i < blocks.size(); i++) {
+	for (uint i = 0; i < blocks.getSize(); i++) {
 		if (blocks[i]->_active) {
 			blocks[i]->_mesh->render(true);
 		}
 	}
 
 	// render generic objects
-	for (uint i = 0; i < generics.size(); i++) {
+	for (uint i = 0; i < generics.getSize(); i++) {
 		if (generics[i]->_active) {
 			generics[i]->_mesh->render(true);
 		}
@@ -946,8 +941,8 @@ void BaseRenderOpenGL3DShader::renderSceneGeometry(const BaseArray<AdWalkplane *
 
 		setup2D();
 
-		for (uint i = 0; i < geom->_waypointGroups.size(); i++) {
-			for (uint j = 0; j < geom->_waypointGroups[i]->_points.size(); j++) {
+		for (uint i = 0; i < geom->_waypointGroups.getSize(); i++) {
+			for (uint j = 0; j < geom->_waypointGroups[i]->_points.getSize(); j++) {
 				DXVec3Project(&vec2d, geom->_waypointGroups[i]->_points[j], &vport, &projMat, &viewMat, &worldMat);
 				geom->_wptMarker->display(vec2d._x + scene->getOffsetLeft() - _drawOffsetX, vec2d._y + scene->getOffsetTop() - _drawOffsetY);
 			}
@@ -979,21 +974,21 @@ void BaseRenderOpenGL3DShader::renderShadowGeometry(const BaseArray<AdWalkplane 
 	glFrontFace(GL_CW); // WME DX have CCW
 
 	// render blocks
-	for (uint i = 0; i < blocks.size(); i++) {
+	for (uint i = 0; i < blocks.getSize(); i++) {
 		if (blocks[i]->_active && blocks[i]->_receiveShadows) {
 			blocks[i]->_mesh->render();
 		}
 	}
 
 	// render walk planes
-	for (uint i = 0; i < planes.size(); i++) {
+	for (uint i = 0; i < planes.getSize(); i++) {
 		if (planes[i]->_active && planes[i]->_receiveShadows) {
 			planes[i]->_mesh->render();
 		}
 	}
 
 	// render generic objects
-	for (uint i = 0; i < generics.size(); i++) {
+	for (uint i = 0; i < generics.getSize(); i++) {
 		if (generics[i]->_active && generics[i]->_receiveShadows) {
 			generics[i]->_mesh->render();
 		}

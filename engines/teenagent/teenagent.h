@@ -62,6 +62,9 @@ class Resources;
 class Inventory;
 class Pack;
 
+#define TEENAGENT_DAT_VERSION 5
+#define TEENAGENT_SAVEGAME_VERSION 1
+
 // Engine Debug Flags
 enum {
 	kDebugActor = 1,
@@ -75,6 +78,15 @@ enum {
 	kDebugPack,
 	kDebugScene,
 	kDebugSurface,
+};
+
+enum TEENAGENTActions {
+	kActionNone,
+	kActionSkipIntro,
+	kActionSkipDialog,
+	kActionCloseInventory,
+	kActionToggleInventory,
+	kActionFastMode,
 };
 
 const uint16 kScreenWidth = 320;
@@ -133,10 +145,11 @@ public:
 	byte getFlag(uint16 addr);
 	void reloadLan();
 	void rejectMessage();
+	void bookColorMessage();
 
 	void playMusic(byte id); //schedules play
 	void playSound(byte id, byte skipFrames);
-	void playSoundNow(Pack *pack, byte id);
+	void playSoundNow(Pack *pack, uint32 id);
 	void enableObject(byte id, byte sceneId = 0);
 	void disableObject(byte id, byte sceneId = 0);
 	void hideActor();
@@ -213,6 +226,8 @@ private:
 	void fnGivingFlowerToAnne();
 	void fnGiveAnotherFlowerToAnne();
 };
+
+extern TeenAgentEngine *g_engine;
 
 } // End of namespace TeenAgent
 

@@ -40,30 +40,23 @@ namespace Wintermute {
 struct ShadowVertexShader {
 	float x;
 	float y;
+	float z;
 };
 
 //////////////////////////////////////////////////////////////////////////
 ShadowVolumeOpenGLShader::ShadowVolumeOpenGLShader(BaseGame *inGame, OpenGL::Shader *volumeShader, OpenGL::Shader *maskShader)
 	: ShadowVolume(inGame), _volumeShader(volumeShader), _maskShader(maskShader) {
-	ShadowVertexShader shadowMask[4];
 	_shadowVolumeVertexBuffer = 0;
-	DXViewport viewport = _gameRef->_renderer3D->getViewPort();
 
-	shadowMask[0].x = viewport._x;
-	shadowMask[0].y = viewport._height;
-
-	shadowMask[1].x = viewport._x;
-	shadowMask[1].y = viewport._y;
-
-	shadowMask[2].x = viewport._width;
-	shadowMask[2].y = viewport._height;
-
-	shadowMask[3].x = viewport._width;
-	shadowMask[3].y = viewport._y;
+	glGenBuffers(1, &_shadowVolumeVertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, _shadowVolumeVertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, 12 * _vertices.getSize(), _vertices.getData(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &_shadowMaskVertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, _shadowMaskVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(ShadowVertexShader), shadowMask, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(ShadowVertexShader), nullptr, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -83,7 +76,7 @@ bool ShadowVolumeOpenGLShader::render() {
 	colorValue.w() = 1.0f;
 	_volumeShader->setUniform("color", colorValue);
 
-	glDrawArrays(GL_TRIANGLES, 0, _vertices.size());
+	glDrawArrays(GL_TRIANGLES, 0, _vertices.getSize());
 
 	return true;
 }
@@ -97,7 +90,7 @@ bool ShadowVolumeOpenGLShader::renderToStencilBuffer() {
 	glDeleteBuffers(1, &_shadowVolumeVertexBuffer);
 	glGenBuffers(1, &_shadowVolumeVertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, _shadowVolumeVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, 12 * _vertices.size(), _vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 12 * _vertices.getSize(), _vertices.getData(), GL_STATIC_DRAW);
 
 	_volumeShader->enableVertexAttribute("position", _shadowVolumeVertexBuffer, 3, GL_FLOAT, false, 12, 0);
 	_volumeShader->use(true);
@@ -160,7 +153,7 @@ bool ShadowVolumeOpenGLShader::renderToScene() {
 	renderer->_shadowMaskShader->use();
 	renderer->setProjection2D(renderer->_shadowMaskShader);
 
-	_maskShader->enableVertexAttribute("position", _shadowMaskVertexBuffer, 2, GL_FLOAT, false, 8, 0);
+	_maskShader->enableVertexAttribute("position", _shadowMaskVertexBuffer, 3, GL_FLOAT, false, 12, 0);
 	_maskShader->use(true);
 
 	glFrontFace(GL_CW);
@@ -182,21 +175,28 @@ bool ShadowVolumeOpenGLShader::renderToScene() {
 
 //////////////////////////////////////////////////////////////////////////
 bool ShadowVolumeOpenGLShader::initMask() {
-	DXViewport viewport = _gameRef->_renderer3D->getViewPort();
-
+	auto *rend = _gameRef->_renderer3D;
 	ShadowVertexShader shadowMask[4];
 
-	shadowMask[0].x = viewport._x;
-	shadowMask[0].y = viewport._height;
+	// bottom left
+	shadowMask[0].x = 0.0f;
+	shadowMask[0].y = rend->getHeight();
+	shadowMask[0].z = 1.0f;
 
-	shadowMask[1].x = viewport._x;
-	shadowMask[1].y = viewport._y;
+	// top left
+	shadowMask[1].x = 0.0f;
+	shadowMask[1].y = 0.0f;
+	shadowMask[1].z = 1.0f;
 
-	shadowMask[2].x = viewport._width;
-	shadowMask[2].y = viewport._height;
+	// bottom right
+	shadowMask[2].x = rend->getWidth();
+	shadowMask[2].y = rend->getHeight();
+	shadowMask[2].z = 1.0f;
 
-	shadowMask[3].x = viewport._width;
-	shadowMask[3].y = viewport._y;
+	// top right
+	shadowMask[3].x = rend->getWidth();
+	shadowMask[3].y = 0.0f;
+	shadowMask[3].z = 1.0f;
 
 	glBindBuffer(GL_ARRAY_BUFFER, _shadowMaskVertexBuffer);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(ShadowVertexShader), shadowMask);

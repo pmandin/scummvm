@@ -19,6 +19,8 @@
  *
  */
 
+#include "engines/advancedDetector.h"
+
 #include "teenagent/resources.h"
 #include "teenagent/teenagent.h"
 #include "common/debug.h"
@@ -62,15 +64,15 @@ quick note on varia resources:
 #define DSEG_SIZE 59280 // 0xe790
 #define ESEG_SIZE 35810 // 0x8be2
 
-void Resources::precomputeDialogOffsets() {
-	dialogOffsets.push_back(0);
-	int n = 0;
+void Resources::precomputeResourceOffsets(Segment &seg, Common::Array<uint16> &offsets, uint numTerminators) {
+	offsets.push_back(0);
+	uint n = 0;
 	uint8 current, last = 0xff;
-	for (uint i = 0; i < eseg.size(); i++) {
-		current = eseg.get_byte(i);
+	for (uint i = 0; i < seg.size(); i++) {
+		current = seg.get_byte(i);
 
-		if (n == 4) {
-			dialogOffsets.push_back(i);
+		if (n == numTerminators) {
+			offsets.push_back(i);
 			n = 0;
 		}
 
@@ -82,10 +84,57 @@ void Resources::precomputeDialogOffsets() {
 
 		last = current;
 	}
+}
+
+void Resources::precomputeDialogOffsets() {
+	precomputeResourceOffsets(eseg, dialogOffsets, 4);
 
 	debug(1, "Resources::precomputeDialogOffsets() - Found %d dialogs", dialogOffsets.size());
 	for (uint i = 0; i < dialogOffsets.size(); i++)
 		debug(1, "\tDialog #%d: Offset 0x%04x", i, dialogOffsets[i]);
+}
+
+void Resources::precomputeCreditsOffsets() {
+	precomputeResourceOffsets(creditsSeg, creditsOffsets);
+
+	debug(1, "Resources::precomputeCreditsOffsets() - Found %d credits", creditsOffsets.size());
+	for (uint i = 0; i < creditsOffsets.size(); i++)
+		debug(1, "\tCredit #%d: Offset 0x%04x", i, creditsOffsets[i]);
+}
+
+void Resources::precomputeItemOffsets() {
+	precomputeResourceOffsets(itemsSeg, itemOffsets);
+
+	debug(1, "Resources::precomputeItemOffsets() - Found %d items", itemOffsets.size());
+	for (uint i = 0; i < itemOffsets.size(); i++)
+		debug(1, "\tItem #%d: Offset 0x%04x", i, itemOffsets[i]);
+}
+
+void Resources::precomputeMessageOffsets() {
+	precomputeResourceOffsets(messagesSeg, messageOffsets);
+}
+
+void Resources::precomputeCombinationOffsets() {
+	precomputeResourceOffsets(combinationsSeg, combinationOffsets);
+
+	debug(1, "Resources::precomputeCombinationOffsets() - Found %d combination items", combinationOffsets.size());
+	for (uint i = 0; i < combinationOffsets.size(); i++)
+		debug(1, "\tCombination #%d: Offset 0x%04x", i, combinationOffsets[i]);
+}
+
+void Resources::readDialogStacks(byte *src) {
+	uint16 base = dsAddr_dialogStackPleadingToMansionGuard;
+
+	byte dialogStackWritten = 0;
+	uint i = 0;
+
+	while (dialogStackWritten < kNumDialogStacks) {
+		uint16 word = READ_LE_UINT16(src + i * 2);
+		dseg.set_word(base + i * 2, word);
+		if (word == 0xFFFF)
+			dialogStackWritten++;
+		i++;
+	}
 }
 
 bool Resources::loadArchives(const ADGameDescription *gd) {
@@ -106,12 +155,76 @@ bool Resources::loadArchives(const ADGameDescription *gd) {
 	// compatibility.
 	Common::SeekableReadStream *dat = Common::wrapCompressedReadStream(dat_file);
 
+	byte tempBuffer[256];
+	dat->read(tempBuffer, 9);
+	tempBuffer[9] = '\0';
+
+	if (strcmp((char *)tempBuffer, "TEENAGENT") != 0) {
+		const char *msg = _s("The '%s' engine data file is corrupt.");
+		Common::U32String errorMessage = Common::U32String::format(_(msg), filename.c_str());
+		GUIErrorMessage(errorMessage);
+		warning(msg, filename.c_str());
+		return false;
+	}
+
+	byte version = dat->readByte();
+	if (version != TEENAGENT_DAT_VERSION) {
+		const char *msg = _s("Incorrect version of the '%s' engine data file found. Expected %d but got %d.");
+		Common::U32String errorMessage = Common::U32String::format(_(msg), filename.c_str(), TEENAGENT_DAT_VERSION, version);
+		GUIErrorMessage(errorMessage);
+		warning(msg, filename.c_str());
+		return false;
+	}
+
 	dat->skip(CSEG_SIZE);
 	dseg.read(dat, DSEG_SIZE);
-	eseg.read(dat, ESEG_SIZE);
+
+	// Locate the correct language block
+	bool found = false;
+
+	while (!found) {
+		dat->read(tempBuffer, 5);
+		if (tempBuffer[0] == 0xff) {
+			error("Could not locate correct language block");
+		}
+
+		if (gd->language == tempBuffer[0]) {
+			found = true;
+			uint32 dataOffset = READ_LE_UINT32(&tempBuffer[1]);
+			dat->seek(dataOffset);
+		}
+	}
+
+	uint resourceSize = dat->readUint32LE();
+	eseg.read(dat, resourceSize);
+
+	// Dialog stack data
+	resourceSize = dat->readUint32LE();
+	dat->read(tempBuffer, resourceSize);
+	readDialogStacks((byte *)tempBuffer);
+
+	resourceSize = dat->readUint32LE();
+	itemsSeg.read(dat, resourceSize);
+
+	resourceSize = dat->readUint32LE();
+	creditsSeg.read(dat, resourceSize);
+
+	resourceSize = dat->readUint32LE();
+	sceneObjectsSeg.read(dat, resourceSize);
+
+	resourceSize = dat->readUint32LE();
+	messagesSeg.read(dat, resourceSize);
+
+	resourceSize = dat->readUint32LE();
+	combinationsSeg.read(dat, resourceSize);
+
 	delete dat;
 
 	precomputeDialogOffsets();
+	precomputeItemOffsets();
+	precomputeCreditsOffsets();
+	precomputeMessageOffsets();
+	precomputeCombinationOffsets();
 
 	FilePack varia;
 	varia.open("varia.res");
