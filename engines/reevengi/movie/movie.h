@@ -34,6 +34,7 @@ class SaveGame;
 class MoviePlayer {
 protected:
 	Common::Path _fname;
+	Common::SeekableReadStream *_stream;
 	Common::Mutex _frameMutex;
 	Video::VideoDecoder *_videoDecoder;     //< Initialize this to your needed subclass of VideoDecoder in the constructor
 	const Graphics::Surface *_internalSurface;
@@ -66,6 +67,7 @@ public:
 	 * @see stop
 	 */
 	virtual bool play(const Common::String &filename, bool looping, bool start = true, bool showSubtitles = false);
+	virtual bool play(Common::SeekableReadStream *stream, bool looping, bool start = true, bool showSubtitles = false);
 	virtual void stop();
 	virtual void pause(bool p);
 	virtual bool isPlaying() { return !_videoFinished; }
@@ -144,6 +146,16 @@ protected:
 	 * @param filename      The filename to be handled.
 	 */
 	virtual bool loadFile(const Common::Path &filename);
+
+	/**
+	 * Loads a stream for playback, any additional setup is not done here, but in
+	 * the play-function. This function is supposed to handle any specifics w.r.t.
+	 * files vs containers (i.e. load from LAB vs load from file).
+	 *
+	 * @see play
+	 * @param stream      The stream to be handled.
+	 */
+	virtual bool loadStream(Common::SeekableReadStream *stream);
 
 	/**
 	 * Saves subclass related state of the video to a savegame

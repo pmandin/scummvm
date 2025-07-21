@@ -47,6 +47,11 @@ bool MpegPlayer::loadFile(const Common::Path &filename) {
 	if (!stream)
 		return false;
 
+	return loadStream(stream);
+}
+
+bool MpegPlayer::loadStream(Common::SeekableReadStream *stream) {
+
 	_videoDecoder->setOutputPixelFormat(Graphics::PixelFormat(4, 8, 8, 8, 0, 8, 16, 24, 0));
 	_videoDecoder->loadStream(stream);
 	_videoDecoder->start();

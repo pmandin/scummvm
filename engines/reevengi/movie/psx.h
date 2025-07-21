@@ -33,6 +33,7 @@ private:
 	bool _emul_cd;
 
 	bool loadFile(const Common::Path &filename) override;
+	bool loadStream(Common::SeekableReadStream *stream) override;
 	//bool _demo;
 
 public:
