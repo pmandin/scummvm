@@ -385,21 +385,6 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 	ReevengiEngine::loadMovie(numMovie);
 
 	switch(_flags.platform) {
-		case Common::kPlatformWindows:
-			{
-				if (numMovie >= sizeof(re1pc_movies)) {
-					return;
-				}
-
-				if (strcmp(re1pc_movies[numMovie], "") == 0) {
-					return;
-				}
-
-				snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
-
-				g_movie = CreateAviPlayer();
-			}
-			break;
 		case Common::kPlatformPSX:
 			{
 				if (numMovie >= sizeof(re1ps1_movies)) {
@@ -413,6 +398,21 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 				snprintf(filePath, sizeof(filePath), re1ps1_movies[numMovie]);
 
 				g_movie = CreatePsxPlayer();
+			}
+			break;
+		case Common::kPlatformWindows:
+			{
+				if (numMovie >= sizeof(re1pc_movies)) {
+					return;
+				}
+
+				if (strcmp(re1pc_movies[numMovie], "") == 0) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
+
+				g_movie = CreateAviPlayer();
 			}
 			break;
 		case Common::kPlatformSaturn:

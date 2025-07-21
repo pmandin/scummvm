@@ -488,28 +488,34 @@ Entity *RE3Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 void RE3Engine::loadMovie(unsigned int numMovie) {
 	char filePath[64];
-	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	ReevengiEngine::loadMovie(numMovie);
 
-	if (isPsx) {
-		// PS1
-		if (numMovie >= sizeof(re3ps1_movies)) {
+	switch(_flags.platform) {
+		case Common::kPlatformPSX:
+			{
+				if (numMovie >= sizeof(re3ps1_movies)) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re3ps1_movies[numMovie]);
+
+				g_movie = CreatePsxPlayer();
+			}
+			break;
+		case Common::kPlatformWindows:
+			{
+				if (numMovie >= sizeof(re3pc_movies)) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re3pc_movies[numMovie]);
+
+				g_movie = CreateMpegPlayer();
+			}
+			break;
+		default:
 			return;
-		}
-
-		snprintf(filePath, sizeof(filePath), re3ps1_movies[numMovie]);
-
-		g_movie = CreatePsxPlayer();
-	} else {
-		// PC
-		if (numMovie >= sizeof(re3pc_movies)) {
-			return;
-		}
-
-		snprintf(filePath, sizeof(filePath), re3pc_movies[numMovie]);
-
-		g_movie = CreateMpegPlayer();
 	}
 
 	debug(3, "re3: loadMovie(%d): %s", numMovie, filePath);
