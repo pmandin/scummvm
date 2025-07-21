@@ -53,47 +53,53 @@ static const char *re1_country[NUM_COUNTRIES]={
 
 static const char *re1pc_movies[] = {
 	"horr/usa/movie/capcom.avi",
+	"horr/usa/movie/ou.avi",
+	"horr/usa/movie/pu.avi",
+	"",
+	"",
 	"horr/usa/movie/dm1.avi",
 	"horr/usa/movie/dm2.avi",
 	"horr/usa/movie/dm3.avi",
 	"horr/usa/movie/dm4.avi",
 	"horr/usa/movie/dm6.avi",
 	"horr/usa/movie/dm7.avi",
-	"horr/usa/movie/dm8.avi",
 	"horr/usa/movie/dmb.avi",
 	"horr/usa/movie/dmc.avi",
 	"horr/usa/movie/dmd.avi",
 	"horr/usa/movie/dme.avi",
+	"horr/usa/movie/dm8.avi",
 	"horr/usa/movie/dmf.avi",
 	"horr/usa/movie/ed1.avi",
 	"horr/usa/movie/ed2.avi",
 	"horr/usa/movie/ed3.avi",
+	"horr/usa/movie/eu4.avi",
+	"horr/usa/movie/eu5.avi",
 	"horr/usa/movie/ed6.avi",
 	"horr/usa/movie/ed7.avi",
 	"horr/usa/movie/ed8.avi",
-	"horr/usa/movie/eu4.avi",
-	"horr/usa/movie/eu5.avi",
-	"horr/usa/movie/ou.avi",
-	"horr/usa/movie/pu.avi",
-	"horr/usa/movie/staf_r.avi",
 	"horr/usa/movie/stfc_r.avi",
 	"horr/usa/movie/stfj_r.avi",
-	"horr/usa/movie/stfz_r.avi"
+	"horr/usa/movie/stfz_r.avi",
+	"horr/usa/movie/staf_r.avi"
 };
 
 static const char *re1ps1_movies[] = {
 	"psx/movie/capcom.str",
+	"psx/movie/oj.str",
+	"psx/movie/pj.str",
+	"",
+	"",
 	"psx/movie/dm1.str",
 	"psx/movie/dm2.str",
 	"psx/movie/dm3.str",
 	"psx/movie/dm4.str",
 	"psx/movie/dm6.str",
 	"psx/movie/dm7.str",
-	"psx/movie/dm8.str",
 	"psx/movie/dmb.str",
 	"psx/movie/dmc.str",
 	"psx/movie/dmd.str",
 	"psx/movie/dme.str",
+	"psx/movie/dm8.str",
 	"psx/movie/dmf.str",
 	"psx/movie/ed1.str",
 	"psx/movie/ed2.str",
@@ -103,10 +109,42 @@ static const char *re1ps1_movies[] = {
 	"psx/movie/ed6.str",
 	"psx/movie/ed7.str",
 	"psx/movie/ed8.str",
-	"psx/movie/oj.str",
-	"psx/movie/pj.str",
 	"psx/movie/stfc.str",
-	"psx/movie/stfj.str"
+	"psx/movie/stfj.str",
+	"",
+	""
+};
+
+static const uint32 re1sat_movieoffsets[] = {
+	0x00000000,     /* capcom.str, capcom intro */
+	0x001dd800,     /* oj.str, opening part 1 */
+	0x00532000,     /* pj.str, opening part 2 */
+	0x02c18000,     /*   opening part 3 */
+	0x02e75800,     /*   opening part 4, casting */
+	0x0380c000,     /* dm1.str, door manor dog */
+	0x0398d800,     /* dm2.str, door manor dog #2 */
+	0x03b05000,     /* dm3.str, zombie intro */
+	0x03de1800,     /* dm4.str, zombie stairs */
+	0x04121000,     /* dm6.str, licker intro */
+	0x044d2800,     /* dm7.str, shark intro */
+	0x04634000,     /* dmb.str, chris tyran intro */
+	0x04aef000,     /* dmc.str, jill tyran intro */
+	0x04faa800,     /* dmd.str, pool puzzle */
+	0x0524f000,     /* dme.str, helico lands */
+	0x0549c800,     /* dm8.str, opening foutain */
+	0x05756800,     /* dmf.str, manor explodes */
+	0x05842800,     /* ed1.str, helico, chris */
+	0x063e3800,     /* ed2.str, helico, jill */
+	0x06fd2000,     /* ed3.str, helico, chris+jill */
+	0x079e3000,     /* ed4.str, helico, chris+rebecca, manor explodes */
+	0x086bc800,     /* ed5.str, helico, jill+barry, manor explodes */
+	0x094a7000,     /* ed6.str, helico, chris+rebecca+jill, manor explodes */
+	0x0a0fb800,     /* ed7.str, helico, chris+barry+jill, manor explodes */
+	0x0ad37000,     /* ed8.str, tyran outro */
+	0x0af6c800,     /* stfc.str, chris credits */
+	0x0c3ea800,     /* stfj.str, jill credits */
+	0x0d973000,     /* stfz,  zombie credits */
+	(uint32) -1
 };
 
 static const char *RE1_ROOM = "%s%s/stage%d/room%d%02x0.rdt";
@@ -114,6 +152,8 @@ static const char *RE1_ROOM = "%s%s/stage%d/room%d%02x0.rdt";
 static const char *RE1PCGAME_BG = "%s/stage%d/rc%d%02x%d.pak";
 
 static const char *RE1PSX_BG = "psx%s/stage%d/room%d%02x.bss";
+
+static const char *RE1SAT_MOVIE = "movie.cpk";
 
 static const char *RE1_MODEL1 = "%s%s/enemy/char1%d.emd";
 static const char *RE1_MODEL2 = "%s%s/enemy/em10%02x.emd";
