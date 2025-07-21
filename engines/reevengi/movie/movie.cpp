@@ -43,8 +43,6 @@ MoviePlayer::MoviePlayer() {
 	_showSubtitles = true;
 	_movieTime = 0;
 	_frame = -1;
-	_x = 0;
-	_y = 0;
 	_videoDecoder = nullptr;
 	_internalSurface = nullptr;
 	_externalSurface = new Graphics::Surface();
@@ -149,11 +147,9 @@ void MoviePlayer::deinit() {
 	_videoFinished = true;
 }
 
-bool MoviePlayer::play(const Common::String &filename, bool looping, int x, int y, bool start, bool showSubtitles) {
+bool MoviePlayer::play(const Common::String &filename, bool looping, bool start, bool showSubtitles) {
 	Common::StackLock lock(_frameMutex);
 	deinit();
-	_x = x;
-	_y = y;
 	_fname = filename;
 	_videoLooping = looping;
 	_showSubtitles = showSubtitles;
@@ -192,9 +188,6 @@ void MoviePlayer::saveState(SaveGame *state) {
 	state->writeBool(_videoFinished);
 	state->writeBool(_videoLooping);
 
-	state->writeLESint32(_x);
-	state->writeLESint32(_y);
-
 	save(state);
 
 	state->endSection();
@@ -211,11 +204,8 @@ void MoviePlayer::restoreState(SaveGame *state) {
 	bool videoFinished = state->readBool();
 	bool videoLooping = state->readBool();
 
-	int x = state->readLESint32();
-	int y = state->readLESint32();
-
 	if (!videoFinished && !_fname.empty()) {
-		play(_fname.c_str(), videoLooping, x, y, false);
+		play(_fname.c_str(), videoLooping, false);
 	}
 	_frame = frame;
 	_movieTime = movieTime;
@@ -245,7 +235,7 @@ public:
 		_videoFinished = true; // Rigs all movies to be completed.
 	}
 	~NullPlayer() {}
-	bool play(const Common::String &filename, bool looping, int x, int y, bool start = true, bool showSubtitles = false) override { return true; }
+	bool play(const Common::String &filename, bool looping, bool start = true, bool showSubtitles = false) override { return true; }
 	bool loadFile(const Common::Path &filename) override { return true; }
 	void stop() override {}
 	void pause(bool p) override {}
