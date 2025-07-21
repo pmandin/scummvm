@@ -22,6 +22,7 @@
 #include "common/debug.h"
 #include "common/memstream.h"
 #include "common/stream.h"
+#include "common/substream.h"
 
 #include "engines/reevengi/detection.h"
 #include "engines/reevengi/formats/pak.h"
@@ -380,28 +381,74 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 
 void RE1Engine::loadMovie(unsigned int numMovie) {
 	char filePath[64];
-	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	ReevengiEngine::loadMovie(numMovie);
 
-	if (isPsx) {
-		// PS1
-		if (numMovie >= sizeof(re1ps1_movies)) {
+	switch(_flags.platform) {
+		case Common::kPlatformWindows:
+			{
+				if (numMovie >= sizeof(re1pc_movies)) {
+					return;
+				}
+
+				if (strcmp(re1pc_movies[numMovie], "") == 0) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
+
+				g_movie = CreateAviPlayer();
+			}
+			break;
+		case Common::kPlatformPSX:
+			{
+				if (numMovie >= sizeof(re1ps1_movies)) {
+					return;
+				}
+
+				if (strcmp(re1ps1_movies[numMovie], "") == 0) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re1ps1_movies[numMovie]);
+
+				g_movie = CreatePsxPlayer();
+			}
+			break;
+		case Common::kPlatformSaturn:
+			{
+				if (numMovie >= sizeof(re1sat_movieoffsets)) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), "%s", RE1SAT_MOVIE);
+
+				Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
+				if (stream) {
+					uint32 offset, length;
+
+					offset = re1sat_movieoffsets[numMovie];
+					if (offset == (uint32) -1) {
+							return;
+					}
+
+					length = re1sat_movieoffsets[numMovie+1];
+					if (length == (uint32) -1) {
+							length = stream->size();
+					}
+					length -= offset;
+
+					Common::SeekableSubReadStream subStream(stream, offset, length);
+
+					// TODO: create a Cinepak movie player from subStream
+				}
+				delete stream;
+
+				return;
+			}
+			break;
+		default:
 			return;
-		}
-
-		snprintf(filePath, sizeof(filePath), re1ps1_movies[numMovie]);
-
-		g_movie = CreatePsxPlayer();
-	} else {
-		// PC
-		if (numMovie >= sizeof(re1pc_movies)) {
-			return;
-		}
-
-		snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
-
-		g_movie = CreateAviPlayer();
 	}
 
 	debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
