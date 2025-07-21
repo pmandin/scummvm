@@ -34,6 +34,8 @@ namespace Reevengi {
 MoviePlayer *g_movie;
 
 MoviePlayer::MoviePlayer() {
+	_fname = "";
+	_stream = nullptr;
 	_channels = -1;
 	_freq = 22050;
 	_videoFinished = false;
@@ -174,6 +176,35 @@ bool MoviePlayer::play(const Common::String &filename, bool looping, bool start,
 
 bool MoviePlayer::loadFile(const Common::Path &filename) {
 	return _videoDecoder->loadFile(filename);
+}
+
+bool MoviePlayer::play(Common::SeekableReadStream *stream, bool looping, bool start, bool showSubtitles) {
+	Common::StackLock lock(_frameMutex);
+	deinit();
+	_stream = stream;
+	_videoLooping = looping;
+	_showSubtitles = showSubtitles;
+
+	if (!loadStream(_stream))
+		return false;
+
+	//Debug::debug(Debug::Movie, "Playing video '%s'.\n", filename.c_str());
+
+	init();
+	_internalSurface = nullptr;
+
+	if (start) {
+		_videoDecoder->start();
+
+		// Get the first frame immediately
+		timerCallback(this);
+	}
+
+	return true;
+}
+
+bool MoviePlayer::loadStream(Common::SeekableReadStream *stream) {
+	return _videoDecoder->loadStream(stream);
 }
 
 #if 0

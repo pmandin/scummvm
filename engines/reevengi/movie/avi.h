@@ -31,6 +31,7 @@ public:
 	AviPlayer();
 private:
 	bool loadFile(const Common::Path &filename) override;
+	bool loadStream(Common::SeekableReadStream *stream) override;
 	//bool _demo;
 };
 
