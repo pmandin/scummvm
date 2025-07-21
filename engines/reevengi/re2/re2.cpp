@@ -577,36 +577,42 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 void RE2Engine::loadMovie(unsigned int numMovie) {
 	char filePath[64];
-	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
 	ReevengiEngine::loadMovie(numMovie);
 
-	if (isPsx) {
-		// PS1
-		if (numMovie >= sizeof(re2ps1_movies)) {
+	switch(_flags.platform) {
+		case Common::kPlatformPSX:
+			{
+				if (numMovie >= sizeof(re2ps1_movies)) {
+					return;
+				}
+
+				if (numMovie == 5) {
+					snprintf(filePath, sizeof(filePath), re2ps1_movies[numMovie], _character, _character==0 ? '9' : '8');
+				} else {
+					snprintf(filePath, sizeof(filePath), re2ps1_movies[numMovie], _character, _character==0 ? 'l' : 'c');
+				}
+
+				g_movie = CreatePsxPlayer();
+			}
+			break;
+		case Common::kPlatformWindows:
+			{
+				if (numMovie >= sizeof(re2pc_movies)) {
+					return;
+				}
+
+				if (numMovie == 5) {
+					snprintf(filePath, sizeof(filePath), re2pc_movies[numMovie], _character, _character==0 ? '9' : '8');
+				} else {
+					snprintf(filePath, sizeof(filePath), re2pc_movies[numMovie], _character, _character==0 ? 'l' : 'c');
+				}
+
+				g_movie = CreateAviPlayer();
+			}
+			break;
+		default:
 			return;
-		}
-
-		if (numMovie == 5) {
-			snprintf(filePath, sizeof(filePath), re2ps1_movies[numMovie], _character, _character==0 ? '9' : '8');
-		} else {
-			snprintf(filePath, sizeof(filePath), re2ps1_movies[numMovie], _character, _character==0 ? 'l' : 'c');
-		}
-
-		g_movie = CreatePsxPlayer();
-	} else {
-		// PC
-		if (numMovie >= sizeof(re2pc_movies)) {
-			return;
-		}
-
-		if (numMovie == 5) {
-			snprintf(filePath, sizeof(filePath), re2pc_movies[numMovie], _character, _character==0 ? '9' : '8');
-		} else {
-			snprintf(filePath, sizeof(filePath), re2pc_movies[numMovie], _character, _character==0 ? 'l' : 'c');
-		}
-
-		g_movie = CreateAviPlayer();
 	}
 
 	debug(3, "re2: loadMovie(%d): %s", numMovie, filePath);
