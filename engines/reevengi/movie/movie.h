@@ -48,7 +48,6 @@ protected:
 	bool _videoPause;
 	bool _videoLooping;
 	bool _timerStarted;
-	int _x, _y;
 
 public:
 	MoviePlayer();
@@ -66,14 +65,12 @@ public:
 	 * @see init
 	 * @see stop
 	 */
-	virtual bool play(const Common::String &filename, bool looping, int x, int y, bool start = true, bool showSubtitles = false);
+	virtual bool play(const Common::String &filename, bool looping, bool start = true, bool showSubtitles = false);
 	virtual void stop();
 	virtual void pause(bool p);
 	virtual bool isPlaying() { return !_videoFinished; }
 	virtual bool isUpdateNeeded() { return _updateNeeded; }
 	virtual Graphics::Surface *getDstSurface();
-	virtual int getX() { return _x; }
-	virtual int getY() { return _y; }
 	virtual int getFrame() { return _frame; }
 	virtual void clearUpdateNeeded() { _updateNeeded = false; }
 	virtual int32 getMovieTime() { return (int32)_movieTime; }
@@ -173,8 +170,7 @@ protected:
 MoviePlayer *CreateMpegPlayer();
 MoviePlayer *CreateAviPlayer();
 MoviePlayer *CreatePsxPlayer(bool emul_cd = true);
-//MoviePlayer *CreateBinkPlayer(bool demo);
-//MoviePlayer *CreateQuickTimePlayer();
+
 extern MoviePlayer *g_movie;
 
 } // end of namespace Reevengi

@@ -452,7 +452,7 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 	}
 
 	debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
-	g_movie->play(filePath, false, 0, 0);
+	g_movie->play(filePath, false);
 }
 
 } // end of namespace Reevengi
