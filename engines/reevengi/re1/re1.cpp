@@ -396,8 +396,11 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 				}
 
 				snprintf(filePath, sizeof(filePath), re1ps1_movies[numMovie]);
+				debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
 
 				g_movie = CreatePsxPlayer();
+
+				g_movie->play(filePath, false);
 			}
 			break;
 		case Common::kPlatformWindows:
@@ -411,8 +414,11 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 				}
 
 				snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
+				debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
 
 				g_movie = CreateAviPlayer();
+
+				g_movie->play(filePath, false);
 			}
 			break;
 		case Common::kPlatformSaturn:
@@ -422,8 +428,10 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 				}
 
 				snprintf(filePath, sizeof(filePath), "%s", RE1SAT_MOVIE);
+				debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
 
 				Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
+
 				if (stream) {
 					uint32 offset, length;
 
@@ -438,21 +446,24 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 					}
 					length -= offset;
 
-					Common::SeekableSubReadStream subStream(stream, offset, length);
-
 					// TODO: create a Cinepak movie player from subStream
+#if 1
+					g_movie = nullptr;
+#else
+					Common::SeekableSubReadStream *subStream = new Common::SeekableSubReadStream(stream, offset, length);
+
+					g_movie = CreateCpkPlayer();
+					g_movie->play( subStream, false);
+#endif
 				}
-				delete stream;
+//				delete stream;	// FIXME: Delete parent stream when movie end
 
 				return;
 			}
 			break;
 		default:
-			return;
+			break;
 	}
-
-	debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
-	g_movie->play(filePath, false);
 }
 
 } // end of namespace Reevengi
