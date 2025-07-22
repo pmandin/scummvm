@@ -24,6 +24,7 @@
 
 #include "common/mutex.h"
 #include "common/system.h"
+#include "common/substream.h"
 
 #include "video/video_decoder.h"
 
