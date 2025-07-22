@@ -496,8 +496,10 @@ void AdActor::turnTo(TDirection dir) {
 	// already there?
 	if (abs(delta) < 2) {
 		_dir = dir;
+		_targetDir = dir;
 		_state = _nextState;
 		_nextState = STATE_READY;
+		_tempSprite2 = nullptr;
 		return;
 	}
 
@@ -621,7 +623,7 @@ bool AdActor::update() {
 	}
 
 	// default: stand animation
-	if (!_currentSprite) {
+	if (BaseEngine::instance().getTargetExecutable() == WME_LITE && !_currentSprite) {
 		if (_sprite) {
 			_currentSprite = _sprite;
 		} else {
@@ -652,10 +654,16 @@ bool AdActor::update() {
 		//////////////////////////////////////////////////////////////////////////
 	case STATE_TURNING_LEFT:
 		if (_tempSprite2 == nullptr || _tempSprite2->isFinished()) {
-			if (_dir > 0) {
+			if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
 				_dir = (TDirection)(_dir - 1);
+				if (_dir < 0)
+					_dir = (TDirection)(NUM_DIRECTIONS - 1);
 			} else {
-				_dir = (TDirection)(NUM_DIRECTIONS - 1);
+				if (_dir > 0) {
+					_dir = (TDirection)(_dir - 1);
+				} else {
+					_dir = (TDirection)(NUM_DIRECTIONS - 1);
+				}
 			}
 
 			if (_dir == _targetDir) {
@@ -797,6 +805,21 @@ bool AdActor::update() {
 		error("AdActor::Update - Unhandled enum");
 	}
 
+	// default: stand animation
+	if (BaseEngine::instance().getTargetExecutable() < WME_LITE && !_currentSprite) {
+		if (_sprite) {
+			_currentSprite = _sprite;
+		} else {
+			if (_standSprite) {
+				_currentSprite = _standSprite->getSprite(_dir);
+			} else {
+				AdSpriteSet *anim = getAnimByName(_idleAnimName);
+				if (anim) {
+					_currentSprite = anim->getSprite(_dir);
+				}
+			}
+		}
+	}
 
 	if (_currentSprite && !already_moved) {
 		_currentSprite->getCurrentFrame(_zoomable ? ((AdGame *)_gameRef)->_scene->getZoomAt(_posX, _posY) : 100, _zoomable ? ((AdGame *)_gameRef)->_scene->getZoomAt(_posX, _posY) : 100);

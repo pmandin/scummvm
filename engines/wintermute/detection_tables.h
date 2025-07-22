@@ -332,15 +332,15 @@ static const WMEGameDescription gameDescriptions[] = {
 
 	// Alpha Polaris (English)
 	WME_WINENTRY("alphapolaris", "",
-		WME_ENTRY1s("data.dcp", "6d5d2264a3135dae3a9a74de50b4ea68", 706780438), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "6d5d2264a3135dae3a9a74de50b4ea68", 706780438), Common::EN_ANY, GF_3D, WME_1_9_1),
 
 	// Alpha Polaris (English, UK CD release)
 	WME_WINENTRY("alphapolaris", "",
-		WME_ENTRY1s("data.dcp", "1df8eb749676752c3e0ab6e24d31971c", 748056178), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "1df8eb749676752c3e0ab6e24d31971c", 748056178), Common::EN_ANY, GF_3D, WME_1_9_1),
 
 	// Alpha Polaris (Polish)
 	WME_WINENTRY("alphapolaris", "",
-		WME_ENTRY1s("data.dcp", "24ebca07b7cf0bd94ec994f26bdccf83", 710319064), Common::PL_POL, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "24ebca07b7cf0bd94ec994f26bdccf83", 710319064), Common::PL_POL, GF_3D, WME_1_9_1),
 
 	// Alpha Polaris (Russian)
 	WME_WINENTRY("alphapolaris", "",
@@ -349,17 +349,17 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Alpha Polaris (English) (1.1.0) (1280x800 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x800 Steam)",
 		WME_ENTRY2s("data.dcp", "2d1bd35749b2538915b53ce79288bceb", 706580987,
-					"data.dcp", "2d1bd35749b2538915b53ce79288bceb", 706580987), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
+					"data.dcp", "2d1bd35749b2538915b53ce79288bceb", 706580987), Common::EN_ANY, GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (German) (1.1.0) (1280x800 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x800 Steam)",
 		WME_ENTRY2s("data.dcp", "2d1bd35749b2538915b53ce79288bceb", 706580987,
-					"german_language_pack.dcp", "0ed4ef1647445c73b5915b60f85ed8e4", 19251966), Common::DE_DEU, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
+					"german_language_pack.dcp", "0ed4ef1647445c73b5915b60f85ed8e4", 19251966), Common::DE_DEU, GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (Polish) (1.1.0) (1280x800 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x800 Steam)",
 		WME_ENTRY2s("data.dcp", "2d1bd35749b2538915b53ce79288bceb", 706580987,
-					"polish_language_pack.dcp", "91f80c5f8d522541d666d11b60b0ea6c", 15006039), Common::PL_POL, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
+					"polish_language_pack.dcp", "91f80c5f8d522541d666d11b60b0ea6c", 15006039), Common::PL_POL, GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (Russian) (1.1.0) (1280x800 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x800 Steam)",
@@ -369,17 +369,17 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Alpha Polaris (English) (1.1.0) (1280x768 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x768 Steam)",
 		WME_ENTRY2s("data.dcp", "481b1bff44178ef2f3d879df05f65a96", 706580987,
-					"data.dcp", "481b1bff44178ef2f3d879df05f65a96", 706580987), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
+					"data.dcp", "481b1bff44178ef2f3d879df05f65a96", 706580987), Common::EN_ANY, GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (German) (1.1.0) (1280x768 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x768 Steam)",
 		WME_ENTRY2s("data.dcp", "481b1bff44178ef2f3d879df05f65a96", 706580987,
-					"german_language_pack.dcp", "2ffd9b2bdf2c2b3646067644572390c0", 19251966), Common::DE_DEU, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
+					"german_language_pack.dcp", "2ffd9b2bdf2c2b3646067644572390c0", 19251966), Common::DE_DEU, GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (Polish) (1.1.0) (1280x768 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x768 Steam)",
 		WME_ENTRY2s("data.dcp", "481b1bff44178ef2f3d879df05f65a96", 706580987,
-					"polish_language_pack.dcp", "4a24986189321f39b9f48cbc4889d89a", 15006039), Common::PL_POL, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
+					"polish_language_pack.dcp", "4a24986189321f39b9f48cbc4889d89a", 15006039), Common::PL_POL, GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (Russian) (1.1.0) (1280x768 Steam)
 	WME_WINENTRY("alphapolaris", "1.1.0 (1280x768 Steam)",
@@ -389,16 +389,16 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Alpha Polaris (English Demo)
 	WME_WINENTRY("alphapolaris", "Demo",
 		WME_ENTRY2s("data.dcp", "68f93edfb69de8f8c06c81566f279e07", 409562809,
-					"data.dcp", "68f93edfb69de8f8c06c81566f279e07", 409562809), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO | GF_3D, WME_1_9_3),
+					"data.dcp", "68f93edfb69de8f8c06c81566f279e07", 409562809), Common::EN_ANY, ADGF_DEMO | GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (German Demo)
 	WME_WINENTRY("alphapolaris", "Demo",
 		WME_ENTRY2s("data.dcp", "130545e152d0b53d84c2c99ce118d5e5", 409564920,
-					"german language pack.dcp", "71e19682f93399018bef90ceda0a1bfd", 16174995), Common::DE_DEU, ADGF_UNSTABLE | ADGF_DEMO | GF_3D, WME_1_9_3),
+					"german language pack.dcp", "71e19682f93399018bef90ceda0a1bfd", 16174995), Common::DE_DEU, ADGF_DEMO | GF_3D, WME_1_9_3),
 
 	// Alpha Polaris (Polish Demo)
 	WME_WINENTRY("alphapolaris", "Demo",
-		WME_ENTRY1s("data.dcp", "c040af58c38c40997fce4b4832f43a5d", 416066977), Common::PL_POL, ADGF_UNSTABLE | ADGF_DEMO | GF_3D, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "c040af58c38c40997fce4b4832f43a5d", 416066977), Common::PL_POL, ADGF_DEMO | GF_3D, WME_1_9_1),
 
 	// Apeiron
 	WME_WINENTRY("apeiron", "",
@@ -1454,55 +1454,55 @@ static const WMEGameDescription gameDescriptions[] = {
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (English)
 	WME_WINENTRY("hamlet", "",
-		WME_ENTRY1s("data.dcp", "f624add957a77c9930529fb28cc2450f", 88183022), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "f624add957a77c9930529fb28cc2450f", 88183022), Common::EN_ANY, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (English)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "74130d3c13f4a8caa2aafb9ee23f2639", 88184289), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "74130d3c13f4a8caa2aafb9ee23f2639", 88184289), Common::EN_ANY, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (French)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "5facdd153473cd3dafd4c6cfd5c683c6", 88145395), Common::FR_FRA, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "5facdd153473cd3dafd4c6cfd5c683c6", 88145395), Common::FR_FRA, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (German)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "fbd9ff90d8cc695b4a1524873792471d", 88204928), Common::DE_DEU, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "fbd9ff90d8cc695b4a1524873792471d", 88204928), Common::DE_DEU, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Hungarian)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "8eb59bb531d3dbfe1d6800b2e82f5613", 88284666), Common::HU_HUN, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "8eb59bb531d3dbfe1d6800b2e82f5613", 88284666), Common::HU_HUN, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Italian)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "ed16bdedc212c2a754b065ded5d91f00", 88259077), Common::IT_ITA, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "ed16bdedc212c2a754b065ded5d91f00", 88259077), Common::IT_ITA, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Japanese)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "06200da35604641c676c363babecb498", 88252762), Common::JA_JPN, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "06200da35604641c676c363babecb498", 88252762), Common::JA_JPN, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Koreana)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "29b8a8fcb4d50533571125be65c0fb93", 88093017), Common::KO_KOR, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "29b8a8fcb4d50533571125be65c0fb93", 88093017), Common::KO_KOR, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Polish)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "b1f993e048cded6902630343fbc14fe2", 88295172), Common::PL_POL, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "b1f993e048cded6902630343fbc14fe2", 88295172), Common::PL_POL, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Portuguese)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "f55674e17df2816145d3473401081f05", 88245004), Common::PT_PRT, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "f55674e17df2816145d3473401081f05", 88245004), Common::PT_PRT, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Russian)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "22cb24e8d37201e49bd2a76c33a1b98d", 88326328), Common::RU_RUS, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "22cb24e8d37201e49bd2a76c33a1b98d", 88326328), Common::RU_RUS, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Spanish)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "262c84ebabc473a678b8e3a18b57fa89", 88332992), Common::ES_ESP, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "262c84ebabc473a678b8e3a18b57fa89", 88332992), Common::ES_ESP, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (Steam) (Turkish)
 	WME_WINENTRY("hamlet", "v1.03",
-		WME_ENTRY1s("data.dcp", "5c9deef7e072f75081165b9c519f5b69", 88239961), Common::TR_TUR, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("data.dcp", "5c9deef7e072f75081165b9c519f5b69", 88239961), Common::TR_TUR, ADGF_NO_FLAGS, WME_1_9_1),
 
 	// Helga Deep In Trouble (Czech)
 	WME_WINENTRY("helga", "",

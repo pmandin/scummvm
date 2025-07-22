@@ -19,29 +19,35 @@
  *
  */
 
-#ifndef GLK_PC_SPEAKER_H
-#define GLK_PC_SPEAKER_H
+#ifndef DIRECTOR_LINGO_XLIBS_SMALLUTIL_H
+#define DIRECTOR_LINGO_XLIBS_SMALLUTIL_H
 
-#include "common/scummsys.h"
+namespace Director {
 
-namespace Audio {
-class PCSpeaker;
-}
-
-namespace Glk {
-
-class PCSpeaker {
-private:
-	Audio::PCSpeaker *_speaker;
+class SmallUtilXObject : public Object<SmallUtilXObject> {
 public:
-	PCSpeaker();
-	~PCSpeaker();
-
-	void speakerOn(int16 frequency, int32 length = -1);
-	void speakerOff();
-	void onUpdate(uint32 millis);
+	SmallUtilXObject(ObjectType objType);
 };
 
-} // End of namespace Glk
+namespace SmallUtilXObj {
+
+extern const char *xlibName;
+extern const XlibFileDesc fileNames[];
+
+void open(ObjectType type, const Common::Path &path);
+void close(ObjectType type);
+
+void m_new(int nargs);
+void m_dispose(int nargs);
+void m_qTVersion(int nargs);
+void m_qTVersionasText(int nargs);
+void m_sMVersion(int nargs);
+void m_sMVersionasText(int nargs);
+void m_fontList(int nargs);
+void m_volumeList(int nargs);
+
+} // End of namespace SmallUtilXObj
+
+} // End of namespace Director
 
 #endif

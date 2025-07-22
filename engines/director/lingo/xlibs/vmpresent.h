@@ -19,29 +19,29 @@
  *
  */
 
-#ifndef GLK_PC_SPEAKER_H
-#define GLK_PC_SPEAKER_H
+#ifndef DIRECTOR_LINGO_XLIBS_VMPRESENT_H
+#define DIRECTOR_LINGO_XLIBS_VMPRESENT_H
 
-#include "common/scummsys.h"
+namespace Director {
 
-namespace Audio {
-class PCSpeaker;
-}
-
-namespace Glk {
-
-class PCSpeaker {
-private:
-	Audio::PCSpeaker *_speaker;
+class VMPresentXObject : public Object<VMPresentXObject> {
 public:
-	PCSpeaker();
-	~PCSpeaker();
-
-	void speakerOn(int16 frequency, int32 length = -1);
-	void speakerOff();
-	void onUpdate(uint32 millis);
+	VMPresentXObject(ObjectType objType);
 };
 
-} // End of namespace Glk
+namespace VMPresentXObj {
+
+extern const char *xlibName;
+extern const XlibFileDesc fileNames[];
+
+void open(ObjectType type, const Common::Path &path);
+void close(ObjectType type);
+
+void m_new(int nargs);
+void m_vMPresent(int nargs);
+
+} // End of namespace VMPresentXObj
+
+} // End of namespace Director
 
 #endif
