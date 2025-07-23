@@ -22,6 +22,8 @@ MODULE_OBJS := \
 	gfx/gfx_opengl.o \
 	gfx/gfx_tinygl.o \
 	movie/avi.o \
+	movie/cpk.o \
+	movie/cpk_decoder.o \
 	movie/movie.o \
 	movie/mpeg.o \
 	movie/psx.o \

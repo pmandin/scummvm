@@ -446,17 +446,11 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 					}
 					length -= offset;
 
-					// TODO: create a Cinepak movie player from subStream
-#if 1
-					g_movie = nullptr;
-#else
 					Common::SeekableSubReadStream *subStream = new Common::SeekableSubReadStream(stream, offset, length);
 
-					g_movie = CreateCpkPlayer();
-					g_movie->play( subStream, false);
-#endif
+					g_movie = CreateCpkPlayer(stream);
+					g_movie->play(subStream, false);
 				}
-//				delete stream;	// FIXME: Delete parent stream when movie end
 
 				return;
 			}

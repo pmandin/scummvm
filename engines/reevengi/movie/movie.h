@@ -183,6 +183,7 @@ protected:
 MoviePlayer *CreateMpegPlayer();
 MoviePlayer *CreateAviPlayer();
 MoviePlayer *CreatePsxPlayer(bool emul_cd = true);
+MoviePlayer *CreateCpkPlayer(Common::SeekableReadStream *stream);
 
 extern MoviePlayer *g_movie;
 
