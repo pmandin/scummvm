@@ -55,13 +55,10 @@ public:
 	void close() override;
 
 private:
-	typedef struct film_sample_s {
-		int stream;
-		unsigned int sample_size;
-		int64_t sample_offset;
-		int64_t pts;
-		int keyframe;
-	} film_sample;
+	enum CpkStreamId {
+		CPK_STREAM_VIDEO,
+		CPK_STREAM_AUDIO
+	};
 
 	enum CpkCodecId {
 		CPK_CODEC_NONE,
@@ -73,12 +70,16 @@ private:
 		CPK_ACODEC_ADPCM_ADX
 	};
 
-	Common::SeekableReadStream *_stream;
+	typedef struct film_sample_s {
+		CpkStreamId stream;
+		unsigned int sample_size;
+		int64_t sample_offset;
+		int64_t pts;
+		int keyframe;
+	} film_sample;
 
 	/* FilmDemuxContext */
-	int _video_stream_index;
 	uint32	_video_duration;
-	int _audio_stream_index;
 	uint32	_audio_duration;
 
 	CpkCodecId _audio_type;
@@ -93,6 +94,64 @@ private:
 
 	unsigned int _base_clock;
 	unsigned int _version;
+
+protected:
+	void readNextPacket() override;
+
+private:
+	class StreamVideoTrack : public VideoTrack  {
+	public:
+		StreamVideoTrack(uint32 width, uint32 height, uint32 codecTag, uint32 frameCount);
+		~StreamVideoTrack() override;
+
+		bool endOfTrack() const override;
+
+		uint16 getWidth() const override { return _width; }
+		uint16 getHeight() const override { return _height; }
+		Graphics::PixelFormat getPixelFormat() const override;
+		bool setOutputPixelFormat(const Graphics::PixelFormat &format) override;
+		int getCurFrame() const override { return _curFrame; }
+		int getFrameCount() const override { return _frameCount; }
+		void setNextFrameStartTime(uint32 nextFrameStartTime) { _nextFrameStartTime = nextFrameStartTime; }
+		uint32 getNextFrameStartTime() const override { return _nextFrameStartTime; }
+		const Graphics::Surface *decodeNextFrame() override { return _surface; }
+
+		void decodeFrame(Common::SeekableReadStream *stream, uint32 videoTimeStamp);
+
+	private:
+		const Graphics::Surface *_surface;
+
+		int _curFrame;
+		uint32 _frameCount;
+		uint32 _nextFrameStartTime;
+
+		Image::Codec *_codec;
+		uint16 _width, _height;
+	};
+
+	class StreamAudioTrack : public AudioTrack {
+	public:
+		StreamAudioTrack(uint32 codecTag, uint32 sampleRate, uint32 channels, Audio::Mixer::SoundType soundType, uint32 trackId);
+		~StreamAudioTrack() override;
+
+		void queueAudio(Common::SeekableReadStream *stream, uint32 size);
+
+		//bool matchesId(uint trackId);
+
+	protected:
+		Audio::AudioStream *getAudioStream() const override;
+
+	private:
+		Audio::QueuingAudioStream *_audioStream;
+		uint32 _totalAudioQueued; /* total amount of milliseconds of audio, that we queued up already */
+
+	public:
+		uint32 getTotalAudioQueued() const { return _totalAudioQueued; }
+	};
+
+	Common::SeekableReadStream *_stream;
+	StreamVideoTrack *_videoTrack;
+	StreamAudioTrack *_audioTrack;
 
 #if 0
 protected:
