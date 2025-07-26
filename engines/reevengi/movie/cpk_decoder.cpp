@@ -53,21 +53,12 @@
 #include "common/textconsole.h"
 
 #include "audio/audiostream.h"
-//#include "audio/decoders/3do.h"
+#include "audio/decoders/raw.h"
 
 #include "image/codecs/cinepak.h"
 
 #include "engines/reevengi/movie/cpk_decoder.h"
 #include "engines/reevengi/movie/movie.h"
-
-// for Test-Code
-#include "common/system.h"
-#include "common/events.h"
-#include "common/keyboard.h"
-#include "engines/engine.h"
-#include "engines/util.h"
-#include "graphics/pixelformat.h"
-#include "graphics/surface.h"
 
 namespace Reevengi {
 
@@ -133,7 +124,7 @@ bool CpkMovieDecoder::loadStream(Common::SeekableReadStream *stream) {
 	film_header_t film_header;
 	film_fdsc_t film_description;
 	film_stab_t	film_sampletable;
-	uint32 chunkTag, videoChunkTag, data_offset;
+	uint32 chunkTag, data_offset;
 	uint32 audio_frame_counter;
 	uint32 video_frame_counter;
 	uint32 videoWidth = 0, videoHeight = 0;
@@ -164,17 +155,20 @@ bool CpkMovieDecoder::loadStream(Common::SeekableReadStream *stream) {
 		/* normal Saturn .cpk files; 32-byte header */
 		_stream->read(&film_description, sizeof(film_fdsc_t));
 
-		_audio_samplerate = FROM_LE_16(film_description.audio_samplerate);
+		_audio_samplerate = FROM_BE_16(film_description.audio_samplerate);
 		_audio_channels = film_description.audio_channels;
 		_audio_bits = film_description.audio_bits;
 
 		if ((film_description.audio_format == 2) && (_audio_channels > 0)) {
 			_audio_type = CPK_ACODEC_ADPCM_ADX;
+			debug(3, "cpk: audio: adpcm");
 		} else if (_audio_channels > 0) {
 			if (_audio_bits == 8) {
 				_audio_type = CPK_ACODEC_PCM_S8_PLANAR;
+				debug(3, "cpk: audio: pcm s8");
 			} else if (_audio_bits == 16) {
 				_audio_type = CPK_ACODEC_PCM_S16BE_PLANAR;
+				debug(3, "cpk: audio: pcm s16be");
 			}
 		}
 	}
@@ -201,37 +195,13 @@ bool CpkMovieDecoder::loadStream(Common::SeekableReadStream *stream) {
 
 		videoHeight = FROM_BE_32(film_description.video_height);
 		videoWidth = FROM_BE_32(film_description.video_width);
-		videoChunkTag = chunkTag;
 
-		debug(3, "video %dx%d", videoWidth, videoHeight );
+		debug(3, "cpk: video %dx%d", videoWidth, videoHeight );
 	}
 
-	/* Initialize audio */
+	/* Initialize video */
 	if (_audio_type != CPK_CODEC_NONE) {
-#if 0
-		st = avformat_new_stream(s, NULL);
-		if (!st)
-			return AVERROR(ENOMEM);
-		_audio_stream_index = st->index;
-		st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
-		st->codecpar->codec_id = _audio_type;
-		st->codecpar->codec_tag = 1;
-		st->codecpar->ch_layout.nb_channels = _audio_channels;
-		st->codecpar->sample_rate = _audio_samplerate;
-
-		if (_audio_type == CPK_ACODEC_ADPCM_ADX) {
-			st->codecpar->bits_per_coded_sample = 18 * 8 / 32;
-			st->codecpar->block_align = _audio_channels * 18;
-			ffstream(st)->need_parsing = AVSTREAM_PARSE_FULL;
-		} else {
-			st->codecpar->bits_per_coded_sample = _audio_bits;
-			st->codecpar->block_align = _audio_channels *
-				st->codecpar->bits_per_coded_sample / 8;
-		}
-
-		st->codecpar->bit_rate = _audio_channels * st->codecpar->sample_rate *
-			st->codecpar->bits_per_coded_sample;
-#endif
+		debug(3, "cpk: audio %d Hz", _audio_samplerate );
 	}
 
 	/* load the sample table */
@@ -287,14 +257,18 @@ bool CpkMovieDecoder::loadStream(Common::SeekableReadStream *stream) {
 			video_frame_counter++;
 		}
 
-		//debug(3, "pos 0x%08lx, stream %d", _sample_table[i].sample_offset, (int) _sample_table[i].stream );
+//		debug(3, "pos 0x%08lx, stream %d, pts %d", _sample_table[i].sample_offset
+//			, (int) _sample_table[i].stream, _sample_table[i].pts );
 	}
 
-	if (_audio_type != CPK_CODEC_NONE)
-		_audio_duration = audio_frame_counter;
+	if (_audio_type != CPK_CODEC_NONE) {
+		_audioTrack = new StreamAudioTrack(_audio_type, _audio_samplerate, _audio_channels,
+			_audio_bits, audio_frame_counter, getSoundType() );
+		addTrack(_audioTrack);
+	}
 
 	if (_video_type != CPK_CODEC_NONE) {
-		_videoTrack = new StreamVideoTrack(videoWidth, videoHeight, videoChunkTag, video_frame_counter);
+		_videoTrack = new StreamVideoTrack(_video_type, videoWidth, videoHeight, video_frame_counter);
 		addTrack(_videoTrack);
 	}
 
@@ -315,35 +289,28 @@ void CpkMovieDecoder::close() {
 void CpkMovieDecoder::readNextPacket() {
 	uint32 currentMovieTime = getTime();
 	uint32 wantedAudioQueued  = currentMovieTime + 500; // always try to be 0.500 seconds in front of movie time
-#if 0
-	int32 chunkOffset     = 0;
-	int32 dataStartOffset = 0;
-	int32 nextChunkOffset = 0;
-	uint32 chunkTag       = 0;
-	uint32 chunkSize      = 0;
-
-	uint32 videoSubType   = 0;
-	uint32 audioSubType   = 0;
-	uint32 audioBytes     = 0;
-	uint32 audioTrackId   = 0;
-#endif
-	uint32 videoFrameSize = 0;
-	uint32 videoTimeStamp = 0;
+	uint32 frameSize = 0;
+	uint32 timeStamp = 0;
 
 	bool videoGotFrame = false;
 	bool videoDone     = false;
 	bool audioDone     = false;
-/*
-	if (wantedAudioQueued <= _audioTracks[0]->getTotalAudioQueued()) {
+
+	if (wantedAudioQueued <= _audioTrack->getTotalAudioQueued(_audio_samplerate)) {
 		// already got enough audio queued up
 		audioDone = true;
 	}
-*/
+
 	while (1) {
 		if (_stream->eos())
 			break;
+		if (_current_sample>=_sample_count)
+			break;
 
 		_stream->seek(_sample_table[_current_sample].sample_offset, SEEK_SET);
+
+		frameSize = _sample_table[_current_sample].sample_size;
+		timeStamp = _sample_table[_current_sample].pts;
 
 		switch (_sample_table[_current_sample].stream) {
 			case CPK_STREAM_VIDEO:
@@ -351,12 +318,7 @@ void CpkMovieDecoder::readNextPacket() {
 					if (!videoDone) {
 						if (!videoGotFrame) {
 							// We haven't decoded any frame yet, so do so now
-							//_stream->readUint32BE();
-							//videoFrameSize = _stream->readUint32BE();
-							videoFrameSize = _sample_table[_current_sample].sample_size;
-							videoTimeStamp = _sample_table[_current_sample].pts;
-
-							_videoTrack->decodeFrame(_stream->readStream(videoFrameSize), videoTimeStamp);
+							_videoTrack->decodeFrame(_stream->readStream(frameSize), timeStamp);
 
 							++_current_sample;
 							videoGotFrame = true;
@@ -367,7 +329,7 @@ void CpkMovieDecoder::readNextPacket() {
 
 							// Calculate next frame time
 							uint32 currentFrameStartTime = _videoTrack->getNextFrameStartTime();
-							uint32 nextFrameStartTime = videoTimeStamp * 1000 / _base_clock;
+							uint32 nextFrameStartTime = timeStamp * 1000 / _base_clock;
 							assert(currentFrameStartTime <= nextFrameStartTime);
 							(void)currentFrameStartTime;
 							_videoTrack->setNextFrameStartTime(nextFrameStartTime);
@@ -380,7 +342,18 @@ void CpkMovieDecoder::readNextPacket() {
 				break;
 			case CPK_STREAM_AUDIO:
 				{
-					++_current_sample;
+					// We are at an offset that is still relevant to audio decoding
+					/*if (!audioDone)*/ {
+						_audioTrack->queueAudio(_stream->readStream(frameSize), frameSize);
+						uint queued = _audioTrack->getTotalAudioQueued(_audio_samplerate);
+
+						++_current_sample;
+
+						if (wantedAudioQueued <= queued) {
+							// Got enough audio
+							audioDone = true;
+						}
+					}
 				}
 				break;
 		}
@@ -389,123 +362,9 @@ void CpkMovieDecoder::readNextPacket() {
 			return;
 		}
 	}
-#if 0
-		switch (chunkTag) {
-		case MKTAG('F','I','L','M'):
-			videoTimeStamp = _stream->readUint32BE();
-			_stream->skip(4); // Unknown
-			videoSubType = _stream->readUint32BE();
-
-			switch (videoSubType) {
-			case MKTAG('F', 'H', 'D', 'R'):
-				// Ignore video header
-				break;
-
-			case MKTAG('F', 'R', 'M', 'E'):
-				// Found frame data
-				if (_streamVideoOffset <= chunkOffset) {
-					// We are at an offset that is still relevant to video decoding
-					if (!videoDone) {
-						if (!videoGotFrame) {
-							// We haven't decoded any frame yet, so do so now
-							_stream->readUint32BE();
-							videoFrameSize = _stream->readUint32BE();
-							_videoTrack->decodeFrame(_stream->readStream(videoFrameSize), videoTimeStamp);
-
-							_streamVideoOffset = nextChunkOffset;
-							videoGotFrame = true;
-
-						} else {
-							// Already decoded a frame, so get timestamp of follow-up frame
-							// and then we are done with video
-
-							// Calculate next frame time
-							// 3DO clock time for movies runs at 240Hh, that's why timestamps are based on 240.
-							uint32 currentFrameStartTime = _videoTrack->getNextFrameStartTime();
-							uint32 nextFrameStartTime = videoTimeStamp * 1000 / 240;
-							assert(currentFrameStartTime <= nextFrameStartTime);
-							(void)currentFrameStartTime;
-							_videoTrack->setNextFrameStartTime(nextFrameStartTime);
-
-							// next time we want to start at the current chunk
-							_streamVideoOffset = chunkOffset;
-							videoDone = true;
-						}
-					}
-				}
-				break;
-
-			default:
-				error("3DO movie: Unknown subtype inside FILM packet");
-				break;
-			}
-			break;
-
-		case MKTAG('S','N','D','S'):
-			_stream->readUint32BE();
-			audioTrackId = _stream->readUint32BE();
-			audioSubType = _stream->readUint32BE();
-
-			switch (audioSubType) {
-			case MKTAG('S', 'H', 'D', 'R'):
-				// Ignore the audio header
-				break;
-
-			case MKTAG('S', 'S', 'M', 'P'):
-				// Got audio chunk
-				if (_streamAudioOffset <= chunkOffset) {
-					// We are at an offset that is still relevant to audio decoding
-					if (!audioDone) {
-						uint queued = 0;
-						audioBytes = _stream->readUint32BE();
-						for (uint i = 0; i < _audioTracks.size(); i++)
-							if (_audioTracks[i]->matchesId(audioTrackId)) {
-								_audioTracks[i]->queueAudio(_stream, audioBytes);
-								queued = _audioTracks[i]->getTotalAudioQueued();
-							}
-
-						_streamAudioOffset = nextChunkOffset;
-						if (wantedAudioQueued <= queued) {
-							// Got enough audio
-							audioDone = true;
-						}
-					}
-				}
-				break;
-
-			default:
-				error("3DO movie: Unknown subtype inside SNDS packet");
-				break;
-			}
-			break;
-
-		case MKTAG('C','T','R','L'):
-		case MKTAG('F','I','L','L'): // filler chunk, fills to certain boundary
-		case MKTAG('D','A','C','Q'):
-		case MKTAG('J','O','I','N'): // add cel data (not used in sherlock)
-			// Ignore these chunks
-			break;
-
-		case MKTAG('S','H','D','R'):
-			// Happens for EA logo, seems to be garbage data right at the start of the file
-			break;
-
-		default:
-			error("Unknown chunk-tag '%s' inside 3DO movie", tag2str(chunkTag));
-		}
-
-		// Always seek to end of chunk
-		// Sometimes not all of the chunk is filled with audio
-		_stream->seek(nextChunkOffset);
-
-		if ((videoDone) && (audioDone)) {
-			return;
-		}
-	}
-#endif
 }
 
-CpkMovieDecoder::StreamVideoTrack::StreamVideoTrack(uint32 width, uint32 height, uint32 codecTag, uint32 frameCount) {
+CpkMovieDecoder::StreamVideoTrack::StreamVideoTrack(CpkCodecId codec, uint32 width, uint32 height, uint32 frameCount) {
 	_width = width;
 	_height = height;
 	_frameCount = frameCount;
@@ -513,10 +372,10 @@ CpkMovieDecoder::StreamVideoTrack::StreamVideoTrack(uint32 width, uint32 height,
 	_nextFrameStartTime = 0;
 
 	// Create the Cinepak decoder, if we're using it
-	if (codecTag == MKTAG('c', 'v', 'i', 'd'))
+	if (codec == CPK_VCODEC_CINEPAK)
 		_codec = new Image::CinepakDecoder();
 	else
-		error("Unsupported CPK movie video codec tag '%s'", tag2str(codecTag));
+		error("Unsupported CPK movie video codec");
 }
 
 CpkMovieDecoder::StreamVideoTrack::~StreamVideoTrack() {
@@ -540,82 +399,38 @@ void CpkMovieDecoder::StreamVideoTrack::decodeFrame(Common::SeekableReadStream *
 	_curFrame++;
 }
 
-CpkMovieDecoder::StreamAudioTrack::StreamAudioTrack(uint32 codecTag, uint32 sampleRate, uint32 channels, Audio::Mixer::SoundType soundType, uint32 trackId) :
-		AudioTrack(soundType) {
-#if 0
-			switch (codecTag) {
-	case MKTAG('A','D','P','4'):
-	case MKTAG('S','D','X','2'):
-		// ADP4 + SDX2 are both allowed
-		break;
+CpkMovieDecoder::StreamAudioTrack::StreamAudioTrack(CpkCodecId codec, uint32 sampleRate, uint32 channels,
+	uint32 bits, uint32 frameCount, Audio::Mixer::SoundType soundType) : AudioTrack(soundType) {
 
-	default:
-		error("Unsupported 3DO movie audio codec tag '%s'", tag2str(codecTag));
+	byte flags = 0;
+	if (bits == 2)
+		flags |= Audio::FLAG_16BITS;
+	if (channels == 2)
+		flags |= Audio::FLAG_STEREO;
+
+	switch(codec) {
+		case CPK_ACODEC_PCM_S8_PLANAR:
+		case CPK_ACODEC_PCM_S16BE_PLANAR:
+			{
+				_audioStream = Audio::makePacketizedRawStream(sampleRate, flags);
+			}
+			break;
+		default:
+			{
+				error("Unsupported CPK audio codec");
+			}
+			break;
 	}
-
-	_totalAudioQueued = 0; // currently 0 milliseconds queued
-
-	_codecTag    = codecTag;
-	_sampleRate  = sampleRate;
-	_trackId     = trackId;
-	switch (channels) {
-	case 1:
-		_stereo = false;
-		break;
-	case 2:
-		_stereo = true;
-		break;
-	default:
-		error("Unsupported 3DO movie audio channels %d", channels);
-	}
-
-	_audioStream = Audio::makeQueuingAudioStream(sampleRate, _stereo);
-
-	// reset audio decoder persistent spaces
-	memset(&_ADP4_PersistentSpace, 0, sizeof(_ADP4_PersistentSpace));
-	memset(&_SDX2_PersistentSpace, 0, sizeof(_SDX2_PersistentSpace));
-#endif
-
-		}
-
-CpkMovieDecoder::StreamAudioTrack::~StreamAudioTrack() {
-//	delete _audioStream;
-//	free(_ADP4_PersistentSpace);
-//	free(_SDX2_PersistentSpace);
 }
 
-//bool CpkMovieDecoder::StreamAudioTrack::matchesId(uint tid) {
-//	return true; // _trackId == tid;
-//}
+CpkMovieDecoder::StreamAudioTrack::~StreamAudioTrack() {
+	delete _audioStream;
+}
 
 void CpkMovieDecoder::StreamAudioTrack::queueAudio(Common::SeekableReadStream *stream, uint32 size) {
-#if 0
-	Common::SeekableReadStream *compressedAudioStream = 0;
-	Audio::RewindableAudioStream *audioStream = 0;
-	uint32 audioLengthMSecs = 0;
+	_totalAudioQueued += size;
 
-	// Read the specified chunk into memory
-	compressedAudioStream = stream->readStream(size);
-
-	switch(_codecTag) {
-	case MKTAG('A','D','P','4'):
-		audioStream = Audio::make3DO_ADP4AudioStream(compressedAudioStream, _sampleRate, _stereo, &audioLengthMSecs, DisposeAfterUse::YES, &_ADP4_PersistentSpace);
-		break;
-	case MKTAG('S','D','X','2'):
-		audioStream = Audio::make3DO_SDX2AudioStream(compressedAudioStream, _sampleRate, _stereo, &audioLengthMSecs, DisposeAfterUse::YES, &_SDX2_PersistentSpace);
-		break;
-	default:
-		break;
-	}
-	if (audioStream) {
-		_totalAudioQueued += audioLengthMSecs;
-		_audioStream->queueAudioStream(audioStream, DisposeAfterUse::YES);
-	} else {
-		// in case there was an error
-		delete compressedAudioStream;
-	}
-#endif
-
+	_audioStream->queuePacket(stream);
 }
 
 Audio::AudioStream *CpkMovieDecoder::StreamAudioTrack::getAudioStream() const {

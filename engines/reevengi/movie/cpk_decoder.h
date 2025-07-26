@@ -27,7 +27,7 @@
 //#include "audio/decoders/3do.h"
 
 namespace Audio {
-class QueuingAudioStream;
+class PacketizedAudioStream;
 }
 
 namespace Common {
@@ -101,7 +101,7 @@ protected:
 private:
 	class StreamVideoTrack : public VideoTrack  {
 	public:
-		StreamVideoTrack(uint32 width, uint32 height, uint32 codecTag, uint32 frameCount);
+		StreamVideoTrack(CpkCodecId codec, uint32 width, uint32 height, uint32 frameCount);
 		~StreamVideoTrack() override;
 
 		bool endOfTrack() const override;
@@ -131,104 +131,26 @@ private:
 
 	class StreamAudioTrack : public AudioTrack {
 	public:
-		StreamAudioTrack(uint32 codecTag, uint32 sampleRate, uint32 channels, Audio::Mixer::SoundType soundType, uint32 trackId);
+		StreamAudioTrack(CpkCodecId codec, uint32 sampleRate, uint32 channels, uint32 bits, uint32 frameCount,
+			Audio::Mixer::SoundType soundType);
 		~StreamAudioTrack() override;
 
 		void queueAudio(Common::SeekableReadStream *stream, uint32 size);
-
-		//bool matchesId(uint trackId);
 
 	protected:
 		Audio::AudioStream *getAudioStream() const override;
 
 	private:
-		Audio::QueuingAudioStream *_audioStream;
+		Audio::PacketizedAudioStream *_audioStream;
 		uint32 _totalAudioQueued; /* total amount of milliseconds of audio, that we queued up already */
 
 	public:
-		uint32 getTotalAudioQueued() const { return _totalAudioQueued; }
+		uint32 getTotalAudioQueued(int rate) const { return (_totalAudioQueued * 1000) / rate; }
 	};
 
 	Common::SeekableReadStream *_stream;
 	StreamVideoTrack *_videoTrack;
 	StreamAudioTrack *_audioTrack;
-
-#if 0
-protected:
-	void readNextPacket() override;
-	bool supportsAudioTrackSwitching() const override { return true; }
-	AudioTrack *getAudioTrack(int index) override;
-
-private:
-	int32 _streamVideoOffset; /* current stream offset for video decoding */
-	int32 _streamAudioOffset; /* current stream offset for audio decoding */
-
-private:
-	class StreamVideoTrack : public VideoTrack  {
-	public:
-		StreamVideoTrack(uint32 width, uint32 height, uint32 codecTag, uint32 frameCount);
-		~StreamVideoTrack() override;
-
-		bool endOfTrack() const override;
-
-		uint16 getWidth() const override { return _width; }
-		uint16 getHeight() const override { return _height; }
-		Graphics::PixelFormat getPixelFormat() const override;
-		bool setOutputPixelFormat(const Graphics::PixelFormat &format) override;
-		int getCurFrame() const override { return _curFrame; }
-		int getFrameCount() const override { return _frameCount; }
-		void setNextFrameStartTime(uint32 nextFrameStartTime) { _nextFrameStartTime = nextFrameStartTime; }
-		uint32 getNextFrameStartTime() const override { return _nextFrameStartTime; }
-		const Graphics::Surface *decodeNextFrame() override { return _surface; }
-
-		void decodeFrame(Common::SeekableReadStream *stream, uint32 videoTimeStamp);
-
-	private:
-		const Graphics::Surface *_surface;
-
-		int _curFrame;
-		uint32 _frameCount;
-		uint32 _nextFrameStartTime;
-
-		Image::Codec *_codec;
-		uint16 _width, _height;
-	};
-
-	class StreamAudioTrack : public AudioTrack {
-	public:
-		StreamAudioTrack(uint32 codecTag, uint32 sampleRate, uint32 channels, Audio::Mixer::SoundType soundType, uint32 trackId);
-		~StreamAudioTrack() override;
-
-		void queueAudio(Common::SeekableReadStream *stream, uint32 size);
-
-		bool matchesId(uint trackId);
-
-	protected:
-		Audio::AudioStream *getAudioStream() const override;
-
-	private:
-		Audio::QueuingAudioStream *_audioStream;
-		uint32 _totalAudioQueued; /* total amount of milliseconds of audio, that we queued up already */
-
-	public:
-		uint32 getTotalAudioQueued() const { return _totalAudioQueued; }
-
-	private:
-		int16 decodeSample(uint8 dataNibble);
-
-		uint32 _codecTag;
-		uint16 _sampleRate;
-		bool   _stereo;
-		uint32 _trackId;
-
-//		Audio::audio_3DO_ADP4_PersistentSpace _ADP4_PersistentSpace;
-//		Audio::audio_3DO_SDX2_PersistentSpace _SDX2_PersistentSpace;
-	};
-
-	Common::SeekableReadStream *_stream;
-	StreamVideoTrack *_videoTrack;
-	Common::Array<StreamAudioTrack *> _audioTracks;
-#endif
 };
 
 } // End of namespace Reevengi
