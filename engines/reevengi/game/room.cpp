@@ -23,6 +23,7 @@
 //#include "common/file.h"
 #include "common/list.h"
 
+#include "engines/reevengi/reevengi.h"
 #include "engines/reevengi/game/room.h"
 #include "engines/reevengi/gfx/gfx_base.h"
 
@@ -31,8 +32,15 @@ namespace Reevengi {
 Room::Room(ReevengiEngine *game, Common::SeekableReadStream *stream): _game(game),
 	_scriptPtr(nullptr), _scriptLen(0), _scriptInst(nullptr), _scriptPC(0),
 	_scriptInit(true) {
-	stream->seek(0);
-	_roomSize = stream->size();
+
+	/* Saturn RDT has 2 extra bytes at start */
+	int roomOffset = 0;
+	if (game->_flags.platform == Common::kPlatformSaturn) {
+		roomOffset = 2;
+	}
+
+	stream->seek(roomOffset);
+	_roomSize = stream->size()-roomOffset;
 
 	_roomPtr = new byte[_roomSize];
 	stream->read(_roomPtr, _roomSize);
