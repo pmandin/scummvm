@@ -32,7 +32,7 @@ TASKS=()
 CONFIGURE_ARGS=()
 _bundle_games=()
 _verbose=false
-EMSDK_VERSION="3.1.51"
+EMSDK_VERSION="${EMSDK_VERSION:-4.0.10}"
 EMSCRIPTEN_VERSION="$EMSDK_VERSION"
 
 usage="\
@@ -117,7 +117,7 @@ fi
 # Setup Toolchain
 #################################
 
-# Activate Emscripten
+# Download Emscripten
 if [[ ! -d "$DIST_FOLDER/emsdk-$EMSDK_VERSION" ]]; then
   echo "$DIST_FOLDER/emsdk-$EMSDK_VERSION not found. Installing Emscripten"
   cd "$DIST_FOLDER"
@@ -127,7 +127,6 @@ if [[ ! -d "$DIST_FOLDER/emsdk-$EMSDK_VERSION" ]]; then
     wget -nc --content-disposition --no-check-certificate "https://github.com/emscripten-core/emsdk/archive/refs/tags/${EMSDK_VERSION}.tar.gz"
     tar -xf "emsdk-${EMSDK_VERSION}.tar.gz"
   fi
-
 fi
 
 cd "$DIST_FOLDER/emsdk-${EMSDK_VERSION}"
@@ -178,7 +177,6 @@ fi
 #################################
 # Download + Install Libraries (if not part of Emscripten-Ports, these are handled by configure)
 #################################
-
 if [[ ! -d "$LIBS_FOLDER/build" ]]; then
   mkdir -p "$LIBS_FOLDER/build"
 fi
@@ -187,9 +185,10 @@ if [ "$_liba52" = true ]; then
   if [[ ! -f "$LIBS_FOLDER/build/lib/liba52.a" ]]; then
     echo "building a52dec-0.7.4"
     cd "$LIBS_FOLDER"
-    wget -nc "https://liba52.sourceforge.io/files/a52dec-0.7.4.tar.gz"
-    tar -xf a52dec-0.7.4.tar.gz
-    cd "$LIBS_FOLDER/a52dec-0.7.4/"
+    wget -nc "https://code.videolan.org/videolan/liba52/-/archive/0.7.4/liba52-0.7.4.tar.gz"
+    tar -xf liba52-0.7.4.tar.gz
+    cd "$LIBS_FOLDER/liba52-0.7.4/"
+    autoreconf -i
     CFLAGS="-fPIC -Oz" emconfigure ./configure --host=wasm32-unknown-none --build=wasm32-unknown-none --prefix="$LIBS_FOLDER/build/"
     emmake make -j 5
     emmake make install
@@ -229,12 +228,13 @@ fi
 
 if [ "$_libmpeg2" = true ]; then
   if [[ ! -f "$LIBS_FOLDER/build/lib/libmpeg2.a" ]]; then
-    echo "building libmpeg2-0.5.1"
+    echo "building libmpeg2-946bf4b5"
     cd "$LIBS_FOLDER"
-    wget -nc "http://libmpeg2.sourceforge.net/files/libmpeg2-0.5.1.tar.gz"
-    tar -xf libmpeg2-0.5.1.tar.gz
-    cd "$LIBS_FOLDER/libmpeg2-0.5.1/"
-    CFLAGS="-fPIC -Oz" emconfigure ./configure --host=wasm32-unknown-none --prefix="$LIBS_FOLDER/build/" --disable-sdl
+    wget -nc --content-disposition  "https://code.videolan.org/videolan/libmpeg2/-/archive/946bf4b518aacc224f845e73708f99e394744499/libmpeg2-946bf4b518aacc224f845e73708f99e394744499.tar.gz"
+    tar -xf libmpeg2-946bf4b518aacc224f845e73708f99e394744499.tar.gz
+    cd "$LIBS_FOLDER/libmpeg2-946bf4b518aacc224f845e73708f99e394744499/"
+    autoreconf -i
+    CFLAGS="-fPIC -Oz" emconfigure ./configure --build=wasm32-unknown-none --prefix="$LIBS_FOLDER/build/" --disable-sdl
     emmake make -j 5
     emmake make install
   fi
@@ -366,9 +366,5 @@ fi
 if [[ "run" =~ $(echo ^\(${TASKS}\)$) ]]; then
   echo "Run ScummVM"
   cd "${ROOT_FOLDER}/build-emscripten/"
-  # emrun doesn't support range requests. Once it will, we don't need node-static anymore
   emrun --browser=chrome scummvm.html
-
-  # TODO: https://github.com/cloudhead/node-static/issues/241 means node-static doesn't work either.
-  # $EMSDK_NPX -p node-static static .
 fi

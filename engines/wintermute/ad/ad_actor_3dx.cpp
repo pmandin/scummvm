@@ -1747,6 +1747,8 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 		ScValue *valVelocity = stack->pop();
 		ScValue *valAnim = stack->pop();
 
+		_directWalkAnim.clear();
+
 		if (!valVelocity->isNULL()) {
 			_directWalkVelocity = valVelocity->getFloat();
 		} else {
@@ -1788,6 +1790,8 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 
 		ScValue *valVelocity = stack->pop();
 		ScValue *valAnim = stack->pop();
+
+		_directWalkAnim.clear();
 
 		if (!valVelocity->isNULL()) {
 			_directTurnVelocity = valVelocity->getFloat();
@@ -1877,7 +1881,6 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	else if (strcmp(name, "RemoveEffect") == 0) {
 		stack->correctParams(1);
 		const char *materialName = stack->pop()->getString();
-		stack->pop();
 
 		if (_xmodel && _xmodel->removeMaterialEffect(materialName)) {
 			stack->pushBool(true);
@@ -2226,8 +2229,7 @@ bool AdActor3DX::scSetProperty(const char *name, ScValue *value) {
 	// DirectionAngle / DirAngle
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "DirectionAngle") == 0 || strcmp(name, "DirAngle") == 0) {
-		_angle = value->getFloat();
-		BaseUtils::normalizeAngle(_angle);
+		_angle = BaseUtils::normalizeAngle(value->getFloat());
 		return true;
 	}
 

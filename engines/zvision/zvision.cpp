@@ -37,8 +37,9 @@
 #include "gui/message.h"
 #include "zvision/zvision.h"
 #include "zvision/core/console.h"
+#include "zvision/file/file_manager.h"
 #include "zvision/file/save_manager.h"
-#include "zvision/file/search_manager.h"
+#include "zvision/file/zfs_archive.h"
 #include "zvision/graphics/render_manager.h"
 #include "zvision/graphics/cursors/cursor_manager.h"
 #include "zvision/scripting/menu.h"
@@ -89,6 +90,7 @@ ZVision::ZVision(OSystem *syst, const ZVisionGameDescription *gameDesc)
 	  _clock(_system),
 	  _scriptManager(nullptr),
 	  _renderManager(nullptr),
+	  _fileManager(nullptr),
 	  _saveManager(nullptr),
 	  _stringManager(nullptr),
 	  _cursorManager(nullptr),
@@ -97,7 +99,6 @@ ZVision::ZVision(OSystem *syst, const ZVisionGameDescription *gameDesc)
 	  _menu(nullptr),
 	  _subtitleManager(nullptr),
 	  _volumeManager(nullptr),
-	  _searchManager(nullptr),
 	  _textRenderer(nullptr),
 	  _doubleFPS(false),
 	  _widescreen(false),
@@ -120,6 +121,7 @@ ZVision::~ZVision() {
 	// Dispose of resources
 	delete _cursorManager;
 	delete _stringManager;
+	delete _fileManager;
 	delete _saveManager;
 	delete _scriptManager;
 	delete _renderManager;	// should be deleted after the script manager
@@ -176,30 +178,6 @@ void ZVision::saveSettings() {
 }
 
 void ZVision::initialize() {
-	// File Paths
-	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
-
-	_searchManager = new SearchManager(ConfMan.getPath("path"), 6);
-
-	_searchManager->addDir("FONTS");
-	_searchManager->addDir("addon");
-	switch (getGameId()) {
-	case GID_GRANDINQUISITOR:
-		if (!_searchManager->loadZix("INQUIS.ZIX"))
-			error("Unable to load file INQUIS.ZIX");
-		break;
-	case GID_NEMESIS:
-		if (!_searchManager->loadZix("NEMESIS.ZIX"))
-			// The game might not be installed, try MEDIUM.ZIX instead
-			if (!_searchManager->loadZix("ZNEMSCR/MEDIUM.ZIX"))
-				error("Unable to load the file ZNEMSCR/MEDIUM.ZIX");
-		break;
-	case GID_NONE:
-	default:
-		error("Unknown/unspecified GameId");
-		break;
-	}
-
 	// Graphics
 	_widescreen = ConfMan.getBool("widescreen");
 	_doubleFPS = ConfMan.getBool("doublefps");
@@ -235,6 +213,7 @@ void ZVision::initialize() {
 		break;
 	}
 	_scriptManager = new ScriptManager(this);
+	_fileManager = new FileManager(this);
 	_saveManager = new SaveManager(this);
 	_stringManager = new StringManager(this);
 	_cursorManager = new CursorManager(this, _resourcePixelFormat);
@@ -302,9 +281,9 @@ Common::Error ZVision::run() {
 			liberationFontName += liberationFontSuffixes[j];
 			liberationFontName += ".ttf";
 
-			if (!Common::File::exists(Common::Path(fontName)) && !_searchManager->hasFile(Common::Path(fontName)) &&
-				!Common::File::exists(Common::Path(liberationFontName)) && !_searchManager->hasFile(Common::Path(liberationFontName)) &&
-				!Common::File::exists("fonts.dat") && !_searchManager->hasFile("fonts.dat")) {
+			if (!Common::File::exists(Common::Path(fontName)) && !SearchMan.hasFile(Common::Path(fontName)) &&
+				!Common::File::exists(Common::Path(liberationFontName)) && !SearchMan.hasFile(Common::Path(liberationFontName)) &&
+				!Common::File::exists("fonts.dat") && !SearchMan.hasFile("fonts.dat")) {
 				foundAllFonts = false;
 				break;
 			}
@@ -331,14 +310,14 @@ Common::Error ZVision::run() {
 	}
 	if (getGameId() == GID_NEMESIS && !_midiManager->isAvailable()) {
 		GUI::MessageDialog MIDIdialog(_(
-		                                  "MIDI playback is not available, or else improperly configured. "
-		                                  "Zork Nemesis contains several music puzzles which require "
-		                                  "MIDI audio in order to be solved.  These puzzles may alternatively "
-		                                  "be solved using subtitles, if supported. Continue launching game?"
-		                              ),
-		                              _("Yes"),
-		                              _("No")
-		                             );
+				"MIDI playback is not available, or else improperly configured. "
+				"Zork Nemesis contains several music puzzles which require "
+				"MIDI audio in order to be solved.  These puzzles may alternatively "
+				"be solved using subtitles, if supported. Continue launching game?"
+				),
+				_("Yes"),
+				_("No")
+			);
 		if (MIDIdialog.runModal() != GUI::kMessageOK)
 			quitGame();
 	}
@@ -409,6 +388,50 @@ void ZVision::fpsTimerCallback(void *refCon) {
 void ZVision::fpsTimer() {
 	_fps = _renderedFrameCount;
 	_renderedFrameCount = 0;
+}
+
+void ZVision::initializePath(const Common::FSNode &gamePath) {
+	// File Paths
+	const Common::FSNode gameDataDir(gamePath);
+	SearchMan.setIgnoreClashes(true);
+	SearchMan.addDirectory(gamePath, 0, 5, true);
+	SearchMan.addSubDirectoryMatching(gameDataDir, "FONTS");
+	
+	//Ensure extras take first search priority 
+	if (ConfMan.hasKey("extrapath")) {
+		Common::Path gameExtraPath = ConfMan.getPath("extrapath");
+		const Common::FSNode gameExtraDir(gameExtraPath);
+		SearchMan.addDirectory(gameExtraPath, 0, 1, true);
+		SearchMan.addSubDirectoryMatching(gameExtraDir, "auxvid");
+		SearchMan.addSubDirectoryMatching(gameExtraDir, "auxscr");
+	}
+	
+	// Ensure addons (game patches) take search priority over files listed in .zix files
+	SearchMan.addSubDirectoryMatching(gameDataDir, "addon");
+	Common::ArchiveMemberList listAddon;
+	SearchMan.listMatchingMembers(listAddon,"*.zfs");
+	for (auto member : listAddon) {
+		Common::Path path(member->getPathInArchive());
+		ZfsArchive *archive = new ZfsArchive(path);
+		SearchMan.add(path.toString(), archive);
+	}
+	
+	switch (getGameId()) {
+	case GID_GRANDINQUISITOR:
+		if (!_fileManager->loadZix("INQUIS.ZIX"))
+			error("Unable to load file INQUIS.ZIX");
+		break;
+	case GID_NEMESIS:
+		if (!_fileManager->loadZix("NEMESIS.ZIX"))
+			// The game might not be installed, try MEDIUM.ZIX instead
+			if (!_fileManager->loadZix("ZNEMSCR/MEDIUM.ZIX"))
+				error("Unable to load the file ZNEMSCR/MEDIUM.ZIX");
+		break;
+	case GID_NONE:
+	default:
+		error("Unknown/unspecified GameId");
+		break;
+	}
 }
 
 } // End of namespace ZVision

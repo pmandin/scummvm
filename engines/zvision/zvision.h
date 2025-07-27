@@ -30,7 +30,6 @@
 #include "gui/debugger.h"
 #include "zvision/detection.h"
 #include "zvision/core/clock.h"
-#include "zvision/file/search_manager.h"
 
 namespace Common {
 class Keymap;
@@ -59,6 +58,7 @@ class ScriptManager;
 class RenderManager;
 class CursorManager;
 class StringManager;
+class FileManager;
 class SaveManager;
 class RLFDecoder;
 class MenuManager;
@@ -142,9 +142,9 @@ private:
 	RenderManager *_renderManager;
 	CursorManager *_cursorManager;
 	StringManager *_stringManager;
-	SearchManager *_searchManager;
 	TextRenderer *_textRenderer;
 	MidiManager *_midiManager;
+	FileManager *_fileManager;
 	SaveManager *_saveManager;
 	MenuManager *_menu;
 	SubtitleManager *_subtitleManager;
@@ -190,14 +190,14 @@ public:
 	CursorManager *getCursorManager() const {
 		return _cursorManager;
 	}
+	FileManager *getFileManager() const {
+		return _fileManager;
+	}
 	SaveManager *getSaveManager() const {
 		return _saveManager;
 	}
 	StringManager *getStringManager() const {
 		return _stringManager;
-	}
-	SearchManager *getSearchManager() const {
-		return _searchManager;
 	}
 	TextRenderer *getTextRenderer() const {
 		return _textRenderer;
@@ -281,6 +281,8 @@ public:
 private:
 	void initialize();
 	void initFonts();
+	
+	void initializePath(const Common::FSNode &gamePath) override;
 
 	void parseStrFile(const Common::String &fileName);
 
@@ -295,8 +297,6 @@ private:
 	void pushKeyToCheatBuf(uint8 key);
 	bool checkCode(const char *code);
 	uint8 getBufferedKey(uint8 pos);
-
-	double getVobAmplification(Common::String fileName) const;
 };
 
 } // End of namespace ZVision

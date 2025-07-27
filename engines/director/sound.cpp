@@ -568,9 +568,13 @@ void DirectorSound::setPuppetSound(SoundID soundId, int soundChannel) {
 	if (!assertChannel(soundChannel))
 		return;
 
-	_channels[soundChannel]->newPuppet = true;
-	_channels[soundChannel]->puppet = soundId;
-	_channels[soundChannel]->stopOnZero = true;
+	if (soundId.isZero()) {
+		stopSound(soundChannel);
+	} else {
+		_channels[soundChannel]->newPuppet = true;
+		_channels[soundChannel]->puppet = soundId;
+		_channels[soundChannel]->stopOnZero = true;
+	}
 }
 
 void DirectorSound::playPuppetSound(int soundChannel) {
@@ -693,6 +697,44 @@ void DirectorSound::setChannelVolume(int channel, uint8 volume) {
 				setChannelVolumeInternal(it._key, volume);
 	}
 }
+
+void DirectorSound::setChannelBalance(int channel, int8 balance) {
+	if (!assertChannel(channel))
+		return;
+	_mixer->setChannelBalance(_channels[channel]->handle, balance);
+}
+
+int8 DirectorSound::getChannelBalance(int channel) {
+	if (!assertChannel(channel))
+		return 0;
+	return _mixer->getChannelBalance(_channels[channel]->handle);
+}
+
+void DirectorSound::setChannelFaderL(int channel, uint8 faderL) {
+	if (!assertChannel(channel))
+		return;
+	_mixer->setChannelFaderL(_channels[channel]->handle, faderL);
+}
+
+uint8 DirectorSound::getChannelFaderL(int channel) {
+	if (!assertChannel(channel))
+		return 0;
+	return _mixer->getChannelFaderL(_channels[channel]->handle);
+}
+
+void DirectorSound::setChannelFaderR(int channel, uint8 faderR) {
+	if (!assertChannel(channel))
+		return;
+	_mixer->setChannelFaderR(_channels[channel]->handle, faderR);
+}
+
+uint8 DirectorSound::getChannelFaderR(int channel) {
+	if (!assertChannel(channel))
+		return 0;
+	return _mixer->getChannelFaderR(_channels[channel]->handle);
+}
+
+
 
 SNDDecoder::SNDDecoder()
 		: AudioDecoder() {

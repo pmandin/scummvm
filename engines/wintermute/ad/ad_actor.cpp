@@ -622,8 +622,16 @@ bool AdActor::update() {
 		_sentence->finish();
 	}
 
+	// Below condition code is present in Lite up to (Feb 8, 2012) (SVN repo)
+	// Present in Lite up to (Nov 1, 2015) (Git repo)
+	// Present up to 1.9.1 (Jan 1, 2010)
+	// Seems removed into 1.10.1 beta (July 19, 2012)
+	// or later but before Mar 21, 2013 (import into Git repo)
+	//
 	// default: stand animation
-	if (BaseEngine::instance().getTargetExecutable() == WME_LITE && !_currentSprite) {
+	if (BaseEngine::instance().getTargetExecutable() < WME_1_9_2 &&
+	    BaseEngine::instance().getTargetExecutable() >= WME_LITE &&
+	    !_currentSprite) {
 		if (_sprite) {
 			_currentSprite = _sprite;
 		} else {
@@ -654,16 +662,10 @@ bool AdActor::update() {
 		//////////////////////////////////////////////////////////////////////////
 	case STATE_TURNING_LEFT:
 		if (_tempSprite2 == nullptr || _tempSprite2->isFinished()) {
-			if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
+			if (_dir > 0) {
 				_dir = (TDirection)(_dir - 1);
-				if (_dir < 0)
-					_dir = (TDirection)(NUM_DIRECTIONS - 1);
 			} else {
-				if (_dir > 0) {
-					_dir = (TDirection)(_dir - 1);
-				} else {
-					_dir = (TDirection)(NUM_DIRECTIONS - 1);
-				}
+				_dir = (TDirection)(NUM_DIRECTIONS - 1);
 			}
 
 			if (_dir == _targetDir) {
@@ -805,8 +807,16 @@ bool AdActor::update() {
 		error("AdActor::Update - Unhandled enum");
 	}
 
+	// Below condition code is not present in Lite up to (Feb 8, 2012) (SVN repo)
+	// Not present in Lite up to (Nov 1, 2015) (Git repo)
+	// Not present up to 1.9.1 (Jan 1, 2010)
+	// Seems added into 1.10.1 beta (July 19, 2012)
+	// or later but before Mar 21, 2013 (import into Git repo)
+	//
 	// default: stand animation
-	if (BaseEngine::instance().getTargetExecutable() < WME_LITE && !_currentSprite) {
+	if (BaseEngine::instance().getTargetExecutable() >= WME_1_9_2 &&
+	    BaseEngine::instance().getTargetExecutable() < WME_LITE &&
+	    !_currentSprite) {
 		if (_sprite) {
 			_currentSprite = _sprite;
 		} else {
@@ -1469,6 +1479,9 @@ int32 AdActor::getHeight() {
 
 //////////////////////////////////////////////////////////////////////////
 AdSpriteSet *AdActor::getAnimByName(const Common::String &animName) {
+	if (animName.empty())
+		return nullptr;
+
 	for (uint32 i = 0; i < _anims.getSize(); i++) {
 		if (animName.compareToIgnoreCase(_anims[i]->getName()) == 0) {
 			return _anims[i];

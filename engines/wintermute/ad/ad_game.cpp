@@ -247,6 +247,16 @@ bool AdGame::addObject(AdObject *object) {
 
 //////////////////////////////////////////////////////////////////////////
 bool AdGame::removeObject(AdObject *object) {
+	// Below condition code is not present in Lite up to (Feb 8, 2012) (SVN repo)
+	// Not present in Lite up to (Nov 1, 2015) (Git repo)
+	// Not present up to 1.9.1 (Jan 1, 2010)
+	// Seems added into 1.10.1 beta (July 19, 2012)
+	// or later but before Mar 21, 2013 (import into Git repo)
+	//
+	// is it inventory object?
+	if (_inventoryOwner == object)
+		_inventoryOwner = nullptr;
+
 	// in case the user called Scene.CreateXXX() and Game.DeleteXXX()
 	if (_scene) {
 		bool res = _scene->removeObject(object);
@@ -534,7 +544,7 @@ bool AdGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 
 		AdItem *item = nullptr;
 		if (val->isInt()) {
-			int index = val->getInt();
+			int32 index = val->getInt();
 			if (index >= 0 && index < (int32)_items.getSize()) {
 				item = _items[index];
 			}
@@ -1931,7 +1941,7 @@ bool AdGame::endDlgBranch(const char *branchName, const char *scriptName, const 
 
 
 	int startIndex = -1;
-	for (int i = _dlgPendingBranches.getSize() - 1; i >= 0; i--) {
+	for (int32 i = (int32)_dlgPendingBranches.getSize() - 1; i >= 0; i--) {
 		if (scumm_stricmp(name, _dlgPendingBranches[i]) == 0) {
 			startIndex = i;
 			break;

@@ -246,14 +246,6 @@ BaseGame::BaseGame(const Common::String &targetName) : BaseObject(this), _target
 	_autoSaveSlot = 999;
 	_cursorHidden = false;
 
-	// Block kept as a reminder that the engine CAN run in constrained/touch-mode
-	/*#ifdef __IPHONEOS__
-	    _touchInterface = true;
-	    _constrainedMemory = true; // TODO differentiate old and new iOS devices
-	#else*/
-	_touchInterface = false;
-	_constrainedMemory = false;
-
 	_settings = new BaseGameSettings(this);
 
 #ifdef ENABLE_HEROCRAFT
@@ -2392,10 +2384,6 @@ bool BaseGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "ShowStatusLine") == 0) {
 		stack->correctParams(0);
-		// Block kept to show intention of opcode.
-		/*#ifdef __IPHONEOS__
-		        IOS_ShowStatusLine(TRUE);
-		#endif*/
 		stack->pushNULL();
 
 		return STATUS_OK;
@@ -2406,10 +2394,6 @@ bool BaseGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "HideStatusLine") == 0) {
 		stack->correctParams(0);
-		// Block kept to show intention of opcode.
-		/*#ifdef __IPHONEOS__
-		        IOS_ShowStatusLine(FALSE);
-		#endif*/
 		stack->pushNULL();
 
 		return STATUS_OK;
@@ -2820,8 +2804,6 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 	// HardwareTL
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "HardwareTL") {
-		// TODO: Once we have a TinyGL renderer, we could potentially return false here
-		// otherwise, as long as WME3D is enabled, vertex processing is done by the hardware
 		_scValue->setBool(true);
 		return _scValue;
 	}
@@ -2841,6 +2823,18 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 	else if (name == "SaveDirectory") {
 		AnsiString dataDir = "saves"; // See also: SXDirectory::scGetProperty("TempDirectory")
 		_scValue->setString(dataDir.c_str());
+		return _scValue;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MostRecentSaveSlot (RO)
+	//////////////////////////////////////////////////////////////////////////
+	else if (name == "MostRecentSaveSlot") {
+		if (!ConfMan.hasKey("most_recent_saveslot")) {
+			_scValue->setInt(-1);
+		} else {
+			_scValue->setInt(ConfMan.getInt("most_recent_saveslot"));
+		}
 		return _scValue;
 	}
 
@@ -3002,18 +2996,6 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 	//////////////////////////////////////////////////////////////////////////
 	else if (name == "DeviceType") {
 		_scValue->setString(getDeviceType().c_str());
-		return _scValue;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	// MostRecentSaveSlot (RO)
-	//////////////////////////////////////////////////////////////////////////
-	else if (name == "MostRecentSaveSlot") {
-		if (!ConfMan.hasKey("most_recent_saveslot")) {
-			_scValue->setInt(-1);
-		} else {
-			_scValue->setInt(ConfMan.getInt("most_recent_saveslot"));
-		}
 		return _scValue;
 	}
 

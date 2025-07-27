@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.6.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2025-07-21 12:14+0000\n"
+"POT-Creation-Date: 2025-07-25 21:03+0000\n"
 "PO-Revision-Date: 2025-07-22 06:36+0000\n"
 "Last-Translator: Xaviu <xaviu@xaviu.com>\n"
 "Language-Team: Catalan <https://translations.scummvm.org/projects/scummvm/"
@@ -120,7 +120,7 @@ msgstr "Amunt"
 #: engines/scumm/dialog-createsession.cpp:47
 #: engines/scumm/dialog-sessionselector.cpp:67
 #: engines/scumm/he/moonbase/dialog-mapgenerator.cpp:138
-#: engines/sword1/control.cpp:2816 engines/wintermute/wintermute.cpp:184
+#: engines/sword1/control.cpp:2816 engines/wintermute/wintermute.cpp:186
 msgid "Cancel"
 msgstr "Cancel·la"
 
@@ -320,7 +320,7 @@ msgstr "Un altre Emmagatzematge està actiu ara mateix. Voleu interrompre'l?"
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:169
 #: engines/sci/graphics/controls32.cpp:937 engines/scumm/scumm.cpp:4216
-#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:339
+#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:318
 msgid "Yes"
 msgstr "Sí"
 
@@ -333,7 +333,7 @@ msgstr "Sí"
 #: engines/kyra/gui/saveload_eob.cpp:611 engines/kyra/gui/saveload_eob.cpp:644
 #: engines/parallaction/metaengine.cpp:175
 #: engines/sci/graphics/controls32.cpp:937 engines/scumm/scumm.cpp:4216
-#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:340
+#: engines/toon/toon.cpp:1543 engines/zvision/zvision.cpp:319
 msgid "No"
 msgstr "No"
 
@@ -356,7 +356,7 @@ msgstr "El contingut del codi JSON està mal format."
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:83
-#: engines/director/lingo/lingo-builtins.cpp:2152
+#: engines/director/lingo/lingo-builtins.cpp:2174
 #: engines/drascula/saveload.cpp:49 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:665 engines/mtropolis/mtropolis.cpp:114
 #: engines/mtropolis/mtropolis.cpp:124 engines/parallaction/saveload.cpp:270
@@ -368,7 +368,7 @@ msgstr "El contingut del codi JSON està mal format."
 #: engines/sword1/control.cpp:2816 engines/sword1/logic.cpp:1738
 #: engines/sword2/animation.cpp:459 engines/sword2/animation.cpp:469
 #: engines/vcruise/vcruise.cpp:96 engines/vcruise/vcruise.cpp:106
-#: engines/zvision/file/save_manager.cpp:210
+#: engines/zvision/file/save_manager.cpp:211
 msgid "OK"
 msgstr "D'acord"
 
@@ -1489,7 +1489,7 @@ msgid "ScummVM could not find any game in the specified directory!"
 msgstr "ScummVM no ha pogut trobar cap joc al directori especificat!"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:718 engines/engine.cpp:1233
+#: gui/launcher.cpp:718 engines/engine.cpp:1237
 msgid "Unknown variant"
 msgstr "Variant desconeguda"
 
@@ -2936,7 +2936,7 @@ msgid ""
 msgstr ""
 
 #: base/main.cpp:661 base/main.cpp:686
-#: engines/director/lingo/lingo-builtins.cpp:1469
+#: engines/director/lingo/lingo-builtins.cpp:1491
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -3447,7 +3447,7 @@ msgstr "~R~etorna al Llançador"
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:308 engines/toon/toon.cpp:3813
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:636
-#: engines/wage/saveload.cpp:763 engines/zvision/file/save_manager.cpp:46
+#: engines/wage/saveload.cpp:763 engines/zvision/file/save_manager.cpp:47
 msgid "Save game:"
 msgstr "Desa la partida:"
 
@@ -3472,7 +3472,7 @@ msgstr "Desa la partida:"
 #: engines/tinsel/metaengine.cpp:323 engines/toltecs/menu.cpp:308
 #: engines/toon/toon.cpp:3813 engines/trecision/saveload.cpp:67
 #: engines/tsage/scenes.cpp:636 engines/wage/saveload.cpp:763
-#: engines/zvision/file/save_manager.cpp:46 engines/zvision/metaengine.cpp:282
+#: engines/zvision/file/save_manager.cpp:47 engines/zvision/metaengine.cpp:282
 msgid "Save"
 msgstr "Desa"
 
@@ -3654,7 +3654,7 @@ msgstr ""
 "partides que deseu no funcionin en versions futures de ScummVM."
 
 #: engines/engine.cpp:808 engines/engine.cpp:833
-#: engines/wintermute/wintermute.cpp:184
+#: engines/wintermute/wintermute.cpp:186
 msgid "Start anyway"
 msgstr "Inicia de totes maneres"
 
@@ -3698,14 +3698,14 @@ msgstr "Actualment no es pot carregar la partida"
 msgid "Saving game is currently unavailable"
 msgstr "Actualment no es pot desar la partida"
 
-#: engines/engine.cpp:1213
+#: engines/engine.cpp:1215
 #, c-format
 msgid ""
 "The directory '%s' looks like an add-on for the game '%s', but ScummVM could "
 "not find any matching add-on in it."
 msgstr ""
 
-#: engines/engine.cpp:1239
+#: engines/engine.cpp:1243
 #, c-format
 msgid "Directory '%s' matches several add-ons, please pick one."
 msgstr ""
@@ -4103,13 +4103,13 @@ msgid "Touchscreen 'Tap Mode' - Hover (DPad Clicks)"
 msgstr "'Mode Toc' de pantalla tàctil - Flotant (Clics de DPad)"
 
 #. I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
-#: backends/fs/android/android-saf-fs.cpp:804
-#: backends/fs/android/android-saf-fs.cpp:808
+#: backends/fs/android/android-saf-fs.cpp:806
+#: backends/fs/android/android-saf-fs.cpp:810
 msgid "Add a new folder"
 msgstr "Afegeix una carpeta nova"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
-#: backends/fs/android/android-saf-fs.cpp:924
+#: backends/fs/android/android-saf-fs.cpp:926
 msgid "Choose a new folder"
 msgstr "Trieu una carpeta nova"
 
@@ -6229,7 +6229,7 @@ msgstr "Aquesta partida no permet desar"
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1261
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:278 engines/toon/toon.cpp:3907
-#: engines/zvision/file/save_manager.cpp:59
+#: engines/zvision/file/save_manager.cpp:60
 msgid "Restore game:"
 msgstr "Recupera la partida:"
 
@@ -6249,7 +6249,7 @@ msgstr "Recupera la partida:"
 #: engines/sci/engine/kfile.cpp:1246 engines/sherlock/scalpel/scalpel.cpp:1261
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:278 engines/toon/toon.cpp:3907
-#: engines/zvision/file/save_manager.cpp:59 engines/zvision/metaengine.cpp:287
+#: engines/zvision/file/save_manager.cpp:60 engines/zvision/metaengine.cpp:287
 msgid "Restore"
 msgstr "Restaura"
 
@@ -14320,21 +14320,21 @@ msgstr "No s'ha compilat el suport per a Hero Craft"
 msgid "Wintermute3D support is not compiled in"
 msgstr "No s'ha compilat el suport per a Wintermute3D"
 
-#: engines/wintermute/wintermute.cpp:150
+#: engines/wintermute/wintermute.cpp:152
 msgid "This game requires PNG, JPEG and Vorbis support."
 msgstr "Aquest joc requereix suport per a PNG, JPEG i Vorbis."
 
-#: engines/wintermute/wintermute.cpp:161
+#: engines/wintermute/wintermute.cpp:163
 msgid "This game requires the FoxTail subengine, which is not compiled in."
 msgstr ""
 "Aquest joc requereix el submotor FoxTail, que no està dins la compilació."
 
-#: engines/wintermute/wintermute.cpp:172
+#: engines/wintermute/wintermute.cpp:174
 msgid "This game requires the HeroCraft subengine, which is not compiled in."
 msgstr ""
 "Aquest joc requereix el submotor HeroCraft, que no està dins la compilció."
 
-#: engines/wintermute/wintermute.cpp:183
+#: engines/wintermute/wintermute.cpp:185
 msgid ""
 "This game requires 3D capabilities, which is not compiled in. As such, it is "
 "likely to be unplayable totally or partially."
@@ -14835,7 +14835,7 @@ msgstr "F1"
 msgid "Key i"
 msgstr "Tecla i"
 
-#: engines/zvision/file/save_manager.cpp:206
+#: engines/zvision/file/save_manager.cpp:207
 #, c-format
 msgid ""
 "This saved game uses version %u, but this engine only supports up to version "
@@ -14922,7 +14922,7 @@ msgstr "Extreu la moneda"
 msgid "Preferences"
 msgstr "Preferències"
 
-#: engines/zvision/zvision.cpp:319
+#: engines/zvision/zvision.cpp:298
 msgid ""
 "Before playing this game, you'll need to copy the required fonts into "
 "ScummVM's extras directory, or into the game directory. On Windows, you'll "
@@ -14933,7 +14933,7 @@ msgid ""
 "LiberationSerif."
 msgstr ""
 
-#: engines/zvision/zvision.cpp:334
+#: engines/zvision/zvision.cpp:313
 msgid ""
 "MIDI playback is not available, or else improperly configured. Zork Nemesis "
 "contains several music puzzles which require MIDI audio in order to be "

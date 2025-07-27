@@ -19,39 +19,27 @@
  *
  */
 
-/*
- * Copyright (C) 2006-2010 - Frictional Games
- *
- * This file is part of HPL1 Engine.
- */
+#include "common/file.h"
+#include "common/path.h"
+#include "zvision/zvision.h"
 
-#ifndef HPL_OCCLUSION_QUERY_OGL_H
-#define HPL_OCCLUSION_QUERY_OGL_H
+#ifndef ZVISION_FILE_MANAGER
+#define ZVISION_FILE_MANAGER
 
-#include "common/scummsys.h"
-#include "hpl1/engine/graphics/OcclusionQuery.h"
-#include "hpl1/opengl.h"
+namespace ZVision {
 
-#ifdef HPL1_USE_OPENGL
-
-namespace hpl {
-
-class cOcclusionQueryOGL : public iOcclusionQuery {
+class FileManager {
 public:
-	cOcclusionQueryOGL();
-	~cOcclusionQueryOGL();
+	FileManager(ZVision *engine);
+	~FileManager() {};
+	
+	bool loadZix(const Common::Path &name);
+	Common::File *open(const Common::Path &fileName, bool allowSrc=true);	// Wrapper to automatically handle loading of files which may be empty & have an alternate .src file
 
-	void Begin();
-	void End();
-	bool FetchResults();
-	unsigned int GetSampleCount();
-
-public:
-	int mlLastSampleCount;
-	unsigned int mlQueryId;
+private:
+	ZVision *_engine;
 };
 
-} // namespace hpl
+} // End of namespace ZVision
 
-#endif // HPL1_USE_OPENGL
-#endif // HPL_OCCLUSION_QUERY_H
+#endif
