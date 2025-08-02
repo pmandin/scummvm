@@ -82,7 +82,8 @@ ReevengiEngine::~ReevengiEngine() {
 }
 
 bool ReevengiEngine::hasFeature(EngineFeature f) const {
-	return (f == kSupportsArbitraryResolutions);
+	return (f == kSupportsArbitraryResolutions)
+		|| (f == kSupportsReturnToLauncher);
 }
 
 GfxBase *ReevengiEngine::createRenderer(int screenW, int screenH, bool fullscreen) {
