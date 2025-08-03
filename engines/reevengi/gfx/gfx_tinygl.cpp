@@ -236,12 +236,14 @@ void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
 	int movW = _smushWidth * movScale;
 	int movH = _smushHeight * movScale;
 
- 	tglViewport(0, 0, sysW, sysH);
+	tglViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
 
 	// prepare view
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, sysW, sysH, 0, 0, 1);
+	tglOrtho(_screenViewport.left, _screenViewport.left + _screenWidth,
+			_screenViewport.top + _screenHeight, _screenViewport.top,
+			0.0, 1.0);
 
 	tglMatrixMode(TGL_TEXTURE);
 	tglLoadIdentity();
@@ -290,8 +292,6 @@ void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
 	tglDepthMask(TGL_TRUE);
 	tglEnable(TGL_DEPTH_TEST);
 	tglEnable(TGL_LIGHTING);
-
-	tglViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
 }
 
 void GfxTinyGL::releaseMovieFrame() {

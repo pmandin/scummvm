@@ -206,12 +206,14 @@ void GfxOpenGL::drawMovieFrame(int offsetX, int offsetY) {
 	int movW = _smushWidth * movScale;
 	int movH = _smushHeight * movScale;
 
- 	glViewport(0, 0, sysW, sysH);
+	glViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
 
 	// prepare view
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0, sysW, sysH, 0, 0, 1);
+	glOrtho(_screenViewport.left, _screenViewport.left + _screenWidth,
+			_screenViewport.top + _screenHeight, _screenViewport.top,
+			0.0, 1.0);
 
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -260,8 +262,6 @@ void GfxOpenGL::drawMovieFrame(int offsetX, int offsetY) {
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
-
-	glViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
 }
 
 void GfxOpenGL::releaseMovieFrame() {
