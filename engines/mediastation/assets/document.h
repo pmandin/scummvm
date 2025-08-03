@@ -19,29 +19,25 @@
  *
  */
 
-#include "mediastation/mediastation.h"
-#include "mediastation/assets/palette.h"
-#include "mediastation/debugchannels.h"
+#ifndef MEDIASTATION_DOCUMENT_H
+#define MEDIASTATION_DOCUMENT_H
+
+#include "mediastation/asset.h"
+#include "mediastation/mediascript/scriptvalue.h"
+#include "mediastation/mediascript/scriptconstants.h"
 
 namespace MediaStation {
 
-Palette::~Palette() {
-	delete _palette;
-	_palette = nullptr;
-}
+class Document : public Asset {
+public:
+	Document() : Asset(kAssetTypeDocument) { _id = 1; };
 
-void Palette::readParameter(Chunk &chunk, AssetHeaderSectionType paramType) {
-	switch (paramType) {
-	case kAssetHeaderPalette: {
-		byte *buffer = new byte[Graphics::PALETTE_SIZE];
-		chunk.read(buffer, Graphics::PALETTE_SIZE);
-		_palette = new Graphics::Palette(buffer, Graphics::PALETTE_COUNT, DisposeAfterUse::YES);
-		break;
-	}
+	virtual ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) override;
 
-	default:
-		Asset::readParameter(chunk, paramType);
-	}
-}
+private:
+	void processBranch(Common::Array<ScriptValue> &args);
+};
 
 } // End of namespace MediaStation
+
+#endif

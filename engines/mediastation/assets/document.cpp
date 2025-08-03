@@ -20,28 +20,40 @@
  */
 
 #include "mediastation/mediastation.h"
-#include "mediastation/assets/palette.h"
-#include "mediastation/debugchannels.h"
+#include "mediastation/assets/document.h"
 
 namespace MediaStation {
 
-Palette::~Palette() {
-	delete _palette;
-	_palette = nullptr;
-}
+ScriptValue Document::callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) {
+	ScriptValue returnValue;
 
-void Palette::readParameter(Chunk &chunk, AssetHeaderSectionType paramType) {
-	switch (paramType) {
-	case kAssetHeaderPalette: {
-		byte *buffer = new byte[Graphics::PALETTE_SIZE];
-		chunk.read(buffer, Graphics::PALETTE_SIZE);
-		_palette = new Graphics::Palette(buffer, Graphics::PALETTE_COUNT, DisposeAfterUse::YES);
-		break;
+	switch (methodId) {
+	case kBranchToScreenMethod:
+		processBranch(args);
+		return returnValue;
+
+	case kReleaseContextMethod: {
+		assert(args.size() == 1);
+		uint32 contextId = args[0].asAssetId();
+		g_engine->scheduleContextRelease(contextId);
+		return returnValue;
 	}
 
 	default:
-		Asset::readParameter(chunk, paramType);
+		return Asset::callMethod(methodId, args);
 	}
+}
+
+void Document::processBranch(Common::Array<ScriptValue> &args) {
+	assert(args.size() >= 1);
+	uint contextId = args[0].asAssetId();
+	if (args.size() > 1) {
+		bool disableUpdates = static_cast<bool>(args[1].asParamToken());
+		if (disableUpdates)
+			warning("processBranch: disableUpdates parameter not handled yet");
+	}
+
+	g_engine->scheduleScreenBranch(contextId);
 }
 
 } // End of namespace MediaStation
