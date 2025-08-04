@@ -558,7 +558,7 @@ void ReevengiEngine::testPlayMovie(void) {
 			g_movie->clearUpdateNeeded();
 		}
 		if (g_movie->getFrame() >= 0)
-			g_driver->drawMovieFrame(0, 0);
+			g_driver->drawMovieFrame(0, 0, true);
 		else
 			g_driver->releaseMovieFrame();
 	}

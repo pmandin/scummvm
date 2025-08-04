@@ -198,7 +198,7 @@ void GfxOpenGL::prepareMovieFrame(const Graphics::Surface *frame) {
 	_smushHeight = height; //(int)(height * _scaleH);
 }
 
-void GfxOpenGL::drawMovieFrame(int offsetX, int offsetY) {
+void GfxOpenGL::drawMovieFrame(int offsetX, int offsetY, bool useWholeViewport) {
 	int sysW = g_system->getWidth();
 	int sysH = g_system->getHeight();
 
@@ -206,14 +206,22 @@ void GfxOpenGL::drawMovieFrame(int offsetX, int offsetY) {
 	int movW = _smushWidth * movScale;
 	int movH = _smushHeight * movScale;
 
-	glViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
+	if (useWholeViewport) {
+		glViewport(0, 0, sysW, sysH);
+	} else {
+		glViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
+	}
 
 	// prepare view
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(_screenViewport.left, _screenViewport.left + _screenWidth,
-			_screenViewport.top + _screenHeight, _screenViewport.top,
-			0.0, 1.0);
+	if (useWholeViewport) {
+		glOrtho(0, sysW, sysH, 0, 0, 1);
+	} else {
+		glOrtho(_screenViewport.left, _screenViewport.left + _screenWidth,
+				_screenViewport.top + _screenHeight, _screenViewport.top,
+				0.0, 1.0);
+	}
 
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();

@@ -57,7 +57,7 @@ public:
 	bool supportsShaders() /*override*/;
 
 	void prepareMovieFrame(const Graphics::Surface *frame) override;
-	void drawMovieFrame(int offsetX, int offsetY) override;
+	void drawMovieFrame(int offsetX, int offsetY, bool useWholeViewport) override;
 	void releaseMovieFrame() override;
 
 	void prepareMaskedFrame(const Graphics::Surface *frame, uint16* timPalette = nullptr) override;
