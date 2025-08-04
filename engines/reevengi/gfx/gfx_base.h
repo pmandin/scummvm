@@ -66,7 +66,7 @@ public:
 	 * @see releaseMovieFrame
 	 */
 	virtual void prepareMovieFrame(const Graphics::Surface *frame) = 0;
-	virtual void drawMovieFrame(int offsetX, int offsetY) = 0;
+	virtual void drawMovieFrame(int offsetX, int offsetY, bool useWholeViewport = false) = 0;
 
 	/**
 	 * Release the currently prepared movie-frame, if one exists.
