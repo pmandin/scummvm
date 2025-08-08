@@ -36,13 +36,14 @@
       <value name="kai03" id="0x17" />
       <value name="kai02" id="0x18" />
       <value name="kai04" id="0x19" />
-      <value name="lad00" id="0x1a" />
-      <value name="lad01" id="0x1b" />
+      <value name="lad01" id="0x1a" />
+      <value name="lad02" id="0x1b" />
       <value name="door00k" id="0x1c" />
       <value name="door01k" id="0x1d" />
       <value name="door03k" id="0x1e" />
       <value name="door05k" id="0x1f" />
-      <value name="door15" id="0x20" />
+      <value name="door06k" id="0x20" />
+      <value name="door15" id="0x21" />
   </enum>
 
   <enum name="model">
@@ -177,9 +178,9 @@
     <field name="y" type="Uint16" base="10" />
     <field name="w" type="Uint16" base="10" />
     <field name="h" type="Uint16" base="10" />
+    <field name="anim" type="Uint8" enum="door" />
     <field name="unknown0" type="Uint8" />
     <field name="unknown1" type="Uint8" />
-    <field name="anim" type="Uint8" enum="door" />
     <field name="unknown2" type="Uint8" />
     <field name="unknown3" type="Uint8" />
     <field name="next_stage_and_room" type="Uint8" /><!-- bits 7-5: stage, 4-0: room -->

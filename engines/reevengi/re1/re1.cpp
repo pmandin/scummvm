@@ -160,6 +160,43 @@ static const char *RE1_MODEL1 = "%s%s/enemy/char1%d.emd";
 static const char *RE1_MODEL2 = "%s%s/enemy/em10%02x.emd";
 static const char *RE1_MODEL3 = "%s%s/enemy/em11%02x.emd";
 
+static const char *re1_doors[] = {
+	"%s%s/item_m1/door00.dor",
+	"%s%s/item_m1/door01.dor",
+	"%s%s/item_m1/door02.dor",
+	"%s%s/item_m1/door03.dor",
+	"%s%s/item_m1/door04.dor",
+	"%s%s/item_m1/door05.dor",
+	"%s%s/item_m1/door06.dor",
+	"%s%s/item_m1/door07.dor",
+	"%s%s/item_m1/door08.dor",
+	"%s%s/item_m1/door09.dor",
+	"%s%s/item_m1/door10.dor",
+	"%s%s/item_m1/door11.dor",
+	"%s%s/item_m1/door12.dor",
+	"%s%s/item_m1/door13.dor",
+	"%s%s/item_m1/door14.dor",
+	"%s%s/item_m1/mon.dor",
+	"%s%s/item_m1/ele03.dor",
+	"%s%s/item_m1/ele01.dor",
+	"%s%s/item_m1/ele01a.dor",
+	"%s%s/item_m1/ele01b.dor",
+	"%s%s/item_m1/ele02.dor",
+	"%s%s/item_m1/ele04.dor",
+	"%s%s/item_m1/kai01.dor",
+	"%s%s/item_m1/kai03.dor",
+	"%s%s/item_m1/kai02.dor",
+	"%s%s/item_m1/kai04.dor",
+	"%s%s/item_m1/lad01.dor",
+	"%s%s/item_m1/lad02.dor",
+	"%s%s/item_m1/door00k.dor",
+	"%s%s/item_m1/door01k.dor",
+	"%s%s/item_m1/door03k.dor",
+	"%s%s/item_m1/door05k.dor",
+	"%s%s/item_m1/door06k.dor",
+	"%s%s/item_m1/door15.dor"
+};
+
 RE1Engine::RE1Engine(OSystem *syst, const ReevengiGameDescription *desc) :
 		ReevengiEngine(syst, desc) {
 	_room = 6;
@@ -453,6 +490,45 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 				}
 
 				return;
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+void RE1Engine::loadDoor(unsigned int numDoor) {
+	char filePath[64];
+
+	ReevengiEngine::loadDoor(numDoor);
+
+	switch(_flags.platform) {
+		case Common::kPlatformPSX:
+			{
+				if (numDoor >= sizeof(re1_doors)) {
+					return;
+				}
+
+				if (strcmp(re1_doors[numDoor], "") == 0) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re1_doors[numDoor], "psx", re1_country[_country]);
+				debug(3, "re1: loadDoor(%d): %s", numDoor, filePath);
+			}
+			break;
+		case Common::kPlatformWindows:
+			{
+				if (numDoor >= sizeof(re1_doors)) {
+					return;
+				}
+
+				if (strcmp(re1_doors[numDoor], "") == 0) {
+					return;
+				}
+
+				snprintf(filePath, sizeof(filePath), re1_doors[numDoor], "", re1_country[_country]);
+				debug(3, "re1: loadDoor(%d): %s", numDoor, filePath);
 			}
 			break;
 		default:
