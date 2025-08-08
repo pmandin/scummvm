@@ -39,6 +39,7 @@ protected:
 	void loadBgMaskImage(void) override;
 	void loadRoom(void) override;
 	void loadMovie(unsigned int numMovie) override;
+	void loadDoor(unsigned int numDoor) override;
 	Entity *loadEntity(int numEntity, int isPlayer) override;
 
 private:

@@ -422,6 +422,8 @@ void ReevengiEngine::processEventsKeyDown(Common::Event e) {
 		if (_roomScene) {
 			Door *inDoorArea = _roomScene->checkDoors(playerPos);
 			if (inDoorArea) {
+				this->loadDoor(inDoorArea->_fileIdx);
+
 				_stage = inDoorArea->_nextStage;
 				_room = inDoorArea->_nextRoom;
 				_camera = inDoorArea->_nextCamera;
@@ -527,6 +529,10 @@ void ReevengiEngine::loadRoom(void) {
 void ReevengiEngine::loadMovie(unsigned int numMovie) {
 	delete g_movie;
 	g_movie = nullptr;
+}
+
+void ReevengiEngine::loadDoor(unsigned int numDoor) {
+	//
 }
 
 void ReevengiEngine::testDisplayImage(Image::ImageDecoder *img) {

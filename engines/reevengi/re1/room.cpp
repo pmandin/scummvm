@@ -389,32 +389,32 @@ bool RE1Room::sceneExecInst(void) {
 	switch(inst->opcode) {
 		case INST_NOP:
 			{
-				debug(3, "0x%04x: NOP", _scriptPC);
+				debug(4, "0x%04x: NOP", _scriptPC);
 			}
 			break;
 		case INST_IF:
 			{
-				debug(3, "0x%04x: IF", _scriptPC);
+				debug(4, "0x%04x: IF", _scriptPC);
 			}
 			break;
 		case INST_ELSE:
 			{
-				debug(3, "0x%04x: ELSE", _scriptPC);
+				debug(4, "0x%04x: ELSE", _scriptPC);
 			}
 			break;
 		case INST_ENDIF:
 			{
-				debug(3, "0x%04x: ENDIF", _scriptPC);
+				debug(4, "0x%04x: ENDIF", _scriptPC);
 			}
 			break;
 		case INST_BIT_TEST:
 			{
-				debug(3, "0x%04x: BIT_TEST", _scriptPC);
+				debug(4, "0x%04x: BIT_TEST", _scriptPC);
 			}
 			break;
 		case INST_BIT_OP:
 			{
-				debug(3, "0x%04x: BIT_OP", _scriptPC);
+				debug(4, "0x%04x: BIT_OP", _scriptPC);
 			}
 			break;
 		case INST_STAGEROOMCAM_CMP:
@@ -437,17 +437,17 @@ bool RE1Room::sceneExecInst(void) {
 			break;
 		case INST_CUT_SET09:
 			{
-				debug(3, "0x%04x: CUR_SET09", _scriptPC);
+				debug(4, "0x%04x: CUR_SET09", _scriptPC);
 			}
 			break;
 		case INST_CUT_SET0A:
 			{
-				debug(3, "0x%04x: CUT_SET0A", _scriptPC);
+				debug(4, "0x%04x: CUT_SET0A", _scriptPC);
 			}
 			break;
 		case INST_MESSAGE_ON:
 			{
-				debug(3, "0x%04x: MESSAGE_ON", _scriptPC);
+				debug(4, "0x%04x: MESSAGE_ON", _scriptPC);
 			}
 			break;
 		case INST_DOOR_SET:
@@ -466,6 +466,8 @@ bool RE1Room::sceneExecInst(void) {
 				new_door->_nextDir = FROM_LE_16(doorSet->next_dir);
 
 				new_door->_nextStage = doorSet->next_stage_and_room>>5;
+				new_door->_fileIdx = doorSet->anim;
+
 				switch(new_door->_nextStage) {
 					case 0:
 					default:
@@ -483,38 +485,38 @@ bool RE1Room::sceneExecInst(void) {
 
 				this->_doors.push_back(new_door);
 
-				debug(3, "0x%04x: DOOR_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
-					new_door->_x,new_door->_y,new_door->_w,new_door->_h);
+				debug(3, "0x%04x: DOOR_SET x=%d,y=%d,w=%d,h=%d, file %d", _scriptPC,
+					new_door->_x,new_door->_y,new_door->_w,new_door->_h, new_door->_fileIdx);
 			}
 			break;
 		case INST_ITEM_SET:
 			{
-				debug(3, "0x%04x: ITEM_SET", _scriptPC);
+				debug(4, "0x%04x: ITEM_SET", _scriptPC);
 			}
 			break;
 		case INST_ITEM_ATTR_SET:
 			{
-				debug(3, "0x%04x: ITEM_ATTR_SET", _scriptPC);
+				debug(4, "0x%04x: ITEM_ATTR_SET", _scriptPC);
 			}
 			break;
 		case INST_ITEM_ATTR2_SET:
 			{
-				debug(3, "0x%04x: ITEM_ATTR2_SET", _scriptPC);
+				debug(4, "0x%04x: ITEM_ATTR2_SET", _scriptPC);
 			}
 			break;
 		case INST_ITEM_MODEL_SET:
 			{
-				debug(3, "0x%04x: ITEM_MODEL_SET", _scriptPC);
+				debug(4, "0x%04x: ITEM_MODEL_SET", _scriptPC);
 			}
 			break;
 		case INST_EM_SET:
 			{
-				debug(3, "0x%04x: EM_SET", _scriptPC);
+				debug(4, "0x%04x: EM_SET", _scriptPC);
 			}
 			break;
 		case INST_OM_SET:
 			{
-				debug(3, "0x%04x: OM_SET", _scriptPC);
+				debug(4, "0x%04x: OM_SET", _scriptPC);
 			}
 			break;
 		case INST_PLC_POS_SET:
@@ -532,11 +534,11 @@ bool RE1Room::sceneExecInst(void) {
 			break;
 		case INST_EM_POS_SET:
 			{
-				debug(3, "0x%04x: EM_POS_SET", _scriptPC);
+				debug(4, "0x%04x: EM_POS_SET", _scriptPC);
 			}
 			break;
 		default:
-			debug(3, "0x%04x: 0x%02x", _scriptPC, inst->opcode);
+			debug(4, "0x%04x: 0x%02x", _scriptPC, inst->opcode);
 			break;
 	}
 

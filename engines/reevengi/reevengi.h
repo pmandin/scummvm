@@ -80,6 +80,9 @@ protected:
 	// Movie
 	virtual void loadMovie(unsigned int numMovie);
 
+	// Door
+	virtual void loadDoor(unsigned int numDoor);
+
 	// Entity
 	int _defEntity, _defIsPlayer;
 	virtual Entity *loadEntity(int numEntity, int isPlayer);

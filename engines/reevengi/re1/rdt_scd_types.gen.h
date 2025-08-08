@@ -80,9 +80,9 @@ typedef struct {
 	uint16	y;
 	uint16	w;
 	uint16	h;
+	uint8	anim;
 	uint8	unknown0;
 	uint8	unknown1;
-	uint8	anim;
 	uint8	unknown2;
 	uint8	unknown3;
 	uint8	next_stage_and_room;

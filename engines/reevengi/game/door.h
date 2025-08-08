@@ -32,7 +32,7 @@ public:
 	int16 _x,_y,_w,_h;
 
 	int16 _nextX, _nextY, _nextZ, _nextDir;
-	uint8 _nextStage, _nextRoom, _nextCamera;
+	uint8 _nextStage, _nextRoom, _nextCamera, _fileIdx;
 
 	Door(void);
 	virtual ~Door();
