@@ -48,13 +48,13 @@ public:
 
 	virtual Common::Error run(void);
 
-	GameFlags _flags;
 	int _character;
 	int _stage, _room, _camera;
 
 	float _playerX, _playerY, _playerZ, _playerA;
 
 protected:
+	GameFlags _flags;
 	ReevengiGameType _gameType;
 	Clock *_clock;
 
