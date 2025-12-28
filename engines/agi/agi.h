@@ -32,6 +32,7 @@
 #include "common/stack.h"
 #include "common/str.h"
 #include "common/system.h"
+#include "common/text-to-speech.h"
 
 #include "engines/engine.h"
 
@@ -111,8 +112,7 @@ enum AgiGameFeatures {
 	GF_AGDS        = (1 << 1), // marks games created with AGDS - all using AGI version 2.440
 	GF_AGI256      = (1 << 2), // marks fanmade AGI-256 games
 	GF_FANMADE     = (1 << 3), // marks fanmade games
-	GF_2GSOLDSOUND = (1 << 5),
-	GF_EXTCHAR     = (1 << 6)  // use WORDS.TOK.EXTENDED
+	GF_2GSOLDSOUND = (1 << 5)
 };
 
 enum AgiGameID {
@@ -755,6 +755,16 @@ public:
 
 	Common::Stack<ImageStackElement> _imageStack;
 
+#ifdef USE_TTS
+	int16 _previousDisplayRow;
+	Common::String _combinedText;
+	Common::String _previousSaid;
+	bool _queueNextText;
+	bool _voiceClock;
+	bool _replaceDisplayNewlines;
+	Common::CodePage _ttsEncoding;
+#endif
+
 	void clearImageStack() override;
 	void recordImageStackCall(uint8 type, int16 p1, int16 p2, int16 p3,
 	                          int16 p4, int16 p5, int16 p6, int16 p7) override;
@@ -785,6 +795,12 @@ private:
 
 public:
 	void syncSoundSettings() override;
+
+#ifdef USE_TTS
+	void sayText(const Common::String &text, Common::TextToSpeechManager::Action action = Common::TextToSpeechManager::QUEUE, 
+				 bool checkPreviousSaid = true);
+	void stopTextToSpeech(bool clearPreviousSaid = true);
+#endif
 
 public:
 	void decrypt(uint8 *mem, int len);

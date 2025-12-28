@@ -919,7 +919,7 @@ void _k_GenericDrawControl(EngineState *s, reg_t controlObject, bool hilite) {
 		splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter, nullptr);
 		break;
 	case SCI_CONTROLS_TYPE_TEXT:
-		splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter);
+		splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter, g_sci->getGameId() == GID_PQ2 ? "\r" : "\r----------\r");
 		break;
 	default:
 		break;
@@ -1276,7 +1276,7 @@ reg_t kDisplay(EngineState *s, int argc, reg_t *argv) {
 	}
 
 	uint16 languageSplitter = 0;
-	Common::String splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter);
+	Common::String splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter, g_sci->getGameId() == GID_PQ2 ? "\r" : "\r----------\r");
 
 	return g_sci->_gfxPaint16->kernelDisplay(splitText.c_str(), languageSplitter, argc, argv);
 }
@@ -1288,7 +1288,7 @@ reg_t kSetVideoMode(EngineState *s, int argc, reg_t *argv) {
 	// decoder in KQ6 is specifically written for the planar memory model.
 	// Planar memory mode access was used for VGA "Mode X" (320x240 resolution,
 	// although the intro in KQ6 is 320x200).
-	// Refer to http://en.wikipedia.org/wiki/Mode_X
+	// Refer to https://en.wikipedia.org/wiki/Mode_X
 
 	//warning("STUB: SetVideoMode %d", argv[0].toUint16());
 	return s->r_acc;

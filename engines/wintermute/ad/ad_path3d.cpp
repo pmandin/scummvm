@@ -45,7 +45,7 @@ AdPath3D::~AdPath3D() {
 
 //////////////////////////////////////////////////////////////////////////
 void AdPath3D::reset() {
-	for (uint32 i = 0; i < _points.getSize(); i++) {
+	for (int32 i = 0; i < _points.getSize(); i++) {
 		delete _points[i];
 	}
 
@@ -85,7 +85,7 @@ DXVector3 *AdPath3D::getFirst() {
 //////////////////////////////////////////////////////////////////////////
 DXVector3 *AdPath3D::getNext() {
 	_currIndex++;
-	if (_currIndex < (int32)_points.getSize()) {
+	if (_currIndex < _points.getSize()) {
 		return _points[_currIndex];
 	} else {
 		return nullptr;
@@ -94,7 +94,7 @@ DXVector3 *AdPath3D::getNext() {
 
 //////////////////////////////////////////////////////////////////////////
 DXVector3 *AdPath3D::getCurrent() {
-	if (_currIndex >= 0 && _currIndex < (int32)_points.getSize()) {
+	if (_currIndex >= 0 && _currIndex < _points.getSize()) {
 		return _points[_currIndex];
 	} else {
 		return nullptr;
@@ -103,13 +103,13 @@ DXVector3 *AdPath3D::getCurrent() {
 
 //////////////////////////////////////////////////////////////////////////
 bool AdPath3D::persist(BasePersistenceManager *persistMgr) {
-	persistMgr->transferPtr(TMEMBER(_gameRef));
+	persistMgr->transferPtr(TMEMBER(_game));
 
 	persistMgr->transferSint32(TMEMBER(_currIndex));
 	persistMgr->transferBool(TMEMBER(_ready));
 
 	if (persistMgr->getIsSaving()) {
-		int32 j = (int32)_points.getSize();
+		int32 j = _points.getSize();
 		persistMgr->transferSint32("ArraySize", &j);
 		for (int32 i = 0; i < j; i++) {
 			persistMgr->transferFloat("x", &_points[i]->_x);

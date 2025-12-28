@@ -668,12 +668,29 @@ void cmdCloseDialogue(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 }
 
 void cmdCloseWindow(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
+#ifdef USE_TTS
+	// Delay closing the text window until TTS is finished
+	Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
+	while (ttsMan && ttsMan->isSpeaking()) {
+		int key = vm->doPollKeyboard();
+
+		if (key != 0) {
+			break;
+		}
+
+		vm->wait(10);
+	}
+#endif
+
 	vm->_text->closeWindow();
 }
 
 void cmdStatusLineOn(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	TextMgr *text = vm->_text;
 
+#ifdef USE_TTS
+	vm->_voiceClock = true;
+#endif
 	text->statusEnable();
 	text->statusDraw();
 }
@@ -1778,11 +1795,11 @@ void cmdSetMenuItem(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 }
 
 void cmdVersion(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
-	char ver2Msg[] =
+	const char *ver2Msg =
 	    "\n"
 	    "                               \n\n"
 	    "  ScummVM Sierra AGI v%x.%03x";
-	char ver3Msg[] =
+	const char *ver3Msg =
 	    "\n"
 	    "                             \n\n"
 	    "ScummVM Sierra AGI v%x.002.%03x";
@@ -1826,6 +1843,9 @@ void cmdTextScreen(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 void cmdGraphics(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	debugC(4, kDebugLevelScripts, "switching to graphics mode");
 
+#ifdef USE_TTS
+	vm->stopTextToSpeech();
+#endif
 	vm->redrawScreen();
 }
 
@@ -2012,6 +2032,10 @@ void cmdGetString(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 		leadInTextPtr = textMgr->stringWordWrap(leadInTextPtr, 40); // ?? not absolutely sure
 
 		textMgr->displayText(leadInTextPtr);
+#ifdef USE_TTS
+		vm->sayText(vm->_combinedText, Common::TextToSpeechManager::INTERRUPT);
+		vm->_combinedText.clear();
+#endif
 	}
 
 	vm->cycleInnerLoopActive(CYCLE_INNERLOOP_GETSTRING);
@@ -2049,6 +2073,10 @@ void cmdGetNum(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 		leadInTextPtr = textMgr->stringWordWrap(leadInTextPtr, 40); // ?? not absolutely sure
 
 		textMgr->displayText(leadInTextPtr);
+#ifdef USE_TTS
+		vm->sayText(vm->_combinedText, Common::TextToSpeechManager::INTERRUPT);
+		vm->_combinedText.clear();
+#endif
 	}
 
 	textMgr->inputEditOff();
@@ -2144,7 +2172,17 @@ void cmdToggleMonitor(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 void cmdClearLines(AgiGame *state, AgiEngine *vm, uint8 *parameter) {
 	int16 textRowUpper = parameter[0];
 	int16 textRowLower = parameter[1];
-	int16 color = vm->_text->calculateTextBackground(parameter[2]);
+	int16 color;
+	if (!vm->_game.gfxMode && vm->getPlatform() == Common::kPlatformAmiga) {
+		// The Amiga interpreter respected the color parameter in clear.lines
+		// while in text mode. Other platforms ignored it and used black.
+		// Amiga DDP sets a white background for its help screen, bug #16246.
+		// This logic could go in calculateTextBackground(), but it is called
+		// by other places in our code so that could cause side effects.
+		color = parameter[2];
+	} else {
+		color = vm->_text->calculateTextBackground(parameter[2]);
+	}
 
 	// Residence 44 calls clear.lines(24,0,0), see Sarien bug #558423
 	// Agent06 incorrectly calls clear.lines(1,150,0), see ScummVM bugs
@@ -2435,6 +2473,13 @@ int AgiEngine::runLogic(int16 logicNr) {
 		case 0x00:  // return
 			debugC(2, kDebugLevelScripts, "%sreturn() // Logic %d", st, logicNr);
 			debugC(2, kDebugLevelScripts, "=================");
+
+#ifdef USE_TTS
+		sayText(_combinedText, Common::TextToSpeechManager::QUEUE, true);
+		_replaceDisplayNewlines = true;
+		_combinedText.clear();
+		_previousDisplayRow = -1;
+#endif
 
 //			if (vm->getVersion() < 0x2000) {
 //				if (logic_index < state->max_logics) {

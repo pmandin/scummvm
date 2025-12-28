@@ -19,8 +19,6 @@
  *
  */
 
-#include "common/substream.h"
-#include "common/macresman.h"
 #include "common/memstream.h"
 
 #include "director/director.h"
@@ -47,13 +45,13 @@ PaletteCastMember::PaletteCastMember(Cast *cast, uint16 castId, PaletteCastMembe
 	_palette = source._palette ? new PaletteV4(*source._palette) : nullptr;
 }
 
-PaletteCastMember::PaletteCastMember(Cast *cast, uint16 castId, byte *paletteData, PaletteV4 *pal) 
+PaletteCastMember::PaletteCastMember(Cast *cast, uint16 castId, byte *paletteData, PaletteV4 *pal)
 	: CastMember(cast, castId) {
 	_type = kCastPalette;
 	_palette = new PaletteV4(pal->id, paletteData, pal->length);
 	_loaded = true;
 }
- 
+
 // Need to make a deep copy
 CastMember *PaletteCastMember::duplicate(Cast *cast, uint16 castId) {
 	byte *buf = (byte *)malloc(_palette->length);
@@ -100,7 +98,7 @@ void PaletteCastMember::load() {
 	if (_cast->_version < kFileVer400) {
 		// For D3 and below, palette IDs are stored in the CLUT resource as cast ID + 1024
 		paletteId = _castId + _cast->_castIDoffset;
-	} else if (_cast->_version >= kFileVer400 && _cast->_version < kFileVer600) {
+	} else if (_cast->_version >= kFileVer400 && _cast->_version < kFileVer1100) {
 		for (auto &it : _children) {
 			if (it.tag == MKTAG('C', 'L', 'U', 'T')) {
 				paletteId = it.index;
@@ -111,7 +109,7 @@ void PaletteCastMember::load() {
 			warning("PaletteCastMember::load(): No CLUT resource found in %d children", _children.size());
 		}
 	} else {
-		warning("STUB: PaletteCastMember::load(): Palettes not yet supported for version %d", _cast->_version);
+		warning("STUB: PaletteCastMember::load(): Palettes not yet supported for version v%d (%d)", humanVersion(_cast->_version), _cast->_version);
 	}
 	if (paletteId) {
 
@@ -150,9 +148,55 @@ uint32 PaletteCastMember::getCastDataSize() {
 	return 0;
 }
 
-void PaletteCastMember::writeCastData(Common::MemoryWriteStream *writeStream) {
+void PaletteCastMember::writeCastData(Common::SeekableWriteStream *writeStream) {
 	// This should never get triggered
 	// Since there is no data to write
+}
+
+uint32 PaletteCastMember::getPaletteDataSize() {
+	// This is the actual Palette data, in the 'CLUT' resource
+	// PaletteCastMembers data stored in the 'CLUT' resource does not change in size (may change in content) (need to verify)
+	// Hence their original size can be written
+	// This is the length of the 'CLUT' resource without the header and size
+	return _palette->length * 6;
+}
+
+void PaletteCastMember::writePaletteData(Common::SeekableWriteStream *writeStream, uint32 offset) {
+	// Load it before writing
+	if (!_loaded) {
+		load();
+	}
+
+	uint32 castSize = getPaletteDataSize();
+
+	writeStream->seek(offset);
+	writeStream->writeUint32LE(MKTAG('C', 'L', 'U', 'T'));
+	writeStream->writeUint32LE(castSize);
+
+	const byte *pal = _palette->palette;
+
+	for (int i = 0; i < _palette->length; i++) {
+		// Duplicating the data to convert to 16-bit
+		// The palette data is converted to 8-bit at the time of loading
+		writeStream->writeUint16BE(pal[3 * i] << 8);
+		writeStream->writeUint16BE(pal[3 * i + 1] << 8);
+		writeStream->writeUint16BE(pal[3 * i + 2] << 8);
+	}
+
+	if (debugChannelSet(7, kDebugSaving)) {
+		byte *dumpData = nullptr;
+		dumpData = (byte *)calloc(castSize, sizeof(byte));
+		auto dumpStream = new Common::SeekableMemoryWriteStream(dumpData, castSize + 8);
+
+		uint32 currentPos = writeStream->pos();
+		writeStream->seek(offset);
+		dumpStream->write(writeStream, castSize);
+		writeStream->seek(currentPos);
+
+		dumpFile("PaletteData", _castId, MKTAG('C', 'L', 'U', 'T'), dumpData, castSize);
+		free(dumpData);
+		delete dumpStream;
+	}
 }
 
 }	// End of namespace Director

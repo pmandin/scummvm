@@ -89,11 +89,10 @@
 	#include <assert.h>
 	#include <ctype.h>
 
-	// The C++11 standard removed the C99 requirement that some <inttypes.h>
-	// features should only be available when the following macros are defined.
-	// But on some systems (such as RISC OS or macOS < 10.7), the system headers
-	// are not necessarily up to date with this change. So, continue defining
-	// them, in order to avoid build failures on some environments.
+	// In C99, the following macros were necessary to get some <inttypes.h>
+	// features we want. The C++11 standard removed this requirement, but in
+	// practice, some systems (such as RISC OS or macOS < 10.7) are not fully
+	// compliant, and still require the old defines.
 	#define __STDC_CONSTANT_MACROS
 	#define __STDC_FORMAT_MACROS
 	#define __STDC_LIMIT_MACROS
@@ -110,6 +109,7 @@
 	#endif
 
 	#include <limits.h>
+
 	// MSVC does not define M_PI, M_SQRT2 and other math defines by default.
 	// _USE_MATH_DEFINES must be defined in order to have these defined, thus
 	// we enable it here. For more information, check:
@@ -128,33 +128,6 @@
 	// https://github.com/scummvm/scummvm/pull/3966 we concluded that it is safe to
 	// use it as minimal STL code with low probability to bring any incompatibilities
 	#include <limits>
-#endif
-
-#ifndef STATIC_ASSERT
-#if __cplusplus >= 201103L || defined(_MSC_VER)
-	/**
-	 * Generates a compile-time assertion.
-	 *
-	 * @param expression An expression that can be evaluated at compile time.
-	 * @param message An underscore-delimited message to be presented at compile
-	 * time if the expression evaluates to false.
-	 */
-	#define STATIC_ASSERT(expression, message) \
-		static_assert((expression), #message)
-#else
-	/**
-	 * Generates a compile-time assertion.
-	 *
-	 * @param expression An expression that can be evaluated at compile time.
-	 * @param message An underscore-delimited message to be presented at compile
-	 * time if the expression evaluates to false.
-	 */
-	#define STATIC_ASSERT(expression, message) \
-		do { \
-			extern int STATIC_ASSERT_##message[(expression) ? 1 : -1]; \
-			(void)(STATIC_ASSERT_##message); \
-		} while (false)
-#endif
 #endif
 
 // The following math constants are usually defined by the system math.h header, but
@@ -482,7 +455,8 @@
 #endif
 
 //
-// std::nullptr_t when this type is not available
+// std::nullptr_t when unavailable (e.g. the compiler supports C++11,
+// but the standard library is older and has incomplete C++11 support)
 //
 #if defined(NO_CXX11_NULLPTR_T)
 namespace std {
@@ -491,8 +465,8 @@ namespace std {
 #endif
 
 //
-// std::initializer_list
-// Provide replacement when not available
+// std::initializer_list when unavailable (e.g. the compiler supports C++11,
+// but the standard library is older and has incomplete C++11 support)
 //
 #if defined(NO_CXX11_INITIALIZER_LIST)
 namespace std {

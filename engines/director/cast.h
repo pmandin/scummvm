@@ -105,13 +105,16 @@ public:
 	void loadLingoContext(Common::SeekableReadStreamEndian &stream);
 	void loadExternalSound(Common::SeekableReadStreamEndian &stream);
 	void loadSord(Common::SeekableReadStreamEndian &stream);
+	bool importFileInto(int castId, const Common::Path &path);
 
-	void saveConfig(Common::MemoryWriteStream *writeStream, uint32 offset);
-	void saveCast();
+	void saveConfig(Common::SeekableWriteStream *writeStream, uint32 offset);
+	void saveCastData(Common::SeekableWriteStream *writeStream, Resource *res);
 	void saveCastData();
-	void writeCastInfo(Common::MemoryWriteStream *writeStream, uint32 castId);
+	void writeCastInfo(Common::SeekableWriteStream *writeStream, uint32 castId);
 	uint32 getCastInfoSize(uint32 castId);
 	uint32 getCastInfoStringLength(uint32 stringIndex, CastMemberInfo *ci);
+
+	uint32 getConfigSize();
 
 	int getCastSize();
 	int getCastMaxID();
@@ -124,6 +127,7 @@ public:
 	CastMember *getCastMember(int castId, bool load = true);
 	CastMember *getCastMemberByNameAndType(const Common::String &name, CastType type);
 	CastMember *getCastMemberByScriptId(int scriptId);
+	int getCastIdByScriptId(uint32 scriptId) const;
 	CastMemberInfo *getCastMemberInfo(int castId);
 	const Stxt *getStxt(int castId);
 	Common::String getLinkedPath(int castId);
@@ -175,7 +179,6 @@ public:
 	uint16 _castIDoffset;
 
 	Common::Rect _movieRect;
-	CastMemberID _defaultPalette;
 	TilePatternEntry _tiles[kNumBuiltinTiles];
 
 	LingoArchive *_lingoArchive;
@@ -183,7 +186,7 @@ public:
 	LingoDec::ScriptContext *_lingodec = nullptr;
 	LingoDec::ChunkResolver *_chunkResolver = nullptr;
 
-	/* Data to be saved */
+	/* Config Data to be saved */
 	/*  0 */ uint16 _len;
 	/*  2 */ uint16 _fileVersion;
 	/*  4, 6, 8, 10 */ Common::Rect _checkRect;
@@ -216,7 +219,7 @@ public:
 	/* 31 */ uint8 _field18;
 	/* 32 */ int32 _field19;
 	/* 36 */ int16 _version;
-	/* 38 */ int16 _field21;
+	/* 38 */ int16 _movieDepth;
 	/* 40 */ int32 _field22;
 	/* 44 */ int32 _field23;
 	/* 48 */ int32 _field24;
@@ -228,6 +231,22 @@ public:
 	/* 60 */ int32 _field29;
 	/* 64 */ uint32 _checksum;
 	/* 68 */ uint16 _field30;	// Marked as remnants in ProjectorRays
+	/* 70 */ uint16 _defPaletteNum = 0; // _defaultPalette before D5, unused later
+	/* 72 */ uint32 _chunkBaseNum = 0;
+	/* 76 */ CastMemberID _defaultPalette;
+
+	/****** D6.0-D8.5 *******/
+	/* 80 */ int8 _netUnk1 = 0;
+	/* 81 */ int8 _netUnk2 = 0;
+	/* 82 */ int16 _netPreloadNumFrames = 0;
+
+	/****** post D9-D10 *******/
+	/* 84 */ uint32 _windowFlags = 0;
+	/* 88 */ CastMemberID _windowIconId;
+	/* 92 */ CastMemberID _windowMaskId;
+	/* 96 */ CastMemberID _windowDragRegionMaskId;
+
+	/* 100 */ // End of config
 
 private:
 	DirectorEngine *_vm;

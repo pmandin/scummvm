@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- 
+
 #include "audio/mixer.h"
 #include "common/bufferedstream.h"
 #include "common/file.h"
@@ -82,6 +82,7 @@ bool Console::cmdLoadSound(int argc, const char **argv) {
 		Common::File *file = new Common::File();
 		if (!file->open(argv[1])) {
 			warning("File not found: %s", argv[1]);
+			delete file;
 			return true;
 		}
 
@@ -255,12 +256,12 @@ bool Console::cmdDumpFiles(int argc, const char **argv) {
 	Common::Path pattern;
 	pattern = Common::Path(Common::String::format("*.%s", argv[1]));
 	SearchMan.listMatchingMembers(fileList, pattern);
-	
-	for (auto iter = fileList.begin(); iter != fileList.end(); ++iter) {
-		fileName = iter->get()->getFileName();
+
+	for (auto &file : fileList) {
+		fileName = file.get()->getFileName();
 		debugPrintf("Dumping %s\n", fileName.toString().c_str());
 
-		in = iter->get()->createReadStream();
+		in = file.get()->createReadStream();
 		if (in)
 			dumpFile(in, fileName);
 		else

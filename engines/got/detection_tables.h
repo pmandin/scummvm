@@ -33,8 +33,8 @@ const ADGameDescription gameDescriptions[] = {
 		 AD_ENTRY1s("gotres.dat", "0fe859bcfd06772be0885bf510c2877d", 739732),
 		 Common::EN_ANY,
 		 Common::kPlatformDOS,
-		 ADGF_TESTING,
-		 GUIO1(GUIO_NOSPEECH)
+		 ADGF_NO_FLAGS,
+		 GUIO2(GUIO_NOSPEECH, GAMEOPTION_TTS)
 	},
 	{
 		"got",
@@ -42,8 +42,8 @@ const ADGameDescription gameDescriptions[] = {
 		 AD_ENTRY1s("gotres.dat", "c316221a3b9d12a838faef55fde2f34c", 482738),
 		 Common::EN_ANY,
 		 Common::kPlatformDOS,
-		 ADGF_TESTING | ADGF_DEMO,
-		 GUIO1(GUIO_NOSPEECH)
+		 ADGF_DEMO,
+		 GUIO2(GUIO_NOSPEECH, GAMEOPTION_TTS)
 	},
 	{
 		"got",
@@ -51,8 +51,8 @@ const ADGameDescription gameDescriptions[] = {
 		 AD_ENTRY1s("gotres.dat", "747ed508ffa3808156a4eb080e9859f8", 739710),
 		 Common::EN_ANY,
 		 Common::kPlatformDOS,
-		 ADGF_TESTING,
-		 GUIO1(GUIO_NOSPEECH)
+		 ADGF_NO_FLAGS,
+		 GUIO2(GUIO_NOSPEECH, GAMEOPTION_TTS)
 	},
 	{
 		"got",
@@ -60,8 +60,8 @@ const ADGameDescription gameDescriptions[] = {
 		 AD_ENTRY1s("gotres.dat", "c443aa09450566ee32998c3ebb15cbaa", 485858),
 		 Common::EN_ANY,
 		 Common::kPlatformDOS,
-		 ADGF_TESTING | ADGF_DEMO,
-		 GUIO1(GUIO_NOSPEECH)
+		 ADGF_DEMO,
+		 GUIO2(GUIO_NOSPEECH, GAMEOPTION_TTS)
 	},
 
 	AD_TABLE_END_MARKER};

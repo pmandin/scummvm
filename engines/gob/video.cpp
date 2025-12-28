@@ -245,7 +245,9 @@ SurfacePtr Video::initSurfDesc(int16 width, int16 height, int16 flags, byte bpp)
 		assert(!(flags & DISABLE_SPR_ALLOC));
 
 
-		if (!(flags & SCUMMVM_CURSOR) && _vm->getGameType() != kGameTypeAdibou2)
+		if (!(flags & SCUMMVM_CURSOR) &&
+				_vm->getGameType() != kGameTypeAdibou2 &&
+				_vm->getGameType() != kGameTypeAdi4)
 			width = (width + 7) & 0xFFF8;
 
 		descPtr = SurfacePtr(new Surface(width,
@@ -372,6 +374,11 @@ void Video::drawPacked(byte *sprBuf, int16 width, int16 height,
 void Video::drawPackedSprite(byte *sprBuf, int16 width, int16 height,
 		int16 x, int16 y, int16 transp, Surface &dest) {
 
+	if (y + height > dest.getHeight()) {
+		warning(" Video::drawPackedSprite: destY + height > destHeight");
+		return;
+	}
+
 	if (spriteUncompressor(sprBuf, width, height, x, y, transp, dest))
 		return;
 
@@ -403,12 +410,16 @@ void Video::setPalElem(int16 index, char red, char green, char blue,
 
 	if (_vm->getPixelFormat().bytesPerPixel == 1)
 		g_system->getPaletteManager()->setPalette(pal, index, 1);
-	else
+	else {
+		bool useSpecialBlackWhiteValues = _vm->getGameType() == kGameTypeAdibou2 ||
+										  _vm->getGameType() == kGameTypeAdi4;
+
 		Surface::computeHighColorMap(_vm->_global->_pPaletteDesc->highColorMap,
 									 pal,
 									 _vm->getPixelFormat(),
-									 _vm->getGameType() == kGameTypeAdibou2,
+									 useSpecialBlackWhiteValues,
 									 index, 1, 0);
+	}
 }
 
 void Video::setPalette(PalDesc *palDesc) {
@@ -423,12 +434,16 @@ void Video::setPalette(PalDesc *palDesc) {
 
 	if (_vm->getPixelFormat().bytesPerPixel == 1)
 		g_system->getPaletteManager()->setPalette(pal, 0, numcolors);
-	else
+	else {
+		bool useSpecialBlackWhiteValues = _vm->getGameType() == kGameTypeAdibou2 ||
+										  _vm->getGameType() == kGameTypeAdi4;
+
 		Surface::computeHighColorMap(palDesc->highColorMap,
 									 pal,
 									 _vm->getPixelFormat(),
-									 _vm->getGameType() == kGameTypeAdibou2,
+									 useSpecialBlackWhiteValues,
 									 0, numcolors);
+	}
 }
 
 void Video::setFullPalette(PalDesc *palDesc) {
@@ -445,11 +460,15 @@ void Video::setFullPalette(PalDesc *palDesc) {
 
 		if (_vm->getPixelFormat().bytesPerPixel == 1)
 			g_system->getPaletteManager()->setPalette(pal, 0, 256);
-		else
+		else {
+			bool useSpecialBlackWhiteValues = _vm->getGameType() == kGameTypeAdibou2 ||
+											  _vm->getGameType() == kGameTypeAdi4;
+
 			Surface::computeHighColorMap(palDesc->highColorMap,
 										 pal,
 										 _vm->getPixelFormat(),
-										 _vm->getGameType() == kGameTypeAdibou2);
+										 useSpecialBlackWhiteValues);
+		}
 	} else
 		Video::setPalette(palDesc);
 }

@@ -353,11 +353,14 @@ int MidiDriver_FluidSynth::open() {
 		return MERR_DEVICE_NOT_AVAILABLE;
 	}
 
-#if defined(ANDROID_BACKEND) && defined(FS_HAS_STREAM_SUPPORT)
+#if (defined(EMSCRIPTEN) || defined(ANDROID_BACKEND)) && defined(FS_HAS_STREAM_SUPPORT)
 	// In Android, when using SAF we need to wrap IO to make it work
 	// We can only do this with FluidSynth 2.0
-	if (!isUsingInMemorySoundFontData &&
-			AndroidFilesystemFactory::instance().hasSAF()) {
+	if (!isUsingInMemorySoundFontData 
+#if defined(ANDROID_BACKEND)
+		&& AndroidFilesystemFactory::instance().hasSAF()
+#endif
+		) {
 		Common::FSNode fsnode(getSoundFontPath());
 		_engineSoundFontData = fsnode.createReadStream();
 		isUsingInMemorySoundFontData = _engineSoundFontData != nullptr;
@@ -514,8 +517,14 @@ void MidiDriver_FluidSynth::close() {
 
 	_mixer->stopHandle(_mixerSoundHandle);
 
-	if (_soundFont != -1)
-		fluid_synth_sfunload(_synth, _soundFont, 1);
+	/*
+	 * Don't delete the soundfont before cleaning up
+	 * Some parts of it are still in use and cause a timer thread to be
+	 * created to postpone the cleanup.
+	 * The "embedded" OS abstraction layer introduced in Fluidsynth 2.5 does
+	 * not supported threads and this causes a segfault when the final cleanup happens
+	 * just below.
+	 */
 
 	delete_fluid_synth(_synth);
 	delete_fluid_settings(_settings);

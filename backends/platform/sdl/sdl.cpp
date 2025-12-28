@@ -54,7 +54,7 @@
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 #include "graphics/opengl/context.h"
 #endif
-#if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
+#if defined(USE_SCUMMVMDLC)
 #include "backends/dlc/scummvmcloud.h"
 #endif
 #include "graphics/cursorman.h"
@@ -105,7 +105,7 @@ OSystem_SDL::OSystem_SDL()
 	_eventSource(nullptr),
 	_eventSourceWrapper(nullptr),
 	_window(nullptr) {
-#if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
+#if defined(USE_SCUMMVMDLC)
 	_dlcStore = new DLC::ScummVMCloud::ScummVMCloud();
 #endif
 }
@@ -225,7 +225,7 @@ bool OSystem_SDL::hasFeature(Feature f) {
 	if (f == kFeatureOpenGLForGame) return _oglType != OpenGL::kContextNone && OpenGLContext.type != OpenGL::kContextGLES;
 	if (f == kFeatureShadersForGame) return _supportsShaders;
 #endif
-#if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
+#if defined(USE_SCUMMVMDLC)
 	if (f == kFeatureDLC) return true;
 #endif
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -999,7 +999,7 @@ bool OSystem_SDL::setGraphicsMode(int mode, uint flags) {
 	// If the new mode and the current mode are not from the same graphics
 	// manager, delete and create the new mode graphics manager
 	if (render3d) {
-		uint best3DSupport = -1;
+		uint best3DSupport = (uint) -1;
 		uint i;
 		// Make sure the requested mode supports 3D
 		for (i = 0; i < GraphicsManagerCount; ++i) {

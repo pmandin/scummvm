@@ -108,13 +108,16 @@ bool FreescapeEngine::executeObjectConditions(GeometricObject *obj, bool shot, b
 		_syncSound = false;
 		_objExecutingCodeSize = collided ? obj->getSize() : Math::Vector3d();
 		if (collided) {
-			clearGameBit(31); // We collided with something that has code
+			if (!isCastle())
+				clearGameBit(31); // We collided with something that has code
 			debugC(1, kFreescapeDebugCode, "Executing with collision flag: %s", obj->_conditionSource.c_str());
 		} else if (shot)
 			debugC(1, kFreescapeDebugCode, "Executing with shot flag: %s", obj->_conditionSource.c_str());
-		else if (activated)
+		else if (activated) {
+			if (isCastle()) // TODO: add a 3DCK check here
+				clearTemporalMessages();
 			debugC(1, kFreescapeDebugCode, "Executing with activated flag: %s", obj->_conditionSource.c_str());
-		else
+		} else
 			error("Neither shot or collided flag is set!");
 		executed = executeCode(obj->_condition, shot, collided, false, activated); // TODO: check this last parameter
 	}
@@ -150,6 +153,8 @@ bool FreescapeEngine::executeCode(FCLInstructionVector &code, bool shot, bool co
 	int skipDepth = 0;
 	int conditionalDepth = 0;
 	bool executed = false;
+	int loopIterations = 0;
+	int loopHead = -1;
 	int codeSize = code.size();
 
 	if (codeSize == 0) {
@@ -196,6 +201,25 @@ bool FreescapeEngine::executeCode(FCLInstructionVector &code, bool shot, bool co
 			break;
 		case Token::NOP:
 			debugC(1, kFreescapeDebugCode, "Executing NOP at ip: %d", ip);
+			break;
+
+		case Token::LOOP:
+			loopHead = ip;
+			loopIterations = instruction._source;
+			debugC(1, kFreescapeDebugCode, "Starting loop with %d iterations at ip: %d", loopIterations, ip);
+			break;
+
+		case Token::AGAIN:
+			if (loopIterations > 1) {
+				loopIterations--;
+				ip = loopHead;
+				debugC(1, kFreescapeDebugCode, "Looping again, %d iterations left, jumping to ip: %d", loopIterations, ip);
+			} else if (loopIterations == 1) {
+				loopIterations--;
+				debugC(1, kFreescapeDebugCode, "Loop finished");
+			} else {
+				error("AGAIN found without a matching LOOP!");
+			}
 			break;
 
 		case Token::CONDITIONAL:
@@ -268,7 +292,7 @@ bool FreescapeEngine::executeCode(FCLInstructionVector &code, bool shot, bool co
 			executeRedraw(instruction);
 			break;
 		case Token::EXECUTE:
-			executeExecute(instruction, shot, collided, activated);
+			executeExecute(instruction);
 			ip = codeSize;
 			break;
 		case Token::DELAY:
@@ -331,13 +355,12 @@ void FreescapeEngine::executeRedraw(FCLInstruction &instruction) {
 	if (isEclipse2() && _currentArea->getAreaID() == _startArea && _gameStateControl == kFreescapeGameStateStart)
 		delay = delay * 10;
 
+	if (isCastle() && isSpectrum() && getGameBit(31))
+		delay = delay * 15; // Slow down redraws when the final cutscene is playing
 	waitInLoop(delay);
-	if (_syncSound) {
-		waitForSounds();
-	}
 }
 
-void FreescapeEngine::executeExecute(FCLInstruction &instruction, bool shot, bool collided, bool activated) {
+void FreescapeEngine::executeExecute(FCLInstruction &instruction) {
 	uint16 objId = instruction._source;
 	debugC(1, kFreescapeDebugCode, "Executing instructions from object %d", objId);
 	Object *obj = _currentArea->objectWithID(objId);
@@ -345,23 +368,26 @@ void FreescapeEngine::executeExecute(FCLInstruction &instruction, bool shot, boo
 		obj = _areaMap[255]->objectWithID(objId);
 		if (!obj) {
 			obj = _areaMap[255]->entranceWithID(objId);
+			if (!obj) {
+				debugC(1, kFreescapeDebugCode, "WARNING: executing instructions from a non-existent object %d", objId);
+				return;
+			}
 			assert(obj);
 			FCLInstructionVector &condition = ((Entrance *)obj)->_condition;
-			executeCode(condition, shot, collided, false, activated);
+			executeCode(condition, true, true, true, true);
 			return;
 		}
 	}
-	executeObjectConditions((GeometricObject *)obj, shot, collided, activated);
+	executeObjectConditions((GeometricObject *)obj, true, true, true);
 }
 
 void FreescapeEngine::executeSound(FCLInstruction &instruction) {
-	if (_firstSound)
-		stopAllSounds();
+	stopAllSounds(_movementSoundHandle);
 	_firstSound = false;
 	uint16 index = instruction._source;
 	bool sync = instruction._additional;
 	debugC(1, kFreescapeDebugCode, "Playing sound %d", index);
-	playSound(index, sync);
+	playSound(index, sync, _soundFxHandle);
 }
 
 void FreescapeEngine::executeDelay(FCLInstruction &instruction) {
@@ -456,7 +482,7 @@ bool FreescapeEngine::executeEndIfVisibilityIsEqual(FCLInstruction &instruction)
 	if (additional == 0) {
 		obj = _currentArea->objectWithID(source);
 		if (!obj && isCastle())
-			return false; // The value is not important
+			return (true == (value != 0));
 		assert(obj);
 		debugC(1, kFreescapeDebugCode, "End condition if visibility of obj with id %d is %d!", source, value);
 	} else {
@@ -582,6 +608,7 @@ void FreescapeEngine::executeDestroy(FCLInstruction &instruction) {
 		debugC(1, kFreescapeDebugCode, "WARNING: Destroying obj %d in area %d already destroyed!", objectID, areaID);
 
 	obj->destroy();
+	obj->makeInvisible();
 }
 
 void FreescapeEngine::executeMakeInvisible(FCLInstruction &instruction) {
@@ -633,9 +660,6 @@ void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
 	debugC(1, kFreescapeDebugCode, "Making obj %d visible in area %d!", objectID, areaID);
 	if (_areaMap.contains(areaID)) {
 		Object *obj = _areaMap[areaID]->objectWithID(objectID);
-		if (!obj && isCastle() && _executingGlobalCode)
-			return; // No side effects
-
 		if (!obj) {
 			obj = _areaMap[255]->objectWithID(objectID);
 			if (!obj) {
@@ -643,7 +667,11 @@ void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
 					error("obj %d does not exists in area %d nor in the global one!", objectID, areaID);
 				return;
 			}
-			_currentArea->addObjectFromArea(objectID, _areaMap[255]);
+
+			if (obj->getType() != kGroupType)
+				_currentArea->addObjectFromArea(objectID, _areaMap[255]);
+			else if (obj->_partOfGroup)
+				_currentArea->addGroupFromArea(objectID, _areaMap[255]);
 			obj = _areaMap[areaID]->objectWithID(objectID);
 			assert(obj); // We know that an object should be there
 		}

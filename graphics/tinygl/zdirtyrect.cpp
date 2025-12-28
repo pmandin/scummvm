@@ -27,6 +27,22 @@
 
 namespace TinyGL {
 
+GLTextureEnvArgument::GLTextureEnvArgument()
+	: sourceRGB(TGL_TEXTURE)
+	, operandRGB(TGL_SRC_COLOR)
+	, sourceAlpha(TGL_TEXTURE)
+	, operandAlpha(TGL_SRC_ALPHA) {}
+
+GLTextureEnv::GLTextureEnv()
+	: envMode(TGL_MODULATE)
+	, combineRGB(TGL_REPLACE)
+	, combineAlpha(TGL_REPLACE)
+	, constA(255), constR(255), constG(255), constB(255) {}
+
+bool GLTextureEnv::isDefault() const {
+	return envMode == TGL_MODULATE;
+}
+
 void GLContext::issueDrawCall(DrawCall *drawCall) {
 	if (_enableDirtyRectangles && drawCall->getDirtyRegion().isEmpty())
 		return;
@@ -469,12 +485,15 @@ RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() 
 	state.texture = c->current_texture;
 	state.wrapS = c->texture_wrap_s;
 	state.wrapT = c->texture_wrap_t;
+	state.textureEnv = c->_texEnv;
 	state.lightingEnabled = c->lighting_enabled;
 	state.textureVersion = c->current_texture->versionNumber;
 	state.fogEnabled = c->fog_enabled;
 	state.fogColorR = c->fog_color.X;
 	state.fogColorG = c->fog_color.Y;
 	state.fogColorB = c->fog_color.Z;
+	state.stippleColor = c->stippleColor;
+	state.two_color_stipple_enabled = c->two_color_stipple_enabled;
 
 	memcpy(state.scissor, c->scissor, sizeof(state.scissor));
 	memcpy(state.viewportScaling, c->viewport.scale._v, sizeof(c->viewport.scale._v));
@@ -504,6 +523,8 @@ void RasterizationDrawCall::applyState(const RasterizationDrawCall::Rasterizatio
 	c->fb->setFogEnabled(state.fogEnabled);
 	c->fb->setFogColor(state.fogColorR, state.fogColorG, state.fogColorB);
 	c->fb->setPolygonStipplePattern(state.polygonStipplePattern);
+	c->fb->setStippleColor(state.stippleColor >> 16, (state.stippleColor >> 8) & 0xff, state.stippleColor & 0xff);
+	c->fb->enableTwoColorStipple(state.two_color_stipple_enabled);
 	c->fb->enablePolygonStipple(state.polygonStippleEnabled);
 
 	c->scissor_test_enabled = state.enableScissor;
@@ -543,6 +564,7 @@ void RasterizationDrawCall::applyState(const RasterizationDrawCall::Rasterizatio
 	c->current_texture = state.texture;
 	c->texture_wrap_s = state.wrapS;
 	c->texture_wrap_t = state.wrapT;
+	c->_texEnv = state.textureEnv;
 	c->fog_enabled = state.fogEnabled;
 	c->fog_color = Vector4(state.fogColorR, state.fogColorG, state.fogColorB, 1.0f);
 

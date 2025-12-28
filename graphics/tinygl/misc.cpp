@@ -130,6 +130,9 @@ void GLContext::glopEnableDisable(GLParam *p) {
 		else
 			offset_states &= ~TGL_OFFSET_LINE;
 		break;
+	case TGL_TWO_COLOR_STIPPLE:
+		two_color_stipple_enabled = v != 0;
+		break;
 	default:
 		if (code >= TGL_LIGHT0 && code < TGL_LIGHT0 + T_MAX_LIGHTS) {
 			gl_enable_disable_light(code - TGL_LIGHT0, v);
@@ -165,8 +168,8 @@ void GLContext::glopStencilFunc(GLParam *p) {
 	else if (ref > 255)
 		ref = 255;
 	stencil_test_func = func;
-	stencil_ref_val = ref;
-	stencil_mask = mask;
+	stencil_ref_val = (byte)ref;
+	stencil_mask = (byte)mask;
 }
 
 void GLContext::glopStencilOp(GLParam *p) {
@@ -218,6 +221,13 @@ void GLContext::glopPolygonStipple(GLParam *p) {
 	for (int i = 0; i < 128; i++) {
 		polygon_stipple_pattern[i] = p[i + 1].ui;
 	}
+}
+
+void GLContext::glopStippleColor(GLParam *p) {
+	int r = (int)p[1].f;
+	int g = (int)p[2].f;
+	int b = (int)p[3].f;
+	stippleColor = r << 16 | g << 8 | b;
 }
 
 void GLContext::glopPolygonOffset(GLParam *p) {

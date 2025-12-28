@@ -60,11 +60,12 @@ uint8 Area::getScale() {
 	return _scale;
 }
 
-Area::Area(uint16 areaID_, uint16 areaFlags_, ObjectMap *objectsByID_, ObjectMap *entrancesByID_) {
+Area::Area(uint16 areaID_, uint16 areaFlags_, ObjectMap *objectsByID_, ObjectMap *entrancesByID_, bool isCastle_) {
 	_areaID = areaID_;
 	_areaFlags = areaFlags_;
 	_objectsByID = objectsByID_;
 	_entrancesByID = entrancesByID_;
+	_isCastle = isCastle_;
 
 	_scale = 0;
 	_skyColor = 255;
@@ -234,14 +235,14 @@ void Area::resetArea() {
 }
 
 
-void Area::draw(Freescape::Renderer *gfx, uint32 animationTicks, Math::Vector3d camera, Math::Vector3d direction) {
+void Area::draw(Freescape::Renderer *gfx, uint32 animationTicks, Math::Vector3d camera, Math::Vector3d direction, bool insideWait) {
 	bool runAnimation = animationTicks != _lastTick;
 	assert(_drawableObjects.size() > 0);
 	ObjectArray planarObjects;
 	ObjectArray nonPlanarObjects;
 	Object *floor = nullptr;
 	Common::HashMap<Object *, float> sizes;
-	float offset = 1.0 / _scale;
+	float offset = MAX(0.15, 1.0 / _scale);
 
 	for (auto &obj : _drawableObjects) {
 		if (!obj->isDestroyed() && !obj->isInvisible()) {
@@ -251,7 +252,7 @@ void Area::draw(Freescape::Renderer *gfx, uint32 animationTicks, Math::Vector3d 
 			}
 
 			if (obj->getType() == ObjectType::kGroupType) {
-				drawGroup(gfx, (Group *)obj, runAnimation);
+				drawGroup(gfx, (Group *)obj, runAnimation && !insideWait);
 				continue;
 			}
 
@@ -401,7 +402,7 @@ Object *Area::checkCollisionRay(const Math::Ray &ray, int raySize) {
 			if (((GeometricObject *)obj)->isLineButNotStraight())
 				continue;
 
-		if (!obj->isDestroyed() && !obj->isInvisible()) {
+		if (!obj->isDestroyed() && !obj->isInvisible() && obj->isGeometric()) {
 			GeometricObject *gobj = (GeometricObject *)obj;
 			Math::Vector3d collidedNormal;
 			float collidedDistance = sweepAABB(boundingBox, gobj->_boundingBox, raySize * ray.getDirection(), collidedNormal);
@@ -425,7 +426,7 @@ Object *Area::checkCollisionRay(const Math::Ray &ray, int raySize) {
 ObjectArray Area::checkCollisions(const Math::AABB &boundingBox) {
 	ObjectArray collided;
 	for (auto &obj : _drawableObjects) {
-		if (!obj->isDestroyed() && !obj->isInvisible()) {
+		if (!obj->isDestroyed() && !obj->isInvisible() && obj->isGeometric()) {
 			GeometricObject *gobj = (GeometricObject *)obj;
 			if (gobj->collides(boundingBox)) {
 				collided.push_back(gobj);
@@ -451,7 +452,7 @@ Math::Vector3d Area::separateFromWall(const Math::Vector3d &_position) {
 	Math::Vector3d position = _position;
 	float sep = 8 / _scale;
 	for (auto &obj : _drawableObjects) {
-		if (!obj->isDestroyed() && !obj->isInvisible()) {
+		if (!obj->isDestroyed() && !obj->isInvisible() && obj->isGeometric()) {
 			GeometricObject *gobj = (GeometricObject *)obj;
 			Math::Vector3d distance = gobj->_boundingBox.distance(position);
 			if (distance.length() > 0.0001)
@@ -491,9 +492,9 @@ Math::Vector3d Area::resolveCollisions(const Math::Vector3d &lastPosition_, cons
 	float reductionHeight = 0.0;
 	// Ugly hack to fix the collisions in tight spaces in the stores and junk room
 	// for Castle Master
-	if (_name == "    STORES     " && _areaID == 62) {
+	if (_isCastle && _areaID == 62) {
 		reductionHeight = 0.3f;
-	} else if (_name == "   JUNK ROOM   " && _areaID == 61) {
+	} else if (_isCastle && _areaID == 61) {
 		reductionHeight = 0.3f;
 	}
 
@@ -507,7 +508,7 @@ Math::Vector3d Area::resolveCollisions(const Math::Vector3d &lastPosition_, cons
 		Math::Vector3d direction = position - lastPosition;
 
 		for (auto &obj : _drawableObjects) {
-			if (!obj->isDestroyed() && !obj->isInvisible()) {
+			if (!obj->isDestroyed() && !obj->isInvisible() && obj->isGeometric()) {
 				GeometricObject *gobj = (GeometricObject *)obj;
 				Math::Vector3d collidedNormal;
 				float collidedDistance = sweepAABB(boundingBox, gobj->_boundingBox, direction, collidedNormal);

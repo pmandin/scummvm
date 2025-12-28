@@ -95,6 +95,7 @@ void DirectorSound::playFile(Common::String filename, int soundChannel) {
 
 	// Set the last played sound so that cast member 0 in the sound channel doesn't stop this file.
 	setLastPlayedSound(soundChannel, SoundID(), false);
+	_channels[soundChannel]->fromLastMovie = false;
 }
 
 void DirectorSound::playMCI(Audio::AudioStream &stream, uint32 from, uint32 to) {
@@ -143,6 +144,7 @@ void DirectorSound::playStream(Audio::AudioStream &stream, int soundChannel) {
 	if (_channels[soundChannel]->pitchShiftPercent != 100) {
 		_mixer->setChannelRate(_channels[soundChannel]->handle, _channels[soundChannel]->originalRate*_channels[soundChannel]->pitchShiftPercent/100);
 	}
+	_channels[soundChannel]->fromLastMovie = false;
 }
 
 void DirectorSound::playSound(SoundID soundID, int soundChannel, bool forPuppet) {
@@ -171,7 +173,7 @@ void DirectorSound::playCastMember(CastMemberID memberID, int soundChannel, bool
 			stopSound(soundChannel);
 			// Director 4 will stop after the current loop iteration, but
 			// Director 3 will continue looping until the sound is replaced.
-		} else if (g_director->getVersion() >= 400) {
+		} else if (g_director->getVersion() >= 400 && !_channels[soundChannel]->fromLastMovie) {
 			// If there is a loopable stream specified, set the loop to expire by itself
 			if (_channels[soundChannel]->loopPtr) {
 				debugC(5, kDebugSound, "DirectorSound::playCastMember(): telling loop in channel %d to stop", soundChannel);
@@ -481,8 +483,11 @@ void DirectorSound::playExternalSound(uint16 menu, uint16 submenu, int soundChan
 void DirectorSound::changingMovie() {
 	for (auto &it : _channels) {
 		it._value->movieChanged = true;
+
+		// When switching movies, the puppetSound flag is disabled. This means any sound (channel or script)
+		// can take over. Any existing sound that is playing (sample or loop) will continue to play until that happens.
 		if (isChannelPuppet(it._key)) {
-			setPuppetSound(SoundID(), it._key); // disable puppet sound
+			disablePuppetSound(it._key); // disable puppet sound
 		}
 
 		if (isChannelActive(it._key)) {
@@ -498,6 +503,9 @@ void DirectorSound::changingMovie() {
 					_mixer->loopChannel(it._value->handle);
 				}
 			}
+
+			// Flag that this is from a previous movie, therefore looping should continue.
+			it._value->fromLastMovie = true;
 		}
 	}
 	unloadSampleSounds(); // TODO: we can possibly keep this between movies
@@ -527,6 +535,7 @@ void DirectorSound::stopSound(int soundChannel) {
 	cancelFade(soundChannel);
 	_mixer->stopHandle(_channels[soundChannel]->handle);
 	setLastPlayedSound(soundChannel, SoundID());
+	_channels[soundChannel]->fromLastMovie = false;
 	return;
 }
 
@@ -542,6 +551,7 @@ void DirectorSound::stopSound() {
 
 		_mixer->stopHandle(it._value->handle);
 		setLastPlayedSound(it._key, SoundID());
+		it._value->fromLastMovie = false;
 	}
 
 	_mixer->stopHandle(_scriptSound);
@@ -569,12 +579,22 @@ void DirectorSound::setPuppetSound(SoundID soundId, int soundChannel) {
 		return;
 
 	if (soundId.isZero()) {
+		// If soundId is zero, kill the current sound and clear the puppet flag.
 		stopSound(soundChannel);
+		disablePuppetSound(soundChannel);
 	} else {
+		// soundId is non-zero, set the puppet sound value to that.
 		_channels[soundChannel]->newPuppet = true;
 		_channels[soundChannel]->puppet = soundId;
 		_channels[soundChannel]->stopOnZero = true;
 	}
+}
+
+void DirectorSound::disablePuppetSound(int soundChannel) {
+	if (!assertChannel(soundChannel))
+		return;
+
+	_channels[soundChannel]->puppet = SoundID();
 }
 
 void DirectorSound::playPuppetSound(int soundChannel) {
@@ -734,6 +754,41 @@ uint8 DirectorSound::getChannelFaderR(int channel) {
 	return _mixer->getChannelFaderR(_channels[channel]->handle);
 }
 
+void DirectorSound::processCuePoints() {
+	for (auto &it : _channels) {
+		SoundChannel *channel = it._value;
+
+		const SoundID &lastPlayedSound = channel->lastPlayedSound;
+		if (lastPlayedSound.type == kSoundCast) {
+			CastMemberID memberID(lastPlayedSound.u.cast.member, lastPlayedSound.u.cast.castLib);
+			SoundCastMember *soundCast = (SoundCastMember *)_window->getCurrentMovie()->getCastMember(memberID);
+
+			if (!soundCast)
+				continue;
+
+			if (soundCast->_cuePoints.empty())
+				continue;
+
+			uint32 elapsedTime = _mixer->getSoundElapsedTime(channel->handle);
+
+			if (!elapsedTime)
+				continue;
+
+			for (uint i = channel->lastCuePointIndex + 1; i < soundCast->_cuePoints.size(); i++) {
+				int32 cuePoint = soundCast->_cuePoints[i];
+
+				if (cuePoint > (int32)elapsedTime)
+					break;
+
+				debugC(5, kDebugSound, "DirectorSound::processCuePoints(): cue point %d reached on channel %d", cuePoint, it._key);
+
+				_window->getCurrentMovie()->processEvent(kEventCuePassed, i);
+
+				channel->lastCuePointIndex = i;
+			}
+		}
+	}
+}
 
 
 SNDDecoder::SNDDecoder()
@@ -964,6 +1019,128 @@ Audio::AudioStream *AudioFileDecoder::getAudioStream(bool looping, bool forPuppe
 	}
 
 	return nullptr;
+}
+
+MoaStreamDecoder::MoaStreamDecoder(Common::String &format, Common::SeekableReadStreamEndian *stream)
+		: AudioDecoder() {
+	_format = format;
+	_stream = stream;
+}
+
+MoaStreamDecoder::~MoaStreamDecoder() {
+	if (_stream) {
+		delete _stream;
+		_stream = nullptr;
+	}
+}
+
+Audio::AudioStream *MoaStreamDecoder::getAudioStream(bool looping, bool forPuppet, DisposeAfterUse::Flag disposeAfterUse) {
+	if (!_stream)
+		return nullptr;
+
+	// Make sure we're at the start of the stream
+	_stream->seek(0, SEEK_SET);
+
+	Audio::RewindableAudioStream *stream = nullptr;
+	if (_format.equalsIgnoreCase("kMoaCfFormat_AIFF")) {
+		stream = Audio::makeAIFFStream(_stream, DisposeAfterUse::NO);
+	} else {
+		warning("Unsupported Moa stream type '%s'", _format.c_str());
+		delete _stream;
+	}
+
+	if (stream) {
+		if (looping) {
+			return new Audio::LoopingAudioStream(stream, 0);
+		}
+		return stream;
+	}
+
+	return nullptr;
+}
+
+MoaSoundFormatDecoder::MoaSoundFormatDecoder() {
+}
+
+MoaSoundFormatDecoder::~MoaSoundFormatDecoder() {
+	if (_data) {
+		free(_data);
+		_data = nullptr;
+	}
+}
+
+bool MoaSoundFormatDecoder::loadHeaderStream(Common::SeekableReadStreamEndian &stream) {
+	_format.offset = stream.readSint32BE();
+	_format.size = stream.readSint32BE();
+	_format.playbackStart = stream.readSint32BE();
+	_format.playbackStartFrame = stream.readSint32BE();
+	_format.loopStart = stream.readSint32BE();
+	_format.loopStartFrame = stream.readSint32BE();
+	_format.loopEnd = stream.readSint32BE();
+	_format.loopEndFrame = stream.readSint32BE();
+	_format.playbackEnd = stream.readSint32BE();
+	_format.playbackEndFrame = stream.readSint32BE();
+	_format.numFrames = stream.readSint32BE();
+	_format.frameRate = stream.readSint32BE();
+	_format.byteRate = stream.readSint32BE();
+	stream.read(_format.compressionType, 16);
+	_format.bitsPerSample = stream.readSint32BE();
+	_format.bytesPerSample = stream.readSint32BE();
+	_format.numChannels = stream.readSint32BE();
+	_format.bytesPerFrame = stream.readSint32BE();
+	stream.read(_format.soundHeaderType, 16);
+	for (int i = 0; i < 63; i++) {
+		_format.platformData[i] = stream.readUint32BE();
+	}
+	_format.bytesPerBlock = stream.readSint32BE();
+
+	if (debugChannelSet(5, kDebugLoading)) {
+		debugC(5, kDebugLoading, "MoaSoundFormatDecoder: Loading header");
+		debugC(5, kDebugLoading, "offset: %d, size: %d, playbackStart: %d, playbackStartFrame: %d",
+		_format.offset, _format.size, _format.playbackStart, _format.playbackStartFrame);
+		debugC(5, kDebugLoading, "loopStart: %d, loopStartEndFrame: %d, loopEnd: %d, loopEndFrame: %d",
+		_format.loopStart, _format.loopStartFrame, _format.loopEnd, _format.loopEndFrame);
+		debugC(5, kDebugLoading, "playbackEnd: %d, playbackEndFrame: %d, numFrames: %d, frameRate: %d, byteRate: %d",
+		_format.playbackEnd, _format.playbackEndFrame, _format.numFrames, _format.frameRate, _format.byteRate);
+		debugC(5, kDebugLoading, "bitsPerSample: %d, bytesPerSample: %d, numChannels: %d, bytesPerFrame: %d, bytesPerBlock: %d",
+		_format.bitsPerSample, _format.bytesPerSample, _format.numChannels, _format.bytesPerFrame, _format.bytesPerBlock);
+
+	}
+	return false;
+}
+
+bool MoaSoundFormatDecoder::loadSampleStream(Common::SeekableReadStreamEndian &stream) {
+	_size = stream.size();
+	if (_data) {
+		free(_data);
+		_data = nullptr;
+	}
+	_data = (byte *)malloc(_size);
+	stream.read(_data, _size);
+	return false;
+}
+
+Audio::AudioStream *MoaSoundFormatDecoder::getAudioStream(bool looping, bool forPuppet, DisposeAfterUse::Flag disposeAfterUse) {
+	if (!_data)
+		return nullptr;
+	byte *buffer = (byte *)malloc(_size);
+	memcpy(buffer, _data, _size);
+
+	Audio::SeekableAudioStream *stream = Audio::makeRawStream(buffer,
+			_size, _format.frameRate,
+			((_format.bitsPerSample == 16) ? Audio::RawFlags::FLAG_16BITS : 0) |
+			((_format.numChannels == 2) ? Audio::RawFlags::FLAG_STEREO : 0) |
+			((_format.bitsPerSample == 8) ? Audio::RawFlags::FLAG_UNSIGNED : 0),
+			disposeAfterUse);
+
+	if (looping) {
+		if (_format.loopEndFrame <= _format.loopStartFrame) {
+			return new Audio::LoopingAudioStream(stream, 0);
+		} else {
+			return new Audio::SubLoopingAudioStream(stream, 0, Audio::Timestamp(0, _format.loopStartFrame, _format.frameRate), Audio::Timestamp(0, _format.loopEndFrame, _format.frameRate));
+		}
+	}
+	return stream;
 }
 
 } // End of namespace Director

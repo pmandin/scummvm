@@ -198,6 +198,8 @@ public:
 	~Video_v6() override {}
 
 private:
+	Graphics::PixelFormat _highColorPackedSpriteFormat;
+
 	void drawPacked(const byte *sprBuf, int16 x, int16 y, Surface &surfDesc);
 	void drawYUVData(const byte *srcData, Surface &destDesc,
 			int16 width, int16 height, int16 x, int16 y);

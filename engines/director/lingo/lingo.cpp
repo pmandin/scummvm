@@ -232,6 +232,9 @@ Lingo::~Lingo() {
 	for (auto &it : _openXLibsState) {
 		delete it._value;
 	}
+	for (auto &it : _openXtrasState) {
+		delete it._value;
+	}
 }
 
 void Lingo::reloadBuiltIns() {
@@ -618,6 +621,7 @@ Common::String Lingo::formatFunctionBody(Symbol &sym) {
 
 bool Lingo::execute(int targetFrame) {
 	uint localCounter = 0;
+	uint lastUpdate = 0;
 
 	while (!_abort && !_freezeState && !_playDone && _state->script && (*_state->script)[_state->pc] != STOP) {
 		if (targetFrame != -1 && (int)_state->callstack.size() == targetFrame)
@@ -650,7 +654,10 @@ bool Lingo::execute(int targetFrame) {
 			Score *score = movie->getScore();
 			score->updateWidgets(true);
 
-			g_system->updateScreen();
+			if (g_system->getMillis() - lastUpdate > 20) {
+				lastUpdate = g_system->getMillis();
+				g_system->updateScreen();
+			}
 		}
 
 		uint current = _state->pc;
@@ -672,6 +679,11 @@ bool Lingo::execute(int targetFrame) {
 
 		g_debugger->stepHook();
 
+		if (_state->script == nullptr) {
+			debugC(1, kDebugLingoExec, "Lingo::execute(): PANIC: No script to execute (1)");
+			break;
+		}
+
 		_state->pc++;
 		(*((*_state->script)[_state->pc - 1]))();
 
@@ -685,6 +697,11 @@ bool Lingo::execute(int targetFrame) {
 
 		_globalCounter++;
 		localCounter++;
+
+		if (!_abort && _state->script == nullptr) {
+			debugC(1, kDebugLingoExec, "Lingo::execute(): PANIC: No script to execute (2)");
+			break;
+		}
 
 		if (!_abort && _state->pc >= (*_state->script).size()) {
 			warning("Lingo::execute(): Bad PC (%d)", _state->pc);
@@ -858,9 +875,6 @@ int Lingo::getAlignedType(const Datum &d1, const Datum &d2, bool equality) {
 		opType = FLOAT;
 	} else if ((d1Type == STRING && d2Type == INT) || (d1Type == INT && d2Type == STRING)) {
 		opType = STRING;
-	} else if ((d1Type == SYMBOL && d2Type != SYMBOL) || (d2Type == SYMBOL && d1Type != SYMBOL)) {
-		// some fun undefined behaviour: adding anything to a symbol returns an int.
-		opType = INT;
 	} else if (d1Type == d2Type) {
 		opType = d1Type;
 	}
@@ -1063,6 +1077,7 @@ int Datum::asInt() const {
 
 	switch (type) {
 	case STRING:
+	case SYMBOL:
 		{
 			Common::String src = asString();
 			char *endPtr = nullptr;
@@ -1087,11 +1102,6 @@ int Datum::asInt() const {
 		} else {
 			res = (int)u.f;
 		}
-		break;
-	case SYMBOL:
-		// Undefined behaviour, but relied on by bad game code that e.g. adds things to symbols.
-		// Return a 32-bit number that's sort of related.
-		res = (int)((uint64)u.s & 0xffffffffL);
 		break;
 	default:
 		warning("Incorrect operation asInt() for type: %s", type2str());
@@ -1525,6 +1535,13 @@ uint32 Datum::compareTo(const Datum &d) const {
 			}
 		}
 		return result;
+
+		// non-coercable strings always outrank numbers and VOID
+	} else if ((this->type == FLOAT || this->type == INT || this->type == VOID) && (d.type == STRING || d.type == SYMBOL)) {
+		return kCompareLessEqual | kCompareLess;
+	} else if ((d.type == FLOAT || d.type == INT || d.type == VOID) && (this->type == STRING || this->type == SYMBOL)) {
+		return kCompareGreaterEqual | kCompareGreater;
+
 	} else {
 		warning("Datum::compareTo(): Invalid comparison between types %s and %s", type2str(), d.type2str());
 		return kCompareError;
@@ -1593,7 +1610,7 @@ void Lingo::executeImmediateScripts(Frame *frame) {
 	}
 }
 
-void Lingo::executePerFrameHook(int frame, int subframe) {
+void Lingo::executePerFrameHook(int frame, int subframe, bool stepFrame) {
 	// Execute perFrameHook and actorList stepFrame, if any is available
 	// Starting D4, stepFrame of each objects in actorList is executed
 	// however the support for legacy mAtFrame is still there. (in future versions)
@@ -1609,18 +1626,16 @@ void Lingo::executePerFrameHook(int frame, int subframe) {
 		}
 	}
 
-	if (_vm->getVersion() >= 400) {
-		if (_actorList.u.farr->arr.size() > 0 && _vm->getVersion() >= 400) {
-			for (uint i = 0; i < _actorList.u.farr->arr.size(); i++) {
-				Datum actor = _actorList.u.farr->arr[i];
-				Symbol method = actor.u.obj->getMethod("stepFrame");
-				if (method.type != VOIDSYM) {
-					debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>, frame %d, subframe %d", actor.asString(true).c_str(), frame, subframe);
-					if (method.nargs == 1)
-						push(actor);
-					LC::call(method, method.nargs, false);
-					execute();
-				}
+	if (stepFrame && _actorList.u.farr->arr.size() > 0 && _vm->getVersion() >= 400) {
+		for (uint i = 0; i < _actorList.u.farr->arr.size(); i++) {
+			Datum actor = _actorList.u.farr->arr[i];
+			Symbol method = actor.u.obj->getMethod("stepFrame");
+			if (method.type != VOIDSYM) {
+				debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>, frame %d, subframe %d", actor.asString(true).c_str(), frame, subframe);
+				if (method.nargs == 1)
+					push(actor);
+				LC::call(method, method.nargs, false);
+				execute();
 			}
 		}
 	}

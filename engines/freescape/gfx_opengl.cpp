@@ -199,6 +199,48 @@ void OpenGLRenderer::drawSkybox(Texture *texture, Math::Vector3d camera) {
 	glFlush();
 }
 
+void OpenGLRenderer::drawThunder(Texture *texture, const Math::Vector3d position, const float size) {
+	OpenGLTexture *glTexture = static_cast<OpenGLTexture *>(texture);
+	glPushMatrix();
+	{
+		glTranslatef(position.x(), position.y(), position.z());
+
+		GLfloat m[16];
+		glGetFloatv(GL_MODELVIEW_MATRIX, m);
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				m[i * 4 + j] = (i == j) ? 1.0f : 0.0f;
+		glLoadMatrixf(m);
+
+		glRotatef(-90, 0.0f, 0.0f, 1.0f);
+
+		// === Texturing setup ===
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, glTexture->_id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		// === Blending (thunder should glow) ===
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
+
+		// === Draw the billboarded quad ===
+		float half = size * 0.5f;
+		glBegin(GL_QUADS);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-half, -half, 0.0f);
+			glTexCoord2f(0.0f, 0.72f); glVertex3f( half, -half, 0.0f);
+			glTexCoord2f(1.0f, 0.72f); glVertex3f( half,  half, 0.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(-half,  half, 0.0f);
+		glEnd();
+
+		// === Cleanup ===
+		glDisable(GL_BLEND);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_TEXTURE_2D);
+	}
+	glPopMatrix();
+}
+
 void OpenGLRenderer::updateProjectionMatrix(float fov, float aspectRatio, float nearClipPlane, float farClipPlane) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -222,7 +264,16 @@ void OpenGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vecto
 	glMultMatrixf(lookMatrix.getData());
 	glRotatef(rollAngle, 0.0f, 0.0f, 1.0f);
 	glTranslatef(-pos.x(), -pos.y(), -pos.z());
-	glTranslatef(_shakeOffset.x, _shakeOffset.y, 0);
+
+	// Apply a 2D shake effect on the projection matrix.
+	// This avoids moving the camera in the 3D world, which could cause clipping issues.
+	glMatrixMode(GL_PROJECTION);
+	GLfloat projMatrix[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, projMatrix);
+	glLoadIdentity();
+	glTranslatef(_shakeOffset.x * 0.05f, _shakeOffset.y * 0.05f, 0.0f);
+	glMultMatrixf(projMatrix);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d target, const Common::Rect &viewArea) {
@@ -257,7 +308,7 @@ void OpenGLRenderer::renderCrossair(const Common::Point &crossairPosition) {
 
 	useColor(255, 255, 255);
 
-	glLineWidth(MAX(2, g_system->getWidth() / 192)); // It will not work in every OpenGL implementation since the
+	glLineWidth(MAX(2, g_system->getWidth() / 640)); // It will not work in every OpenGL implementation since the
 	                                                 // spec doesn't require support for line widths other than 1
 	glEnableClientState(GL_VERTEX_ARRAY);
 	copyToVertexArray(0, Math::Vector3d(crossairPosition.x - 3, crossairPosition.y, 0));
@@ -293,7 +344,17 @@ void OpenGLRenderer::renderPlayerShootRay(byte color, const Common::Point &posit
 	if (_renderMode == Common::kRenderCGA || _renderMode == Common::kRenderZX) {
 		r = g = b = 255;
 	} else {
-		r = g = b = 255;
+		if (_renderMode == Common::kRenderHercG) {
+			// Hercules Green
+			r = b = 0;
+			g = 255;
+		} else if (_renderMode == Common::kRenderHercA) {
+			// Hercules Amber
+			r = 255;
+			g = 191;
+			b = 0;
+		} else
+			r = g = b = 255;
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
 	}
@@ -335,7 +396,7 @@ void OpenGLRenderer::drawCelestialBody(Math::Vector3d position, float radius, by
 	float twicePi = (float)(2.0 * M_PI);
 
 	// Quick billboard effect inspired from this code:
-	// http://www.lighthouse3d.com/opengl/billboarding/index.php?billCheat
+	// https://www.lighthouse3d.com/opengl/billboarding/index.php?billCheat
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	GLfloat m[16];
@@ -409,7 +470,17 @@ void OpenGLRenderer::renderPlayerShootBall(byte color, const Common::Point &posi
 	if (_renderMode == Common::kRenderCGA || _renderMode == Common::kRenderZX) {
 		r = g = b = 255;
 	} else {
-		r = g = b = 255;
+		if (_renderMode == Common::kRenderHercG) {
+			// Hercules Green
+			r = b = 0;
+			g = 255;
+		} else if (_renderMode == Common::kRenderHercA) {
+			// Hercules Amber
+			r = 255;
+			g = 191;
+			b = 0;
+		} else
+			r = g = b = 255;
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
 	}
@@ -458,7 +529,7 @@ void OpenGLRenderer::renderFace(const Common::Array<Math::Vector3d> &vertices) {
 		copyToVertexArray(0, v0);
 		copyToVertexArray(1, v1);
 		glVertexPointer(3, GL_FLOAT, 0, _verts);
-		glLineWidth(MAX(1, g_system->getWidth() / 192));
+		glLineWidth(MAX(1, g_system->getWidth() / 640));
 		glDrawArrays(GL_LINES, 0, 2);
 		glLineWidth(1);
 		glDisableClientState(GL_VERTEX_ARRAY);

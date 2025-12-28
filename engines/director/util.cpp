@@ -446,8 +446,11 @@ const char *recIndent() {
 
 bool isAbsolutePath(const Common::String &path) {
 	// Starts with Mac directory notation for the game root
-	if (path.hasPrefix(Common::String("@") + g_director->_dirSeparator))
+	if (path.hasPrefix(Common::String("@:")) ||
+		path.hasPrefix(Common::String("@\\")) ||
+		path.hasPrefix(Common::String("@/"))) {
 		return true;
+	}
 	// Starts with a Windows drive letter
 	if (path.size() >= 3
 			&& Common::isAlpha(path[0])
@@ -471,6 +474,12 @@ bool isPathWithRelativeMarkers(const Common::String &path) {
 Common::String rectifyRelativePath(const Common::String &path, const Common::Path &base) {
 	Common::StringArray components = base.splitComponents();
 	uint32 idx = 0;
+
+	// If a path is provided that begins with @, it will be relative to the top level, not the base.
+	if ((path.size() > 0) && (path[0] == '@')) {
+		idx++;
+		components.clear();
+	}
 
 	while (idx < path.size()) {
 		uint32 start = idx;
@@ -501,7 +510,7 @@ Common::String rectifyRelativePath(const Common::String &path, const Common::Pat
 		}
 	}
 	Common::String result = "@:" + Common::Path::joinComponents(components).toString(g_director->_dirSeparator);
-	debug(9, "rectifyRelativePath(): '%s' + '%s' => '%s'", base.toString(g_director->_dirSeparator).c_str(), path.c_str(), result.c_str());
+	debugC(1, kDebugPaths, "rectifyRelativePath(): '%s' + '%s' => '%s'", base.toString(g_director->_dirSeparator).c_str(), path.c_str(), result.c_str());
 	warning("rectifyRelativePath(): '%s' + '%s' => '%s'", base.toString(g_director->_dirSeparator).c_str(), path.c_str(), result.c_str());
 	return result;
 }
@@ -530,7 +539,8 @@ Common::String convertPath(const Common::String &path) {
 	if (path.empty())
 		return path;
 
-	if (!path.contains(':') && !path.contains('\\') && !path.contains('@')) {
+	if (!path.contains(':') && !path.contains('\\') && !path.contains('@')
+			&& (g_director->getVersion() >= 500 && !path.contains('/'))) {
 		return path;
 	}
 
@@ -539,7 +549,9 @@ Common::String convertPath(const Common::String &path) {
 
 	if (path.hasPrefix("::")) { // Parent directory
 		idx = 2;
-	} else if (path.hasPrefix(Common::String("@") + g_director->_dirSeparator)) { // Root of the game
+	} else if (path.hasPrefix(Common::String("@:")) ||
+				path.hasPrefix(Common::String("@\\")) ||
+				path.hasPrefix(Common::String("@/"))) { // Root of the game
 		idx = 2;
 	} else if (path.size() >= 3
 					&& Common::isAlpha(path[0])
@@ -551,7 +563,7 @@ Common::String convertPath(const Common::String &path) {
 	}
 
 	while (idx < path.size()) {
-		if (path[idx] == ':' || path[idx] == '\\')
+		if (path[idx] == ':' || path[idx] == '\\' || (g_director->getVersion() >= 500 && path[idx] == '/'))
 			res += g_director->_dirSeparator;
 		else
 			res += path[idx];
@@ -622,6 +634,7 @@ Common::String convert83Path(const Common::String &path) {
 Common::Path resolveFSPath(const Common::String &path, const Common::Path &base, bool directory) {
 	// Path is the raw input from Director. Scrub it to be a clean relative path.
 	Common::String converted = convertPath(path);
+	debugC(2, kDebugPaths, "  convertPath(): '%s' => '%s'", path.c_str(), converted.c_str());
 
 	// Absolute path to the game directory
 	Common::Path gamePath = Common::Path(g_director->getGameDataDir()->getPath());
@@ -680,8 +693,8 @@ Common::Path resolveFSPath(const Common::String &path, const Common::Path &base,
 	}
 
 	if (exists) {
-		debugN(9, "%s", recIndent());
-		debug(9, "resolveFSPath(): Found filesystem match for %s -> %s", path.c_str(), newPath.toString().c_str());
+		debugCN(1, kDebugPaths, "%s", recIndent());
+		debugC(1, kDebugPaths, "resolveFSPath(): Found filesystem match for %s -> %s", path.c_str(), newPath.toString().c_str());
 		return newPath;
 	}
 
@@ -702,14 +715,14 @@ Common::Path resolvePathInner(const Common::String &path, const Common::Path &ba
 	if (!directory) {
 		// Check SearchMan
 		if (SearchMan.hasFile(newPath)) {
-			debugN(9, "%s", recIndent());
-			debug(9, "resolvePath(): Found SearchMan match for %s -> %s", path.c_str(), newPath.toString().c_str());
+			debugCN(1, kDebugPaths, "%s", recIndent());
+			debugC(1, kDebugPaths, "resolvePathInner(): Found SearchMan match for %s -> %s", path.c_str(), newPath.toString().c_str());
 			return newPath;
 		}
 		// Check MacResArchive
 		if (Common::MacResManager::exists(newPath)) {
-			debugN(9, "%s", recIndent());
-			debug(9, "resolvePath(): Found MacResManager match for %s -> %s", path.c_str(), newPath.toString().c_str());
+			debugCN(1, kDebugPaths, "%s", recIndent());
+			debugC(1, kDebugPaths, "resolvePathInner(): Found MacResManager match for %s -> %s", path.c_str(), newPath.toString().c_str());
 			return newPath;
 		}
 	} else {
@@ -737,16 +750,16 @@ Common::Path resolvePathInner(const Common::String &path, const Common::Path &ba
 				}
 			}
 			if (match) {
-				debugN(9, "%s", recIndent());
-				debug(9, "resolvePath(): Found SearchMan match for %s -> %s", path.c_str(), testParent.toString().c_str());
+				debugCN(1, kDebugPaths, "%s", recIndent());
+				debugC(1, kDebugPaths, "resolvePathInner(): Found SearchMan match for %s -> %s", path.c_str(), testParent.toString().c_str());
 				return testParent;
 			}
 
 		}
 	}
 
-	debugN(9, "%s", recIndent());
-	debug(9, "resolvePath(): No match found for %s", path.c_str());
+	debugCN(1, kDebugPaths, "%s", recIndent());
+	debugC(1, kDebugPaths, "resolvePathInner(): No match found for %s", path.c_str());
 	return Common::Path();
 }
 
@@ -768,6 +781,7 @@ Common::Path resolvePath(const Common::String &path, const Common::Path &base, b
 
 Common::Path resolvePartialPath(const Common::String &path, const Common::Path &base, bool directory, const char **exts) {
 	Common::String converted = convertPath(path);
+	debugC(2, kDebugPaths, "  convertPath(): '%s' => '%s'", path.c_str(), converted.c_str());
 	Common::Path result;
 
 	Common::StringArray baseTokens = base.splitComponents();
@@ -840,12 +854,12 @@ Common::Path resolvePartialPathWithFuzz(const Common::String &path, const Common
 Common::Path findAbsolutePath(const Common::String &path, bool directory, const char **exts) {
 	Common::Path result, base;
 	if (isAbsolutePath(path)) {
-		debugN(9, "%s", recIndent());
-		debug(9, "findAbsolutePath(): searching absolute path");
+		debugCN(1, kDebugPaths, "%s", recIndent());
+		debugC(1, kDebugPaths, "findAbsolutePath(): searching absolute path");
 		result = resolvePathWithFuzz(path, base, directory, exts);
 		if (!result.empty()) {
-			debugN(9, "%s", recIndent());
-			debug(9, "findAbsolutePath(): resolved \"%s\" -> \"%s\"", path.c_str(), result.toString().c_str());
+			debugCN(1, kDebugPaths, "%s", recIndent());
+			debugC(1, kDebugPaths, "findAbsolutePath(): resolved \"%s\" -> \"%s\"", path.c_str(), result.toString().c_str());
 		}
 	}
 	return result;
@@ -857,8 +871,8 @@ Common::Path findPath(const Common::Path &path, bool currentFolder, bool searchP
 
 Common::Path findPath(const Common::String &path, bool currentFolder, bool searchPaths, bool directory, const char **exts) {
 	Common::Path result, base;
-	debugN(9, "%s", recIndent());
-	debug(9, "findPath(): beginning search for \"%s\"", path.c_str());
+	debugCN(1, kDebugPaths, "%s", recIndent());
+	debugC(1, kDebugPaths, "findPath(): beginning search for \"%s\"", path.c_str());
 
 	Common::String currentPath = g_director->getCurrentPath();
 	Common::Path current = resolvePath(currentPath, base, true, exts);
@@ -876,25 +890,25 @@ Common::Path findPath(const Common::String &path, bool currentFolder, bool searc
 	}
 
 	if (currentFolder) {
-		debugN(9, "%s", recIndent());
-		debug(9, "findPath(): searching current folder %s", current.toString().c_str());
+		debugCN(1, kDebugPaths, "%s", recIndent());
+		debugC(1, kDebugPaths, "findPath(): searching current folder %s", current.toString().c_str());
 		base = current;
 		result = resolvePartialPathWithFuzz(testPath, base, directory, exts);
 		if (!result.empty()) {
-			debugN(9, "%s", recIndent());
-			debug(9, "findPath(): resolved \"%s\" -> \"%s\"", testPath.c_str(), result.toString().c_str());
+			debugCN(1, kDebugPaths, "%s", recIndent());
+			debugC(1, kDebugPaths, "findPath(): resolved \"%s\" -> \"%s\"", testPath.c_str(), result.toString().c_str());
 			return result;
 		}
 	}
 
 	// Fall back to checking the game root path
-	debugN(9, "%s", recIndent());
-	debug(9, "findPath(): searching game root path");
+	debugCN(1, kDebugPaths, "%s", recIndent());
+	debugC(1, kDebugPaths, "findPath(): searching game root path");
 	base = Common::Path();
 	result = resolvePartialPathWithFuzz(testPath, base, directory, exts);
 	if (!result.empty()) {
-		debugN(9, "%s", recIndent());
-		debug(9, "findPath(): resolved \"%s\" -> \"%s\"", testPath.c_str(), result.toString().c_str());
+		debugCN(1, kDebugPaths, "%s", recIndent());
+		debugC(1, kDebugPaths, "findPath(): resolved \"%s\" -> \"%s\"", testPath.c_str(), result.toString().c_str());
 		return result;
 	}
 
@@ -914,23 +928,23 @@ Common::Path findPath(const Common::String &path, bool currentFolder, bool searc
 			base = Common::Path();
 			base = resolvePathWithFuzz(searchIn, base, true, exts);
 			if (base.empty()) {
-				debugN(9, "%s", recIndent());
-				debug(9, "findPath(): couldn't resolve search path folder %s, skipping", searchIn.c_str());
+				debugCN(1, kDebugPaths, "%s", recIndent());
+				debugC(1, kDebugPaths, "findPath(): couldn't resolve search path folder %s, skipping", searchIn.c_str());
 				continue;
 			}
-			debugN(9, "%s", recIndent());
-			debug(9, "findPath(): searching search path folder %s", searchIn.c_str());
+			debugCN(1, kDebugPaths, "%s", recIndent());
+			debugC(1, kDebugPaths, "findPath(): searching search path folder %s", searchIn.c_str());
 			result = resolvePartialPathWithFuzz(testPath, base, directory, exts);
 			if (!result.empty()) {
-				debugN(9, "%s", recIndent());
-				debug(9, "findPath(): resolved \"%s\" -> \"%s\"", testPath.c_str(), result.toString().c_str());
+				debugCN(1, kDebugPaths, "%s", recIndent());
+				debugC(1, kDebugPaths, "findPath(): resolved \"%s\" -> \"%s\"", testPath.c_str(), result.toString().c_str());
 				return result;
 			}
 		}
 	}
 
 	// Return empty path
-	debug(9, "findPath(): failed to resolve \"%s\"", path.c_str());
+	debugC(1, kDebugPaths, "findPath(): failed to resolve \"%s\"", path.c_str());
 	return Common::Path();
 }
 
@@ -938,6 +952,7 @@ Common::Path findMoviePath(const Common::String &path, bool currentFolder, bool 
 	const char *extsD3[] = { ".MMM", nullptr };
 	const char *extsD4[] = { ".DIR", ".DXR", ".EXE", nullptr };
 	const char *extsD5[] = { ".DIR", ".DXR", ".CST", ".CXT", ".EXE", nullptr };
+	const char *extsD6[] = { ".DIR", ".DXR", ".CST", ".CXT", ".EXE", ".DCR", ".DCT", nullptr };
 
 	const char **exts = nullptr;
 	if (g_director->getVersion() < 400) {
@@ -947,8 +962,7 @@ Common::Path findMoviePath(const Common::String &path, bool currentFolder, bool 
 	} else if (g_director->getVersion() >= 500 && g_director->getVersion() < 600) {
 		exts = extsD5;
 	} else {
-		warning("findMoviePath(): file extensions not yet supported for version %d, falling back to D5", g_director->getVersion());
-		exts = extsD5;
+		exts = extsD6;
 	}
 
 	Common::Path result = findPath(path, currentFolder, searchPaths, false, exts);
@@ -962,10 +976,7 @@ Common::Path findXLibPath(const Common::String &path, bool currentFolder, bool s
 	const char **exts = nullptr;
 	if (g_director->getVersion() < 500) {
 		exts = extsD3;
-	} else if (g_director->getVersion() < 600) {
-		exts = extsD5;
 	} else {
-		warning("findXLibPath(): file extensions not yet supported for version %d, falling back to D5", g_director->getVersion());
 		exts = extsD5;
 	}
 
@@ -986,6 +997,14 @@ Common::String getFileNameFromModal(bool save, const Common::String &suggested, 
 	if (ext) {
 		mask += ".";
 		mask += ext;
+
+		/*
+		 The file browser dialog and the save system forces a .txt file extension.
+		 To support other file extensions we need to add .txt to the end if the file extension is different.
+		*/
+		if (strncmp(ext, "txt", 3) != 0) {
+			mask += ".txt";
+		}
 	}
 	GUI::FileBrowserDialog browser(title.c_str(), "txt", save ? GUI::kFBModeSave : GUI::kFBModeLoad, mask.c_str(), suggested.c_str());
 	if (browser.runModal() <= 0) {
@@ -1152,22 +1171,25 @@ Common::Path dumpScriptName(const char *prefix, int type, int id, const char *ex
 
 	switch (type) {
 	case kNoneScript:
-		typeName = "unknown";
+		typeName = "UnknownScript";
 		break;
 	case kMovieScript:
-		typeName = "movie";
+		typeName = "MovieScript";
 		break;
 	case kCastScript:
-		typeName = "cast";
+		typeName = "CastScript";
 		break;
 	case kEventScript:
-		typeName = "event";
+		typeName = "EventScript";
 		break;
 	case kScoreScript:
-		typeName = "score";
+		if (g_director->getVersion() >= 600)
+			typeName = "BehaviorScript";
+		else
+			typeName = "ScoreScript";
 		break;
 	case kParentScript:
-		typeName = "parent";
+		typeName = "ParentScript";
 		break;
 	default:
 		error("dumpScriptName(): Incorrect call (type %d)", type);
@@ -1642,6 +1664,30 @@ const byte equalityTableD5win[256] = {
 	0xd0, 0x98, 0x9c, 0x9e, 0x9d, 0xd5, 0xd6, 0xf7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x9f
 };
 
+
+//
+// Director 6 Win, cp1252 encoding
+//
+
+const byte equalityTableD6win[256] = {
+	0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+	0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+	0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
+	0x60, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
+	0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
+	0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x8a, 0x9b, 0x8c, 0x9d, 0x9e, 0x9f,
+	0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
+	0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
+	0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
+	0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
+	0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
+	0xd0, 0x98, 0x8c, 0x9e, 0x9d, 0xd5, 0xd6, 0xf7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x9f
+};
+
 //
 // Director 3, 4, 5 Mac MacRoman
 //
@@ -1736,6 +1782,9 @@ static int getCharEquality(Common::u32char_type_t ch) {
 	if (pl == Common::kPlatformWindows && lang != Common::JA_JPN && version < 600)
 		return equalityTableD5win[num];
 
+	if (pl == Common::kPlatformWindows && lang != Common::JA_JPN && version < 700)
+		return equalityTableD6win[num];
+
 	warning("BUILDBOT: No equality table for Director version: %d", version);
 	return num;
 }
@@ -1800,4 +1849,21 @@ double readAppleFloat80(void *ptr_) {
 	uint64 mantissa = READ_BE_UINT64(&ptr[2]);
 
 	return Common::XPFloat(signAndExponent, mantissa).toDouble(Common::XPFloat::kSemanticsSANE);
+}
+
+void hexdumpIfNotZero(byte *data, int len, const char *prefix) {
+	bool nonZero = false;
+	for (int i = 0; i < len; i++) {
+		if (data[i] != 0) {
+			nonZero = true;
+			break;
+		}
+	}
+
+	if (nonZero) {
+		if (prefix)
+			debugN("%s ", prefix);
+
+		Common::hexdump(data, len);
+	}
 }

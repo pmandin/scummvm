@@ -141,10 +141,12 @@ struct SoundChannel {
 	Audio::SoundHandle handle;
 	SoundID lastPlayedSound;
 	bool stopOnZero; // Should the sound be stopped when the channel contains cast member 0?
+	bool fromLastMovie; // Was this sound carried over from a movie switch?
 	byte volume;
 	int pitchShiftPercent;
 	int originalRate;
 	FadeParams *fade;
+	int lastCuePointIndex;
 
 	// a non-zero sound ID if the channel is a puppet. i.e. it's controlled by lingo
 	SoundID puppet;
@@ -158,7 +160,9 @@ struct SoundChannel {
 	// a stop at the end of a loop.
 	Audio::LoopableAudioStream *loopPtr;
 
-	SoundChannel(): handle(), lastPlayedSound(SoundID()), stopOnZero(true), volume(255), originalRate(-1), pitchShiftPercent(100), fade(nullptr), puppet(SoundID()), newPuppet(false), movieChanged(false), loopPtr(nullptr) {}
+	SoundChannel(): handle(), lastPlayedSound(SoundID()), stopOnZero(true), fromLastMovie(false), volume(255), originalRate(-1),
+		pitchShiftPercent(100), fade(nullptr), puppet(SoundID()), newPuppet(false), movieChanged(false), loopPtr(nullptr),
+		lastCuePointIndex(-1) {}
 };
 
 class DirectorSound {
@@ -201,6 +205,7 @@ public:
 
 	bool isChannelPuppet(int soundChannel);
 	void setPuppetSound(SoundID soundId, int soundChannel);
+	void disablePuppetSound(int soundChannel);
 	void playPuppetSound(int soundChannel);
 
 	bool getSoundEnabled() { return _enable; }
@@ -224,6 +229,8 @@ public:
 	void stopSound();
 	void setChannelDefaultVolume(int soundChannel);
 	void setChannelPitchShift(int soundChannel, int pitchShiftPercent);
+
+	void processCuePoints();
 
 private:
 	void setLastPlayedSound(int soundChannel, SoundID soundId, bool stopOnZero = true);
@@ -286,6 +293,58 @@ public:
 private:
 	Common::String _path;
 	Common::MacResManager *_macresman;
+};
+
+class MoaStreamDecoder : public AudioDecoder {
+public:
+	MoaStreamDecoder(Common::String &format, Common::SeekableReadStreamEndian *stream);
+	~MoaStreamDecoder();
+
+	Audio::AudioStream *getAudioStream(bool looping = false, bool forPuppet = false, DisposeAfterUse::Flag disposeAfterUse = DisposeAfterUse::YES) override;
+
+private:
+	Common::String _format;
+	Common::SeekableReadStreamEndian *_stream;
+};
+
+// Source: mixsnd.h in the Director 7 XDK
+struct MoaSoundFormat {
+	int32 offset;
+	int32 size;
+	int32 playbackStart;
+	int32 playbackStartFrame;
+	int32 loopStart;
+	int32 loopStartFrame;
+	int32 loopEnd;
+	int32 loopEndFrame;
+	int32 playbackEnd;
+	int32 playbackEndFrame;
+	int32 numFrames;
+	int32 frameRate;
+	int32 byteRate;
+	byte compressionType[16];
+	int32 bitsPerSample;
+	int32 bytesPerSample;
+	int32 numChannels;
+	int32 bytesPerFrame;
+	byte soundHeaderType[16];
+	uint32 platformData[63];
+	int32 bytesPerBlock;
+};
+
+class MoaSoundFormatDecoder : public AudioDecoder {
+public:
+	MoaSoundFormatDecoder();
+	~MoaSoundFormatDecoder();
+
+	bool loadHeaderStream(Common::SeekableReadStreamEndian &stream);
+	bool loadSampleStream(Common::SeekableReadStreamEndian &stream);
+
+	MoaSoundFormat _format;
+	byte *_data = nullptr;
+	uint32 _size = 0;
+
+	Audio::AudioStream *getAudioStream(bool looping = false, bool forPuppet = false, DisposeAfterUse::Flag disposeAfterUse = DisposeAfterUse::YES) override;
 };
 
 } // End of namespace Director

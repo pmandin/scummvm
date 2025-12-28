@@ -10,7 +10,7 @@ clean: clean-win32-resource-embed
 
 .PHONY: clean-win32-resource-embed
 
-define win32-resource-embed-macro=
+define win32-resource-embed-macro
 $(1): configure.stamp $(foreach filename,$($(2)), $(srcdir)/$(filename)) $($(2)_SOURCE)
 	$(QUIET)echo '    GENERATE' $$@
 	$(QUIET)mkdir -p $$(dir $$@)
@@ -51,7 +51,6 @@ win32-data: all
 	cp $(srcdir)/LICENSES/COPYING.Apache $(WIN32PATH)/COPYING.Apache.txt
 	cp $(srcdir)/LICENSES/COPYING.BSD $(WIN32PATH)/COPYING.BSD.txt
 	cp $(srcdir)/LICENSES/COPYING.BSL $(WIN32PATH)/COPYING.BSL.txt
-	cp $(srcdir)/LICENSES/COPYING.FREEFONT $(WIN32PATH)/COPYING.FREEFONT.txt
 	cp $(srcdir)/LICENSES/COPYING.GLAD $(WIN32PATH)/COPYING.GLAD.txt
 	cp $(srcdir)/LICENSES/COPYING.LGPL $(WIN32PATH)/COPYING.LGPL.txt
 	cp $(srcdir)/LICENSES/COPYING.LUA $(WIN32PATH)/COPYING.LUA.txt

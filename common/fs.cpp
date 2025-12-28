@@ -352,7 +352,7 @@ bool FSDirectory::isPathDirectory(const Path &path) const {
 	if (path.empty() || !_node.isDirectory())
 		return false;
 
-	FSNode *node = lookupCache(_fileCache, path);
+	FSNode *node = lookupCache(_subDirCache, path);
 	return node && node->isDirectory();
 }
 
@@ -539,7 +539,7 @@ int FSDirectory::listMatchingMembers(ArchiveMemberList &list, const Path &patter
 	addMatchingToList(_fileCache);
 
 	if (_includeDirectories)
-			addMatchingToList(_subDirCache);
+		addMatchingToList(_subDirCache);
 
 	return matches;
 }

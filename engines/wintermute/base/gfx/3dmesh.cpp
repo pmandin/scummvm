@@ -30,6 +30,7 @@
 #include "engines/wintermute/base/base_game.h"
 #include "engines/wintermute/base/gfx/3dloader_3ds.h"
 #include "engines/wintermute/base/gfx/3dmesh.h"
+#include "engines/wintermute/dcgf.h"
 
 namespace Wintermute {
 
@@ -53,12 +54,10 @@ Mesh3DS::~Mesh3DS() {
 
 //////////////////////////////////////////////////////////////////////////
 void Mesh3DS::cleanup() {
-	delete[] _vertices;
-	_vertices = nullptr;
+	SAFE_DELETE_ARRAY(_vertices);
 	_numVertices = 0;
 
-	delete[] _faces;
-	_faces = nullptr;
+	SAFE_DELETE_ARRAY(_faces);
 	_numFaces = 0;
 
 	_vb.free();
@@ -75,7 +74,7 @@ bool Mesh3DS::createVertexBuffer() {
 	int vbSize = _numFaces * sizeof(Mesh3DSVertex) * 3;
 	_vb = DXBuffer(vbSize);
 	if (_vb.ptr() == nullptr) {
-		_gameRef->LOG(0, "Error creating vertex buffer.");
+		_game->LOG(0, "Error creating vertex buffer.");
 		return false;
 	} else
 		return true;
@@ -92,7 +91,7 @@ bool Mesh3DS::fillVertexBuffer(uint32 color) {
 	int vbSize = _numFaces * sizeof(Mesh3DSVertex) * 3;
 	_vb = DXBuffer(vbSize);
 	if (_vb.ptr() == nullptr) {
-		_gameRef->LOG(0, "Error creating vertex buffer.");
+		_game->LOG(0, "Error creating vertex buffer.");
 		return false;
 	}
 

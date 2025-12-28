@@ -94,21 +94,6 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_endArea = 127;
 	_endEntrance = 0;
 
-	_soundIndexShoot = 1;
-	_soundIndexCollide = -1;
-	_soundIndexFall = 3;
-	_soundIndexClimb = -1;
-	_soundIndexMenu = -1;
-	_soundIndexStart = 9;
-	_soundIndexAreaChange = 5;
-
-	_soundIndexNoShield = 20;
-	_soundIndexNoEnergy = 20;
-	_soundIndexFallen = 20;
-	_soundIndexTimeout = 20;
-	_soundIndexForceEndGame = 20;
-	_soundIndexCrushed = 20;
-
 	_borderExtra = nullptr;
 	_borderExtraTexture = nullptr;
 	_playerSid = nullptr;
@@ -280,7 +265,7 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 		if (isC64())
 			_playerSid->startMusic();
 		else {
-			playSound(_soundIndexStart, true);
+			playSound(_soundIndexStart, true, _soundFxHandle);
 			// Start playing music, if any, in any supported format
 			playMusic("Matt Gray - The Best Of Reformation - 07 Driller Theme");
 		}
@@ -292,7 +277,7 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 		// Show the number of completed areas
 		_areaMap[127]->_name.replace(0, 3, Common::String::format("%4d", _gameStateVars[32]));
 	} else
-		playSound(_soundIndexAreaChange, false);
+		playSound(_soundIndexAreaChange, false, _soundFxHandle);
 
 	debugC(1, kFreescapeDebugMove, "starting player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
 	clearTemporalMessages();
@@ -595,6 +580,8 @@ void DrillerEngine::pressedKey(const int keycode) {
 		} else
 			_drillStatusByArea[_currentArea->getAreaID()] = kDrillerRigOutOfPlace;
 		executeMovementConditions();
+		if (isDOS())
+			playSound(_soundIndexAreaChange, false, _soundFxHandle);
 	} else if (keycode == kActionCollectDrillingRig) {
 		if (isDOS() && isDemo()) // No support for drilling here yet
 			return;
@@ -636,6 +623,8 @@ void DrillerEngine::pressedKey(const int keycode) {
 		assert(scoreToRemove <= uint32(_gameStateVars[k8bitVariableScore]));
 		_gameStateVars[k8bitVariableScore] -= scoreToRemove;
 		executeMovementConditions();
+		if (isDOS())
+			playSound(_soundIndexAreaChange, false, _soundFxHandle);
 	}
 }
 
@@ -738,7 +727,7 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 
 void DrillerEngine::addSkanner(Area *area) {
 	debugC(1, kFreescapeDebugParser, "Adding skanner to area: %d", area->getAreaID());
-	GeometricObject *obj = nullptr;
+	Object *obj = nullptr;
 	int16 id;
 
 	id = 248;
@@ -747,25 +736,25 @@ void DrillerEngine::addSkanner(Area *area) {
 		return;
 
 	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
-	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
+	obj = _areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = (GeometricObject *)obj->duplicate();
+	obj = obj->duplicate();
 	obj->makeInvisible();
 	area->addObject(obj);
 
 	id = 249;
 	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
-	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
+	obj = _areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = (GeometricObject *)obj->duplicate();
+	obj = obj->duplicate();
 	obj->makeInvisible();
 	area->addObject(obj);
 
 	id = 250;
 	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
-	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
+	obj = _areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = (GeometricObject *)obj->duplicate();
+	obj = obj->duplicate();
 	obj->makeInvisible();
 	area->addObject(obj);
 }
@@ -927,16 +916,16 @@ void DrillerEngine::endGame() {
 
 bool DrillerEngine::onScreenControls(Common::Point mouse) {
 	if (_moveFowardArea.contains(mouse)) {
-		move(kForwardMovement, _scaleVector.x(), 20.0);
+		//move(kForwardMovement, _scaleVector.x(), 20.0);
 		return true;
 	} else if (_moveLeftArea.contains(mouse)) {
-		move(kLeftMovement, _scaleVector.y(), 20.0);
+		//move(kLeftMovement, _scaleVector.y(), 20.0);
 		return true;
 	} else if (_moveRightArea.contains(mouse)) {
-		move(kRightMovement, _scaleVector.y(), 20.0);
+		//move(kRightMovement, _scaleVector.y(), 20.0);
 		return true;
 	} else if (_moveBackArea.contains(mouse)) {
-		move(kBackwardMovement, _scaleVector.x(), 20.0);
+		//move(kBackwardMovement, _scaleVector.x(), 20.0);
 		return true;
 	} else if (_moveUpArea.contains(mouse)) {
 		rise();
@@ -965,9 +954,9 @@ bool DrillerEngine::onScreenControls(Common::Point mouse) {
 }
 
 void DrillerEngine::drawSensorShoot(Sensor *sensor) {
-	if (_gameStateControl == kFreescapeGameStatePlaying) {
+	if (_underFireFrames == 1 && _gameStateControl == kFreescapeGameStatePlaying) {
 		// Avoid playing new sounds, so the endgame can progress
-		playSound(_soundIndexHit, true);
+		playSound(_soundIndexHit, true, _soundFxHandle);
 	}
 
 	Math::Vector3d target;

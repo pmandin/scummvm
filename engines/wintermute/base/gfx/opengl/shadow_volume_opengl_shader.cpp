@@ -67,14 +67,7 @@ ShadowVolumeOpenGLShader::~ShadowVolumeOpenGLShader() {
 bool ShadowVolumeOpenGLShader::render() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
-	_gameRef->_renderer3D->_lastTexture = nullptr;
-
-	Math::Vector4d colorValue;
-	colorValue.x() = 1.0f;
-	colorValue.y() = 1.0f;
-	colorValue.z() = 1.0f;
-	colorValue.w() = 1.0f;
-	_volumeShader->setUniform("color", colorValue);
+	_game->_renderer3D->_lastTexture = nullptr;
 
 	glDrawArrays(GL_TRIANGLES, 0, _vertices.getSize());
 
@@ -95,9 +88,10 @@ bool ShadowVolumeOpenGLShader::renderToStencilBuffer() {
 	_volumeShader->enableVertexAttribute("position", _shadowVolumeVertexBuffer, 3, GL_FLOAT, false, 12, 0);
 	_volumeShader->use(true);
 
-	// Disable z-buffer writes (note: z-testing still occurs), and enable the
+	// Disable z-buffer/color writes (note: z-testing still occurs), and enable the
 	// stencil-buffer
 	glDepthMask(GL_FALSE);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_STENCIL_TEST);
 	glEnable(GL_CULL_FACE);
@@ -106,11 +100,7 @@ bool ShadowVolumeOpenGLShader::renderToStencilBuffer() {
 	// Stencil test passes if ((ref & mask) cmpfn (stencil & mask)) is true.
 	// Note: since we set up the stencil-test to always pass, the STENCILFAIL
 	// renderstate is really not needed.
-	glStencilFunc(GL_ALWAYS, 0x1, 0xFFFFFFFF);
-
-	// Make sure that no pixels get drawn to the frame buffer
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ZERO, GL_ONE);
+	glStencilFunc(GL_ALWAYS, 0x1, (GLuint)~0);
 
 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 
@@ -128,6 +118,7 @@ bool ShadowVolumeOpenGLShader::renderToStencilBuffer() {
 	// Restore render states
 	glFrontFace(GL_CCW);
 	glDepthMask(GL_TRUE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_BLEND);
 
@@ -144,12 +135,12 @@ bool ShadowVolumeOpenGLShader::renderToScene() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Only write where stencil val >= 1 (count indicates # of shadows that overlap that pixel)
-	glStencilFunc(GL_LEQUAL, 0x1, 0xFFFFFFFF);
+	glStencilFunc(GL_LEQUAL, 0x1, (GLuint)~0);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	BaseRenderOpenGL3DShader *renderer = dynamic_cast<BaseRenderOpenGL3DShader *>(_gameRef->_renderer3D);
+	BaseRenderOpenGL3DShader *renderer = dynamic_cast<BaseRenderOpenGL3DShader *>(_game->_renderer3D);
 	renderer->_shadowMaskShader->use();
 	renderer->setProjection2D(renderer->_shadowMaskShader);
 
@@ -164,7 +155,7 @@ bool ShadowVolumeOpenGLShader::renderToScene() {
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 
-	_gameRef->_renderer3D->setup3D(nullptr, true);
+	_game->_renderer3D->setup3D(nullptr, true);
 
 	// clear stencil buffer
 	glClearStencil(0);
@@ -175,7 +166,7 @@ bool ShadowVolumeOpenGLShader::renderToScene() {
 
 //////////////////////////////////////////////////////////////////////////
 bool ShadowVolumeOpenGLShader::initMask() {
-	auto *rend = _gameRef->_renderer3D;
+	auto *rend = _game->_renderer3D;
 	ShadowVertexShader shadowMask[4];
 
 	// bottom left

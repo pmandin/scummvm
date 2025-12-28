@@ -278,7 +278,7 @@ protected:
 
 #ifdef USE_ENET
 class Net;
-#ifdef USE_LIBCURL
+#ifdef USE_BASIC_NET
 class Lobby;
 #endif
 #endif
@@ -585,7 +585,7 @@ class ScummEngine_v90he : public ScummEngine_v80he {
 	friend class LogicHE;
 #ifdef USE_ENET
 	friend class Net;
-#ifdef USE_LIBCURL
+#ifdef USE_BASIC_NET
 	friend class Lobby;
 #endif
 #endif
@@ -682,7 +682,7 @@ protected:
 #ifdef USE_ENET
 public:
 	Net *_net;
-#ifdef USE_LIBCURL
+#ifdef USE_BASIC_NET
 	Lobby *_lobby;
 #endif
 #endif
@@ -800,11 +800,11 @@ protected:
 	byte VAR_NUM_SPRITE_GROUPS;
 	byte VAR_NUM_SPRITES;
 	byte VAR_NUM_PALETTES;
-	byte VAR_NUM_UNK;
+	byte VAR_NUM_WINDOWS;
 	byte VAR_SPRITE_IMAGE_CHANGE_DOES_NOT_RESET_SETTINGS;
 
 	byte VAR_U32_VERSION;
-	byte VAR_U32_ARRAY_UNK;
+	byte VAR_U32_RESERVED;
 
 #ifdef USE_ENET
 	byte VAR_REMOTE_START_SCRIPT = 98;

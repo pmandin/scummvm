@@ -165,7 +165,7 @@ int ScummEngine_v72he::readArray(int array, int idx2, int idx1) {
 			  FROM_LE_32(ah->downMin), FROM_LE_32(ah->downMax));
 	}
 
-#if defined(USE_ENET) && defined(USE_LIBCURL)
+#if defined(USE_ENET) && defined(USE_BASIC_NET)
 	if (_enableHECompetitiveOnlineMods) {
 		// Mod for Backyard Baseball 2001 online competitive play: allow baserunners to be
 		// turned around while they're jogging to the next base on a pop-up.
@@ -1776,7 +1776,7 @@ void ScummEngine_v72he::getStringFromArray(int arrayNumber, char *buffer, int ma
 
 	// this function makes a C-string out of <arrayNumber> contents
 
-	VAR(0) = arrayNumber; // it was 0 in original code, but I've seen ScummVM Moonbase code which uses VAR_U32_ARRAY_UNK
+	VAR(0) = arrayNumber; // it was 0 in original code, but I've seen ScummVM Moonbase code which uses VAR_U32_RESERVED
 
 	int i, ch;
 	for (i = 0; i < maxLength; ++i) {

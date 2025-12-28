@@ -56,7 +56,7 @@ XMeshOpenGLShader::~XMeshOpenGLShader() {
 	glDeleteBuffers(1, &_indexBuffer);
 }
 
-bool XMeshOpenGLShader::loadFromXData(const Common::String &filename, XFileData *xobj) {
+bool XMeshOpenGLShader::loadFromXData(const char *filename, XFileData *xobj) {
 	if (XMesh::loadFromXData(filename, xobj)) {
 		uint32 *indexData = (uint32 *)_blendedMesh->getIndexBuffer().ptr();
 		uint32 indexDataSize = _blendedMesh->getIndexBuffer().size() / sizeof(uint32);
@@ -83,7 +83,7 @@ bool XMeshOpenGLShader::render(XModel *model) {
 
 	// For WME DX, mesh model is not visible, possible it's clipped.
 	// For OpenGL, mesh is visible, skip draw it here instead in core.
-	if (!_gameRef->_renderer3D->_camera)
+	if (!_game->_renderer3D->_camera)
 		return false;
 
 	auto fvf = _blendedMesh->getFVF();
@@ -179,7 +179,7 @@ bool XMeshOpenGLShader::renderFlatShadowModel(uint32 shadowColor) {
 
 	// For WME DX, mesh model is not visible, possible it's clipped.
 	// For OpenGL, mesh is visible, skip draw it here instead in core.
-	if (!_gameRef->_renderer3D->_camera)
+	if (!_game->_renderer3D->_camera)
 		return false;
 
 	// W/A for the scene with the table in the laboratory where the engine switches to flat shadows.

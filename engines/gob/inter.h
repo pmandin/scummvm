@@ -674,7 +674,7 @@ protected:
 	void setupOpcodesGob() override;
 
 	void oPlaytoons_printText(OpFuncParams &params);
-	void oPlaytoons_F_1B(OpFuncParams &params);
+	void oPlaytoons_createButton(OpFuncParams &params);
 	void oPlaytoons_putPixel(OpFuncParams &params);
 	void oPlaytoons_freeSprite(OpFuncParams &params);
 	void oPlaytoons_checkData(OpFuncParams &params);
@@ -704,6 +704,8 @@ protected:
 
 	Common::String ansiToOEM(Common::String string);
 	Common::String oemToANSI(Common::String string);
+	void xorObfuscate(byte *str, int len);
+	void xorDeobfuscate(byte *str, int len);
 
 	void o7_draw0x0C();
 	void o7_setCursorToLoadFromExec();
@@ -729,6 +731,7 @@ protected:
 	void o7_getFileInfo();
 	void o7_getSystemProperty();
 	void o7_loadImage();
+	void o7_copyDataToClipboard();
 	void o7_setVolume();
 	void o7_zeroVar();
 	void o7_draw0xA0();
@@ -784,14 +787,47 @@ protected:
 	void o7_checkData(OpFuncParams &params);
 	void o7_readData(OpFuncParams &params);
 	void o7_writeData(OpFuncParams &params);
+	void o7_manageDataFile(OpFuncParams &params);
 
+	bool readAdi4InfDataForChild(Common::Array<byte> &dest, uint32 childNumber, uint32 offset, uint32 size);
+	bool readAdi4InstalledAppsData(Common::Array<byte> &generalChildData,
+								   Common::Array<byte> &appChildData,
+								   uint32 childNbr, uint32 appliNbr);
+	bool writeAdi4InfDataForChild(const Common::Array<byte> &data, uint32 childNumber, uint32 offset, uint32 size);
+	bool writeAdi4InstalledAppsData(const Common::Array<byte> &generalChildData,
+									const Common::Array<byte> &appChildData,
+									uint32 childNbr, uint32 appliNbr);
+
+	void o7_saveAdi4ExerciseAttemptsCount(OpGobParams &params);
+	void o7_saveAdi4ExerciseResults(OpGobParams &params);
+	void o7_writeUnknownChildDataToGameVariables(OpGobParams &params);
+	void o7_writeUnknownAppChildDataToGameVariables(OpGobParams &params);
+	void o7_writeChildScoreToGameVariables(OpGobParams &params);
+
+	void o7_startAdi4Application(OpGobParams &params);
+
+	void o7_xorDeobfuscate(OpGobParams &params);
+	void o7_xorObfuscate(OpGobParams &params);
+	void o7_resolvePath(OpGobParams &params);
 	void o7_ansiToOEM(OpGobParams &params);
 	void o7_oemToANSI(OpGobParams &params);
 	void o7_setDBStringEncoding(OpGobParams &params);
 	void o7_gob0x201(OpGobParams &params);
 	void o7_getFreeDiskSpace(OpGobParams &params);
+	void o7_dummy(OpGobParams &params);
 
 private:
+	const uint32 kAdi4InfChildDataSize = 7406;
+	const uint32 kAdi4InfGeneralChildDataSize = 3406;
+	const uint32 kAdi4InfAppChildDataSize = 200;
+
+	uint32 _adi4CurrentAppNbr = 0;
+	uint32 _adi4CurrentChildNbr = 0;
+	uint32 _adi4CurrentSectionInGeneralChildData = 0;
+	uint32 _adi4CurrentSectionInAppChildData = 0;
+	Common::Array<byte> _adi4GeneralChildData;
+	Common::Array<byte> _adi4CurrentAppChildData;
+
 	INIConfig _inis;
 	TranslationDatabases _translationDatabases;
 	Common::HashMap<Common::String, Database, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> _databases;

@@ -19,11 +19,12 @@
  *
  */
 
-#include "common/memstream.h"
+#include "common/stream.h"
 #include "graphics/macgui/macwidget.h"
 
 #include "director/director.h"
 #include "director/cast.h"
+#include "director/channel.h"
 #include "director/images.h"
 #include "director/movie.h"
 #include "director/picture.h"
@@ -40,7 +41,7 @@ RichTextCastMember::RichTextCastMember(Cast *cast, uint16 castId, Common::Seekab
 
 	_pf32 = Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
 
-	if (version >= kFileVer500 && version < kFileVer600) {
+	if (version >= kFileVer500 && version < kFileVer1100) {
 		if (debugChannelSet(5, kDebugLoading)) {
 			debugC(5, kDebugLoading, "RichTextCastMember():");
 			stream.hexdump(stream.size());
@@ -48,9 +49,14 @@ RichTextCastMember::RichTextCastMember(Cast *cast, uint16 castId, Common::Seekab
 
 		_initialRect = Movie::readRect(stream);
 		_boundingRect = Movie::readRect(stream);
-		stream.seek(8, SEEK_CUR);
+		_antialiasFlag = stream.readByte();
+		_cropFlags = stream.readByte();
+		_scrollPos = stream.readUint16BE();
+		_antialiasFontSize = stream.readUint16BE();
+		_displayHeight = stream.readUint16BE();
+
 		uint8 r = 0, g = 0, b = 0;
-		stream.readByte();
+		stream.readByte(); // skip one byte
 		r = stream.readByte();
 		g = stream.readByte();
 		b = stream.readByte();
@@ -60,12 +66,23 @@ RichTextCastMember::RichTextCastMember(Cast *cast, uint16 castId, Common::Seekab
 		g = (stream.readUint16BE() >> 8);
 		b = (stream.readUint16BE() >> 8);
 		_bgColor = _pf32.RGBToColor(r, g, b);
+
+		debugC(3, kDebugLoading, "  RichTextCastMember(): initialRect: [%s], boundingRect: [%s], antialiasFlag: 0x%02x, cropFlags: 0x%02x, scrollPos: %d, antialiasFontSize: %d, displayHeight: %d",
+			_initialRect.toString().c_str(),
+			_boundingRect.toString().c_str(),
+			_antialiasFlag,
+			_cropFlags,
+			_scrollPos,
+			_antialiasFontSize,
+			_displayHeight);
+		debugC(3, kDebugLoading, "  RichTextCastMember(): foreColor: 0x%08x, bgColor: 0x%08x", _foreColor, _bgColor);
 	} else {
-		warning("RichTextCastMember(): >D5 isn't handled");
+		warning("STUB: RichTextCastMember: RTE not yet supported for version v%d (%d)", humanVersion(_cast->_version), _cast->_version);
 	}
 
 	_type = kCastRichText;
 	_picture = nullptr;
+	_pictureWithBg = nullptr;
 }
 
 RichTextCastMember::RichTextCastMember(Cast *cast, uint16 castId, RichTextCastMember &source)
@@ -83,12 +100,25 @@ RichTextCastMember::RichTextCastMember(Cast *cast, uint16 castId, RichTextCastMe
 RichTextCastMember::~RichTextCastMember() {
 	if (_picture)
 		delete _picture;
+
+	if (_pictureWithBg)
+		delete _pictureWithBg;
 }
 
 void RichTextCastMember::load() {
 	if (_loaded)
 		return;
 
+	// RichText casts consist of 3 files:
+	// RTE0: Editor data, used only by the Authoring Tool
+	// RTE1: Plain text data
+	// RTE2: Bitmap representation for rendering
+	//
+	// RTE0 is using Paige editor by Hermes, which was recently
+	// open sourced. So, if anyone wants to look into internals,
+	// https://github.com/nmatavka/Hermes-Paige/tree/main
+	// the pgReadDoc() is the code entry:
+	// https://github.com/nmatavka/Hermes-Paige/blob/main/PGSOURCE/PGREAD.C#L767
 	uint rte0id = 0;
 	uint rte1id = 0;
 	uint rte2id = 0;
@@ -117,10 +147,18 @@ void RichTextCastMember::load() {
 	}
 	if (_cast->_loadedRTE2s.contains(rte2id)) {
 		_picture = new Picture();
-		const RTE2 *rte2 =  _cast->_loadedRTE2s.getVal(rte2id);
-		Graphics::ManagedSurface *surface = rte2->createSurface(_foreColor, _bgColor, _pf32);
+		const RTE2 *rte2 = _cast->_loadedRTE2s.getVal(rte2id);
+		Graphics::ManagedSurface *surface = rte2->createSurface(_foreColor, _bgColor, _pf32, false);
 		if (surface) {
 			_picture->_surface.copyFrom(surface->rawSurface());
+			surface->free();
+			delete surface;
+		}
+
+		_pictureWithBg = new Picture();
+		surface = rte2->createSurface(_foreColor, _bgColor, _pf32, true);
+		if (surface) {
+			_pictureWithBg->_surface.copyFrom(surface->rawSurface());
 			surface->free();
 			delete surface;
 		}
@@ -145,17 +183,21 @@ Graphics::MacWidget *RichTextCastMember::createWidget(Common::Rect &bbox, Channe
 	// Check if we need to dither the image
 	int dstBpp = g_director->_wm->_pixelformat.bytesPerPixel;
 
-	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
+	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow()->getMacWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
 
 	Graphics::Surface *dithered = nullptr;
+	Picture *src = _pictureWithBg;
+
+	if (channel->_sprite->_ink == kInkTypeBackgndTrans)
+		src = _picture;
 
 	if (dstBpp == 1) {
-		dithered = _picture->_surface.convertTo(g_director->_wm->_pixelformat, nullptr, 0, g_director->_wm->getPalette(), g_director->_wm->getPaletteSize());
+		dithered = src->_surface.convertTo(g_director->_wm->_pixelformat, nullptr, 0, g_director->_wm->getPalette(), g_director->_wm->getPaletteSize());
 	}
 
 	// scale for drawing a different size sprite
 	copyStretchImg(
-		dithered ? dithered : &_picture->_surface,
+		dithered ? dithered : &src->_surface,
 		widget->getSurface()->surfacePtr(),
 		_initialRect,
 		bbox,
@@ -169,8 +211,6 @@ Graphics::MacWidget *RichTextCastMember::createWidget(Common::Rect &bbox, Channe
 
 	return widget;
 }
-
-
 
 bool RichTextCastMember::hasField(int field) {
 	switch (field) {
@@ -201,19 +241,19 @@ Datum RichTextCastMember::getField(int field) {
 	return d;
 }
 
-bool RichTextCastMember::setField(int field, const Datum &d) {
+void RichTextCastMember::setField(int field, const Datum &d) {
 	switch (field) {
 	case kTheText:
 		_plainText = Common::U32String(d.asString());
 		warning("STUB: RichTextCastMember::setField: text set to \"%s\", but won't rerender!", d.asString().c_str());
-		break;
+		return;
 	case kThePageHeight:
 	case kTheScrollTop:
 	default:
 		break;
 	}
 
-	return CastMember::setField(field, d);
+	CastMember::setField(field, d);
 }
 
 Common::String RichTextCastMember::formatInfo() {
@@ -246,7 +286,7 @@ uint32 RichTextCastMember::getCastDataSize() {
 	}
 }
 
-void RichTextCastMember::writeCastData(Common::MemoryWriteStream *writeStream) {
+void RichTextCastMember::writeCastData(Common::SeekableWriteStream *writeStream) {
 	if (_cast->_version >= kFileVer500 && _cast->_version < kFileVer600) {
 		Movie::writeRect(writeStream, _initialRect);
 		Movie::writeRect(writeStream, _boundingRect);

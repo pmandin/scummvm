@@ -819,6 +819,8 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 	// initial value of zero!
 	sem_init(&pause_sem, 0, 0);
 
+	virt_keyboard_state = false;
+
 	_asset_archive = new AndroidAssetArchive(asset_manager);
 	assert(_asset_archive);
 
@@ -1074,6 +1076,9 @@ jobject JNI::getNewSAFTree(bool writable, const Common::String &initURI,
 	jobject tree = env->CallObjectMethod(_jobj, _MID_getNewSAFTree,
 	                                     writable, javaInitURI, javaPrompt);
 
+	env->DeleteLocalRef(javaInitURI);
+	env->DeleteLocalRef(javaPrompt);
+
 	if (env->ExceptionCheck()) {
 		LOGE("getNewSAFTree: error");
 
@@ -1082,9 +1087,6 @@ jobject JNI::getNewSAFTree(bool writable, const Common::String &initURI,
 
 		return nullptr;
 	}
-
-	env->DeleteLocalRef(javaInitURI);
-	env->DeleteLocalRef(javaPrompt);
 
 	return tree;
 }

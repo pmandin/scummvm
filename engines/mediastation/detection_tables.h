@@ -34,6 +34,7 @@ const PlainGameDescriptor mediastationGames[] = {
 	{ "ibmcrayolaholiday", "IBM/Crayola Print Factory Holiday Activity Pack" },
 	{ "101dalmatians", "Disney's Animated Storybook: 101 Dalmatians" },
 	{ "herculesasb", "Disney's Animated Storybook: Hercules" },
+	{ "pocahontas", "Disney's Animated Storybook: Pocahontas"},
 	{ "barbieasrapunzel", "Magic Fairy Tales: Barbie as Rapunzel" },
 	{ "tonkasearchandrescue", "Tonka Search and Rescue" },
 	{ "arielstorystudio", "Disney presents Ariel's Story Studio" },
@@ -85,9 +86,9 @@ const ADGameDescription gameDescriptions[] = {
 		"lionking",
 		"v2.0/GB",
 		AD_ENTRY3s(
-			"LIONKING.EXE", "9cc25600be13c402f4edf15772989393", 358368,
-			"BOOT.STM", "72e9211eb97b968e8db20c0fec919eb4", 23610,
-			"100.CXT", "069b86f0912627bc1fffb1dee9b68afa", 1455740
+			"LIONKING.EXE", "3239451c477eaa16015110502be031a5", 363232,
+			"BOOT.STM", "dd83fd1fb899b680f00c586404cc7b7c", 23610,
+			"100.CXT", "d5dc4d49df2ea6f2ff0aa33a3f385506", 1455740
 		),
 		Common::EN_GRB,
 		Common::kPlatformWindows,
@@ -136,6 +137,34 @@ const ADGameDescription gameDescriptions[] = {
 		),
 		Common::EN_USA,
 		Common::kPlatformWindows,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOASPECT)
+	},
+
+	{
+		"honeytree",
+		"v2.0/SE", // Also includes English as an in-game language option.
+		AD_ENTRY3s(
+			"WPHTASB.EXE", "8cbb2b365a1073ca5c8c1fde301094ea", 443008,
+			"BOOT.STM", "448efdc32f4ce36b5e4f91b34f44437a", 55284,
+			"100.CXT", "76bd87d2692b6ab7b034bbc50957156b", 1966658
+		),
+		Common::SV_SWE,
+		Common::kPlatformWindows,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOASPECT)
+	},
+
+	{
+		"honeytree",
+		"v2.0/SE", // Also includes English as an in-game language option.
+		AD_ENTRY3s(
+			"Nalle Puh", "r:3c061bff404de99c69a0b0187018a7da", 765688,
+			"BOOT.STM", "448efdc32f4ce36b5e4f91b34f44437a", 55284,
+			"100.CXT", "00239a03730b8e1c3c730050b8872d33", 2267499
+		),
+		Common::SV_SWE,
+		Common::kPlatformMacintosh,
 		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOASPECT)
 	},
@@ -252,6 +281,36 @@ const ADGameDescription gameDescriptions[] = {
 		),
 		Common::EN_USA,
 		Common::kPlatformWindows,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOASPECT)
+	},
+
+	// Disney's Animated Storybook: Pocahontas
+	{
+		"pocahontas",
+		"v1.0/SE", // Also includes English as an in-game language option
+		AD_ENTRY3s(
+			"POCA_ASB.EXE", "b5dc94c806c1122a69b19a2ef9113d3c", 389440,
+			"BOOT.STM", "dfb9353599cf8ca0f95095353041ef54", 337944,
+			"100.CXT", "7f9fae41a07e8e1cc467d1b2be37ef9d", 1117144
+		),
+		Common::SV_SWE,
+		Common::kPlatformWindows,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOASPECT)
+	},
+
+	// Disney's Animated Storybook: Pocahontas
+	{
+		"pocahontas",
+		"v1.0/SE", // Also includes English as an in-game language option
+		AD_ENTRY3s(
+			"Pocahontas", "r:6b0d52f286954d7dbb5fd703ff696b40", 326402,
+			"BOOT.STM", "dfb9353599cf8ca0f95095353041ef54", 337944,
+			"100.CXT", "7f9fae41a07e8e1cc467d1b2be37ef9d", 1117144
+		),
+		Common::SV_SWE,
+		Common::kPlatformMacintosh,
 		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOASPECT)
 	},

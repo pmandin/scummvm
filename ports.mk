@@ -182,25 +182,27 @@ ifdef USE_PANDOC
 	@sed -i'.sed-orig' -e "s|href=\"AUTHORS\"|href=\"https://www.scummvm.org/credits/\"|g" $(bundle_name)/Contents/Resources/README$(PANDOCEXT)
 endif
 	@rm $(bundle_name)/Contents/Resources/*.sed-orig
-	cp $(bundle_name)/Contents/Resources/COPYING.Apache $(bundle_name)/Contents/Resources/COPYING-Apache
-	cp $(bundle_name)/Contents/Resources/COPYING.BSD $(bundle_name)/Contents/Resources/COPYING-BSD
-	cp $(bundle_name)/Contents/Resources/COPYING.BSL $(bundle_name)/Contents/Resources/COPYING-BSL
-	cp $(bundle_name)/Contents/Resources/COPYING.FREEFONT $(bundle_name)/Contents/Resources/COPYING-FREEFONT
-	cp $(bundle_name)/Contents/Resources/COPYING.GLAD $(bundle_name)/Contents/Resources/COPYING-GLAD
-	cp $(bundle_name)/Contents/Resources/COPYING.ISC $(bundle_name)/Contents/Resources/COPYING-ISC
-	cp $(bundle_name)/Contents/Resources/COPYING.LGPL $(bundle_name)/Contents/Resources/COPYING-LGPL
-	cp $(bundle_name)/Contents/Resources/COPYING.LUA $(bundle_name)/Contents/Resources/COPYING-LUA
-	cp $(bundle_name)/Contents/Resources/COPYING.MIT $(bundle_name)/Contents/Resources/COPYING-MIT
-	cp $(bundle_name)/Contents/Resources/COPYING.MKV $(bundle_name)/Contents/Resources/COPYING-MKV
-	cp $(bundle_name)/Contents/Resources/COPYING.MPL $(bundle_name)/Contents/Resources/COPYING-MPL
-	cp $(bundle_name)/Contents/Resources/COPYING.OFL $(bundle_name)/Contents/Resources/COPYING-OFL
-	cp $(bundle_name)/Contents/Resources/COPYING.TINYGL $(bundle_name)/Contents/Resources/COPYING-TINYGL
-	cp $(bundle_name)/Contents/Resources/CatharonLicense.txt $(bundle_name)/Contents/Resources/CatharonLicense-txt
+	mkdir -p $(bundle_name)/Contents/Resources/licenses
+	mv $(bundle_name)/Contents/Resources/COPYING $(bundle_name)/Contents/Resources/licenses/COPYING
+	mv $(bundle_name)/Contents/Resources/COPYING.Apache $(bundle_name)/Contents/Resources/licenses/COPYING-Apache
+	mv $(bundle_name)/Contents/Resources/COPYING.BSD $(bundle_name)/Contents/Resources/licenses/COPYING-BSD
+	mv $(bundle_name)/Contents/Resources/COPYING.BSL $(bundle_name)/Contents/Resources/licenses/COPYING-BSL
+	mv $(bundle_name)/Contents/Resources/COPYING.GLAD $(bundle_name)/Contents/Resources/licenses/COPYING-GLAD
+	mv $(bundle_name)/Contents/Resources/COPYING.ISC $(bundle_name)/Contents/Resources/licenses/COPYING-ISC
+	mv $(bundle_name)/Contents/Resources/COPYING.LGPL $(bundle_name)/Contents/Resources/licenses/COPYING-LGPL
+	mv $(bundle_name)/Contents/Resources/COPYING.LUA $(bundle_name)/Contents/Resources/licenses/COPYING-LUA
+	mv $(bundle_name)/Contents/Resources/COPYING.MIT $(bundle_name)/Contents/Resources/licenses/COPYING-MIT
+	mv $(bundle_name)/Contents/Resources/COPYING.MKV $(bundle_name)/Contents/Resources/licenses/COPYING-MKV
+	mv $(bundle_name)/Contents/Resources/COPYING.MPL $(bundle_name)/Contents/Resources/licenses/COPYING-MPL
+	mv $(bundle_name)/Contents/Resources/COPYING.OFL $(bundle_name)/Contents/Resources/licenses/COPYING-OFL
+	mv $(bundle_name)/Contents/Resources/COPYING.TINYGL $(bundle_name)/Contents/Resources/licenses/COPYING-TINYGL
+	mv $(bundle_name)/Contents/Resources/CatharonLicense.txt $(bundle_name)/Contents/Resources/licenses/CatharonLicense.txt
 
 ifdef DYNAMIC_MODULES
 	cp $(PLUGINS) $(bundle_name)/Contents/Resources/
 endif
 	chmod 644 $(bundle_name)/Contents/Resources/*
+	chmod 755 $(bundle_name)/Contents/Resources/licenses
 ifneq ($(DIST_FILES_SHADERS),)
 	chmod 755 $(bundle_name)/Contents/Resources/shaders
 endif
@@ -507,12 +509,16 @@ else
 ifdef USE_FLUIDSYNTH
 OSX_STATIC_LIBS += -liconv \
                 -framework CoreMIDI -framework CoreAudio\
-                $(STATICLIBPATH)/lib/libfluidsynth.a \
-                $(STATICLIBPATH)/lib/libglib-2.0.a \
-                $(STATICLIBPATH)/lib/libintl.a
+                $(STATICLIBPATH)/lib/libfluidsynth.a
+ifneq (,$(wildcard $(STATICLIBPATH)/lib/libglib-2.0.a))
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libglib-2.0.a
+ifneq (,$(wildcard $(STATICLIBPATH)/lib/libintl.a))
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libintl.a
+endif
+endif
 
 ifneq ($(BACKEND), ios7)
-OSX_STATIC_LIBS += -lreadline -framework AudioUnit
+OSX_STATIC_LIBS += -lreadline
 endif
 endif
 endif
@@ -593,7 +599,7 @@ endif
 # Special target to create a static linked binary for macOS.
 scummvm-static: $(DETECT_OBJS) $(OBJS)
 	+$(LD) $(LDFLAGS) -o scummvm-static $(PRE_OBJS_FLAGS) $(DETECT_OBJS) $(OBJS) $(POST_OBJS_FLAGS) \
-		-framework CoreMIDI \
+		-framework CoreMIDI -framework AudioUnit \
 		$(OSX_STATIC_LIBS) \
 		$(OSX_ZLIB)
 
@@ -614,7 +620,6 @@ osxsnap: bundle
 	mv ./ScummVM-snapshot/COPYING.Apache ./ScummVM-snapshot/License\ \(Apache\)
 	mv ./ScummVM-snapshot/COPYING.BSD ./ScummVM-snapshot/License\ \(BSD\)
 	mv ./ScummVM-snapshot/COPYING.BSL ./ScummVM-snapshot/License\ \(BSL\)
-	mv ./ScummVM-snapshot/COPYING.FREEFONT ./ScummVM-snapshot/License\ \(FREEFONT\)
 	mv ./ScummVM-snapshot/COPYING.GLAD ./ScummVM-snapshot/License\ \(Glad\)
 	mv ./ScummVM-snapshot/COPYING.ISC ./ScummVM-snapshot/License\ \(ISC\)
 	mv ./ScummVM-snapshot/COPYING.LGPL ./ScummVM-snapshot/License\ \(LGPL\)

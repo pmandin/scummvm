@@ -98,6 +98,7 @@ const GameIdStrToEnum gameIdStrToEnum[] = {
 	{ "qfg4demo",        "",                GID_QFG4DEMO,         false, SCI_VERSION_NONE },	// Sierra ID is "glory", distinguished by resources
 	{ "rama",            "rama",            GID_RAMA,             true,  SCI_VERSION_NONE },
 	{ "sci-fanmade",     "",                GID_FANMADE,          false, SCI_VERSION_NONE },
+	{ "shield",          "archive",         GID_SHIELD,           true,  SCI_VERSION_NONE },
 	{ "shivers",         "",                GID_SHIVERS,          true,  SCI_VERSION_NONE },
 	//{ "shivers2",        "shivers2",        GID_SHIVERS2,       true,  SCI_VERSION_NONE },	// Not SCI
 	{ "slater",          "thegame",         GID_SLATER,           false, SCI_VERSION_NONE },
@@ -166,7 +167,7 @@ Common::String customizeGuiOptions(Common::Path gamePath, Common::String guiOpti
 				if (i->getFileName().equalsIgnoreCase(rmodes[ii].gfxDriverName)) {
 					// Make sure that the Windows 16 colors mode is only ever added to the above mentioned
 					// windows versions and the other modes only get added to the other versions.
-					if (isWindows != (strncmp(rmodes[ii].guio, GUIO_RENDERWIN_16C, 1) != 0))
+					if (isWindows != (strncmp(rmodes[ii].guio, GUIO_RENDERWIN_16C, sizeof(GUIO_RENDERWIN_16C) - 1) != 0))
 						guiOptions += rmodes[ii].guio;
 				}
 			}

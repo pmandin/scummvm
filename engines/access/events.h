@@ -81,7 +81,7 @@ public:
 	/**
 	 * Return frame counter
 	 */
-	uint32 getFrameCounter() { return _frameCounter; }
+	uint32 getFrameCounter() const { return _frameCounter; }
 
 	/**
 	 * Sets the cursor and reset the normal cursor
@@ -131,9 +131,15 @@ public:
 
 	bool getAction(Common::CustomEventType &action);
 
+	Common::CustomEventType peekAction() const { return _action; }
+
+	Common::KeyCode peekKeyCode() const { return _keyCode; }
+
 	bool isKeyActionPending() const;
 
 	void delay(int time = 5);
+
+	void delayUntilNextFrame();
 
 	void debounceLeft();
 
@@ -141,11 +147,11 @@ public:
 
 	void waitKeyActionMouse();
 
-	Common::Point &getMousePos() { return _mousePos; }
+	const Common::Point &getMousePos() const { return _mousePos; }
 
 	Common::Point calcRawMouse();
 
-	int checkMouseBox1(Common::Array<Common::Rect> &rects);
+	int checkMouseBox1(const Common::Array<Common::Rect> &rects);
 
 	bool isKeyActionMousePressed();
 

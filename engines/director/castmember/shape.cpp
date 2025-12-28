@@ -19,7 +19,7 @@
  *
  */
 
-#include "common/memstream.h"
+#include "common/stream.h"
 #include "director/director.h"
 #include "director/cast.h"
 #include "director/movie.h"
@@ -32,8 +32,6 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 		: CastMember(cast, castId, stream) {
 	_type = kCastShape;
 
-	byte unk1;
-
 	_ink = kInkTypeCopy;
 
 	if (debugChannelSet(5, kDebugLoading)) {
@@ -42,8 +40,7 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 	}
 
 	if (version < kFileVer400) {
-		unk1 = stream.readByte();
-		_shapeType = static_cast<ShapeType>(stream.readByte());
+		_shapeType = static_cast<ShapeType>(stream.readUint16BE());
 		_initialRect = Movie::readRect(stream);
 		_pattern = stream.readUint16BE();
 		// Normalize D2 and D3 colors from -128 ... 127 to 0 ... 255.
@@ -53,9 +50,8 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 		_ink = static_cast<InkType>(_fillType & 0x3f);
 		_lineThickness = stream.readByte();
 		_lineDirection = stream.readByte();
-	} else if (version >= kFileVer400 && version < kFileVer600) {
-		unk1 = stream.readByte();
-		_shapeType = static_cast<ShapeType>(stream.readByte());
+	} else if (version >= kFileVer400 && version < kFileVer1100) {
+		_shapeType = static_cast<ShapeType>(stream.readUint16BE());
 		_initialRect = Movie::readRect(stream);
 		_pattern = stream.readUint16BE();
 		_fgCol = g_director->transformColor((uint8)stream.readByte());
@@ -65,8 +61,7 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 		_lineThickness = stream.readByte();
 		_lineDirection = stream.readByte();
 	} else {
-		warning("STUB: ShapeCastMember::ShapeCastMember(): not yet implemented");
-		unk1 = 0;
+		warning("STUB: ShapeCastMember::ShapeCastMember(): Shapes not yet supported for version v%d (%d)", humanVersion(_cast->_version), _cast->_version);
 		_shapeType = kShapeRectangle;
 		_pattern = 0;
 		_fgCol = _bgCol = 0;
@@ -76,8 +71,8 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 	}
 	_modified = false;
 
-	debugC(3, kDebugLoading, "ShapeCastMember: unk1: %x type: %d pat: %d fg: %d bg: %d fill: %d thick: %d dir: %d",
-		unk1, _shapeType, _pattern, _fgCol, _bgCol, _fillType, _lineThickness, _lineDirection);
+	debugC(3, kDebugLoading, "ShapeCastMember: type: %d pat: %d fg: %d bg: %d fill: %d thick: %d dir: %d",
+		_shapeType, _pattern, _fgCol, _bgCol, _fillType, _lineThickness, _lineDirection);
 
 	if (debugChannelSet(3, kDebugLoading))
 		_initialRect.debugPrint(0, "ShapeCastMember: rect:");
@@ -167,17 +162,17 @@ Datum ShapeCastMember::getField(int field) {
 	return d;
 }
 
-bool ShapeCastMember::setField(int field, const Datum &d) {
+void ShapeCastMember::setField(int field, const Datum &d) {
 	switch (field) {
 	case kTheFilled:
 		_fillType = d.asInt() ? 1 : 0;
-		return true;
+		return;
 	case kTheLineSize:
 		_lineThickness = d.asInt();
-		return true;
+		return;
 	case kThePattern:
 		_pattern = d.asInt();
-		return true;
+		return;
 	case kTheShapeType:
 		if (d.type == SYMBOL) {
 			Common::String name = *d.u.s;
@@ -190,14 +185,13 @@ bool ShapeCastMember::setField(int field, const Datum &d) {
 			} else if (name.equalsIgnoreCase("line")) {
 				_shapeType = kShapeLine;
 			}
-			return true;
 		}
 		break;
 	default:
 		break;
 	}
 
-	return CastMember::setField(field, d);
+	CastMember::setField(field, d);
 }
 
 
@@ -236,7 +230,7 @@ uint32 ShapeCastMember::getCastDataSize() {
 	}
 }
 
-void ShapeCastMember::writeCastData(Common::MemoryWriteStream *writeStream) {
+void ShapeCastMember::writeCastData(Common::SeekableWriteStream *writeStream) {
 	writeStream->writeByte(0);
 	writeStream->writeByte(1);
 
@@ -244,7 +238,7 @@ void ShapeCastMember::writeCastData(Common::MemoryWriteStream *writeStream) {
 	writeStream->writeUint16LE(_pattern);
 
 	// The foreground and background colors are transformed
-	// Need to retreive the original colors for saving
+	// Need to retrieve the original colors for saving
 	writeStream->writeByte(_fgCol);
 	writeStream->writeByte(_bgCol);
 

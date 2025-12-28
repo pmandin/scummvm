@@ -1329,14 +1329,14 @@ bool Console::cmdShowInstruments(int argc, const char **argv) {
 	Common::List<ResourceId> resources = _engine->getResMan()->listResources(kResourceTypeSound);
 	Common::sort(resources.begin(), resources.end());
 	int instruments[128];
-	bool instrumentsSongs[128][1000];
+	uint8 instrumentsSongs[128][1000 / 8];
 
 	for (int i = 0; i < 128; i++)
 		instruments[i] = 0;
 
 	for (int i = 0; i < 128; i++)
-		for (int j = 0; j < 1000; j++)
-			instrumentsSongs[i][j] = false;
+		for (int j = 0; j < 1000 / 8; j++)
+			instrumentsSongs[i][j] = 0;
 
 	if (songNumber == -1) {
 		debugPrintf("%d sounds found, checking their instrument mappings...\n", resources.size());
@@ -1396,7 +1396,7 @@ bool Console::cmdShowInstruments(int argc, const char **argv) {
 
 					debugPrintf(" %d", instrument);
 					instruments[instrument]++;
-					instrumentsSongs[instrument][itr->getNumber()] = true;
+					instrumentsSongs[instrument][itr->getNumber() >> 3] |= 1 << (itr->getNumber() & 7);
 				} else {
 					channelData++;
 				}
@@ -1462,7 +1462,7 @@ bool Console::cmdShowInstruments(int argc, const char **argv) {
 			if (instruments[i] > 0) {
 				debugPrintf("Instrument %d: ", i);
 				for (int j = 0; j < 1000; j++) {
-					if (instrumentsSongs[i][j])
+					if ((instrumentsSongs[i][j >> 3] & (1 << (j & 7))) != 0)
 						debugPrintf("%d, ", j);
 				}
 				debugPrintf("\n");
@@ -4263,8 +4263,7 @@ bool Console::cmdBreakpointMethod(int argc, const char **argv) {
 	/* Note: We can set a breakpoint on a method that has not been loaded yet.
 	   Thus, we can't check whether the command argument is a valid method name.
 	   A breakpoint set on an invalid method name will just never trigger. */
-	Breakpoint bp;
-	bp._type = BREAK_SELECTOREXEC;
+	Breakpoint bp(BREAK_SELECTOREXEC);
 	bp._name = argv[1];
 	bp._action = action;
 
@@ -4297,8 +4296,7 @@ bool Console::cmdBreakpointRead(int argc, const char **argv) {
 		}
 	}
 
-	Breakpoint bp;
-	bp._type = BREAK_SELECTORREAD;
+	Breakpoint bp(BREAK_SELECTORREAD);
 	bp._name = argv[1];
 	bp._action = action;
 
@@ -4331,8 +4329,7 @@ bool Console::cmdBreakpointWrite(int argc, const char **argv) {
 		}
 	}
 
-	Breakpoint bp;
-	bp._type = BREAK_SELECTORWRITE;
+	Breakpoint bp(BREAK_SELECTORWRITE);
 	bp._name = argv[1];
 	bp._action = action;
 
@@ -4397,8 +4394,7 @@ bool Console::cmdBreakpointKernel(int argc, const char **argv) {
 		return true;
 	}
 
-	Breakpoint bp;
-	bp._type = BREAK_KERNEL;
+	Breakpoint bp(BREAK_KERNEL);
 	bp._name = pattern;
 	bp._action = action;
 
@@ -4429,11 +4425,7 @@ bool Console::cmdBreakpointFunction(int argc, const char **argv) {
 		}
 	}
 
-	/* Note: We can set a breakpoint on a method that has not been loaded yet.
-	   Thus, we can't check whether the command argument is a valid method name.
-	   A breakpoint set on an invalid method name will just never trigger. */
-	Breakpoint bp;
-	bp._type = BREAK_EXPORT;
+	Breakpoint bp(BREAK_EXPORT);
 	// script number, export number
 	bp._address = (atoi(argv[1]) << 16 | atoi(argv[2]));
 	bp._action = action;
@@ -4471,8 +4463,7 @@ bool Console::cmdBreakpointAddress(int argc, const char **argv) {
 		}
 	}
 
-	Breakpoint bp;
-	bp._type = BREAK_ADDRESS;
+	Breakpoint bp(BREAK_ADDRESS);
 	bp._regAddress = make_reg32(addr.getSegment(), addr.getOffset());
 	bp._action = action;
 

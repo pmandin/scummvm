@@ -600,7 +600,7 @@ int ScummEngine::readVar(uint var) {
 			return 2;
 		}
 
-#if defined(USE_ENET) && defined(USE_LIBCURL)
+#if defined(USE_ENET) && defined(USE_BASIC_NET)
 		if (_enableHECompetitiveOnlineMods) {
 			// HACK: If we're reading var586, competitive mods enabled, playing online,
 			// successfully fetched custom teams, and we're not in one of the three scripts
@@ -626,7 +626,7 @@ int ScummEngine::readVar(uint var) {
 			var &= 0xFFF;
 			assertRange(0, var, _numRoomVariables - 1, "room variable (reading)");
 
-#if defined(USE_ENET) && defined(USE_LIBCURL)
+#if defined(USE_ENET) && defined(USE_BASIC_NET)
 			if (_enableHECompetitiveOnlineMods) {
 				// Mod for Backyard Baseball 2001 online competitive play: don't give powerups for double plays
 				// Return true for this variable, which dictates whether powerups are disabled, but only in this script
@@ -677,7 +677,7 @@ int ScummEngine::readVar(uint var) {
 			assertRange(0, var, 25, "local variable (reading)");
 		else
 			assertRange(0, var, 20, "local variable (reading)");
-#if defined(USE_ENET) && defined(USE_LIBCURL)
+#if defined(USE_ENET) && defined(USE_BASIC_NET)
 		// Mod for Backyard Baseball 2001 online competitive play: change impact of
 		// batter's power stat on hit power
 		if (_enableHECompetitiveOnlineMods) {
@@ -1478,10 +1478,17 @@ void ScummEngine::runInputScript(int clickArea, int val, int mode) {
 void ScummEngine::decreaseScriptDelay(int amount) {
 	ScriptSlot *ss = vm.slot;
 	int i;
+#ifdef USE_TTS
+	Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
+#endif
 	for (i = 0; i < NUM_SCRIPT_SLOT; i++, ss++) {
 		if (ss->status == ssPaused) {
 			ss->delay -= amount;
+#ifdef USE_TTS
+			if (ss->delay < 0 && (!ttsMan || !ttsMan->isSpeaking())) {
+#else
 			if (ss->delay < 0) {
+#endif
 				if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformMacintosh && ss->number == 134) {
 					// Unlike the DOS version, there doesn't
 					// appear to be anything in the credits
@@ -1651,6 +1658,9 @@ void ScummEngine::abortCutscene() {
 	uint32 offs = vm.cutScenePtr[idx];
 	if (offs) {
 		ScriptSlot *ss = &vm.slot[vm.cutSceneScript[idx]];
+#ifdef USE_TTS
+		stopTextToSpeech();
+#endif
 		ss->offs = offs;
 		ss->status = ssRunning;
 		ss->freezeCount = 0;
