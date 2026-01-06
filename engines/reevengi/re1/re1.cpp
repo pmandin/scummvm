@@ -27,6 +27,7 @@
 #include "engines/reevengi/detection.h"
 #include "engines/reevengi/formats/pak.h"
 #include "engines/reevengi/formats/bss.h"
+#include "engines/reevengi/formats/prs.h"
 #include "engines/reevengi/movie/movie.h"
 #include "engines/reevengi/re1/re1.h"
 #include "engines/reevengi/re1/entity.h"
@@ -382,8 +383,18 @@ void RE1Engine::loadRoom(void) {
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		//debug(3, "loaded %s", filePath);
-		_roomScene = new RE1Room(this, stream);
+		if (_flags.platform == Common::kPlatformSaturn) {
+			PrsDecoder *prsDecoder = new PrsDecoder();
+			Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(stream);
+			if (prsStream) {
+				//debug(3, "loaded %s", filePath);
+				_roomScene = new RE1Room(this, prsStream);
+			}
+			delete prsStream;
+		} else {
+			//debug(3, "loaded %s", filePath);
+			_roomScene = new RE1Room(this, stream);
+		}
 	}
 	delete stream;
 }
