@@ -32,6 +32,10 @@
 
 namespace MediaStation {
 
+class DisplayContext;
+class SpatialEntity;
+class StageActor;
+
 enum ActorType {
 	kActorTypeEmpty = 0x0000,
 	kActorTypeScreen = 0x0001, // SCR
@@ -53,6 +57,7 @@ enum ActorType {
 	kActorTypeText = 0x001a, // TXT
 	kActorTypeFont = 0x001b, // FON
 	kActorTypeCamera = 0x001c, // CAM
+	kActorTypeDiskImageActor = 0x001d,
 	kActorTypeCanvas = 0x001e, // CVS
 	kActorTypeXsnd = 0x001f,
 	kActorTypeXsndMidi = 0x0020,
@@ -65,9 +70,9 @@ enum ActorHeaderSectionType {
 	kActorHeaderEventHandler = 0x0017,
 	kActorHeaderChildActorId = 0x0019,
 	kActorHeaderActorId = 0x001a,
-	kActorHeaderChunkReference = 0x001b,
-	kActorHeaderMovieAnimationChunkReference = 0x06a4,
-	kActorHeaderMovieAudioChunkReference = 0x06a5,
+	kActorHeaderChannelIdent = 0x001b,
+	kActorHeaderMovieAnimationChannelIdent = 0x06a4,
+	kActorHeaderMovieAudioChannelIdent = 0x06a5,
 	kActorHeaderActorReference = 0x077b,
 	kActorHeaderBoundingBox = 0x001c,
 	kActorHeaderMouseActiveArea = 0x001d,
@@ -100,11 +105,18 @@ enum ActorHeaderSectionType {
 	kActorHeaderDuration = 0x0612,
 
 	// CAMERA FIELDS.
-	kActorHeaderViewportOrigin = 0x076f,
-	kActorHeaderLensOpen = 0x0770,
+	kActorHeaderCameraViewportOrigin = 0x076f,
+	kActorHeaderCameraLensOpen = 0x0770,
+	kActorHeaderCameraImageActor = 0x77b,
+
+	// CANVAS FIELDS.
+	kActorHeaderCanvasUnk1 = 0x491,
+	kActorHeaderCanvasDissolveFactor = 0x493,
+	kActorHeaderCanvasUnk2 = 0x494,
+	kActorHeaderCanvasUnk3 = 0x495,
 
 	// STAGE FIELDS.
-	kActorHeaderStageSize = 0x0771,
+	kActorHeaderStageExtent = 0x0771,
 	kActorHeaderCylindricalX = 0x0772,
 	kActorHeaderCylindricalY = 0x0773,
 
@@ -124,7 +136,7 @@ enum ActorHeaderSectionType {
 	kActorHeaderCurrentSpriteClip = 0x03ea
 };
 
-class SpatialEntity;
+enum CylindricalWrapMode : int;
 
 struct MouseActorState {
 	SpatialEntity *keyDown = nullptr;
@@ -150,8 +162,6 @@ enum MouseEventFlag {
 	// There is no key up event.
 };
 
-class StageActor;
-
 class Actor {
 public:
 	Actor(ActorType type) : _type(type) {};
@@ -169,11 +179,6 @@ public:
 	virtual void readParameter(Chunk &chunk, ActorHeaderSectionType paramType);
 	virtual void loadIsComplete();
 
-	// These are not pure virtual so if an actor doesn't read any chunks or
-	// subfiles it doesn't need to just implement these with an error message.
-	virtual void readChunk(Chunk &chunk);
-	virtual void readSubfile(Subfile &subfile, Chunk &chunk);
-
 	void processTimeEventHandlers();
 	void runEventHandlerIfExists(EventType eventType, const ScriptValue &arg);
 	void runEventHandlerIfExists(EventType eventType);
@@ -183,9 +188,6 @@ public:
 	uint contextId() const { return _contextId; }
 	void setId(uint id) { _id = id; }
 	void setContextId(uint id) { _contextId = id; }
-
-	uint32 _chunkReference = 0;
-	uint _actorReference = 0;
 
 protected:
 	ActorType _type = kActorTypeEmpty;
@@ -202,11 +204,15 @@ protected:
 class SpatialEntity : public Actor {
 public:
 	SpatialEntity(ActorType type) : Actor(type) {};
+	~SpatialEntity();
 
-	virtual void draw(const Common::Array<Common::Rect> &dirtyRegion) { return; }
+	virtual void draw(DisplayContext &displayContext) { return; }
 	virtual ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) override;
 	virtual void readParameter(Chunk &chunk, ActorHeaderSectionType paramType) override;
 	virtual void loadIsComplete() override;
+	virtual void preload(const Common::Rect &rect) {};
+	virtual bool isRectInMemory(const Common::Rect &rect) { return true; }
+	virtual bool isLoading() { return false; }
 
 	virtual bool isSpatialActor() const override { return true; }
 	virtual bool isVisible() const { return _isVisible; }
@@ -239,6 +245,7 @@ public:
 	StageActor *getParentStage() const { return _parentStage; }
 
 	virtual void invalidateLocalBounds();
+	virtual void setAdjustedBounds(CylindricalWrapMode alignmentMode);
 
 protected:
 	uint _stageId = 0;
@@ -247,6 +254,7 @@ protected:
 	double _scaleX = 0.0;
 	double _scaleY = 0.0;
 	Common::Rect _boundingBox;
+	Common::Rect _originalBoundingBox;
 	bool _isVisible = false;
 	bool _hasTransparency = false;
 	bool _getOffstageEvents = false;

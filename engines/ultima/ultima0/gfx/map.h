@@ -19,19 +19,25 @@
  *
  */
 
-#ifndef ULTIMA_ULTIMA0_RESOURCES_H
-#define ULTIMA_ULTIMA0_RESOURCES_H
+#ifndef ULTIMA0_GFX_MAP_H
+#define ULTIMA0_GFX_MAP_H
 
-#include "ultima/shared/engine/resources.h"
+#include "graphics/managed_surface.h"
 
 namespace Ultima {
 namespace Ultima0 {
+namespace Gfx {
 
-class Resources : public Shared::LocalResourceFile {
+class Map {
+private:
+	static void drawTile(Graphics::ManagedSurface *s, const Common::Rect &r, int obj);
 
+public:
+	static void draw(Graphics::ManagedSurface *s, bool showAsMap = false);
 };
 
-} // End of namespace Ultima0
-} // End of namespace Ultima
+} // namespace Gfx
+} // namespace Ultima0
+} // namespace Ultima
 
 #endif

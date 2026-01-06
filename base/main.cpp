@@ -583,9 +583,11 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		}
 		ConfMan.set("gfx_mode", gfxModeSetting, Common::ConfigManager::kSessionDomain);
 	}
+#ifdef ENABLE_EVENTRECORDER
 	if (settings.contains("disable-display")) {
-		ConfMan.setInt("disable-display", 1, Common::ConfigManager::kTransientDomain);
+		ConfMan.setInt("disable_display", 1, Common::ConfigManager::kTransientDomain);
 	}
+#endif
 	setupGraphics(system);
 
 	if (!configLoadStatus) {
@@ -656,7 +658,7 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				"Select the folder containing the game's files, then tap **Choose**. \n"
 				"\n"
 				"Repeat steps 1 and 6 for each game."
-				), _("Ok"),
+				), _("OK"),
 				// I18N: A button caption to dismiss a message and read it later
 				_("Read Later"), Graphics::kTextAlignLeft);
 
@@ -681,7 +683,7 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				"Select the sub-folder containing the game's files, then tap **Choose**."
 				"\n"
 				"Repeat steps 1 and 6 for each game."
-				), _("Ok"),
+				), _("OK"),
 				// I18N: A button caption to dismiss a message and read it later
 				_("Read Later"), Graphics::kTextAlignLeft);
 
@@ -786,6 +788,9 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				g_eventRec.init(recordFileName, GUI::EventRecorder::kRecorderUpdate);
 			} else if (recordMode == "playback") {
 				g_eventRec.init(recordFileName, GUI::EventRecorder::kRecorderPlayback);
+			} else if (recordMode == "fast_playback") {
+				g_eventRec.init(recordFileName, GUI::EventRecorder::kRecorderPlayback);
+				g_eventRec.setFastPlayback(true);
 			} else if ((recordMode == "info") && (!recordFileName.empty())) {
 				Common::PlaybackFile record;
 				record.openRead(recordFileName);

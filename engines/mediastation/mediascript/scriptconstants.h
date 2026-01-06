@@ -71,15 +71,42 @@ enum VariableScope {
 const char *variableScopeToStr(VariableScope scope);
 
 enum BuiltInFunction {
-	kUnk1Function = 0xA,
-	// TODO: Figure out if effectTransitionOnSync = 13 is consistent across titles?
-	kEffectTransitionFunction = 0xC,
-	kEffectTransitionOnSyncFunction = 0xD,
+	kRandomFunction = 0x0A,
+	kTimeOfDayFunction = 0x0B,
+	kEffectTransitionFunction = 0x0C,
+	kEffectTransitionOnSyncFunction = 0x0D,
+	kPlatformFunction = 0x0E,
+	kSquareRootFunction = 0x0F,
+	kGetUniqueRandomFunction = 0x10,
+	kCurrentRunTimeFunction = 0x11,
+	kSetGammaCorrectionFunction = 0x12,
+	kGetDefaultGammaCorrectionFunction = 0x13,
+	kGetCurrentGammaCorrectionFunction = 0x14,
+	kSetAudioVolumeFunction = 0x17,
+	kGetAudioVolumeFunction = 0x18,
+	kSystemLanguagePreferenceFunction = 0x19,
+	kSetRegistryFunction = 0x1A,
+	kGetRegistryFunction = 0x1B,
+	kSetProfileFunction = 0x1C,
+	kMazeGenerateFunction = 0x1F,
+	kMazeApplyMoveMaskFunction = 0x20,
+	kMazeSolveFunction = 0x21,
+	kBeginTimedIntervalFunction = 0x22,
+	kEndTimedIntervalFunction = 0x23,
 	kDrawingFunction = 0x25,
-	// TODO: Figure out if TimeOfDay = 101 is consistent across titles.
-	kDebugPrintFunction = 0xB4,
-	// TODO: Figure out code for DebugPrint.
-	// TODO: Figure out code for Quit.
+
+	// Early engine versions (like for Lion King and such), had different opcodes
+	// for some functions, even though the functions were the same. So those are
+	// defined here.
+	kLegacy_RandomFunction = 0x64,
+	kLegacy_TimeOfDayFunction = 0x65,
+	kLegacy_EffectTransitionFunction = 0x66,
+	kLegacy_EffectTransitionOnSyncFunction = 0x67,
+	kLegacy_PlatformFunction = 0x68,
+	kLegacy_SquareRootFunction = 0x69,
+	kLegacy_GetUniqueRandomFunction = 0x6A,
+	kLegacy_DebugPrintFunction = 0xB4,
+	kLegacy_SystemLanguagePreferenceFunction = 0xC8,
 };
 const char *builtInFunctionToStr(BuiltInFunction function);
 
@@ -150,8 +177,19 @@ enum BuiltInMethod {
 	kStageGetHeightMethod = 0x16D,
 
 	// CAMERA METHODS.
+	// NOTE: IDs 0x15A and 0x15B seem to be double-assigned
+	// between two camera methods and two printer methods.
+	kAddToStageMethod = 0x15A,
+	kRemoveFromStageMethod = 0x15B,
+	kAddedToStageMethod = 0x15C,
+	kStartPanMethod = 0x15D,
 	kStopPanMethod = 0x15E,
+	kIsPanningMethod = 0x15F,
 	kViewportMoveToMethod = 0x160,
+	kAdjustCameraViewportMethod = 0x161,
+	kAdjustCameraViewportSpatialCenterMethod = 0x162,
+	kSetCameraBoundsMethod = 0x163,
+	kXViewportPositionMethod = 0x164,
 	kYViewportPositionMethod = 0x165,
 	kPanToMethod = 0x172,
 
@@ -159,10 +197,14 @@ enum BuiltInMethod {
 	kClearToPaletteMethod = 0x17B,
 
 	// DOCUMENT METHODS.
-	kLoadContextMethod = 0x176,
-	kReleaseContextMethod = 0x177,
-	kBranchToScreenMethod = 0xC9,
-	kIsLoadedMethod = 0x178,
+	kDocumentBranchToScreenMethod = 0xC9,
+	kDocumentQuitMethod = 0xD9,
+	kDocumentContextLoadInProgressMethod = 0x169,
+	kDocumentSetMultipleStreamsMethod = 0x174,
+	kDocumentSetMultipleSoundsMethod = 0x175,
+	kDocumentLoadContextMethod = 0x176,
+	kDocumentReleaseContextMethod = 0x177,
+	kDocumentContextIsLoadedMethod = 0x178,
 
 	// PATH METHODS.
 	kSetDurationMethod = 0x106,
@@ -193,60 +235,48 @@ enum BuiltInMethod {
 	kSortMethod = 0x10A,
 
 	// PRINTER METHODS.
+	// NOTE: IDs 0x15A and 0x15B seem to be double-assigned
+	// between two camera methods and two printer methods.
 	kOpenLensMethod = 0x15A,
 	kCloseLensMethod = 0x15B,
 };
 const char *builtInMethodToStr(BuiltInMethod method);
 
 enum EventType {
-	// TIMER EVENTS.
-	kTimerEvent = 0x5,
-
-	// HOTSPOT EVENTS.
-	kMouseDownEvent = 0x6,
-	kMouseUpEvent = 0x7,
-	kMouseMovedEvent = 0x8,
-	kMouseEnteredEvent = 0x9,
-	kMouseExitedEvent = 0xA,
-	kKeyDownEvent = 0xD,
-
-	// SOUND EVENTS.
-	kSoundEndEvent = 0xE,
+	kTimerEvent = 0x05,
+	kMouseDownEvent = 0x06,
+	kMouseUpEvent = 0x07,
+	kMouseMovedEvent = 0x08,
+	kMouseEnteredEvent = 0x09,
+	kMouseExitedEvent = 0x0A,
+	kKeyDownEvent = 0x0D,
+	kSoundEndEvent = 0x0E,
+	kMovieEndEvent = 0x0F,
+	kPathEndEvent = 0x10,
+	kScreenEntryEvent = 0x11,
 	kSoundAbortEvent = 0x13,
 	kSoundFailureEvent = 0x14,
-	kSoundStoppedEvent = 0x1D,
-	kSoundBeginEvent = 0x1E,
-
-	// MOVIE EVENTS.
-	kMovieEndEvent = 0xF,
 	kMovieAbortEvent = 0x15,
 	kMovieFailureEvent = 0x16,
+	kSpriteMovieEndEvent = 0x17,
+	kScreenExitEvent = 0x1B,
+	kPathStepEvent = 0x1C,
+	kSoundStoppedEvent = 0x1D,
+	kSoundBeginEvent = 0x1E,
 	kMovieStoppedEvent = 0x1F,
 	kMovieBeginEvent = 0x20,
-
-	// SPRITE EVENTS.
-	// Just "MovieEnd" in source.
-	kSpriteMovieEndEvent = 0x17,
-
-	// SCREEN EVENTS.
-	kEntryEvent = 0x11,
-	kExitEvent = 0x1B,
-
-	// CONTEXT EVENTS.
-	kLoadCompleteEvent = 0x2C,
-
-	// TEXT EVENTS.
-	kInputEvent = 0x25,
-	kErrorEvent = 0x26,
-
-	// CAMERA EVENTS.
-	kPanAbortEvent = 0x2B,
-	kPanEndEvent = 0x2A,
-
-	// PATH EVENTS.
-	kStepEvent = 0x1C,
 	kPathStoppedEvent = 0x21,
-	kPathEndEvent = 0x10
+	kTextInputEvent = 0x25,
+	kTextErrorEvent = 0x26,
+	kCameraPanStepEvent = 0x29,
+	kCameraPanEndEvent = 0x2A,
+	kCameraPanAbortEvent = 0x2B,
+	kContextLoadCompleteEvent = 0x2C,
+	// TODO: These last 3 events appear as valid event types, but I haven't found
+	// scripts that actually use them. So the names might be wrong.
+	kContextLoadCompleteEvent2 = 0x2D,
+	kContextLoadAbortEvent = 0x2E,
+	kContextLoadFailureEvent = 0x2F,
 };
 const char *eventTypeToStr(EventType type);
 

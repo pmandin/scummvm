@@ -372,24 +372,47 @@ void Parser::actionHandler(Common::Event event) {
 		switchTurbo();
 		break;
 	case kActionEscape: // Escape key, may want to QUIT
-		if (gameStatus._viewState == kViewIntro)
+		if (gameStatus._viewState == kViewIntro) {
 			gameStatus._skipIntroFl = true;
-		else {
+		} else if (gameStatus._viewState == kViewPlay) {
+			endGamePrompt();
+		} else {
 			if (_vm->_inventory->getInventoryState() == kInventoryActive) // Remove inventory, if displayed
 				_vm->_inventory->setInventoryState(kInventoryUp);
 			_vm->_screen->resetInventoryObjId();
 		}
 		break;
 	case kActionMoveTop:
+		_vm->_route->resetRoute();                   // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_UP);    // Direction of hero travel
+		break;
 	case kActionMoveBottom:
+		_vm->_route->resetRoute();                   // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_DOWN);  // Direction of hero travel
+		break;
 	case kActionMoveLeft:
+		_vm->_route->resetRoute();                   // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_LEFT);  // Direction of hero travel
+		break;
 	case kActionMoveRight:
+		_vm->_route->resetRoute();                   // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_RIGHT); // Direction of hero travel
+		break;
 	case kActionMoveTopLeft:
+		_vm->_route->resetRoute();                  // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_KP7);  // Direction of hero travel
+		break;
 	case kActionMoveTopRight:
+		_vm->_route->resetRoute();                  // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_KP9);  // Direction of hero travel
+		break;
 	case kActionMoveBottomLeft:
+		_vm->_route->resetRoute();                  // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_KP1);  // Direction of hero travel
+		break;
 	case kActionMoveBottomRight:
-		_vm->_route->resetRoute();              // Stop any automatic route
-		_vm->_route->setWalk(event.customType); // Direction of hero travel
+		_vm->_route->resetRoute();                  // Stop any automatic route
+		_vm->_route->setWalk(Common::KEYCODE_KP3);  // Direction of hero travel
 		break;
 	default:
 		break;
@@ -513,6 +536,12 @@ void Parser::showDosInventory() const {
 	_vm->sayText(ttsMessage, Common::TextToSpeechManager::INTERRUPT);
 #endif
 	Utils::notifyBox(buffer.c_str(), false);
+}
+
+void Parser::endGamePrompt() {
+	if (Utils::yesNoBox(_vm->_text->getTextParser(kTBExit_1d))) {
+		_vm->endGame();
+	}
 }
 
 } // End of namespace Hugo

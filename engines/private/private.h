@@ -252,11 +252,13 @@ public:
 
 	Video::SmackerDecoder *_videoDecoder;
 	Video::SmackerDecoder *_pausedVideo;
+	Common::String _pausedMovieName;
 
 	Common::Error run() override;
 	void restartGame();
 	void clearAreas();
 	void initializePath(const Common::FSNode &gamePath) override;
+	void pauseEngineIntern(bool pause) override;
 	Common::SeekableReadStream *loadAssets();
 	Common::Archive *loadMacInstaller();
 

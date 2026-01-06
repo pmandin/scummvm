@@ -19,8 +19,49 @@
  *
  */
 
-#include "ultima/shared/engine/resources.h"
+#ifndef ULTIMA0_MONSTER_LOGIC_H
+#define ULTIMA0_MONSTER_LOGIC_H
+
+#include "ultima/ultima0/data/data.h"
 
 namespace Ultima {
+namespace Ultima0 {
 
-} // End of namespace Ultima
+class MonsterLogic {
+private:
+	/**
+	 * Shows a message in the dungeon status area
+	 */
+	static void showLines(const Common::String &msg);
+
+	/**
+	 * Monster Attacks
+	 */
+	static int attack(MonsterEntry &m, PlayerInfo &p);
+
+	/**
+	 * Monster Moves
+	 */
+	static void move(MonsterEntry &m, PlayerInfo &p, DungeonMapInfo &d);
+
+	/**
+	 * Can monster move to a square
+	 */
+	static bool canMoveTo(DungeonMapInfo &d, int x, int y);
+
+	/**
+	 * Monster Stealing
+	 */
+	static int steal(MonsterEntry &m, PlayerInfo &p);
+
+public:
+	/**
+	 * Check Monsters Attacking
+	 */
+	static void checkForAttacks(PlayerInfo &p, DungeonMapInfo &d);
+};
+
+} // namespace Ultima0
+} // namespace Ultima
+
+#endif

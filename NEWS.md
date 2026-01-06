@@ -83,6 +83,9 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Hugo:
    - Added Text-to-Speech support.
+   - Fixed unrecognized commands, missing points, and graphics glitches
+     in the DOS version of Hugo 2.
+   - Fixed clicking to walk.
    - Fixed closing the top menu.
 
  Hypno:
@@ -165,6 +168,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed KQ1 Amiga crash when incorrectly guessing gnome's name.
    - Fixed LONGBOW Amiga crash when going to abbey.
    - Fixed SQ4 Amiga taking three minutes to display title screen.
+   - Fixed PQ2 phone when dialing wrong numbers.
    - Fixed script bugs in ECO1, LSL6, PEPPER.
    - Added support for SLATER Macintosh.
    - Virtual keyboard now correctly triggers on/off wherever text input is

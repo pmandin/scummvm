@@ -68,6 +68,7 @@ PrivateEngine::PrivateEngine(OSystem *syst, const ADGameDescription *gd)
 	_nextSetting = "";
 	_currentSetting = "";
 	_pausedSetting = "";
+	_pausedMovieName = "";
 	_modified = false;
 	_mode = -1;
 	_toTake = false;
@@ -503,7 +504,11 @@ Common::Error PrivateEngine::run() {
 		if (_subtitles != nullptr) {
 			if (_subtitledSound != nullptr && isSoundPlaying(*_subtitledSound)) {
 				_subtitles->drawSubtitle(_mixer->getElapsedTime(_subtitledSound->handle).msecs(), false, _sfxSubtitles);
-			} else {
+			}
+			/* Only destroy subtitles if we are not playing a video.
+			If _videoDecoder is valid (even if paused), we must keep the subtitles
+			in memory so they are available when the video resumes. */
+			else if (_videoDecoder == nullptr) {
 				destroySubtitles();
 			}
 		}
@@ -900,6 +905,10 @@ void PrivateEngine::selectPauseGame(Common::Point mousePos) {
 				if (_videoDecoder) {
 					_videoDecoder->pauseVideo(true);
 					_pausedVideo = _videoDecoder;
+					_pausedMovieName = _currentMovie;
+				}
+				if (_subtitles) {
+					_system->hideOverlay();
 				}
 
 				_pausedBackgroundSoundName = _bgSound.name;
@@ -923,6 +932,19 @@ void PrivateEngine::resumeGame() {
 	if (_pausedVideo != nullptr) {
 		_videoDecoder = _pausedVideo;
 		_pausedVideo = nullptr;
+
+		// restore the name we saved in selectPauseGame
+		if (!_pausedMovieName.empty()) {
+			_currentMovie = _pausedMovieName;
+			_pausedMovieName.clear();
+		}
+	}
+
+	// always reload subtitles if a movie is active
+	// we do this unconditionally because the casebook might have loaded
+	// different subtitles while we were paused
+	if (!_currentMovie.empty()) {
+		loadSubtitles(convertPath(_currentMovie));
 	}
 
 	if (_videoDecoder) {
@@ -933,6 +955,19 @@ void PrivateEngine::resumeGame() {
 	if (!_pausedBackgroundSoundName.empty()) {
 		playBackgroundSound(_pausedBackgroundSoundName);
 		_pausedBackgroundSoundName.clear();
+	}
+	// force draw the subtitle once
+	// the screen was likely wiped by the pause menu
+	// to account for the subtitle which was already rendered and we wiped the screen before it finished we must
+	// force the subtitle system to ignore its cache and redraw the text.
+	if (_subtitles) {
+		_system->showOverlay(false);
+		_system->clearOverlay();
+		// calling adjustSubtitleSize() makes the next drawSubtitle call perform a full redraw
+		// automatically, so we don't need to pass 'true'
+		adjustSubtitleSize();
+		if (_videoDecoder)
+			_subtitles->drawSubtitle(_videoDecoder->getTime(), false, _sfxSubtitles);
 	}
 }
 
@@ -1929,6 +1964,7 @@ void PrivateEngine::restartGame() {
 
 	// Pause
 	_pausedSetting = "";
+	_pausedMovieName.clear();
 
 	// VSPicture
 	_nextVS = "";
@@ -1944,6 +1980,7 @@ Common::Error PrivateEngine::loadGameStream(Common::SeekableReadStream *stream) 
 	// We don't want to continue with any sound or videos from a previous game
 	stopSounds();
 	destroyVideo();
+	_pausedMovieName.clear();
 
 	debugC(1, kPrivateDebugFunction, "loadGameStream");
 
@@ -2355,6 +2392,14 @@ bool PrivateEngine::isSoundPlaying(Sound &sound) {
 
 void PrivateEngine::waitForSoundsToStop() {
 	while (isSoundPlaying()) {
+		// since this is a blocking wait loop, the main engine loop in run() is not called until this loop finishes
+		// we must manually update and draw subtitles here otherwise sounds
+		// played via fSyncSound will play audio but show no subtitles.
+		if (_subtitles != nullptr) {
+			if (_subtitledSound != nullptr && isSoundPlaying(*_subtitledSound)) {
+				_subtitles->drawSubtitle(_mixer->getElapsedTime(_subtitledSound->handle).msecs(), false, _sfxSubtitles);
+			}
+		}
 		if (consumeEvents()) {
 			stopSounds();
 			return;
@@ -2897,9 +2942,32 @@ void PrivateEngine::drawScreen() {
 		_system->copyRectToScreen(sa.getPixels(), sa.pitch, _origin.x, _origin.y, sa.w, sa.h);
 	}
 
-	if (_subtitles && _videoDecoder && !_videoDecoder->isPaused())
+	if (_subtitles && _videoDecoder && !_videoDecoder->isPaused()) {
 		_subtitles->drawSubtitle(_videoDecoder->getTime(), false, _sfxSubtitles);
+	}
 	_system->updateScreen();
+}
+
+void PrivateEngine::pauseEngineIntern(bool pause) {
+	Engine::pauseEngineIntern(pause);
+
+	// If we are unpausing (returning from quit dialog, etc.)
+	if (!pause && _subtitles) {
+		// reset the overlay
+		_system->showOverlay(false);
+		_system->clearOverlay();
+
+		// force draw the subtitle once
+		// the screen was likely wiped by the dialog/menu
+		// to account for the subtitle which was already rendered and we wiped the screen before it finished we must
+		// force the subtitle system to ignore its cache and redraw the text.
+		if (_videoDecoder) {
+			// calling adjustSubtitleSize() makes the next drawSubtitle call perform a full redraw
+			// automatically, so we don't need to pass 'true'.
+			adjustSubtitleSize();
+			_subtitles->drawSubtitle(_videoDecoder->getTime(), false, _sfxSubtitles);
+		}
+	}
 }
 
 bool PrivateEngine::getRandomBool(uint p) {

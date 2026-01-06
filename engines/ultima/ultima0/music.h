@@ -19,15 +19,29 @@
  *
  */
 
-#include "ultima/ultima0/game.h"
+// Music class
+
+#ifndef ULTIMA_ULTIMA0_MUSIC_H
+#define ULTIMA_ULTIMA0_MUSIC_H
+
+#include "audio/midiplayer.h"
 
 namespace Ultima {
 namespace Ultima0 {
 
-EMPTY_MESSAGE_MAP(Ultima0Game, Shared::Game);
+class MusicPlayer : public Audio::MidiPlayer {
+private:
+	Common::Path _filename;
 
-Ultima0Game::Ultima0Game() : Shared::Game() {
-}
+public:
+	MusicPlayer(const char *filename);
+	void playSMF(bool loop = true);
 
-} // End of namespace Ultima0
-} // End of namespace Ultima
+	// Overload Audio::MidiPlayer method
+	void sendToChannel(byte channel, uint32 b) override;
+};
+
+} // namespace Ultima0
+} // namespace Ultima
+
+#endif

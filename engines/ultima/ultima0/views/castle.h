@@ -19,19 +19,43 @@
  *
  */
 
-#ifndef ULTIMA_ULTIMA0_RESOURCES_H
-#define ULTIMA_ULTIMA0_RESOURCES_H
+#ifndef ULTIMA0_VIEWS_CASTLE_H
+#define ULTIMA0_VIEWS_CASTLE_H
 
-#include "ultima/shared/engine/resources.h"
+#include "ultima/ultima0/views/view.h"
 
 namespace Ultima {
 namespace Ultima0 {
+namespace Views {
 
-class Resources : public Shared::LocalResourceFile {
+class Castle : public View {
+private:
+	enum Mode {
+		NAMING, GRAND_ADVENTURE, BEGONE, FIRST_TASK, TASK_COMPLETE, TASK_INCOMPLETE
+	};
+	Mode _mode = NAMING;
+	Common::String _playerName;
 
+	void firstTime();
+	void taskCompleted();
+	void taskIncomplete();
+	void nextTask();
+	void pressAnyKey();
+	Common::String getTaskName(int taskNum) const;
+
+public:
+	Castle() : View("Castle") {}
+	~Castle() override {}
+
+	bool msgFocus(const FocusMessage &msg) override;
+	bool msgUnfocus(const UnfocusMessage &msg) override;
+	void draw() override;
+	bool msgKeypress(const KeypressMessage &msg) override;
+	bool msgAction(const ActionMessage &msg) override;
 };
 
-} // End of namespace Ultima0
-} // End of namespace Ultima
+} // namespace Views
+} // namespace Ultima0
+} // namespace Ultima
 
 #endif

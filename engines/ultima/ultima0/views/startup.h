@@ -19,8 +19,42 @@
  *
  */
 
-#include "ultima/ultima0/core/resources.h"
+#ifndef ULTIMA0_VIEWS_STARTUP_H
+#define ULTIMA0_VIEWS_STARTUP_H
+
+#include "ultima/ultima0/views/view.h"
 
 namespace Ultima {
+namespace Ultima0 {
+namespace Views {
 
-} // End of namespace Ultima
+class Startup : public View {
+private:
+	void showTitle() {
+		replaceView("Title");
+	}
+public:
+	Startup() : View("Startup") {}
+	~Startup() override {}
+
+	void draw() override;
+
+	bool msgKeypress(const KeypressMessage &msg) override {
+		showTitle();
+		return true;
+	}
+	bool msgMouseDown(const MouseDownMessage &msg) override {
+		showTitle();
+		return true;
+	}
+	bool msgAction(const ActionMessage &msg) override {
+		showTitle();
+		return true;
+	}
+};
+
+} // namespace Views
+} // namespace Ultima0
+} // namespace Ultima
+
+#endif

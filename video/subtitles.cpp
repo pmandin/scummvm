@@ -284,7 +284,9 @@ Subtitles::Subtitles() : _loaded(false), _hPad(0), _vPad(0), _overlayHasAlpha(tr
 }
 
 Subtitles::~Subtitles() {
+	close();
 	_surface.free();
+
 	for (const auto &font : _fonts) {
 		FontMan.mayDeleteFont(font._value);
 	}
@@ -331,10 +333,19 @@ void Subtitles::setFont(const char *fontname, int height, FontStyle type) {
 void Subtitles::loadSRTFile(const Common::Path &fname) {
 	debug(1, "loadSRTFile('%s')", fname.toString().c_str());
 
-	if (_subtitleDev) {
+	if (_subtitleDev)
 		_fname = fname;
-	}
-	_loaded = _srtParser.parseFile(fname);
+
+	_srtParser = new SRTParser();
+	_loaded = _srtParser->parseFile(fname);
+}
+
+void Subtitles::close() {
+	_loaded = false;
+	_parts = nullptr;
+	_fname.clear();
+	delete _srtParser;
+	_srtParser = nullptr;
 }
 
 void Subtitles::setBBox(const Common::Rect &bbox) {
@@ -359,37 +370,7 @@ void Subtitles::setPadding(uint16 horizontal, uint16 vertical) {
 	_vPad = vertical;
 }
 
-bool Subtitles::drawSubtitle(uint32 timestamp, bool force, bool showSFX) const {
-	const Common::Array<SubtitlePart> *parts;
-	bool isSFX = false;
-	if (_loaded) {
-		parts = _srtParser.getSubtitleParts(timestamp);
-		if (parts && !parts->empty()) {
-			isSFX = (*parts)[0].tag == "sfx";
-		}
-	} else if (_subtitleDev) {
-		// Force refresh
-		_parts = nullptr;
-
-		Common::String subtitle = _fname.toString('/');
-		uint32 hours, mins, secs, msecs;
-		secs = timestamp / 1000;
-		hours = secs / 3600;
-		mins = (secs / 60) % 60;
-		secs %= 60;
-		msecs = timestamp % 1000;
-		subtitle += " " + Common::String::format("%02u:%02u:%02u,%03u", hours, mins, secs, msecs);
-
-		if (_devParts.empty()) {
-			_devParts.push_back(SubtitlePart("", ""));
-		}
-		_devParts[0].text = subtitle;
-
-		parts = &_devParts;
-	} else {
-		return false;
-	}
-
+bool Subtitles::recalculateBoundingBox() const {
 	int16 width = g_system->getOverlayWidth(),
 		  height = g_system->getOverlayHeight();
 
@@ -421,8 +402,44 @@ bool Subtitles::drawSubtitle(uint32 timestamp, bool force, bool showSFX) const {
 			_realBBox.left = 0;
 		}
 
-		force = true;
+		return true;
 	}
+
+	return false;
+}
+
+bool Subtitles::drawSubtitle(uint32 timestamp, bool force, bool showSFX) const {
+	const Common::Array<SubtitlePart> *parts;
+	bool isSFX = false;
+	if (_loaded && _srtParser) {
+		parts = _srtParser->getSubtitleParts(timestamp);
+		if (parts && !parts->empty()) {
+			isSFX = (*parts)[0].tag == "sfx";
+		}
+	} else if (_subtitleDev) {
+		// Force refresh
+		_parts = nullptr;
+
+		Common::String subtitle = _fname.toString('/');
+		uint32 hours, mins, secs, msecs;
+		secs = timestamp / 1000;
+		hours = secs / 3600;
+		mins = (secs / 60) % 60;
+		secs %= 60;
+		msecs = timestamp % 1000;
+		subtitle += " " + Common::String::format("%02u:%02u:%02u,%03u", hours, mins, secs, msecs);
+
+		if (_devParts.empty()) {
+			_devParts.push_back(SubtitlePart("", ""));
+		}
+		_devParts[0].text = subtitle;
+
+		parts = &_devParts;
+	} else {
+		return false;
+	}
+
+	force |= recalculateBoundingBox();
 
 	if (!force && _overlayHasAlpha && parts == _parts)
 		return false;
@@ -444,6 +461,34 @@ bool Subtitles::drawSubtitle(uint32 timestamp, bool force, bool showSFX) const {
 			renderSubtitle();
 	}
 
+	updateSubtitleOverlay();
+
+	return true;
+}
+
+void Subtitles::clearSubtitle() const {
+	if (!_loaded)
+		return;
+
+	g_system->hideOverlay();
+	_drawRect.setEmpty();
+	_surface.fillRect(Common::Rect(0, 0, _surface.w, _surface.h), _transparentColor);
+}
+
+void Subtitles::updateSubtitleOverlay() const {
+	if (!_loaded)
+		return;
+
+	if (!shouldShowSubtitle()) {
+		g_system->hideOverlay();
+		return;
+	}
+
+	if (!g_system->isOverlayVisible()) {
+		g_system->clearOverlay();
+		g_system->showOverlay(false);
+	}
+
 	if (_overlayHasAlpha) {
 		// When we have alpha, draw the whole surface without thinking it more
 		g_system->copyRectToOverlay(_surface.getPixels(), _surface.pitch, _realBBox.left, _realBBox.top, _realBBox.width(), _realBBox.height());
@@ -453,10 +498,8 @@ bool Subtitles::drawSubtitle(uint32 timestamp, bool force, bool showSFX) const {
 		// We then draw the smallest possible surface to minimize black rectangle behind text
 		g_system->clearOverlay();
 		g_system->copyRectToOverlay((byte *)_surface.getPixels() + _drawRect.top * _surface.pitch + _drawRect.left * _surface.format.bytesPerPixel, _surface.pitch,
-				_realBBox.left + _drawRect.left, _realBBox.top + _drawRect.top, _drawRect.width(), _drawRect.height());
+									_realBBox.left + _drawRect.left, _realBBox.top + _drawRect.top, _drawRect.width(), _drawRect.height());
 	}
-
-	return true;
 }
 
 struct SubtitleRenderingPart {
@@ -511,6 +554,8 @@ void Subtitles::renderSubtitle() const {
 			currentX = 0;
 		}
 	}
+
+	_splitPartCount = (uint16)splitParts.size();
 
 	// Then, center all lines and calculate the drawing box
 	auto lineBegin = splitParts.begin();

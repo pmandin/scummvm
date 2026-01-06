@@ -24,6 +24,7 @@
 
 #include "common/rect.h"
 #include "common/array.h"
+#include "common/stack.h"
 #include "graphics/managed_surface.h"
 #include "graphics/screen.h"
 
@@ -70,6 +71,58 @@ enum VideoDisplayManagerSectionType {
 	kVideoDisplayManagerLoadPalette = 0x5aa,
 };
 
+class Region {
+public:
+	void addRect(const Common::Rect &rect);
+	bool intersects(const Common::Rect &rect);
+	void operator&=(const Common::Rect &rect);
+	void operator+=(const Common::Point &point);
+
+	Common::Array<Common::Rect> _rects;
+	Common::Rect _bounds;
+};
+
+class Clip {
+public:
+	Clip() {}
+	Clip(const Common::Rect &rect);
+
+	void addToRegion(const Region &region);
+	void addToRegion(const Common::Rect &rect);
+	bool clipIntersectsRect(const Common::Rect &rect);
+	void intersectWithRegion(const Common::Rect &rect);
+	void makeEmpty();
+
+	Region _region;
+	Common::Rect _bounds;
+};
+
+class DisplayContext {
+public:
+	bool clipIsEmpty();
+	void intersectClipWith(const Common::Rect &rect);
+	bool rectIsInClip(const Common::Rect &rect);
+	void setClipTo(Region region);
+	void emptyCurrentClip();
+
+	void addClip();
+	Clip *currentClip();
+	Clip *previousClip();
+	void verifyClipSize();
+
+	// These are not named as such in the original, but are helper functions
+	// for things that likely were macros or something similar in the original.
+	void pushOrigin();
+	void popOrigin();
+
+	Common::Point _origin;
+	Graphics::ManagedSurface *_destImage = nullptr;
+
+private:
+	Common::Stack<Common::Point> _origins;
+	Common::Stack<Clip> _clips;
+};
+
 class VideoDisplayManager : public ParameterClient {
 public:
 	VideoDisplayManager(MediaStationEngine *vm);
@@ -82,19 +135,19 @@ public:
 	void setRegisteredPalette(Graphics::Palette *palette) { _registeredPalette = palette; }
 
 	void imageBlit(
-		const Common::Point &destinationPoint,
+		Common::Point destinationPoint,
 		const Bitmap *image,
 		double dissolveFactor,
-		const Common::Array<Common::Rect> &dirtyRegion,
+		DisplayContext *displayContext,
 		Graphics::ManagedSurface *destinationImage = nullptr);
 
 	void imageDeltaBlit(
-		const Common::Point &deltaFramePos,
+		Common::Point deltaFramePos,
 		const Common::Point &keyFrameOffset,
 		const Bitmap *deltaFrame,
 		const Bitmap *keyFrame,
 		const double dissolveFactor,
-		const Common::Array<Common::Rect> &dirtyRegion);
+		DisplayContext *displayContext);
 
 	void effectTransition(Common::Array<ScriptValue> &args);
 	void setTransitionOnSync(Common::Array<ScriptValue> &args) { _scheduledTransitionOnSync = args; }
@@ -103,12 +156,23 @@ public:
 	void performUpdateDirty();
 	void performUpdateAll();
 
+	void setGammaValues(double red, double green, double blue);
+	void getDefaultGammaValues(double &red, double &green, double &blue);
+	void getGammaValues(double &red, double &green, double &blue);
+
+	DisplayContext _displayContext;
+
 private:
 	MediaStationEngine *_vm = nullptr;
 	Graphics::Screen *_screen = nullptr;
 	Graphics::Palette *_registeredPalette = nullptr;
 	Common::Array<ScriptValue> _scheduledTransitionOnSync;
 	double _defaultTransitionTime = 0.0;
+
+	const double DEFAULT_GAMMA_VALUE = 1.0;
+	double _redGamma = 1.0;
+	double _greenGamma = 1.0;
+	double _blueGamma = 1.0;
 
 	void readAndEffectTransition(Chunk &chunk);
 	void readAndRegisterPalette(Chunk &chunk);
