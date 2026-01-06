@@ -150,6 +150,7 @@ static const uint32 re1sat_movieoffsets[] = {
 };
 
 static const char *RE1_ROOM = "%s%s/stage%d/room%d%02x0.rdt";
+static const char *RE1SAT_ROOM = "stage%d/room%d%02x0.rdt";
 
 static const char *RE1PCGAME_BG = "%s/stage%d/rc%d%02x%d.pak";
 
@@ -377,7 +378,11 @@ void RE1Engine::loadRoom(void) {
 	char filePath[64];
 	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
-	snprintf(filePath, sizeof(filePath), RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
+	if (_flags.platform == Common::kPlatformSaturn) {
+		snprintf(filePath, sizeof(filePath), RE1SAT_ROOM, _stage, _stage, _room);
+	} else {
+		snprintf(filePath, sizeof(filePath), RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
+	}
 
 	debug(3, "re1: loadRoom(\"%s\")", filePath);
 
