@@ -446,8 +446,12 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(entityPath);
 	if (stream) {
-		//debug(3, "re1: loaded %s", entityPath.toString().c_str());
-		newEntity = (Entity *) new RE1Entity(stream);
+		if (_flags.platform == Common::kPlatformSaturn) {
+			// FIXME
+		} else {
+			//debug(3, "re1: loaded %s", entityPath.toString().c_str());
+			newEntity = (Entity *) new RE1Entity(stream);
+		}
 	}
 	delete stream;
 
