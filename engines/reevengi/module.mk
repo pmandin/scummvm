@@ -10,6 +10,7 @@ MODULE_OBJS := \
 	formats/bss_sld.o \
 	formats/ems.o \
 	formats/pak.o \
+	formats/prs.o \
 	formats/rofs.o \
 	formats/sap.o \
 	formats/sld.o \
