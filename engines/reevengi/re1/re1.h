@@ -43,7 +43,7 @@ protected:
 	Entity *loadEntity(int numEntity, int isPlayer) override;
 
 private:
-	int _country;
+	Common::Path _pathPrefix;
 
 	void loadBgImagePc(int stage, int width = 320, int height = 240);
 	void loadBgImagePsx(int stage, int width = 320, int height = 240);

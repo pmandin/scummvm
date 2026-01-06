@@ -54,65 +54,65 @@ static const char *re1_country[NUM_COUNTRIES]={
 };
 
 static const char *re1pc_movies[] = {
-	"horr/usa/movie/capcom.avi",
-	"horr/usa/movie/ou.avi",
-	"horr/usa/movie/pu.avi",
+	"movie/capcom.avi",
+	"movie/ou.avi",
+	"movie/pu.avi",
 	"",
 	"",
-	"horr/usa/movie/dm1.avi",
-	"horr/usa/movie/dm2.avi",
-	"horr/usa/movie/dm3.avi",
-	"horr/usa/movie/dm4.avi",
-	"horr/usa/movie/dm6.avi",
-	"horr/usa/movie/dm7.avi",
-	"horr/usa/movie/dmb.avi",
-	"horr/usa/movie/dmc.avi",
-	"horr/usa/movie/dmd.avi",
-	"horr/usa/movie/dme.avi",
-	"horr/usa/movie/dm8.avi",
-	"horr/usa/movie/dmf.avi",
-	"horr/usa/movie/ed1.avi",
-	"horr/usa/movie/ed2.avi",
-	"horr/usa/movie/ed3.avi",
-	"horr/usa/movie/eu4.avi",
-	"horr/usa/movie/eu5.avi",
-	"horr/usa/movie/ed6.avi",
-	"horr/usa/movie/ed7.avi",
-	"horr/usa/movie/ed8.avi",
-	"horr/usa/movie/stfc_r.avi",
-	"horr/usa/movie/stfj_r.avi",
-	"horr/usa/movie/stfz_r.avi",
-	"horr/usa/movie/staf_r.avi"
+	"movie/dm1.avi",
+	"movie/dm2.avi",
+	"movie/dm3.avi",
+	"movie/dm4.avi",
+	"movie/dm6.avi",
+	"movie/dm7.avi",
+	"movie/dmb.avi",
+	"movie/dmc.avi",
+	"movie/dmd.avi",
+	"movie/dme.avi",
+	"movie/dm8.avi",
+	"movie/dmf.avi",
+	"movie/ed1.avi",
+	"movie/ed2.avi",
+	"movie/ed3.avi",
+	"movie/eu4.avi",
+	"movie/eu5.avi",
+	"movie/ed6.avi",
+	"movie/ed7.avi",
+	"movie/ed8.avi",
+	"movie/stfc_r.avi",
+	"movie/stfj_r.avi",
+	"movie/stfz_r.avi",
+	"movie/staf_r.avi"
 };
 
 static const char *re1ps1_movies[] = {
-	"psx/movie/capcom.str",
-	"psx/movie/oj.str",
-	"psx/movie/pj.str",
+	"movie/capcom.str",
+	"movie/oj.str",
+	"movie/pj.str",
 	"",
 	"",
-	"psx/movie/dm1.str",
-	"psx/movie/dm2.str",
-	"psx/movie/dm3.str",
-	"psx/movie/dm4.str",
-	"psx/movie/dm6.str",
-	"psx/movie/dm7.str",
-	"psx/movie/dmb.str",
-	"psx/movie/dmc.str",
-	"psx/movie/dmd.str",
-	"psx/movie/dme.str",
-	"psx/movie/dm8.str",
-	"psx/movie/dmf.str",
-	"psx/movie/ed1.str",
-	"psx/movie/ed2.str",
-	"psx/movie/ed3.str",
-	"psx/movie/ed4.str",
-	"psx/movie/ed5.str",
-	"psx/movie/ed6.str",
-	"psx/movie/ed7.str",
-	"psx/movie/ed8.str",
-	"psx/movie/stfc.str",
-	"psx/movie/stfj.str",
+	"movie/dm1.str",
+	"movie/dm2.str",
+	"movie/dm3.str",
+	"movie/dm4.str",
+	"movie/dm6.str",
+	"movie/dm7.str",
+	"movie/dmb.str",
+	"movie/dmc.str",
+	"movie/dmd.str",
+	"movie/dme.str",
+	"movie/dm8.str",
+	"movie/dmf.str",
+	"movie/ed1.str",
+	"movie/ed2.str",
+	"movie/ed3.str",
+	"movie/ed4.str",
+	"movie/ed5.str",
+	"movie/ed6.str",
+	"movie/ed7.str",
+	"movie/ed8.str",
+	"movie/stfc.str",
+	"movie/stfj.str",
 	"",
 	""
 };
@@ -149,54 +149,52 @@ static const uint32 re1sat_movieoffsets[] = {
 	(uint32) -1
 };
 
-static const char *RE1_ROOM = "%s%s/stage%d/room%d%02x0.rdt";
-static const char *RE1SAT_ROOM = "stage%d/room%d%02x0.rdt";
+static const char *RE1_ROOM = "stage%d/room%d%02x0.rdt";
 
-static const char *RE1PCGAME_BG = "%s/stage%d/rc%d%02x%d.pak";
-
-static const char *RE1PSX_BG = "psx%s/stage%d/room%d%02x.bss";
+static const char *RE1PCGAME_BG = "stage%d/rc%d%02x%d.pak";
+static const char *RE1PSX_BG = "stage%d/room%d%02x.bss";
 
 static const char *RE1SAT_MOVIE = "movie.cpk";
 
-static const char *RE1_MODEL1 = "%s%s/enemy/char1%d.emd";
-static const char *RE1_MODEL2 = "%s%s/enemy/em10%02x.emd";
-static const char *RE1_MODEL3 = "%s%s/enemy/em11%02x.emd";
+static const char *RE1_MODEL1 = "enemy/char1%d.emd";
+static const char *RE1_MODEL2 = "enemy/em10%02x.emd";
+static const char *RE1_MODEL3 = "enemy/em11%02x.emd";
 
 static const char *re1_doors[] = {
-	"%s%s/item_m1/door00.dor",
-	"%s%s/item_m1/door01.dor",
-	"%s%s/item_m1/door02.dor",
-	"%s%s/item_m1/door03.dor",
-	"%s%s/item_m1/door04.dor",
-	"%s%s/item_m1/door05.dor",
-	"%s%s/item_m1/door06.dor",
-	"%s%s/item_m1/door07.dor",
-	"%s%s/item_m1/door08.dor",
-	"%s%s/item_m1/door09.dor",
-	"%s%s/item_m1/door10.dor",
-	"%s%s/item_m1/door11.dor",
-	"%s%s/item_m1/door12.dor",
-	"%s%s/item_m1/door13.dor",
-	"%s%s/item_m1/door14.dor",
-	"%s%s/item_m1/mon.dor",
-	"%s%s/item_m1/ele03.dor",
-	"%s%s/item_m1/ele01.dor",
-	"%s%s/item_m1/ele01a.dor",
-	"%s%s/item_m1/ele01b.dor",
-	"%s%s/item_m1/ele02.dor",
-	"%s%s/item_m1/ele04.dor",
-	"%s%s/item_m1/kai01.dor",
-	"%s%s/item_m1/kai03.dor",
-	"%s%s/item_m1/kai02.dor",
-	"%s%s/item_m1/kai04.dor",
-	"%s%s/item_m1/lad01.dor",
-	"%s%s/item_m1/lad02.dor",
-	"%s%s/item_m1/door00k.dor",
-	"%s%s/item_m1/door01k.dor",
-	"%s%s/item_m1/door03k.dor",
-	"%s%s/item_m1/door05k.dor",
-	"%s%s/item_m1/door06k.dor",
-	"%s%s/item_m1/door15.dor"
+	"item_m1/door00.dor",
+	"item_m1/door01.dor",
+	"item_m1/door02.dor",
+	"item_m1/door03.dor",
+	"item_m1/door04.dor",
+	"item_m1/door05.dor",
+	"item_m1/door06.dor",
+	"item_m1/door07.dor",
+	"item_m1/door08.dor",
+	"item_m1/door09.dor",
+	"item_m1/door10.dor",
+	"item_m1/door11.dor",
+	"item_m1/door12.dor",
+	"item_m1/door13.dor",
+	"item_m1/door14.dor",
+	"item_m1/mon.dor",
+	"item_m1/ele03.dor",
+	"item_m1/ele01.dor",
+	"item_m1/ele01a.dor",
+	"item_m1/ele01b.dor",
+	"item_m1/ele02.dor",
+	"item_m1/ele04.dor",
+	"item_m1/kai01.dor",
+	"item_m1/kai03.dor",
+	"item_m1/kai02.dor",
+	"item_m1/kai04.dor",
+	"item_m1/lad01.dor",
+	"item_m1/lad02.dor",
+	"item_m1/door00k.dor",
+	"item_m1/door01k.dor",
+	"item_m1/door03k.dor",
+	"item_m1/door05k.dor",
+	"item_m1/door06k.dor",
+	"item_m1/door15.dor"
 };
 
 RE1Engine::RE1Engine(OSystem *syst, const ReevengiGameDescription *desc) :
@@ -204,7 +202,7 @@ RE1Engine::RE1Engine(OSystem *syst, const ReevengiGameDescription *desc) :
 	_room = 6;
 	_camera = 6;
 
-	_country = 8;
+	_pathPrefix = "";
 
 	/* Default entity */
 	_defEntity = 0;
@@ -212,26 +210,42 @@ RE1Engine::RE1Engine(OSystem *syst, const ReevengiGameDescription *desc) :
 }
 
 RE1Engine::~RE1Engine() {
+	//
 }
 
 void RE1Engine::initPreRun(void) {
-	char filePath[32];
 
-	/* Country detect */
-	for (int i=0; i<NUM_COUNTRIES; i++) {
-		snprintf(filePath, sizeof(filePath), "%s/data/capcom.ptc", re1_country[i]);
+	switch(_flags.platform) {
+		case Common::kPlatformPSX:
+			{
+				_pathPrefix = "psx";
 
-		if (SearchMan.hasFile(filePath)) {
-			_country = i;
-			debug(3, "re1: country %d", i);
+				/* Dual shock USA ? */
+				if (SearchMan.hasFile("slus_007.47")) {
+					_pathPrefix = "psx/usa";
+				}
+			}
 			break;
-		}
+		case Common::kPlatformWindows:
+			{
+				char filePath[32];
+
+				/* Country detect */
+				for (int i=0; i<NUM_COUNTRIES; i++) {
+					snprintf(filePath, sizeof(filePath), "%s/data/capcom.ptc", re1_country[i]);
+
+					if (SearchMan.hasFile(filePath)) {
+						_pathPrefix = re1_country[i];
+						break;
+					}
+				}
+			}
+			break;
+		default:
+			break;
 	}
 
-	/* Dual shock USA ? */
-	if (SearchMan.hasFile("slus_007.47")) {
-		_country = 4;
-	}
+	debug(3, "re1: pathPrefix=%s", _pathPrefix.toString().c_str());
 }
 
 void RE1Engine::loadBgImage(void) {
@@ -295,11 +309,15 @@ void RE1Engine::loadBgImage(void) {
 }
 
 void RE1Engine::loadBgImagePc(int stage, int width, int height) {
+	Common::Path bgimagePath = _pathPrefix;
 	char filePath[64];
 
-	snprintf(filePath, sizeof(filePath), RE1PCGAME_BG, re1_country[_country], stage, stage, _room, _camera);
+	snprintf(filePath, sizeof(filePath), RE1PCGAME_BG, stage, stage, _room, _camera);
+	bgimagePath.joinInPlace(filePath);
 
-	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
+	debug(3, "re1: loadBgImagePc(\"%s\")", bgimagePath.toString().c_str());
+
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(bgimagePath);
 	if (stream) {
 		_bgImage = new PakDecoder();
 		if ((width!=320) || (height!=240)) {
@@ -311,11 +329,15 @@ void RE1Engine::loadBgImagePc(int stage, int width, int height) {
 }
 
 void RE1Engine::loadBgImagePsx(int stage, int width, int height) {
+	Common::Path bgimagePath = _pathPrefix;
 	char filePath[64];
 
-	snprintf(filePath, sizeof(filePath), RE1PSX_BG, re1_country[_country], stage, stage, _room);
+	snprintf(filePath, sizeof(filePath), RE1PSX_BG, stage, stage, _room);
+	bgimagePath.joinInPlace(filePath);
 
-	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(filePath);
+	debug(3, "re1: loadBgImagePsx(\"%s\")", bgimagePath.toString().c_str());
+
+	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(bgimagePath);
 	if (arcStream) {
 		byte *imgBuffer = new byte[32768];
 		memset(imgBuffer, 0, 32768);
@@ -375,29 +397,26 @@ void RE1Engine::loadBgMaskImage(void) {
 }
 
 void RE1Engine::loadRoom(void) {
+	Common::Path roomPath = _pathPrefix;
 	char filePath[64];
-	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 
-	if (_flags.platform == Common::kPlatformSaturn) {
-		snprintf(filePath, sizeof(filePath), RE1SAT_ROOM, _stage, _stage, _room);
-	} else {
-		snprintf(filePath, sizeof(filePath), RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
-	}
+	snprintf(filePath, sizeof(filePath), RE1_ROOM, _stage, _stage, _room);
+	roomPath.joinInPlace(filePath);
 
-	debug(3, "re1: loadRoom(\"%s\")", filePath);
+	debug(3, "re1: loadRoom(\"%s\")", roomPath.toString().c_str());
 
-	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(roomPath);
 	if (stream) {
 		if (_flags.platform == Common::kPlatformSaturn) {
 			PrsDecoder *prsDecoder = new PrsDecoder();
 			Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(stream);
 			if (prsStream) {
-				//debug(3, "loaded %s", filePath);
+				//debug(3, "loaded %s", roomPath.toString().c_str());
 				_roomScene = new RE1Room(this, prsStream);
 			}
 			delete prsStream;
 		} else {
-			//debug(3, "loaded %s", filePath);
+			//debug(3, "loaded %s", roomPath.toString().c_str());
 			_roomScene = new RE1Room(this, stream);
 		}
 	}
@@ -405,9 +424,9 @@ void RE1Engine::loadRoom(void) {
 }
 
 Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
+	Common::Path entityPath = _pathPrefix;
 	char filePath[64];
 	const char *filename = RE1_MODEL1;
-	bool isPsx = (_flags.platform == Common::kPlatformPSX);
 	Entity *newEntity = nullptr;
 
 	debug(3, "re1: loadEntity(%d, %d)", numEntity, isPlayer);
@@ -420,11 +439,14 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 		}
 	}
 
-	snprintf(filePath, sizeof(filePath), filename, isPsx ? "psx" : "", re1_country[_country], numEntity);
+	snprintf(filePath, sizeof(filePath), filename, numEntity);
+	entityPath.joinInPlace(filePath);
 
-	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
+	debug(3, "re1:  loadEntity(\"%s\")", entityPath.toString().c_str());
+
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(entityPath);
 	if (stream) {
-		//debug(3, "re1: loaded %s", filePath);
+		//debug(3, "re1: loaded %s", entityPath.toString().c_str());
 		newEntity = (Entity *) new RE1Entity(stream);
 	}
 	delete stream;
@@ -433,6 +455,7 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 }
 
 void RE1Engine::loadMovie(unsigned int numMovie) {
+	Common::Path moviePath = _pathPrefix;
 	char filePath[64];
 
 	ReevengiEngine::loadMovie(numMovie);
@@ -448,12 +471,13 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 					return;
 				}
 
-				snprintf(filePath, sizeof(filePath), re1ps1_movies[numMovie]);
-				debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
+				moviePath.joinInPlace(re1ps1_movies[numMovie]);
+
+				debug(3, "re1: loadMovie(%d): %s", numMovie, moviePath.toString().c_str());
 
 				g_movie = CreatePsxPlayer();
 
-				g_movie->play(filePath, false);
+				g_movie->play(moviePath.toString().c_str(), false);
 			}
 			break;
 		case Common::kPlatformWindows:
@@ -466,12 +490,13 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 					return;
 				}
 
-				snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
-				debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
+				moviePath.joinInPlace(re1pc_movies[numMovie]);
+
+				debug(3, "re1: loadMovie(%d): %s", numMovie, moviePath.toString().c_str());
 
 				g_movie = CreateAviPlayer();
 
-				g_movie->play(filePath, false);
+				g_movie->play(moviePath.toString().c_str(), false);
 			}
 			break;
 		case Common::kPlatformSaturn:
@@ -514,25 +539,12 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 }
 
 void RE1Engine::loadDoor(unsigned int numDoor) {
-	char filePath[64];
+	Common::Path doorPath = _pathPrefix;
 
 	ReevengiEngine::loadDoor(numDoor);
 
 	switch(_flags.platform) {
 		case Common::kPlatformPSX:
-			{
-				if (numDoor >= sizeof(re1_doors)) {
-					return;
-				}
-
-				if (strcmp(re1_doors[numDoor], "") == 0) {
-					return;
-				}
-
-				snprintf(filePath, sizeof(filePath), re1_doors[numDoor], "psx", re1_country[_country]);
-				debug(3, "re1: loadDoor(%d): %s", numDoor, filePath);
-			}
-			break;
 		case Common::kPlatformWindows:
 			{
 				if (numDoor >= sizeof(re1_doors)) {
@@ -543,8 +555,9 @@ void RE1Engine::loadDoor(unsigned int numDoor) {
 					return;
 				}
 
-				snprintf(filePath, sizeof(filePath), re1_doors[numDoor], "", re1_country[_country]);
-				debug(3, "re1: loadDoor(%d): %s", numDoor, filePath);
+				doorPath.joinInPlace(re1_doors[numDoor]);
+
+				debug(3, "re1: loadDoor(%d): %s", numDoor, doorPath.toString().c_str());
 			}
 			break;
 		default:
