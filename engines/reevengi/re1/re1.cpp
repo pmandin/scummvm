@@ -301,6 +301,11 @@ void RE1Engine::loadBgImage(void) {
 				loadBgImagePsx(stage, width, height);
 			}
 			break;
+		case Common::kPlatformSaturn:
+			{
+				loadBgImageSaturn(stage, width, height);
+			}
+			break;
 		default:
 			return;
 	}
@@ -381,6 +386,42 @@ void RE1Engine::loadBgImagePsx(int stage, int width, int height) {
 	delete arcStream;
 }
 
+void RE1Engine::loadBgImageSaturn(int stage, int width, int height) {
+	Common::Path bgimagePath = _pathPrefix;
+	char filePath[64];
+
+	snprintf(filePath, sizeof(filePath), RE1PSX_BG, stage, stage, _room, _camera);
+	bgimagePath.joinInPlace(filePath);
+
+	debug(3, "re1: loadBgImageSaturn(\"%s\")", bgimagePath.toString().c_str());
+
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(bgimagePath);
+	if (stream) {
+		uint32 bssSaturnOffsets[20];
+		uint16 palette[256];
+
+		for (int i=0; i<20; i++) {
+			bssSaturnOffsets[i] = stream->readUint32BE();
+		}
+
+		/* Read palette */
+		stream->seek(bssSaturnOffsets[_camera]);
+		stream->read(palette, sizeof(palette));
+
+		/* Read image data, depack it */
+		Common::SeekableSubReadStream subStream(stream, bssSaturnOffsets[10+_camera], bssSaturnOffsets[10+_camera + 1]);
+
+		PrsDecoder *prsDecoder = new PrsDecoder();
+		Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(&subStream);
+		if (prsStream) {
+			// TODO
+			delete prsStream;
+		}
+		delete prsDecoder;
+	}
+	delete stream;
+}
+
 void RE1Engine::loadBgMaskImage(void) {
 	//debug(3, "re1: loadBgMaskImage");
 
@@ -413,8 +454,9 @@ void RE1Engine::loadRoom(void) {
 			if (prsStream) {
 				//debug(3, "loaded %s", roomPath.toString().c_str());
 				_roomScene = new RE1Room(this, prsStream);
+				delete prsStream;
 			}
-			delete prsStream;
+			delete prsDecoder;
 		} else {
 			//debug(3, "loaded %s", roomPath.toString().c_str());
 			_roomScene = new RE1Room(this, stream);
