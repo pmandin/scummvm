@@ -421,8 +421,15 @@ void RE1Engine::loadBgImageSaturn(int stage, int width, int height) {
 		/* Read image data, depack it */
 		Common::SeekableSubReadStream subStream(stream, bssSaturnOffsets[10+_camera], bssSaturnOffsets[10+_camera + 1]);
 
+		Common::SeekableReadStream *prsStream = nullptr;
 		PrsDecoder *prsDecoder = new PrsDecoder();
-		Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(&subStream);
+
+		if (subStream.size() > 4) {
+			prsStream = prsDecoder->createReadStream(&subStream);
+		} else {
+			debug("ERROR: re1: no background image for camera %d", _camera);
+		}
+
 		if (prsStream) {
 			Graphics::PixelFormat fmt = Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0);
 
