@@ -415,7 +415,7 @@ void RE1Engine::loadBgImageSaturn(int stage, int width, int height) {
 				((color>>15) & 1)
 				| ((color>>9) & (31<<1))
 				| ((color<<1) & (31<<6))
-				| (color<<11) & (31<<11);
+				| ((color<<11) & (31<<11));
 		}
 
 		/* Read image data, depack it */
@@ -431,17 +431,27 @@ void RE1Engine::loadBgImageSaturn(int stage, int width, int height) {
 
 			const Graphics::Surface *dstFrame = _bgImage->getSurface();
 
-			byte *src = new byte[width];
-			uint16 *dst = (uint16 *) dstFrame->getPixels();
-			for (int y = height; y > 0; --y) {
-				prsStream->read(src, width);
-				for (int x=0; x<width; x++) {
-					dst[x] = palette[src[x]];
+			for (int srcY=0; srcY<height; srcY+=8) {
+				for (int srcX=0; srcX<width; srcX+=8) {
+					int dstX=srcX;
+					int dstY=srcY;
+
+					uint16 *dst = (uint16 *) dstFrame->getPixels();
+					dst += dstY * (dstFrame->pitch >> 1);
+					dst += dstX;
+
+					for (int row=0; row<8; row++) {
+						byte src[8];
+
+						prsStream->read(src, 8);
+						for (int x=0; x<8; x++) {
+							dst[x] = palette[src[x]];
+						}
+						dst += (dstFrame->pitch >> 1);
+					}
 				}
-				dst += (dstFrame->pitch >> 1);
 			}
 
-			delete[] src;
 			delete prsStream;
 		}
 		delete prsDecoder;
