@@ -407,6 +407,16 @@ void RE1Engine::loadBgImageSaturn(int stage, int width, int height) {
 		/* Read palette */
 		stream->seek(bssSaturnOffsets[_camera]);
 		stream->read(palette, sizeof(palette));
+		for (int i=0; i<256; i++) {
+			// Saturn: A1B5G5R5
+			uint16 color = FROM_BE_16(palette[i]);
+			// Convert to R5G5B5A1
+			palette[i] =
+				((color>>15) & 1)
+				| ((color>>9) & (31<<1))
+				| ((color<<1) & (31<<6))
+				| (color<<11) & (31<<11);
+		}
 
 		/* Read image data, depack it */
 		Common::SeekableSubReadStream subStream(stream, bssSaturnOffsets[10+_camera], bssSaturnOffsets[10+_camera + 1]);
@@ -414,7 +424,24 @@ void RE1Engine::loadBgImageSaturn(int stage, int width, int height) {
 		PrsDecoder *prsDecoder = new PrsDecoder();
 		Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(&subStream);
 		if (prsStream) {
-			// TODO
+			Graphics::PixelFormat fmt = Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0);
+
+			_bgImage = new TimDecoder();
+			((TimDecoder *)_bgImage)->CreateTimSurface(width, height, fmt);
+
+			const Graphics::Surface *dstFrame = _bgImage->getSurface();
+
+			byte *src = new byte[width];
+			uint16 *dst = (uint16 *) dstFrame->getPixels();
+			for (int y = height; y > 0; --y) {
+				prsStream->read(src, width);
+				for (int x=0; x<width; x++) {
+					dst[x] = palette[src[x]];
+				}
+				dst += (dstFrame->pitch >> 1);
+			}
+
+			delete[] src;
 			delete prsStream;
 		}
 		delete prsDecoder;
