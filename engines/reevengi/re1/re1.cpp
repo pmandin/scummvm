@@ -493,14 +493,16 @@ void RE1Engine::loadRoom(void) {
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(roomPath);
 	if (stream) {
 		if (_flags.platform == Common::kPlatformSaturn) {
-			PrsDecoder *prsDecoder = new PrsDecoder();
-			Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(stream);
-			if (prsStream) {
-				//debug(3, "loaded %s", roomPath.toString().c_str());
-				_roomScene = new RE1Room(this, prsStream);
-				delete prsStream;
+			if (stream->size() >= 16) {
+				PrsDecoder *prsDecoder = new PrsDecoder();
+				Common::SeekableReadStream *prsStream = prsDecoder->createReadStream(stream);
+				if (prsStream) {
+					//debug(3, "loaded %s", roomPath.toString().c_str());
+					_roomScene = new RE1Room(this, prsStream);
+					delete prsStream;
+				}
+				delete prsDecoder;
 			}
-			delete prsDecoder;
 		} else {
 			//debug(3, "loaded %s", roomPath.toString().c_str());
 			_roomScene = new RE1Room(this, stream);
