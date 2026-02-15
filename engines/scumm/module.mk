@@ -19,6 +19,7 @@ MODULE_OBJS := \
 	file_nes.o \
 	gfx_gui.o \
 	gfx_mac.o \
+	gfx_nes.o \
 	gfx_towns.o \
 	gfx.o \
 	he/mixer_he.o \
@@ -93,6 +94,12 @@ MODULE_OBJS := \
 	util.o \
 	vars.o \
 	verbs.o
+
+ifdef USE_IMGUI
+MODULE_OBJS += \
+	debugger/debugtools.o \
+	debugger/editor.o
+endif
 
 ifdef USE_ARM_COSTUME_ASM
 MODULE_OBJS += \
@@ -169,6 +176,7 @@ MODULE_OBJS += \
 	he/basketball/shooting.o \
 	he/basketball/trajectory.o \
 	he/cup_player_he.o \
+	he/font_he.o \
 	he/gfx_comp/aux_comp.o \
 	he/gfx_comp/mrle_comp.o \
 	he/gfx_comp/trle_comp.o \

@@ -839,8 +839,16 @@ Common::KeymapperDefaultBindings *OSystem_Android::getKeymapperDefaultBindings()
 	//      The engines use those as much as possible when defining keymaps.
 	//      Then, the backends can override the default bindings to make use of the platform specific keys.
 	//
+	// Also Note: Using setDefaultBinding() will override any default/fallback keymap(s) for an action.
+	//            (for default see the ones in MetaEngine::initKeymaps() and DefaultEventManager::getGlobalKeymap())
+	//            Using addDefaultBinding() after a setDefaultBinding() here will (as expected) add another keymap to the action,
+	//            and all keymaps for the action will be listed in this method.
+	//            Using addDefaultBinding() without setDefaultBinding() will add another keymap to the action,
+	//            in addition to the existing default/fallback ones (ie. not all keymaps for the action are listed here).
 	//
-	keymapperDefaultBindings->setDefaultBinding(Common::kGlobalKeymapName, "MENU", "MENU");
+	keymapperDefaultBindings->setDefaultBinding(Common::kGlobalKeymapName, Common::kStandardActionOpenMainMenu, "MENU");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, Common::kStandardActionOpenMainMenu, "JOY_START");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, Common::kStandardActionOpenMainMenu, "C+F5");
 	//
 	// We want the AC_BACK key to be the default (until overridden explicitly by the user or a game engine)
 	// mapped key for the standard SKIP action.
@@ -856,10 +864,12 @@ Common::KeymapperDefaultBindings *OSystem_Android::getKeymapperDefaultBindings()
 	// [kStandardActionsKeymapName is defined  as (constant char*) in ./backends/keymapper/keymap, and utilised in getActionDefaultMappings()]
 	// ["If no keymap-specific default mapping was found, look for a standard action binding"]
 	keymapperDefaultBindings->setDefaultBinding(Common::kStandardActionsKeymapName, Common::kStandardActionSkip, "AC_BACK");
+	keymapperDefaultBindings->addDefaultBinding(Common::kStandardActionsKeymapName, Common::kStandardActionSkip, "JOY_Y");
 
 	// The "CLOS" action ID is not a typo.
 	// See: backends/keymapper/remap-widget.cpp:	kCloseCmd        = 'CLOS'
 	keymapperDefaultBindings->setDefaultBinding(Common::kGuiKeymapName, "CLOS", "AC_BACK");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGuiKeymapName, "CLOS", "JOY_Y");
 
 	// By default DPAD directions will be used for virtual mouse in GUI context
 	// If the user wants to remap them, they will be able to navigate to Global Options -> Keymaps and do so.
@@ -1143,21 +1153,21 @@ _s(
 "\n"
 "2. Inside the ScummVM file browser, select **Go Up** until you reach the root folder which has the **<Add a new folder>** option. \n"
 "\n"
-"  ![ScummVM file browser root](browser-root.png \"ScummVM file browser root\"){w=70%}\n"
+"  ![ScummVM file browser root](browser-root.png \"ScummVM file browser root\"){w=70%,maxw=50em}\n"
 "\n"
 "3. Double-tap **<Add a new folder>**. In your device's file browser, navigate to the folder containing all your game folders. For example, **SD Card > ScummVMgames**. \n"
 "\n"
 "4. Select **Use this folder**. \n"
 "\n"
-"  ![OS selectable folder](fs-folder.png \"OS selectable folder\"){w=70%}\n"
+"  ![OS selectable folder](fs-folder.png \"OS selectable folder\"){w=70%,maxw=50em}\n"
 "\n"
 "5. Select **ALLOW** to give ScummVM permission to access the folder. \n"
 "\n"
-"  ![OS access permission dialog](fs-permission.png \"OS access permission\"){w=70%}\n"
+"  ![OS access permission dialog](fs-permission.png \"OS access permission\"){w=70%,maxw=50em}\n"
 "\n"
 "6. In the ScummVM file browser, double-tap to browse through your added folder. Add a game by selecting the sub-folder containing the game files, then tap **Choose**. \n"
 "\n"
-"  ![SAF folder added](browser-folder-in-list.png \"SAF folder added\"){w=70%}\n"
+"  ![SAF folder added](browser-folder-in-list.png \"SAF folder added\"){w=70%,maxw=50em}\n"
 "\n"
 "Step 2 and 3 are done only once. To add more games, repeat Steps 1 and 6. \n"
 "\n"

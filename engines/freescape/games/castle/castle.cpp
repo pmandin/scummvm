@@ -30,7 +30,10 @@
 #include "backends/keymapper/standard-actions.h"
 #include "common/translation.h"
 
+#include "audio/mods/protracker.h"
+
 #include "freescape/freescape.h"
+#include "freescape/gfx.h"
 #include "freescape/games/castle/castle.h"
 #include "freescape/language/8bitDetokeniser.h"
 
@@ -243,6 +246,101 @@ CastleEngine::~CastleEngine() {
 	}
 }
 
+Graphics::ManagedSurface *CastleEngine::loadFrameWithHeader(Common::SeekableReadStream *file, int pos, uint32 front, uint32 back) {
+	Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
+	file->seek(pos);
+	int16 width = file->readByte();
+	int16 height = file->readByte();
+	debugC(kFreescapeDebugParser, "Frame size: %d x %d", width, height);
+	surface->create(width * 8, height, _gfx->_texturePixelFormat);
+
+	/*byte mask =*/ file->readByte();
+
+	surface->fillRect(Common::Rect(0, 0, width * 8, height), back);
+	/*int frameSize =*/ file->readUint16LE();
+	return loadFrame(file, surface, width, height, front);
+}
+
+Common::Array<Graphics::ManagedSurface *> CastleEngine::loadFramesWithHeader(Common::SeekableReadStream *file, int pos, int numFrames, uint32 front, uint32 back) {
+	Graphics::ManagedSurface *surface = nullptr;
+	file->seek(pos);
+	int16 width = file->readByte();
+	int16 height = file->readByte();
+	/*byte mask =*/ file->readByte();
+
+	/*int frameSize =*/ file->readUint16LE();
+	Common::Array<Graphics::ManagedSurface *> frames;
+	for (int i = 0; i < numFrames; i++) {
+		surface = new Graphics::ManagedSurface();
+		surface->create(width * 8, height, _gfx->_texturePixelFormat);
+		surface->fillRect(Common::Rect(0, 0, width * 8, height), back);
+		frames.push_back(loadFrame(file, surface, width, height, front));
+	}
+
+	return frames;
+}
+
+Graphics::ManagedSurface *CastleEngine::loadFrame(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int width, int height, uint32 front) {
+	for (int i = 0; i < width * height; i++) {
+		byte color = file->readByte();
+		for (int n = 0; n < 8; n++) {
+			int y = i / width;
+			int x = (i % width) * 8 + (7 - n);
+			if ((color & (1 << n)))
+				surface->setPixel(x, y, front);
+		}
+	}
+	return surface;
+}
+
+Graphics::ManagedSurface *CastleEngine::loadFrameWithHeaderCPC(Common::SeekableReadStream *file, int pos, const uint32 *cpcPalette) {
+	Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
+	file->seek(pos);
+	int16 width = file->readByte();
+	int16 height = file->readByte();
+	debugC(kFreescapeDebugParser, "CPC Frame size: %d x %d", width, height);
+	surface->create(width * 4, height, _gfx->_texturePixelFormat);
+
+	/*byte mask =*/ file->readByte();
+
+	surface->fillRect(Common::Rect(0, 0, width * 4, height), cpcPalette[0]);
+	/*int frameSize =*/ file->readUint16LE();
+	return loadFrameCPC(file, surface, width, height, cpcPalette);
+}
+
+Common::Array<Graphics::ManagedSurface *> CastleEngine::loadFramesWithHeaderCPC(Common::SeekableReadStream *file, int pos, int numFrames, const uint32 *cpcPalette) {
+	Graphics::ManagedSurface *surface = nullptr;
+	file->seek(pos);
+	int16 width = file->readByte();
+	int16 height = file->readByte();
+	/*byte mask =*/ file->readByte();
+
+	/*int frameSize =*/ file->readUint16LE();
+	Common::Array<Graphics::ManagedSurface *> frames;
+	for (int i = 0; i < numFrames; i++) {
+		surface = new Graphics::ManagedSurface();
+		surface->create(width * 4, height, _gfx->_texturePixelFormat);
+		surface->fillRect(Common::Rect(0, 0, width * 4, height), cpcPalette[0]);
+		frames.push_back(loadFrameCPC(file, surface, width, height, cpcPalette));
+	}
+
+	return frames;
+}
+
+Graphics::ManagedSurface *CastleEngine::loadFrameCPC(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int width, int height, const uint32 *cpcPalette) {
+	for (int y = 0; y < height; y++) {
+		for (int col = 0; col < width; col++) {
+			byte cpc_byte = file->readByte();
+			for (int i = 0; i < 4; i++) {
+				int pixel = getCPCPixel(cpc_byte, i, true);
+				if (pixel != 0)
+					surface->setPixel(col * 4 + i, y, cpcPalette[pixel]);
+			}
+		}
+	}
+	return surface;
+}
+
 void CastleEngine::initKeymaps(Common::Keymap *engineKeyMap, Common::Keymap *infoScreenKeyMap, const char *target) {
 	FreescapeEngine::initKeymaps(engineKeyMap, infoScreenKeyMap, target);
 	Common::Action *act;
@@ -321,8 +419,10 @@ void CastleEngine::initKeymaps(Common::Keymap *engineKeyMap, Common::Keymap *inf
 void CastleEngine::beforeStarting() {
 	if (isDOS())
 		waitInLoop(250);
-	else if (isSpectrum())
+	else if (isSpectrum() || isCPC())
 		waitInLoop(100);
+	else if (isAmiga() || isAtariST())
+		waitInLoop(250);
 }
 
 void CastleEngine::gotoArea(uint16 areaID, int entranceID) {
@@ -361,6 +461,14 @@ void CastleEngine::gotoArea(uint16 areaID, int entranceID) {
 			playSound(13, true, _soundFxHandle);
 		else
 			playSound(_soundIndexStart, false, _soundFxHandle);
+
+		// Start ProTracker background music for Amiga demo
+		if (isAmiga() && !_modData.empty() && !_mixer->isSoundHandleActive(_musicHandle)) {
+			Common::MemoryReadStream modStream(_modData.data(), _modData.size());
+			Audio::AudioStream *musicStream = Audio::makeProtrackerStream(&modStream);
+			if (musicStream)
+				_mixer->playStream(Audio::Mixer::kMusicSoundType, &_musicHandle, musicStream);
+		}
 	} else if (areaID == _endArea && entranceID == _endEntrance) {
 		_pitch = -85;
 	} else {
@@ -590,6 +698,33 @@ void CastleEngine::drawInfoMenu() {
 		for (int  i = 0; i < int(_keysCollected.size()) ; i++) {
 			int y = 58 + (i / 2) * 18;
 
+			if (i % 2 == 0) {
+				surface->copyRectToSurfaceWithKey(*_keysBorderFrames[i], 58, y, Common::Rect(0, 0, _keysBorderFrames[i]->w, _keysBorderFrames[i]->h), black);
+				keyRects.push_back(Common::Rect(58, y, 58 + _keysBorderFrames[i]->w / 2, y + _keysBorderFrames[i]->h));
+			} else {
+				surface->copyRectToSurfaceWithKey(*_keysBorderFrames[i], 80, y, Common::Rect(0, 0, _keysBorderFrames[i]->w, _keysBorderFrames[i]->h), black);
+				keyRects.push_back(Common::Rect(80, y, 80 + _keysBorderFrames[i]->w / 2, y + _keysBorderFrames[i]->h));
+			}
+		}
+	} else if (isAmiga() || isAtariST()) {
+		if (_menu)
+			surface->copyRectToSurface(*_menu, 47, 35, Common::Rect(0, 0, MIN<int>(_menu->w, surface->w - 47), MIN<int>(_menu->h, surface->h - 35)));
+
+		_gfx->readFromPalette(15, r, g, b);
+		front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+		drawStringInSurface(Common::String::format("%07d", score), 166, 71, front, black, surface);
+		drawStringInSurface(centerAndPadString(Common::String::format("%s", _messagesList[135 + shield / 6].c_str()), 10), 151, 102, front, black, surface);
+
+		Common::String keysCollected = _messagesList[141];
+		Common::replace(keysCollected, "X", Common::String::format("%d", _keysCollected.size()));
+		drawStringInSurface(keysCollected, 103, 41, front, black, surface);
+
+		Common::String spiritsDestroyedString = _messagesList[133];
+		Common::replace(spiritsDestroyedString, "X", Common::String::format("%d", spiritsDestroyed));
+		drawStringInSurface(spiritsDestroyedString, 145, 132, front, black, surface);
+
+		for (int i = 0; i < int(_keysCollected.size()); i++) {
+			int y = 58 + (i / 2) * 18;
 			if (i % 2 == 0) {
 				surface->copyRectToSurfaceWithKey(*_keysBorderFrames[i], 58, y, Common::Rect(0, 0, _keysBorderFrames[i]->w, _keysBorderFrames[i]->h), black);
 				keyRects.push_back(Common::Rect(58, y, 58 + _keysBorderFrames[i]->w / 2, y + _keysBorderFrames[i]->h));
@@ -867,7 +1002,7 @@ void CastleEngine::drawFullscreenGameOverAndWait() {
 
 	if (isDOS()) {
 		// TODO: playSound(X, false, _soundFxHandle);
-	} else if (isSpectrum()) {
+	} else if (isSpectrum() || isCPC()) {
 		playSound(9, false, _soundFxHandle);
 	}
 
@@ -1122,6 +1257,8 @@ void CastleEngine::drawFullscreenRiddleAndWait(uint16 riddle) {
 	uint8 r, g, b;
 	_gfx->readFromPalette(frontColor, r, g, b);
 	uint32 front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+	if (isAmiga())
+		front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xEE, 0xAA, 0x00);
 	uint32 transparent = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0x00, 0x00, 0x00);
 
 	Graphics::Surface *surface = new Graphics::Surface();
@@ -1180,13 +1317,25 @@ void CastleEngine::drawRiddle(uint16 riddle, uint32 front, uint32 back, Graphics
 	} else if (isSpectrum() || isCPC()) {
 		x = 64;
 		y = 37;
+	} else if (isAmiga()) {
+		x = 32;
+		y = 33;
+		maxWidth = 139;
 	}
-	surface->copyRectToSurface((const Graphics::Surface)*_riddleTopFrame, x, y, Common::Rect(0, 0, _riddleTopFrame->w, _riddleTopFrame->h));
-	for (y += _riddleTopFrame->h; y < maxWidth;) {
-		surface->copyRectToSurface((const Graphics::Surface)*_riddleBackgroundFrame, x, y, Common::Rect(0, 0, _riddleBackgroundFrame->w, _riddleBackgroundFrame->h));
-		y += _riddleBackgroundFrame->h;
+	// Draw riddle frame borders (if available)
+	if (_riddleTopFrame) {
+		surface->copyRectToSurface((const Graphics::Surface)*_riddleTopFrame, x, y, Common::Rect(0, 0, _riddleTopFrame->w, _riddleTopFrame->h));
+		y += _riddleTopFrame->h;
 	}
-	surface->copyRectToSurface((const Graphics::Surface)*_riddleBottomFrame, x, maxWidth, Common::Rect(0, 0, _riddleBottomFrame->w, _riddleBottomFrame->h - 1));
+	if (_riddleBackgroundFrame) {
+		for (; y < maxWidth;) {
+			surface->copyRectToSurface((const Graphics::Surface)*_riddleBackgroundFrame, x, y, Common::Rect(0, 0, _riddleBackgroundFrame->w, _riddleBackgroundFrame->h));
+			y += _riddleBackgroundFrame->h;
+		}
+	}
+	if (_riddleBottomFrame) {
+		surface->copyRectToSurface((const Graphics::Surface)*_riddleBottomFrame, x, maxWidth, Common::Rect(0, 0, _riddleBottomFrame->w, _riddleBottomFrame->h - 1));
+	}
 
 	Common::Array<RiddleText> riddleMessages = _riddleList[riddle]._lines;
 	x = _riddleList[riddle]._origin.x;
@@ -1198,6 +1347,9 @@ void CastleEngine::drawRiddle(uint16 riddle, uint32 front, uint32 back, Graphics
 	} else if (isSpectrum() || isCPC()) {
 		x = 64;
 		y = 36;
+	} else if (isAmiga()) {
+		x = 40;
+		y = 32;
 	}
 
 	for (int i = 0; i < int(riddleMessages.size()); i++) {
@@ -1240,41 +1392,48 @@ void CastleEngine::drawEnergyMeter(Graphics::Surface *surface, Common::Point ori
 		barFrameOrigin += Common::Point(5, 6);
 	else if (isSpectrum())
 		barFrameOrigin += Common::Point(0, 6);
+	else if (isCPC())
+		barFrameOrigin += Common::Point(0, 6);
 
 	surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtBarFrame, barFrameOrigin.x, barFrameOrigin.y, Common::Rect(0, 0, _strenghtBarFrame->w, _strenghtBarFrame->h), black);
 
 	Common::Point weightPoint;
 	int frameIdx = -1;
 
-	weightPoint = Common::Point(origin.x + 10, origin.y);
-	frameIdx = _gameStateVars[k8bitVariableShield] % 4;
-
 	if (_strenghtWeightsFrames.empty())
 		return;
 
-	if (frameIdx != 0) {
-		frameIdx = 4 - frameIdx;
-		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[frameIdx], weightPoint.x, weightPoint.y, Common::Rect(0, 0, 3, _strenghtWeightsFrames[frameIdx]->h), back);
-		weightPoint += Common::Point(3, 0);
-	}
+	// Use actual weight sprite width for positioning
+	int weightWidth = _strenghtWeightsFrames[0]->w;
+	int weightOffset = isCPC() ? 9 : 10;
+	int rightWeightPos = isCPC() ? 59 : 62;
 
-	for (int i = 0; i < _gameStateVars[k8bitVariableShield] / 4; i++) {
-		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[0], weightPoint.x, weightPoint.y, Common::Rect(0, 0, 3, _strenghtWeightsFrames[0]->h), back);
-		weightPoint += Common::Point(3, 0);
-	}
-
-	weightPoint = Common::Point(origin.x + 62, origin.y);
+	weightPoint = Common::Point(origin.x + weightOffset, origin.y);
 	frameIdx = _gameStateVars[k8bitVariableShield] % 4;
 
 	if (frameIdx != 0) {
 		frameIdx = 4 - frameIdx;
-		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[frameIdx], weightPoint.x, weightPoint.y, Common::Rect(0, 0, 3, _strenghtWeightsFrames[frameIdx]->h), back);
-		weightPoint += Common::Point(-3, 0);
+		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[frameIdx], weightPoint.x, weightPoint.y, Common::Rect(0, 0, weightWidth, _strenghtWeightsFrames[frameIdx]->h), back);
+		weightPoint += Common::Point(weightWidth, 0);
 	}
 
 	for (int i = 0; i < _gameStateVars[k8bitVariableShield] / 4; i++) {
-		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[0], weightPoint.x, weightPoint.y, Common::Rect(0, 0, 3, _strenghtWeightsFrames[0]->h), back);
-		weightPoint += Common::Point(-3, 0);
+		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[0], weightPoint.x, weightPoint.y, Common::Rect(0, 0, weightWidth, _strenghtWeightsFrames[0]->h), back);
+		weightPoint += Common::Point(weightWidth, 0);
+	}
+
+	weightPoint = Common::Point(origin.x + rightWeightPos, origin.y);
+	frameIdx = _gameStateVars[k8bitVariableShield] % 4;
+
+	if (frameIdx != 0) {
+		frameIdx = 4 - frameIdx;
+		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[frameIdx], weightPoint.x, weightPoint.y, Common::Rect(0, 0, weightWidth, _strenghtWeightsFrames[frameIdx]->h), back);
+		weightPoint += Common::Point(-weightWidth, 0);
+	}
+
+	for (int i = 0; i < _gameStateVars[k8bitVariableShield] / 4; i++) {
+		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_strenghtWeightsFrames[0], weightPoint.x, weightPoint.y, Common::Rect(0, 0, weightWidth, _strenghtWeightsFrames[0]->h), back);
+		weightPoint += Common::Point(-weightWidth, 0);
 	}
 }
 
@@ -1303,7 +1462,7 @@ void CastleEngine::checkSensors() {
 
 	/*if (!_mixer->isSoundHandleActive(_soundFxGhostHandle)) {
 		_speaker->play(Audio::PCSpeaker::kWaveFormSquare, 25.0f, -1);
-		_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundFxGhostHandle, _speaker, -1, kFreescapeDefaultVolume / 2, 0, DisposeAfterUse::NO);
+		_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundFxGhostHandle, _speaker, -1, Audio::Mixer::kMaxChannelVolume, 0, DisposeAfterUse::NO);
 	}*/
 
 	// This is the frequency to shake the screen
@@ -1539,6 +1698,10 @@ void CastleEngine::drawLiftingGate(Graphics::Surface *surface) {
 		duration = 250;
 	else if (isSpectrum())
 		duration = 100;
+	else if (isAmiga() || isAtariST())
+		duration = 250;
+	else if (isCPC())
+		duration = 100;
 
 	if ((_gameStateControl == kFreescapeGameStateStart || _gameStateControl == kFreescapeGameStateRestart) && _ticks <= duration) { // Draw the _gameOverBackgroundFrame gate lifting up slowly
 		int gate_w = _gameOverBackgroundFrame->w;
@@ -1678,7 +1841,7 @@ void CastleEngine::drawBackground() {
 }
 
 void CastleEngine::updateThunder() {
-	if (!_thunderFrames[0])
+	if (_thunderFrames.empty() || !_thunderFrames[0])
 		return;
 
 	if (_thunderFrameDuration > 0) {
@@ -1688,7 +1851,7 @@ void CastleEngine::updateThunder() {
 		_gfx->drawThunder(_thunderTextures[0], _position + _thunderOffset, 100);
 		_thunderFrameDuration--;
 		if (_thunderFrameDuration == 0)
-			if (isSpectrum())
+			if (isSpectrum() || isCPC())
 				playSound(8, false, _soundFxHandle);
 		return;
 	}

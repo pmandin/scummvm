@@ -51,6 +51,7 @@ class RandomSource;
 namespace Freescape {
 
 class Renderer;
+class Debugger;
 
 #define FREESCAPE_DATA_BUNDLE "freescape.dat"
 
@@ -142,6 +143,7 @@ struct CGAPaletteEntry {
 
 extern Common::String shiftStr(const Common::String &str, int shift);
 extern Common::String centerAndPadString(const Common::String &str, int size);
+extern Graphics::ManagedSurface *readCPCImage(Common::SeekableReadStream *file, bool mode1);
 
 class EventManagerWrapper {
 public:
@@ -487,6 +489,8 @@ public:
 	uint16 playSoundDOSSpeaker(uint16 startFrequency, soundSpeakerFx *speakerFxInfo);
 	void playSoundDOS(soundSpeakerFx *speakerFxInfo, bool sync, Audio::SoundHandle &handle);
 
+	void playSoundDrillerZX(int index, Audio::SoundHandle &handle);
+	void playSoundCPC(int index, Audio::SoundHandle &handle);
 	virtual void playSoundFx(int index, bool sync);
 	virtual void loadSoundsFx(Common::SeekableReadStream *file, int offset, int number);
 	Common::HashMap<uint16, soundFx *> _soundsFx;
@@ -496,6 +500,12 @@ public:
 
 	void playSoundZX(Common::Array<soundUnitZX> *data, Audio::SoundHandle &handle);
 	Common::HashMap<uint16, Common::Array<soundUnitZX>*> _soundsSpeakerFxZX;
+
+	void loadSoundsCPC(Common::SeekableReadStream *file, int offsetTone, int sizeTone, int offsetEnvelope, int sizeEnvelope, int offsetSoundDef, int sizeSoundDef);
+	Common::Array<byte> _soundsCPCToneTable;
+	Common::Array<byte> _soundsCPCEnvelopeTable;
+	Common::Array<byte> _soundsCPCSoundDefTable;
+
 	int _soundIndexShoot;
 	int _soundIndexCollide;
 	int _soundIndexStepDown;
@@ -646,6 +656,7 @@ enum GameReleaseFlags {
 };
 
 extern FreescapeEngine *g_freescape;
+extern Debugger *g_debugger;
 
 } // namespace Freescape
 

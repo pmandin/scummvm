@@ -22,6 +22,7 @@
 #include "m4/burger/rooms/section6/room602.h"
 #include "m4/burger/rooms/section6/section6.h"
 #include "m4/burger/vars.h"
+#include "m4/adv_r/adv_control.h"
 
 namespace M4 {
 namespace Burger {
@@ -474,7 +475,7 @@ void Room602::daemon() {
 			hotspot_set_active("PAW", true);
 			hotspot_set_active("MOTOR", true);
 			hotspot_set_active("MOTOR ", false);
-			hotspot_set_active("FOOR  ", true);
+			hotspot_set_active("FLOOR  ", true);
 			break;
 
 		case 56:

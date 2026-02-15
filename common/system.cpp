@@ -37,6 +37,7 @@
 
 #include "backends/audiocd/default/default-audiocd.h"
 #include "backends/fs/fs-factory.h"
+#include "backends/printing/printman.h"
 #include "backends/timer/default/default-timer.h"
 #include "backends/dlc/store.h"
 
@@ -47,6 +48,7 @@ OSystem::OSystem() {
 	_eventManager = nullptr;
 	_timerManager = nullptr;
 	_savefileManager = nullptr;
+	_printingManager = nullptr;
 #if defined(USE_TASKBAR)
 	_taskbarManager = nullptr;
 #endif
@@ -71,6 +73,9 @@ OSystem::~OSystem() {
 
 	delete _timerManager;
 	_timerManager = nullptr;
+
+	delete _printingManager;
+	_printingManager = nullptr;
 
 #if defined(USE_TASKBAR)
 	delete _taskbarManager;
@@ -116,6 +121,10 @@ void OSystem::initBackend() {
 	// set it.
 // 	if (!_fsFactory)
 // 		error("Backend failed to instantiate fs factory");
+
+	// Initialize default printing manager unless overridden by backend
+	if (!_printingManager)
+		_printingManager = new Common::PrintingManager();
 
 	_backendInitialized = true;
 }
@@ -239,6 +248,12 @@ void OSystem::fatalError() {
 FilesystemFactory *OSystem::getFilesystemFactory() {
 	assert(_fsFactory);
 	return _fsFactory;
+}
+
+void OSystem::addSysArchivesToSearchSet(Common::SearchSet &s, int priority) {
+	// Add the current dir as a very last resort (cf. bug #3984).
+	// TODO: check if it's really needed
+	s.addDirectory(".", ".", priority - 1);
 }
 
 Common::SeekableReadStream *OSystem::createConfigReadStream() {

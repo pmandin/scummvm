@@ -26,9 +26,10 @@
 #include "m4/burger/core/conv.h"
 #include "m4/burger/gui/gui_gizmo.h"
 #include "m4/burger/gui/game_menu.h"
-#include "m4/graphics/krn_pal.h"
+#include "m4/adv_r/adv_control.h"
 #include "m4/core/errors.h"
 #include "m4/core/imath.h"
+#include "m4/graphics/krn_pal.h"
 
 namespace M4 {
 namespace Burger {
@@ -361,7 +362,7 @@ void BurgerEngine::global_daemon() {
 			_G(wilbur_should) = 10017;
 			kernel_trigger_dispatch_now(kCHANGE_WILBUR_ANIMATION);
 		} else {
-			error_show(FL, 'Burg', "Time to abduct Wilbur in space?");
+			error_show(FL, "Time to abduct Wilbur in space?");
 		}
 		break;
 

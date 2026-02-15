@@ -82,6 +82,7 @@ enum class ScriptKernelTask {
 	StopAndTurnMe,
 	ChangeCharacter,
 	SayText,
+	SayTextV2, // TODO: Reverse engineer this variant
 	Go,
 	Put,
 	ChangeCharacterRoom,
@@ -119,6 +120,7 @@ enum class ScriptKernelTask {
 	LerpCamToObjectWithScale,
 	LerpCamToObjectResettingZ,
 	LerpCamRotation,
+	LerpOrSetCam, // only V1
 	FadeIn,
 	FadeOut,
 	FadeIn2,
@@ -126,8 +128,7 @@ enum class ScriptKernelTask {
 	LerpCamXYZ,
 	LerpCamToObjectKeepingZ,
 
-	SheriffTakesCharacter, ///< some special-case V1 tasks, unknown yet
-	ChangeDoor,
+	ChangeDoor, ///< some special-case V1 tasks, unknown yet
 	Disguise
 };
 

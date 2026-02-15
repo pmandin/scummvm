@@ -69,6 +69,7 @@ class TextToSpeechManager;
 #if defined(USE_SYSDIALOGS)
 class DialogManager;
 #endif
+class PrintingManager;
 class TimerManager;
 class SeekableReadStream;
 class WriteStream;
@@ -263,6 +264,13 @@ protected:
 	 * @note _fsFactory is deleted by the OSystem destructor.
 	 */
 	FilesystemFactory *_fsFactory;
+
+	/**
+	 * No default value is provided for _printingManager by OSystem.
+	 *
+	 * @note _printingManager is deleted by the OSystem destructor.
+	*/
+	Common::PrintingManager *_printingManager;
 
 	/**
 	 * Used by the DLC Manager implementation
@@ -1792,6 +1800,15 @@ public:
 		return _textToSpeechManager;
 	}
 
+	/**
+	 * Return the PrintingManager, used to handle printing.
+	 *
+	 * @return The PrintingManager for the current architecture.
+	 */
+	virtual Common::PrintingManager *getPrintingManager() {
+		return _printingManager;
+	}
+
 #if defined(USE_SYSDIALOGS)
 	/**
 	 * Return the DialogManager, which is used to handle system dialogs.
@@ -1834,7 +1851,7 @@ public:
 	 * @param s         SearchSet to which the system-specific dirs, if any, are added.
 	 * @param priority	Priority with which those dirs are added.
 	 */
-	virtual void addSysArchivesToSearchSet(Common::SearchSet &s, int priority = 0) {}
+	virtual void addSysArchivesToSearchSet(Common::SearchSet &s, int priority);
 
 	/**
 	 * Open the default config file for reading by returning a suitable

@@ -21,7 +21,7 @@
 
 #include "alcachofa/camera.h"
 #include "alcachofa/alcachofa.h"
-#include "alcachofa/script.h"
+#include "alcachofa/graphics.h"
 
 #include "common/system.h"
 #include "math/vector4d.h"
@@ -31,52 +31,10 @@ using namespace Math;
 
 namespace Alcachofa {
 
-void Camera::resetRotationAndScale() {
-	_cur._scale = 1;
-	_cur._rotation = 0;
-	_cur._usedCenter.z() = 0;
-}
-
-void Camera::setRoomBounds(Point bgSize, int16 bgScale) {
-	float scaleFactor = 1 - bgScale * kInvBaseScale;
-	_roomMin = Vector2d(
-		g_system->getWidth() / 2 * scaleFactor,
-		g_system->getHeight() / 2 * scaleFactor);
-	_roomMax = _roomMin + Vector2d(
-		bgSize.x * bgScale * kInvBaseScale,
-		bgSize.y * bgScale * kInvBaseScale);
-	_roomScale = bgScale;
-}
-
-void Camera::setFollow(WalkingCharacter *target, bool catchUp) {
-	_cur._isFollowingTarget = target != nullptr;
-	_followTarget = target;
-	_lastUpdateTime = g_engine->getMillis();
-	_catchUp = catchUp;
-	if (target == nullptr)
-		_isChanging = false;
-}
-
-void Camera::setPosition(Vector2d v) {
-	setPosition({ v.getX(), v.getY(), _cur._usedCenter.z() });
-}
-
-void Camera::setPosition(Vector3d v) {
-	_cur._usedCenter = v;
-	setFollow(nullptr);
-}
-
-void Camera::backup(uint slot) {
-	assert(slot < kStateBackupCount);
-	_backups[slot] = _cur;
-}
-
-void Camera::restore(uint slot) {
-	assert(slot < kStateBackupCount);
-	auto backupState = _backups[slot];
-	_backups[slot] = _cur;
-	_cur = backupState;
-}
+//
+// Base camera
+//
+Camera::~Camera() {}
 
 static Matrix4 scale2DMatrix(float scale) {
 	Matrix4 m;
@@ -87,16 +45,16 @@ static Matrix4 scale2DMatrix(float scale) {
 
 void Camera::setupMatricesAround(Vector3d center) {
 	Matrix4 matTemp;
-	matTemp.buildAroundZ(_cur._rotation);
+	matTemp.buildAroundZ(rotation());
 	_mat3Dto2D.setToIdentity();
 	_mat3Dto2D.translate(-center);
 	_mat3Dto2D = matTemp * _mat3Dto2D;
-	_mat3Dto2D = scale2DMatrix(_cur._scale) * _mat3Dto2D;
+	_mat3Dto2D = scale2DMatrix(scale()) * _mat3Dto2D;
 
 	_mat2Dto3D.setToIdentity();
 	_mat2Dto3D.translate(center);
-	matTemp.buildAroundZ(-_cur._rotation);
-	matTemp = matTemp * scale2DMatrix(1 / _cur._scale);
+	matTemp.buildAroundZ(-rotation());
+	matTemp = matTemp * scale2DMatrix(1 / scale());
 	_mat2Dto3D = _mat2Dto3D * matTemp;
 }
 
@@ -133,7 +91,7 @@ Vector3d Camera::transform2Dto3D(Vector3d v2d) const {
 	// if this looks like normal 3D math to *someone* please contact.
 	Vector4d vh;
 	vh.w() = 1.0f;
-	vh.z() = v2d.z() - _cur._usedCenter.z();
+	vh.z() = v2d.z() - _appliedCenter.z();
 	vh.y() = (v2d.y() - g_system->getHeight() * 0.5f) * vh.z() * kInvBaseScale;
 	vh.x() = (v2d.x() - g_system->getWidth() * 0.5f) * vh.z() * kInvBaseScale;
 	vh = _mat2Dto3D * vh;
@@ -152,7 +110,7 @@ Vector3d Camera::transform3Dto2D(Vector3d v3d) const {
 	return Vector3d(
 		g_system->getWidth() * 0.5f + vh.x() * kBaseScale / vh.z(),
 		g_system->getHeight() * 0.5f + vh.y() * kBaseScale / vh.z(),
-		_cur._scale * kBaseScale / vh.z());
+		scale() * kBaseScale / vh.z());
 }
 
 Point Camera::transform3Dto2D(Point p3d) const {
@@ -160,7 +118,344 @@ Point Camera::transform3Dto2D(Point p3d) const {
 	return { (int16)v2d.x(), (int16)v2d.y() };
 }
 
-void Camera::update() {
+static void syncMatrix(Serializer &s, Matrix4 &m) {
+	float *data = m.getData();
+	for (int i = 0; i < 16; i++)
+		s.syncAsFloatLE(data[i]);
+}
+
+static void syncVector(Serializer &s, Vector3d &v) {
+	s.syncAsFloatLE(v.x());
+	s.syncAsFloatLE(v.y());
+	s.syncAsFloatLE(v.z());
+}
+
+static void syncFollowTarget(Serializer &s, WalkingCharacter *&followTarget) {
+	// originally the follow object is also searched for before changing the room
+	// so that would practically mean only the main characters could be reasonably found
+	// instead we fall back to global search
+	String name;
+	if (followTarget != nullptr)
+		name = followTarget->name();
+	s.syncString(name);
+	if (s.isLoading()) {
+		if (name.empty())
+			followTarget = nullptr;
+		else {
+			followTarget = dynamic_cast<WalkingCharacter *>(g_engine->world().getObjectByName(name.c_str()));
+			if (followTarget == nullptr)
+				followTarget = dynamic_cast<WalkingCharacter *>(g_engine->world().getObjectByNameFromAnyRoom(name.c_str()));
+			if (followTarget == nullptr)
+				warning("Camera follow target from savestate was not found: %s", name.c_str());
+		}
+	}
+}
+
+//
+// CameraV1
+//
+
+Angle CameraV1::rotation() const {
+	return {};
+}
+
+float CameraV1::scale() const {
+	return 1.0f;
+}
+
+void CameraV1::preUpdate() {
+}
+
+void CameraV1::update() {
+	auto deltaTime = (g_engine->getMillis() - _lastUpdateTime) / 1000.0f;
+	auto newCenter = _appliedCenter;
+
+	if (_followTarget != nullptr) {
+		// this threshold is responsible for the jitter while following
+		const auto threshold = _isLerping ? 100 : 200;
+		_target = as3D(_followTarget->position());
+		auto deltaPos = _target - newCenter;
+		_lastUpdateTime = g_engine->getMillis();
+
+		_isLerping = false;
+		if (fabsf(deltaPos.x()) > threshold) {
+			newCenter.x() += copysignf(350.0f, deltaPos.x()) * deltaTime;
+			_isLerping = true;
+		}
+		if (fabsf(deltaPos.y()) > threshold) {
+			newCenter.y() += copysignf(350.0f, deltaPos.y()) * deltaTime;
+			_isLerping = true;
+		}
+	} else if (_isLerping) {
+		auto distance = newCenter.getDistanceTo(_target);
+		auto move = deltaTime * _lerpSpeed;
+		_lastUpdateTime = g_engine->getMillis();
+
+		if (move < distance)
+			newCenter += (_target - newCenter) / distance * move;
+		else {
+			newCenter = _target;
+			_isLerping = false;
+		}
+	}
+
+	setAppliedCenter(newCenter);
+}
+
+void CameraV1::setRoomBounds(Graphic &background) {
+	auto bgSize = background.animation().imageSize(0);
+	Point screenSize(g_system->getWidth(), g_system->getHeight());
+	_roomMin = as2D(background.topLeft() + screenSize / 2);
+	_roomMax = _roomMin + as2D(bgSize - screenSize);
+	_roomScale = 0;
+}
+
+void CameraV1::setFollow(WalkingCharacter *target) {
+	_lastUpdateTime = g_engine->getMillis();
+	_followTarget = target;
+	_isLerping = false;
+	if (target != nullptr)
+		setAppliedCenter(as3D(target->position()));
+}
+
+void CameraV1::onChangedRoom(bool resetCamera) {
+	// nothing to do in V1
+}
+
+void CameraV1::onTriggeredDoor(WalkingCharacter *target) {
+	setFollow(target);
+}
+
+void CameraV1::onTriggeredDoor(Common::Point fixedPosition) {
+	// should probably never be called
+	debug(1, "Set camera to fixed position in V1: %d, %d", fixedPosition.x, fixedPosition.y);
+}
+
+void CameraV1::onScriptChangedCharacter(MainCharacterKind kind) {
+	if (kind != MainCharacterKind::None)
+		setFollow(g_engine->player().activeCharacter());
+}
+
+void CameraV1::onUserChangedCharacter() {
+	setFollow(g_engine->player().activeCharacter());
+}
+
+void CameraV1::onOpenMenu() {
+	// we rely on room bounds clipping to set the camera position
+	// interaction locks prevent opening menus during lerps, follows are fine due to clipping 
+}
+
+void CameraV1::onCloseMenu() {
+}
+
+void CameraV1::syncGame(Serializer &s) {
+	syncVector(s, _appliedCenter);
+	syncMatrix(s, _mat3Dto2D);
+	syncMatrix(s, _mat2Dto3D);
+	syncFollowTarget(s, _followTarget);
+	syncVector(s, _target);
+	s.syncAsByte(_isLerping);
+	s.syncAsFloatLE(_lerpSpeed);
+	s.syncAsUint32LE(_lastUpdateTime);
+} 
+
+void CameraV1::lerpOrSet(Point target, int32 mode) {
+	_target = as3D(target);
+	_lastUpdateTime = g_engine->getMillis();
+	_followTarget = nullptr;
+	_isLerping = true;
+
+	if (mode == 1) {
+		// snap to target
+		_isLerping = false;
+		_appliedCenter = _target;
+	} else if (mode <= 0) {
+		// fixed speed, overshoot target
+		_target.x() += copysignf(100, _appliedCenter.x() - _target.x());
+		_target.y() += copysignf(100, _appliedCenter.y() - _target.y());
+		_lerpSpeed = 350.0f;
+	} else {
+		// dynamic speed
+		_lerpSpeed = MAX(1.0f, _target.getDistanceTo(_appliedCenter) / mode);
+	}
+}
+
+// The original name for this task is "disfraza" which I can only translate as "disguise"
+// It is a slightly bouncing vertical camera movement with fixed distance
+
+struct CamV1DisguiseTask final : public Task {
+	CamV1DisguiseTask(Process &process, int32 durationMs)
+		: Task(process)
+		, _camera(g_engine->cameraV1())
+		, _durationMs(durationMs) {}
+
+	CamV1DisguiseTask(Process &process, Serializer &s)
+		: Task(process)
+		, _camera(g_engine->cameraV1()) {
+		CamV1DisguiseTask::syncGame(s);
+	}
+
+	TaskReturn run() override {
+		if (_startTime == 0) {
+			_startPosition = _camera._appliedCenter;
+			_startTime = g_engine->getMillis();
+		}
+		if (_durationMs <= 0 || g_engine->getMillis() - _startTime >= (uint32)_durationMs)
+			return TaskReturn::finish(0);
+
+		Vector3d newPosition = _startPosition;
+		uint32 t = (g_engine->getMillis() - _startTime) * 5;
+		if (t <= 50)
+			newPosition.y() += t;
+		else if (t <= 150)
+			newPosition.y() += 100 - t;
+		else if (t >= 200)
+			newPosition.y() += t - 200;
+		_camera._appliedCenter = newPosition;
+		_camera.setFollow(nullptr);
+
+		return TaskReturn::yield();
+	}
+
+	void debugPrint() override {
+		g_engine->getDebugger()->debugPrintf("\"Disguise\" camera for %dms", _durationMs);
+	}
+
+	void syncGame(Serializer &s) override {
+		Task::syncGame(s);
+		s.syncAsSint32LE(_durationMs);
+		s.syncAsUint32LE(_startTime);
+		syncVector(s, _startPosition);
+	}
+
+	const char *taskName() const override;
+
+private:
+	CameraV1 &_camera;
+	int32 _durationMs = 0;
+	uint32 _startTime = 0;
+	Vector3d _startPosition;
+};
+DECLARE_TASK(CamV1DisguiseTask)
+
+Task *CameraV1::disguise(Process &process, int32 duration) {
+	return new CamV1DisguiseTask(process, duration);
+}
+
+//
+// CameraV3
+//
+
+Angle CameraV3::rotation() const {
+	return _cur._rotation;
+}
+
+float CameraV3::scale() const {
+	return _cur._scale;
+}
+
+void CameraV3::preUpdate() {
+	_shake = {};
+}
+
+void CameraV3::setRoomBounds(Graphic &background) {
+	auto bgSize = background.animation().imageSize(0);
+	/* The fallback fixes a bug where if the background image is invalid the original engine
+		* would not update the background size. This would be around 1024,768 due to
+		* previous rooms in the bug instances I found.
+		*/
+	if (bgSize == Point(0, 0))
+		bgSize = Point(1024, 768);
+
+	const auto bgScale = background.scale();
+	float scaleFactor = 1 - bgScale * kInvBaseScale;
+	_roomMin = Vector2d(
+		g_system->getWidth() / 2 * scaleFactor,
+		g_system->getHeight() / 2 * scaleFactor);
+	_roomMax = _roomMin + Vector2d(
+		bgSize.x * bgScale * kInvBaseScale,
+		bgSize.y * bgScale * kInvBaseScale);
+	_roomScale = bgScale;
+}
+
+void CameraV3::setFollow(WalkingCharacter *target) {
+	setFollow(target, false);
+}
+
+void CameraV3::setFollow(WalkingCharacter *target, bool catchUp) {
+	_cur._isFollowingTarget = target != nullptr;
+	_followTarget = target;
+	_lastUpdateTime = g_engine->getMillis();
+	_catchUp = catchUp;
+	if (target == nullptr)
+		_isChanging = false;
+}
+
+void CameraV3::onChangedRoom(bool resetCamera) {
+	if (resetCamera)
+		resetRotationAndScale();
+	if (_followTarget != nullptr)
+		setFollow(_followTarget, true);
+}
+
+void CameraV3::onTriggeredDoor(WalkingCharacter *target) {
+	setFollow(target, true);
+}
+
+void CameraV3::onTriggeredDoor(Point fixedPosition) {
+	setPosition(as2D(fixedPosition));
+}
+
+void CameraV3::onScriptChangedCharacter(MainCharacterKind kind) {
+	resetRotationAndScale();
+	if (kind != MainCharacterKind::None)
+		setFollow(g_engine->player().activeCharacter());
+	backup(0);
+}
+
+void CameraV3::onUserChangedCharacter() {
+	setFollow(g_engine->player().activeCharacter());
+	restore(0);
+}
+
+void CameraV3::onOpenMenu() {
+	backup(1);
+	setPosition(Math::Vector3d(
+		g_system->getWidth() / 2.0f, g_system->getHeight() / 2.0f, 0.0f));
+}
+
+void CameraV3::onCloseMenu() {
+	restore(1);
+}
+
+void CameraV3::resetRotationAndScale() {
+	_cur._scale = 1;
+	_cur._rotation = 0;
+	_cur._usedCenter.z() = 0;
+}
+
+void CameraV3::setPosition(Vector2d v) {
+	setPosition({ v.getX(), v.getY(), _cur._usedCenter.z() });
+}
+
+void CameraV3::setPosition(Vector3d v) {
+	_cur._usedCenter = v;
+	setFollow(nullptr);
+}
+
+void CameraV3::backup(uint slot) {
+	assert(slot < kStateBackupCount);
+	_backups[slot] = _cur;
+}
+
+void CameraV3::restore(uint slot) {
+	assert(slot < kStateBackupCount);
+	auto backupState = _backups[slot];
+	_backups[slot] = _cur;
+	_cur = backupState;
+}
+
+void CameraV3::update() {
 	// original would be some smoothing of delta times, let's not.
 	uint32 now = g_engine->getMillis();
 	float deltaTime = (now - _lastUpdateTime) / 1000.0f;
@@ -176,7 +471,7 @@ void Camera::update() {
 	setAppliedCenter(_cur._usedCenter + Vector3d(_shake.getX(), _shake.getY(), 0.0f));
 }
 
-void Camera::updateFollowing(float deltaTime) {
+void CameraV3::updateFollowing(float deltaTime) {
 	if (!_cur._isFollowingTarget || _followTarget == nullptr)
 		return;
 	const float resolutionFactor = g_system->getWidth() * 0.00125f;
@@ -230,19 +525,7 @@ void Camera::updateFollowing(float deltaTime) {
 	}
 }
 
-static void syncMatrix(Serializer &s, Matrix4 &m) {
-	float *data = m.getData();
-	for (int i = 0; i < 16; i++)
-		s.syncAsFloatLE(data[i]);
-}
-
-static void syncVector(Serializer &s, Vector3d &v) {
-	s.syncAsFloatLE(v.x());
-	s.syncAsFloatLE(v.y());
-	s.syncAsFloatLE(v.z());
-}
-
-void Camera::State::syncGame(Serializer &s) {
+void CameraV3::State::syncGame(Serializer &s) {
 	syncVector(s, _usedCenter);
 	s.syncAsFloatLE(_scale);
 	s.syncAsFloatLE(_speed);
@@ -254,7 +537,7 @@ void Camera::State::syncGame(Serializer &s) {
 	s.syncAsByte(_isFollowingTarget);
 }
 
-void Camera::syncGame(Serializer &s) {
+void CameraV3::syncGame(Serializer &s) {
 	syncMatrix(s, _mat3Dto2D);
 	syncMatrix(s, _mat2Dto3D);
 	syncVector(s, _appliedCenter);
@@ -264,30 +547,13 @@ void Camera::syncGame(Serializer &s) {
 	for (uint i = 0; i < kStateBackupCount; i++)
 		_backups[i].syncGame(s);
 
-	// originally the follow object is also searched for before changing the room
-	// so that would practically mean only the main characters could be reasonably found
-	// instead we fall back to global search
-	String name;
-	if (_followTarget != nullptr)
-		name = _followTarget->name();
-	s.syncString(name);
-	if (s.isLoading()) {
-		if (name.empty())
-			_followTarget = nullptr;
-		else {
-			_followTarget = dynamic_cast<WalkingCharacter *>(g_engine->world().getObjectByName(name.c_str()));
-			if (_followTarget == nullptr)
-				_followTarget = dynamic_cast<WalkingCharacter *>(g_engine->world().getObjectByNameFromAnyRoom(name.c_str()));
-			if (_followTarget == nullptr)
-				warning("Camera follow target from savestate was not found: %s", name.c_str());
-		}
-	}
+	syncFollowTarget(s, _followTarget);
 }
 
 struct CamLerpTask : public Task {
 	CamLerpTask(Process &process, uint32 duration = 0, EasingType easingType = EasingType::Linear)
 		: Task(process)
-		, _camera(g_engine->camera())
+		, _camera(g_engine->cameraV3())
 		, _duration(duration)
 		, _easingType(easingType) {}
 
@@ -320,7 +586,7 @@ struct CamLerpTask : public Task {
 protected:
 	virtual void update(float t) = 0;
 
-	Camera &_camera;
+	CameraV3 &_camera;
 	uint32 _startTime = 0, _duration;
 	EasingType _easingType;
 };
@@ -480,7 +746,7 @@ protected:
 	void update(float t) override {
 		const Vector2d phase = _frequency * t * (float)M_PI * 2.0f;
 		const float amplTimeFactor = 1.0f / expf(t * 5.0f); // a curve starting at 1, depreciating towards 0 
-		_camera.shake() = {
+		_camera._shake = {
 			sinf(phase.getX()) * _amplitude.getX() * amplTimeFactor,
 			sinf(phase.getY()) * _amplitude.getY() * amplTimeFactor
 		};
@@ -493,11 +759,11 @@ DECLARE_TASK(CamShakeTask)
 struct CamWaitToStopTask final : public Task {
 	CamWaitToStopTask(Process &process)
 		: Task(process)
-		, _camera(g_engine->camera()) {}
+		, _camera(g_engine->cameraV3()) {}
 
 	CamWaitToStopTask(Process &process, Serializer &s)
 		: Task(process)
-		, _camera(g_engine->camera()) {
+		, _camera(g_engine->cameraV3()) {
 		syncGame(s);
 	}
 
@@ -514,7 +780,7 @@ struct CamWaitToStopTask final : public Task {
 	const char *taskName() const override;
 
 private:
-	Camera &_camera;
+	CameraV3 &_camera;
 };
 DECLARE_TASK(CamWaitToStopTask)
 
@@ -527,14 +793,14 @@ struct CamSetInactiveAttributeTask final : public Task {
 
 	CamSetInactiveAttributeTask(Process &process, Attribute attribute, float value, int32 delay)
 		: Task(process)
-		, _camera(g_engine->camera())
+		, _camera(g_engine->cameraV3())
 		, _attribute(attribute)
 		, _value(value)
 		, _delay(delay) {}
 
 	CamSetInactiveAttributeTask(Process &process, Serializer &s)
 		: Task(process)
-		, _camera(g_engine->camera()) {
+		, _camera(g_engine->cameraV3()) {
 		syncGame(s);
 	}
 
@@ -592,14 +858,14 @@ struct CamSetInactiveAttributeTask final : public Task {
 	const char *taskName() const override;
 
 private:
-	Camera &_camera;
+	CameraV3 &_camera;
 	Attribute _attribute = {};
 	float _value = 0;
 	int32 _delay = 0;
 };
 DECLARE_TASK(CamSetInactiveAttributeTask)
 
-Task *Camera::lerpPos(Process &process,
+Task *CameraV3::lerpPos(Process &process,
 					  Vector2d targetPos,
 					  int32 duration, EasingType easingType) {
 	if (!process.isActiveForPlayer()) {
@@ -609,7 +875,7 @@ Task *Camera::lerpPos(Process &process,
 	return new CamLerpPosTask(process, targetPos3d, duration, easingType);
 }
 
-Task *Camera::lerpPos(Process &process,
+Task *CameraV3::lerpPos(Process &process,
 					  Vector3d targetPos,
 					  int32 duration, EasingType easingType) {
 	if (!process.isActiveForPlayer()) {
@@ -619,7 +885,7 @@ Task *Camera::lerpPos(Process &process,
 	return new CamLerpPosTask(process, targetPos, duration, easingType);
 }
 
-Task *Camera::lerpPosZ(Process &process,
+Task *CameraV3::lerpPosZ(Process &process,
 					   float targetPosZ,
 					   int32 duration, EasingType easingType) {
 	if (!process.isActiveForPlayer()) {
@@ -629,7 +895,7 @@ Task *Camera::lerpPosZ(Process &process,
 	return new CamLerpPosTask(process, targetPos, duration, easingType);
 }
 
-Task *Camera::lerpScale(Process &process,
+Task *CameraV3::lerpScale(Process &process,
 						float targetScale,
 						int32 duration, EasingType easingType) {
 	if (!process.isActiveForPlayer()) {
@@ -638,7 +904,7 @@ Task *Camera::lerpScale(Process &process,
 	return new CamLerpScaleTask(process, targetScale, duration, easingType);
 }
 
-Task *Camera::lerpRotation(Process &process,
+Task *CameraV3::lerpRotation(Process &process,
 						   float targetRotation,
 						   int32 duration, EasingType easingType) {
 	if (!process.isActiveForPlayer()) {
@@ -647,7 +913,7 @@ Task *Camera::lerpRotation(Process &process,
 	return new CamLerpRotationTask(process, targetRotation, duration, easingType);
 }
 
-Task *Camera::lerpPosScale(Process &process,
+Task *CameraV3::lerpPosScale(Process &process,
 						   Vector3d targetPos, float targetScale,
 						   int32 duration,
 						   EasingType moveEasingType, EasingType scaleEasingType) {
@@ -657,11 +923,11 @@ Task *Camera::lerpPosScale(Process &process,
 	return new CamLerpPosScaleTask(process, targetPos, targetScale, duration, moveEasingType, scaleEasingType);
 }
 
-Task *Camera::waitToStop(Process &process) {
+Task *CameraV3::waitToStop(Process &process) {
 	return new CamWaitToStopTask(process);
 }
 
-Task *Camera::shake(Process &process, Math::Vector2d amplitude, Math::Vector2d frequency, int32 duration) {
+Task *CameraV3::shake(Process &process, Math::Vector2d amplitude, Math::Vector2d frequency, int32 duration) {
 	if (!process.isActiveForPlayer()) {
 		return new DelayTask(process, (uint32)duration);
 	}

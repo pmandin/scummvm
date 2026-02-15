@@ -156,6 +156,8 @@ protected:
 	int				_gridHeaderWidth;
 	int				_trayHeight;
 
+	bool			_multiSelectEnabled;	/// Flag for multi-selection
+
 public:
 	int				_gridItemHeight;
 	int				_gridItemWidth;
@@ -212,6 +214,8 @@ public:
 
 	int getItemPos(int item);
 	int getNewSel(int index);
+	int getVisualPos(int entryID) const;
+	void selectVisualRange(int startPos, int endPos);
 	int getScrollPos() const { return _scrollPos; }
 	int getSelected() const { return ((_selectedEntry == nullptr) ? -1 : _selectedEntry->entryID); }
 	int getThumbnailHeight() const { return _thumbnailHeight; }
@@ -223,11 +227,23 @@ public:
 
 	bool wantsFocus() override { return true; }
 
+	bool handleKeyDown(Common::KeyState state) override;
+	bool handleKeyUp(Common::KeyState state) override;
 	void openTrayAtSelected();
 	void scrollBarRecalc();
 
 	void setSelected(int id);
 	void setFilter(const Common::U32String &filter);
+
+	// Multi-selection methods
+	void setMultiSelectEnabled(bool enabled) { _multiSelectEnabled = enabled; }
+	bool isMultiSelectEnabled() const { return _multiSelectEnabled; }
+	Common::Array<bool> _selectedItems;	/// Multiple selected items (bool array)
+	int _lastSelectedEntryID = -1;		/// Used for Shift+Click range selection
+	bool isItemSelected(int entryID) const;
+	void markSelectedItem(int entryID, bool state);
+	void clearSelection();
+	const Common::Array<bool> &getSelectedItems() const { return _selectedItems; }
 };
 
 /* GridItemWidget */

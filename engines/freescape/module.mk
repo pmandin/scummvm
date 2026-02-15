@@ -3,10 +3,11 @@ MODULE := engines/freescape
 MODULE_OBJS := \
 	area.o \
 	assets.o \
-	font.o \
-	events.o \
+	debugger.o \
 	demo.o \
 	doodle.o \
+	events.o \
+	font.o \
 	freescape.o \
 	games/castle/castle.o \
 	games/castle/amiga.o \
@@ -49,7 +50,8 @@ MODULE_OBJS := \
 	sweepAABB.o \
 	sound.o \
 	ui.o \
-	unpack.o
+	unpack.o \
+	wb.o
 
 ifdef USE_TINYGL
 MODULE_OBJS += \

@@ -22,6 +22,7 @@
 #include "m4/burger/rooms/section1/room172.h"
 #include "m4/burger/rooms/section1/section1.h"
 #include "m4/burger/vars.h"
+#include "m4/adv_r/adv_control.h"
 #include "m4/graphics/gr_series.h"
 
 namespace M4 {
@@ -421,9 +422,9 @@ void Room172::loadSeries7() {
 
 void Room172::conv41() {
 	const char *sound = conv_sound_to_play();
-	int who = conv_whos_talking();
-	int node = conv_current_node();
-	int entry = conv_current_entry();
+	const int who = conv_whos_talking();
+	const int node = conv_current_node();
+	const int entry = conv_current_entry();
 
 	if (sound) {
 		if (who == 1) {

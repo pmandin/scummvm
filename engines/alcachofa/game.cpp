@@ -39,6 +39,11 @@ void Game::onLoadedGameFiles() {}
 
 void Game::drawScreenStates() {}
 
+int32 Game::getKernelTaskArgCount(int32 kernelTaskI) {
+	(void)kernelTaskI;
+	return 0;
+}
+
 bool Game::doesRoomHaveBackground(const Room *room) {
 	return true;
 }
@@ -143,8 +148,9 @@ void Game::missingAnimation(const String &fileName) {
 	_message("Could not open animation %s", fileName.c_str());
 }
 
-void Game::unknownSayTextCharacter(const char *name, int32) {
+Character *Game::unknownSayTextCharacter(const char *name, int32) {
 	unknownScriptCharacter("say text", name);
+	return nullptr;
 }
 
 void Game::unknownChangeCharacterRoom(const char *name) {
@@ -163,8 +169,9 @@ void Game::unknownClearInventoryTarget(int characterKind) {
 	_message("Invalid clear inventory character kind: %d", characterKind);
 }
 
-void Game::unknownCamLerpTarget(const char *action, const char *name) {
+PointObject *Game::unknownCamLerpTarget(const char *action, const char *name) {
 	_message("Invalid target object for %s: %s", action, name);
+	return nullptr;
 }
 
 void Game::unknownKernelTask(int task) {
@@ -173,6 +180,10 @@ void Game::unknownKernelTask(int task) {
 
 void Game::unknownScriptProcedure(const String &procedure) {
 	_message("Unknown required procedure: %s", procedure.c_str());
+}
+
+void Game::unknownMenuAction(int32 actionId) {
+	_message("Unknown button action: %d", actionId);
 }
 
 void Game::missingSound(const String &fileName) {
@@ -197,6 +208,35 @@ bool Game::isKnownBadVideo(int32 videoId) {
 
 void Game::invalidVideo(int32 videoId, const char *context) {
 	_message("Could not play video %d (%s)", videoId, context);
+}
+
+Game *Game::create() {
+	const auto &desc = g_engine->gameDescription();
+	switch (desc.engineVersion) {
+	case EngineVersion::V1_0:
+		switch (*desc.desc.gameId) {
+		case 'a':
+			return createForMovieAdventureOriginal();
+		case 't':
+			return createForTerror();
+		case 'v':
+			return createForVaqueros();
+		}
+		break;
+	case EngineVersion::V2_0:
+		switch (*desc.desc.gameId) {
+		case 's':
+			return createForSecta();
+		}
+		break;
+	case EngineVersion::V3_0:
+	case EngineVersion::V3_1:
+		return createForMovieAdventureSpecial();
+	default:
+		break;
+	}
+
+	error("Unsupported or invalid engine version: %d", (int)desc.engineVersion);
 }
 
 }

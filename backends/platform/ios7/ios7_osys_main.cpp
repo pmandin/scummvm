@@ -53,6 +53,7 @@
 #include "backends/mutex/pthread/pthread-mutex.h"
 #include "backends/fs/chroot/chroot-fs-factory.h"
 #include "backends/fs/posix/posix-fs.h"
+#include "backends/text-to-speech/avfaudio/avfaudio-text-to-speech.h"
 #include "audio/mixer.h"
 #include "audio/mixer_intern.h"
 
@@ -159,6 +160,11 @@ void OSystem_iOS7::initBackend() {
 	_startTime = CACurrentMediaTime();
 
 	_graphicsManager = new iOSGraphicsManager();
+
+#ifdef USE_TTS
+	// Initialize Text to Speech manager
+	_textToSpeechManager = new AVFAudioTextToSpeechManager();
+#endif
 
 	setupMixer();
 
@@ -402,6 +408,9 @@ void OSystem_iOS7::addSysArchivesToSearchSet(Common::SearchSet &s, int priority)
 		}
 		CFRelease(fileUrl);
 	}
+	// Add the current dir as a very last resort (cf. bug #3984).
+	// TODO: check if it's really needed
+	s.addDirectory(".", ".", priority - 1);
 }
 
 void iOS7_buildSharedOSystemInstance() {

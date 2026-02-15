@@ -1,7 +1,49 @@
 For a more comprehensive changelog of the latest experimental code, see:
         https://github.com/scummvm/scummvm/commits/
 
-#### 3.0.0 (XXXX-XX-XX)
+#### 2026.1.1 (2026-XX-XX)
+
+ General:
+   - Improved PC-Speaker emulation.
+   - Implemented multiselect in the GUI launcher games list.
+
+ M4:
+   - Added music support in Ripley.
+   - Fixed numerous bugs in Ripley.
+   - Fixed some bugs in Orion Burger.
+
+ Bagel:
+   - Fix Enter/Escape keys in The Guessing Game guess dialog.
+   - Fix using Enter key to close info dialogs.
+   - Fix shell animations in Mankala minigame.
+   - Fixed incorrect evolution logic in Game of Life.
+
+ MM:
+   - Fixed M&M1 memory corruption on exit.
+   - Fixed M&M1 display issues/corruption getting items from treasure chests.
+   - Fixed M&M1 showing incorrect name for attacking monsters in combat.
+
+ MYST3:
+   - Restored ambient sounds for harmonic frequencies puzzle in Amateria.
+   - Fixed resetting animations for turntable puzzle in Amateria.
+   - Fixed synchronization of videos that play consecutively.
+   - Fixed skipping frames in some looping videos.
+   - Fixed frame-triggered ambient sounds in scripted movies.
+   - Various tweaks for displaying subtitles and inventory in widescreen mod.
+   - Fixed scaling issues for subtitles, draggable items, inventory bar and main menu in widescreen mod.
+
+ SCUMM:
+   - Added the original splash screens to MM NES (works only with PRG files).
+
+ WAGE:
+   - Implemented combat system.
+   - Numerous visual fixes.
+   - Implemented mouse scrolling of text window.
+
+ iOS port:
+   - Added support for Text-to-Speech.
+
+#### 2026.1.0 "Like a version" (2026-01-31)
 
  New games:
    - Added support for Dark Seed.
@@ -26,10 +68,10 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Adibou 2: Nature & Sciences.
    - Added support for WAGE-based game. More than 160 titles so far.
    - Added support for Penumbra: Overture.
-   - Added support for Tex Murphy: Martian Memorandum
+   - Added support for Tex Murphy: Martian Memorandum.
    - Added support for Mort&Phil: A Movie Adventure (Special Edition).
-   - Added support for Trick or Treat
-   - Added support for Hodj 'n' Podj
+   - Added support for Trick or Treat.
+   - Added support for Hodj 'n' Podj.
 
  Access:
    - Added keymapper support.
@@ -37,6 +79,9 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  ADL:
    - Added Text-to-Speech support.
+
+ AGS:
+   - Updated detection tables.
 
  AGI:
    - Added Text-to-Speech support.
@@ -81,6 +126,9 @@ For a more comprehensive changelog of the latest experimental code, see:
  Gob:
    - Added Text-to-Speech support.
 
+ Grim:
+  - Added support for the fantranslated Polish version of Grim Fandango.
+
  Hugo:
    - Added Text-to-Speech support.
    - Fixed unrecognized commands, missing points, and graphics glitches
@@ -90,13 +138,14 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Hypno:
    - Added keymapper support.
+   - Added support for third party subtitles.
 
  Illusions:
    - Fixed a crash when triggering the game menu early in the game.
 
  Kyra:
-   - Reduce CPU usage in the LoL main menu.
-   - Reduce CPU usage in EoB 1 and 2.
+   - Reduced CPU usage in the LoL main menu.
+   - Reduced CPU usage in EoB 1 and 2.
    - Introduced new launcher checkbox in Eye of the Beholder 1 and 2,
      to enable smarter replacing of thrown weapons from inventory.
    - In Eye of the Beholder 1, Ileria and Beohram NPC data fix is now behind
@@ -115,8 +164,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed protection from elements spell.
    - Added Text-to-Speech support.
    - Fixed errors with M&M1 monster advancement in combat.
-   - Fixed doors color in M&M1 enhanced mode
-   - Fix rendering of M&M1 enhanced main menu circles
+   - Fixed doors color in M&M1 enhanced mode.
+   - Fixed rendering of M&M1 enhanced main menu circles.
 
  Mohawk:
    - Fixed popping noise in speech in some game releases (bug in the original).
@@ -131,6 +180,8 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  NGI:
    - Added keymapper support.
+   - Fixed a crash when trying to open the game main menu several times in
+     a row.
 
  Nuvie:
    - Added "Transfer a Character" feature to main menu.
@@ -206,10 +257,16 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added keymapper support.
 
  Stark:
-   - The OpenGL renderer now works on older implementations not supporting non-power-of-two textures
+   - The OpenGL renderer now works on older GPUs not supporting
+     non-power-of-two textures.
 
  Supernova:
    - Added keymapper support.
+
+ Sword1:
+   - Fixed harsh noise being played instead of the intended audio on PS3,
+     Wii, and other big-endian ports.
+   - Fixed some engine leaks that could lead to crashes in some situations.
 
  Sword25:
    - Added keymapper support.
@@ -239,7 +296,7 @@ For a more comprehensive changelog of the latest experimental code, see:
      played.
 
  TwinE:
-   - Activate original bug fixes (FunFrock's HQ door and safe bugs).
+   - Activated original bug fixes (FunFrock's HQ door and safe bugs).
 
  V-Cruise:
    - Fixed text rendering in Chinese and Japanese localizations.
@@ -251,6 +308,19 @@ For a more comprehensive changelog of the latest experimental code, see:
  Wintermute:
    - 3D renderer enabled by default for 2D games.
    - Added Text-to-Speech support.
+   - Added support for several fan translations.
+
+ ZVision:
+   - Added support for widescreen displays
+   - Added high quality panorama option (uses bilinear filtering)
+   - Improved directionality of 3D sound
+   - Improved accuracy of volume scaling
+   - Enabled high performance audiovisual effects in Zork Nemesis
+   - Improved behaviour of draggable lever controls
+   - Fixed bug causing audio to cut out after long periods of continuous gameplay
+   - Fixed bug causing some audio not to play in certain locations after restoring a saved game
+   - Fixed bug causing music puzzles not to play all notes when using MT-32
+   - Fixed various gameplay script bugs in Nemesis and Grand Inquisitor
 
  Desktop ports:
    - Allow the user to disable manual resizing of the ScummVM window (using Ctrl+R).
@@ -285,6 +355,9 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Add support for antialiasing with 3D engines.
    - Remove last remnants from the ResidualVM merge: the codebase is now fully unified.
    - Take screen forbidden zones into account.
+
+ PS3 port:
+   - Fixed crashes for games using a screen shaking effect.
 
 #### 2.9.1 "Slappin da BASS" (2025-05-25)
 

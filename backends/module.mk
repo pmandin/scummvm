@@ -23,6 +23,7 @@ MODULE_OBJS := \
 	midi/sndio.o \
 	midi/stmidi.o \
 	midi/timidity.o \
+	printing/printman.o \
 	saves/savefile.o \
 	saves/default/default-saves.o \
 	timer/default/default-timer.o
@@ -104,7 +105,7 @@ MODULE_OBJS += \
 	fs/emscripten/emscripten-fs-factory.o \
 	fs/emscripten/emscripten-posix-fs.o \
 	fs/emscripten/http-fs.o \
-	midi/webmidi.o 
+	midi/webmidi.o
 ifdef USE_CLOUD
 MODULE_OBJS += \
 	fs/emscripten/cloud-fs.o
@@ -299,8 +300,13 @@ MODULE_OBJS += \
 	taskbar/macosx/macosx-taskbar.o
 
 ifdef USE_TTS
+ifdef USE_NS_SPEECH_SYNTHESIZER
 MODULE_OBJS += \
 	text-to-speech/macosx/macosx-text-to-speech.o
+else
+MODULE_OBJS += \
+	text-to-speech/avfaudio/avfaudio-text-to-speech.o
+endif
 endif
 
 ifdef SDL_BACKEND
@@ -318,6 +324,7 @@ MODULE_OBJS += \
 	fs/windows/windows-fs-factory.o \
 	midi/windows.o \
 	plugins/win32/win32-provider.o \
+	printing/win32/win32-printman.o \
 	saves/windows/windows-saves.o \
 	updates/win32/win32-updates.o \
 	taskbar/win32/win32-taskbar.o
@@ -436,6 +443,12 @@ MODULE_OBJS += \
 	mutex/pthread/pthread-mutex.o \
 	graphics/ios/ios-graphics.o \
 	graphics/ios/renderbuffer.o
+
+ifdef USE_TTS
+MODULE_OBJS += \
+	text-to-speech/avfaudio/avfaudio-text-to-speech.o
+endif
+
 endif
 
 ifeq ($(BACKEND),maemo)

@@ -647,6 +647,9 @@ void OSystem_SDL::addSysArchivesToSearchSet(Common::SearchSet &s, int priority) 
 	}
 #endif
 
+	// Add the current dir as a very last resort (cf. bug #3984).
+	// TODO: check if it's really needed
+	s.addDirectory(".", ".", priority - 1);
 }
 
 void OSystem_SDL::setWindowCaption(const Common::U32String &caption) {
@@ -744,7 +747,7 @@ Common::String OSystem_SDL::getSystemLanguage() const {
 	if (pLocales) {
 		SDL_Locale *locales = *pLocales;
 		if (locales[0].language != NULL) {
-			Common::String str = Common::String::format("%s_%s", locales[0].country, locales[0].language);
+			Common::String str = Common::String::format("%s_%s", locales[0].language, locales[0].country);
 			SDL_free(pLocales);
 			return str;
 		}

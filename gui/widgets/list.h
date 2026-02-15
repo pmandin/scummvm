@@ -72,6 +72,8 @@ protected:
 	int				_currentPos;
 	int				_entriesPerPage;
 	int				_selectedItem;
+	Common::Array<bool> _selectedItems;    /// Multiple selected items (bool array)
+	bool			_multiSelectEnabled;	/// Flag for multi-selection
 	ScrollBarWidget	*_scrollBar;
 	int				_currentKeyDown;
 
@@ -117,6 +119,16 @@ public:
 
 	const Common::U32String getSelectedString() const	{ return stripGUIformatting(_list[_selectedItem]); }
 
+	/// Get visual position (index in filtered list) from real data index
+	int getVisualPos(int dataIndex) const;
+
+	/// Multi-selection support
+	const Common::Array<bool> &getSelectedItems() const { return _selectedItems; }
+	bool isItemSelected(int item) const;
+	void markSelectedItem(int item, bool state);
+	void clearSelection();
+	void selectItemRange(int from, int to);
+	int _lastSelectionStartItem;          /// Used for Shift+Click range selection
 	void setNumberingMode(NumberingMode numberingMode)	{ _numberingMode = numberingMode; }
 
 	void scrollTo(int item);
@@ -133,6 +145,10 @@ public:
 	void setEditable(bool editable)				{ _editable = editable; }
 	void setEditColor(ThemeEngine::FontColor color) { _editColor = color; }
 	void setFilterMatcher(FilterMatcher matcher, void *arg) { _filterMatcher = matcher; _filterMatcherArg = arg; }
+
+	// Multi-selection methods
+	void setMultiSelectEnabled(bool enabled) { _multiSelectEnabled = enabled; }
+	bool isMultiSelectEnabled() const { return _multiSelectEnabled; }
 
 	// Made startEditMode/endEditMode for SaveLoadChooser
 	void startEditMode() override;
@@ -178,6 +194,12 @@ protected:
 	void lostFocusWidget() override;
 	void checkBounds();
 	void scrollToCurrent();
+
+	/// Find the visual position of a data item
+	int findDataIndex(int dataIndex) const;
+
+	/// Check if an item at a given position is selectable
+	virtual bool isItemSelectable(int item) const { return true; }
 
 	virtual ThemeEngine::WidgetStateInfo getItemState(int item) const { return _state; }
 

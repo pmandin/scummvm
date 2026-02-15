@@ -33,10 +33,49 @@
 #include "freescape/objects/sensor.h"
 #include "freescape/sweepAABB.h"
 #include "freescape/doodle.h"
+#include "freescape/debugger.h"
 
 namespace Freescape {
 
 FreescapeEngine *g_freescape;
+
+byte getCPCPixelMode1(byte cpc_byte, int index) {
+	if (index == 0)
+		return ((cpc_byte & 0x08) >> 2) | ((cpc_byte & 0x80) >> 7);
+	else if (index == 1)
+		return ((cpc_byte & 0x04) >> 1) | ((cpc_byte & 0x40) >> 6);
+	else if (index == 2)
+		return (cpc_byte & 0x02)        | ((cpc_byte & 0x20) >> 5);
+	else if (index == 3)
+		return ((cpc_byte & 0x01) << 1) | ((cpc_byte & 0x10) >> 4);
+	else
+		error("Invalid index %d requested", index);
+}
+
+byte getCPCPixelMode0(byte cpc_byte, int index) {
+	if (index == 0) {
+		// Extract Pixel 0 from the byte
+		return ((cpc_byte & 0x02) << 2) |  // Bit 1 -> Bit 3 (MSB)
+		       ((cpc_byte & 0x20) >> 3) |  // Bit 5 -> Bit 2
+		       ((cpc_byte & 0x08) >> 2) |  // Bit 3 -> Bit 1
+		       ((cpc_byte & 0x80) >> 7);   // Bit 7 -> Bit 0 (LSB)
+	} else if (index == 2) {
+		// Extract Pixel 1 from the byte
+		return ((cpc_byte & 0x01) << 3) |  // Bit 0 -> Bit 3 (MSB)
+		       ((cpc_byte & 0x10) >> 2) |  // Bit 4 -> Bit 2
+		       ((cpc_byte & 0x04) >> 1) |  // Bit 2 -> Bit 1
+		       ((cpc_byte & 0x40) >> 6);   // Bit 6 -> Bit 0 (LSB)
+	} else {
+		error("Invalid index %d requested", index);
+	}
+}
+
+byte getCPCPixel(byte cpc_byte, int index, bool mode1) {
+	if (mode1)
+		return getCPCPixelMode1(cpc_byte, index);
+	else
+		return getCPCPixelMode0(cpc_byte, index);
+}
 
 FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	: Engine(syst), _gameDescription(gd), _gfx(nullptr) {
@@ -232,6 +271,8 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	ConfMan.setInt("gamepad_controller_directional_input", 1 /* kDirectionalInputDpad */, gameDomain);
 #endif
 	g_freescape = this;
+	g_debugger = new Debugger(g_freescape);
+	setDebugger(g_debugger);
 }
 
 FreescapeEngine::~FreescapeEngine() {
@@ -787,7 +828,6 @@ Common::Error FreescapeEngine::run() {
 	//_screenH = g_system->getHeight();
 	_gfx = createRenderer(_screenW, _screenH, _renderMode, ConfMan.getBool("authentic_graphics"));
 	_speaker = new SizedPCSpeaker();
-	_speaker->setVolume(50);
 	_crossairPosition.x = _screenW / 2;
 	_crossairPosition.y = _screenH / 2;
 

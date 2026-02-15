@@ -62,6 +62,7 @@ constexpr int DUNGEON_MINIMAP_SIZE = DUNGEON_MAP_SIZE * MINIMAP_TILE_SIZE;
 #define C_ROSE      8
 #define C_VIOLET    9
 #define C_GREY      10
+#define C_TOMATO	11
 
 #define C_TEXT_DEFAULT C_CYAN
 
@@ -88,7 +89,8 @@ constexpr int DUNGEON_MINIMAP_SIZE = DUNGEON_MAP_SIZE * MINIMAP_TILE_SIZE;
 #define ISDRAWDOOR(x)   ((x) == DT_DOOR)
 #define ISDRAWOPEN(x)	(ISDRAWWALL(x) == 0 && ISDRAWDOOR(x) == 0)
 
-#define	COL_WALL		(C_GREEN)			// Object Colours
+// Object Colours
+#define	COL_WALL		(g_engine->_player._level == 1 ? C_WHITE : C_BLUE)
 #define	COL_LADDER		(C_RED)
 #define COL_DOOR		(C_BLUE)
 #define COL_HOLE		(C_RED)

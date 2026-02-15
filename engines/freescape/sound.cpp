@@ -22,6 +22,7 @@
 #include "common/file.h"
 #include "audio/audiostream.h"
 #include "audio/decoders/raw.h"
+#include "audio/softsynth/ay8912.h"
 
 #include "freescape/freescape.h"
 #include "freescape/games/eclipse/eclipse.h"
@@ -324,8 +325,14 @@ void FreescapeEngine::playSound(int index, bool sync, Audio::SoundHandle &handle
 			debugC(1, kFreescapeDebugMedia, "WARNING: Sound %d is not available", index);
 
 		return;
-	} else if (isSpectrum() && !isDriller()) {
-		playSoundZX(_soundsSpeakerFxZX[index], handle);
+	} else if (isSpectrum()) {
+		if (isDriller())
+			playSoundDrillerZX(index, handle);
+		else
+			playSoundZX(_soundsSpeakerFxZX[index], handle);
+		return;
+	} else if (isCPC()) {
+		playSoundCPC(index, handle);
 		return;
 	}
 
@@ -333,69 +340,6 @@ void FreescapeEngine::playSound(int index, bool sync, Audio::SoundHandle &handle
 	filename = Common::String::format("%s-%d.wav", _targetName.c_str(), index);
 	debugC(1,  kFreescapeDebugMedia, "Playing sound %s", filename.toString().c_str());
 	playWav(filename);
-	/*switch (index) {
-	case 1:
-		playWav("fsDOS_laserFire.wav");
-		break;
-	case 2: // Done
-		playWav("fsDOS_WallBump.wav");
-		break;
-	case 3:
-		playWav("fsDOS_stairDown.wav");
-		break;
-	case 4:
-		playWav("fsDOS_stairUp.wav");
-		break;
-	case 5:
-		playWav("fsDOS_roomChange.wav");
-		break;
-	case 6:
-		playWav("fsDOS_configMenu.wav");
-		break;
-	case 7:
-		playWav("fsDOS_bigHit.wav");
-		break;
-	case 8:
-		playWav("fsDOS_teleporterActivated.wav");
-		break;
-	case 9:
-		playWav("fsDOS_powerUp.wav");
-		break;
-	case 10:
-		playWav("fsDOS_energyDrain.wav");
-		break;
-	case 11: // ???
-		debugC(1, kFreescapeDebugMedia, "Playing unknown sound");
-		break;
-	case 12:
-		playWav("fsDOS_switchOff.wav");
-		break;
-	case 13: // Seems to be repeated?
-		playWav("fsDOS_laserHit.wav");
-		break;
-	case 14:
-		playWav("fsDOS_tankFall.wav");
-		break;
-	case 15:
-		playWav("fsDOS_successJingle.wav");
-		break;
-	case 16: // Silence?
-		break;
-	case 17:
-		playWav("fsDOS_badJingle.wav");
-		break;
-	case 18: // Silence?
-		break;
-	case 19:
-		debugC(1, kFreescapeDebugMedia, "Playing unknown sound");
-		break;
-	case 20:
-		playWav("fsDOS_bigHit.wav");
-		break;
-	default:
-		debugC(1, kFreescapeDebugMedia, "Unexpected sound %d", index);
-		break;
-	}*/
 	_syncSound = sync;
 }
 void FreescapeEngine::playWav(const Common::Path &filename) {
@@ -449,7 +393,7 @@ void FreescapeEngine::stopAllSounds(Audio::SoundHandle &handle) {
 }
 
 void FreescapeEngine::waitForSounds() {
-	if (_usePrerecordedSounds || isAmiga() || isAtariST())
+	if (_usePrerecordedSounds || isAmiga() || isAtariST() || isCPC())
 		while (_mixer->isSoundHandleActive(_soundFxHandle))
 			waitInLoop(10);
 	else {
@@ -459,7 +403,7 @@ void FreescapeEngine::waitForSounds() {
 }
 
 bool FreescapeEngine::isPlayingSound() {
-	if (_usePrerecordedSounds || isAmiga() || isAtariST())
+	if (_usePrerecordedSounds || isAmiga() || isAtariST() || isCPC())
 		return _mixer->isSoundHandleActive(_soundFxHandle);
 
 	return (!_speaker->endOfStream());
@@ -527,7 +471,7 @@ void FreescapeEngine::playSoundZX(Common::Array<soundUnitZX> *data, Audio::Sound
 	}
 
 	_mixer->stopHandle(_soundFxHandle);
-	_mixer->playStream(Audio::Mixer::kSFXSoundType, &handle, _speaker, -1, kFreescapeDefaultVolume, 0, DisposeAfterUse::NO);
+	_mixer->playStream(Audio::Mixer::kSFXSoundType, &handle, _speaker, -1, Audio::Mixer::kMaxChannelVolume, 0, DisposeAfterUse::NO);
 }
 
 void FreescapeEngine::playSoundDOS(soundSpeakerFx *speakerFxInfo, bool sync, Audio::SoundHandle &handle) {
@@ -543,7 +487,7 @@ void FreescapeEngine::playSoundDOS(soundSpeakerFx *speakerFxInfo, bool sync, Aud
 	}
 
 	_mixer->stopHandle(handle);
-	_mixer->playStream(Audio::Mixer::kSFXSoundType, &handle, _speaker, -1, kFreescapeDefaultVolume / 2, 0, DisposeAfterUse::NO);
+	_mixer->playStream(Audio::Mixer::kSFXSoundType, &handle, _speaker, -1, Audio::Mixer::kMaxChannelVolume, 0, DisposeAfterUse::NO);
 }
 
 void FreescapeEngine::loadSoundsFx(Common::SeekableReadStream *file, int offset, int number) {
@@ -566,5 +510,483 @@ void FreescapeEngine::loadSoundsFx(Common::SeekableReadStream *file, int offset,
 		_soundsFx[i] = sound;
 	}
 }
+
+/**
+ * CPC Sound Implementation (shared by Driller, Dark Side, and other Freescape CPC games)
+ *
+ * Based on reverse engineering of DRILL.BIN and DARKCODE.BIN (both load at 0x1C62).
+ * The sound engine is identical across games; only table contents and sizes differ.
+ *
+ * All sounds use the sub_4760h system:
+ *   - Sound initialization loads 7-byte entry from the sound definition table
+ *   - Volume envelope from "Tone" Table
+ *   - Pitch sweep from "Envelope" Table
+ *   - 300Hz interrupt-driven update
+ *
+ * AY-3-8912 PSG with 1MHz clock:
+ *   Port 0xF4 = register select, Port 0xF6 = data
+ *
+ * ---- Sound Definition Table ----
+ * N entries, 7 bytes each. Loaded with 1-based sound number.
+ *   Byte 0: flags
+ *     - Bits 0-1: channel number (1=A, 2=B, 3=C)
+ *     - Bit 2: tone disable (0 = enable tone, 1 = disable)
+ *     - Bit 3: noise disable (0 = enable noise, 1 = disable)
+ *   Byte 1: "tone" table index (volume envelope)
+ *   Byte 2: "envelope" table index (pitch sweep)
+ *   Bytes 3-4: initial AY tone period (little-endian, 12-bit)
+ *   Byte 5: initial AY volume (0-15)
+ *   Byte 6: duration (repeat count; 0 = single play)
+ *
+ * ---- "Tone" Table - Volume Envelope ----
+ * Despite the name, this table controls VOLUME modulation, not pitch.
+ * Indexed by 4-byte stride: base = index * 4.
+ *   Byte 0: number of triplets (N)
+ *   Then N triplets of 3 bytes each:
+ *     Byte 0: counter - how many times to apply the delta
+ *     Byte 1: delta (signed) - added to volume each step
+ *     Byte 2: limit - ticks between each application
+ *
+ * ---- "Envelope" Table - Pitch Sweep ----
+ * Despite the name, this table controls PITCH modulation, not envelope.
+ * Indexed by 4-byte stride: base = index * 4.
+ *   Byte 0: number of triplets (N)
+ *   Then N triplets of 3 bytes each:
+ *     Byte 0: counter - how many times to apply the delta
+ *     Byte 1: delta (signed) - added to period each step
+ *     Byte 2: limit - ticks between each application
+ */
+
+class CPCSfxStream : public Audio::AY8912Stream {
+public:
+	CPCSfxStream(int index, const byte *soundDefTable, int soundDefTableSize,
+	             const byte *toneTable, const byte *envelopeTable, int rate = 44100)
+		: AY8912Stream(rate, 1000000),
+		  _soundDefTable(soundDefTable), _soundDefTableSize(soundDefTableSize),
+		  _toneTable(toneTable), _envelopeTable(envelopeTable) {
+		_finished = false;
+		_tickSampleCount = 0;
+
+		// Reset all AY registers to match CPC init state
+		for (int r = 0; r < 14; r++)
+			setReg(r, 0);
+		// Noise period from CPC init table (verified in binary)
+		setReg(6, 0x07);
+
+		memset(&_ch, 0, sizeof(_ch));
+		setupSound(index);
+	}
+
+	int readBuffer(int16 *buffer, const int numSamples) override {
+		if (_finished)
+			return 0;
+
+		int samplesGenerated = 0;
+		// AY8912Stream is stereo: readBuffer counts int16 values (2 per frame).
+		// CPC interrupts fire at 300Hz (6 per frame). The update routine is called
+		// unconditionally at every interrupt, NOT inside the 50Hz divider.
+		int samplesPerTick = (getRate() / 300) * 2;
+
+		while (samplesGenerated < numSamples && !_finished) {
+			// Generate samples until next tick
+			int remaining = samplesPerTick - _tickSampleCount;
+			int toGenerate = MIN(numSamples - samplesGenerated, remaining);
+
+			if (toGenerate > 0) {
+				generateSamples(buffer + samplesGenerated, toGenerate);
+				samplesGenerated += toGenerate;
+				_tickSampleCount += toGenerate;
+			}
+
+			// Run interrupt handler at 300Hz tick boundary
+			if (_tickSampleCount >= samplesPerTick) {
+				_tickSampleCount -= samplesPerTick;
+				tickUpdate();
+			}
+		}
+
+		return samplesGenerated;
+	}
+
+	bool endOfData() const override { return _finished; }
+	bool endOfStream() const override { return _finished; }
+
+private:
+	bool _finished;
+	int _tickSampleCount; // Samples generated in current tick
+
+	// Pointers to table data loaded from game binary (owned by FreescapeEngine)
+	const byte *_soundDefTable;
+	int _soundDefTableSize;      // Size in bytes (numSounds * 7)
+	const byte *_toneTable;      // Volume envelope data
+	const byte *_envelopeTable;  // Pitch sweep data
+
+	/**
+	 * Channel state - mirrors the 23-byte per-channel structure
+	 * as populated by the init routine and updated at 300Hz.
+	 *
+	 * "vol" fields come from the "tone" table - controls volume envelope
+	 * "pitch" fields come from the "envelope" table - controls pitch sweep
+	 */
+	struct ChannelState {
+		// Volume modulation (from "tone" table)
+		byte volCounter;        // ix+000h: initial counter value
+		int8 volDelta;          // ix+001h: signed delta added to volume
+		byte volLimit;          // ix+002h: initial limit value
+		byte volCounterCur;     // ix+003h: current counter (decremented)
+		byte volLimitCur;       // ix+004h: current limit countdown
+		byte volume;            // ix+005h: current AY volume (0-15)
+		byte volTripletTotal;   // ix+006h: total number of volume triplets
+		byte volCurrentStep;    // ix+007h: current triplet index
+		byte duration;          // ix+008h: repeat count
+		byte volToneIdx;        // tone table index (to recompute data pointer)
+
+		// Pitch modulation (from "envelope" table)
+		byte pitchCounter;      // ix+00Bh: initial counter value
+		int8 pitchDelta;        // ix+00Ch: signed delta added to period
+		byte pitchLimit;        // ix+00Dh: initial limit value
+		byte pitchCounterCur;   // ix+00Eh: current counter (decremented)
+		byte pitchLimitCur;     // ix+00Fh: current limit countdown
+		uint16 period;          // ix+010h-011h: current 16-bit AY tone period
+		byte pitchTripletTotal; // ix+012h: total number of pitch triplets
+		byte pitchCurrentStep;  // ix+013h: current triplet index
+		byte pitchEnvIdx;       // envelope table index (to recompute data pointer)
+
+		byte finishedFlag;      // ix+016h: set when volume envelope exhausted
+
+		// AY register mapping for this channel
+		byte channelNum;        // 1=A, 2=B, 3=C
+		byte toneRegLo;         // AY register for tone fine
+		byte toneRegHi;         // AY register for tone coarse
+		byte volReg;            // AY register for volume
+		bool active;             // Channel is producing sound
+	} _ch;
+
+	void writeReg(int reg, byte val) {
+		setReg(reg, val);
+	}
+
+	void setupSound(int index) {
+		int maxSounds = _soundDefTableSize / 7;
+		if (index >= 1 && index <= maxSounds) {
+			setupSub4760h(index);
+		} else {
+			_finished = true;
+		}
+	}
+
+	/**
+	 * Sound initialization - loads 7-byte entry and configures AY registers.
+	 */
+	void setupSub4760h(int soundNum) {
+		int maxSounds = _soundDefTableSize / 7;
+		if (soundNum < 1 || soundNum > maxSounds) {
+			_finished = true;
+			return;
+		}
+
+		const byte *entry = &_soundDefTable[(soundNum - 1) * 7];
+		byte flags = entry[0];
+		byte toneIdx = entry[1];
+		byte envIdx = entry[2];
+		uint16 period = entry[3] | (entry[4] << 8);
+		byte volume = entry[5];
+		byte duration = entry[6];
+
+		// Channel number (1-based): 1=A, 2=B, 3=C
+		byte channelNum = flags & 0x03;
+		if (channelNum < 1 || channelNum > 3) {
+			_finished = true;
+			return;
+		}
+
+		// AY register mapping
+		_ch.channelNum = channelNum;
+		_ch.toneRegLo = (channelNum - 1) * 2;       // A=0, B=2, C=4
+		_ch.toneRegHi = (channelNum - 1) * 2 + 1;   // A=1, B=3, C=5
+		_ch.volReg = channelNum + 7;                 // A=8, B=9, C=10
+
+		// Configure mixer (register 7)
+		// Start with all disabled (0xFF), selectively enable per flags
+		// Bit 2 set in flags = DISABLE tone, Bit 3 set = DISABLE noise
+		byte mixer = 0xFF;
+		if (!(flags & 0x04))
+			mixer &= ~(1 << (channelNum - 1));        // Enable tone
+		if (!(flags & 0x08))
+			mixer &= ~(1 << (channelNum - 1 + 3));    // Enable noise
+		writeReg(7, mixer);
+
+		// Set AY tone period from entry[3-4]
+		_ch.period = period;
+		writeReg(_ch.toneRegLo, period & 0xFF);
+		writeReg(_ch.toneRegHi, period >> 8);
+
+		// Set AY volume from entry[5]
+		_ch.volume = volume;
+		writeReg(_ch.volReg, volume);
+
+		// Duration from entry[6]
+		_ch.duration = duration;
+
+		// Load volume envelope from "tone" table
+		// index * 4 stride, byte[0]=triplet_count, then {counter, delta, limit}
+		int toneBase = toneIdx * 4;
+		_ch.volTripletTotal = _toneTable[toneBase];
+		_ch.volCurrentStep = 0;
+		_ch.volToneIdx = toneIdx;
+
+		// Load first volume triplet
+		int volOff = toneBase + 1;
+		_ch.volCounter = _toneTable[volOff];
+		_ch.volDelta = static_cast<int8>(_toneTable[volOff + 1]);
+		_ch.volLimit = _toneTable[volOff + 2];
+		_ch.volCounterCur = _ch.volCounter;
+		_ch.volLimitCur = _ch.volLimit;
+
+		// Load pitch sweep from "envelope" table
+		// index * 4 stride, byte[0]=triplet_count, then {counter, delta, limit}
+		int envBase = envIdx * 4;
+		_ch.pitchTripletTotal = _envelopeTable[envBase];
+		_ch.pitchCurrentStep = 0;
+		_ch.pitchEnvIdx = envIdx;
+
+		// Load first pitch triplet
+		int pitchOff = envBase + 1;
+		_ch.pitchCounter = _envelopeTable[pitchOff];
+		_ch.pitchDelta = static_cast<int8>(_envelopeTable[pitchOff + 1]);
+		_ch.pitchLimit = _envelopeTable[pitchOff + 2];
+		_ch.pitchCounterCur = _ch.pitchCounter;
+		_ch.pitchLimitCur = _ch.pitchLimit;
+
+		_ch.finishedFlag = 0;
+		_ch.active = true;
+
+		debugC(1, kFreescapeDebugMedia, "CPC sound init: sound %d ch=%d mixer=0x%02x period=%d vol=%d dur=%d tone[%d] env[%d]",
+			soundNum, channelNum, mixer, period, volume, duration, toneIdx, envIdx);
+		debugC(1, kFreescapeDebugMedia, "  vol envelope: triplets=%d counter=%d delta=%d limit=%d",
+			_ch.volTripletTotal, _ch.volCounter, _ch.volDelta, _ch.volLimit);
+		debugC(1, kFreescapeDebugMedia, "  pitch sweep:  triplets=%d counter=%d delta=%d limit=%d",
+			_ch.pitchTripletTotal, _ch.pitchCounter, _ch.pitchDelta, _ch.pitchLimit);
+	}
+
+	/**
+	 * 300Hz interrupt-driven update. Updates pitch first, then volume.
+	 */
+	void tickUpdate() {
+		if (!_ch.active) {
+			_finished = true;
+			return;
+		}
+
+		const byte *toneRaw = _toneTable;
+		const byte *envRaw = _envelopeTable;
+
+		// === PITCH UPDATE ===
+		_ch.pitchLimitCur--;
+		if (_ch.pitchLimitCur == 0) {
+			// Reload limit countdown
+			_ch.pitchLimitCur = _ch.pitchLimit;
+
+			// period += sign_extend(pitchDelta) with natural 16-bit wrapping
+			_ch.period += static_cast<int8>(_ch.pitchDelta);
+
+			// Write period to AY tone registers (AY masks coarse to 4 bits)
+			writeReg(_ch.toneRegLo, _ch.period & 0xFF);
+			writeReg(_ch.toneRegHi, _ch.period >> 8);
+
+			// Decrement pitch counter
+			_ch.pitchCounterCur--;
+			if (_ch.pitchCounterCur == 0) {
+				// Advance to next pitch triplet
+				_ch.pitchCurrentStep++;
+				if (_ch.pitchCurrentStep >= _ch.pitchTripletTotal) {
+					// All pitch triplets exhausted -> check duration
+					_ch.duration--;
+					if (_ch.duration == 0) {
+						// SHUTDOWN: silence and deactivate
+						writeReg(_ch.volReg, 0);
+						_ch.active = false;
+						_finished = true;
+						return;
+					}
+					// Duration > 0: restart BOTH volume and pitch from beginning
+
+					// Reload first volume triplet (from tone table)
+					int volOff = _ch.volToneIdx * 4 + 1;
+					_ch.volCounter = toneRaw[volOff];
+					_ch.volDelta = static_cast<int8>(toneRaw[volOff + 1]);
+					_ch.volLimit = toneRaw[volOff + 2];
+					_ch.volCounterCur = _ch.volCounter;
+					_ch.volLimitCur = _ch.volLimit;
+
+					// Reset both position indices and done flag
+					_ch.volCurrentStep = 0;
+					_ch.pitchCurrentStep = 0;
+					_ch.finishedFlag = 0;
+
+					// Reload first pitch triplet (from envelope table)
+					int off = _ch.pitchEnvIdx * 4 + 1;
+					_ch.pitchCounter = envRaw[off];
+					_ch.pitchDelta = static_cast<int8>(envRaw[off + 1]);
+					_ch.pitchLimit = envRaw[off + 2];
+					_ch.pitchCounterCur = _ch.pitchCounter;
+					_ch.pitchLimitCur = _ch.pitchLimit;
+				} else {
+					// Load next pitch triplet
+					int off = _ch.pitchEnvIdx * 4 + 1 + _ch.pitchCurrentStep * 3;
+					_ch.pitchCounter = envRaw[off];
+					_ch.pitchDelta = static_cast<int8>(envRaw[off + 1]);
+					_ch.pitchLimit = envRaw[off + 2];
+					_ch.pitchCounterCur = _ch.pitchCounter;
+					_ch.pitchLimitCur = _ch.pitchLimit;
+				}
+			}
+		}
+
+		// === VOLUME UPDATE ===
+		if (!_ch.finishedFlag) {
+			_ch.volLimitCur--;
+			if (_ch.volLimitCur == 0) {
+				// Reload limit countdown
+				_ch.volLimitCur = _ch.volLimit;
+
+				// volume = (volume + volDelta) & 0x0F
+				_ch.volume = (_ch.volume + _ch.volDelta) & 0x0F;
+				writeReg(_ch.volReg, _ch.volume);
+
+				// Decrement volume counter
+				_ch.volCounterCur--;
+				if (_ch.volCounterCur == 0) {
+					// Advance to next volume triplet
+					_ch.volCurrentStep++;
+					if (_ch.volCurrentStep >= _ch.volTripletTotal) {
+						// All volume triplets exhausted -> set finished flag
+						// NOTE: Does NOT shutdown channel - pitch continues
+						_ch.finishedFlag = 1;
+					} else {
+						// Load next volume triplet
+						int off = _ch.volToneIdx * 4 + 1 + _ch.volCurrentStep * 3;
+						_ch.volCounter = toneRaw[off];
+						_ch.volDelta = static_cast<int8>(toneRaw[off + 1]);
+						_ch.volLimit = toneRaw[off + 2];
+						_ch.volCounterCur = _ch.volCounter;
+						_ch.volLimitCur = _ch.volLimit;
+					}
+				}
+			}
+		}
+	}
+};
+
+void FreescapeEngine::playSoundCPC(int index, Audio::SoundHandle &handle) {
+	if (_soundsCPCSoundDefTable.empty()) {
+		debugC(1, kFreescapeDebugMedia, "CPC sound tables not loaded");
+		return;
+	}
+	debugC(1, kFreescapeDebugMedia, "Playing CPC sound %d", index);
+	CPCSfxStream *stream = new CPCSfxStream(index,
+		_soundsCPCSoundDefTable.data(), _soundsCPCSoundDefTable.size(),
+		_soundsCPCToneTable.data(), _soundsCPCEnvelopeTable.data());
+	_mixer->playStream(Audio::Mixer::kSFXSoundType, &handle, stream->toAudioStream(), -1, kFreescapeDefaultVolume, 0, DisposeAfterUse::YES);
+}
+
+void FreescapeEngine::playSoundDrillerZX(int index, Audio::SoundHandle &handle) {
+	debugC(1, kFreescapeDebugMedia, "Playing Driller ZX sound %d", index);
+	Common::Array<soundUnitZX> soundUnits;
+
+	auto addTone = [&](uint16 hl, uint16 de, float multiplier) {
+		soundUnitZX s;
+		s.isRaw = false;
+		s.tStates = hl; // HL determines period
+		s.freqTimesSeconds = de; // DE determines duration (number of cycles)
+		s.multiplier = multiplier;
+		soundUnits.push_back(s);
+	};
+
+	// Linear Sweep: Period increases -> Pitch decreases
+	auto addSweep = [&](uint16 startHl, uint16 endHl, uint16 step, uint16 duration) {
+		for (uint16 hl = startHl; hl < endHl; hl += step) {
+			addTone(hl, duration, 10.0f);
+		}
+	};
+
+	// Zap effect: Decreasing Period (E decrements) -> Pitch increases
+	auto addZap = [&](uint16 startE, uint16 endE, uint16 duration) {
+		for (uint16 e = startE; e > endE; e--) {
+			// Map E (delay loops) to HL (tStates)
+			// Small E -> Short Period -> High Freq
+			uint16 hl = (24 + e) * 4;
+			addTone(hl, duration, 10.0f);
+		}
+	};
+
+	// Sweep Down: Increasing Period (E increments) -> Pitch decreases
+	auto addSweepDown = [&](uint16 startE, uint16 endE, uint16 step, uint16 duration, float multiplier) {
+		for (uint16 e = startE; e < endE; e += step) {
+			uint16 hl = (24 + e) * 4;
+			addTone(hl, duration, multiplier);
+		}
+	};
+
+	switch (index) {
+	case 1: // Shoot (FUN_95A1 -> 95AF)
+		// Laser: High Pitch -> Low Pitch
+		// Adjusted pitch to be even lower (0x200-0x600 is approx 850Hz-280Hz)
+		addSweepDown(0x200, 0x600, 20, 1, 2.0f);
+		break;
+	case 2: // Collide/Bump (FUN_95DE)
+		// Low tone sequence
+		addTone(0x93c, 0x40, 10.0f); // 64 cycles ~340ms
+		addTone(0x7a6, 0x30, 10.0f); // 48 cycles
+		break;
+	case 3: // Step (FUN_95E5)
+		// Short blip
+		// Increased duration significantly again (0xC0 = 192 cycles)
+		addTone(0x7a6, 0xC0, 10.0f);
+		break;
+	case 4: // Silence (FUN_95F7)
+		break;
+	case 5: // Area Change? (FUN_95F8)
+		addTone(0x1f0, 0x60, 10.0f); // High pitch, longer
+		break;
+	case 6: // Menu (Silence?) (FUN_9601)
+		break;
+	case 7: // Hit? (Sweep FUN_9605)
+		// Sweep down (Period increases)
+		addSweep(0x200, 0xC00, 64, 2);
+		break;
+	case 8: // Zap (FUN_961F)
+		// Zap: Low -> High
+		addZap(0xFF, 0x10, 2);
+		break;
+	case 9: // Sweep (FUN_9673)
+		addSweep(0x100, 0x600, 16, 4);
+		break;
+	case 10: // Area Change (FUN_9696)
+		addSweep(0x100, 0x500, 16, 4);
+		break;
+	case 11: // Explosion (FUN_96B9)
+		{
+			soundUnitZX s;
+			s.isRaw = true;
+			s.rawFreq = 0.0f; // Noise
+			s.rawLengthus = 100000; // 100ms noise
+			soundUnits.push_back(s);
+		}
+		break;
+	case 12: // Sweep Down (FUN_96E4)
+		addSweepDown(0x01, 0xFF, 1, 2, 10.0f);
+		break;
+	case 13: // Fall? (FUN_96FD)
+		addSweep(300, 800, 16, 2);
+		break;
+	default:
+		debugC(1, kFreescapeDebugMedia, "Unknown Driller ZX sound %d", index);
+		break;
+	}
+
+	playSoundZX(&soundUnits, handle);
+}
+
 
 } // namespace Freescape

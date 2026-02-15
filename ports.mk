@@ -519,6 +519,12 @@ OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libintl.a
 endif
 endif
 
+ifdef USE_TTS
+ifndef USE_NS_SPEECH_SYNTHESIZER
+OSX_STATIC_LIBS += -framework AVFoundation
+endif
+endif
+
 ifneq ($(BACKEND), ios7)
 OSX_STATIC_LIBS += -lreadline
 endif
@@ -651,11 +657,13 @@ osxsnap: bundle
 	cp $(DIST_FILES_DOCS_no-nb) ./ScummVM-snapshot/doc/no-nb/
 	mkdir ScummVM-snapshot/doc/sv
 	cp $(DIST_FILES_DOCS_se) ./ScummVM-snapshot/doc/sv/
-	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/QuickStart
-	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/*/*
-ifndef MACOSX_LEOPARD_OR_BELOW
+ifdef MACOSX_LEOPARD_OR_BELOW
+	perl -pi -e 'print "\xEF\xBB\xBF" if $$. == 1 && !/^\xEF\xBB\xBF/' ./ScummVM-snapshot/doc/*/*
+else
 	xattr -w "com.apple.TextEncoding" "utf-8;134217984" ./ScummVM-snapshot/doc/*/*
 endif
+	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/QuickStart
+	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/*/*
 	cp -RP $(bundle_name) ./ScummVM-snapshot/
 	cp $(srcdir)/dists/macosx/DS_Store ./ScummVM-snapshot/.DS_Store
 	cp $(srcdir)/dists/macosx/background.jpg ./ScummVM-snapshot/background.jpg
@@ -709,7 +717,7 @@ endif
 	@echo Creating Code::Blocks project files...
 	@cd $(srcdir)/dists/codeblocks && $(PWD)/devtools/create_project/create_project ../.. --codeblocks >/dev/null && git add -f engines/*.h *.workspace *.cbp
 	@echo Creating MSVC project files...
-	@cd $(srcdir)/dists/msvc && $(PWD)/devtools/create_project/create_project ../.. --msvc-version 12 --msvc >/dev/null && git add -f engines/*.h *.sln *.vcxproj *.vcxproj.filters *.props
+	@cd $(srcdir)/dists/msvc && $(PWD)/devtools/create_project/create_project ../.. --msvc-version 14 --msvc >/dev/null && git add -f engines/*.h *.sln *.vcxproj *.vcxproj.filters *.props
 	@echo
 	@echo All is done.
 	@echo Now run

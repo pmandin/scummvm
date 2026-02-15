@@ -22,6 +22,7 @@
 #include "m4/burger/rooms/section7/room702.h"
 #include "m4/burger/rooms/section7/section7.h"
 #include "m4/burger/vars.h"
+#include "m4/adv_r/adv_control.h"
 
 namespace M4 {
 namespace Burger {
@@ -94,7 +95,7 @@ void Room702::daemon() {
 		break;
 
 	case 4:
-		_G(game).new_room = 706;
+		_G(game).setRoom(706);
 		break;
 
 	case kCHANGE_FLUMIX_ANIMATION:

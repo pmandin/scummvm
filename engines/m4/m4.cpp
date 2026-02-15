@@ -33,7 +33,6 @@
 #include "m4/adv_r/conv_io.h"
 #include "m4/graphics/gr_sprite.h"
 #include "m4/gui/hotkeys.h"
-#include "m4/platform/sound/digi.h"
 #include "m4/platform/sound/midi.h"
 #include "m4/detection.h"
 #include "m4/console.h"
@@ -84,7 +83,6 @@ int M4Engine::isDemo() const {
 Common::Error M4Engine::run() {
 	// Initialize 320x200 paletted graphics mode
 	initGraphics(640, 480);
-	syncSoundSettings();
 
 	_subtitles.load();
 
@@ -92,6 +90,8 @@ Common::Error M4Engine::run() {
 	Vars *vars = createVars();
 
 	if (vars->init()) {
+		syncSoundSettings();
+
 		// Set the console
 		setupConsole();
 
@@ -119,7 +119,7 @@ void M4Engine::m4_inflight() {
 	while (KEEP_PLAYING) {
 		if (_G(game).previous_room == KERNEL_RESTORING_GAME) {
 			midi_stop();
-			int slot = _G(kernel).restore_slot;
+			const int slot = _G(kernel).restore_slot;
 			if (!kernel_load_game(slot))
 				error("Could not restore save slot %d", slot);
 		}
@@ -141,8 +141,13 @@ void M4Engine::m4_inflight() {
 void M4Engine::syncSoundSettings() {
 	Engine::syncSoundSettings();
 
-	const int volume = ConfMan.getBool("sfx_mute") ? 0 : CLIP(ConfMan.getInt("sfx_volume"), 0, 255);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kPlainSoundType, volume);
+	_G(midi).syncSoundSettings();
+}
+
+void M4Engine::pauseEngineIntern(bool pause) {
+	Engine::pauseEngineIntern(pause);
+
+	_G(midi).pause(pause);
 }
 
 bool M4Engine::canLoadGameStateCurrently(Common::U32String *msg) {
@@ -265,8 +270,12 @@ Common::Error M4Engine::syncGame(Common::Serializer &s) {
 
 	} else {
 		s.syncAsByte(_G(kernel).restore_game);
-		s.syncAsSint32LE(_G(game).digi_overall_volume_percent);
-		s.syncAsSint32LE(_G(game).midi_overall_volume_percent);
+		int32 sfx_volume_percent = ConfMan.getInt("sfx_volume") * 100 / 256;
+		s.syncAsSint32LE(sfx_volume_percent);
+		ConfMan.setInt("sfx_volume", sfx_volume_percent * 256 / 100);
+		int32 midi_volume_percent = ConfMan.getInt("music_volume") * 100 / 256;
+		s.syncAsSint32LE(midi_volume_percent);
+		ConfMan.setInt("music_volume", midi_volume_percent * 256 / 100);
 		s.syncAsByte(_G(kernel).camera_pan_instant);
 	}
 
@@ -291,8 +300,7 @@ Common::Error M4Engine::syncGame(Common::Serializer &s) {
 		_G(between_rooms) = true;
 		_G(game).previous_room = KERNEL_RESTORING_GAME;
 
-		digi_set_overall_volume(_G(game).digi_overall_volume_percent);
-		midi_set_overall_volume(_G(game).midi_overall_volume_percent);
+		syncSoundSettings();
 		interface_show();
 	}
 
@@ -375,7 +383,7 @@ bool M4Engine::saveGameFromMenu(int slotNum, const Common::String &desc,
 	M4MetaEngine *metaEngine = static_cast<M4MetaEngine *>(getMetaEngine());
 	metaEngine->_thumbnail = &thumbnail;
 
-	bool result = saveGameState(slotNum, desc).getCode() == Common::kNoError;
+	const bool result = saveGameState(slotNum, desc).getCode() == Common::kNoError;
 
 	metaEngine->_thumbnail = nullptr;
 	return result;

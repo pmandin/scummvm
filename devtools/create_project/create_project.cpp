@@ -459,6 +459,15 @@ int main(int argc, char *argv[]) {
 			setup.defines.push_back("SCUMMVM_NEON");
 		} else {
 			setup.defines.push_back("MACOSX");
+			// We have two TTS backends, one that is deprecated in macOS 11 and a newer one
+			// that requires macOS 10.14 minimum. Use the new one when compiling for ARM, and
+			// otherwise (PPC, Intel) use the old one. We assume the current arch to compile
+			// create_project is also the one we will be compiling ScummVM for.
+#if !defined(__aarch64__)
+			if (getFeatureBuildState("tts", setup.features)) {
+				setup.defines.push_back("USE_NS_SPEECH_SYNTHESIZER");
+			}
+#endif
 		}
 	} else if (projectType == kProjectMSVC || projectType == kProjectCodeBlocks) {
 		setup.defines.push_back("WIN32");
@@ -1212,6 +1221,7 @@ const Feature s_features[] = {
 	{        "translation",               "USE_TRANSLATION", false, true,  "Translation support" },
 	{             "vkeybd",                 "ENABLE_VKEYBD", false, false, "Virtual keyboard support"},
 	{      "eventrecorder",          "ENABLE_EVENTRECORDER", false, false, "Event recorder support"},
+	{           "printing",           "USE_SYSTEM_PRINTING", false, true,  "Printing support"},
 	{            "updates",                   "USE_UPDATES", false, false, "Updates support"},
 	{            "dialogs",                "USE_SYSDIALOGS", false, true,  "System dialogs support"},
 	{         "langdetect",                "USE_DETECTLANG", false, true,  "System language detection support" }, // This feature actually depends on "translation", there

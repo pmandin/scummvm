@@ -191,7 +191,9 @@ _taskbar=auto
 _updates=no
 _libunity=auto
 _dialogs=auto
+_printing=yes
 _tts=auto
+_osx_tts_backend=auto
 _gtk=auto
 _fribidi=auto
 _discord=auto
@@ -205,6 +207,7 @@ _werror_build=auto
 _text_console=no
 _mt32emu=yes
 _lua=yes
+_mfc=yes
 _build_scalers=yes
 _build_hq_scalers=yes
 _build_edge_scalers=yes
@@ -297,14 +300,18 @@ _need_memalign=yes
 _have_x86=no
 _have_amd64=no
 _imgui=yes
+_cdtoons=auto
 _indeo3=auto
 _indeo45=auto
 _hnm=auto
+_jyv1=auto
 _qdm2=auto
 _fmtowns_pc98_audio=auto
 _sid_audio=auto
 _svq1=auto
+_truemotion1=auto
 _vgmtrans_audio=auto
+_xan=auto
 _midi=auto
 _universaltracker=auto
 
@@ -326,8 +333,10 @@ add_feature png "PNG" "_png"
 add_feature vorbis "Vorbis file support" "_vorbis _tremor"
 add_feature zlib "zlib" "_zlib"
 add_feature test_cxx11 "Test C++11" "_test_cxx11"
+add_feature printing "Printing" "_printing"
 
 # Components are features which may be disabled if unused by the engines
+add_component cdtoons "CDTOONS" "_cdtoons" "USE_CDTOONS"
 add_component enet "ENet" "_enet" "USE_ENET"
 add_component fmtowns_pc98_audio "FM-TOWNS/PC98 audio" "_fmtowns_pc98_audio" "USE_FMTOWNS_PC98_AUDIO"
 add_component gif "GIF" "_gif" "USE_GIF"
@@ -335,7 +344,9 @@ add_component hnm "HNM" "_hnm" "USE_HNM"
 add_component imgui "Dear ImGui based debugger" "_imgui" "USE_IMGUI"
 add_component indeo3 "Indeo 3" "_indeo3" "USE_INDEO3"
 add_component indeo45 "Indeo 4&5" "_indeo45" "USE_INDEO45"
+add_component jyv1 "JYV1" "_jyv1" "USE_JYV1"
 add_component lua "Lua" "_lua" "USE_LUA"
+add_component mfc "MFC" "_mfc" "USE_MFC"
 add_component vpx "libvpx" "_vpx" "USE_VPX"
 add_component theoradec "libtheoradec" "_theoradec" "USE_THEORADEC"
 add_component midi "MIDI synthesis" "_midi" "USE_MIDI"
@@ -345,8 +356,10 @@ add_component qdm2 "QDM2" "_qdm2" "USE_QDM2"
 add_component sid_audio "SID audio" "_sid_audio" "USE_SID_AUDIO"
 add_component svq1 "Sorenson Video 1" "_svq1" "USE_SVQ1"
 add_component tinygl "TinyGL" "_tinygl" "USE_TINYGL"
+add_component truemotion1 "TrueMotion 1" "_truemotion1" "USE_TRUEMOTION1"
 add_component universaltracker "External Tracker Libraries" "_universaltracker" "USE_UNIVERSALTRACKER"
 add_component vgmtrans_audio "VGMTrans Soundfont audio" "_vgmtrans_audio" "USE_VGMTRANS_AUDIO"
+add_component xan "XAN" "_xan" "USE_XAN"
 
 # The following list of features cannot be declared as components
 # because they are used in the common code:
@@ -1396,6 +1409,8 @@ for ac_option in $@; do
 	--disable-vkeybd)            _vkeybd=no              ;;
 	--enable-eventrecorder)      _eventrec=yes           ;;
 	--disable-eventrecorder)     _eventrec=no            ;;
+	--enable-system-printing)    _printing=yes           ;;
+	--disable-system-printing)   _printing=no            ;;
 	--enable-text-console)       _text_console=yes       ;;
 	--disable-text-console)      _text_console=no        ;;
 	--enable-ext-sse2)           _ext_sse2=yes           ;;
@@ -2249,7 +2264,7 @@ if test "$_host_os" = android; then
 	if test -z "$PKG_CONFIG_LIBDIR"; then
 		PKG_CONFIG_LIBDIR="$_android_toolchain/sysroot/usr/lib/$_host_alias/$_android_version/pkgconfig"
 	fi
-	_libcurlpath="$_android_toolchain/sysroot/usr/bin/$_host_alias/$_android_version:$_libcurlpath"
+	_libmikmodpath="$_android_toolchain/sysroot/usr/bin/$_host_alias/$_android_version:$_libmikmodpath"
 fi
 
 #
@@ -3221,6 +3236,10 @@ EOF
 			fi
 		fi
 
+		# The TTS backend can use either NSSpeechSynthesizer or AVSpeechSynthesizer. The latter
+		# is only available since macOS 10.14, while the former is available in older versions
+		# but deprecated in macOS 12. This coincides with the switch to Apple Silicon CPUs.
+		_osx_tts_backend="NSSpeechSynthesizer"
 		case $_host_cpu in
 		powerpc*)
 			# We use -force_cpusubtype_ALL to ensure the binary runs on every
@@ -3237,6 +3256,7 @@ EOF
 			;;
 		aarch64)
 			add_line_to_config_mk 'MACOSX_ARM64 = 1'
+			_osx_tts_backend="AVSpeechSynthesizer"
 			;;
 		esac
 
@@ -3353,7 +3373,7 @@ EOF
 		# on whether the port has been used before (and is detected) which is unpredictable.
 		if test "$_freetype2" = yes; then
 			# neither pkg-config nor freetype-config work, so we setup freetype manually
-			append_var LDFLAGS "-s USE_FREETYPE2=1"
+			append_var LDFLAGS "-s USE_FREETYPE=1"
 			_freetype_found="true"
 			_freetypepath="$EMSDK/upstream/emscripten/cache/sysroot/include/freetype2/"
 			FREETYPE2_CFLAGS="-I$_freetypepath"
@@ -3452,13 +3472,15 @@ EOF
 		fi
 		append_var LDFLAGS "-Wl,--export-dynamic"
 		append_var LDFLAGS "-L/usr/local/lib"
-		append_var CXXFLAGS "-D__MORPHOS_SHAREDLIBS"
 		# Suppress format warnings as the long 4 byte causes noisy warnings.
 		append_var CXXFLAGS "-Wno-format"
 		add_line_to_config_mk 'MORPHOS = 1'
 		_port_mk="backends/platform/sdl/morphos/morphos.mk"
 		# use SDL2
 		_sdlconfig=sdl2-config
+		# OpenGL configuration
+		_opengl_game_classic=yes
+		_opengl_game_shaders=no
 		;;
 	msys)
 		echo ERROR: Using the MSYS shell in msys mode is not supported. Please use the MSYS shell in mingw mode instead.
@@ -3552,6 +3574,7 @@ EOF
 			_detection_features_static=no
 			_plugins_default=dynamic
 		fi
+		_detection_features_full=no
 		append_var CXXFLAGS "-I$PSPSDK/include"
 		# FIXME: Why is the following in CXXFLAGS and not in DEFINES? Change or document this.
 		append_var CXXFLAGS "-D_PSP_FW_VERSION=150"
@@ -5188,18 +5211,6 @@ PRE_OBJS_FLAGS		:= -Wl,--whole-archive
 POST_OBJS_FLAGS		:= -Wl,--export-all-symbols -Wl,--no-whole-archive -Wl,--out-implib,./libscummvm.a
 '
 		;;
-	morphos)
-		_plugin_prefix="lib"
-		_plugin_suffix=".so"
-		append_var CXXFLAGS "-fPIC"
-		append_var LIBS "-use-dynld"
-_mak_plugins='
-PLUGIN_EXTRA_DEPS =
-PLUGIN_LDFLAGS  += -shared
-PRE_OBJS_FLAGS  := -Wl,-export-dynamic -Wl,-whole-archive
-POST_OBJS_FLAGS := -Wl,-no-whole-archive
-'
-		;;
 	psp)
 		_elf_loader=yes
 		append_var DEFINES "-DUNCACHED_PLUGINS"
@@ -5382,17 +5393,38 @@ EOF
 			cc_check -lspeechd && _tts=yes
 			;;
 		darwin*)
-			# Check the API is available. The most recent API we need is for the NSSpeechSynthesizerDelegate protocol
-			cat > $TMPC << EOF
+			if test "$_osx_tts_backend" = "NSSpeechSynthesizer" ; then
+				# Check older NSSpeechSynthesizer API.
+				cat > $TMPC << EOF
 #include <AppKit/NSSpeechSynthesizer.h>
 @interface SpeechDelegate : NSObject<NSSpeechSynthesizerDelegate> {
 }
 @end
 int main(void) { return 0; }
 EOF
+				cc_check -ObjC++ -lobjc && _tts=yes
+			else
+				# Check the newer AVSpeechSynthesizer API is available
+				cat > $TMPC << EOF
+#import <AVFoundation/AVFoundation.h>
+@interface SpeechDelegate : NSObject<AVSpeechSynthesizerDelegate> {
+}
+@end
+int main(void) { return 0; }
+EOF
+				cc_check -ObjC++ -lobjc && _tts=yes
+			fi
+			;;
+		iphoneos)
+			cat > $TMPC << EOF
+#import <AVFoundation/AVFoundation.h>
+@interface SpeechDelegate : NSObject<AVSpeechSynthesizerDelegate> {
+}
+@end
+int main(void) { return 0; }
+EOF
 			cc_check -ObjC++ -lobjc && _tts=yes
 			;;
-		
 		emscripten)
 			# Emscripten has the "Web Speech API" available
 			_tts=yes
@@ -6659,6 +6691,10 @@ if test "$_opengl_mode" != none ; then
 						darwin*)
 							_opengl_mode=gl
 							;;
+						morphos)
+							_opengl_glad=no
+							_opengl_mode=gl
+							;;
 						*)
 							# As SDL2 supports everything, let users choose
 							test "$_opengl_mode" = "auto" && _opengl_mode=any
@@ -6752,6 +6788,9 @@ EOF
 				;;
 			mingw*)
 				OPENGL_LIBS="-lopengl32"
+				;;
+			morphos*)
+				_opengl_can_compile=yes
 				;;
 			serenity*)
 				OPENGL_LIBS="-lgl"
@@ -7192,6 +7231,21 @@ fi
 define_in_config_if_yes $_taskbar 'USE_TASKBAR'
 
 #
+# Check whether to build printing support
+#
+echo_n "Building system printing support... "
+case $_host_os in
+mingw*)
+	echo "win32"
+	append_var LIBS '-lMsimg32'
+	;;
+*)
+	echo "no"
+	;;
+esac
+define_in_config_if_yes $_printing 'USE_SYSTEM_PRINTING'
+
+#
 # Check whether to build system dialogs support
 #
 echo_n "Building system dialogs support... "
@@ -7245,8 +7299,20 @@ else
 		append_var LIBS '-lsapi -lole32'
 		;;
 	darwin*)
-		echo "osx"
+		if test "$_osx_tts_backend" = "NSSpeechSynthesizer" ; then
+			echo "osx (NSSpeechSynthesizer)"
+			_tts=yes
+			define_in_config_if_yes $_tts 'USE_NS_SPEECH_SYNTHESIZER'
+		else
+			echo "osx (AVSpeechSynthesizer)"
+			_tts=yes
+			append_var LIBS "-framework AVFoundation"
+		fi
+		;;
+	iphoneos)
+		echo "ios (AVSpeechSynthesizer)"
 		_tts=yes
+		append_var LIBS "-framework AVFoundation"
 		;;
 	emscripten)
 		echo "Web Speech API"

@@ -50,6 +50,11 @@ Renderer::Renderer(int screenW, int screenH, Common::RenderMode renderMode, bool
 	_colorRemaps = nullptr;
 	_renderMode = renderMode;
 	_isAccelerated = false;
+	_debugRenderBoundingBoxes = false;
+	_debugBoundingBoxFilterID = -1;
+	_debugRenderWireframe = false;
+	_debugRenderNormals = false;
+	_debugHighlightObjectID = -1;
 	_authenticGraphics = authenticGraphics;
 
 	for (int i = 0; i < 16; i++) {
@@ -63,8 +68,6 @@ Renderer::Renderer(int screenW, int screenH, Common::RenderMode renderMode, bool
 }
 
 Renderer::~Renderer() {}
-
-extern byte getCPCPixel(byte cpc_byte, int index, bool mode0);
 
 byte getCPCStipple(byte cpc_byte, int back, int fore) {
 	int c0 = getCPCPixel(cpc_byte, 0, true);

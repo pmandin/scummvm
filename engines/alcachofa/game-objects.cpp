@@ -32,9 +32,13 @@ namespace Alcachofa {
 
 const char *Item::typeName() const { return "Item"; }
 
-Item::Item(Room *room, ReadStream &stream)
+Item::Item(Room *room, SeekableReadStream &stream)
 	: GraphicObject(room, stream) {
-	stream.readByte(); // unused and ignored byte
+	// unused data in any case
+	if (g_engine->isV1())
+		skipVarString(stream);
+	else
+		stream.skip(1);
 }
 
 Item::Item(const Item &other)
@@ -70,9 +74,14 @@ void Item::trigger() {
 		player.triggerObject(heldItem, name().c_str());
 }
 
-ITriggerableObject::ITriggerableObject(ReadStream &stream)
-	: _interactionPoint(Shape(stream).firstPoint())
-	, _interactionDirection((Direction)stream.readSint32LE()) {}
+ITriggerableObject::ITriggerableObject(SeekableReadStream &stream) {
+	read(stream);
+}
+
+void ITriggerableObject::read(SeekableReadStream &stream) {
+	_interactionPoint = Shape(stream).firstPoint();
+	_interactionDirection = readDirection(stream);
+}
 
 void ITriggerableObject::onClick() {
 	auto heldItem = g_engine->player().heldItem();
@@ -86,11 +95,14 @@ void ITriggerableObject::onClick() {
 
 const char *InteractableObject::typeName() const { return "InteractableObject"; }
 
-InteractableObject::InteractableObject(Room *room, ReadStream &stream)
+InteractableObject::InteractableObject(Room *room, SeekableReadStream &stream)
 	: PhysicalObject(room, stream)
 	, ITriggerableObject(stream)
 	, _relatedObject(readVarString(stream)) {
 	_relatedObject.toUppercase();
+
+	if (g_engine->isV1())
+		skipVarString(stream); // unused script field
 }
 
 void InteractableObject::drawDebug() {
@@ -120,11 +132,11 @@ void InteractableObject::toggle(bool isEnabled) {
 
 const char *Door::typeName() const { return "Door"; }
 
-Door::Door(Room *room, ReadStream &stream)
+Door::Door(Room *room, SeekableReadStream &stream)
 	: InteractableObject(room, stream)
 	, _targetRoom(readVarString(stream))
 	, _targetObject(readVarString(stream))
-	, _characterDirection((Direction)stream.readSint32LE()) {
+	, _characterDirection(readDirection(stream)) {
 	_targetRoom.replace(' ', '_');
 }
 
@@ -162,14 +174,29 @@ void Door::trigger(const char *_) {
 
 const char *Character::typeName() const { return "Character"; }
 
-Character::Character(Room *room, ReadStream &stream)
-	: ShapeObject(room, stream)
-	, ITriggerableObject(stream)
-	, _graphicNormal(stream)
-	, _graphicTalking(stream) {
+Character::Character(Room *room, SeekableReadStream &stream)
+	: ShapeObject(room, stream) {
+	if (g_engine->isV1()) {
+		// the structure in V1 is quite redundant
+		toggle(readBool(stream));
+		_order = stream.readByte();
+		ITriggerableObject::read(stream);
+		skipVarString(stream); // unused "relatedGraphicObject" field
+		skipVarString(stream); // unused "script" field
+		toggle(readBool(stream));
+		_graphicNormal = Graphic(stream);
+		auto talkingFileRef = g_engine->world().readFileRef(stream);
+		_graphicTalking = _graphicNormal;
+		_graphicTalking.setAnimation(talkingFileRef, AnimationFolder::Animations);
+	} else {
+		ITriggerableObject::read(stream);
+		_graphicNormal = Graphic(stream);
+		_graphicTalking = Graphic(stream);
+		_order = _graphicNormal.order();
+	}
+
 	_graphicNormal.start(true);
 	_graphicNormal.frameI() = _graphicTalking.frameI() = 0;
-	_order = _graphicNormal.order();
 }
 
 static Graphic *graphicOf(ObjectBase *object, Graphic *fallback = nullptr) {
@@ -323,7 +350,7 @@ struct SayTextTask final : public Task {
 				g_engine->drawQueue().add<TextDrawRequest>(
 					g_engine->globalUI().dialogFont(),
 					g_engine->world().getDialogLine(_dialogId),
-					Point(g_system->getWidth() / 2, g_system->getHeight() - 200),
+					g_engine->game().getSubtitlePos(),
 					-1, true, kWhite, -kForegroundOrderCount);
 			}
 
@@ -498,15 +525,22 @@ Task *Character::lerpLodBias(Process &process, float targetLodBias, int32 durati
 
 const char *WalkingCharacter::typeName() const { return "WalkingCharacter"; }
 
-WalkingCharacter::WalkingCharacter(Room *room, ReadStream &stream)
+WalkingCharacter::WalkingCharacter(Room *room, SeekableReadStream &stream)
 	: Character(room, stream) {
+	// every other animation is for an unused direction
+
+	const auto &world = g_engine->world();
 	for (int32 i = 0; i < kDirectionCount; i++) {
-		auto fileName = readVarString(stream);
-		_walkingAnimations[i].reset(new Animation(Common::move(fileName)));
+		auto fileRef = world.readFileRef(stream);
+		_walkingAnimations[i].reset(new Animation(move(fileRef)));
+		if (g_engine->isV1())
+			world.readFileRef(stream);
 	}
 	for (int32 i = 0; i < kDirectionCount; i++) {
-		auto fileName = readVarString(stream);
-		_talkingAnimations[i].reset(new Animation(Common::move(fileName)));
+		auto fileRef = world.readFileRef(stream);
+		_talkingAnimations[i].reset(new Animation(move(fileRef)));
+		if (g_engine->isV1())
+			world.readFileRef(stream);
 	}
 }
 
@@ -803,7 +837,7 @@ Task *WalkingCharacter::waitForArrival(Process &process) {
 
 const char *MainCharacter::typeName() const { return "MainCharacter"; }
 
-MainCharacter::MainCharacter(Room *room, ReadStream &stream)
+MainCharacter::MainCharacter(Room *room, SeekableReadStream &stream)
 	: WalkingCharacter(room, stream)
 	, _semaphore(name().firstChar() == 'M' ? "mortadelo" : "filemon") {
 	stream.readByte(); // unused byte
@@ -821,7 +855,7 @@ MainCharacter::~MainCharacter() {
 }
 
 bool MainCharacter::isBusy() const {
-	return !_semaphore.isReleased() || !g_engine->player().semaphore().isReleased();
+	return !_semaphore.isReleased() || !g_engine->game().isAllowedToInteract();
 }
 
 void MainCharacter::update() {
@@ -829,11 +863,10 @@ void MainCharacter::update() {
 		_currentlyUsingObject = nullptr;
 	WalkingCharacter::update();
 
-	const int16 halfWidth = (int16)(60 * _graphicNormal.depthScale());
-	const int16 height = (int16)(310 * _graphicNormal.depthScale());
+	const Point size = g_engine->game().getMainCharacterSize() * _graphicNormal.depthScale();
 	shape()->setAsRectangle(Rect(
-		_currentPos.x - halfWidth, _currentPos.y - height,
-		_currentPos.x + halfWidth, _currentPos.y));
+		_currentPos.x - size.x, _currentPos.y - size.y,
+		_currentPos.x + size.x, _currentPos.y));
 
 	// These are set as members as FloorColor might want to change them
 	_alphaPremultiplier = room()->characterAlphaPremultiplier();
@@ -878,7 +911,9 @@ void MainCharacter::walkTo(
 		strcmp(_activateAction, "MIRAR") != 0 &&
 		otherCharacter->currentlyUsing() != dynamic_cast<ObjectBase *>(_activateObject);
 
-	if (otherCharacter->room() == room() && evadeTarget.sqrDist(otherTarget) <= avoidanceDistSqr) {
+	if (otherCharacter->room() == room() &&
+		evadeTarget.sqrDist(otherTarget) <= avoidanceDistSqr &&
+		g_engine->game().shouldAvoidCollisions()) {
 		if (!otherCharacter->isBusy()) {
 			if (activeFloor != nullptr && activeFloor->findEvadeTarget(evadeTarget, activeDepthScale, avoidanceDistSqr, evadeTarget))
 				otherCharacter->WalkingCharacter::walkTo(evadeTarget);
@@ -889,7 +924,7 @@ void MainCharacter::walkTo(
 	}
 
 	WalkingCharacter::walkTo(target, endDirection, activateObject, activateAction);
-	if (this == g_engine->player().activeCharacter())
+	if (this == g_engine->player().activeCharacter() && g_engine->isV3())
 		g_engine->camera().setFollow(this);
 }
 
@@ -1040,6 +1075,7 @@ struct DialogMenuTask final : public Task {
 	TaskReturn run() override {
 		TASK_BEGIN;
 		layoutLines();
+		process().unlockInteraction();
 		while (true) {
 			TASK_YIELD(1);
 			if (g_engine->player().activeCharacter() != _character) //-V779
@@ -1051,6 +1087,7 @@ struct DialogMenuTask final : public Task {
 			_clickedLineI = updateLines();
 			if (_clickedLineI != UINT_MAX) {
 				TASK_YIELD(2);
+				process().lockInteraction();
 				TASK_WAIT(3, _character->sayText(process(), _character->_dialogLines[_clickedLineI]._dialogId));
 				int32 returnValue = _character->_dialogLines[_clickedLineI]._returnValue;
 				_character->_dialogLines.clear();
@@ -1148,14 +1185,14 @@ const char *Background::typeName() const { return "Background"; }
 Background::Background(Room *room, const String &animationFileName, int16 scale)
 	: GraphicObject(room, "BACKGROUND") {
 	toggle(true);
-	_graphic.setAnimation(animationFileName, AnimationFolder::Backgrounds);
+	_graphic.setAnimation(GameFileReference(animationFileName), AnimationFolder::Backgrounds);
 	_graphic.scale() = scale;
 	_graphic.order() = 59;
 }
 
 const char *FloorColor::typeName() const { return "FloorColor"; }
 
-FloorColor::FloorColor(Room *room, ReadStream &stream)
+FloorColor::FloorColor(Room *room, SeekableReadStream &stream)
 	: ObjectBase(room, stream)
 	, _shape(stream) {}
 

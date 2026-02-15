@@ -22,6 +22,8 @@
 #include "common/file.h"
 #include "common/memstream.h"
 
+#include "audio/mods/protracker.h"
+
 #include "freescape/freescape.h"
 #include "freescape/games/castle/castle.h"
 #include "freescape/language/8bitDetokeniser.h"
@@ -45,6 +47,25 @@ byte kAmigaCastlePalette[16][3] = {
 	{0xcc, 0x44, 0x00},
 	{0x88, 0x44, 0x00},
 	{0xee, 0xee, 0xee},
+};
+
+byte kAmigaCastleRiddlePalette[16][3] = {
+	{0x00, 0x00, 0x00},
+	{0x44, 0x44, 0x44},
+	{0x66, 0x66, 0x66},
+	{0x88, 0x88, 0x88},
+	{0xaa, 0xaa, 0xaa},
+	{0xcc, 0x44, 0x00},
+	{0xee, 0xaa, 0x00},
+	{0x66, 0x22, 0x00},
+	{0x66, 0x22, 0x00},
+	{0x66, 0x22, 0x00},
+	{0x66, 0x22, 0x00},
+	{0x66, 0x22, 0x00},
+	{0xaa, 0x88, 0x00},
+	{0xaa, 0x66, 0x00},
+	{0x88, 0x44, 0x00},
+	{0xee, 0xcc, 0x66},
 };
 
 Graphics::ManagedSurface *CastleEngine::loadFrameFromPlanesVertical(Common::SeekableReadStream *file, int widthInBytes, int height) {
@@ -76,6 +97,32 @@ Graphics::ManagedSurface *CastleEngine::loadFrameFromPlanesInternalVertical(Comm
 		}
 	}
 	free(colors);
+	return surface;
+}
+
+Graphics::ManagedSurface *CastleEngine::loadFrameFromPlanesInterleaved(Common::SeekableReadStream *file, int widthInWords, int height) {
+	int widthInPixels = widthInWords * 16;
+	Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
+	surface->create(widthInPixels, height, Graphics::PixelFormat::createFormatCLUT8());
+	surface->fillRect(Common::Rect(0, 0, widthInPixels, height), 0);
+
+	for (int y = 0; y < height; y++) {
+		for (int col = 0; col < widthInWords; col++) {
+			uint16 planes[4];
+			for (int p = 0; p < 4; p++)
+				planes[p] = file->readUint16BE();
+
+			for (int bit = 0; bit < 16; bit++) {
+				int x = col * 16 + (15 - bit);
+				byte color = 0;
+				for (int p = 0; p < 4; p++) {
+					if (planes[p] & (1 << bit))
+						color |= (1 << p);
+				}
+				surface->setPixel(x, y, color);
+			}
+		}
+	}
 	return surface;
 }
 
@@ -129,6 +176,152 @@ void CastleEngine::loadAssetsAmigaDemo() {
 	file.seek(0x2cf28 + 0x28 - 0x2 + 0x28);
 	_border = loadFrameFromPlanesVertical(&file, 160, 200);
 	_border->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastlePalette, 16);
+
+	// Menu background: 224x54 interleaved 4-plane (memory 0x36B9A, file 0x36BB6)
+	file.seek(0x36bb6);
+	_menu = loadFrameFromPlanesInterleaved(&file, 14, 54);
+	_menu->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastlePalette, 16);
+
+	file.seek(0x38952); // Spirit meter indicator background (memory 0x38936)
+	_spiritsMeterIndicatorBackgroundFrame = loadFrameFromPlanesInterleaved(&file, 5, 10);
+	_spiritsMeterIndicatorBackgroundFrame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastlePalette, 16);
+
+	file.seek(0x38ae2); // Spirit meter indicator (memory 0x38AC6)
+	_spiritsMeterIndicatorFrame = loadFrameFromPlanesInterleaved(&file, 1, 10);
+	_spiritsMeterIndicatorFrame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastlePalette, 16);
+
+	// Key sprites (memory 0x3C096, 12 frames, 16x7 each, interleaved 4-plane)
+	file.seek(0x3c0b2);
+	for (int i = 0; i < 12; i++) {
+		Graphics::ManagedSurface *frame = loadFrameFromPlanesInterleaved(&file, 1, 7);
+		frame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastlePalette, 16);
+		_keysBorderFrames.push_back(frame);
+	}
+
+	// Flag animation (memory 0x3C340, 5 frames, 32x11 each, interleaved 4-plane)
+	file.seek(0x3c35c);
+	for (int i = 0; i < 5; i++) {
+		Graphics::ManagedSurface *frame = loadFrameFromPlanesInterleaved(&file, 2, 11);
+		frame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastlePalette, 16);
+		_flagFrames.push_back(frame);
+	}
+
+	// Riddle frames (memory 0x3C6FA: top 20 rows + bg 1 row + bottom 8 rows, 256px wide)
+	file.seek(0x3c716);
+	_riddleTopFrame = loadFrameFromPlanesInterleaved(&file, 16, 20);
+	_riddleTopFrame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastleRiddlePalette, 16);
+
+	_riddleBackgroundFrame = loadFrameFromPlanesInterleaved(&file, 16, 1);
+	_riddleBackgroundFrame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastleRiddlePalette, 16);
+
+	_riddleBottomFrame = loadFrameFromPlanesInterleaved(&file, 16, 8);
+	_riddleBottomFrame->convertToInPlace(_gfx->_texturePixelFormat, (byte *)kAmigaCastleRiddlePalette, 16);
+
+	// Castle gate (game over background frame)
+	// Pixel data: 43 rows × 96 bytes (16 columns × 3 words) at file 0x39AE2
+	// Mask data: 43 rows × 32 bytes (16 words) at file 0x3AB02
+	// FUN_2CCA tiles 24 top rows + 19 bottom rows into a 256×120 gate image
+	{
+		static const int kTopRows = 24;
+		static const int kBottomRows = 19;
+		static const int kTotalSrcRows = kTopRows + kBottomRows;
+		static const int kColumnsPerRow = 16;
+		static const int kPixelBytesPerRow = kColumnsPerRow * 6; // 3 words × 2 bytes
+		static const int kMaskBytesPerRow = kColumnsPerRow * 2;  // 1 word × 2 bytes
+		static const int kGateWidth = 256;
+		static const int kGateHeight = 120;
+
+		byte pixelData[kTotalSrcRows * kPixelBytesPerRow];
+		byte maskData[kTotalSrcRows * kMaskBytesPerRow];
+
+		file.seek(0x39AE2);
+		file.read(pixelData, sizeof(pixelData));
+		file.seek(0x3AB02);
+		file.read(maskData, sizeof(maskData));
+
+		uint32 keyColor = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x24, 0xA5);
+		uint32 paletteColors[8];
+		for (int i = 0; i < 8; i++)
+			paletteColors[i] = _gfx->_texturePixelFormat.ARGBToColor(0xFF,
+				kAmigaCastlePalette[i][0], kAmigaCastlePalette[i][1], kAmigaCastlePalette[i][2]);
+
+		_gameOverBackgroundFrame = new Graphics::ManagedSurface();
+		_gameOverBackgroundFrame->create(kGateWidth, kGateHeight, _gfx->_texturePixelFormat);
+		_gameOverBackgroundFrame->fillRect(Common::Rect(0, 0, kGateWidth, kGateHeight), keyColor);
+
+		// Build row mapping: FUN_2CCA tiling for N=120
+		// 5 tail rows from top portion (rows 19-23), then 4×24 full top blocks, then 19 bottom rows
+		int destRow = 0;
+		// Tail of top portion
+		for (int r = kTopRows - 5; r < kTopRows; r++) {
+			int srcRow = r;
+			for (int col = 0; col < kColumnsPerRow; col++) {
+				uint16 mask = READ_BE_UINT16(&maskData[srcRow * kMaskBytesPerRow + col * 2]);
+				int pOff = srcRow * kPixelBytesPerRow + col * 6;
+				uint16 p0 = READ_BE_UINT16(&pixelData[pOff]);
+				uint16 p1 = READ_BE_UINT16(&pixelData[pOff + 2]);
+				uint16 p2 = READ_BE_UINT16(&pixelData[pOff + 4]);
+				for (int bit = 15; bit >= 0; bit--) {
+					if (!(mask & (1 << bit))) {
+						int color = ((p0 >> bit) & 1) | (((p1 >> bit) & 1) << 1) | (((p2 >> bit) & 1) << 2);
+						_gameOverBackgroundFrame->setPixel(col * 16 + (15 - bit), destRow, paletteColors[color]);
+					}
+				}
+			}
+			destRow++;
+		}
+		// 4 full repetitions of top portion (24 rows each)
+		for (int block = 0; block < 4; block++) {
+			for (int r = 0; r < kTopRows; r++) {
+				int srcRow = r;
+				for (int col = 0; col < kColumnsPerRow; col++) {
+					uint16 mask = READ_BE_UINT16(&maskData[srcRow * kMaskBytesPerRow + col * 2]);
+					int pOff = srcRow * kPixelBytesPerRow + col * 6;
+					uint16 p0 = READ_BE_UINT16(&pixelData[pOff]);
+					uint16 p1 = READ_BE_UINT16(&pixelData[pOff + 2]);
+					uint16 p2 = READ_BE_UINT16(&pixelData[pOff + 4]);
+					for (int bit = 15; bit >= 0; bit--) {
+						if (!(mask & (1 << bit))) {
+							int color = ((p0 >> bit) & 1) | (((p1 >> bit) & 1) << 1) | (((p2 >> bit) & 1) << 2);
+							_gameOverBackgroundFrame->setPixel(col * 16 + (15 - bit), destRow, paletteColors[color]);
+						}
+					}
+				}
+				destRow++;
+			}
+		}
+		// Bottom portion (19 rows)
+		for (int r = 0; r < kBottomRows; r++) {
+			int srcRow = kTopRows + r;
+			for (int col = 0; col < kColumnsPerRow; col++) {
+				uint16 mask = READ_BE_UINT16(&maskData[srcRow * kMaskBytesPerRow + col * 2]);
+				int pOff = srcRow * kPixelBytesPerRow + col * 6;
+				uint16 p0 = READ_BE_UINT16(&pixelData[pOff]);
+				uint16 p1 = READ_BE_UINT16(&pixelData[pOff + 2]);
+				uint16 p2 = READ_BE_UINT16(&pixelData[pOff + 4]);
+				for (int bit = 15; bit >= 0; bit--) {
+					if (!(mask & (1 << bit))) {
+						int color = ((p0 >> bit) & 1) | (((p1 >> bit) & 1) << 1) | (((p2 >> bit) & 1) << 2);
+						_gameOverBackgroundFrame->setPixel(col * 16 + (15 - bit), destRow, paletteColors[color]);
+					}
+				}
+			}
+			destRow++;
+		}
+	}
+
+	// Load embedded ProTracker module for background music
+	// Module is at file offset 0x3D5A6 (memory 0x3D58A), ~86260 bytes
+	static const int kModOffset = 0x3D5A6;
+	file.seek(0, SEEK_END);
+	int fileSize = file.pos();
+	int modSize = fileSize - kModOffset;
+	if (modSize > 0) {
+		file.seek(kModOffset);
+		_modData.resize(modSize);
+		file.read(_modData.data(), modSize);
+	}
+
 	file.close();
 
 	_areaMap[2]->_groundColor = 1;
@@ -137,7 +330,36 @@ void CastleEngine::loadAssetsAmigaDemo() {
 }
 
 void CastleEngine::drawAmigaAtariSTUI(Graphics::Surface *surface) {
+	drawLiftingGate(surface);
+	drawDroppingGate(surface);
+
 	drawStringInSurface(_currentArea->_name, 97, 182, 0, 0, surface);
+	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
+
+	// Draw last collected key at (224, 164)
+	if (!_keysCollected.empty() && !_keysBorderFrames.empty()) {
+		int k = int(_keysCollected.size()) - 1;
+		if (k < int(_keysBorderFrames.size()))
+			surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_keysBorderFrames[k], 224, 164,
+				Common::Rect(0, 0, _keysBorderFrames[k]->w, _keysBorderFrames[k]->h), black);
+	}
+
+	// Draw flag animation at (288, 5)
+	if (!_flagFrames.empty()) {
+		int flagFrameIndex = (_ticks / 10) % _flagFrames.size();
+		surface->copyRectToSurface(*_flagFrames[flagFrameIndex], 288, 5,
+			Common::Rect(0, 0, _flagFrames[flagFrameIndex]->w, _flagFrames[flagFrameIndex]->h));
+	}
+
+	// Draw spirit meter
+	if (_spiritsMeterIndicatorBackgroundFrame)
+		surface->copyRectToSurface((const Graphics::Surface)*_spiritsMeterIndicatorBackgroundFrame, 128, 160,
+			Common::Rect(0, 0, _spiritsMeterIndicatorBackgroundFrame->w, _spiritsMeterIndicatorBackgroundFrame->h));
+
+	if (_spiritsMeterIndicatorFrame) {
+		surface->copyRectToSurfaceWithKey((const Graphics::Surface)*_spiritsMeterIndicatorFrame, 128 + _spiritsMeterPosition, 160,
+			Common::Rect(0, 0, _spiritsMeterIndicatorFrame->w, _spiritsMeterIndicatorFrame->h), black);
+	}
 }
 
 } // End of namespace Freescape
