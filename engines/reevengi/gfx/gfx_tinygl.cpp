@@ -25,6 +25,7 @@
 #include "common/system.h"
 #include "math/glmath.h"
 
+#include "graphics/cursorman.h"
 #include "graphics/surface.h"
 
 #include "engines/reevengi/gfx/gfx_base.h"
@@ -54,7 +55,7 @@ void GfxTinyGL::setupScreen(int screenW, int screenH) {
 	_scaleW = _screenWidth / (float)_gameWidth;
 	_scaleH = _screenHeight / (float)_gameHeight;
 
-	g_system->showMouse(false);
+	CursorMan.showMouse(false);
 
 	_pixelFormat = g_system->getScreenFormat();
 	debug("INFO: TinyGL front buffer pixel format: %s", _pixelFormat.toString().c_str());

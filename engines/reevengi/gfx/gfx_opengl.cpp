@@ -33,6 +33,8 @@
 
 #if defined(USE_OPENGL_GAME)
 
+#include "graphics/cursorman.h"
+
 #include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/gfx/gfx_opengl.h"
 
@@ -66,7 +68,7 @@ void GfxOpenGL::setupScreen(int screenW, int screenH) {
 	_useDepthShader = false;
 	_useDimShader = false;*/
 
-	g_system->showMouse(false);
+	CursorMan.showMouse(false);
 
 	//int screenSize = _screenWidth * _screenHeight * 4;
 	//_storedDisplay = new byte[screenSize];
