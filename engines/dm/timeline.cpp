@@ -747,6 +747,7 @@ void Timeline::processEventSquareCorridor(TimelineEvent *event) {
 				if (healthMultiplier == 0)
 					healthMultiplier = _vm->_dungeonMan->_currMap->_difficulty;
 
+				creatureCount = CLIP<int16>(creatureCount, 0, 3);
 				_vm->_groupMan->groupGetGenerated((CreatureType)curSensor->getData(), healthMultiplier, creatureCount, (Direction)_vm->getRandomNumber(4), mapX, mapY);
 				if (curSensor->getAttrAudibleA())
 					_vm->_sound->requestPlay(kDMSoundIndexBuzz, mapX, mapY, kDMSoundModePlayIfPrioritized);
@@ -760,7 +761,7 @@ void Timeline::processEventSquareCorridor(TimelineEvent *event) {
 						if (actionTicks > 127)
 							actionTicks = (actionTicks - 126) << 6;
 
-						TimelineEvent newEvent;
+						TimelineEvent newEvent = {};
 						newEvent._type = kDMEventTypeEnableGroupGenerator;
 						newEvent._mapTime = _vm->setMapAndTime(_vm->_dungeonMan->_currMapIndex, _vm->_gameTime + actionTicks);
 						newEvent._priority = 0;
@@ -913,7 +914,7 @@ void Timeline::processEventLight(TimelineEvent *event) {
 	}
 	_vm->_championMan->_party._magicalLightAmount += lightAmount;
 	if (weakerLightPower) {
-		TimelineEvent newEvent;
+		TimelineEvent newEvent = {};
 		newEvent._type = kDMEventTypeLight;
 		newEvent._Bu._lightPower = weakerLightPower;
 		newEvent._mapTime = _vm->setMapAndTime(_vm->_dungeonMan->_partyMapIndex, _vm->_gameTime + 4);

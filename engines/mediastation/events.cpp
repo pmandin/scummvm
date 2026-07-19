@@ -90,8 +90,40 @@ Common::String MouseEvent::debugString() const {
 }
 
 Common::String KeyboardEvent::debugString() const {
-	return Common::String::format("%s %s (keyCode: %u)",
-		eventClassToStr(eventClass), eventTypeToStr(type), keyCode);
+	return Common::String::format("%s %s (state: { keycode: %u, ascii: %u, flags: 0x%02x })",
+		eventClassToStr(eventClass), eventTypeToStr(type),
+		static_cast<uint>(state.keycode), state.ascii, state.flags);
+}
+
+uint16 KeyboardEvent::getMediaStationCharCode() const {
+	uint16 result = state.ascii;
+	switch (state.keycode) {
+	case Common::KEYCODE_BACKSPACE:
+		result = static_cast<uint16>(kBackspaceCharCode);
+		break;
+
+	case Common::KEYCODE_LEFT:
+		result = static_cast<uint16>(kLeftArrowCharCode);
+		break;
+
+	case Common::KEYCODE_RIGHT:
+		result = static_cast<uint16>(kRightArrowCharCode);
+		break;
+
+	case Common::KEYCODE_UP:
+		result = static_cast<uint16>(kUpArrowCharCode);
+		break;
+
+	case Common::KEYCODE_DOWN:
+		result = static_cast<uint16>(kDownArrowCharCode);
+		break;
+
+	default:
+		// This is explicitly a no-op.
+		break;
+	}
+
+	return result;
 }
 
 void EventLoop::run() {
@@ -208,7 +240,7 @@ void MediaStationEngine::dispatchOneSystemEvent(const Common::Event &event) {
 	}
 
 	case Common::EVENT_KEYDOWN: {
-		KeyboardEvent keyboardEvent(kKeyDownEvent, event.kbd.ascii);
+		KeyboardEvent keyboardEvent(kKeyDownEvent, event.kbd);
 		_stageDirector->handleKeyboardEvent(keyboardEvent);
 		break;
 	}
@@ -236,6 +268,15 @@ void MediaStationEngine::dispatchOneSystemEvent(const Common::Event &event) {
 		// default case.
 		break;
 	}
+}
+
+void MediaStationEngine::generateMouseUpdateEvent() {
+	queueMouseEvent(kMouseEnterExitEvent, g_system->getEventManager()->getMousePos());
+}
+
+void MediaStationEngine::queueMouseEvent(EventType type, const Common::Point &point) {
+	MouseEvent mouseEvent(type, point);
+	_eventLoop->queueEvent(mouseEvent);
 }
 
 PreDisplaySyncState EventLoop::preDisplaySync() {

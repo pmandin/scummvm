@@ -32,6 +32,8 @@ namespace Macs2 {
 Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 	const byte SAVE_MAGIC[12] = {'A', 'H', 'F', 'F', 'M', 'S', 'G', 'M', '0', '1', '0', '0'};
 	View1 *view1 = (View1 *)findView("View1");
+	if (view1 == nullptr)
+		return Common::kUnknownError;
 
 	// --- Header: 12-byte magic ---
 	if (s.isSaving()) {
@@ -52,12 +54,9 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 	// name when producing an original-format save.
 	byte slotName[21] = {0};
 	if (s.isSaving()) {
-		const char *defName = "SCUMMVM";
-		uint8 len = (uint8)strlen(defName);
-		if (len > 20)
-			len = 20;
-		slotName[0] = len;
-		memcpy(slotName + 1, defName, len);
+		const char defName[] = {'S', 'C', 'U', 'M', 'M', 'V', 'M'};
+		slotName[0] = 20;
+		memcpy(slotName + 1, defName, sizeof(defName));
 	}
 	s.syncBytes(slotName, 21);
 
@@ -204,9 +203,9 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 	}
 
 	// g_wSavedCursorMode [0xfea]: 2 bytes
-	uint16 savedCursorMode = view1 ? (uint16)view1->_savedCursorMode : (uint16)Script::MouseMode::Walk;
+	uint16 savedCursorMode = (uint16)view1->_savedCursorMode;
 	s.syncAsUint16LE(savedCursorMode);
-	if (s.isLoading() && view1)
+	if (s.isLoading())
 		view1->_savedCursorMode = (Script::MouseMode)savedCursorMode;
 
 	// g_wClipRectDirty [0xfec]: 1 byte - flags clip region needs full-screen reset
@@ -849,8 +848,7 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 		// The cursor slot is only populated when clicking an inventory item in the panel;
 		// after loading a save with mouseMode==UseInventory, the slot is empty.
 		if (_scriptExecutor->_cursorMode == Script::MouseMode::UseInventory && view1->_activeInventoryItem != nullptr) {
-			AnimFrame *icon = view1->getInventoryIcon(view1->_activeInventoryItem);
-			if (icon != nullptr) {
+			if (AnimFrame *icon = view1->getInventoryIcon(view1->_activeInventoryItem)) {
 				int cursorSlot = (int)Script::MouseMode::UseInventory - 1;
 				_imageResources[cursorSlot] = *icon;
 			}

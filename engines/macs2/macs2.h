@@ -120,15 +120,15 @@ struct AnimFrame : public Sprite {
 };
 
 struct BackgroundAnimation {
-	uint16 _x;
-	uint16 _y;
+	uint16 _x = 0;
+	uint16 _y = 0;
 	Common::Array<AnimFrame> _frames;
-	uint32 _frameIndex;
+	uint32 _frameIndex = 0;
 };
 
 struct BackgroundAnimationBlob {
-	uint16 _x;
-	uint16 _y;
+	uint16 _x = 0;
+	uint16 _y = 0;
 	Common::Array<uint8> _blob;
 	uint16 _unknown0C = 0; // +0x50F3: purpose unknown (word, read from file, not used at runtime)
 	uint8 _unknown0E = 0;  // +0x50F5: purpose unknown (byte, read from file, not used at runtime)
@@ -454,6 +454,7 @@ public:
 	// Game speed mode from original binary (g_wGameSpeedMode at 1020:0214).
 	// Cycled by Ctrl+T: 0=normal, 1=fast (no frame wait), 2=slow (wait for tick>=0x12).
 	uint16 _gameSpeedMode = 0;
+	void setGameSpeedMode(uint16 mode);
 
 	// Input record/playback system from original binary.
 	// Original usage: MCSEXEC filename /rRecFile or /pPlayFile
@@ -495,7 +496,9 @@ public:
 	};
 	Common::HashMap<uint32, TranslationEntry> _sceneTranslations;
 	Common::HashMap<uint32, TranslationEntry> _objectTranslations;
+	Common::HashMap<Common::String, Common::String> _hotspotLabelTranslations;
 	void loadTranslation();
+	Common::String translateHotspotLabel(const Common::String &cp850Name) const;
 	// Compute the sequential string index at the given byte offset in a string blob
 	int computeStringIndex(Common::MemoryReadStream *stream, int targetOffset);
 
@@ -551,6 +554,31 @@ public:
 	bool tick() override;
 
 	void sayText(const Common::String &text, Common::TextToSpeechManager::Action action = Common::TextToSpeechManager::INTERRUPT_NO_REPEAT) const;
+
+	void getHotspotPositions(Common::Array<Graphics::HotspotInfo> &hotspots) override;
+	bool hotspotDirty() const override;
+	void rebuildHotspotSnapshot() const;
+
+	struct HotspotSnapshot {
+		struct SceneHotspotEntry {
+			uint16 index = 0;
+			Common::Point center;
+		};
+		struct SceneObjectEntry {
+			uint16 index = 0;
+			Common::Point position;
+			uint16 orientation = 0;
+		};
+
+		int currentSceneIndex = -1;
+		uint16 numHotspots = 0;
+		Common::Array<uint16> hotspotColorTable;
+		Common::Array<uint16> hotspotOverrides;
+		Common::Array<SceneHotspotEntry> sceneHotspots;
+		Common::Array<SceneObjectEntry> sceneObjects;
+		bool mapModeActive = false;
+	};
+	mutable HotspotSnapshot _hotspotSnapshot;
 };
 
 extern Macs2Engine *g_engine;

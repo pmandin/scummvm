@@ -269,6 +269,32 @@ const char *builtInMethodToStr(BuiltInMethod method) {
 		return "StartCaching";
 	case kIsCachingMethod:
 		return "IsCaching";
+	case kIsPrinterReadyMethod:
+		return "IsPrinterReady";
+	case kPrintActorsMethod:
+		return "PrintActors";
+	case kPrintScreenMethod:
+		return "PrintScreen";
+	case kSetPortraitPrintMethod:
+		return "SetPortraitPrint";
+	case kGetPortraitPrintMethod:
+		return "GetPortraitPrint";
+	case kSetLeftPrintMarginMethod:
+		return "SetLeftPrintMargin";
+	case kSetTopPrintMarginMethod:
+		return "SetTopPrintMargin";
+	case kSetRightPrintMarginMethod:
+		return "SetRightPrintMargin";
+	case kSetBottomPrintMarginMethod:
+		return "SetBottomPrintMargin";
+	case kGetLeftPrintMarginMethod:
+		return "GetLeftPrintMargin";
+	case kGetTopPrintMarginMethod:
+		return "GetTopPrintMargin";
+	case kGetRightPrintMarginMethod:
+		return "GetRightPrintMargin";
+	case kGetBottomPrintMarginMethod:
+		return "GetBottomPrintMargin";
 	case kIsPausedMethod:
 		return "SetMultipleSounds/IsPaused";
 	case kSetMousePositionMethod:
@@ -450,14 +476,24 @@ const char *builtInMethodToStr(BuiltInMethod method) {
 		return "StopLoad";
 	case kIsRectInMemoryMethod:
 		return "IsRectInMemory";
-	case kDotGameResetMethod:
-		return "DotGameReset";
-	case kDotGameShowMethod:
-		return "DotGameShow";
-	case kDotGameHideMethod:
-		return "DotGameHide";
+	case kMinigameResetMethod:
+		return "MinigameReset";
+	case kMinigameActivateMethod:
+		return "MinigameActivate";
+	case kMinigameDeactivateMethod:
+		return "MinigameDeactivate";
 	case kDotGameHitMethod:
 		return "DotGameHit";
+	case kStalkingStartZazuLookingMethod:
+		return "StalkingSetLookOn";
+	case kStalkingStopZazuLookingMethod:
+		return "StalkingSetLookOff";
+	case kStalkingGetZazuLookDirectionMethod:
+		return "StalkingGetLookDirection";
+	case kStalkingEnableAudio:
+		return "StalkingEnableAudio";
+	case kStalkingDisableAudio:
+		return "StalkingDisableAudio";
 	default:
 		return "UNKNOWN";
 	}
@@ -511,8 +547,12 @@ const char *eventTypeToStr(EventType type) {
 		return "MovieFailure";
 	case kSpriteMovieEndEvent:
 		return "SpriteMovieEnd";
-	case kDotGameCompleteEvent:
-		return "DotGameComplete";
+	case kMinigameSuccessEvent:
+		return "MinigameSuccess";
+	case kMinigameDefeatEvent:
+		return "MinigameDefeat";
+	case kMinigameCrouchedEvent:
+		return "MinigameCrouched";
 	case kScreenExitEvent:
 		return "ScreenExit";
 	case kPathStepEvent:

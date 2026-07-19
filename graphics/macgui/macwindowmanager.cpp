@@ -178,6 +178,7 @@ template<typename T>
 class MacDrawPrimitives : public Primitives {
 public:
 	void drawPoint(int x, int y, uint32 color, void *data) override;
+	void drawPolygonScan(const int *polyX, const int *polyY, int npoints, const Common::Rect &bbox, uint32 color, void *data) override;
 };
 
 template<typename T>
@@ -335,6 +336,7 @@ void MacWindowManager::setScreen(ManagedSurface *screen) {
 	else
 		_desktop = new ManagedSurface();
 
+	_screenDims = Common::Rect(_screen->w, _screen->h);
 	_desktop->create(_screen->w, _screen->h, _pixelformat);
 	drawDesktop();
 }
@@ -826,7 +828,7 @@ void MacDrawPrimitives<T>::drawPoint(int x, int y, uint32 color, void *data) {
 
 	const byte *pat = p->patterns->operator[](p->fillType - 1);
 
-	if (p->thickness == 1) {
+	if (p->thickness.x == 1 && p->thickness.y == 1) {
 		if (x >= 0 && x < p->surface->w && y >= 0 && y < p->surface->h) {
 			uint xu = (uint)x; // for letting compiler optimize it
 			uint yu = (uint)y;
@@ -839,9 +841,9 @@ void MacDrawPrimitives<T>::drawPoint(int x, int y, uint32 color, void *data) {
 		}
 	} else {
 		int x1 = x;
-		int x2 = x1 + p->thickness;
+		int x2 = x1 + p->thickness.x;
 		int y1 = y;
-		int y2 = y1 + p->thickness;
+		int y2 = y1 + p->thickness.y;
 
 		for (y = y1; y < y2; y++)
 			for (x = x1; x < x2; x++)
@@ -849,13 +851,57 @@ void MacDrawPrimitives<T>::drawPoint(int x, int y, uint32 color, void *data) {
 					uint xu = (uint)x; // for letting compiler optimize it
 					uint yu = (uint)y;
 					*((T *)p->surface->getBasePtr(xu, yu)) = p->invert ? ~(*((T *)p->surface->getBasePtr(xu, yu))) :
-						(pat[(yu + p->fillOriginY) % 8] & (1 << (7 + (xu - p->fillOriginX) % 8))) ? color : p->bgColor;
+						(pat[(yu + p->fillOriginY) % 8] & (1 << (7 - (xu + p->fillOriginX) % 8))) ? color : p->bgColor;
 
 					if (p->mask)
 						*((T *)p->mask->getBasePtr(xu, yu)) = 0xff;
 				}
 	}
 }
+
+// Based on public-domain code by Darel Rex Finley, 2007
+// https://alienryderflex.com/polygon_fill/
+// Basically the same as the one in Graphics::Primitives, only tweaked to produce similar output to QuickDraw.
+template<typename T>
+void MacDrawPrimitives<T>::drawPolygonScan(const int *polyX, const int *polyY, int npoints, const Common::Rect &bbox, uint32 color, void *data) {
+	int *nodeX = (int *)calloc(npoints, sizeof(int));
+	int i, j;
+
+	//  Loop through the rows of the image.
+	for (int pixelY = bbox.top; pixelY < bbox.bottom; pixelY++) {
+		//  Build a list of nodes.
+		int nodes = 0;
+		j = npoints - 1;
+
+		for (i = 0; i < npoints; i++) {
+			// this line has been changed so the alignment is on the left
+			if ((polyY[i] <= pixelY && polyY[j] > pixelY) || (polyY[j] <= pixelY && polyY[i] > pixelY)) {
+				nodeX[nodes++] = (int)(polyX[i] + (double)(pixelY - polyY[i]) / (double)(polyY[j]-polyY[i]) *
+														(double)(polyX[j] - polyX[i]) + 0.5);
+			}
+			j = i;
+		}
+
+		//  Sort the nodes
+		Common::sort(nodeX, &nodeX[nodes]);
+
+		//  Fill the pixels between node pairs.
+		for (i = 0; i < nodes; i += 2) {
+			if (nodeX[i  ] >= bbox.right)
+				break;
+			if (nodeX[i + 1] > bbox.left) {
+				nodeX[i] = MAX<int16>(nodeX[i], bbox.left);
+				nodeX[i + 1] = MIN<int16>(nodeX[i + 1] - 1, bbox.right);
+				if (nodeX[i] < nodeX[i + 1])
+					drawHLine(nodeX[i], nodeX[i + 1], pixelY, color, data);
+			}
+		}
+	}
+
+	free(nodeX);
+}
+
+
 
 // TODO: implement for other bpp
 
@@ -943,7 +989,7 @@ void MacWindowManager::drawDesktop() {
 	} else {
 		Common::Rect r(_desktop->getBounds());
 
-		MacPlotData pd(_desktop, nullptr, &_patterns, kPatternCheckers, 0, 0, 1, _colorWhite);
+		MacPlotData pd(_desktop, nullptr, &_patterns, kPatternCheckers, 0, 0, {1, 1}, _colorWhite);
 
 		getDrawPrimitives().drawRoundRect(r, kDesktopArc, _colorBlack, true, &pd);
 	}
@@ -1240,7 +1286,7 @@ void MacWindowManager::renderZoomBox(bool redraw) {
 	ZoomBox *box = _zoomBoxes.front();
 	uint32 t = g_system->getMillis();
 
-	MacPlotData pd(_screen, nullptr, &getPatterns(), Graphics::kPatternCheckers, 0, 0, 1, 0, true);
+	MacPlotData pd(_screen, nullptr, &getPatterns(), Graphics::kPatternCheckers, 0, 0, {1, 1}, 0, true);
 
 	// Undraw the previous boxes
 	if (box->last.size() != 0) {
@@ -1458,7 +1504,7 @@ void MacWindowManager::replaceCustomCursor(const byte *data, int w, int h, int h
 
 void MacWindowManager::pushCustomCursor(const Graphics::Cursor *cursor) {
 	CursorMan.pushCursor(cursor->getSurface(), cursor->getWidth(), cursor->getHeight(), cursor->getHotspotX(),
-	                     cursor->getHotspotY(), cursor->getKeyColor());
+	                     cursor->getHotspotY(), cursor->getKeyColor(), NULL, cursor->getMask());
 
 	if (cursor->getPalette())
 		CursorMan.pushCursorPalette(cursor->getPalette(), cursor->getPaletteStartIndex(), cursor->getPaletteCount());

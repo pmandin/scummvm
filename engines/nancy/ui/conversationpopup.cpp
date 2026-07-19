@@ -130,9 +130,7 @@ void ConversationPopup::drawContent() {
 
 	drawAllText(textBounds, 0, _tboxData->conversationFontID, _tboxData->highlightConversationFontID);
 
-	Common::Rect localTextRect = _uicoData->textRect;
-	localTextRect.translate(-_uicoData->header.normalDestRect.left,
-							-_uicoData->header.normalDestRect.top);
+	Common::Rect localTextRect = getLocalTextRect();
 
 	const uint16 inner = getInnerHeight();
 	const uint16 outer = localTextRect.height();
@@ -151,6 +149,15 @@ void ConversationPopup::drawContent() {
 
 uint16 ConversationPopup::getInnerHeight() const {
 	return _drawnTextHeight + _tboxData->scrollbarDefaultPos.y;
+}
+
+Common::Rect ConversationPopup::getLocalTextRect() const {
+	Common::Rect r = _uicoData->textRect;
+	if (g_nancy->getGameType() < kGameTypeNancy13) {
+		r.translate(-_uicoData->header.normalDestRect.left,
+					-_uicoData->header.normalDestRect.top);
+	}
+	return r;
 }
 
 Common::Rect ConversationPopup::toPopupLocal(const Common::Rect &chunkRect, bool useGameFrame) const {
@@ -229,11 +236,17 @@ void ConversationPopup::handleInput(NancyInput &input) {
 
 			const int newThumbTop = localMouse.y - _scrollbarGrabOffset;
 			const int clamped = CLIP<int>(newThumbTop, trackLocal.top, trackLocal.top + travel);
-			_scrollPos = travel > 0 ? (float)(clamped - trackLocal.top) / (float)travel : 0.0f;
+			const float newScrollPos = travel > 0 ? (float)(clamped - trackLocal.top) / (float)travel : 0.0f;
 
-			drawBackground();
-			drawContent();
-			drawScrollbar(kUIButtonPressed);
+			// Only re-render when the thumb actually moves. drawContent() re-lays out
+			// the whole text surface, so calling it every frame while the button is
+			// merely held down pins the CPU and makes dragging choppy.
+			if (newScrollPos != _scrollPos) {
+				_scrollPos = newScrollPos;
+				drawBackground();
+				drawContent();
+				drawScrollbar(kUIButtonPressed);
+			}
 
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				_scrollbarDragging = false;
@@ -264,9 +277,7 @@ void ConversationPopup::handleInput(NancyInput &input) {
 	}
 
 	// Response hotspot handling — mirrors Textbox::handleInput().
-	Common::Rect localTextRect = _uicoData->textRect;
-	localTextRect.translate(-_uicoData->header.normalDestRect.left,
-							-_uicoData->header.normalDestRect.top);
+	Common::Rect localTextRect = getLocalTextRect();
 
 	const uint16 inner = getInnerHeight();
 	const uint16 outer = localTextRect.height();

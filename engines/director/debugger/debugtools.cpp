@@ -615,7 +615,11 @@ void setScriptToDisplay(const ImGuiScript &script) {
 	uint index = scriptData->_scripts.size();
 	scriptData->_scrollToCurrent = true;
 	if (index && scriptData->_scripts[index - 1] == script) {
+		// operator== ignores pc, so carry the new execution point over
+		scriptData->_scripts[index - 1].pc = script.pc;
+		scriptData->_current = index - 1;
 		scriptData->_showScript = true;
+		_state->_dbg._scrollToPC = true;
 		return;
 	}
 	scriptData->_scripts.push_back(script);
@@ -668,6 +672,20 @@ ImColor brightenColor(const ImColor& color, float factor) {
 	col.y = CLIP<float>(col.y * factor, 0.0f, 1.0f);
 	col.z = CLIP<float>(col.z * factor, 0.0f, 1.0f);
 	return ImColor(col);
+}
+
+Window *findWindowByName(const Common::String &name) {
+	if (name.empty())
+		return nullptr;
+	Movie *stageMovie = g_director->getStage()->getCurrentMovie();
+	if (stageMovie && stageMovie->getMacName() == name)
+		return g_director->getStage();
+	for (auto window : *g_director->getWindowList()) {
+		Movie *movie = window->getCurrentMovie();
+		if (movie && movie->getMacName() == name)
+			return window;
+	}
+	return nullptr;
 }
 
 Window *windowListCombo(Common::String *target) {
@@ -999,11 +1017,6 @@ void onImGuiRender() {
 
 	invalidateStaleCaches();
 
-	if (_state->_windowToRedraw) {
-		_state->_windowToRedraw->render(true);
-		_state->_windowToRedraw = nullptr;
-	}
-
 	ImGuiIO &io = ImGui::GetIO();
 	io.ConfigFlags &= ~(ImGuiConfigFlags_NoMouseCursorChange | ImGuiConfigFlags_NoMouse);
 
@@ -1106,6 +1119,13 @@ void onImGuiCleanup() {
 
 	delete _state;
 	_state = nullptr;
+}
+
+void renderPendingWindow() {
+	if (!_state || !_state->_windowToRedraw)
+		return;
+	_state->_windowToRedraw->render(true);
+	_state->_windowToRedraw = nullptr;
 }
 
 int getSelectedChannel(){

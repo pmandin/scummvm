@@ -428,6 +428,7 @@ InsaneRebel2::InsaneRebel2(ScummEngine_v7 *scumm) {
 	_flyControlMode = 0;
 	_shipFiring = false;
 	_prevMouseButtons = 0;
+	_rapidFireCounter = 0;
 	_shipDirectionH = 2;
 	_shipDirectionV = 3;
 	_shipDirectionIndex = 2 * 7 + 3;
@@ -536,7 +537,8 @@ InsaneRebel2::InsaneRebel2(ScummEngine_v7 *scumm) {
 	// "subtitles" key, which the text-render paths gate on.
 	_optTextEnabled = ConfMan.getBool("subtitles");
 	_optControlsFlipped = false;
-	_optRapidFire = false;
+	// Unlike the original, this defaults to on.
+	_optRapidFire = ConfMan.hasKey("rebel2_rapid_fire") ? ConfMan.getBool("rebel2_rapid_fire") : true;
 	_optVolumeLevel = _vm->_mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType) / 2;
 
 	_menuInputActive = false;
@@ -1080,7 +1082,10 @@ bool InsaneRebel2::notifyEvent(const Common::Event &event) {
 		switch (event.kbd.keycode) {
 		case Common::KEYCODE_ESCAPE:
 			if (splayer) {
-				if (_gameState == kStateGameplay && _rebelHandler != 0) {
+				// _gameplaySectionActive also covers a gameplay video's startup, before
+				// its first IACT sets _rebelHandler; otherwise ESC there skips the segment
+				// (e.g. spamming ESC after a Level 6 phase-2 death skipped phase 2).
+				if (_gameState == kStateGameplay && (_rebelHandler != 0 || _gameplaySectionActive)) {
 					debugC(DEBUG_INSANE, "ESC pressed during gameplay - opening global menu");
 					openGameplayMainMenu(splayer);
 				} else {
@@ -1511,6 +1516,7 @@ int32 InsaneRebel2::processMouse() {
 
 	bool leftPressed = (currentButtons & 1) != 0;
 	bool leftWasPressed = (_prevMouseButtons & 1) != 0;
+	bool leftEdge = leftPressed && !leftWasPressed;
 	bool rightPressed = (currentButtons & 2) != 0;
 	bool rightWasPressed = (_prevMouseButtons & 2) != 0;
 
@@ -1520,7 +1526,7 @@ int32 InsaneRebel2::processMouse() {
 		if (rightPressed && !rightWasPressed) {
 			_rebelControlMode |= 2;
 		}
-		if (leftPressed && !leftWasPressed) {
+		if (leftEdge) {
 			_rebelControlMode |= 1;
 		}
 	} else {
@@ -1542,7 +1548,16 @@ int32 InsaneRebel2::processMouse() {
 	if (autoFire)
 		_rebelControlMode |= 1;
 
-	bool triggerShot = ((_rebelHandler == 25) ? (leftPressed && !leftWasPressed) : leftPressed) || autoFire;
+	// Rapid fire injects a held-button shot every 5th frame from the press.
+	if (leftEdge)
+		_rapidFireCounter = 0;
+	bool rapidFireShot = false;
+	if (!_rebelAutoPlay && _optRapidFire) {
+		rapidFireShot = (_rapidFireCounter % 5 == 0) && leftPressed;
+		_rapidFireCounter++;
+	}
+
+	bool triggerShot = leftEdge || rapidFireShot || autoFire;
 	if (_rebelHandler == 8) {
 		_shipFiring = triggerShot && canShoot;
 	}

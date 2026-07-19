@@ -19,45 +19,24 @@
  *
  */
 
-#ifndef MEDIASTATION_DOTGAME_H
-#define MEDIASTATION_DOTGAME_H
+#ifndef MEDIASTATION_ACTORS_PRINTER_H
+#define MEDIASTATION_ACTORS_PRINTER_H
 
-#include "mediastation/actors/stage.h"
+#include "mediastation/actor.h"
 
 namespace MediaStation {
 
-class DotGameActor : public SpatialEntity {
+class PrinterActor : public SpatialEntity {
 public:
-	DotGameActor() : SpatialEntity(kActorTypeDotGame) {};
-
-	virtual void readParameter(Chunk &chunk, ActorHeaderSectionType paramType) override;
+	PrinterActor() : SpatialEntity(kActorTypePrinter) {};
 	virtual ScriptValue callMethod(BuiltInMethod methodId, Common::Array<ScriptValue> &args) override;
-	virtual void draw(DisplayContext &displayContext) override;
-	virtual void loadIsComplete() override;
 
 private:
-	uint16 _totalDots = 0;
-	Common::Array<Common::Point> _dotPositions;
-	uint16 _startHotspotId = 0;
-	uint16 _endHotspotId = 0;
-	uint16 _markerActorId = 0;
-	uint16 _currentDotIndex = 0;
-	uint16 _speed = 1;
-	uint8 _lineThickness = 3;
-	byte _lineColorR = 0;
-	byte _lineColorG = 0;
-	byte _lineColorB = 0;
-	byte _linePaletteIndex = 0;
-	Common::Point _currentPosition;
-	uint16 _animationProgress = 100;
+	bool printActor(uint actorId, bool unk1);
+	void printActorCollection(const Collection &actors);
 
-	void activateHelpers();
-	void deActivateHelpers();
-	void doHit();
-	void doReset(int16 targetDot);
-	void updateHelpers();
 };
 
-} // End namespace MediaStation
+} // End of namespace MediaStation
 
 #endif

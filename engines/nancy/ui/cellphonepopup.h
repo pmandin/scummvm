@@ -173,6 +173,17 @@ private:
 
 	void resetDialPad();
 	void enterScreenState(ScreenState newState);
+	// True while a player-placed call is ringing / waiting for pickup, so the
+	// connecting strip shows a Back button (subButtons[0]) that cancels it.
+	// Incoming calls have no Back button.
+	bool isCallBackButtonActive() const {
+		return (_screenState == kPlaceCall || _screenState == kWaitOutgoingRing ||
+				_screenState == kLookupContact || _screenState == kWaitPickup) &&
+				!_hasPendingCallScene && _uiclData &&
+				!_uiclData->subButtons[0].destRect.isEmpty();
+	}
+	// Cancel a ringing / waiting call and return to the welcome screen.
+	void cancelCall();
 	void appendDigit(byte slotIndex);
 	// Play a dial-pad key's DTMF tone. The name is a raw sound filename, so it
 	// is played through the phone's call-sound channel rather than the common
@@ -219,6 +230,13 @@ private:
 	Common::Rect backLabelHitRect() const;
 	// Popup-local rect of a visible Back sub-button (subButtons[index]).
 	Common::Rect backButtonHitRect(uint subButtonIndex) const;
+	// subButtons index of the Back / HOME button visible in the current state,
+	// or -1 when none is shown. Used to drive its hover highlight.
+	int currentBackButtonIndex() const;
+	// subButtons index of the bottom button on a content view.
+	uint contentViewBottomButton() const;
+	// A browser content view other than the main page (i.e. an actual web page).
+	bool isBrowserArticle() const;
 	// Move the directory selection by delta, scrolling as needed.
 	void moveDirectorySelection(int delta);
 
@@ -237,6 +255,10 @@ private:
 	bool _closeButtonHovered = false;
 	bool _scrollUpHovered = false;
 	bool _scrollDownHovered = false;
+	// Green-arrow highlight state for the captioned "> HELP" (welcome / dialing)
+	// and "< BACK" / HOME sub-buttons: each swaps to its pressed sprite on hover.
+	bool _helpButtonHovered = false;
+	bool _backButtonHovered = false;
 
 	ScreenState _screenState = kWelcome;
 
@@ -270,6 +292,8 @@ private:
 	ScreenState _contentReturnState = kOnlineHub;
 	const UICL::SrcDestRectPair *_contentHeading = nullptr;
 	Common::String _contentKey;
+	// Uppercased key of the main browser page (empty until the browser is opened).
+	Common::String _browserHomeKey;
 	uint _contentScroll = 0;
 
 	// Email "opening" transition: the visible row whose closed envelope briefly

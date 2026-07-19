@@ -166,6 +166,7 @@ TheEntity entities[] = {					//	hasId  ver.	isFunction
 	{ kTheSerialNumber,		"serialNumber",		false, 500, false },//				D5 p, documnted in D7
 	{ kTheShiftDown,		"shiftDown",		false, 200, true },	// D2 f
 	{ kTheSoundEnabled,		"soundEnabled",		false, 200, false },// D2 p
+	{ kTheSoundDevice,		"soundDevice",		false, 700, false },//					D7 p
 	{ kTheSoundEntity,		"sound",			true,  300, false },// 		D3 p
 	{ kTheSoundKeepDevice,	"soundKeepDevice",	false, 600, false },//					D6 p, documented in D7
 	{ kTheSoundLevel,		"soundLevel",		false, 200, false },// D2 p
@@ -285,6 +286,7 @@ const TheEntityField fields[] = {
 	{ kTheSprite,	"movieTime",	kTheMovieTime,	300 },//		D3.1 P
 	{ kTheCast,		"pausedAtStart",kThePausedAtStart,400 },//				D4 p
 	{ kTheCast,		"preLoad",		kThePreLoad,	300 },//		D3.1 p
+	{ kTheCast,		"scale",		kTheScale,		700 },//							D7 p
 	{ kTheSprite,	"setTrackEnabled",kTheSetTrackEnabled, 500 },//				D5 p
 	{ kTheCast,		"sound",		kTheSound,		300 },//		D3.1 p // 0-1 off-on
 	{ kTheSprite,	"startTime",	kTheStartTime,	300 },//		D3.1 p
@@ -1092,6 +1094,9 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 			}
 		}
 		break;
+	case kTheSoundDevice:
+		d = _soundDevice;
+		break;
 	case kTheSoundKeepDevice:
 		// System property; for Windows only, prevents the sound driver from unloading
 		// and reloading each time a sound needs to play. The default value is TRUE.
@@ -1449,6 +1454,10 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 				break;
 			}
 		}
+		break;
+	case kTheSoundDevice:
+		// Ignored: ScummVM has one fixed output with no switchable backend,
+		// as in Director when the requested device is unavailable.
 		break;
 	case kTheSoundKeepDevice:
 		// We do not need to unload the sound driver, so just ignore this.
@@ -2027,16 +2036,18 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		break;
 	case kTheMovieRate:
 		channel->_movieRate = d.asFloat();
-		if (sprite->_cast && sprite->_cast->_type == kCastDigitalVideo)
+		if (sprite->_cast && sprite->_cast->_type == kCastDigitalVideo) {
+			((DigitalVideoCastMember *)sprite->_cast)->setChannel(channel);
 			((DigitalVideoCastMember *)sprite->_cast)->setMovieRate(channel->_movieRate);
-		else
+		} else
 			warning("Setting movieTime for non-digital video");
 		break;
 	case kTheMovieTime:
 		channel->_movieTime = d.asInt();
-		if (sprite->_cast->_type == kCastDigitalVideo)
+		if (sprite->_cast && sprite->_cast->_type == kCastDigitalVideo) {
+			((DigitalVideoCastMember *)sprite->_cast)->setChannel(channel);
 			((DigitalVideoCastMember *)sprite->_cast)->seekMovie(channel->_movieTime);
-		else
+		} else
 			warning("Setting movieTime for non-digital video");
 		break;
 	case kThePattern:
@@ -2071,16 +2082,18 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		break;
 	case kTheStartTime:
 		channel->_startTime = d.asInt();
-		if (sprite->_cast->_type == kCastDigitalVideo)
+		if (sprite->_cast && sprite->_cast->_type == kCastDigitalVideo) {
+			((DigitalVideoCastMember *)sprite->_cast)->setChannel(channel);
 			((DigitalVideoCastMember *)sprite->_cast)->seekMovie(channel->_startTime);
-		else
+		} else
 			warning("Setting startTime for non-digital video");
 		break;
 	case kTheStopTime:
 		channel->_stopTime = d.asInt();
-		if (sprite->_cast->_type == kCastDigitalVideo)
+		if (sprite->_cast && sprite->_cast->_type == kCastDigitalVideo) {
+			((DigitalVideoCastMember *)sprite->_cast)->setChannel(channel);
 			((DigitalVideoCastMember *)sprite->_cast)->setStopTime(channel->_stopTime);
-		else
+		} else
 			warning("Setting stopTime for non-digital video");
 		break;
 	case kTheStretch:
@@ -2234,7 +2247,12 @@ Datum Lingo::getTheCastLib(Datum &id1, int field) {
 
 	switch (field) {
 	case kTheFileName:
-		d = cast->getArchive()->getPathName().toString(g_director->_dirSeparator);
+		// The cast archive may not be attached yet, e.g. when Lingo runs
+		// before the movie finished loading.
+		if (cast->getArchive())
+			d = cast->getArchive()->getPathName().toString(g_director->_dirSeparator);
+		else
+			d = Common::String();
 		break;
 	case kTheName:
 		d = cast->getCastName();

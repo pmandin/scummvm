@@ -884,7 +884,9 @@ void VideoDisplayManager::imageBlit(
 	if (dissolveFactor > 1.0 || dissolveFactor < 0.0) {
 		warning("%s: Got out-of-range dissolve factor: %f", __func__, dissolveFactor);
 		dissolveFactor = CLIP(dissolveFactor, 0.0, 1.0);
-	} else if (dissolveFactor == 0.0) {
+	}
+
+	if (dissolveFactor == 0.0) {
 		// If the image is fully transparent, there is nothing to draw, so we can return now.
 		return;
 	} else if (dissolveFactor != 1.0) {
@@ -921,7 +923,7 @@ void VideoDisplayManager::imageBlit(
 		// non-transparent blitting, but we will just use simpleBlitFrom in both
 		// cases. It will pick the better method if there is no transparent
 		// color set.
-		blitRectsClip(targetImage, destinationPoint, sourceImage->_image, dirtyRegion, useTransBlit);
+		blitRectsClip(targetImage, destinationPoint, sourceImage, dirtyRegion, useTransBlit);
 		break;
 
 	case kRle8Blit | kClipEnabled:
@@ -954,12 +956,12 @@ void VideoDisplayManager::imageBlit(
 void VideoDisplayManager::blitRectsClip(
 	Graphics::ManagedSurface *dest,
 	const Common::Point &destLocation,
-	const Graphics::ManagedSurface &source,
+	const PixMapImage *source,
 	const Common::Array<Common::Rect> &dirtyRegion,
 	bool useTransBlit) {
 
 	for (const Common::Rect &dirtyRect : dirtyRegion) {
-		Common::Rect destRect(destLocation, source.w, source.h);
+		Common::Rect destRect(destLocation, source->width(), source->height());
 		Common::Rect areaToRedraw = dirtyRect.findIntersectingRect(destRect);
 
 		if (!areaToRedraw.isEmpty()) {
@@ -967,9 +969,9 @@ void VideoDisplayManager::blitRectsClip(
 			Common::Point originOnScreen(areaToRedraw.origin());
 			areaToRedraw.translate(-destLocation.x, -destLocation.y);
 			if (useTransBlit) {
-				dest->transBlitFrom(source, areaToRedraw, originOnScreen);
+				dest->transBlitFrom(source->_image, areaToRedraw, originOnScreen);
 			} else {
-				dest->simpleBlitFrom(source, areaToRedraw, originOnScreen);
+				dest->simpleBlitFrom(source->_image, areaToRedraw, originOnScreen);
 			}
 		}
 	}
@@ -1042,11 +1044,11 @@ void VideoDisplayManager::dissolveBlitRectsClip(
 	const Common::Array<Common::Rect> &dirtyRegion,
 	const uint integralDissolveFactor) {
 
-	byte dissolveIndex = DISSOLVE_PATTERN_COUNT;
+	byte dissolveIndex = DISSOLVE_PATTERN_COUNT - 1;
 	if (integralDissolveFactor != 50) {
-		dissolveIndex = ((integralDissolveFactor + 2) / 4) - 1;
+		dissolveIndex = ((integralDissolveFactor + 2) / 4);
+		dissolveIndex = CLIP<byte>(dissolveIndex, 0, (DISSOLVE_PATTERN_COUNT - 2));
 	}
-	dissolveIndex = CLIP<byte>(dissolveIndex, 0, (DISSOLVE_PATTERN_COUNT - 1));
 
 	Common::Rect destRect(Common::Rect(destPos, source->width(), source->height()));
 	for (const Common::Rect &dirtyRect : dirtyRegion) {
@@ -1499,6 +1501,27 @@ void VideoDisplayManager::getGammaValues(double &red, double &green, double &blu
 	red = _redGamma;
 	green = _greenGamma;
 	blue = _blueGamma;
+}
+
+bool PrintManager::printerIsReady() {
+	// For this stub, we will just always report that †he printer is ready.
+	return true;
+}
+
+void PrintManager::printScreen() {
+	warning("STUB: %s", __func__);
+}
+
+void PrintManager::printSpatialObject(SpatialEntity *entity) {
+	warning("STUB: %s", __func__);
+}
+
+void PrintManager::setSourceSize(Common::Point size) {
+	warning("STUB: %s", __func__);
+}
+
+void PrintManager::flushToPrinter() {
+	warning("STUB: %s", __func__);
 }
 
 } // End of namespace MediaStation

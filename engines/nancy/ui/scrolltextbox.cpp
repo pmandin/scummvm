@@ -104,11 +104,14 @@ void ScrollTextBox::updateGraphics() {
 }
 
 Common::Rect ScrollTextBox::textViewportLocal() const {
-	// The viewport is in screen space; the overlay shares it, so subtract the
-	// dest origin to get popup-local coordinates.
+	// Nancy13 stores the viewport as a source rect within the overlay image, so
+	// it's already popup-local. Earlier games store it in screen space and share
+	// the popup origin, so subtract the dest origin there.
 	Common::Rect r = _textViewportScreen;
-	r.translate(-_header->normalDestRect.left,
-				-_header->normalDestRect.top);
+	if (g_nancy->getGameType() < kGameTypeNancy13) {
+		r.translate(-_header->normalDestRect.left,
+					-_header->normalDestRect.top);
+	}
 	return r;
 }
 
@@ -323,13 +326,23 @@ void ScrollTextBox::handleInput(NancyInput &input) {
 
 			const int newThumbTop = localMouse.y - _scrollbarGrabOffset;
 			const int clamped = CLIP<int>(newThumbTop, trackLocal.top, trackLocal.top + travel);
-			_scrollPos = travel > 0 ? (float)(clamped - trackLocal.top) / (float)travel : 0.0f;
+			const float newScrollPos = travel > 0 ? (float)(clamped - trackLocal.top) / (float)travel : 0.0f;
 
+			bool released = false;
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				_scrollbarDragging = false;
+				released = true;
 			}
 
-			drawContent();
+			// Only re-render when the thumb actually moves (or the drag just ended, to
+			// repaint the thumb out of its pressed state). drawContent() re-lays out
+			// the whole text surface, so calling it every frame while the button is
+			// merely held down pins the CPU and makes dragging choppy.
+			if (newScrollPos != _scrollPos || released) {
+				_scrollPos = newScrollPos;
+				drawContent();
+			}
+
 			input.eatMouseInput();
 			return;
 		}

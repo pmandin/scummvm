@@ -911,7 +911,7 @@ void Score::incrementFilmLoops() {
 	for (auto &it : _channels) {
 		if (it->_sprite->_cast && (it->_sprite->_cast->_type == kCastFilmLoop || it->_sprite->_cast->_type == kCastMovie)) {
 			FilmLoopCastMember *fl = ((FilmLoopCastMember *)it->_sprite->_cast);
-			if (!fl->_score->_scoreCache.empty()) {
+			if (fl->_score && !fl->_score->_scoreCache.empty()) {
 				if (fl->_looping) {
 					it->_filmLoopFrame += 1;
 					it->_filmLoopFrame %= fl->_score->_scoreCache.size();
@@ -1768,6 +1768,11 @@ bool Score::refreshPointersForCastLib(uint16 castLib) {
 			hit = true;
 		}
 	}
+
+	// The frame may not be loaded yet, e.g. when Lingo swaps a cast lib
+	// before the score started playing.
+	if (!_currentFrame)
+		return hit;
 
 	for (auto &it : _currentFrame->_sprites) {
 		if (it->_castId.castLib == castLib) {

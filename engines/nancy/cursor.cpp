@@ -116,10 +116,11 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	_primaryVideoInitialPos.x = chunkStream->readUint16LE();
 	_primaryVideoInitialPos.y = chunkStream->readUint16LE();
 
-	if (g_nancy->getGameType() >= kGameTypeNancy13) {
+	// Nancy13+ split the cursor sheet into two images: system cursors in
+	// _uiCursorsSurface, held-item cursors in _invCursorsSurface (applyCursor
+	// picks the surface).
+	if (g_nancy->getGameType() >= kGameTypeNancy13)
 		g_nancy->_resource->loadImage(uiCursorsImageName, _uiCursorsSurface);
-		// TODO: Add handling for split UI + inventory cursors in Nancy13+
-	}
 
 	g_nancy->_resource->loadImage(inventoryCursorsImageName, _invCursorsSurface);
 
@@ -133,7 +134,7 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	delete chunkStream;
 }
 
-uint CursorManager::resolveNancy10CursorID(CursorType type, int16 itemID, bool setFromScript) {
+uint CursorManager::resolveNancy10CursorID(CursorType type, int16 itemID, bool setFromScript, bool hotspotVariant) {
 	// Item-held variants. The Nancy 10+ chunk reserves `numItems × 2`
 	// slots after the two 37-entry system arrays (= _numCursorTypes * 2),
 	// each item getting one [idle, hotspot] pair. Held items only
@@ -150,9 +151,10 @@ uint CursorManager::resolveNancy10CursorID(CursorType type, int16 itemID, bool s
 	if (setFromScript) {
 		// Scripts store a raw cursor type number T, while the chunk lays
 		// each type out as a [idle, hotspot] pair (slots T*2 and T*2+1).
-		// Script cursors are only ever applied while hovering a hotspot,
-		// so we always pick the hotspot variant.
-		return (uint)type * 2 + 1;
+		// Script cursors are usually applied while hovering a hotspot, so
+		// hotspotVariant defaults to the hotspot sprite; puzzle cursors that
+		// want the idle sprite (e.g. RotatingLockPuzzle's crank) pass false.
+		return (uint)type * 2 + (hotspotVariant ? 1 : 0);
 	}
 
 	// System cursors: translate the legacy CursorType to the matching
@@ -163,31 +165,85 @@ uint CursorManager::resolveNancy10CursorID(CursorType type, int16 itemID, bool s
 	case kNormal:               return kNewNormal;
 	case kHotspot:              return kNewHotspot;
 	case kHotspotTalk:          return kNewHotspotTalk;
-	case kDragHand:             return kNewDragHand;
-	case kDropHand:             return kNewDropHand;
-	case kPuzzleArrow:          return kNewPuzzleArrow;
 	case kNormalArrow:          return kNewNormalArrow;
 	case kHotspotArrow:         return kNewHotspotArrow;
 	case kExit:                 return kNewExit;
 	case kMove:                 return kNewExit;
-	case kRotateCW:             return kNewRotateCW;
-	case kRotateCCW:            return kNewRotateCCW;
 	case kMoveLeft:             return kNewMoveLeft;
 	case kMoveRight:            return kNewMoveRight;
 	case kMoveForward:          return kNewMoveForward;
 	case kMoveBackward:         return kNewMoveBackward;
 	case kMoveUp:               return kNewMoveUp;
 	case kMoveDown:             return kNewMoveDown;
-	case kRotateLeft:           return kNewRotateLeft;
+	case kRotateCW:             return kNewRotateCW;
+	case kRotateCCW:            return kNewRotateCCW;
 	case kRotateRight:          return kNewRotateRight;
-	case kInvertedRotateLeft:   return kNewInvertedRotateLeft;
+	case kRotateLeft:           return kNewRotateLeft;
 	case kInvertedRotateRight:  return kNewInvertedRotateRight;
+	case kInvertedRotateLeft:   return kNewInvertedRotateLeft;
+	case kDragHand:             return kNewDragHand;
+	case kPuzzleArrow:          return kNewPuzzleArrow;
+	case kDropHand:             return kNewDropHand;
 	default:
 		return kNewNormal;
 	}
 }
 
-void CursorManager::setCursor(CursorType type, int16 itemID, bool setFromScript) {
+uint CursorManager::resolveNancy13CursorID(CursorType type, int16 itemID, bool setFromScript, bool hotspotVariant) {
+	// Held-item cursors: the item block follows the 45 system-cursor pairs;
+	// each item owns an [idle, hotspot] pair now indexing _invCursorsSurface
+	// (chosen by applyCursor()).
+	if (itemID != -1 && (type == kNormal || type == kHotspot)) {
+		_hasItem = true;
+		const uint itemsOffset = (uint)_numCursorTypes * 2;
+		const uint variant = (type == kHotspot) ? 1 : 0;
+		return itemsOffset + (uint)itemID * 2 + variant;
+	}
+
+	if (setFromScript) {
+		// Scripts store a raw cursor type number T, while the chunk lays
+		// each type out as a [idle, hotspot] pair (slots T*2 and T*2+1).
+		// Script cursors are usually applied while hovering a hotspot, so
+		// hotspotVariant defaults to the hotspot sprite; puzzle cursors that
+		// want the idle sprite pass false.
+		return (uint)type * 2 + (hotspotVariant ? 1 : 0);
+	}
+
+	// Map the engine's logical CursorType to a Nancy13 system type, then pick
+	// the idle slot (type * 2) or hotspot slot (type * 2 + 1).
+	uint sysType = kNancy13Normal;
+	bool hotspot = false;
+
+	switch (type) {
+	case kNormal:               sysType = kNancy13Normal; break;
+	case kHotspot:              sysType = kNancy13Normal; hotspot = true; break;
+	case kNormalArrow:          sysType = kNancy13Arrow; break;
+	case kHotspotArrow:         sysType = kNancy13Arrow; hotspot = true; break;
+	case kMove:
+	case kExit:                 sysType = kNancy13Exit; break;
+	case kMoveForward:          sysType = kNancy13MoveForward; break;
+	case kMoveBackward:         sysType = kNancy13MoveBackward; break;
+	case kMoveUp:               sysType = kNancy13MoveUp; break;
+	case kMoveDown:             sysType = kNancy13MoveDown; break;
+	case kMoveLeft:             sysType = kNancy13MoveLeft; break;
+	case kMoveRight:            sysType = kNancy13MoveRight; break;
+	case kRotateCW:
+	case kRotateRight:
+	case kInvertedRotateRight:  sysType = kNancy13RotateCW; break;
+	case kRotateCCW:
+	case kRotateLeft:
+	case kInvertedRotateLeft:   sysType = kNancy13RotateCCW; break;
+	case kDragHand:
+	case kDropHand:             sysType = kNancy13DropHand; break;
+	case kPuzzleArrow:          sysType = kNancy13PuzzleArrow; hotspot = true; break;
+	case kHotspotTalk:          sysType = kNancy13Normal; hotspot = true; break;	// TODO: talk sprite not yet identified in the sheet
+	default:                    sysType = kNancy13Normal; break;
+	}
+
+	return sysType * 2 + (hotspot ? 1 : 0);
+}
+
+void CursorManager::setCursor(CursorType type, int16 itemID, bool setFromScript, bool hotspotVariant) {
 	if (!_isInitialized)
 		return;
 
@@ -200,8 +256,13 @@ void CursorManager::setCursor(CursorType type, int16 itemID, bool setFromScript)
 	_curItemID = itemID;
 	_hasItem = false;
 
+	if (gameType >= kGameTypeNancy13) {
+		_curCursorID = resolveNancy13CursorID(type, itemID, setFromScript, hotspotVariant);
+		return;
+	}
+
 	if (gameType >= kGameTypeNancy10) {
-		_curCursorID = resolveNancy10CursorID(type, itemID, setFromScript);
+		_curCursorID = resolveNancy10CursorID(type, itemID, setFromScript, hotspotVariant);
 		return;
 	}
 
@@ -314,8 +375,8 @@ void CursorManager::setCursor(CursorType type, int16 itemID, bool setFromScript)
 	_curCursorID = (uint)(itemID * _numCursorTypes) + itemsOffset + (uint)type;
 }
 
-void CursorManager::setCursorType(CursorType type, bool setFromScript) {
-	setCursor(type, _curItemID, setFromScript);
+void CursorManager::setCursorType(CursorType type, bool setFromScript, bool hotspotVariant) {
+	setCursor(type, _curItemID, setFromScript, hotspotVariant);
 }
 
 void CursorManager::setCursorItemID(int16 itemID) {
@@ -327,6 +388,8 @@ void CursorManager::warpCursor(const Common::Point &pos) {
 }
 
 void CursorManager::applyCursor() {
+	const bool isNancy13 = g_nancy->getGameType() >= kGameTypeNancy13;
+
 	if (_curCursorID != _lastCursorID) {
 		Graphics::ManagedSurface *surf;
 		Common::Rect bounds = _cursors[_curCursorID].bounds;
@@ -335,7 +398,7 @@ void CursorManager::applyCursor() {
 		if (_hasItem)
 			surf = &_invCursorsSurface;
 		else
-			surf = g_nancy->getGameType() <= kGameTypeNancy12 ? &g_nancy->_graphics->_object0 : &_uiCursorsSurface;
+			surf = !isNancy13 ? &g_nancy->_graphics->_object0 : &_uiCursorsSurface;
 
 		Graphics::ManagedSurface temp(*surf, bounds);
 

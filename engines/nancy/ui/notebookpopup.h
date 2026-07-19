@@ -94,6 +94,13 @@ private:
 	Common::Rect toPopupLocal(const Common::Rect &chunkRect, bool useGameFrame) const;
 	Common::Point popupLocalMouse(const Common::Point &screenMouse) const;
 
+	// The UINB tab id of the Journal (book) tab. Nancy 13 renumbered the tab
+	// ids from {1,2} to {0,1}, so the Journal id dropped from 1 to 0.
+	uint16 notebookJournalTabId() const;
+
+	// Clear the taskbar badge for the active tab (Journal = sub 0, Tasks = sub 1).
+	void clearActiveTabNotification();
+
 	// Populate HypertextParser's text-line list with the active tab's
 	// entries.
 	void buildTextLines();

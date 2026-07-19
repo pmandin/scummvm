@@ -27,6 +27,7 @@
 #include "common/memstream.h"
 
 #include "graphics/paletteman.h"
+#include "graphics/blit.h"
 
 #include "image/png.h"
 
@@ -73,7 +74,7 @@ void Screen::drawIbassIcon() {
 			// get the current animation frame
 			Graphics::Surface *currentFrame = _uiIcon[i]._anim->_frames[_uiIcon[i]._curFrame];
 			if ((_uiIcon[i]._x + currentFrame->w) <= _screen32.w)
-				_screen32.copyRectToSurfaceWithKey(*currentFrame, _uiIcon[i]._x, _uiIcon[i]._y, Common::Rect(currentFrame->w, currentFrame->h), _screen32.format.ARGBToColor(0x00, 0xFF, 0xFF, 0xFF));
+				Graphics::alphaBlit((byte *)_screen32.getBasePtr(_uiIcon[i]._x, _uiIcon[i]._y), (const byte *)currentFrame->getPixels(), _screen32.pitch, currentFrame->pitch, currentFrame->w, currentFrame->h, _screen32.format, currentFrame->format, 0, 255);
 		}
 
 	}
@@ -722,29 +723,22 @@ void Screen::processSequence() {
 			}
 		} while (nrToDo == 0xFF);
 	} while (screenPos < (GAME_SCREEN_WIDTH * GAME_SCREEN_HEIGHT));
-	uint8 *gridPtr = _seqGrid; uint8 *scrPtr = _currentScreen; uint8 *rectPtr = NULL;
-	uint8 rectWid = 0, rectX = 0, rectY = 0;
+	uint8 *gridPtr = _seqGrid;
+	uint8 rectWid = 0;
 	for (uint8 cnty = 0; cnty < 12; cnty++) {
 		for (uint8 cntx = 0; cntx < 20; cntx++) {
 			if (*gridPtr) {
-				if (!rectWid) {
-					rectX = cntx;
-					rectY = cnty;
-					rectPtr = scrPtr;
-				}
 				rectWid++;
 			} else if (rectWid) {
 				renderFinalFrame();
 				rectWid = 0;
 			}
-			scrPtr += 16;
 			gridPtr++;
 		}
 		if (rectWid) {
 			renderFinalFrame();
 			rectWid = 0;
 		}
-		scrPtr += 15 * GAME_SCREEN_WIDTH;
 	}
 	_system->updateScreen();
 	_seqInfo.framesLeft--;

@@ -56,8 +56,8 @@ class Character {
 private:
 	Common::Point _startPosition;
 
-	uint32 _startTime;
-	uint32 _duration;
+	uint32 _startTime = 0;
+	uint32 _duration = 0;
 
 	bool _lerpIgnoresObstacles = false;
 
@@ -118,7 +118,6 @@ public:
 
 	uint16 getVerticalOffset() const;
 
-	// TODO: Handle properly
 	uint8 _animationIndex = 1;
 	uint16 _motionTargetVerticalOffset = 0;
 	uint16 _motionVerticalOffsetDelta = 0;
@@ -135,7 +134,6 @@ public:
 	bool isAnimationMirrored() const;
 	uint8 getMirroredAnimation(uint8 original) const;
 
-	// TODO: Will need time handling
 	// advanceMode matches drawAnimFrame/advanceAnimFrame (1010:16e7): 0=current frame,
 	// 2=advance sequence after returning current frame. Hit testing uses 0; drawing uses 2.
 	bool fillCurrentAnimationFrame(uint16 advanceMode, Macs2::AnimFrame &out);
@@ -172,7 +170,7 @@ struct SpeechActData {
 	Character *speaker = nullptr;
 	Common::Array<Common::String> strings;
 	Common::Point position;
-	bool onRightSide;
+	bool onRightSide = false;
 	// Mouth animation counter from handleTimerCallback (1008:d38b).
 	// Decremented each frame. Controls which portrait frame is drawn:
 	// >1: draw frame 2 from primary portrait blob (+0x14C)

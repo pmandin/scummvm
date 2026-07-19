@@ -362,10 +362,10 @@ void ScriptExecutor::scriptPrintString(bool alignRight) {
 		currentView->_uiBackgroundRestorePending = false;
 	}
 
-	uint16 x = scriptReadValue16();
-	uint16 y = scriptReadValue16();
-	uint16 bp2 = readUint16();
-	uint16 bp4 = readUint16();
+	const uint16 x = scriptReadValue16();
+	const uint16 y = scriptReadValue16();
+	const uint16 bp2 = readUint16();
+	const uint16 bp4 = readUint16();
 
 	debugC(kDebugScript, "SCRIPT::printString(x=%u, y=%u, strOffset=%u, numLines=%u, alignRight=%d)", x, y, bp2, bp4, alignRight);
 
@@ -378,13 +378,16 @@ void ScriptExecutor::scriptPrintString(bool alignRight) {
 		delete s;
 	}
 
+	int stringBoxX = x;
+	const int stringBoxY = y;
 	if (alignRight) {
-		x -= g_engine->measureStrings(strings) + 0x12;
+		const int totalWidth = g_engine->measureStrings(strings) + 0x12;
+		stringBoxX -= totalWidth;
 	}
 
 	if (currentView) {
 		// Binary scriptPrintString (1008:a9fa): renders text, then sets g_wIsShowingTextBox=1
-		currentView->_stringBoxPosition = Common::Point(x, y);
+		currentView->_stringBoxPosition = Common::Point(stringBoxX, stringBoxY);
 		currentView->_drawnStringBox = strings;
 		currentView->_isShowingTextBox = true;
 		currentView->currentSpeechActData.speaker = nullptr;
@@ -727,7 +730,7 @@ uint16 Script::ScriptExecutor::readUint16() {
 
 void Script::ScriptExecutor::scriptSetVar() {
 	// This writes to a script variable.
-	readByte();
+	(void)readByte();
 	uint16 variableIndex = readUint16();
 	ScriptVariable var;
 	scriptReadValuePair(var.a, var.b);
@@ -737,7 +740,7 @@ void Script::ScriptExecutor::scriptSetVar() {
 
 void Script::ScriptExecutor::scriptSetVarOr() {
 	// Padding/type byte (same as opcode 0x01) - read and discarded
-	readByte();
+	(void)readByte();
 	uint16 variableIndex = readUint16();
 	// We skip the left shift and just read the first value directly
 	uint16 throwaway;
@@ -1240,8 +1243,7 @@ ExecutionResult Script::ScriptExecutor::scriptShowDialogue() {
 		return ExecutionResult::ScriptFinished;
 	}
 	// Binary: bSlotLoaded for portrait slots 0x12 and 0x13 (runtime+0x153, +0x163).
-	if (speaker->_blobs.size() <= 17 || speaker->_blobs[17].empty() ||
-		speaker->_blobs.size() <= 18 || speaker->_blobs[18].empty()) {
+	if (speaker->_blobs.size() < 19 || speaker->_blobs[17].empty() || speaker->_blobs[18].empty()) {
 		setScriptError(6);
 		endBuffering(_lastOpcodeTriggeredSkip);
 		return ExecutionResult::ScriptFinished;
@@ -1885,9 +1887,8 @@ void Script::ScriptExecutor::scriptSetYOffset() {
 	}
 
 	object->_verticalOffsetScale = offset;
-	Character *c = getOrCreateCharacter((uint16)objectID);
-	if (c != nullptr) {
-		c->_motionTargetVerticalOffset = offset;
+	if (Character *character = getOrCreateCharacter((uint16)objectID)) {
+		character->_motionTargetVerticalOffset = offset;
 	}
 	object->_storedWalkRuntime.valid = true;
 	object->_storedWalkRuntime.motionTargetVerticalOffset = offset;
@@ -3318,6 +3319,8 @@ uint32 ScriptExecutor::getSpecialValue(uint16 value) {
 	case 0x05:
 		break;
 	case 0x06:
+	case 0x0A:
+	case 0x0C:
 		out1 = 1;
 		break;
 	case 0x07:
@@ -3325,14 +3328,8 @@ uint32 ScriptExecutor::getSpecialValue(uint16 value) {
 	case 0x09:
 		out1 = 0;
 		break;
-	case 0x0A:
-		out1 = 1;
-		break;
 	case 0x0B:
 		out1 = _repeatRunFlag ? 1 : 0;
-		break;
-	case 0x0C:
-		out1 = 1;
 		break;
 	case 0x0D:
 		out1 = _chosenDialogueOption;

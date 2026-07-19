@@ -1505,8 +1505,10 @@ uint16 SCR_26_GameOver(void) {
 	script_byte_vars.zone_index = 135;
 
 	/*reload background*/
-	while (!loadFond())
+	Graphics::Surface *fond;
+	while (!(fond = loadFond()))
 		askDisk2();
+	delete fond;
 
 	jaggedZoom(backbuffer, frontbuffer);
 
@@ -1919,11 +1921,6 @@ uint16 SCR_23_HidePortrait(void) {
 	index = *script_ptr++;
 
 	getDirtyRectAndFree(index, &kind, &x, &y, &width, &height, &offs);
-	if (right_button) {
-		g_vm->_renderer->copyScreenBlock(backbuffer, width, height, SCREENBUFFER, offs);
-		return 0;
-	}
-
 	g_vm->_renderer->copyScreenBlock(backbuffer, width, height, SCREENBUFFER, offs);
 
 	return 0;
@@ -2462,7 +2459,7 @@ uint16 SCR_46_DeProfundisLowerHook(void) {
 	script_ptr++;
 
 	/*draw Hook*/
-	sprofs = getPuzzlSprite(96, 140 / 4, 18, &w, &h, &ofs);
+	getPuzzlSprite(96, 140 / 4, 18, &w, &h, &ofs);
 
 	h = 1;
 	y = 15;
@@ -3005,7 +3002,7 @@ static void AnimSaucer(void) {
 		height_prev = height_new;
 
 		waitVBlank();
-		for (i = delay; i--;) ; /*TODO: weak delay*/
+		g_system->delayMillis(delay / 250);
 		delay += 500;
 	}
 }
@@ -3031,18 +3028,25 @@ void theEnd(void) {
 		}
 		while(buttons == 0);
 
-		while (!loadFond())
+		Graphics::Surface *fond;
+		while (!(fond = loadFond()))
 			askDisk2();
+		delete fond;
 		jaggedZoom(backbuffer, frontbuffer);
 		g_vm->_renderer->backBufferToRealFull();
 	} else if (g_vm->getPlatform() == Common::kPlatformAmiga) {
-		while (!ega_loadFond("PRES.BIN"))
+		Graphics::Surface *fond;
+		while (!(fond = ega_loadFond("PRES.BIN")))
 			askDisk2();
+		delete fond;
 		g_vm->_renderer->colorSelect(AMIGA_NUM_PALETTES - 1);
 		g_vm->_renderer->backBufferToRealFull();
 	} else {
-		while (!loadSplash("PRES.BIN"))
+		Graphics::Surface *splash;
+		while (!(splash = loadSplash("PRES.BIN")))
 			askDisk2();
+		splash->free();
+		delete splash;
 		g_vm->_renderer->backBufferToRealFull();
 	}
 }
@@ -3706,21 +3710,26 @@ uint16 CMD_E_PsiZoneScan(void) {
 
 	IFGM_PlaySample(26);
 
+	// On Amiga the scan tints the whole room green for its duration: the exe
+	// ships a dedicated green stone-ramp delta (19) that no room ever uses
+	if (g_vm->_videoMode == Common::kRenderAmiga)
+		amigaApplyRoomPalette(19);
+
 	offs = g_vm->_renderer->calcXY_p(room_bounds_rect.sx, room_bounds_rect.sy);
 	w = room_bounds_rect.ex - room_bounds_rect.sx;
 	h = room_bounds_rect.ey - room_bounds_rect.sy;
 
-	/*room coords are in 4-pixel blocks; EGA is 1 byte/pixel so the scan line
-	  spans w*4 bytes, while CGA packs 4 pixels/byte and spans w bytes*/
-	if (g_vm->_videoMode == Common::kRenderEGA)
+	if (isEgaLikeRenderer())
 		w *= 4;
+
+	byte inv = isEgaLikeRenderer() ? 0x0F : 0xFF;
 
 	for (y = room_bounds_rect.sy; h; y++, h--) {
 		spot_t *spot;
-		for (x = 0; x < w; x++) frontbuffer[offs + x] = ~frontbuffer[offs + x];
+		for (x = 0; x < w; x++) frontbuffer[offs + x] ^= inv;
 		g_vm->_renderer->blitToScreen(offs, w, 1);
 		waitVBlank();
-		for (x = 0; x < w; x++) frontbuffer[offs + x] = ~frontbuffer[offs + x];
+		for (x = 0; x < w; x++) frontbuffer[offs + x] ^= inv;
 		g_vm->_renderer->blitToScreen(offs, w, 1);
 
 		for (spot = zone_spots; spot != zone_spots_end; spot++) {
@@ -3736,6 +3745,10 @@ uint16 CMD_E_PsiZoneScan(void) {
 		if ((offs & g_vm->_line_offset) == 0)
 			offs += g_vm->_screenBPL;
 	}
+
+	// Bring back the room's own palette once the scan is over
+	if (g_vm->_videoMode == Common::kRenderAmiga)
+		amigaApplyRoomPalette(script_byte_vars.palette_index);
 
 	restoreScreenOfSpecialRoom();
 
@@ -4257,8 +4270,6 @@ uint16 CMD_21_VortTalk(void) {
 
 	if (script_byte_vars.rand_value >= 85)
 		num = 6;
-	else if (script_byte_vars.rand_value >= 170)
-		num = 7;
 	else
 		num = 35;
 
@@ -4496,6 +4507,8 @@ uint16 RunScript(byte *code) {
 	script_ptr = code;
 	while (script_ptr != script_end_ptr) {
 		byte opcode = *script_ptr;
+
+		debug(9, "scr %04X: %02X", (uint16)((script_ptr - templ_data) & 0xFFFF), opcode);
 
 #ifdef DEBUG_SCRIPT
 		{

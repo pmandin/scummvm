@@ -21,6 +21,7 @@ MODULE_OBJS = \
   action/puzzle/assemblypuzzle.o \
   action/puzzle/bballpuzzle.o \
   action/puzzle/beadpuzzle.o \
+  action/puzzle/blockspuzzle.o \
   action/puzzle/boardgamepuzzle.o \
   action/puzzle/bulpuzzle.o \
   action/puzzle/bombpuzzle.o \
@@ -30,6 +31,7 @@ MODULE_OBJS = \
   action/puzzle/cuttingpuzzle.o \
   action/puzzle/dotconnectpuzzle.o \
   action/puzzle/drivingpuzzle.o \
+  action/puzzle/dropsortpuzzle.o \
   action/puzzle/gridmappuzzle.o \
   action/puzzle/hamradiopuzzle.o \
   action/puzzle/leverpuzzle.o \
@@ -47,6 +49,7 @@ MODULE_OBJS = \
   action/puzzle/overridelockpuzzle.o \
   action/puzzle/passwordpuzzle.o \
   action/puzzle/peepholepuzzle.o \
+  action/puzzle/pegspuzzle.o \
   action/puzzle/quizpuzzle.o \
   action/puzzle/raycastpuzzle.o \
   action/puzzle/riddlepuzzle.o \
@@ -60,6 +63,7 @@ MODULE_OBJS = \
   action/puzzle/soundequalizerpuzzle.o \
   action/puzzle/soundmatchpuzzle.o \
   action/puzzle/spigotpuzzle.o \
+  action/puzzle/stepobjectspuzzle.o \
   action/puzzle/tangrampuzzle.o \
   action/puzzle/telephone.o \
   action/puzzle/towerpuzzle.o \
@@ -67,6 +71,7 @@ MODULE_OBJS = \
   action/puzzle/twodialpuzzle.o \
   action/puzzle/typingquizpuzzle.o \
   action/puzzle/whalesurvivorpuzzle.o \
+  action/puzzle/wordfindpuzzle.o \
   ui/fullscreenimage.o \
   ui/animatedbutton.o \
   ui/button.o \

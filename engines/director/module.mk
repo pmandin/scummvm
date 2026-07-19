@@ -106,6 +106,7 @@ MODULE_OBJS = \
 	lingo/xlibs/f/fplayxobj.o \
 	lingo/xlibs/f/fsutil.o \
 	lingo/xlibs/g/genutils.o \
+	lingo/xlibs/g/getpath.o \
 	lingo/xlibs/g/getscreenrectsxfcn.o \
 	lingo/xlibs/g/getscreensizexfcn.o \
 	lingo/xlibs/g/getsoundinlevel.o \
@@ -188,7 +189,10 @@ MODULE_OBJS = \
 	lingo/xlibs/x/xsoundxfcn.o \
 	lingo/xlibs/x/xwin.o \
 	lingo/xlibs/y/yasix.o \
+	lingo/xtras-cast/cursorxtra.o \
+	lingo/xtras-cast/textxtra.o \
 	lingo/xtras/a/audio.o \
+	lingo/xtras/b/border.o \
 	lingo/xtras/b/budapi.o \
 	lingo/xtras/d/datetime.o \
 	lingo/xtras/d/directsound.o \

@@ -146,6 +146,23 @@ private:
 	Common::Stack<Clip> _clips;
 };
 
+
+class PrintManager : DisplayContext {
+public:
+	bool printerIsReady();
+	void printScreen();
+	void printSpatialObject(SpatialEntity *entity);
+	void setSourceSize(Common::Point size);
+	void flushToPrinter();
+
+	bool _isPortrait = false;
+
+	double _leftMargin = -1;
+	double _rightMargin = -1;
+	double _topMargin = -1;
+	double _bottomMargin = -1;
+};
+
 class DisplayUpdateManager {
 public:
 	virtual ~DisplayUpdateManager() {}
@@ -243,7 +260,7 @@ private:
 	void blitRectsClip(
 		Graphics::ManagedSurface *dest,
 		const Common::Point &destLocation,
-		const Graphics::ManagedSurface &source,
+		const PixMapImage *source,
 		const Common::Array<Common::Rect> &dirtyRegion,
 		bool useTransBlit = false);
 	void rleBlitRectsClip(

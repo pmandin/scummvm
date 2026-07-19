@@ -371,12 +371,15 @@ static Common::String decodeParams(Common::MemoryReadStream *script, uint8 opcod
 		result = Common::String::format(" %s", v.c_str());
 		break;
 	}
-	case 0x10: {
+	case 0x10:
+	case 0x1F: {
 		Common::String o = decodeScriptValue(script), x = decodeScriptValue(script), y = decodeScriptValue(script);
 		result = Common::String::format(" obj=%s pos=(%s,%s)", o.c_str(), x.c_str(), y.c_str());
 		break;
 	}
 	case 0x11:
+	case 0x29:
+	case 0x2B:
 	case 0x47: {
 		Common::String o = decodeScriptValue(script);
 		result = Common::String::format(" obj=%s", o.c_str());
@@ -447,11 +450,6 @@ static Common::String decodeParams(Common::MemoryReadStream *script, uint8 opcod
 		result = Common::String::format(" obj=%s slot=%s frame=%s", o.c_str(), s.c_str(), f.c_str());
 		break;
 	}
-	case 0x1F: {
-		Common::String o = decodeScriptValue(script), x = decodeScriptValue(script), y = decodeScriptValue(script);
-		result = Common::String::format(" obj=%s pos=(%s,%s)", o.c_str(), x.c_str(), y.c_str());
-		break;
-	}
 	case 0x20: {
 		Common::String o = decodeScriptValue(script), v = decodeScriptValue(script);
 		result = Common::String::format(" obj=%s offset=%s", o.c_str(), v.c_str());
@@ -492,20 +490,10 @@ static Common::String decodeParams(Common::MemoryReadStream *script, uint8 opcod
 		result = Common::String::format(" obj=%s maxFrame=%s", o.c_str(), v.c_str());
 		break;
 	}
-	case 0x29: {
-		Common::String o = decodeScriptValue(script);
-		result = Common::String::format(" obj=%s", o.c_str());
-		break;
-	}
 	case 0x2A: {
 		Common::String o = decodeScriptValue(script), s = decodeScriptValue(script), d = decodeScriptValue(script);
 		uint8 ai = script->readByte();
 		result = Common::String::format(" obj=%s slot=%s decode=%s idx=%u", o.c_str(), s.c_str(), d.c_str(), ai);
-		break;
-	}
-	case 0x2B: {
-		Common::String o = decodeScriptValue(script);
-		result = Common::String::format(" obj=%s", o.c_str());
 		break;
 	}
 	case 0x2C:
@@ -587,7 +575,7 @@ static Common::String decodeParams(Common::MemoryReadStream *script, uint8 opcod
 	case 0x4E:
 		break;
 	default:
-		if (length > 0 && length <= 30) {
+		if (length <= 30) {
 			result = " [";
 			for (uint8 i = 0; i < length && script->pos() < script->size(); i++) {
 				if (i)
@@ -963,7 +951,7 @@ static void showVariablesWindow() {
 				int firstLineY = view->_stringBoxPosition.y + 9;
 				int relY = mousePos.y - firstLineY;
 				int hoveredChoice = -1;
-				if (relY >= 0 && lineHeight > 0) {
+				if (relY >= 0) {
 					int hoveredLine = relY / lineHeight;
 					int cumulativeLines = 0;
 					for (uint i = 0; i < view->_dialogueChoiceLineCounts.size(); i++) {
@@ -2086,13 +2074,13 @@ static void showDebugToolbarWindow() {
 		}
 		if (ImGui::BeginMenu("Speed")) {
 			if (ImGui::MenuItem("Normal", NULL, g_engine->_gameSpeedMode == 0)) {
-				g_engine->_gameSpeedMode = 0;
+				g_engine->setGameSpeedMode(0);
 			}
 			if (ImGui::MenuItem("Fast", NULL, g_engine->_gameSpeedMode == 1)) {
-				g_engine->_gameSpeedMode = 1;
+				g_engine->setGameSpeedMode(1);
 			}
 			if (ImGui::MenuItem("Slow", NULL, g_engine->_gameSpeedMode == 2)) {
-				g_engine->_gameSpeedMode = 2;
+				g_engine->setGameSpeedMode(2);
 			}
 			ImGui::EndMenu();
 		}

@@ -176,12 +176,8 @@ bool ResourceManager::loadImage(const Common::Path &name, Graphics::ManagedSurfa
 
 	GraphicsManager::copyToManaged(buf, surf, info.width, info.height, g_nancy->_graphics->getInputPixelFormat(info.depth));
 
-	if (info.depth != 16) {
-		// Convert 24/32 bpp images to 16 bpp on the fly since that's what the
-		// engine uses internally. These images are used since nancy13.
-		// TODO: add support for 24/32 bpp surfaces in the engine and skip this conversion
-		surf.convertToInPlace(g_nancy->_graphics->getInputPixelFormat());
-	}
+	if (info.depth == 24)
+		surf.convertToInPlace(g_nancy->_graphics->getInputPixelFormat(32));
 
 	delete[] buf;
 	delete stream;
@@ -326,7 +322,9 @@ bool ResourceManager::exportCif(const Common::Path &name) {
 	if (stream) {
 		// .cifs are compressed, so we need to extract
 		CifFile cifFile(stream, name); // cifFile takes ownership of the current stream
-		stream = cifFile.createReadStreamRaw();
+		stream = cifFile.createReadStream();
+		if (!stream)
+			stream = cifFile.createReadStreamRaw();
 		info = cifFile.getInfo();
 	}
 
@@ -351,7 +349,9 @@ bool ResourceManager::exportCif(const Common::Path &name) {
 			}
 
 			if (tree) {
-				stream = tree->createReadStreamRaw(name);
+				stream = tree->createReadStreamForMember(name);
+				if (!stream)
+					stream = tree->createReadStreamRaw(name);
 				info = tree->getCifInfo(name);
 			} else {
 				// Finally, use SearchMan to get a loose file. This is useful if we want to add files that

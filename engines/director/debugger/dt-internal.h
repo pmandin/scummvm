@@ -219,6 +219,7 @@ typedef struct ImGuiState {
 	struct {
 		Common::HashMap<CastMember *, ImGuiImage> _textures;
 		bool _listView = true;
+		bool _showGridNumbers = false;
 		int _thumbnailSize = 64;
 		ImGuiTextFilter _nameFilter;
 		int _typeFilter = 0xFFFF;
@@ -232,6 +233,8 @@ typedef struct ImGuiState {
 	struct {
 		// stored as an ID: raw CastMember pointers dangle on movie switch
 		CastMemberID _castMemberID;
+		// name of the window whose movie owns the member
+		Common::String _window;
 		Common::HashMap<CastMemberID, int> _filmLoopCurrentFrame;
 	} _castDetails;
 
@@ -362,6 +365,7 @@ ImVec4 convertColor(uint32 color);
 void displayVariable(const Common::String &name, bool changed, bool outOfScope = false);
 ImColor brightenColor(const ImColor &color, float factor);
 Window *windowListCombo(Common::String *target);
+Window *findWindowByName(const Common::String &name);
 bool selectableViewButton(const char *label, bool selected);
 Common::String formatHandlerName(int scriptId, int castId, Common::String handlerName, ScriptType scriptType, bool childScript);
 void setTheme(int themeIndex);

@@ -137,6 +137,7 @@ public:
 	int16 _previewOffsetY;
 
 	void drawChapterInfoLine(byte *renderBitmap, int pitch, int width, int height);
+	void drawPilotInfoLines(byte *renderBitmap);
 	Common::String getRankString(int rating);
 	Common::String getChapterPassword(int level, int difficulty);
 
@@ -809,6 +810,9 @@ public:
 
 	bool _shipFiring;
 	uint32 _prevMouseButtons;
+
+	// Rapid-fire cadence counter, re-anchored on each press.
+	int16 _rapidFireCounter;
 
 	int16 _shipDirectionIndex;
 	int16 _shipDirectionH;

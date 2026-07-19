@@ -19,7 +19,9 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "common/error.h"
+#include "common/file.h"
 #include "common/system.h"
 #include "engines/advancedDetector.h"
 #include "engines/util.h"
@@ -304,6 +306,20 @@ Common::Error ChamberEngine::init() {
 	if (getPlatform() == Common::kPlatformAmiga) {
 		// Amiga title: static resources (incl. palette) live in KULT, load them first
 		loadAmigaStaticData();
+		if (getLanguage() == Common::EN_USA) {
+			splash = ega_loadFond("INTRO.PIA");
+			if (splash) {
+				g_vm->_renderer->colorSelect(AMIGA_NUM_PALETTES - 1);
+				g_vm->_renderer->backBufferToRealFull();
+				// Splash wraps ega_backbuffer: the surface does not own its pixels
+				delete splash;
+				splash = nullptr;
+				clearKeyboard();
+				readKeyboardChar();
+				if (_shouldQuit)
+					return Common::kNoError;
+			}
+		}
 		splash = ega_loadFond("PRES.BIN");
 		if (!splash) {
 			_shouldQuit = true;
@@ -388,10 +404,14 @@ Common::Error ChamberEngine::init() {
 		c = 'E';
 	} else {
 		/* Load language selection screen */
-		if (!loadSplash("DRAP.BIN")) {
+		Graphics::Surface *drap = loadSplash("DRAP.BIN");
+		if (!drap) {
+			warning("File DRAP.BIN not found");
 			_shouldQuit = true;
-			return Common::kNoError;
+			return Common::kReadingFailed;
 		}
+		drap->free();
+		delete drap;
 
 		/* Wait for a keypress and show the language selection screen */
 		clearKeyboard();
@@ -473,8 +493,12 @@ Common::Error ChamberEngine::init() {
 		// Early intro screens set no palette of their own; apply the room palette now
 		amigaApplyRoomPalette(0);
 	} else {
-		while (!loadFond() || !loadSpritesData() || !loadPersData())
+		Graphics::Surface *fond;
+		while (!(fond = loadFond()) || !loadSpritesData() || !loadPersData()) {
+			delete fond;
 			askDisk2();
+		}
+		delete fond;
 	}
 
 	/*TODO: is this necessary?*/
@@ -533,6 +557,12 @@ Common::Error ChamberEngine::execute() {
 
 	/* Initialize cursor backup */
 	processInput();
+
+	if (ConfMan.hasKey("save_slot") && ConfMan.getInt("save_slot") >= 0) {
+		int slot = ConfMan.getInt("save_slot");
+		ConfMan.set("save_slot", "-1");
+		loadGameState(slot);
+	}
 
 #ifdef DEBUG_ENDING
 	script_byte_vars.game_paused = 5;

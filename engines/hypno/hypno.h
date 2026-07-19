@@ -527,6 +527,7 @@ private:
 	uint16 getNextChar(const Common::String &str, uint32 &c);
 	void drawGlyph(const Common::BitArray &font, int x, int y, int bitoffset, int width, int height, int pitch, uint32 color, bool invert);
 	void drawKoreanChar(uint16 chr, int &curx, int y, uint32 color);
+	void drawStatLine(const Common::String &name, const Common::String &value, int y, uint32 color);
 	void runMainMenu(Code *code);
 	void runLevelMenu(Code *code);
 	void runCheckLives(Code *code);
@@ -634,6 +635,15 @@ private:
 	const Graphics::Font *_font;
 };
 
+// SOUND.LIB ships four music tracks that no level script references: the menus
+// and the territory approach videos use them. m_choice/m_hilite are the menu
+// click and highlight sounds (as in Wetlands).
+static const char *const kMenuChoiceSound = "sound/m_choice.raw";
+static const char *const kMenuHiliteSound = "sound/m_hilite.raw";
+static const char *const kMenuMusic = "sound/46-g.raw";
+static const char *const kTransitionMusic = "sound/45.raw";
+static const char *const kCreditsMusic = "sound/42.raw";
+
 class BoyzEngine : public HypnoEngine {
 public:
 	BoyzEngine(OSystem *syst, const ADGameDescription *gd);
@@ -686,6 +696,7 @@ public:
 	void saveProfile(const Common::String &name, int levelId);
 
 	private:
+	Common::Rect _lastHighlighted;
 	void renderHighlights(Hotspots *hs);
 	void waitForUserClick(uint32 timeout);
 	int pickABox();

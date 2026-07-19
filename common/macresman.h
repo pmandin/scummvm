@@ -167,6 +167,11 @@ public:
 	static SeekableReadStream *openDataForkFromMacBinary(SeekableReadStream *inStream, DisposeAfterUse::Flag disposeAfterUse = DisposeAfterUse::NO);
 
 	/**
+	 * Write macbinary data to a stream.
+	 */
+	static void writeMacBinary(SeekableWriteStream *outStream, SeekableReadStream *dataFork, SeekableReadStream *resourceFork, const Common::String &name, const MacFinderInfo &info, TimeDate *created = nullptr, TimeDate *modified = nullptr);
+
+	/**
 	 * See if a Mac data/resource fork pair exists.
 	 * @param fileName The base file name of the file
 	 * @return True if either a data fork or resource fork with this name exists
@@ -262,6 +267,14 @@ public:
 	 * @return The length in bytes of a given resource
 	 */
 	uint32 getResLength(uint32 typeID, uint16 resID);
+
+	/**
+	 * Get the resource ID from a MacBinary file
+	 * @param typeID FourCC of the type
+	 * @param filename file name of the resource
+	 * @return The resource ID for a matching resource
+	 */
+	uint16 getResID(uint32 typeID, const Common::String &filename);
 
 	/**
 	 * Get the size of the data portion of the resource fork

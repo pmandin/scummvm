@@ -97,6 +97,7 @@ enum BuiltInFunction {
 	kEndTimedIntervalFunction = 0x23,
 	kCheckersFunction = 0x24, // Hercules
 	kDrawingFunction = 0x25, // IBM/Crayola
+	kMoveSophieFunction = 0x44c, // Puzzle Castle
 
 	// Early engine versions (like for Lion King and such), had different opcodes
 	// for some functions, even though the functions were the same. So those are
@@ -285,6 +286,19 @@ enum BuiltInMethod {
 	// between two camera methods and two printer methods.
 	kOpenLensMethod = 0x15A,
 	kCloseLensMethod = 0x15B,
+	kIsPrinterReadyMethod = 0x110,
+	kPrintActorsMethod = 0x111,
+	kPrintScreenMethod = 0x112,
+	kSetPortraitPrintMethod = 0x115,
+	kGetPortraitPrintMethod = 0x116,
+	kSetLeftPrintMarginMethod = 0x117,
+	kSetTopPrintMarginMethod = 0x118,
+	kSetRightPrintMarginMethod = 0x119,
+	kSetBottomPrintMarginMethod = 0x11a,
+	kGetLeftPrintMarginMethod = 0x11b,
+	kGetTopPrintMarginMethod = 0x11c,
+	kGetRightPrintMarginMethod = 0x11d,
+	kGetBottomPrintMarginMethod = 0x11e,
 
 	// CURSOR METHODS.
 	kCursorSetMethod = 0xC8,
@@ -295,11 +309,18 @@ enum BuiltInMethod {
 	kStopLoadMethod = 0x168,
 	kIsRectInMemoryMethod = 0x16A,
 
-	// DOT GAME ACTOR METHODS.
-	kDotGameResetMethod = 0xE2,
-	kDotGameShowMethod = 0xE3,
-	kDotGameHideMethod = 0xE4,
+	// MINIGAME ACTOR METHODS.
+	kMinigameResetMethod = 0xE2,
+	kMinigameActivateMethod = 0xE3,
+	kMinigameDeactivateMethod = 0xE4,
 	kDotGameHitMethod = 0xE5,
+
+	// STALKING ACTOR METHODS.
+	kStalkingStartZazuLookingMethod = 0xDF,
+	kStalkingStopZazuLookingMethod = 0xE0,
+	kStalkingGetZazuLookDirectionMethod = 0xE1,
+	kStalkingEnableAudio = 0xE7,
+	kStalkingDisableAudio = 0xE8,
 };
 const char *builtInMethodToStr(BuiltInMethod method);
 
@@ -327,7 +348,9 @@ enum EventType {
 	kMovieAbortEvent = 0x15,
 	kMovieFailureEvent = 0x16,
 	kSpriteMovieEndEvent = 0x17,
-	kDotGameCompleteEvent = 0x18,
+	kMinigameSuccessEvent = 0x18,
+	kMinigameDefeatEvent = 0x19,
+	kMinigameCrouchedEvent = 0x1A,
 	kScreenExitEvent = 0x1B,
 	kPathStepEvent = 0x1C,
 	kSoundStoppedEvent = 0x1D,

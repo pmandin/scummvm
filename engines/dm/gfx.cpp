@@ -151,6 +151,27 @@ DisplayMan::DisplayMan(DMEngine *dmEngine) : _vm(dmEngine) {
 	_paletteSwitchingEnabled = false;
 	_dungeonViewPaletteIndex = 0;
 
+	_stairsNativeBitmapIndexUpFrontD3L = 0;
+	_stairsNativeBitmapIndexUpFrontD3C = 0;
+	_stairsNativeBitmapIndexUpFrontD2L = 0;
+	_stairsNativeBitmapIndexUpFrontD2C = 0;
+	_stairsNativeBitmapIndexUpFrontD1L = 0;
+	_stairsNativeBitmapIndexUpFrontD1C = 0;
+	_stairsNativeBitmapIndexUpFrontD0CLeft = 0;
+	_stairsNativeBitmapIndexDownFrontD3L = 0;
+	_stairsNativeBitmapIndexDownFrontD3C = 0;
+	_stairsNativeBitmapIndexDownFrontD2L = 0;
+	_stairsNativeBitmapIndexDownFrontD2C = 0;
+	_stairsNativeBitmapIndexDownFrontD1L = 0;
+	_stairsNativeBitmapIndexDownFrontD1C = 0;
+	_stairsNativeBitmapIndexDownFrontD0CLeft = 0;
+	_stairsNativeBitmapIndexSideD2L = 0;
+	_stairsNativeBitmapIndexUpSideD1L = 0;
+	_stairsNativeBitmapIndexDownSideD1L = 0;
+	_stairsNativeBitmapIndexSideD0L = 0;
+
+	_useFlippedWallAndFootprintsBitmap = false;
+
 	for (uint16 i = 0; i < 16; ++i) {
 		_paletteTopAndBottomScreen[i] = 0;
 		_paletteMiddleScreen[i] = 0;
@@ -672,10 +693,10 @@ void DisplayMan::setUpScreens(uint16 width, uint16 height) {
 	_screenHeight = height;
 	delete[] _tmpBitmap;
 	delete[] _bitmapScreen;
-	_bitmapScreen = new byte[_screenWidth * _screenHeight];
+	_bitmapScreen = new byte[(uint32)_screenWidth * _screenHeight];
 	fillScreen(kDMColorBlack);
 
-	_tmpBitmap = new byte[_screenWidth * _screenHeight];
+	_tmpBitmap = new byte[(uint32)_screenWidth * _screenHeight];
 }
 
 
@@ -1213,7 +1234,7 @@ uint16 DisplayMan::getPixelHeight(uint16 index) {
 }
 
 void DisplayMan::copyBitmapAndFlipHorizontal(byte *srcBitmap, byte *destBitmap, uint16 byteWidth, uint16 height) {
-	memmove(destBitmap, srcBitmap, byteWidth * 2 * height * sizeof(byte));
+	memmove(destBitmap, srcBitmap, (size_t)byteWidth * 2 * height * sizeof(byte));
 	flipBitmapHorizontal(destBitmap, byteWidth, height);
 }
 

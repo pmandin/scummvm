@@ -462,7 +462,7 @@ void EventManager::mouseDropChampionIcon() {
 	_useChampionIconOrdinalAsMousePointerBitmap = _vm->indexToOrdinal(kDMChampionNone);
 	_mousePointerBitmapUpdated = true;
 	bool useByteBoxCoordinatesBackup = displMan._useByteBoxCoordinates;
-	displMan.blitToScreen(_mousePointerOriginalColorsChampionIcon, &_vm->_championMan->_boxChampionIcons[championIconIndex << 2], 16, kDMColorDarkestGray, 18);
+	displMan.blitToScreen(_mousePointerOriginalColorsChampionIcon, &_vm->_championMan->_boxChampionIcons[championIconIndex], 16, kDMColorDarkestGray, 18);
 	displMan._useByteBoxCoordinates = useByteBoxCoordinatesBackup;
 	_preventBuildPointerScreenArea = false;
 }
@@ -1021,8 +1021,10 @@ void EventManager::commandMoveParty(CommandType cmdType) {
 			movementArrowIdx += (_vm->_dungeonMan->_partyDir + 2);
 			int16 firstDamagedChampionIndex = _vm->_championMan->getTargetChampionIndex(partyMapX, partyMapY, _vm->normalizeModulo4(movementArrowIdx));
 			int16 secondDamagedChampionIndex = _vm->_championMan->getTargetChampionIndex(partyMapX, partyMapY, _vm->turnDirRight(movementArrowIdx));
-			int16 damage = _vm->_championMan->addPendingDamageAndWounds_getDamage(firstDamagedChampionIndex, 1, kDMWoundTorso | kDMWoundLegs, kDMAttackTypeSelf);
-			if (firstDamagedChampionIndex != secondDamagedChampionIndex)
+			int16 damage = 0;
+			if (firstDamagedChampionIndex >= 0)
+				damage = _vm->_championMan->addPendingDamageAndWounds_getDamage(firstDamagedChampionIndex, 1, kDMWoundTorso | kDMWoundLegs, kDMAttackTypeSelf);
+			if (secondDamagedChampionIndex >= 0 && firstDamagedChampionIndex != secondDamagedChampionIndex)
 				damage |= _vm->_championMan->addPendingDamageAndWounds_getDamage(secondDamagedChampionIndex, 1, kDMWoundTorso | kDMWoundLegs, kDMAttackTypeSelf);
 
 			if (damage)
@@ -1259,7 +1261,7 @@ void EventManager::commandProcessCommands160To162ClickInResurrectReincarnatePane
 		box._rect.right = box._rect.left + 66;
 		dispMan._useByteBoxCoordinates = false;
 		dispMan.fillScreenBox(box, kDMColorBlack);
-		dispMan.fillScreenBox(_vm->_championMan->_boxChampionIcons[champMan.getChampionIconIndex(champ->_cell, dunMan._partyDir) * 2], kDMColorBlack);
+		dispMan.fillScreenBox(_vm->_championMan->_boxChampionIcons[champMan.getChampionIconIndex(champ->_cell, dunMan._partyDir)], kDMColorBlack);
 		_vm->_menuMan->drawEnabledMenus();
 		showMouse();
 		return;
@@ -1507,9 +1509,11 @@ void EventManager::mouseProcessCommands125To128_clickOnChampionIcon(uint16 champ
 			} else
 				displMan.fillScreenBox(_vm->_championMan->_boxChampionIcons[championIconIndex], kDMColorBlack);
 
-			_vm->_championMan->_champions[championCellIndex]._cell = (ViewCell)_vm->normalizeModulo4(champIconIndex + _vm->_dungeonMan->_partyDir);
-			setFlag(_vm->_championMan->_champions[championCellIndex]._attributes, kDMAttributeIcon);
-			_vm->_championMan->drawChampionState((ChampionIndex)championCellIndex);
+			if (championCellIndex >= 0) {
+				_vm->_championMan->_champions[championCellIndex]._cell = (ViewCell)_vm->normalizeModulo4(champIconIndex + _vm->_dungeonMan->_partyDir);
+				setFlag(_vm->_championMan->_champions[championCellIndex]._attributes, kDMAttributeIcon);
+				_vm->_championMan->drawChampionState((ChampionIndex)championCellIndex);
+			}
 		}
 	}
 	_preventBuildPointerScreenArea = false;

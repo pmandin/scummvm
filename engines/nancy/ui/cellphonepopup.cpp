@@ -107,7 +107,7 @@ void CellPhonePopup::init() {
 
 	Common::Rect bounds = _screenPosition;
 	bounds.moveTo(0, 0);
-	_drawSurface.create(bounds.width(), bounds.height(), g_nancy->_graphics->getInputPixelFormat());
+	_drawSurface.create(bounds.width(), bounds.height(), g_nancy->_graphics->getScreenPixelFormat());
 
 	// Persistent state lives in CellPhoneData (saved across the game).
 	// First-time init seeds the runtime contact list from the chunk;
@@ -252,6 +252,8 @@ void CellPhonePopup::open() {
 	_closeButtonHovered = false;
 	_scrollUpHovered = false;
 	_scrollDownHovered = false;
+	_helpButtonHovered = false;
+	_backButtonHovered = false;
 	_autoDialPending = false;
 	_pressedSlot = -1;
 
@@ -262,7 +264,8 @@ void CellPhonePopup::open() {
 	g_nancy->_cursor->warpCursor(Common::Point(_screenPosition.left + _screenPosition.width() / 2,
 												_screenPosition.top + _screenPosition.height() / 2));
 
-	NancySceneState.getTaskbar()->clearAllNotifications(kTaskButtonCellphone);
+	// Badge sub-categories clear when their list is viewed (enterScreenState),
+	// not on open.
 
 	if (!_uiclData->header.sounds[0].name.empty()) {
 		g_nancy->_sound->loadSound(_uiclData->header.sounds[0]);
@@ -466,7 +469,7 @@ void CellPhonePopup::drawChrome() {
 	// it once a call is being placed (the connecting / "We're sorry" screens)
 	// and on every sub-screen that shows its own heading.
 	if (_screenState == kWelcome || _screenState == kDialing) {
-		drawHelpButton(0);
+		drawHelpButton(_helpButtonHovered ? 1 : 0);
 	}
 	_needsRedraw = true;
 }
@@ -509,9 +512,20 @@ void CellPhonePopup::drawScreenContent() {
 			// no digits to display, just the connecting animation.
 			drawConnectingSprite();
 		}
+		// Back button on the connecting strip cancels the ringing call.
+		if (isCallBackButtonActive()) {
+			drawBackButton(0);
+		}
 		break;
 
 	case kWaitPickup:
+		// Still ringing — only the connecting sprite, plus the Back button.
+		drawConnectingSprite();
+		if (isCallBackButtonActive()) {
+			drawBackButton(0);
+		}
+		break;
+
 	case kConnected:
 		drawConnectedLabel();
 		drawConnectingSprite();
@@ -557,21 +571,16 @@ void CellPhonePopup::drawScreenContent() {
 		break;
 
 	case kContentView:
-		// Browser pages use the interactive top-row "SEARCH" button
-		// (subButtons[8], drawn below) in place of a static heading; help /
-		// email keep their static heading.
-		if (_contentHeading && _contentHeading != &_uiclData->browserHeading) {
+		// Articles show the BROWSER heading; the main browser page shows the
+		// interactive SEARCH button (drawn below) instead.
+		if (_contentHeading &&
+			(_contentHeading != &_uiclData->browserHeading || isBrowserArticle())) {
 			drawHeading(*_contentHeading);
 		}
 		drawContentView();
-		// Help's Back sits in the lower ribbon (subButtons[0]); the zoomed
-		// articles' Back sits at the bottom of the screen (subButtons[7]).
-		// drawDirectoryArrows() blits whichever scroll pair applies.
 		drawDirectoryArrows();
-		drawBackButton(isHelpContentView() ? 0 : 7);
-		// Browser pages carry the top-row "SEARCH" button (subButtons[8]),
-		// which highlights green on hover and opens the search-topics list.
-		if (_contentHeading == &_uiclData->browserHeading) {
+		drawBackButton(contentViewBottomButton());
+		if (_contentHeading == &_uiclData->browserHeading && !isBrowserArticle()) {
 			drawHubButton(8);
 		}
 		break;
@@ -868,10 +877,13 @@ void CellPhonePopup::openContentView(const Common::String &key, const UICL::SrcD
 
 void CellPhonePopup::openBrowserHome() {
 	// The Web button opens the browser home page (UIBW page 0 — the "River
-	// Heights Wireless" homepage), matching the original's FUN_004dae28(0).
-	// Its in-page hyperlinks then navigate to further pages / the search list.
+	// Heights Wireless" homepage). Its in-page hyperlinks then navigate to
+	// further pages / the search list.
 	const UIBW *browserData = GetEngineData(UIBW);
 	if (browserData && !browserData->pages.empty()) {
+		// Remember the main-page key so isBrowserArticle() can tell it apart.
+		_browserHomeKey = browserData->pages[0].imageName.toString();
+		_browserHomeKey.toUppercase();
 		openContentView(browserData->pages[0].imageName.toString(), _uiclData->browserHeading);
 		// The homepage's Back button always returns to the main phone (welcome)
 		// screen, regardless of whether the browser was opened from the online
@@ -939,11 +951,18 @@ void CellPhonePopup::renderContentPage(int surfaceWidth) {
 		}
 	}
 	const uint32 trans = g_nancy->_graphics->getTransColor();
-	ht.render(surfaceWidth, 2000, trans, renderText, _uiclData->fontId2);
 
-	_contentCacheSurface.copyFrom(ht.surface());
+	// Render into a tall scratch surface, then cache only the used height
+	static const uint16 kMaxContentHeight = 6000;
+	ht.render(surfaceWidth, kMaxContentHeight, trans, renderText, _uiclData->fontId2);
+
+	const uint16 textHeight = MIN<uint16>(MAX<uint16>(ht.textHeight(), 1), kMaxContentHeight);
+	_contentCacheSurface.create(surfaceWidth, textHeight, ht.surface().format);
 	_contentCacheSurface.setTransparentColor(trans);
-	_contentCacheTextHeight = ht.textHeight();
+	_contentCacheSurface.clear(trans);
+	_contentCacheSurface.blitFrom(ht.surface(), Common::Rect(0, 0, (int16)surfaceWidth, (int16)textHeight),
+									Common::Point(0, 0));
+	_contentCacheTextHeight = textHeight;
 	_contentCacheHotspots = ht.hotspots();
 }
 
@@ -1087,12 +1106,22 @@ void CellPhonePopup::drawBackButton(uint subButtonIndex) {
 	// subButtons[0] is the Back button in the lower ribbon (help / sub-screens);
 	// subButtons[7] is the Back button at the bottom of the zoomed content view.
 	const UICL::ThreeRectWidget &back = _uiclData->subButtons[subButtonIndex];
-	if (back.srcRectIdle.isEmpty() || back.destRect.isEmpty()) {
+	if (back.destRect.isEmpty()) {
+		return;
+	}
+
+	// Highlight (pressed sprite, green arrow) when the cursor is over this
+	// button and it's the one currently accepting input.
+	const bool hovered = _backButtonHovered && (int)subButtonIndex == currentBackButtonIndex();
+	const Common::Rect &src = (hovered && !back.srcRectPressed.isEmpty())
+								? back.srcRectPressed
+								: back.srcRectIdle;
+	if (src.isEmpty()) {
 		return;
 	}
 
 	const Common::Point chunkOrigin(_screenPosition.left, _screenPosition.top);
-	_drawSurface.blitFrom(_spritesImage, back.srcRectIdle,
+	_drawSurface.blitFrom(_spritesImage, src,
 							Common::Point(back.destRect.left - chunkOrigin.x,
 											back.destRect.top - chunkOrigin.y));
 }
@@ -1140,6 +1169,43 @@ Common::Rect CellPhonePopup::backButtonHitRect(uint subButtonIndex) const {
 	}
 	r.translate(-_screenPosition.left, -_screenPosition.top);
 	return r;
+}
+
+int CellPhonePopup::currentBackButtonIndex() const {
+	// Mirrors the drawBackButton() calls in drawScreenContent: which
+	// subButtons slot holds the visible Back / HOME button per screen.
+	if (isCallBackButtonActive()) {
+		return 0;
+	}
+	switch (_screenState) {
+	case kDirectory:
+	case kOnlineHub:
+		return 0;
+	case kWebList:
+		return 9;
+	case kEmailList:
+		return 7;
+	case kContentView:
+		return (int)contentViewBottomButton();
+	default:
+		return -1;
+	}
+}
+
+uint CellPhonePopup::contentViewBottomButton() const {
+	// Help Back (0); browser-article HOME (9); main page / email article Back (7).
+	if (isHelpContentView()) {
+		return 0;
+	}
+	return isBrowserArticle() ? 9 : 7;
+}
+
+bool CellPhonePopup::isBrowserArticle() const {
+	// A browser content view other than the main page opened by openBrowserHome().
+	if (_contentHeading != &_uiclData->browserHeading) {
+		return false;
+	}
+	return !_browserHomeKey.empty() && !_contentKey.equalsIgnoreCase(_browserHomeKey);
 }
 
 const UICL::ThreeRectWidget &CellPhonePopup::scrollUpButton() const {
@@ -1216,14 +1282,44 @@ void CellPhonePopup::resetDialPad() {
 }
 
 void CellPhonePopup::enterScreenState(ScreenState newState) {
+	// Viewing a list clears its badge: directory = sub 0, email = sub 1, web = sub 2.
+	if (UI::Taskbar *taskbar = NancySceneState.getTaskbar()) {
+		switch (newState) {
+		case kDirectory:
+			taskbar->clearNotification(kTaskButtonCellphone, 0);
+			break;
+		case kEmailList:
+			taskbar->clearNotification(kTaskButtonCellphone, 1);
+			break;
+		case kWebList:
+			taskbar->clearNotification(kTaskButtonCellphone, 2);
+			break;
+		default:
+			break;
+		}
+	}
+
 	// Always redraw, so successive digit entries refresh the readout.
 	_screenState = newState;
 	_hoveredHubButton = -1;
+	_helpButtonHovered = false;
+	_backButtonHovered = false;
 	if (newState != kContentView) {
 		// Cancel a pending email-open flash unless we're completing it.
 		_openingEmailRow = -1;
 	}
 	drawScreenContent();
+}
+
+void CellPhonePopup::cancelCall() {
+	if (!_callSound.name.empty()) {
+		g_nancy->_sound->stopSound(_callSound);
+	}
+	_autoDialPending = false;
+	_resolvedContact = -1;
+	_pressedSlot = -1;
+	resetDialPad();
+	enterScreenState(kWelcome);
 }
 
 void CellPhonePopup::appendDigit(byte slotIndex) {
@@ -1702,6 +1798,25 @@ void CellPhonePopup::handleInput(NancyInput &input) {
 	}
 
 	if (transientCallState) {
+		// While ringing, only the Back button is live (cancels the call).
+		if (isCallBackButtonActive()) {
+			const Common::Rect backHit = backButtonHitRect(0);
+			const Common::Point popupMouse(input.mousePos.x - _screenPosition.left,
+											input.mousePos.y - _screenPosition.top);
+			const bool overBack = !backHit.isEmpty() && backHit.contains(popupMouse);
+			if (overBack != _backButtonHovered) {
+				_backButtonHovered = overBack;
+				drawScreenContent();
+			}
+			if (overBack) {
+				g_nancy->_cursor->setCursorType(CursorManager::kHotspotArrow);
+				if (input.input & NancyInput::kLeftMouseButtonUp) {
+					input.eatMouseInput();
+					cancelCall();
+					return;
+				}
+			}
+		}
 		// Block the viewport from seeing the cursor (edge-pan, etc.).
 		input.eatMouseInput();
 		return;
@@ -1721,6 +1836,22 @@ void CellPhonePopup::handleInput(NancyInput &input) {
 	if (overUp != _scrollUpHovered || overDown != _scrollDownHovered) {
 		_scrollUpHovered = overUp;
 		_scrollDownHovered = overDown;
+		drawScreenContent();
+	}
+
+	// Green-arrow highlight for the captioned "> HELP" and "< BACK" / HOME
+	// buttons: swap to the pressed sprite while the cursor is over them.
+	const bool helpVisible = (_screenState == kWelcome || _screenState == kDialing);
+	const bool overHelp = helpVisible &&
+			!_uiclData->helpButton.destRect.isEmpty() &&
+			_uiclData->helpButton.destRect.contains(chunkMouse);
+	const int backIndex = currentBackButtonIndex();
+	const bool overBack = backIndex >= 0 &&
+			!_uiclData->subButtons[backIndex].destRect.isEmpty() &&
+			_uiclData->subButtons[backIndex].destRect.contains(chunkMouse);
+	if (overHelp != _helpButtonHovered || overBack != _backButtonHovered) {
+		_helpButtonHovered = overHelp;
+		_backButtonHovered = overBack;
 		drawScreenContent();
 	}
 
@@ -1985,9 +2116,9 @@ void CellPhonePopup::handleInput(NancyInput &input) {
 		const Common::Point popupMouseLink(chunkMouse.x - _screenPosition.left,
 											chunkMouse.y - _screenPosition.top);
 
-		// On browser pages the top-row "SEARCH" button (subButtons[8]) opens the
-		// search-topics list and highlights green while hovered.
-		if (_contentHeading == &_uiclData->browserHeading &&
+		// The main browser page carries the top-row SEARCH button (subButtons[8])
+		// which opens the search list; it highlights green while hovered.
+		if (_contentHeading == &_uiclData->browserHeading && !isBrowserArticle() &&
 				!_uiclData->subButtons[8].destRect.isEmpty()) {
 			Common::Rect searchBtn = _uiclData->subButtons[8].destRect;
 			searchBtn.translate(-_screenPosition.left, -_screenPosition.top);
@@ -2057,11 +2188,9 @@ void CellPhonePopup::handleInput(NancyInput &input) {
 		const bool overUpDown =
 			upDst.contains(chunkMouse) || downDst.contains(chunkMouse);
 
-		// Help draws its Back button in the lower ribbon (subButtons[0]); the
-		// zoomed email / browser view draws it at the bottom of the screen
-		// (subButtons[7]). Hit-test the matching button so it lines up with the
-		// visible sprite.
-		const Common::Rect backHit = backButtonHitRect(isHelpContentView() ? 0 : 7);
+		// Hit-test the bottom button that this view actually draws.
+		const bool onBrowserArticle = isBrowserArticle();
+		const Common::Rect backHit = backButtonHitRect(contentViewBottomButton());
 		const Common::Point popupMouse(chunkMouse.x - _screenPosition.left,
 										chunkMouse.y - _screenPosition.top);
 		if (!overUpDown && !backHit.isEmpty() && backHit.contains(popupMouse)) {
@@ -2069,7 +2198,12 @@ void CellPhonePopup::handleInput(NancyInput &input) {
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				_contentKey.clear();
 				_contentHeading = nullptr;
-				enterScreenState(_contentReturnState);
+				if (onBrowserArticle) {
+					// HOME → the browser homepage (River Heights Wireless).
+					openBrowserHome();
+				} else {
+					enterScreenState(_contentReturnState);
+				}
 				input.eatMouseInput();
 				return;
 			}

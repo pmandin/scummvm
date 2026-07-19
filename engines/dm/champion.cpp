@@ -930,7 +930,7 @@ void ChampionMan::disableAction(uint16 champIndex, uint16 ticks) {
 	Champion *curChampion = &_champions[champIndex];
 	int32 updatedEnableActionEventTime = _vm->_gameTime + ticks;
 
-	TimelineEvent curEvent;
+	TimelineEvent curEvent = {};
 	curEvent._type = kDMEventTypeEnableChampionAction;
 	curEvent._priority = champIndex;
 	curEvent._Bu._slotOrdinal = 0;
@@ -1136,7 +1136,7 @@ void ChampionMan::championPoison(int16 champIndex, uint16 attack) {
 
 	if (--attack) {
 		curChampion->_poisonEventCount++;
-		TimelineEvent newEvent;
+		TimelineEvent newEvent = {};
 		newEvent._type = kDMEventTypePoisonChampion;
 		newEvent._priority = champIndex;
 		newEvent._mapTime = _vm->setMapAndTime(_vm->_dungeonMan->_partyMapIndex, _vm->_gameTime + 36);
@@ -1348,8 +1348,11 @@ void ChampionMan::clickOnSlotBox(uint16 slotBoxIndex) {
 	if ((slotThing == _vm->_thingNone) && (leaderHandObject == _vm->_thingNone))
 		return;
 
-	if ((leaderHandObject != _vm->_thingNone) && (!(dungeon._objectInfos[dungeon.getObjectInfoIndex(leaderHandObject)]._allowedSlots & _slotMasks[slotIndex])))
-		return;
+	if (leaderHandObject != _vm->_thingNone) {
+		int16 infoIndex = dungeon.getObjectInfoIndex(leaderHandObject);
+		if (infoIndex < 0 || infoIndex >= 180 || !(dungeon._objectInfos[infoIndex]._allowedSlots & _slotMasks[slotIndex]))
+			return;
+	}
 
 	EventManager &evtMan = *_vm->_eventMan;
 	evtMan.showMouse();
@@ -1464,7 +1467,7 @@ void ChampionMan::applyAndDrawPendingDamageAndWounds() {
 
 			int16 eventIndex = championPtr->_hideDamageReceivedIndex;
 			if (eventIndex == -1) {
-				TimelineEvent newEvent;
+				TimelineEvent newEvent = {};
 				newEvent._type = kDMEventTypeHideDamageReceived;
 				newEvent._mapTime = _vm->setMapAndTime(_vm->_dungeonMan->_partyMapIndex, _vm->_gameTime + 5);
 				newEvent._priority = championIndex;
@@ -2018,7 +2021,10 @@ void ChampionMan::addCandidateChampionToParty(uint16 championPortraitIndex) {
 	while (curThing != _vm->_thingEndOfList) {
 		ThingType thingType = curThing.getType();
 		if ((thingType > kDMThingTypeSensor) && (curThing.getCell() == championObjectsCell)) {
-			int16 objectAllowedSlots = dungeon._objectInfos[dungeon.getObjectInfoIndex(curThing)]._allowedSlots;
+			int16 objectAllowedSlots = 0;
+			int16 infoIndex = dungeon.getObjectInfoIndex(curThing);
+			if (infoIndex >= 0 && infoIndex < 180)
+				objectAllowedSlots = dungeon._objectInfos[infoIndex]._allowedSlots;
 			uint16 curSlotIndex = kDMSlotReadyHand;
 			switch (thingType) {
 			case kDMThingTypeArmour: {

@@ -137,6 +137,15 @@ void Movie::resolveScriptEvent(LingoEvent &event) {
 		debugC(3, kDebugEvents, "Movie::resolveScriptEvent(%s): id: %d sourceType: %s, handlerType: %s, pos: [%d, %d], spriteId: %d",
 			leventType2str(event.event), event.eventId, scriptType2str(event.scriptType),
 			eventHandlerSourceType2str(event.eventHandlerSourceType), event.mousePos.x, event.mousePos.y, spriteId);
+
+		if (event.event == kEventMouseDown || event.event == kEventRightMouseDown) {
+			_lastClickedSpriteId = spriteId; // the clickOn
+		} else 	if (event.event == kEventMouseUp || event.event == kEventRightMouseUp) {
+			// Do not override when clicked on Score
+			if (spriteId)
+				_lastClickedSpriteId = spriteId;
+		}
+
 	}
 	// Very occasionally, we want to specify an event with a channel ID
 	// rather than infer it from the position. Allow it to override.
@@ -241,14 +250,20 @@ void Movie::resolveScriptEvent(LingoEvent &event) {
 			CastMemberID scriptId;
 			bool immediate = false;
 			Common::String initializerParams;
-			// mouseUp events seem to check the frame script ID from the original mouseDown event
-			// In Director 5 and above, we always generate event for the actual sprite under the mouse
-			if (((event.event == kEventMouseUp) || (event.event == kEventRightMouseUp)) && _vm->getVersion() < 500) {
+			// Before D4, mouseUp goes to the mouseDown sprite; from D4 on it goes
+			// to the sprite under the mouse at release (see T_EVNT21 in D4-unit).
+			if (((event.event == kEventMouseUp) || (event.event == kEventRightMouseUp)) && _vm->getVersion() < 400) {
 				scriptId = _currentMouseDownSpriteScriptID;
 				immediate = _currentMouseDownSpriteImmediate;
 			} else {
 				if (!event.channelId)
 					return;
+
+				// clickOn must reflect the release sprite so drop-target scripts
+				// can identify the channel
+				if ((event.event == kEventMouseUp || event.event == kEventRightMouseUp) && event.channelId)
+					_lastClickedSpriteId = event.channelId;
+
 				Frame *currentFrame = _score->_currentFrame;
 				assert(currentFrame != nullptr);
 				Sprite *sprite = _score->getSpriteById(event.channelId);
@@ -560,14 +575,6 @@ void Movie::queueEvent(Common::Queue<LingoEvent> &queue, LEvent event, int targe
 		uint16 spriteId = _score->getMouseSpriteIDFromPos(pos);
 		Sprite *sprite = _score->getSpriteById(spriteId);
 
-		if (event == kEventMouseDown || event == kEventRightMouseDown) {
-			_lastClickedSpriteId = spriteId; // the clickOn
-		} else 	if (event == kEventMouseUp || event == kEventRightMouseUp) {
-			// Do not override when clicked on Score
-			if (spriteId)
-				_lastClickedSpriteId = spriteId;
-		}
-
 		switch (event) {
 		case kEventKeyUp:
 		case kEventKeyDown:
@@ -690,6 +697,13 @@ void Movie::broadcastEvent(LEvent event) {
 			queueEvent(queue, event, i);
 		}
 	}
+
+	// With no sprite behaviors, cast/frame/movie handlers were never queued
+	// at all; add a no-target pass. When behaviors exist, their pass()
+	// semantics already decide whether those handlers run.
+	if (queue.empty())
+		queueEvent(queue, event, 0);
+
 	_vm->setCurrentWindow(this->getWindow());
 	_lingo->processEvents(queue, false);
 }

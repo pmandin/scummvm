@@ -689,6 +689,26 @@ struct UICL : public EngineData {
 
 	uint16 contactCount = 0;
 	Common::Array<Contact> contacts;
+
+	// Nancy 13 added a camera / pictures sub-UI to the cell phone, which
+	// reorganized the chunk body. The fields below are only populated for
+	// Nancy 13 and later.
+	struct PictureRecord {
+		uint16 id = 0;
+		Common::Rect rect;
+		byte unknown[6] = {};
+	};
+
+	Common::Rect cameraViewSrcRect;           // camera viewfinder SRC on the overlay
+	int32 cameraTextX = 0;
+	int32 cameraTextY = 0;
+	Common::Path cameraViewImageName;         // "UI_CellCamView_OVL"
+	Common::Path cameraClickSound;
+	Common::Rect pictureDisplayRect;          // where a captured picture is shown
+	Common::Rect noPictureScreenRect;         // "no pictures" placeholder
+	Common::Path helpTextKey2;                // second CVTX key (phone-use help)
+	byte screenColors[9] = {};                // 3 RGB colors for the phone screen
+	Common::Array<PictureRecord> pictures;    // captured-picture slots (up to 50)
 };
 
 // New conversation popup UI (the text strip that appears above the taskbar
@@ -733,6 +753,8 @@ struct UINB : public EngineData {
 	UIPopupHeader header;
 	UIButtonSlot tabs[kNumTabs];
 	Common::Rect textRect;
+	byte primaryTextColor[3] = {};    // RGB, Nancy 13+
+	byte secondaryTextColor[3] = {};  // RGB, Nancy 13+
 	uint16 primaryFontID = 0;
 	uint16 secondaryFontAttr = 0;
 	uint16 useFilenameTextFlag = 0;
@@ -743,9 +765,8 @@ struct UINB : public EngineData {
 	Common::Rect tabCaptionDestRect;                            // on-screen target
 };
 
-// Named-event table. Introduced in Nancy 12. Empty in Secret of the Old Clock
-// (the engine registers several built-in event categories at runtime on top of
-// whatever this chunk provides). Each record is a name followed by an id.
+// Event flags table. Introduced in Nancy 12, and replaces the event flag names
+// that were hardcoded in the executable. Each record is a name followed by an id.
 struct EVNT : public EngineData {
 	EVNT(Common::SeekableReadStream *chunkStream);
 

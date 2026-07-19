@@ -52,8 +52,8 @@ const char *actorTypeToStr(ActorType type) {
 		return "Cursor";
 	case kActorTypeSprite:
 		return "Sprite";
-	case kActorTypeLKZazu:
-		return "LKZazu";
+	case kActorTypeStalkingZazu:
+		return "StalkingZazu";
 	case kActorTypeDotGame:
 		return "DotGame";
 	case kActorTypeDocument:
@@ -167,7 +167,7 @@ void Actor::readParameter(Chunk &chunk, ActorHeaderSectionType paramType) {
 		// This is not a hashmap because we don't want to have to hash ScriptValues.
 		for (ScriptResponse *existingScriptResponse : scriptResponsesForType) {
 			if (existingScriptResponse->_argumentValue == scriptResponse->_argumentValue) {
-				error("[%s] %s: Script response for %s (%s) already exists", debugName(), __func__,
+				warning("[%s] %s: Script response for %s (%s) already exists", debugName(), __func__,
 					eventTypeToStr(scriptResponse->_type), scriptResponse->_argumentValue.getDebugString().c_str());
 			}
 		}
@@ -212,6 +212,22 @@ ScriptResponse *Actor::findNextTimeScriptResponseAfter(uint32 after) const {
 	}
 
 	return nullptr;
+}
+
+bool Actor::hasScriptResponse(EventType eventType, const ScriptValue &arg) const {
+	const Common::Array<ScriptResponse *> &scriptResponses = _scriptResponses.getValOrDefault(eventType);
+	for (const ScriptResponse *scriptResponse : scriptResponses) {
+		const ScriptValue &argToCheck = scriptResponse->_argumentValue;
+
+		if (arg.getType() != argToCheck.getType()) {
+			continue;
+		}
+
+		if (arg == argToCheck) {
+			return true;
+		}
+	}
+	return false;
 }
 
 void Actor::runScriptResponseIfExists(EventType eventType, const ScriptValue &arg) {
@@ -541,7 +557,7 @@ void SpatialEntity::moveTo(int16 x, int16 y) {
 	debugC(3, kDebugGraphics, "[%s] %s: (%d, %d) -> (%d, %d)", debugName(), __func__,
 		_originalBoundingBox.origin().x, _originalBoundingBox.origin().y, x, y);
 
-	if (dest == _boundingBox.origin()) {
+	if (dest == _originalBoundingBox.origin()) {
 		// We aren't actually moving anywhere.
 		return;
 	}
@@ -567,7 +583,7 @@ void SpatialEntity::moveToCentered(int16 x, int16 y) {
 }
 
 void SpatialEntity::setBounds(const Common::Rect &bounds) {
-	if (_boundingBox == bounds) {
+	if (_originalBoundingBox == bounds) {
 		// We aren't actually moving anywhere.
 		return;
 	}

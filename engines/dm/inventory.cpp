@@ -124,6 +124,10 @@ void InventoryMan::toggleInventory(ChampionIndex championIndex) {
 			return;
 		}
 	}
+
+	if (championIndex == kDMChampionCloseInventory)
+		return;
+
 	display._useByteBoxCoordinates = false;
 	_inventoryChampionOrdinal = _vm->indexToOrdinal(championIndex);
 	if (!inventoryChampionOrdinal)
@@ -522,13 +526,14 @@ void InventoryMan::drawPanelObject(Thing thingToDraw, bool pressingEye) {
 
 			descString = str;
 		} else if ((thingType == kDMThingTypePotion)
+				   && (iconIndex >= 0)
 				   && (iconIndex != kDMIconIndicePotionWaterFlask)
 				   && (champMan.getSkillLevel((ChampionIndex)_vm->ordinalToIndex(_inventoryChampionOrdinal), kDMSkillPriest) > 1)) {
 			str = ('_' + dungeon.getPotion(thingToDraw)->getPower() / 40);
 			str += " ";
 			str += objMan._objectNames[iconIndex];
 			descString = str;
-		} else {
+		} else if (iconIndex >= 0) {
 			descString = objMan._objectNames[iconIndex];
 		}
 
@@ -919,7 +924,8 @@ void InventoryMan::clickOnMouth() {
 		return;
 
 	Thing handThing = championMan._leaderHandObject;
-	if (!getFlag(dungeon._objectInfos[dungeon.getObjectInfoIndex(handThing)]._allowedSlots, kDMMaskMouth))
+	int16 infoIndex = dungeon.getObjectInfoIndex(handThing);
+	if (infoIndex < 0 || infoIndex >= 180 || !getFlag(dungeon._objectInfos[infoIndex]._allowedSlots, kDMMaskMouth))
 		return;
 
 	uint16 iconIndex = _vm->_objectMan->getIconIndex(handThing);
@@ -977,7 +983,7 @@ void InventoryMan::clickOnMouth() {
 				adjustedPotionPower >>= 2;
 
 			curChampion->_shieldDefense += adjustedPotionPower;
-			TimelineEvent newEvent;
+			TimelineEvent newEvent = {};
 			newEvent._type = kDMEventTypeChampionShield;
 			newEvent._mapTime = _vm->setMapAndTime(dungeon._partyMapIndex, _vm->_gameTime + (adjustedPotionPower * adjustedPotionPower));
 			newEvent._priority = championIndex;
