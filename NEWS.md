@@ -17,6 +17,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Dracula 2: The Last Sanctuary.
    - Added support for Nancy Drew: The Secret of Shadow Ranch.
    - Added support for Nancy Drew: Curse of Blackmoor Manor.
+   - Added support for Chamber of the Sci-Mutant Priestess.
 
  General:
    - Optimised mixing and rate converters, for better performance.
@@ -46,6 +47,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fix M&M1 spelling mistakes.
    - Improved M&M1 Enhanced mouse support, character generation, and general in-game UI.
    - Fixed cutscene subtitle rendering.
+   - Added Xeen French translation.
 
  NANCY:
    - Generic flags are no longer cleared when saving or auto-saving. Clearing

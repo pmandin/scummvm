@@ -141,14 +141,13 @@ void ScrollTextBox::drawContent() {
 	const uint16 fontID = _fontIDOverride != -1 ? (uint16)_fontIDOverride : _tboxData->highlightConversationFontID;
 	drawAllText(textBounds, 0, fontID, _tboxData->highlightConversationFontID);
 
-	// Two discrete states: "mini" (<= 2 lines) is a short strip above the
-	// taskbar with no scrollbar; "expanded" (> 2 lines) is the full overlay
-	// covering the taskbar, with a scrollbar.
+	// Mini strip vs full overlay with scrollbar, decided by whether the text
+	// overflows the viewport (not by line count): a caption that fits stays mini.
 	const Common::Rect viewport = textViewportLocal();
 	const int fullHeight = _fullPopupRect.height();
 	const int contentHeight = getInnerHeight();
 
-	_expanded = _numDrawnLines > 2;
+	_expanded = contentHeight > viewport.height();
 
 	Common::Rect boxRect;
 	int visibleTextHeight;
@@ -161,8 +160,8 @@ void ScrollTextBox::drawContent() {
 			scrollY = (int)(_scrollPos * (contentHeight - visibleTextHeight));
 		}
 	} else {
-		// Fixed two-line strip at the top of the overlay. Drop the chrome's
-		// bottom margin so it's just tall enough for two lines.
+		// A strip at the top of the overlay, sized to the text with a two-line
+		// minimum. Drop the chrome's bottom margin so it hugs the content.
 		const Font *font = g_nancy->_graphics->getFont(fontID);
 		const int lineStep = font->getLineHeight() + font->getLineHeight() / 9;
 		const int twoLineContent = _tboxData->scrollbarDefaultPos.y + 2 * lineStep;
@@ -205,6 +204,29 @@ void ScrollTextBox::drawContent() {
 		drawScrollbar(_scrollbarDragging ? kUIButtonPressed : (_scrollbarHovered ? kUIButtonHover : kUIButtonIdle));
 	}
 
+	_needsRedraw = true;
+}
+
+void ScrollTextBox::redrawScroll() {
+	// Only reachable while dragging the scrollbar, which only exists in the
+	// expanded state, so the layout (box rect, surface size, text in _fullSurface)
+	// is already settled. Just re-composite the visible slice at the new scroll
+	// offset instead of re-running drawContent()'s full text re-layout.
+	const Common::Rect viewport = textViewportLocal();
+	const int visibleTextHeight = viewport.height();
+	const int contentHeight = getInnerHeight();
+	int scrollY = 0;
+	if (contentHeight > visibleTextHeight) {
+		scrollY = (int)(_scrollPos * (contentHeight - visibleTextHeight));
+	}
+
+	// drawBackground() repaints the chrome, wiping the previous (transparent-keyed)
+	// text so the new slice doesn't smear over the old one.
+	drawBackground();
+	_drawSurface.blitFrom(_fullSurface,
+		Common::Rect(0, scrollY, _fullSurface.w, scrollY + visibleTextHeight),
+		Common::Point(viewport.left, viewport.top));
+	drawScrollbar(_scrollbarDragging ? kUIButtonPressed : (_scrollbarHovered ? kUIButtonHover : kUIButtonIdle));
 	_needsRedraw = true;
 }
 
@@ -334,13 +356,14 @@ void ScrollTextBox::handleInput(NancyInput &input) {
 				released = true;
 			}
 
-			// Only re-render when the thumb actually moves (or the drag just ended, to
-			// repaint the thumb out of its pressed state). drawContent() re-lays out
-			// the whole text surface, so calling it every frame while the button is
-			// merely held down pins the CPU and makes dragging choppy.
+			// Re-composite only when the thumb moves (or the drag just ended, to
+			// repaint the thumb out of its pressed state), and via redrawScroll() --
+			// a cheap slice re-blit -- rather than drawContent()'s full text
+			// re-layout. This keeps dragging smooth instead of re-rendering the
+			// whole text surface each frame.
 			if (newScrollPos != _scrollPos || released) {
 				_scrollPos = newScrollPos;
-				drawContent();
+				redrawScroll();
 			}
 
 			input.eatMouseInput();

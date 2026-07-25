@@ -74,11 +74,24 @@ private:
 	/** Fractional position of the output stream in input stream unit */
 	frac_t _outPosFrac;
 
-	/** Last sample(s) in the input stream (left/right channel) */
+	/**
+	 * Last sample(s) in the input stream (left/right channel). The interpolating
+	 * path interpolates from them towards _inCur*, the upsampling path copies them.
+	 */
 	int16 _inLastL, _inLastR;
 
 	/** Current sample(s) in the input stream (left/right channel) */
 	int16 _inCurL, _inCurR;
+
+	/**
+	 * How many more copies of _inLastL/_inLastR the next call has to write
+	 * before reading further input (upsampling).
+	 */
+	int _pendingRepeats;
+
+	/** Write one output frame built from a single input frame, and advance outBuffer. */
+	template<st_volume_t volL, st_volume_t volR, typename st_sample_t, MixMode mixMode>
+	FORCEINLINE void writeFrame(st_sample_t *&outBuffer, int16 inL, int16 inR, st_volume_t volL_val, st_volume_t volR_val);
 
 	template<st_volume_t volL, st_volume_t volR, typename st_sample_t, MixMode mixMode>
 	int commonConvert(AudioStream &input, st_sample_t *outBuffer, st_size_t numSamples, st_volume_t volL_val, st_volume_t volR_val, int outputSamples);
@@ -123,14 +136,57 @@ public:
 
 	int convert(AudioStream &input, byte *outBuffer, uint outBytesPerSample, st_size_t numSamples, st_volume_t vol_l, st_volume_t vol_r, MixMode mixMode) override;
 
-	void setInputRate(st_rate_t inputRate) override { _inRate = inputRate; }
-	void setOutputRate(st_rate_t outputRate) override { _outRate = outputRate; }
+	void setInputRate(st_rate_t inputRate) override { _inRate = inputRate; _pendingRepeats = 0; }
+	void setOutputRate(st_rate_t outputRate) override { _outRate = outputRate; _pendingRepeats = 0; }
 
 	st_rate_t getInputRate() const override { return _inRate; }
 	st_rate_t getOutputRate() const override { return _outRate; }
 
-	bool needsDraining() const override { return _bufferSize != 0; }
+	bool needsDraining() const override { return _bufferSize != 0 || _pendingRepeats != 0; }
 };
+
+template<bool inStereo, bool outStereo, bool reverseStereo>
+template<st_volume_t volL, st_volume_t volR, typename st_sample_t, MixMode mixMode>
+void RateConverter_Impl<inStereo, outStereo, reverseStereo>::writeFrame(st_sample_t *&outBuffer, int16 inL, int16 inR, st_volume_t volL_val, st_volume_t volR_val) {
+	if (volL | volR) {
+		st_sample_t outL, outR;
+
+		if (volL != 0) {
+			if (volL != Audio::Mixer::kMaxMixerVolume)
+				outL = (inL * (int)volL_val) / Audio::Mixer::kMaxMixerVolume;
+			else
+				outL = inL;
+		}
+
+		if (volR != 0) {
+			if (volR != Audio::Mixer::kMaxMixerVolume)
+				outR = (inR * (int)volR_val) / Audio::Mixer::kMaxMixerVolume;
+			else
+				outR = inR;
+		}
+
+		if (outStereo) {
+			// Output left channel
+			if (volL != 0)
+				processSample<mixMode>(outBuffer[reverseStereo    ], outL);
+
+			// Output right channel
+			if (volR != 0)
+				processSample<mixMode>(outBuffer[reverseStereo ^ 1], outR);
+		} else {
+			// Output mono channel
+			st_sample_t monoOut;
+			if (volL != 0 && volR != 0)
+				monoOut = (outL + outR) / 2;
+			else if (volL != 0)
+				monoOut = outL / 2;
+			else if (volR != 0)
+				monoOut = outR / 2;
+			processSample<mixMode>(outBuffer[0], monoOut);
+		}
+	}
+	outBuffer += (outStereo ? 2 : 1);
+}
 
 template<bool inStereo, bool outStereo, bool reverseStereo>
 template<st_volume_t volL, st_volume_t volR, typename st_sample_t, MixMode mixMode>
@@ -139,85 +195,57 @@ int RateConverter_Impl<inStereo, outStereo, reverseStereo>::commonConvert(AudioS
 	const st_sample_t *outEnd = outBuffer + numSamples * (outStereo ? 2 : 1);
 
 	while (outBuffer < outEnd) {
-		// Check if we have to refill the buffer
-		if (_bufferSize == 0) {
+		// Finish a group of repeated output frames which the previous call had
+		// to cut short because it ran out of output buffer.
+		while (_pendingRepeats > 0 && outBuffer < outEnd) {
+			writeFrame<volL, volR, st_sample_t, mixMode>(outBuffer, _inLastL, _inLastR, volL_val, volR_val);
+			_pendingRepeats--;
+		}
+		if (outBuffer == outEnd)
+			break;
+
+		// Check if we have to refill the buffer. A partial frame left over in
+		// the buffer can never be used, so discard it and refill as well.
+		if (_bufferSize < (inStereo ? 2 : 1)) {
 			_bufferPos = _buffer;
 			_bufferSize = input.readBuffer(_buffer, ARRAYSIZE(_buffer));
 
-			if (_bufferSize <= 0)
+			if (_bufferSize < (inStereo ? 2 : 1)) {
+				_bufferSize = 0;
 				return (outBuffer - outStart) / (outStereo ? 2 : 1);
+			}
 		}
 
-		// Process as many samples as we can from the current buffer
+		// Process as many whole outputSample groups as we can from the current buffer
 		const int count = MIN(
 			_bufferSize / (inStereo ? 2 : 1),
 			(int)(outEnd - outBuffer) / (outStereo ? 2 : 1) / outputSamples);
+
+		if (count == 0) {
+			// Fewer than outputSamples output frames are left, so no whole
+			// group fits. Consume one input frame anyway and let the code at
+			// the top of the loop write what fits; the rest is carried over to
+			// the next call. Without this the loop could never make progress.
+			_inLastL = _bufferPos[0];
+			_inLastR = inStereo ? _bufferPos[1] : _bufferPos[0];
+			_bufferPos += (inStereo ? 2 : 1);
+			_bufferSize -= (inStereo ? 2 : 1);
+			_pendingRepeats = outputSamples;
+			continue;
+		}
+
 		_bufferSize -= count * (inStereo ? 2 : 1);
 
 		if (volL | volR) {
 			// Mix the data into the output buffer
 			for (int i = 0; i < count; ++i) {
-				int16 inL, inR;
+				// This code is eliminated if muted
+				const int16 inL = _bufferPos[0];
+				const int16 inR = inStereo ? _bufferPos[1] : _bufferPos[0];
+				_bufferPos += (inStereo ? 2 : 1);
 
-				if (inStereo) {
-					if (volL != 0)
-						inL = *_bufferPos++;
-					else
-						_bufferPos++;
-
-					if (volR != 0)
-						inR = *_bufferPos++;
-					else
-						_bufferPos++;
-				} else {
-					if (volL != 0) {
-						inL = *_bufferPos++;
-						if (volR != 0)
-							inR = inL;
-					} else {
-						inR = *_bufferPos++;
-					}
-				}
-
-				st_sample_t outL, outR;
-
-				if (volL != 0) {
-					if (volL != Audio::Mixer::kMaxMixerVolume)
-						outL = (inL * (int)volL_val) / Audio::Mixer::kMaxMixerVolume;
-					else
-						outL = inL;
-				}
-
-				if (volR != 0) {
-					if (volR != Audio::Mixer::kMaxMixerVolume)
-						outR = (inR * (int)volR_val) / Audio::Mixer::kMaxMixerVolume;
-					else
-						outR = inR;
-				}
-
-				// TODO: could be unrolled
-				for (int j = 0; j < outputSamples; ++j) {
-					if (outStereo) {
-						// Output left channel
-						if (volL != 0)
-							processSample<mixMode>(outBuffer[reverseStereo    ], outL);
-
-						// Output right channel
-						if (volR != 0)
-							processSample<mixMode>(outBuffer[reverseStereo ^ 1], outR);
-					} else {
-						// Output mono channel
-						st_sample_t monoOut;
-						if (volL != 0 && volR != 0)
-							monoOut = (outL + outR) / 2;
-						else if (volL != 0)
-							monoOut = outL / 2;
-						else if (volR != 0)
-							monoOut = outR / 2;
-						processSample<mixMode>(outBuffer[0], monoOut);
-					}
-					outBuffer += (outStereo ? 2 : 1);
-				}
+				for (int j = 0; j < outputSamples; ++j)
+					writeFrame<volL, volR, st_sample_t, mixMode>(outBuffer, inL, inR, volL_val, volR_val);
 			}
 		} else {
 			_bufferPos += count * (inStereo ? 2 : 1);
@@ -469,7 +497,8 @@ RateConverter_Impl<inStereo, outStereo, reverseStereo>::RateConverter_Impl(st_ra
 	_inCurL(0),
 	_inCurR(0),
 	_bufferSize(0),
-	_bufferPos(nullptr) {}
+	_bufferPos(nullptr),
+	_pendingRepeats(0) {}
 
 template<bool inStereo, bool outStereo, bool reverseStereo>
 template<typename st_sample_t, MixMode mixMode>

@@ -19,13 +19,13 @@
  *
  */
 
-#ifndef MADS_SOUND_NEBULAR_H
-#define MADS_SOUND_NEBULAR_H
+#ifndef MADS_NEBULAR_SOUND_NEBULAR_H
+#define MADS_NEBULAR_SOUND_NEBULAR_H
 
-#include "mads/nebular/core/asound.h"
+#include "mads/nebular/asound.h"
 
 namespace MADS {
-namespace Nebular {
+namespace RexNebular {
 
 class RexSoundManager : public SoundManager {
 protected:
@@ -51,7 +51,7 @@ public:
 
 class ASound1 : public RexASound {
 private:
-	typedef int (ASound1::*CommandPtr)();
+	typedef int (ASound1:: *CommandPtr)();
 	static const CommandPtr _commandList[42];
 	bool _cmd23Toggle;
 
@@ -101,7 +101,7 @@ class ASound2 : public RexASound {
 private:
 	byte _command12Param;
 private:
-	typedef int (ASound2::*CommandPtr)();
+	typedef int (ASound2:: *CommandPtr)();
 	static const CommandPtr _commandList[44];
 
 	int command0() override;
@@ -153,7 +153,7 @@ class ASound3 : public RexASound {
 private:
 	bool _command39Flag;
 
-	typedef int (ASound3::*CommandPtr)();
+	typedef int (ASound3:: *CommandPtr)();
 	static const CommandPtr _commandList[61];
 
 	int command9();
@@ -211,7 +211,7 @@ public:
 
 class ASound4 : public RexASound {
 private:
-	typedef int (ASound4::*CommandPtr)();
+	typedef int (ASound4:: *CommandPtr)();
 	static const CommandPtr _commandList[61];
 
 	int command10();
@@ -249,7 +249,7 @@ public:
 
 class ASound5 : public RexASound {
 private:
-	typedef int (ASound5::*CommandPtr)();
+	typedef int (ASound5:: *CommandPtr)();
 	static const CommandPtr _commandList[42];
 
 	int command9();
@@ -295,7 +295,7 @@ public:
 
 class ASound6 : public RexASound {
 private:
-	typedef int (ASound6::*CommandPtr)();
+	typedef int (ASound6:: *CommandPtr)();
 	static const CommandPtr _commandList[30];
 
 	int command9();
@@ -324,7 +324,7 @@ public:
 
 class ASound7 : public RexASound {
 private:
-	typedef int (ASound7::*CommandPtr)();
+	typedef int (ASound7:: *CommandPtr)();
 	static const CommandPtr _commandList[38];
 
 	int command9();
@@ -356,7 +356,7 @@ public:
 
 class ASound8 : public RexASound {
 private:
-	typedef int (ASound8::*CommandPtr)();
+	typedef int (ASound8:: *CommandPtr)();
 	static const CommandPtr _commandList[38];
 
 	int command9();
@@ -399,11 +399,23 @@ public:
 
 class ASound9 : public RexASound {
 private:
-	int _v1, _v2;
-	byte *_soundPtr;
+	/**
+	 * Deferred sound-loader callback state (word_1949E/word_194A0/_soundPtr
+	 * in the original disassembly). Unlike every other Rex Nebular driver,
+	 * ASound9 arms a recurring timer that re-invokes a scheduled loader
+	 * function every _callbackPeriod ticks, without ever clearing the
+	 * pointer itself (the loader body clears it if it wants the recurrence
+	 * to stop).
+	 */
+	typedef void (ASound9:: *CallbackFunction)();
+	int _callbackCounter;
+	int _callbackPeriod;
+	CallbackFunction _callbackFnPtr;
 
-	typedef int (ASound9::*CommandPtr)();
+	typedef int (ASound9:: *CommandPtr)();
 	static const CommandPtr _commandList[52];
+
+	void tickCallback() override;
 
 	int command9();
 	int command10();
@@ -447,17 +459,24 @@ private:
 	int command49();
 	int command50();
 	int command51();
-	int command57();
-	int command59();
-	int command60();
+
+	// Deferred loader bodies, scheduled via _callbackFnPtr by the commands above
+	void loadCommand38();
+	void loadCommand39();
+	void loadCommand40();
+	void loadCommand41();
+	void loadCommand42();
+	void loadCommand44_46();
+	void loadCommand45();
+	void loadCommand47();
+	void loadCommand50();
 public:
 	ASound9(Audio::Mixer *mixer, OPL::OPL *opl);
 
 	int command(int commandId, int param) override;
 };
 
-} // namespace Nebular
-
+} // namespace RexNebular
 } // namespace MADS
 
-#endif /* MADS_SOUND_NEBULAR_H */
+#endif

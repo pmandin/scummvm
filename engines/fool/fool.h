@@ -26,14 +26,11 @@
 #include "common/system.h"
 #include "common/error.h"
 #include "common/fs.h"
-#include "common/hash-str.h"
 #include "common/random.h"
 #include "common/serializer.h"
 #include "common/util.h"
 #include "engines/engine.h"
-#include "engines/savestate.h"
 #include "graphics/macgui/macwindowmanager.h"
-#include "graphics/screen.h"
 
 #include "fool/detection.h"
 
@@ -49,7 +46,8 @@ struct FoolGameDescription;
 enum FoolVersion {
 	kFool11 = 1,
 	kFool20 = 2,
-	kFool30 = 3,
+	kFool30 = 4,
+	kFoolDemo10 = 8,
 };
 
 class FoolEngine : public Engine {
@@ -62,7 +60,7 @@ protected:
 
 public:
 	Graphics::ManagedSurface _screen;
-	Graphics::MacWindowManager _wm;
+	Graphics::MacWindowManager *_wm = nullptr;
 
 	FoolEngine(OSystem *syst, const FOOLGameDescription *gameDesc);
 	~FoolEngine() override;
@@ -93,6 +91,10 @@ public:
 	}
 	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override {
 		return true;
+	}
+
+	const Common::String getTarget() {
+		return _targetName;
 	}
 
 	/**

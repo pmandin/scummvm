@@ -41,6 +41,11 @@
 namespace Director {
 
 bool RIFXArchive::writeToFile(Common::String filename, Movie *movie) {
+	if (_rifxType == MKTAG('F', 'G', 'D', 'M') || _rifxType == MKTAG('F', 'G', 'D', 'C')) {
+		warning("STUB: RIFXArchive::writeToFile(): saving Afterburner movies is not supported");
+		return false;
+	}
+
 	// If the filename is empty, we save the movie with the name of the current movie
 	if (filename.empty()) {
 		filename = movie->getMacName();
@@ -75,10 +80,6 @@ bool RIFXArchive::writeToFile(Common::String filename, Movie *movie) {
 		writeMemoryMap(saveFile, builtResources);
 		break;
 
-	case MKTAG('F', 'G', 'D', 'M'):
-	case MKTAG('F', 'G', 'D', 'C'):
-		writeAfterBurnerMap(saveFile);
-		break;
 	default:
 		break;
 	}
@@ -115,11 +116,21 @@ bool RIFXArchive::writeToFile(Common::String filename, Movie *movie) {
 			break;
 
 		case MKTAG('V', 'W', 'C', 'F'):
-			// There is only 'VWCF' resource, that is for the internal cast
+		case MKTAG('D', 'R', 'C', 'F'):
+			// There is only one config resource, that is for the internal cast
 			// The external casts don't have a config
 			// movie->getCast() returns the internal cast
 			cast = movie->getCast();
-			cast->saveConfig(saveFile, it->offset);
+			if (cast->getConfigSize() == 0) {
+				// Unsupported version (D10+): keep the original bytes
+				debugC(7, kDebugSaving, "Saving resource %s as it is, without modification", tag2str(it->tag));
+				saveFile->seek(it->offset, SEEK_SET);
+				saveFile->writeUint32LE(it->tag);
+				saveFile->writeUint32LE(it->size);
+				saveFile->writeStream(getResource(it->tag, it->index));
+			} else {
+				cast->saveConfig(saveFile, it->offset, it->tag);
+			}
 			break;
 
 		case MKTAG('B', 'I', 'T', 'D'):
@@ -333,10 +344,10 @@ bool RIFXArchive::writeCast(Common::SeekableWriteStream *writeStream, uint32 off
 	debugCN(5, kDebugSaving, "'CASt' indexes: [");
 	for (uint32 i = 0; i <= maxCastId; i++) {
 		uint32 castIndex = castIndexes.getValOrDefault(i, 0);
-		if (castIndex) {
+		// CAS* is a positional array: empty slots are written as 0
+		writeStream->writeUint32BE(castIndex);
+		if (castIndex)
 			debugCN(5, kDebugSaving, (i == 0 ? "%d" : ", %d"), castIndex);
-			writeStream->writeUint32BE(castIndex);
-		}
 	}
 	debugC(5, kDebugSaving, "]");
 
@@ -380,21 +391,38 @@ Common::Array<Resource *> RIFXArchive::rebuildResources(Movie *movie) {
 				if (!res) {
 					// If the castId is new, create a new resource
 					// Assigning the next available index to the resource
-					res = &castResMap[_resources.size()];
+					uint16 newResIndex = _resources.size();
+					res = &castResMap[newResIndex];
 					res->tag = MKTAG('C', 'A', 'S', 't');
 					res->accessed = true;
 
 					res->libResourceId = cast->_libResourceId;
-					res->children = jt._value->_children;
-					res->index = _resources.size();
+					res->index = newResIndex;
 					res->castId = jt._value->getID() - cast->_castArrayStart;
+					_resources.push_back(res);
 
+					// Clone the child resources that are re-serialized from
+					// their owning member's state: the duplicate must not
+					// share them with its source
+					res->children.clear();
 					for (auto child : jt._value->_children) {
+						if (child.tag == MKTAG('S', 'T', 'X', 'T') || child.tag == MKTAG('B', 'I', 'T', 'D') ||
+								child.tag == MKTAG('C', 'L', 'U', 'T') || child.tag == MKTAG('S', 'C', 'V', 'W')) {
+							uint16 childIndex = _resources.size();
+							Resource &newChild = _types[child.tag][childIndex];
+							newChild = child;
+							newChild.index = childIndex;
+							_resources.push_back(&newChild);
+							child.index = childIndex;
+						}
+						res->children.push_back(child);
+					}
+
+					for (auto child : res->children) {
 						_keyData[child.tag][res->index].push_back(child.index);
 						_keyTableUsedCount += 1;
 						_keyTableEntryCount += 1;
 					}
-					_resources.push_back(res);
 
 					debugC(5, kDebugSaving, "RIFXArchive::rebuildResources(): new 'CASt' resource added");
 				} else {
@@ -498,16 +526,23 @@ Common::Array<Resource *> RIFXArchive::rebuildResources(Movie *movie) {
 			break;
 
 		case MKTAG('V', 'W', 'C', 'F'):
+		case MKTAG('D', 'R', 'C', 'F'):
 			{
-				// Only one cast config per movie
+				// Only one config resource per movie
 				// No need to update the key mapping
 				cast = movie->getCast();
 				resSize = cast->getConfigSize();
 
 				it->offset = currentSize;
 
+				if (resSize == 0) {
+					// Unsupported Director version: keep the original size
+					resSize = it->size;
+				} else {
+					it->size = resSize;
+				}
+
 				currentSize += resSize + 8;			// getConfigSize() doesn't include header and size
-				it->size = resSize;
 			}
 			break;
 

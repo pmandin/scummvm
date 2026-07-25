@@ -1411,8 +1411,11 @@ Common::Rect Scene::activePopupConfinement() const {
 	if (_notebookPopup.isVisible())     return _notebookPopup.getScreenPosition();
 	// The cellphone stays up during a call it placed, but the conversation
 	// (textbox) is the active UI then — don't confine the cursor to the phone,
-	// or it fights the textbox as each new line starts.
-	if (_cellPhonePopup.isVisible() && _activeConversation == nullptr)
+	// or it fights the textbox as each new line starts. _activeConversation
+	// can't gate this: it toggles per dialogue line (null between lines), so the
+	// confinement would flicker on and snap the cursor up into the phone. Gate on
+	// the phone's own call state instead, which stays set for the whole call.
+	if (_cellPhonePopup.isVisible() && !_cellPhonePopup.isInCall())
 		return _cellPhonePopup.getScreenPosition();
 	return Common::Rect();
 }
@@ -1526,72 +1529,76 @@ void Scene::handleInput() {
 
 	_actionManager.handleInput(input);
 
-	// Menu/help are disabled when a movie is active. The taskbar is also
-	// skipped while the textbox is in open mode (it visually covers the
-	// buttons, so they should not receive hover/clicks).
-	if (!_activeMovie) {
-		// While a Nancy 10+ popup (inventory / notebook / cellphone /
-		// conversation) is open, the original disables the entire taskbar —
-		// every button, including MENU and HELP. Skip the taskbar input so it
-		// neither hovers nor reacts to clicks until the popup is closed.
-		const bool popupOpen = g_nancy->getGameType() >= kGameTypeNancy10 &&
-								!activePopupConfinement().isEmpty();
-		if (_taskbar) {
-			// Grey out the whole taskbar while a popup is open (matches the
-			// original); restored automatically once the popup closes.
-			_taskbar->setPopupLockout(popupOpen);
-		}
-		if (_taskbar && !_textbox.isFullMode() && !popupOpen) {
-			// MENU and HELP leave gameplay entirely, which would cut off the
-			// taskbar click sound. The original defers the transition until that
-			// sound finishes, so we hold the click here and only switch state
-			// once the button's click sound has stopped playing.
-			if (_pendingTaskbarButton != -1) {
-				auto *taskData = GetEngineData(TASK);
-				if (!taskData || !g_nancy->_sound->isSoundPlaying(taskData->buttons[_pendingTaskbarButton].button.clickSound)) {
-					NancyState::NancyState target = _pendingTaskbarButton == kTaskButtonMenu ? NancyState::kMainMenu : NancyState::kHelp;
-					_pendingTaskbarButton = -1;
-					requestStateChange(target);
-				}
-			} else {
-				_taskbar->handleInput(input);
+	// The whole Nancy 10+ taskbar (inventory / notebook / cell phone / MENU /
+	// HELP) stays usable even while a SecondaryMovie is playing; only the
+	// standalone Nancy <=9 menu/help buttons further down are disabled during a
+	// movie. While a Nancy 10+ popup (inventory / notebook / cellphone /
+	// conversation) is open, the original disables the entire taskbar — every
+	// button, including MENU and HELP. Skip the taskbar input so it neither
+	// hovers nor reacts to clicks until the popup is closed. The taskbar is also
+	// skipped while the textbox is in open mode, since it visually covers the
+	// buttons.
+	const bool popupOpen = g_nancy->getGameType() >= kGameTypeNancy10 &&
+							!activePopupConfinement().isEmpty();
+	if (_taskbar) {
+		// Grey out the whole taskbar while a popup is open (matches the
+		// original); restored automatically once the popup closes.
+		_taskbar->setPopupLockout(popupOpen);
+	}
+	if (_taskbar && !_textbox.isFullMode() && !popupOpen) {
+		// MENU and HELP leave gameplay entirely, which would cut off the
+		// taskbar click sound. The original defers the transition until that
+		// sound finishes, so we hold the click here and only switch state
+		// once the button's click sound has stopped playing.
+		if (_pendingTaskbarButton != -1) {
+			auto *taskData = GetEngineData(TASK);
+			if (!taskData || !g_nancy->_sound->isSoundPlaying(taskData->buttons[_pendingTaskbarButton].button.clickSound)) {
+				NancyState::NancyState target = _pendingTaskbarButton == kTaskButtonMenu ? NancyState::kMainMenu : NancyState::kHelp;
+				_pendingTaskbarButton = -1;
+				requestStateChange(target);
+			}
+		} else {
+			_taskbar->handleInput(input);
 
-				int clicked = _taskbar->getClickedButton();
-				switch (clicked) {
-				case kTaskButtonMenu:
-					_pendingTaskbarButton = kTaskButtonMenu;
-					break;
-				case kTaskButtonInventory:
-					_inventoryPopup.toggle();
-					break;
-				case kTaskButtonNotebook: {
-					// Nancy 11+ populates the notebook lazily: opening it first
-					// runs a hidden prep scene (header.linkbackScene) whose ARs
-					// add the journal / task entries. Games without a prep scene
-					// (linkbackScene == kNoScene, e.g. Nancy 10) just toggle.
-					const int16 prepScene = _notebookPopup.getPrepSceneID();
-					if (!_notebookPopup.isVisible() && (uint16)prepScene != kNoScene) {
-						startUIPrepScene(kUITypeNotebook, prepScene);
-					} else {
-						_notebookPopup.toggle();
-					}
-					break;
+			int clicked = _taskbar->getClickedButton();
+			switch (clicked) {
+			case kTaskButtonMenu:
+				_pendingTaskbarButton = kTaskButtonMenu;
+				break;
+			case kTaskButtonInventory:
+				_inventoryPopup.toggle();
+				break;
+			case kTaskButtonNotebook: {
+				// Nancy 11+ populates the notebook lazily: opening it first
+				// runs a hidden prep scene (header.linkbackScene) whose ARs
+				// add the journal / task entries. Games without a prep scene
+				// (linkbackScene == kNoScene, e.g. Nancy 10) just toggle.
+				const int16 prepScene = _notebookPopup.getPrepSceneID();
+				if (!_notebookPopup.isVisible() && (uint16)prepScene != kNoScene) {
+					startUIPrepScene(kUITypeNotebook, prepScene);
+				} else {
+					_notebookPopup.toggle();
 				}
-				case kTaskButtonCellphone:
-					_cellPhonePopup.toggle();
-					break;
-				case -1:
-					break;
-				default:
-					// HELP is always the last taskbar button. Its index shifts from
-					// 4 to 5 in Nancy12, where a non-clickable coin purse occupies slot
-					// 4 (and never reports a click), so match it as the fall-through.
-					_pendingTaskbarButton = clicked;
-					break;
-				}
+				break;
+			}
+			case kTaskButtonCellphone:
+				_cellPhonePopup.toggle();
+				break;
+			case -1:
+				break;
+			default:
+				// HELP is always the last taskbar button. Its index shifts from
+				// 4 to 5 in Nancy12, where a non-clickable coin purse occupies slot
+				// 4 (and never reports a click), so match it as the fall-through.
+				_pendingTaskbarButton = clicked;
+				break;
 			}
 		}
+	}
 
+	// The standalone Nancy <=9 menu/help buttons leave the scene, so they're
+	// disabled while a movie is active.
+	if (!_activeMovie) {
 		if (_menuButton) {
 			_menuButton->handleInput(input);
 
@@ -1634,12 +1641,16 @@ void Scene::initStaticData() {
 	auto *bootSummary = GetEngineData(BSUM);
 	assert(bootSummary);
 
-	Common::Path imageName = "FRAME";
+	Common::Path imageName;
 
 	if (g_nancy->getGameType() <= kGameTypeNancy9) {
 		const ImageChunk *fr0 = (const ImageChunk *)g_nancy->getEngineData("FR0");
 		assert(fr0);
 		imageName = fr0->imageName;
+	} else {
+		auto *taskData = GetEngineData(TASK);
+		assert(taskData);
+		imageName = taskData->imageName;
 	}
 
 	auto *mapData = GetEngineData(MAP);
