@@ -57,11 +57,13 @@ PlaySecondaryMovie::~PlaySecondaryMovie() {
 	}
 }
 
-bool PlaySecondaryMovie::isPersistentAcrossScenes() const {
+bool PlaySecondaryMovie::survivesSceneChange(bool nextSceneIsNoArt) const {
 	// Nancy11's random movies can be ambient loops that intentionally keep
 	// playing across scene changes. Nancy13's per-character reaction movies
 	// (AR 42) are scene-local: they must stop when their scene is left, and are
-	// reloaded if it's re-entered.
+	// reloaded if it's re-entered. A plain (non-random) cinematic movie is
+	// self-contained and does not persist, not even into a NO_ART_SCENE — so the
+	// NO_ART flag is deliberately ignored here.
 	return _isRandom && g_nancy->getGameType() < kGameTypeNancy13 && !_isDone && !_randomStopRequested;
 }
 
@@ -757,8 +759,24 @@ void PlaySecondaryMovie::execute() {
 				srcRect = Common::Rect(_fullFrame.w, _fullFrame.h);
 			}
 
+			Common::Rect destRect = _videoDescs[descID].destRect;
+
+			// The videoDesc's size might be larger than the decoded video (for example, nancy10's
+			// COR_AceFidgetEars_ANIM, and nancy12's PAR_ArcadeAnimationB); clamp here to avoid
+			// reading out-of-bounds during draw. (Adjust destRect too: avoid stretching)
+			const int16 decodedWidth = (int16)_decoder.getWidth();
+			if (srcRect.width() > decodedWidth) {
+				srcRect.setWidth(decodedWidth);
+				destRect.setWidth(decodedWidth);
+			}
+			const int16 decodedHeight = (int16)_decoder.getHeight();
+			if (srcRect.height() > decodedHeight) {
+				srcRect.setHeight(decodedHeight);
+				destRect.setHeight(decodedHeight);
+			}
+
 			_drawSurface.create(_fullFrame, srcRect);
-			moveTo(_videoDescs[descID].destRect);
+			moveTo(destRect);
 
 			_needsRedraw = true;
 

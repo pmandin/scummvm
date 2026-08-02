@@ -277,7 +277,10 @@ ActionRecord *ActionManager::createActionRecord(uint16 type, Common::SeekableRea
 		else
 			return new TableIndexSetValueHS();
 	case 68:
-		return new TextScroll(false);
+		if (g_nancy->getGameType() >= kGameTypeNancy12)
+			return new TextLineOverlay();
+		else
+			return new TextScroll(false);
 	case 69:	// Nancy11
 		return new TimerControl();
 	case 70:
@@ -288,7 +291,7 @@ ActionRecord *ActionManager::createActionRecord(uint16 type, Common::SeekableRea
 		return new ModifyListEntry(ModifyListEntry::kDelete);
 	case 73:
 		return new ModifyListEntry(ModifyListEntry::kMark);
-	case 74:	// Nancy10
+	case 74:	// Nancy10 only: writes the full, taskbar-covering box
 		return new FrameTextBox(true);
 	case 75:
 		if (g_nancy->getGameType() <= kGameTypeNancy9)

@@ -71,47 +71,29 @@ enum Difficulty {
 #define MOUSE_NOT_MICROSOFT     1
 
 struct ConfigFile {
-	int sound_card_type;          /* Sound card configuration  */
-	int sound_card_address;
+	bool music_flag;				/* Music on/off              */
+	bool sound_flag;				/* Sound on/off              */
+	int interface_hotspots;			/* Easy / Standard           */
 
-	int speech_card_type;         /* Speech card configuration */
-	int speech_card_address;
-	int speech_card_irq;
-	int speech_card_drq;
+	int inventory_mode;				/* Spinning / Still          */
+	int animated_interface;			/* On / Off                  */
+	int naughtiness;				/* NAUGHTY / NICE            */
+	bool quotes_enabled;			/* Quotes option enabled     */
 
-	int music_flag;               /* Music on/off              */
-	int sound_flag;               /* Sound on/off              */
-	int interface_hotspots;       /* Easy / Standard           */
+	bool high_memory_mode;			/* High memory mode          */
+	int screen_fade;				/* Screen fade               */
+	bool speech_flag;				/* Speech on/off             */
+	int panning_speed;				/* Panning speed flag        */
+	int mouse_cursor_fix;			/* Mouse halfway problem     */
+	bool cd_version_installed;		/* CD version installed      */
+	bool speech_version_installed;	/* Version with speech installed */
+	bool show_speech_boxes;			/* Show text during speech   */
+	bool original_save_load;		/* Original vs ScummVM dialogs */
 
-	int inventory_mode;           /* Spinning / Still          */
-	int animated_interface;       /* On / Off                  */
-	int naughtiness;              /* NAUGHTY / NICE            */
-	int quotes_enabled;           /* Quotes option enabled     */
-
-	int high_memory_mode;         /* High memory mode          */
-
-	int screen_fade;              /* Screen fade               */
-
-	int speech_flag;              /* Speech on/off             */
-
-	int panning_speed;            /* Panning speed flag        */
-
-	int mouse_cursor_fix;         /* Mouse halfway problem     */
-
-	int cd_version_installed;     /* CD version installed      */
-	int cd_drive;                 /* CD drive letter           */
-
-	int speech_version_installed; /* Version with speech installed */
-
-	int show_speech_boxes;        /* Show text during speech       */
-
-	int sound_card_irq;
 	int misc2;
 	int misc3;
 	int misc4;
 	int misc5;
-
-	bool original_save_load;
 };
 
 extern ConfigFile config_file;
@@ -119,10 +101,9 @@ extern ConfigFile config_file;
 #define music_off               (!config_file.music_flag)
 #define sound_off               (!config_file.sound_flag)
 
+extern void init_config();
 extern void read_config_file();
 extern void write_config_file();
-//extern void global_load_config_parameters();
-//extern void global_unload_config_parameters();
 
 } // namespace MADS
 

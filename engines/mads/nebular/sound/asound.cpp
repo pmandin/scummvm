@@ -20,11 +20,16 @@
  */
 
 #include "audio/fmopl.h"
+#include "common/file.h"
+#include "common/md5.h"
 #include "common/memstream.h"
-#include "mads/nebular/asound.h"
+#include "mads/nebular/sound/asound.h"
 
 namespace MADS {
 namespace RexNebular {
+namespace Sound {
+
+constexpr int CHAN_COMMAND_COUNT = 15;
 
 bool AdlibChannel::_channelsEnabled;
 
@@ -114,8 +119,8 @@ AdlibSample::AdlibSample(Common::SeekableReadStream &s) {
 
 /*-----------------------------------------------------------------------*/
 
-ASound::ASound(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
-	int dataOffset, int dataSize) : SoundDriver(mixer, opl, filename, dataOffset, dataSize) {
+ASound::ASound(Audio::Mixer *mixer, const Common::Path &filename, int dataOffset, int dataSize) :
+		SoundDriver(mixer, filename, dataOffset, dataSize) {
 	// Initialize fields
 	_commandParam = 0;
 	_activeChannelPtr = nullptr;
@@ -155,13 +160,56 @@ ASound::ASound(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
 
 	AdlibChannel::_channelsEnabled = false;
 
+	// Initialize the OPL instance
+	_opl = OPL::Config::create();
+	_opl->init();
+	_opl->start(new Common::Functor0Mem<void, ASound>(this, &ASound::onTimer), CALLBACKS_PER_SECOND);
+
 	// Initialize the Adlib
 	adlibInit();
 
 	// Reset the adlib
 	command0();
+}
 
-	_opl->start(new Common::Functor0Mem<void, ASound>(this, &ASound::onTimer), CALLBACKS_PER_SECOND);
+ASound::~ASound() {
+	_opl->stop();
+	delete _opl;
+}
+
+void ASound::validate(bool isDemo) {
+	Common::File f;
+	static const char *const MD5[] = {
+		"205398468de2c8873b7d4d73d5be8ddc",
+		"f9b2d944a2fb782b1af5c0ad592306d3",
+		"7431f8dad77d6ddfc24e6f3c0c4ac7df",
+		"eb1f3f5a4673d3e73d8ac1818c957cf4",
+		"f936dd853073fa44f3daac512e91c476",
+		"3dc139d3e02437a6d9b732072407c366",
+		"af0edab2934947982e9a405476702e03",
+		"8cbc25570b50ba41c9b5361cad4fbedc",
+		"a31e4783e098f633cbb6689adb41dd4f"
+	};
+
+	static const char *const MD5_DEMO[] = {
+		"11aa27a511abdfa905fd290b4d96e9d3",
+		"057c16af3b84b019bf088cb0ef8e6c4f"
+	};
+
+	for (int i = 1; i <= 9; ++i) {
+		if (isDemo && i != 1 && i != 9)
+			continue;
+		const char *const EXPECTED = isDemo ? MD5_DEMO[i == 1 ? 0 : 1] : MD5[i - 1];
+
+		Common::Path filename(Common::String::format("ASOUND.00%d", i));
+		if (!f.open(filename))
+			error("Could not process - %s", filename.toString().c_str());
+		Common::String md5str = Common::computeStreamMD5AsString(f, 8192);
+		f.close();
+
+		if (md5str != EXPECTED)
+			error("Invalid sound file - %s", filename.toString().c_str());
+	}
 }
 
 void ASound::adlibInit() {
@@ -203,21 +251,13 @@ void ASound::noise() {
 }
 
 void ASound::write(int reg, int val) {
-	_queue.push(RegisterValue(reg, val));
+	_opl->writeReg(reg, val);
 }
 
 int ASound::write2(int state, int reg, int val) {
-	// TODO: Original has a state parameter, not used when in Adlib mode?
 	_ports[reg] = val;
 	write(reg, val);
 	return state;
-}
-
-void ASound::flush() {
-	while (!_queue.empty()) {
-		RegisterValue v = _queue.pop();
-		_opl->writeReg(v._regNum, v._value);
-	}
 }
 
 void ASound::channelOn(int reg, int volume) {
@@ -348,7 +388,7 @@ void ASound::pollActiveChannel() {
 					break;
 				}
 
-				if (!(*pSrc & 0x80) || (*pSrc <= (0xff - _chanCommandCount))) {
+				if (!(*pSrc & 0x80) || (*pSrc <= (0xff - CHAN_COMMAND_COUNT))) {
 					if (updateFlag)
 						updateActiveChannel();
 
@@ -553,9 +593,7 @@ void ASound::updateFNumber() {
 }
 
 void ASound::onTimer() {
-	Common::StackLock slock(_driverMutex);
 	poll();
-	flush();
 }
 
 void ASound::setVolume(int volume) {
@@ -666,5 +704,167 @@ int ASound::command8() {
 	return result;
 }
 
+void ASound::channelCommand(byte *&pSrc, bool &updateFlag) {
+	AdlibChannel *chan = _activeChannelPtr;
+	int cmdNum = 255 - *pSrc;
+
+	switch (cmdNum) {
+	case 0:
+		if (!chan->_innerLoopCount) {
+			if (*++pSrc == 0) {
+				chan->_pSrc += 2;
+				chan->_innerLoopPtr = chan->_pSrc;
+				chan->_innerLoopCount = 0;
+			} else {
+				chan->_innerLoopCount = *pSrc;
+				chan->_pSrc = chan->_innerLoopPtr;
+			}
+		} else if (--chan->_innerLoopCount) {
+			chan->_pSrc = chan->_innerLoopPtr;
+		} else {
+			chan->_pSrc += 2;
+			chan->_innerLoopPtr = chan->_pSrc;
+		}
+		break;
+
+	case 1:
+		if (!chan->_outerLoopCount) {
+			if (*++pSrc == 0) {
+				chan->_pSrc += 2;
+				chan->_outerLoopPtr = chan->_pSrc;
+				chan->_innerLoopPtr = chan->_pSrc;
+				chan->_innerLoopCount = 0;
+				chan->_outerLoopCount = 0;
+			} else {
+				chan->_outerLoopCount = *pSrc;
+				chan->_pSrc = chan->_outerLoopPtr;
+				chan->_innerLoopPtr = chan->_outerLoopPtr;
+			}
+		} else if (--chan->_outerLoopCount) {
+			chan->_outerLoopPtr = chan->_pSrc;
+			chan->_innerLoopPtr = chan->_pSrc;
+		} else {
+			chan->_pSrc += 2;
+			chan->_outerLoopPtr = chan->_pSrc;
+			chan->_innerLoopPtr = chan->_pSrc;
+		}
+		break;
+
+	case 2:
+		// Loop sound data
+		chan->_pitchBend = 0;
+		chan->_volumeFadeStep = chan->_attenFadeStep = 0;
+		chan->_volume = chan->_noteOffset = 0;
+		chan->_transpose = chan->_volumeOffset = 0;
+		chan->_keyOnDelay = 0;
+		chan->_volumeFadeCounter = 0;
+		chan->_attenFadeCounter = 0;
+		chan->_innerLoopCount = 0;
+		chan->_outerLoopCount = 0;
+		chan->_patchAttenuation = 0x40;
+		chan->_ptr1 = chan->_soundData;
+		chan->_pSrc = chan->_soundData;
+		chan->_innerLoopPtr = chan->_soundData;
+		chan->_outerLoopPtr = chan->_soundData;
+
+		chan->_pSrc += 2;
+		break;
+
+	case 3:
+		chan->_sampleIndex = *++pSrc;
+		chan->_pSrc += 2;
+		loadSample(chan->_sampleIndex);
+		break;
+
+	case 4:
+		chan->_noteOffset = *++pSrc;
+		chan->_pSrc += 2;
+		break;
+
+	case 5:
+		chan->_pitchBend = *++pSrc;
+		chan->_pSrc += 2;
+		break;
+
+	case 6:
+		++pSrc;
+		if (chan->_pendingStop) {
+			chan->_pSrc += 2;
+		} else {
+			chan->_volume = *pSrc >> 1;
+			updateFlag = true;
+			chan->_pSrc += 2;
+		}
+		break;
+
+	case 7:
+		++pSrc;
+		if (!chan->_pendingStop) {
+			chan->_volumeFadeReload = *pSrc;
+			chan->_volumeFadeStep = *++pSrc;
+			chan->_volumeFadeCounter = 1;
+		}
+
+		chan->_pSrc += 3;
+		break;
+
+	case 8:
+		chan->_transpose = (int8) * ++pSrc;
+		chan->_pSrc += 2;
+		break;
+
+	case 9:
+	{
+		int v1 = *++pSrc;
+		++pSrc;
+		int v2 = (v1 - 1) & getRandomNumber();
+		int v3 = pSrc[v2];
+		int v4 = pSrc[v1];
+
+		pSrc[v4 + v1 + 1] = v3;
+		chan->_pSrc += v1 + 3;
+		break;
+	}
+
+	case 10:
+		++pSrc;
+		if (chan->_pendingStop) {
+			chan->_pSrc += 2;
+		} else {
+			chan->_volumeOffset = *pSrc >> 1;
+			updateFlag = true;
+			chan->_pSrc += 2;
+		}
+		break;
+
+	case 11:
+		chan->_patchAttenuation = *++pSrc;
+		updateFlag = true;
+		chan->_pSrc += 2;
+		break;
+
+	case 12:
+		chan->_attenFadeReload = *++pSrc;
+		chan->_attenFadeStep = *++pSrc;
+		chan->_attenFadeCounter = 1;
+		chan->_pSrc += 2;
+		break;
+
+	case 13:
+		++pSrc;
+		chan->_pSrc += 2;
+		break;
+
+	case 14:
+		chan->_octaveTranspose = *++pSrc;
+		chan->_pSrc += 2;
+		break;
+
+	default:
+		break;
+	}
+}
+
+} // namespace Sound
 } // namespace RexNebular
 } // namespace MADS

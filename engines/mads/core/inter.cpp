@@ -52,8 +52,6 @@
 
 namespace MADS {
 
-#define disable_error_check
-
 int stroke_type = STROKE_NONE;          /* Current stroke type           */
 
 int inter_auxiliary_click;              /* Clicks during downtime        */
@@ -320,7 +318,6 @@ static int inter_get_spot(int class_, int id, int *x1, int *y1, int *xs, int *ys
 	valid_flag = false;
 
 	switch (class_) {
-
 	case STROKE_COMMAND:
 		row = id % inter_columns;
 		col = id / inter_columns;
@@ -485,7 +482,7 @@ static void inter_show_word(int class_, int id) {
 		} else {
 			inter_set_colors(LEFT_SELECT);
 		}
-		font_write(font_misc, &scr_inter, temp_buf, x, y, 0);
+		font_write(font_misc ? font_misc : font_inter, &scr_inter, temp_buf, x, y, 0);
 		goto done;
 		break;
 
@@ -539,26 +536,30 @@ static void inter_show_all_inven() {
  * work buffer.
  */
 static void inter_show_all_actions() {
-	int count;
+	int count, id;
 
 	if (active_inven >= 0) {
 		for (count = 0; count < (int)object[inven[active_inven]].num_verbs; count++) {
-			inter_show_word(STROKE_ACTION, count);
-#if 0
-			int id = object[inven[active_inven]].vocab_id;
-			id = object_named(id);
-			// id = object[inven[active_inven]].verb[count].count;
-			if (id == 8) {  // pid doll
-				if (global[86]) {  // heal_verbs_visible
-					inter_show_word(STROKE_ACTION, count);
-				} else if (count == 0) {
+			if (g_engine->getGameID() == GType_Dragonsphere) {
+				// Special handling for Pid Doll
+				id = object[inven[active_inven]].vocab_id;
+				id = object_named(id);
+
+				if (id == Dragonsphere::pid_doll) {
+					if (global[Dragonsphere::heal_verbs_visible]) {
+						// heal_verbs_visible
+						inter_show_word(STROKE_ACTION, count);
+					} else if (count == 0) {
+						inter_show_word(STROKE_ACTION, count);
+					}
+
+				} else {
 					inter_show_word(STROKE_ACTION, count);
 				}
-
 			} else {
+				// All other games
 				inter_show_word(STROKE_ACTION, count);
 			}
-#endif
 		}
 	}
 }
@@ -674,12 +675,6 @@ static void inter_update(int x1, int y1, int xs, int ys) {
 		x1 + inter_base_x, y1a,
 		xs, ys);
 
-#ifdef sixteen_colors
-	if (video_mode == ega_mode) {
-		video_flush_ega(y1a, (y1a + ys - 1));
-	}
-#endif
-
 	if (refresh_flag) mouse_refresh_done();
 	mouse_thaw();
 }
@@ -695,11 +690,6 @@ static void inter_image(int x1, int y1, int xs, int ys) {
 		image_inter_list[image_inter_marker].series_id = (byte)ys;
 		image_inter_marker++;
 	}
-#ifndef disable_error_check
-	else {
-		error_report(ERROR_IMAGE_INTER_LIST_FULL, WARNING, MODULE_INTER, IMAGE_INTER_LIST_SIZE, 1);
-	}
-#endif
 }
 
 static void inter_scrollbar_refresh() {
@@ -812,11 +802,6 @@ void inter_set_active_inven(int new_active) {
 						image_inter_list[image_inter_marker].series_id = (byte)ys;
 						image_inter_marker++;
 					}
-#ifndef disable_error_check
-					else {
-						error_report(ERROR_IMAGE_INTER_LIST_FULL, WARNING, MODULE_INTER, IMAGE_INTER_LIST_SIZE, 2);
-					}
-#endif
 
 					matte_inter_frame(false, false);
 
@@ -1073,7 +1058,7 @@ static void inter_select_word() {
 	int mode;
 	int limit = 0;
 	int strict, delta;
-	int tight_boxes;
+	int tight_boxes = false;
 	int difference = 0;
 	int *selection;
 	int base_spot, this_spot;
@@ -1583,11 +1568,9 @@ static void inter_analyze_stroke() {
 	}
 
 	switch (inter_awaiting) {
-
 	case AWAITING_COMMAND:
 		inter_prep = PREP_NONE;
 		switch (stroke_type) {
-
 		case STROKE_COMMAND:
 			inter_command_source = STROKE_COMMAND;
 			inter_command = picked_word;
@@ -1698,10 +1681,8 @@ static void inter_complete_stroke() {
 	}
 
 	switch (inter_awaiting) {
-
 	case AWAITING_COMMAND:
 		switch (stroke_type) {
-
 		case STROKE_COMMAND:
 			if (inter_command >= 0) {
 				if (inter_verb_type == VERB_ONLY) {
@@ -1762,7 +1743,6 @@ static void inter_complete_stroke() {
 
 	case AWAITING_THIS:
 		switch (stroke_type) {
-
 		case STROKE_INVEN:
 		case STROKE_INTERFACE:
 		case STROKE_SPECIAL_INVEN:
@@ -1822,7 +1802,8 @@ static void inter_background_animation() {
 	int image_scan;
 	int myprob;
 
-	if (inter_anim == NULL) goto done;
+	if (inter_anim == NULL)
+		goto done;
 
 	inter_no_segments_active = !inter_some_segments_active;
 	inter_some_segments_active = false;
@@ -1876,11 +1857,6 @@ static void inter_background_animation() {
 				image_inter_list[image_inter_marker].flags = IMAGE_UPDATE;
 				image_inter_marker++;
 			}
-#ifndef disable_error_check
-			else {
-				error_report(ERROR_IMAGE_INTER_LIST_FULL, WARNING, MODULE_INTER, IMAGE_INTER_LIST_SIZE, 3);
-			}
-#endif
 		}
 	}
 
@@ -1913,11 +1889,6 @@ void inter_spinning_object() {
 			image_inter_list[image_inter_marker].y = inter_object_base_y;
 			image_inter_marker++;
 		}
-#ifndef disable_error_check
-		else {
-			error_report(ERROR_IMAGE_INTER_LIST_FULL, WARNING, MODULE_INTER, IMAGE_INTER_LIST_SIZE, 3);
-		}
-#endif
 	}
 
 done:

@@ -1809,19 +1809,24 @@ static const WMEGameDescription gameDescriptions[] = {
 					"data.dcp", "7074bcd7bc7ad7eb04c271aafb964c32", 13815660), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
 
 	// Looky Demo (German)
-	WME_WINENTRY("looky", "Demo",
+	WME_WINENTRY("looky", "Missing DivX 5.0 support",
 		WME_ENTRY2s("german.dcp", "606c048426dfbe94442b59fd34a5c76e", 14339496,
-					"data.dcp", "7074bcd7bc7ad7eb04c271aafb964c32", 13815660), Common::DE_DEU, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
+					"data.dcp", "7074bcd7bc7ad7eb04c271aafb964c32", 13815660), Common::DE_DEU, ADGF_UNSUPPORTED | ADGF_DEMO, WME_1_9_1),
 
-	// Looky (English)
-	WME_WINENTRY("looky", "",
+	// Looky (German) (2007)
+	WME_WINENTRY("looky", "Missing DivX 5.0 support",
+		WME_ENTRY2s("german.dcp", "bf4c2b8c26342342441a6d64934ab832", 107027865,
+					"data.dcp", "50de0beaa5ad621aa9f020df901d1e74", 1342214), Common::DE_DEU, ADGF_UNSUPPORTED, WME_1_9_1),
+
+	// Looky (German) (2019)
+	WME_WINENTRY("looky", "2019 Release",
+		WME_ENTRY2s("german.dcp", "607c07e94a05c5eef3ea8d699292da1c", 351431200,
+					"data.dcp", "d0f2bb73425db45fcff6690637c430dd", 1342439), Common::DE_DEU, ADGF_UNSTABLE, WME_1_9_1),
+
+	// Looky (English) (2019)
+	WME_WINENTRY("looky", "2019 Release",
 		WME_ENTRY2s("english.dcp", "71ed521b7a1d1a23c3805c26f16de2b9", 245968038,
 					"data.dcp", "d0f2bb73425db45fcff6690637c430dd", 1342439), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
-
-	// Looky (German)
-	WME_WINENTRY("looky", "",
-		WME_ENTRY2s("german.dcp", "bf4c2b8c26342342441a6d64934ab832", 107027865,
-					"data.dcp", "50de0beaa5ad621aa9f020df901d1e74", 1342214), Common::DE_DEU, ADGF_UNSTABLE, WME_1_9_1),
 
 	// Limbo of the Lost (English)
 	WME_WINENTRY("lotl", "",
@@ -4356,6 +4361,11 @@ static const WMEGameDescription gameDescriptions[] = {
 	// 1 1/2 Ritter: Auf der Suche nach der hinreissenden Herzelinde (German demo)
 	WME_WINENTRY("ritter", "Demo",
 		WME_ENTRY1s("data.dcp", "7fadb30dbe987528489f50bd85cc0c12", 99975952), Common::DE_DEU, ADGF_DEMO, WME_1_8_6),
+
+	// The Road to Santiago (English demo)
+	WME_WINENTRY("roadsantiago", "Demo",
+				 WME_ENTRY2s("data.dcp", "14107f414c1689759d917507aca11361", 144081093,
+							 "language.dcp", "a95b157c5654a4a06caa805f4e4fe5d4", 13042650), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_8_6),
 
 	// The Road to Santiago (English)
 	WME_WINENTRY("roadsantiago", "",

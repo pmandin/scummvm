@@ -49,9 +49,10 @@ public:
 
 	Level1Handler(Rebel2PSX &psx, const RA2PSXModel &enemy, const RA2PSXModel &ship,
 			const RA2PSXModel &crosshair, const RA2PSXModel &laser,
+			const RA2PSXModel &tieLaser, const Common::Array<RA2PSXModel> &debris,
 			const RA2PSXLevel1UI &ui, int &score) :
 		_psx(psx), _enemy(enemy), _ship(ship), _crosshair(crosshair), _laser(laser),
-		_ui(ui), _score(score), _error(kGameplayError) {
+		_tieLaser(tieLaser), _debris(debris), _ui(ui), _score(score), _error(kGameplayError) {
 	}
 
 	bool shouldQuit() const override {
@@ -59,7 +60,8 @@ public:
 	}
 
 	Result playAttempt(int &lives) override {
-		switch (_psx.playLevel1(_enemy, _ship, _crosshair, _laser, _ui, lives, _score)) {
+		switch (_psx.playLevel1(_enemy, _ship, _crosshair, _laser, _tieLaser, _debris,
+				_ui, lives, _score)) {
 		case Rebel2PSX::kLevel1Quit:
 			return kQuit;
 		case Rebel2PSX::kLevel1Complete:
@@ -106,10 +108,53 @@ private:
 	const RA2PSXModel &_ship;
 	const RA2PSXModel &_crosshair;
 	const RA2PSXModel &_laser;
+	const RA2PSXModel &_tieLaser;
+	const Common::Array<RA2PSXModel> &_debris;
 	const RA2PSXLevel1UI &_ui;
 	int &_score;
 	Error _error;
 };
+
+// The smoke trail draws the third 16x16 cell of the SMALLEX strip.
+static bool extractRA2PSXSmokeCell(const Common::Array<byte> &sheet, RA2PSXTexture &smoke) {
+	Common::Array<RA2PSXTexture> textures;
+	if (!loadRA2PSXTextures(sheet, textures))
+		return false;
+	for (uint i = 0; i < textures.size(); ++i) {
+		const RA2PSXTexture &source = textures[i];
+		if (!source.name.equalsIgnoreCase("SMALLEX") || source.width < 48 || source.height < 16)
+			continue;
+		smoke.name = "SMOKE";
+		smoke.width = 16;
+		smoke.height = 16;
+		smoke.pixels.resize(16 * 16);
+		for (int y = 0; y < 16; ++y) {
+			for (int x = 0; x < 16; ++x)
+				smoke.pixels[y * 16 + x] = source.pixels[y * source.width + 32 + x];
+		}
+		return true;
+	}
+	return false;
+}
+
+// The TIE breaks into its own body and wing pieces, five of each.
+bool loadRA2PSXDebrisModels(const RA2PSXArchive &archive,
+		const Common::Array<byte> &textureData, Common::Array<RA2PSXModel> &models) {
+	static const char *const kParts[] = { "body", "wing" };
+	for (uint part = 0; part < ARRAYSIZE(kParts); ++part) {
+		for (int index = 1; index <= 5; ++index) {
+			const Common::String path = Common::String::format("fOFS/TieFighter/%s_%d",
+					kParts[part], index);
+			Common::Array<byte> data;
+			RA2PSXModel model;
+			if (!archive.getMember(path, data) || !model.load(data) ||
+					!model.loadTextures(textureData))
+				return false;
+			models.push_back(model);
+		}
+	}
+	return true;
+}
 
 Common::SeekableReadStream *Rebel2PSX::openResource(int number) {
 	const Common::Path path(Common::String::format("RESOURCE.%03d", number));
@@ -152,6 +197,7 @@ bool Rebel2PSX::playVideo(const Common::Path &path, int discNumber, bool version
 		decoder.close();
 		return false;
 	}
+	decoder.setVolume(_settings.videoVolume());
 	decoder.start();
 	const bool cursorWasVisible = CursorMan.isVisible();
 	CursorMan.showMouse(false);
@@ -223,10 +269,27 @@ bool Rebel2PSX::loadGlobalAssets(RA2PSXMainMenuUI &menu) {
 	RA2PSXArchive archive;
 	const bool loaded = archive.load(*stream);
 	delete stream;
+	if (!loaded || !menu.load(archive))
+		return false;
+
+	Common::Array<byte> textureData;
+	Common::Array<byte> explosionData;
+	Common::Array<byte> logoData;
+	Common::Array<byte> cloakData;
+	Common::Array<byte> crestData;
+	if (!archive.getMember("menuTex", textureData) ||
+			!archive.getMember("fOFS/Logo", logoData) || !_logoModel.load(logoData) ||
+			!_logoModel.loadTextures(textureData) ||
+			!archive.getMember("fOFS/Cloak", cloakData) || !_cloakModel.load(cloakData) ||
+			!_cloakModel.loadTextures(textureData) ||
+			!archive.getMember("fOFS/LogoDbl", crestData) || !_crestModel.load(crestData) ||
+			!archive.getMember("bigEx", explosionData) ||
+			!loadRA2PSXSpriteAnimation(explosionData, kRA2PSXExplosionHeight, _explosionFrames))
+		return false;
+
 	Common::Array<byte> soundData;
 	Common::Array<byte> soundProjectData;
-	return loaded && menu.load(archive) &&
-			archive.getMember("SNDsmp", soundData) &&
+	return archive.getMember("SNDsmp", soundData) &&
 			archive.getMember("sNDdata", soundProjectData) &&
 			_soundBank.load(soundData, soundProjectData);
 }
@@ -237,7 +300,8 @@ bool Rebel2PSX::loadMovieTextAssets(RA2PSXMovieText &movieText) {
 }
 
 bool Rebel2PSX::loadLevel1Assets(RA2PSXModel &enemy, RA2PSXModel &ship,
-		RA2PSXModel &crosshair, RA2PSXModel &laser, RA2PSXLevel1UI &ui) {
+		RA2PSXModel &crosshair, RA2PSXModel &laser, RA2PSXModel &tieLaser,
+		Common::Array<RA2PSXModel> &debris, RA2PSXLevel1UI &ui) {
 	Common::SeekableReadStream *stream = openResource(1);
 	if (!stream)
 		return false;
@@ -251,14 +315,20 @@ bool Rebel2PSX::loadLevel1Assets(RA2PSXModel &enemy, RA2PSXModel &ship,
 	Common::Array<byte> shipData;
 	Common::Array<byte> crosshairData;
 	Common::Array<byte> laserData;
+	Common::Array<byte> tieLaserData;
 	Common::Array<byte> enemyTextureData;
 	Common::Array<byte> shipTextureData;
+	Common::Array<byte> commonTextureData;
 	return archive.getMember("fOFS/TieFighter/main", enemyData) && enemy.load(enemyData) &&
 			archive.getMember("tex/Ties", enemyTextureData) && enemy.loadTextures(enemyTextureData) &&
 			archive.getMember("fOFS/Ship", shipData) && ship.load(shipData) &&
 			archive.getMember("tex/BWingCockp", shipTextureData) && ship.loadTextures(shipTextureData) &&
 			archive.getMember("fOFS/CrosshairW", crosshairData) && crosshair.load(crosshairData) &&
 			archive.getMember("fOFS/WingLaser", laserData) && laser.load(laserData) &&
+			archive.getMember("fOFS/TieLaser", tieLaserData) && tieLaser.load(tieLaserData) &&
+			loadRA2PSXDebrisModels(archive, enemyTextureData, debris) &&
+			archive.getMember("tex/Common", commonTextureData) &&
+			extractRA2PSXSmokeCell(commonTextureData, _smokeTexture) &&
 			ui.load(archive);
 }
 
@@ -266,9 +336,12 @@ Common::Error Rebel2PSX::runGame() {
 #ifdef USE_TINYGL
 	RA2PSXMainMenuUI menu;
 	RA2PSXMovieText movieText;
+	_settings.load();
 	if (!loadGlobalAssets(menu))
 		return Common::Error(Common::kReadingFailed,
 				_("Could not load the PlayStation menu resources"));
+	const RA2PSXOptionsUI options(menu.textures());
+	const RA2PSXChapterSelectUI chapters(menu.textures());
 	if (!loadMovieTextAssets(movieText))
 		return Common::Error(Common::kReadingFailed,
 				_("Could not load the PlayStation movie fonts"));
@@ -279,16 +352,39 @@ Common::Error Rebel2PSX::runGame() {
 				_("Could not play the PlayStation introduction"));
 	}
 
-	const MenuResult menuResult = runMainMenu(menu);
-	if (menuResult == kMenuQuit)
+	int chapter = 0;
+	while (!chapter && !_vm->shouldQuit()) {
+		if (runMainMenu(menu, options) == kMenuQuit)
+			return Common::kNoError;
+
+		bool backedOut = false;
+		while (!chapter && !backedOut && !_vm->shouldQuit()) {
+			const int picked = runChapterSelect(chapters);
+			if (!picked)
+				backedOut = true;
+			else if (picked == 2) {
+				const Common::Error error = runLevel2();
+				if (error.getCode() != Common::kNoError)
+					return error;
+			} else if (picked > 2)
+				// Chapters 3 and up are not ported; stay on the list rather than
+				// pretending to start them.
+				warning("Rebel Assault II: chapter %d is not implemented yet", picked);
+			else
+				chapter = picked;
+		}
+	}
+	if (_vm->shouldQuit())
 		return Common::kNoError;
 
 	RA2PSXModel enemy;
 	RA2PSXModel ship;
 	RA2PSXModel crosshair;
 	RA2PSXModel laser;
+	RA2PSXModel tieLaser;
+	Common::Array<RA2PSXModel> debris;
 	RA2PSXLevel1UI ui;
-	if (!loadLevel1Assets(enemy, ship, crosshair, laser, ui))
+	if (!loadLevel1Assets(enemy, ship, crosshair, laser, tieLaser, debris, ui))
 		return Common::Error(Common::kReadingFailed,
 				_("Could not load the PlayStation Level 1 resources"));
 
@@ -302,7 +398,7 @@ Common::Error Rebel2PSX::runGame() {
 
 	int lives = 3;
 	int score = 0;
-	Level1Handler handler(*this, enemy, ship, crosshair, laser, ui, score);
+	Level1Handler handler(*this, enemy, ship, crosshair, laser, tieLaser, debris, ui, score);
 	if (runRebel2Level1(handler, lives) != Rebel2Level1Handler::kError)
 		return Common::kNoError;
 

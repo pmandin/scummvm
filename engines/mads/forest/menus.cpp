@@ -33,7 +33,7 @@
 #include "mads/forest/global.h"
 #include "mads/forest/mads/quotes.h"
 #include "mads/forest/menus.h"
-#include "mads/forest/midi.h"
+#include "mads/forest/sound/midi.h"
 
 namespace MADS {
 namespace Forest {
@@ -348,8 +348,10 @@ void global_game_menu() {
 			}
 			break;
 		case GAME_OPTIONS_MENU:
-			if (section_id != 9)
+			if (section_id != 9) {
 				global_menu_options();
+				music = config_file.music_flag != 0;
+			}
 			break;
 		default:
 			kernel.activate_menu = GAME_NO_MENU;

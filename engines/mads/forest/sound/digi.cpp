@@ -21,7 +21,7 @@
 
 #include "audio/decoders/adpcm.h"
 #include "audio/decoders/raw.h"
-#include "mads/forest/digi.h"
+#include "mads/forest/sound/digi.h"
 #include "mads/forest/forest.h"
 #include "mads/core/env.h"
 #include "mads/core/kernel.h"

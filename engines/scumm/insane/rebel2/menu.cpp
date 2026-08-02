@@ -41,7 +41,7 @@
 
 namespace Scumm {
 
-static void setRebel2MixerVolume(ScummEngine_v7 *vm, int volumeLevel) {
+void setRebel2MixerVolume(ScummEngine_v7 *vm, int volumeLevel) {
 	const int mixerVolume = CLIP<int>(volumeLevel * 2, 0, (int)Audio::Mixer::kMaxMixerVolume);
 	vm->_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, mixerVolume);
 	vm->_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, mixerVolume);
@@ -291,17 +291,21 @@ int InsaneRebel2::getMenuStringWidth(const char *str) const {
 	if (!defaultFont)
 		return 0;
 
+	const char *end = str + strlen(str);
+	const bool useCJK = _vm->_language == Common::JA_JPN;
 	int w = 0;
 	NutRenderer *curFont = defaultFont;
 	int dummyColor = 0;
-	while (*str) {
+	while (str < end) {
 		int fc = parseFormatCode(str, dummyColor);
 		if (fc >= 0) { curFont = (fonts[fc] ? fonts[fc] : defaultFont); continue; }
 		if (fc == -2) continue;
-		byte c = (byte)*str++;
+		uint charLen;
+		uint16 c = decodeRebel2Char(str, end - str, charLen, useCJK);
+		str += charLen;
 		if (c >= 'a' && c <= 'z') c = c - 'a' + 'A';
-		if (curFont && c < curFont->getNumChars())
-			w += curFont->getCharWidth(c);
+		if (curFont && (c > 0xff || c < curFont->getNumChars()))
+			w += curFont->getCharWidth((byte)c);
 	}
 	return w;
 }
@@ -315,16 +319,20 @@ void InsaneRebel2::drawMenuString(byte *renderBitmap, const char *str, int x, in
 	Common::Rect clipRect(0, 0, _vm->_screenWidth, _vm->_screenHeight);
 	int pitch = _vm->_screenWidth;
 
+	const char *end = str + strlen(str);
+	const bool useCJK = _vm->_language == Common::JA_JPN;
 	NutRenderer *curFont = defaultFont;
 	int curColor = defaultColor;
-	while (*str) {
+	while (str < end) {
 		int fc = parseFormatCode(str, curColor);
 		if (fc >= 0) { curFont = (fonts[fc] ? fonts[fc] : defaultFont); continue; }
 		if (fc == -2) continue;
-		byte c = (byte)*str++;
+		uint charLen;
+		uint16 c = decodeRebel2Char(str, end - str, charLen, useCJK);
+		str += charLen;
 		if (c >= 'a' && c <= 'z') c = c - 'a' + 'A';
-		if (!curFont || c >= curFont->getNumChars()) continue;
-		int charW = curFont->getCharWidth(c);
+		if (!curFont || (c <= 0xff && c >= curFont->getNumChars())) continue;
+		int charW = curFont->getCharWidth((byte)c);
 		if (x >= 0 && y >= 0 && charW > 0)
 			drawRebel2Char(curFont, renderBitmap, clipRect, x, y, pitch, curColor, c);
 		x += charW;
@@ -1030,12 +1038,7 @@ int InsaneRebel2::runLevelSelect() {
 		debugC(DEBUG_INSANE, "Pilot selection: %d (numPilots=%d)", _levelSelection, _numPilots);
 
 		if (_levelSelection < _numPilots) {
-			_activePilot = _levelSelection;
-			_difficulty = _pilots[_activePilot].difficulty;
-
-			for (int i = 0; i < 16; i++) {
-				_chapterUnlocked[i] = _debugUnlockAll || (_pilots[_activePilot].damage[i] < 0xFF);
-			}
+			selectPilot(_levelSelection);
 
 			debugC(DEBUG_INSANE, "Pilot '%s' selected (slot %d, difficulty %d)",
 			      _pilots[_activePilot].name, _activePilot, _difficulty);

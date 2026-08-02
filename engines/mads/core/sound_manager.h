@@ -31,10 +31,6 @@ namespace Audio {
 class Mixer;
 }
 
-namespace OPL {
-class OPL;
-}
-
 namespace MADS {
 
 #define CALLBACKS_PER_SECOND 60
@@ -42,7 +38,6 @@ namespace MADS {
 class SoundDriver {
 protected:
 	Audio::Mixer *_mixer;
-	OPL::OPL *_opl;
 	Common::Array<byte> _soundData;
 	Common::Mutex _driverMutex;
 
@@ -54,9 +49,9 @@ protected:
 	}
 
 public:
-	SoundDriver(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
+	SoundDriver(Audio::Mixer *mixer, const Common::Path &filename,
 		int dataOffset, int dataSize);
-	virtual ~SoundDriver();
+	virtual ~SoundDriver() {}
 
 	/**
 	 * Execute a player command. Most commands represent sounds to play, but some
@@ -89,9 +84,10 @@ public:
 
 class SoundManager {
 protected:
+	enum DriverType { SOUND_ADLIB, SOUND_MT32, SOUND_PCSPEAKER };
 	Audio::Mixer *_mixer;
+	DriverType _driverType;
 	bool &_soundFlag;
-	OPL::OPL *_opl = nullptr;
 	SoundDriver *_driver = nullptr;
 	bool _pollSoundEnabled = false;
 	bool _soundPollFlag = false;
@@ -110,9 +106,12 @@ public:
 	SoundManager(Audio::Mixer *mixer, bool &soundFlag);
 	virtual ~SoundManager();
 
-	virtual void validate() = 0;
+	//bool _preferRoland = false;
 
-	bool _preferRoland;
+	/**
+	 * Validate the sound driver files needed for data
+	 */
+	virtual void validate() = 0;
 
 	/**
 	 * Initializes the sound driver for a given game section

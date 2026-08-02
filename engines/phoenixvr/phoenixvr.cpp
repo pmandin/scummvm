@@ -880,7 +880,7 @@ void PhoenixVREngine::setCursor(const Common::String &path, const Common::String
 	}
 	auto &cursors = _cursors[warp];
 	if (idx >= 0 && idx < static_cast<int>(cursors.size()))
-		cursors[idx] = path;
+		cursors[idx].name = path;
 	else
 		debug("index %d is out of range", idx);
 }
@@ -894,7 +894,7 @@ void PhoenixVREngine::hideCursor(const Common::String &wname, int idx) {
 	}
 	auto &cursors = _cursors[warp];
 	if (idx >= 0 && idx < static_cast<int>(cursors.size()))
-		cursors[idx].clear();
+		cursors[idx].hidden = true;
 	else
 		debug("index %d is out of range", idx);
 }
@@ -1279,31 +1279,34 @@ Graphics::ManagedSurface *PhoenixVREngine::loadSurface(const Common::String &pat
 	return s;
 }
 
-Graphics::ManagedSurface *PhoenixVREngine::loadCursor(const Common::String &path, int w, int h) {
+PhoenixVREngine::CachedCursor *PhoenixVREngine::loadCursor(const Common::String &path, int offsetX, int offsetY) {
 	if (path.empty())
 		return nullptr;
 	auto it = _cursorCache.find(path);
 	if (it != _cursorCache.end())
-		return it->_value.get();
+		return &it->_value;
 	Common::ScopedPtr<Graphics::ManagedSurface> s(loadSurface(path));
 	if (!s) {
 		warning("can't load cursor from %s", path.c_str());
 		return nullptr;
 	}
-	if (w > 0 && h > 0) {
-		s.reset(s->scale(w, h, true));
+	if (offsetX < 0 || offsetY < 0) {
+		offsetX = s->w / 2;
+		offsetY = s->h / 2;
 	}
 	auto &cursor = _cursorCache[path];
-	cursor = Common::move(s);
-	return cursor.get();
+	cursor.offset.x = offsetX;
+	cursor.offset.y = offsetY;
+	cursor.surface = Common::move(s);
+	return &cursor;
 }
 
-void PhoenixVREngine::loadCursor(int idx, const Common::String &path, int w, int h) {
-	debug("load cursor %d %s %d %d", idx, path.c_str(), w, h);
+void PhoenixVREngine::loadCursor(int idx, const Common::String &path, int offsetX, int offsetY) {
+	debug("load cursor %d %s %d %d", idx, path.c_str(), offsetX, offsetY);
 	auto &desc = _loadedCursors[idx];
 	desc.path = path;
 	_cursorCache.erase(path);
-	loadCursor(desc.path, w, h);
+	loadCursor(desc.path, offsetX, offsetY);
 }
 
 void PhoenixVREngine::spriteLoad(const Common::String &name, const Common::String &path) {
@@ -1496,8 +1499,8 @@ void PhoenixVREngine::renderLensflare() {
 	if (!_lensflareActive)
 		return;
 
-	const float viewX = kPi2 - _angleY.angle();
-	const float viewY = _angleX.angle();
+	const float viewY = -_angleY.angle();
+	const float viewX = _angleX.angle();
 	const float lensX = _lensflareX;
 	const float lensY = _lensflareY;
 	const float deltaX = lensX - viewX;
@@ -1534,7 +1537,6 @@ void PhoenixVREngine::renderLensflare() {
 		const Graphics::ManagedSurface &src = *it->_value;
 		const int dstX = static_cast<int>(sourceX + (_screenCenter.x - sourceX) * lens.scale);
 		const int dstY = static_cast<int>(sourceY + (_screenCenter.y - sourceY) * lens.scale);
-		const uint32 transparentColor = src.hasTransparentColor() ? src.getTransparentColor() : src.format.RGBToColor(0, 0, 0);
 
 		for (int y = 0; y != src.h; ++y) {
 			const int screenY = dstY + y;
@@ -1545,12 +1547,13 @@ void PhoenixVREngine::renderLensflare() {
 				if (screenX < 0 || screenX >= _screen->w)
 					continue;
 
-				const uint32 srcColor = src.getPixel(x, y);
-				if (srcColor == transparentColor)
+				uint8 srcR, srcG, srcB, srcA, dstR, dstG, dstB;
+				src.format.colorToARGB(src.getPixel(x, y), srcA, srcR, srcG, srcB);
+				srcR = srcR * srcA / 255;
+				srcG = srcG * srcA / 255;
+				srcB = srcB * srcA / 255;
+				if ((srcR | srcG | srcB) == 0)
 					continue;
-
-				uint8 srcR, srcG, srcB, dstR, dstG, dstB;
-				src.format.colorToRGB(srcColor, srcR, srcG, srcB);
 				_screen->format.colorToRGB(_screen->getPixel(screenX, screenY), dstR, dstG, dstB);
 				_screen->setPixel(screenX, screenY, _screen->format.RGBToColor(CLIP<int>(dstR + srcR, 0, 255), CLIP<int>(dstG + srcG, 0, 255), CLIP<int>(dstB + srcB, 0, 255)));
 			}
@@ -1783,6 +1786,9 @@ void PhoenixVREngine::tick(float dt) {
 		debug("warp %d -> %s %s", _nextWarp, _warp->vrFile.c_str(), _warp->testFile.c_str());
 		_nextWarp = -1;
 		_randomSounds.clear();
+		auto &cursors = _cursors[_warpIdx];
+		for (auto &cursor : cursors)
+			cursor.hidden = false;
 
 		{
 			Common::String origName;
@@ -1832,7 +1838,7 @@ void PhoenixVREngine::tick(float dt) {
 	if (_nextWarp < 0 && _nextScript.empty())
 		renderVR(dt);
 
-	Graphics::ManagedSurface *cursor = nullptr;
+	CachedCursor *cursor = nullptr;
 	auto &cursors = _cursors[_warpIdx];
 	bool anyMatched = false;
 	int messengerInventoryHover = -1;
@@ -1843,7 +1849,8 @@ void PhoenixVREngine::tick(float dt) {
 			continue;
 
 		if (_vr.isVR() ? region->contains3D(currentVRPos()) : region->contains2D(_mousePos.x, _mousePos.y)) {
-			anyMatched = true;
+			const bool validTestIdx = i < static_cast<int>(cursors.size());
+			anyMatched = !(validTestIdx && cursors[i].hidden);
 			if (gameIdMatches("messenger") && _warp && _warp->vrFile.equalsIgnoreCase("portef.vr") && i >= 0 && i < 12)
 				messengerInventoryHover = i;
 
@@ -1854,9 +1861,8 @@ void PhoenixVREngine::tick(float dt) {
 				executeTest(i);
 			}
 
-			if (!cursor && i < static_cast<int>(cursors.size())) {
-				auto &name = cursors[i];
-				cursor = loadCursor(name);
+			if (!cursor && validTestIdx) {
+				cursor = loadCursor(cursors[i].name);
 			}
 		} else if (i == _hoverIndex) {
 			debug("leaving hover region");
@@ -1896,10 +1902,10 @@ void PhoenixVREngine::tick(float dt) {
 	if (!cursor)
 		cursor = loadCursor(anyMatched ? _defaultCursor[1] : _defaultCursor[0]);
 	if (cursor) {
-		if (cursor->format.aBits() != 0)
-			_screen->blendBlitFrom(*cursor, _mousePos - Common::Point(cursor->w / 2, cursor->h / 2));
+		if (cursor->surface->format.aBits() != 0)
+			_screen->blendBlitFrom(*cursor->surface, _mousePos - cursor->offset);
 		else
-			_screen->simpleBlitFrom(*cursor, _mousePos - Common::Point(cursor->w / 2, cursor->h / 2));
+			_screen->simpleBlitFrom(*cursor->surface, _mousePos - cursor->offset);
 	}
 }
 
@@ -2217,7 +2223,7 @@ void PhoenixVREngine::captureContext() {
 	writeString({});
 	for (auto &warpCursors : _cursors)
 		for (auto &cursor : warpCursors)
-			writeString(cursor);
+			writeString(cursor.name);
 
 	for (auto &var : _script->getVars()) {
 		auto value = g_engine->getVariable(var.name);
@@ -2310,7 +2316,7 @@ bool PhoenixVREngine::enterScript() {
 				debug("ignoring VR cursor, original engine saves `LOAD.VR` as a cursor name at loading screen");
 				cursor.clear();
 			}
-			warpCursor = cursor;
+			warpCursor.name = cursor;
 		}
 	}
 	debug("vars at %08x", (uint32)ms.pos());

@@ -20,10 +20,13 @@
  */
 
 #include "audio/fmopl.h"
-#include "mads/dragonsphere/asound.h"
+#include "common/file.h"
+#include "common/md5.h"
+#include "mads/dragonsphere/sound/asound.h"
 
 namespace MADS {
 namespace Dragonsphere {
+namespace Sound {
 
 
 bool AdlibChannel::_isDisabled;
@@ -235,10 +238,16 @@ void AdlibChannel::processChannelFade() {
 		_fadePeriodCounter = 1;
 }
 
-ASound::ASound(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
+ASound::ASound(Audio::Mixer *mixer, const Common::Path &filename,
 	int dataOffset, int dataSize)
-	: SoundDriver(mixer, opl, filename, dataOffset, dataSize) {
+	: SoundDriver(mixer, filename, dataOffset, dataSize) {
 	AdlibChannel::_isDisabled = false;
+
+	// Initialize OPL
+	_opl = OPL::Config::create();
+	_opl->init();
+	_opl->start(new Common::Functor0Mem<void, ASound>(this, &ASound::onTimer),
+		CALLBACKS_PER_SECOND);
 
 	/* Standard OPL timer-reset sequence. */
 	write(4, 0x60);
@@ -250,9 +259,48 @@ ASound::ASound(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
 
 	Common::fill(_adlibPorts, _adlibPorts + 256, 0);
 	command0();
+}
 
-	_opl->start(new Common::Functor0Mem<void, ASound>(this, &ASound::onTimer),
-		CALLBACKS_PER_SECOND);
+ASound::~ASound() {
+	_opl->stop();
+	delete _opl;
+}
+
+void ASound::validate(bool isDemo) {
+	Common::File f;
+	static const char *const MD5[] = {
+		"cac84f53ccf18ca56f4c03352037790f",
+		"2dcdbe18ca5225384cdb97ceb7f5642a",
+		"c6001b0dfe32cb9399ab60742b631c2e",
+		"1596b657c6171e13714eaf114bf94641",
+		"ecbb8bdf1e2e36fcacedce79761e625b",
+		"29639869e5faed1378dd2cdc1d132889",
+		nullptr,
+		nullptr,
+		"379fcc9af2142f15a3e7166eee6dd49d"
+	};
+	static const char *const MD5_DEMO[] = {
+		"c4fc9e9d7e2392c69ea7b3ca997e832d",
+		nullptr, nullptr, nullptr, nullptr,
+		nullptr, nullptr, nullptr,
+		"21432c2dd055d0d505ede8fecc77b29a"
+	};
+
+	for (int i = 1; i <= 9; ++i) {
+		if (i == 7 || i == 8)
+			continue;
+		if (isDemo && i != 1 && i != 9)
+			continue;
+
+		Common::Path filename(Common::String::format("asound.dr%d", i));
+		if (!f.open(filename))
+			error("Could not process - %s", filename.toString().c_str());
+		Common::String md5str = Common::computeStreamMD5AsString(f, 8192);
+		f.close();
+
+		if (md5str != (isDemo ? MD5_DEMO[i - 1] : MD5[i - 1]))
+			error("Invalid sound file - %s", filename.toString().c_str());
+	}
 }
 
 int ASound::stop() {
@@ -997,7 +1045,6 @@ dispatch:
 			pSrc++;   /* skip command byte */
 
 			switch (di) {
-
 			case 0x0: /* set sampleIndex, call loadSample */
 				ch->_sampleIndex = *pSrc;
 				loadSample();
@@ -1134,7 +1181,6 @@ op2_set_vol:
 			 * themselves are responsible for updating _pSrc).
 			 * ============================================================ */
 			switch (di) {
-
 			case 0x0: /* inner loop */
 			{
 				ch = _activeChannelPtr;
@@ -1275,7 +1321,6 @@ op2_set_vol:
 			 * incremented pSrc; each case increments pSrc itself as needed.
 			 * ============================================================ */
 			switch (di) {
-
 			case 0x0: /* random pick from packed table -> write to stream */
 			{
 				/* Format: [cmd] [tblSize] [entry0..N-1] [targetSlot]
@@ -1410,7 +1455,6 @@ op2_set_vol:
 			 * Switch on di (0-4); di >= 5 falls through to return.
 			 * ============================================================ */
 			switch (di) {
-
 			case 0x0: /* var[dst] = imm */
 			{
 				pSrc++;
@@ -1799,5 +1843,6 @@ void ASound::playSound(int offset) {
 	findFreeChannelFull(loadData(offset));
 }
 
+} // namespace Sound
 } // namespace Dragonsphere
 } // namespace MADS

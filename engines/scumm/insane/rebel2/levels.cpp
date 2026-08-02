@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "common/events.h"
 #include "common/system.h"
 #include "common/util.h"
@@ -33,9 +34,9 @@
 
 namespace Scumm {
 
-static const int kRebel2GameplayAimCenterX = 160;
-static const int kRebel2GameplayAimCenterY = 100;
-static const uint32 kRebel2GameplayMouseSettleMs = 1000;
+const int kRebel2GameplayAimCenterX = 160;
+const int kRebel2GameplayAimCenterY = 100;
+const uint32 kRebel2GameplayMouseSettleMs = 1000;
 
 struct Rebel2LevelEndParams {
 	int titleStartBeforeEnd;
@@ -46,7 +47,7 @@ struct Rebel2LevelEndParams {
 	int errHigh;
 };
 
-static const Rebel2LevelEndParams kRebel2LevelEndParams[16] = {
+const Rebel2LevelEndParams kRebel2LevelEndParams[16] = {
 	{ 0,   0,  -1,  -1, -1, -1 },
 	{ 120, 10,  96, 100, -1, -1 },
 	{ 120, 10,  80,  94, -1, -1 },
@@ -65,7 +66,7 @@ static const Rebel2LevelEndParams kRebel2LevelEndParams[16] = {
 	{ 100, 10,  60,  68,  1,  3 }
 };
 
-static void purgeRebel2GameplayInputEvents(Common::EventManager *eventMan) {
+void purgeRebel2GameplayInputEvents(Common::EventManager *eventMan) {
 	if (!eventMan)
 		return;
 
@@ -90,30 +91,48 @@ void InsaneRebel2::runGame() {
 		return;
 	}
 
-	playIntroSequence();
+	// Launching straight into a pilot from the launcher skips the intro.
+	if (ConfMan.hasKey("save_slot"))
+		loadGameState(ConfMan.getInt("save_slot"), true);
+
+	if (!_pilotLoadRequested)
+		playIntroSequence();
 
 	while (!_vm->shouldQuit()) {
-		int menuResult = runMainMenu();
+		int menuResult = kMenuNewGame;
 
-		if (menuResult == kMenuQuit || _vm->shouldQuit())
-			break;
+		// A loaded pilot goes straight to the chapter selection.
+		if (_pilotLoadRequested) {
+			_pilotLoadRequested = false;
+		} else {
+			menuResult = runMainMenu();
 
-		if (menuResult == kMenuResumeDemo) {
-			playIntroSequence();
-			if (!_vm->shouldQuit())
-				showTopPilots();
-			continue;
+			if (menuResult == kMenuQuit || _vm->shouldQuit())
+				break;
+
+			if (menuResult == kMenuResumeDemo) {
+				playIntroSequence();
+				if (!_vm->shouldQuit())
+					showTopPilots();
+				continue;
+			}
+
+			if (menuResult == kMenuNewGame) {
+				int pilotResult = runLevelSelect();
+
+				if (pilotResult == kLevelSelectQuit || _vm->shouldQuit())
+					break;
+
+				// A load during the pilot menu already picked the pilot.
+				if (pilotResult == kLevelSelectBack && !_pilotLoadRequested)
+					continue;
+
+				if (_pilotLoadRequested)
+					_pilotLoadRequested = false;
+			}
 		}
 
 		if (menuResult == kMenuNewGame) {
-			int pilotResult = runLevelSelect();
-
-			if (pilotResult == kLevelSelectQuit || _vm->shouldQuit())
-				break;
-
-			if (pilotResult == kLevelSelectBack)
-				continue;
-
 			int chapterResult = runChapterSelect();
 
 			if (chapterResult == kChapterSelectQuit || _vm->shouldQuit())

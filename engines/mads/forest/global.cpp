@@ -29,8 +29,8 @@
 #include "mads/core/pal.h"
 #include "mads/core/player.h"
 #include "mads/core/text.h"
-#include "mads/forest/digi.h"
-#include "mads/forest/midi.h"
+#include "mads/forest/sound/digi.h"
+#include "mads/forest/sound/midi.h"
 #include "mads/forest/mads/words.h"
 #include "mads/forest/extra.h"
 #include "mads/forest/global.h"
@@ -1196,9 +1196,9 @@ static void do_looping_sounds() {
 }
 
 void global_game_main_loop() {
-	static char temp_buf_2[20];
-	static char temp_buf_3[20];
-	static char temp_buf_4[20];
+	//static char temp_buf_2[20];
+	//static char temp_buf_3[20];
+	//static char temp_buf_4[20];
 	int yy;
 	long dif;
 

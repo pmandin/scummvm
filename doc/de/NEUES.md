@@ -26,6 +26,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      nicht überschrieben werden konnten
    - Der Nuked-OPL3 AdLib-Emulator wurden durch den Nuked-OPL3-fast-Fork ausgetauscht.
 
+ AWE:
+   - Absturz des Audio-Codes in OpenBSD korrigiert.
+
  Bagel:
    - Speicher-Optionen in Hodj n' Podj's Th Gesng Gme korrigiert.
 
@@ -35,6 +38,11 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Freescape:
    - Unterstützung für das Laden von ZX Spectrum-Spielen von TAP/TZX-Tape-Images hinzugefügt.
+
+ Kyra:
+   - Unterstützung für die koreanische Fan-Übersetzung in Kyra1 hinzugefügt (in ScummVM 2026.3.0).
+   - Fehlerhafte nicht-koreanische kyra1-Spiele (Fehlermeldung "You're missing the 'KYRA.DAT'
+     engine data file or it got corrupted...) wiederhergestellt.
 
  Lure:
    - Charakter-Wegfindung optimiert.
@@ -49,6 +57,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      in M&M1.
    - Darstellung der Untertitel in Zwischensequenzen korrigiert.
    - Unterstützung für die französische Übersetzung von Xeen hinzugefügt.
+   - Die Stimme des Pharao wird im Intro von Dark Side of Xeen jetzt nicht wiederholt.
 
  NANCY:
    - Allgemeine Flags werden nicht mehr gelöscht, wenn das Spiel (automatisch) gespeichert

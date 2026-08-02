@@ -19,9 +19,10 @@
  *
  */
 
-#ifndef MADS_DRAGONSPHERE_ASOUND_H
-#define MADS_DRAGONSPHERE_ASOUND_H
+#ifndef MADS_DRAGONSPHERE_SOUND_ASOUND_H
+#define MADS_DRAGONSPHERE_SOUND_ASOUND_H
 
+#include "audio/fmopl.h"
 #include "common/mutex.h"
 #include "common/queue.h"
 #include "common/util.h"
@@ -29,6 +30,7 @@
 
 namespace MADS {
 namespace Dragonsphere {
+namespace Sound {
 
 #define ADLIB_CHANNEL_COUNT 9
 
@@ -193,6 +195,8 @@ protected:
 	typedef void (ASound::*CallbackFunction)();
 
 private:
+	OPL::OPL *_opl;
+
 	// ---- callback / tick state ------------------------------------------
 	uint16 _callbackCounter = 0;  // per-tick countdown
 	uint16 _callbackPeriod = 0;  // reload value; 0 = callback disabled
@@ -605,18 +609,22 @@ protected:
 
 public:
 	/**
+	 * Validate the sound driver files needed for data
+	 */
+	static void validate(bool isDemo);
+
+public:
+	/**
 	 * Constructor.
 	 * @param mixer       Mixer instance
-	 * @param opl         OPL chip instance
 	 * @param filename    Path to the .DR1 (or equivalent) sound-driver file
 	 * @param dataOffset  Offset in the file of the data segment
 	 * @param dataSize    Size of the data segment
 	 */
-	ASound(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
+	ASound(Audio::Mixer *mixer, const Common::Path &filename,
 		int dataOffset, int dataSize);
 
-	~ASound() override {
-	}
+	~ASound() override;
 
 	/** Stop all currently playing sounds (wraps command0). */
 	virtual int stop() override;
@@ -641,6 +649,7 @@ public:
 	}
 };
 
+} // namespace Sound
 } // namespace Dragonsphere
 } // namespace MADS
 

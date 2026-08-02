@@ -22,7 +22,7 @@
 #include "mads/forest/rooms/section2.h"
 #include "mads/forest/mads/inventory.h"
 #include "mads/forest/mads/words.h"
-#include "mads/forest/digi.h"
+#include "mads/forest/sound/digi.h"
 #include "mads/forest/extra.h"
 #include "mads/forest/global.h"
 #include "mads/core/game.h"
@@ -337,32 +337,20 @@ static void room_201_anim5() {
 	if (kernel_anim[aa[3]].frame == scratch._aa)
 		return;
 
-	int16 var_2 = -1;
 	scratch._aa = kernel_anim[aa[3]].frame;
 
 	if (scratch._aa == 23)
 		digi_play_build(101, '_', 1, 2);
-
-	if (var_2 >= 0) {
-		kernel_reset_animation(aa[3], var_2);
-		scratch._aa = var_2;
-	}
 }
 
 static void room_201_anim6() {
 	if (kernel_anim[aa[3]].frame == scratch._ae)
 		return;
 
-	int16 var_2 = -1;
 	scratch._ae = kernel_anim[aa[3]].frame;
 
 	if (scratch._ae == 40)
 		digi_play_build(101, '_', 1, 2);
-
-	if (var_2 >= 0) {
-		kernel_reset_animation(aa[3], var_2);
-		scratch._ae = var_2;
-	}
 }
 
 static void room_201_daemon() {

@@ -249,6 +249,10 @@ public:
 	State getState() const { return _state; }
 	void setState(State state) { _state = state; }
 
+	// Close every open Nancy 10+ popup. Used before a script auto-opens one
+	// (e.g. the incoming game-over call) so two popups can't stack.
+	void closeActivePopups();
+
 	struct Timers {
 		Time pushedPlayTime;
 		Time lastTotalTime;
@@ -273,13 +277,14 @@ private:
 	// puzzle data) and fires any whose configured duration has just elapsed.
 	void tickSoftwareTimers(uint32 deltaMs);
 	void fireSoftwareTimer(TimerData::Timer &timer);
+	void fireTimerTrigger(TimerData::Trigger &trigger);
 
 	// Rect of the open Nancy 10+ taskbar popup, or empty if none.
 	Common::Rect activePopupConfinement() const;
 
 	void initStaticData();
 
-	void clearSceneData();
+	void clearSceneData(bool nextIsNoArt = false);
 	void clearPuzzleData();
 
 	// Maps an event flag label to its index in the eventFlags array

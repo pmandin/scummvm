@@ -24,7 +24,7 @@
 #include "audio/adlib_hmisos.h"
 #include "audio/midiparser_hmp.h"
 #include "audio/mt32gm.h"
-#include "mads/forest/midi.h"
+#include "mads/forest/sound/midi.h"
 #include "mads/core/env.h"
 #include "mads/forest/forest.h"
 
@@ -51,18 +51,12 @@ MidiPlayer::~MidiPlayer() {
 
 	Common::StackLock lock(_mutex);
 
-	if (_parser) {
-		delete _parser;
-		_parser = nullptr;
-	}
-	if (_data) {
-		delete[] _data;
-		_data = nullptr;
-	}
-	if (_driver) {
-		delete _driver;
-		_driver = nullptr;
-	}
+	delete _parser;
+	_parser = nullptr;
+	delete[] _data;
+	_data = nullptr;
+	delete _driver;
+	_driver = nullptr;
 }
 
 int MidiPlayer::open() {

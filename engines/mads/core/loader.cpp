@@ -20,6 +20,8 @@
  */
 
 #include "common/textconsole.h"
+#include "common/compression/dcl.h"
+#include "common/memstream.h"
 #include "mads/core/loader.h"
 #include "mads/core/general.h"
 #include "mads/core/pack.h"
@@ -35,31 +37,34 @@
 
 namespace MADS {
 
-
-/* debug stuff */
-#ifndef disable_statistics
-long loader_found_in_ems = 0;
-long loader_found_in_xms = 0;
-long loader_found_on_disk = 0;
-long loader_timing_ems = 0;
-long loader_timing_xms = 0;
-long loader_timing_disk = 0;
-long loader_size_ems = 0;
-long loader_size_xms = 0;
-long loader_size_disk = 0;
-#endif
-
 int loader_ems_search_disabled = false;
 
 char loader_last[14] = "";
 
 
 LoaderReadStream::LoaderReadStream(LoadHandle load, long size) {
-	if (size < 0)
-		size = load->decompress_size;
+	byte *data;
 
-	byte *data = (byte *)malloc(size);
-	(void)loader_read(data, 1, size, load);
+	if (size < 0) {
+		// No explicit size was given, so the caller wants the whole file. The
+		// pack list may hold multiple index entries (e.g. header/data split into
+		// separate compressed sections), and loader_read() only ever decompresses
+		// one entry per call. Read each remaining entry in turn using its own
+		// declared uncompressed size, advancing the destination pointer, instead
+		// of asking for the full decompressed size in a single call.
+		size = load->decompress_size;
+		data = (byte *)malloc(size);
+		byte *dest = data;
+
+		while (load->pack_list_marker < (int)load->pack.num_records) {
+			long entrySize = load->pack.strategy[load->pack_list_marker].size;
+			(void)loader_read(dest, 1, entrySize, load);
+			dest += entrySize;
+		}
+	} else {
+		data = (byte *)malloc(size);
+		(void)loader_read(data, 1, size, load);
+	}
 
 	_data = new Common::MemoryReadStream(data, size, DisposeAfterUse::YES);
 }
@@ -100,20 +105,11 @@ int loader_open(LoadHandle handle, const char *filename, const char *options, in
 		handle->pack_list_marker = 0;
 		handle->reading = true;
 
-		// printf ("Opened %d with xms handle %d\n", found_himem, himem_directory_entry->xms_handle);
 		for (count = 0; count < (int)handle->pack.num_records; count++) {
 			handle->pack.strategy[count].type = PACK_NONE;
 			handle->pack.strategy[count].size = himem_directory_entry->packet_size[count];
 			handle->pack.strategy[count].compressed_size = himem_directory_entry->packet_size[count];
 		}
-
-#ifndef disable_statistics
-		if (himem_directory_entry->memory_type == MEM_EMS) {
-			loader_found_in_ems++;
-		} else {
-			loader_found_in_xms++;
-		}
-#endif
 	} else {
 		handle->mode = LOADER_DISK;
 		handle->ems_handle = -1;
@@ -134,10 +130,6 @@ int loader_open(LoadHandle handle, const char *filename, const char *options, in
 		} else {
 			error("Open for writing not supported in ScummVM");
 		}
-
-#ifndef disable_statistics
-		loader_found_on_disk++;
-#endif
 	}
 
 	handle->open = true;
@@ -189,14 +181,6 @@ long loader_read(void *target, long record_size, long record_count, LoadHandle h
 	int marker;
 	int already_unpacked = false;
 
-#ifndef disable_statistics
-	long start_timing;
-	long finish_timing;
-	long total_timing;
-
-	start_timing = timer_read_600();
-#endif
-
 	if (!record_size)
 		return 0;
 
@@ -232,9 +216,15 @@ long loader_read(void *target, long record_size, long record_count, LoadHandle h
 			if (decompress_buffer != NULL) {
 				if (!fileio_fread_f(decompress_buffer, compressed_size, 1, handle->handle)) goto done;
 
-				result = pack_data(packing_flag, total_size,
-					FROM_MEMORY, decompress_buffer,
-					TO_MEMORY, target);
+				if (pack_strategy == PACK_DCL) {
+					Common::MemoryReadStream stream(decompress_buffer, compressed_size);
+					result = Common::decompressDCL(&stream, (byte *)target,
+						compressed_size, total_size) ? total_size : 0;
+				} else {
+					result = pack_data(packing_flag, total_size,
+						FROM_MEMORY, decompress_buffer,
+						TO_MEMORY, target);
+				}
 				already_unpacked = true;
 			}
 		}
@@ -250,22 +240,6 @@ long loader_read(void *target, long record_size, long record_count, LoadHandle h
 				handle->handle->seek(file_position + compressed_size);
 		}
 	}
-
-#ifndef disable_statistics
-	finish_timing = timer_read_600();
-	total_timing = finish_timing - start_timing;
-
-	if (handle->mode == LOADER_EMS) {
-		loader_timing_ems += total_timing;
-		loader_size_ems += total_size;
-	} else if (handle->mode == LOADER_XMS) {
-		loader_timing_xms += total_timing;
-		loader_size_xms += total_size;
-	} else {
-		loader_timing_disk += total_timing;
-		loader_size_disk += total_size;
-	}
-#endif
 
 done:
 	if (decompress_buffer != NULL)

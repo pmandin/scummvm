@@ -19,248 +19,11 @@
  *
  */
 
-#include "audio/fmopl.h"
-#include "common/algorithm.h"
-#include "common/file.h"
-#include "common/md5.h"
-#include "mads/nebular/sound_nebular.h"
-
-namespace Audio {
-class Mixer;
-}
+#include "mads/nebular/sound/asound_nebular.h"
 
 namespace MADS {
 namespace RexNebular {
-
-void RexSoundManager::validate() {
-	Common::File f;
-	static const char *const MD5[] = {
-		"205398468de2c8873b7d4d73d5be8ddc",
-		"f9b2d944a2fb782b1af5c0ad592306d3",
-		"7431f8dad77d6ddfc24e6f3c0c4ac7df",
-		"eb1f3f5a4673d3e73d8ac1818c957cf4",
-		"f936dd853073fa44f3daac512e91c476",
-		"3dc139d3e02437a6d9b732072407c366",
-		"af0edab2934947982e9a405476702e03",
-		"8cbc25570b50ba41c9b5361cad4fbedc",
-		"a31e4783e098f633cbb6689adb41dd4f"
-	};
-
-	for (int i = 1; i <= 9; ++i) {
-		Common::Path filename(Common::String::format("ASOUND.00%d", i));
-		if (!f.open(filename))
-			error("Could not process - %s", filename.toString().c_str());
-		Common::String md5str = Common::computeStreamMD5AsString(f, 8192);
-		f.close();
-
-		if (md5str != MD5[i - 1])
-			error("Invalid sound file - %s", filename.toString().c_str());
-	}
-}
-
-void RexSoundManager::loadDriver(int sectionNumber) {
-	switch (sectionNumber) {
-	case 1:
-		_driver = new RexNebular::ASound1(_mixer, _opl);
-		break;
-	case 2:
-		_driver = new RexNebular::ASound2(_mixer, _opl);
-		break;
-	case 3:
-		_driver = new RexNebular::ASound3(_mixer, _opl);
-		break;
-	case 4:
-		_driver = new RexNebular::ASound4(_mixer, _opl);
-		break;
-	case 5:
-		_driver = new RexNebular::ASound5(_mixer, _opl);
-		break;
-	case 6:
-		_driver = new RexNebular::ASound6(_mixer, _opl);
-		break;
-	case 7:
-		_driver = new RexNebular::ASound7(_mixer, _opl);
-		break;
-	case 8:
-		_driver = new RexNebular::ASound8(_mixer, _opl);
-		break;
-	case 9:
-		_driver = new RexNebular::ASound9(_mixer, _opl);
-		break;
-	default:
-		_driver = nullptr;
-		return;
-	}
-}
-
-/*-----------------------------------------------------------------------*/
-
-RexASound::RexASound(Audio::Mixer *mixer, OPL::OPL *opl,
-		const Common::Path &filename, int dataOffset, int dataSize) :
-		ASound(mixer, opl, filename, dataOffset, dataSize) {
-	_chanCommandCount = 15;
-}
-
-void RexASound::channelCommand(byte *&pSrc, bool &updateFlag) {
-	AdlibChannel *chan = _activeChannelPtr;
-	int cmdNum = 255 - *pSrc;
-
-	switch (cmdNum) {
-	case 0:
-		if (!chan->_innerLoopCount) {
-			if (*++pSrc == 0) {
-				chan->_pSrc += 2;
-				chan->_innerLoopPtr = chan->_pSrc;
-				chan->_innerLoopCount = 0;
-			} else {
-				chan->_innerLoopCount = *pSrc;
-				chan->_pSrc = chan->_innerLoopPtr;
-			}
-		} else if (--chan->_innerLoopCount) {
-			chan->_pSrc = chan->_innerLoopPtr;
-		} else {
-			chan->_pSrc += 2;
-			chan->_innerLoopPtr = chan->_pSrc;
-		}
-		break;
-
-	case 1:
-		if (!chan->_outerLoopCount) {
-			if (*++pSrc == 0) {
-				chan->_pSrc += 2;
-				chan->_outerLoopPtr = chan->_pSrc;
-				chan->_innerLoopPtr = chan->_pSrc;
-				chan->_innerLoopCount = 0;
-				chan->_outerLoopCount = 0;
-			} else {
-				chan->_outerLoopCount = *pSrc;
-				chan->_pSrc = chan->_outerLoopPtr;
-				chan->_innerLoopPtr = chan->_outerLoopPtr;
-			}
-		} else if (--chan->_outerLoopCount) {
-			chan->_outerLoopPtr = chan->_pSrc;
-			chan->_innerLoopPtr = chan->_pSrc;
-		} else {
-			chan->_pSrc += 2;
-			chan->_outerLoopPtr = chan->_pSrc;
-			chan->_innerLoopPtr = chan->_pSrc;
-		}
-		break;
-
-	case 2:
-		// Loop sound data
-		chan->_pitchBend = 0;
-		chan->_volumeFadeStep = chan->_attenFadeStep = 0;
-		chan->_volume = chan->_noteOffset = 0;
-		chan->_transpose = chan->_volumeOffset = 0;
-		chan->_keyOnDelay = 0;
-		chan->_volumeFadeCounter = 0;
-		chan->_attenFadeCounter = 0;
-		chan->_innerLoopCount = 0;
-		chan->_outerLoopCount = 0;
-		chan->_patchAttenuation = 0x40;
-		chan->_ptr1 = chan->_soundData;
-		chan->_pSrc = chan->_soundData;
-		chan->_innerLoopPtr = chan->_soundData;
-		chan->_outerLoopPtr = chan->_soundData;
-
-		chan->_pSrc += 2;
-		break;
-
-	case 3:
-		chan->_sampleIndex = *++pSrc;
-		chan->_pSrc += 2;
-		loadSample(chan->_sampleIndex);
-		break;
-
-	case 4:
-		chan->_noteOffset = *++pSrc;
-		chan->_pSrc += 2;
-		break;
-
-	case 5:
-		chan->_pitchBend = *++pSrc;
-		chan->_pSrc += 2;
-		break;
-
-	case 6:
-		++pSrc;
-		if (chan->_pendingStop) {
-			chan->_pSrc += 2;
-		} else {
-			chan->_volume = *pSrc >> 1;
-			updateFlag = true;
-			chan->_pSrc += 2;
-		}
-		break;
-
-	case 7:
-		++pSrc;
-		if (!chan->_pendingStop) {
-			chan->_volumeFadeReload = *pSrc;
-			chan->_volumeFadeStep = *++pSrc;
-			chan->_volumeFadeCounter = 1;
-		}
-
-		chan->_pSrc += 3;
-		break;
-
-	case 8:
-		chan->_transpose = (int8) * ++pSrc;
-		chan->_pSrc += 2;
-		break;
-
-	case 9:
-	{
-		int v1 = *++pSrc;
-		++pSrc;
-		int v2 = (v1 - 1) & getRandomNumber();
-		int v3 = pSrc[v2];
-		int v4 = pSrc[v1];
-
-		pSrc[v4 + v1 + 1] = v3;
-		chan->_pSrc += v1 + 3;
-		break;
-	}
-
-	case 10:
-		++pSrc;
-		if (chan->_pendingStop) {
-			chan->_pSrc += 2;
-		} else {
-			chan->_volumeOffset = *pSrc >> 1;
-			updateFlag = true;
-			chan->_pSrc += 2;
-		}
-		break;
-
-	case 11:
-		chan->_patchAttenuation = *++pSrc;
-		updateFlag = true;
-		chan->_pSrc += 2;
-		break;
-
-	case 12:
-		chan->_attenFadeReload = *++pSrc;
-		chan->_attenFadeStep = *++pSrc;
-		chan->_attenFadeCounter = 1;
-		chan->_pSrc += 2;
-		break;
-
-	case 13:
-		++pSrc;
-		chan->_pSrc += 2;
-		break;
-
-	case 14:
-		chan->_octaveTranspose = *++pSrc;
-		chan->_pSrc += 2;
-		break;
-
-	default:
-		break;
-	}
-}
+namespace Sound {
 
 /*-----------------------------------------------------------------------*/
 
@@ -278,8 +41,7 @@ const ASound1::CommandPtr ASound1::_commandList[42] = {
 	&ASound1::command40, &ASound1::command41
 };
 
-ASound1::ASound1(Audio::Mixer *mixer, OPL::OPL *opl)
-	: RexASound(mixer, opl, "asound.001", 0x1520, 0x17b0) {
+ASound1::ASound1(Audio::Mixer *mixer) : ASound(mixer, "asound.001", 0x1520, 0x17b0) {
 	_cmd23Toggle = false;
 
 	// Load sound samples
@@ -566,6 +328,270 @@ int ASound1::command2627293032() {
 
 /*-----------------------------------------------------------------------*/
 
+const ASoundDemo1::CommandPtr ASoundDemo1::_commandList[41] = {
+	&ASoundDemo1::command0, &ASoundDemo1::command1, &ASoundDemo1::command2, &ASoundDemo1::command3,
+	&ASoundDemo1::command4, &ASoundDemo1::command5, &ASoundDemo1::command6, &ASoundDemo1::command7,
+	&ASoundDemo1::command8, &ASoundDemo1::command9, &ASoundDemo1::command10, &ASoundDemo1::command11,
+	&ASoundDemo1::command12, &ASoundDemo1::command13, &ASoundDemo1::command14, &ASoundDemo1::command15,
+	&ASoundDemo1::command16, &ASoundDemo1::command17, &ASoundDemo1::command18, &ASoundDemo1::command19,
+	&ASoundDemo1::command20, &ASoundDemo1::command21, &ASoundDemo1::command22, &ASoundDemo1::command23,
+	&ASoundDemo1::command24, &ASoundDemo1::command25, &ASoundDemo1::command26, &ASoundDemo1::command27,
+	&ASoundDemo1::command28, &ASoundDemo1::command29, &ASoundDemo1::command30, &ASoundDemo1::command31,
+	&ASoundDemo1::command32, &ASoundDemo1::command33, &ASoundDemo1::command34, &ASoundDemo1::command35,
+	&ASoundDemo1::command36, &ASoundDemo1::command37, &ASoundDemo1::command38, &ASoundDemo1::command39,
+	&ASoundDemo1::command40
+};
+
+ASoundDemo1::ASoundDemo1(Audio::Mixer *mixer) : ASound(mixer, "asound.001", 0x1540, 0x24b0) {
+	_cmd23Toggle = false;
+
+	// Load sound samples
+	auto samplesStream = getDataStream(0x50);
+	for (int i = 0; i < 96; ++i)
+		_samples.push_back(AdlibSample(samplesStream));
+}
+
+int ASoundDemo1::command(int commandId, int param) {
+	if (commandId > 40)
+		return 0;
+
+	_commandParam = param;
+	_frameCounter = 0;
+	return (this->*_commandList[commandId])();
+}
+
+int ASoundDemo1::command9() {
+	playSoundAny(0x2220);
+	return 0;
+}
+
+int ASoundDemo1::command10() {
+	byte *pData1 = loadData(0x1C8C);
+	isSoundActive(pData1); // result unused, matches disassembly quirk
+	command1();
+	_channels[4].load(pData1);
+	_channels[5].load(loadData(0x1CBC));
+	_channels[6].load(loadData(0x1E3E));
+	_channels[7].load(loadData(0x1E6C));
+	return 0;
+}
+
+int ASoundDemo1::command11() {
+	command111213();
+	_channels[0]._volumeOffset = 0;
+	_channels[1]._volumeOffset = 0;
+	return 0;
+}
+
+int ASoundDemo1::command12() {
+	command111213();
+	_channels[0]._volumeOffset = 40;
+	_channels[1]._volumeOffset = 0;
+	return 0;
+}
+
+int ASoundDemo1::command13() {
+	command111213();
+	_channels[0]._volumeOffset = 40;
+	_channels[1]._volumeOffset = 50;
+	return 0;
+}
+
+int ASoundDemo1::command14() {
+	playSoundAny(0x1C08);
+	return 0;
+}
+
+int ASoundDemo1::command15() {
+	byte *pData1 = loadData(0x1E9C);
+	isSoundActive(pData1); // result unused, matches disassembly quirk
+	command1();
+	_channels[4].load(pData1);
+	_channels[5].load(loadData(0x1F3A));
+	_channels[6].load(loadData(0x1F92));
+	_channels[7].load(loadData(0x1FEA));
+	_channels[8].load(loadData(0x2014));
+	return 0;
+}
+
+int ASoundDemo1::command16() {
+	playSoundAny(0x222A);
+	return 0;
+}
+
+int ASoundDemo1::command17() {
+	playSoundAny(0x244C);
+	return 0;
+}
+
+int ASoundDemo1::command18() {
+	command1();
+	playSoundAny(0x225A);
+	return 0;
+}
+
+int ASoundDemo1::command19() {
+	command1();
+	playSoundAny(0x226A);
+	return 0;
+}
+
+int ASoundDemo1::command20() {
+	playSoundAny(0x22C6);
+	return 0;
+}
+
+int ASoundDemo1::command21() {
+	playSoundAny(0x22B6);
+	return 0;
+}
+
+int ASoundDemo1::command22() {
+	byte *pData = loadData(0x22E2);
+	pData[6] = (byte)((getRandomNumber() & 7) + 85);
+	playSoundAny(0x22E2);
+	return 0;
+}
+
+int ASoundDemo1::command23() {
+	_cmd23Toggle = !_cmd23Toggle;
+	playSoundAny(_cmd23Toggle ? 0x22EC : 0x22F4);
+	return 0;
+}
+
+int ASoundDemo1::command24() {
+	playSoundAny(0x22FC);
+	playSoundAny(0x230C);
+	playSoundAny(0x231E);
+	return 0;
+}
+
+int ASoundDemo1::command25() {
+	playSoundAny(0x232A);
+	return 0;
+}
+
+int ASoundDemo1::command26() {
+	byte *pData = loadData(0x249E);
+	pData[5] = (byte)((command2627293032() >> 1) + 60);
+	_channels[8].load(pData);
+	return 0;
+}
+
+int ASoundDemo1::command27() {
+	byte *pData = loadData(0x2494);
+	pData[5] = (byte)((command2627293032() >> 1) + 78);
+	_channels[7].load(pData);
+	return 0;
+}
+
+int ASoundDemo1::command28() {
+	playSoundAny(0x233A);
+	return 0;
+}
+
+int ASoundDemo1::command29() {
+	byte *pData = loadData(0x2236);
+	byte v = (byte)((command2627293032() >> 1) + 76);
+	pData[7] = pData[13] = pData[21] = pData[27] = v;
+	isSoundActive(pData); // result unused, matches disassembly quirk
+	playSoundAny(0x2236);
+	return 0;
+}
+
+int ASoundDemo1::command30() {
+	byte *pData = loadData(0x2456);
+	pData[7] = (byte)((command2627293032() >> 1) + 72);
+	isSoundActive(pData); // result unused, matches disassembly quirk
+	playSoundAny(0x2456);
+	return 0;
+}
+
+int ASoundDemo1::command31() {
+	_channels[6].load(loadData(0x23B8));
+	_channels[7].load(loadData(0x2354));
+	return 0;
+}
+
+int ASoundDemo1::command32() {
+	byte *pData = loadData(0x2466);
+	byte base = (byte)command2627293032() >> 1;
+	byte v1 = base + 20;
+	byte v2 = base + 40;
+	pData[9] = pData[17] = pData[25] = pData[33] = v1;
+	pData[11] = pData[19] = pData[27] = pData[35] = v2;
+	isSoundActive(pData); // result unused, matches disassembly quirk
+	playSoundAny(0x2466);
+	return 0;
+}
+
+int ASoundDemo1::command33() {
+	playSoundAny(0x2362);
+	playSoundAny(0x236C);
+	return 0;
+}
+
+int ASoundDemo1::command34() {
+	byte *pData = loadData(0x2376);
+	byte v = (byte)((getRandomNumber() & 12) + 45);
+	pData[9] = v;
+	pData[16] = v + 36;
+	playSoundAny(0x2376);
+	return 0;
+}
+
+int ASoundDemo1::command35() {
+	playSoundAny(0x238A);
+	return 0;
+}
+
+int ASoundDemo1::command36() {
+	playSoundAny(0x23AE);
+	return 0;
+}
+
+int ASoundDemo1::command37() {
+	playSoundAny(0x23C6);
+	return 0;
+}
+
+int ASoundDemo1::command38() {
+	playSoundAny(0x23DA);
+	return 0;
+}
+
+int ASoundDemo1::command39() {
+	byte *pData1 = loadData(0x203E);
+	isSoundActive(pData1); // result unused, matches disassembly quirk
+	_channels[5].load(pData1);
+	_channels[6].load(loadData(0x20C0));
+	_channels[7].load(loadData(0x20DE));
+	_channels[8].load(loadData(0x2106));
+	return 0;
+}
+
+int ASoundDemo1::command40() {
+	playSoundAny(0x2396);
+	return 0;
+}
+
+void ASoundDemo1::command111213() {
+	byte *pData1 = loadData(0x18E8);
+	isSoundActive(pData1); // result unused, matches disassembly quirk
+	command1();
+	_channels[0].load(pData1);
+	_channels[1].load(loadData(0x1A80));
+	_channels[2].load(loadData(0x1B8A));
+	_channels[3].load(loadData(0x1BCC));
+}
+
+int ASoundDemo1::command2627293032() {
+	return (_commandParam > 0x40) ? _commandParam - 0x40 : _commandParam & 0xff00;
+}
+
+
+/*-----------------------------------------------------------------------*/
+
 const ASound2::CommandPtr ASound2::_commandList[44] = {
 	&ASound2::command0, &ASound2::command1, &ASound2::command2, &ASound2::command3,
 	&ASound2::command4, &ASound2::command5, &ASound2::command6, &ASound2::command7,
@@ -580,8 +606,7 @@ const ASound2::CommandPtr ASound2::_commandList[44] = {
 	&ASound2::command40, &ASound2::command41, &ASound2::command42, &ASound2::command43
 };
 
-ASound2::ASound2(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.002", 0x15E0, 0x4b70) {
+ASound2::ASound2(Audio::Mixer *mixer) : ASound(mixer, "asound.002", 0x15E0, 0x4b70) {
 	_command12Param = 0xFD;
 
 	// Load sound samples
@@ -952,8 +977,7 @@ const ASound3::CommandPtr ASound3::_commandList[61] = {
 	&ASound3::command60
 };
 
-ASound3::ASound3(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.003", 0x15B0, 0x5020) {
+ASound3::ASound3(Audio::Mixer *mixer) : ASound(mixer, "asound.003", 0x15B0, 0x5020) {
 	_command39Flag = false;
 
 	// Load sound samples
@@ -1357,8 +1381,7 @@ const ASound4::CommandPtr ASound4::_commandList[61] = {
 	&ASound4::command60
 };
 
-ASound4::ASound4(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.004", 0x14F0, 0x2930) {
+ASound4::ASound4(Audio::Mixer *mixer) : ASound(mixer, "asound.004", 0x14F0, 0x2930) {
 	// Load sound samples
 	auto samplesStream = getDataStream(0x122);
 	for (int i = 0; i < 210; ++i)
@@ -1614,8 +1637,7 @@ const ASound5::CommandPtr ASound5::_commandList[42] = {
 	&ASound5::command40, &ASound5::command41
 };
 
-ASound5::ASound5(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.005", 0x15E0, 0x2200) {
+ASound5::ASound5(Audio::Mixer *mixer) : ASound(mixer, "asound.005", 0x15E0, 0x2200) {
 	// Load sound samples
 	auto samplesStream = getDataStream(0x144);
 	for (int i = 0; i < 164; ++i)
@@ -1856,8 +1878,7 @@ const ASound6::CommandPtr ASound6::_commandList[30] = {
 	&ASound6::nullCommand, &ASound6::command29
 };
 
-ASound6::ASound6(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.006", 0x1390, 0x22d0) {
+ASound6::ASound6(Audio::Mixer *mixer) : ASound(mixer, "asound.006", 0x1390, 0x22d0) {
 	// Load sound samples
 	auto samplesStream = getDataStream(0x122);
 	for (int i = 0; i < 200; ++i)
@@ -2013,8 +2034,7 @@ const ASound7::CommandPtr ASound7::_commandList[38] = {
 	&ASound7::command36, &ASound7::command37
 };
 
-ASound7::ASound7(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.007", 0x1460, 0x2cf0) {
+ASound7::ASound7(Audio::Mixer *mixer) : ASound(mixer, "asound.007", 0x1460, 0x2cf0) {
 	// Load sound samples
 	auto samplesStream = getDataStream(0x122);
 	for (int i = 0; i < 214; ++i)
@@ -2222,8 +2242,7 @@ const ASound8::CommandPtr ASound8::_commandList[38] = {
 	&ASound8::command36, &ASound8::command37
 };
 
-ASound8::ASound8(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.008", 0x1490, 0x1810) {
+ASound8::ASound8(Audio::Mixer *mixer) : ASound(mixer, "asound.008", 0x1490, 0x1810) {
 	// Load sound samples
 	auto samplesStream = getDataStream(0x122);
 	for (int i = 0; i < 174; ++i)
@@ -2462,6 +2481,147 @@ int ASound8::command37() {
 
 /*-----------------------------------------------------------------------*/
 
+const ASoundDemo9::CommandPtr ASoundDemo9::_commandList[39] = {
+	&ASoundDemo9::command0, &ASoundDemo9::command1, &ASoundDemo9::command2, &ASoundDemo9::command3,
+	&ASoundDemo9::command4, &ASoundDemo9::command5, &ASoundDemo9::command6, &ASoundDemo9::command7,
+	&ASoundDemo9::command8, &ASoundDemo9::nullCommand, &ASoundDemo9::nullCommand, &ASoundDemo9::command11,
+	&ASoundDemo9::nullCommand, &ASoundDemo9::nullCommand, &ASoundDemo9::command14, &ASoundDemo9::nullCommand,
+	&ASoundDemo9::nullCommand, &ASoundDemo9::command17, &ASoundDemo9::nullCommand, &ASoundDemo9::nullCommand,
+	&ASoundDemo9::command20, &ASoundDemo9::command21, &ASoundDemo9::command22, &ASoundDemo9::command23,
+	&ASoundDemo9::nullCommand, &ASoundDemo9::nullCommand, &ASoundDemo9::command26, &ASoundDemo9::command27,
+	&ASoundDemo9::command28, &ASoundDemo9::command29, &ASoundDemo9::command30, &ASoundDemo9::command31,
+	&ASoundDemo9::nullCommand, &ASoundDemo9::nullCommand, &ASoundDemo9::command34, &ASoundDemo9::command35,
+	&ASoundDemo9::command36, &ASoundDemo9::nullCommand, &ASoundDemo9::command38
+};
+
+ASoundDemo9::ASoundDemo9(Audio::Mixer *mixer) : ASound(mixer, "asound.009", 0x13f0, 0x3610) {
+	// Load sound samples
+	auto samplesStream = getDataStream(0x50);
+	for (int i = 0; i < 94; ++i)
+		_samples.push_back(AdlibSample(samplesStream));
+}
+
+int ASoundDemo9::command(int commandId, int param) {
+	if (commandId > 38)
+		return 0;
+
+	_commandParam = param;
+	_frameCounter = 0;
+	return (this->*_commandList[commandId])();
+}
+
+int ASoundDemo9::command11() {
+	playSoundAny(0x320E);
+	playSoundAny(0x32A2);
+	return 0;
+}
+
+int ASoundDemo9::command14() {
+	playSoundAny(0x31D2);
+	return 0;
+}
+
+int ASoundDemo9::command17() {
+	command29();
+	playSoundAny(0x3540);
+	return 0;
+}
+
+int ASoundDemo9::command20() {
+	byte *pData = loadData(0x315E);
+	int v = getRandomNumber();
+	v = (v & 0x10) | 0x4D;
+	pData[4] = (byte)(v & 0x7F);
+	playSoundAny(0x315E);
+	return 0;
+}
+
+int ASoundDemo9::command21() {
+	playSoundAny(0x3176);
+	return 0;
+}
+
+int ASoundDemo9::command22() {
+	playSoundAny(0x3186);
+	return 0;
+}
+
+int ASoundDemo9::command23() {
+	playSoundAny(0x3166);
+	return 0;
+}
+
+int ASoundDemo9::command26() {
+	_channels[6].load(loadData(0x3338));
+	_channels[7].load(loadData(0x33D4));
+	return 0;
+}
+
+int ASoundDemo9::command27() {
+	playSoundAny(0x3474);
+	return 0;
+}
+
+int ASoundDemo9::command28() {
+	_channels[8].load(loadData(0x31A6));
+	return 0;
+}
+
+int ASoundDemo9::command29() {
+	_channels[8].load(loadData(0x31B0));
+	return 0;
+}
+
+int ASoundDemo9::command30() {
+	playSoundAny(0x3196);
+	return 0;
+}
+
+int ASoundDemo9::command31() {
+	playSoundAny(0x31E8);
+	playSoundAny(0x31F6);
+	return 0;
+}
+
+int ASoundDemo9::command34() {
+	byte *pData1 = loadData(0x18FE);
+	isSoundActive(pData1); // result unused, matches disassembly quirk
+	command1();
+	_channels[0].load(pData1);
+	_channels[1].load(loadData(0x1B10));
+	_channels[2].load(loadData(0x1E4E));
+	_channels[3].load(loadData(0x21EE));
+	_channels[4].load(loadData(0x2804));
+	_channels[5].load(loadData(0x2C72));
+	return 0;
+}
+
+int ASoundDemo9::command35() {
+	playSoundAny(0x3500);
+	return 0;
+}
+
+int ASoundDemo9::command36() {
+	playSoundAny(0x31BA);
+	playSoundAny(0x31C4);
+	return 0;
+}
+
+int ASoundDemo9::command38() {
+	byte *pData1 = loadData(0x307A);
+	isSoundActive(pData1); // result unused, matches disassembly quirk
+	command1();
+	_channels[0].load(pData1);
+	_channels[1].load(loadData(0x3090));
+	_channels[2].load(loadData(0x30C8));
+	_channels[3].load(loadData(0x3102));
+	_channels[4].load(loadData(0x313A));
+	_channels[5].load(loadData(0x314A));
+	return 0;
+}
+
+/*-----------------------------------------------------------------------*/
+
 const ASound9::CommandPtr ASound9::_commandList[52] = {
 	&ASound9::command0, &ASound9::command1, &ASound9::command2, &ASound9::command3,
 	&ASound9::command4, &ASound9::command5, &ASound9::command6, &ASound9::command7,
@@ -2478,8 +2638,7 @@ const ASound9::CommandPtr ASound9::_commandList[52] = {
 	&ASound9::command48, &ASound9::command49, &ASound9::command50, &ASound9::command51
 };
 
-ASound9::ASound9(Audio::Mixer *mixer, OPL::OPL *opl) :
-		RexASound(mixer, opl, "asound.009", 0x16F0, 0x85a0) {
+ASound9::ASound9(Audio::Mixer *mixer) : ASound(mixer, "asound.009", 0x16F0, 0x85a0) {
 	_callbackCounter = _callbackPeriod = 0;
 	_callbackFnPtr = nullptr;
 
@@ -2880,5 +3039,6 @@ int ASound9::command51() {
 }
 
 
+} // namespace Sound
 } // namespace RexNebular
 } // namespace MADS

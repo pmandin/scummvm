@@ -273,7 +273,6 @@ void vocab_report_error(int number) {
 	dos_flag = false;
 
 	switch (number) {
-
 	case VC_ERR_OPENMAINFILE:
 		Common::strcpy_s(temp_buf_1, "Failed to open main vocabulary file:");
 		env_get_path(temp_buf_2, VC_MAINFILENAME);
@@ -435,6 +434,7 @@ void vocab_sort() {
 	}
 }
 
+/*
 static bool check_for_caps(const char *string) {
 	bool any_caps = false;
 	const char *mark;
@@ -445,6 +445,7 @@ static bool check_for_caps(const char *string) {
 
 	return any_caps;
 }
+*/
 
 void vocab_unload_active() {
 	vocab_size = 0;

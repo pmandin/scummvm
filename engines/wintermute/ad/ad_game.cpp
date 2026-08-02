@@ -28,6 +28,7 @@
 #include "engines/wintermute/ad/ad_actor.h"
 #ifdef ENABLE_WME3D
 #include "engines/wintermute/ad/ad_actor_3dx.h"
+#include "engines/wintermute/base/gfx/base_renderer3d.h"
 #endif
 #include "engines/wintermute/ad/ad_game.h"
 #include "engines/wintermute/ad/ad_entity.h"
@@ -534,6 +535,24 @@ bool AdGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// QueryWindow
+	//////////////////////////////////////////////////////////////////////////
+	else if (strcmp(name, "QueryWindow") == 0) {
+		stack->correctParams(1);
+		const char *findName = stack->pop()->getString();
+		for (int32 i = 0; i < _windows.getSize(); i++) {
+			if (scumm_stricmp(_windows[i]->_name, findName) == 0) {
+				stack->pushNative(_windows[i], true);
+				return STATUS_OK;
+			}
+		}
+
+		stack->pushNULL();
+
+		return STATUS_OK;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// QueryItem
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "QueryItem") == 0) {
@@ -952,6 +971,21 @@ bool AdGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack, 
 		if (_sceneViewport) {
 			_sceneViewport->setRect(x, y, x + width, y + height);
 		}
+
+		stack->pushBool(true);
+
+		return STATUS_OK;
+	}
+
+	else if (strcmp(name, "SetBrightness") == 0) {
+		stack->correctParams(1);
+
+		float gamma = stack->pop()->getFloat(0.0f);
+
+#ifdef ENABLE_WME3D
+		if (_renderer3D)
+			_renderer3D->setBrightnessJulia(gamma);
+#endif
 
 		stack->pushBool(true);
 
@@ -2503,6 +2537,14 @@ bool AdGame::displayDebugInfo() {
 //////////////////////////////////////////////////////////////////////////
 Wintermute::TShadowType AdGame::getMaxShadowType(Wintermute::BaseObject *object) {
 	TShadowType ret = BaseGame::getMaxShadowType(object);
+
+	// W/A for 'The Lost Crown - A Ghost-Hunting Adventure'.
+	// Disable flat shadows for the map on table scene in day 4.
+	if (BaseEngine::instance().getGameId() == "thelostcrowngha" &&
+	    _scene && _scene->_filename &&
+		scumm_stricmp(_scene->_filename, "scenes\\maptable\\maptableday4\\maptableday4.scene") == 0) {
+		return SHADOW_NONE;
+	}
 
 	return MIN(ret, _scene->_maxShadowType);
 }

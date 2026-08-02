@@ -19,13 +19,15 @@
  *
  */
 
-#ifndef MADS_NEBULAR_ASOUND_H
-#define MADS_NEBULAR_ASOUND_H
+#ifndef MADS_NEBULAR_SOUND_ASOUND_H
+#define MADS_NEBULAR_SOUND_ASOUND_H
 
+#include "audio/fmopl.h"
 #include "mads/core/sound_manager.h"
 
 namespace MADS {
 namespace RexNebular {
+namespace Sound {
 
 class ASound;
 
@@ -133,6 +135,7 @@ struct RegisterValue {
  */
 class ASound : public SoundDriver {
 private:
+	OPL::OPL *_opl;
 	uint16 _randomSeed;
 	int _masterVolume;
 
@@ -181,11 +184,10 @@ private:
 	 */
 	void onTimer();
 
-protected:
-	int _chanCommandCount;
-	int _commandParam;
+	void channelCommand(byte *&pSrc, bool &updateFlag);
 
-	virtual void channelCommand(byte *&pSrc, bool &updateFlag) = 0;
+protected:
+	int _commandParam;
 
 	/**
 	 * Hook called once per update() frame, immediately after the disabled
@@ -222,11 +224,6 @@ protected:
 	 * Queue a byte for an Adlib register, and store it in the _ports array
 	 */
 	int write2(int state, int reg, int val);
-
-	/**
-	 * Flush any pending Adlib register values to the OPL driver
-	 */
-	void flush();
 
 	/**
 	 * Turn a channel on
@@ -304,7 +301,6 @@ public:
 	AdlibChannelData _channelData[11];
 	Common::Array<AdlibSample> _samples;
 	AdlibSample *_samplePtr;
-	Common::Queue<RegisterValue> _queue;
 	int _frameCounter;
 	bool _isDisabled;
 	int _noiseTicks1;       // remaining duration for noise voice 1 (byte_11F86)
@@ -327,28 +323,27 @@ public:
 	int _activeChannelReg;
 	int _outputReg;         // scratch OPL operator register offset used within loadSample()
 	bool _amDep, _vibDep, _splitPoint;
+
+public:
+	/**
+	 * Validates the Adlib sound files
+	 */
+	static void validate(bool isDemo);
+
 public:
 	/**
 	 * Constructor
 	 * @param mixer			Mixer
-	 * @param opl			OPL
 	 * @param filename		Specifies the adlib sound player file to use
 	 * @param dataOffset	Offset in the file of the data segment
 	 * @param dataSize		Size of the data segment
 	 */
-	ASound(Audio::Mixer *mixer, OPL::OPL *opl, const Common::Path &filename,
-		int dataOffset, int dataSize);
+	ASound(Audio::Mixer *mixer, const Common::Path &filename, int dataOffset, int dataSize);
 
 	/**
 	 * Destructor
 	 */
-	~ASound() override {
-	}
-
-	/**
-	 * Validates the Adlib sound files
-	 */
-	static void validate();
+	~ASound() override;
 
 	/**
 	 * Stop all currently playing sounds
@@ -378,6 +373,7 @@ public:
 	void setVolume(int volume) override;
 };
 
+} // namespace Sound
 } // namespace RexNebular
 } // namespace MADS
 

@@ -26,6 +26,9 @@ For a more comprehensive changelog of the latest experimental code, see:
      devices.
    - Switched Nuked-OPL3 AdLib emulator to Nuked-OPL3-fast fork.
 
+ AWE:
+   - Fix sound code crash in OpenBSD.
+
  Bagel:
    - Fix saving options for Hodj n' Podj's Th Gesng Gme.
 
@@ -35,6 +38,11 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Freescape:
    - Added support for loading ZX Spectrum games directly from TAP/TZX tape images.
+
+ Kyra:
+   - Added support for Korean fan-translation of kyra1 (added in 2026.3.0).
+   - Restored non-Korean kyra1 games which got broken ("You're missing the 'KYRA.DAT'
+     engine data file or it got corrupted..." message).
 
  Lure:
    - Improved character pathfinding.
@@ -48,6 +56,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Improved M&M1 Enhanced mouse support, character generation, and general in-game UI.
    - Fixed cutscene subtitle rendering.
    - Added Xeen French translation.
+   - Fix Pharoah voice line repeating in Dark Side of Xeen intro.
 
  NANCY:
    - Generic flags are no longer cleared when saving or auto-saving. Clearing
