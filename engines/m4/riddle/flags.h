@@ -37,9 +37,9 @@ enum Flag {
 	V002 =   2,
 	V003 =   3,
 	V004 =   4,
-	V005 =   5,
-	V006 =   6,
-	V007 =   7,
+	V005 =   5, // Warning level from Feng Li
+	V006 =   6, // Number of trips Ripley has taken (technically: Times foreign Posh Express offices entered)
+	V007 =   7, // Marshall Matt is waiting at the exit of room 301
 	V008 =   8,
 	V009 =   9,
 	V010 =  10,
@@ -319,7 +319,7 @@ enum Flag {
 	V282 = 282,
 	V283 = 283,
 	V284 = 284,
-	V285 = 285,
+	V285 = 285,// empty translation table in journal
 	V286 = 286,
 	V287 = 287,
 	V288 = 288,

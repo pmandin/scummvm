@@ -108,7 +108,6 @@ static void room_501_init() {
 	local._rexPunched = true;
 
 	if (previous_room == 504) {
-		player.commands_allowed = false;
 		player.x = 74;
 		player.y = 121;
 		player.facing = FACING_NORTHWEST;
@@ -138,7 +137,7 @@ static void room_501_init() {
 	}
 
 	section_5_music();
-	kernel.quotes = quote_load(0x275, 0x276, 0x277, 0);
+	kernel.quotes = quote_load(629, 630, 631, 0);
 
 	if (!player.been_here_before)
 		kernel_timing_trigger(2, 90);

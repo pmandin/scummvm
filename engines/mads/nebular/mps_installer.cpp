@@ -26,9 +26,10 @@
 #include "common/util.h"
 #include "common/memstream.h"
 #include "common/compression/dcl.h"
-#include "mads/core/mps_installer.h"
+#include "mads/nebular/mps_installer.h"
 
 namespace MADS {
+namespace RexNebular {
 
 MpsInstaller *MpsInstaller::open(const Common::Path &baseName) {
 	Common::File indexFile;
@@ -104,8 +105,6 @@ Common::SharedArchiveContents MpsInstaller::readContentsForPath(const Common::Pa
 		Common::Path volumePath = _baseName.append(Common::String::format(".%03d", vol));
 		if (!fvol.open(volumePath)) {
 			error("Failed to open volume %s.%03d", volumePath.toString(Common::Path::kNativeSeparator).c_str(), vol);
-			delete[] compressedBuf;
-			return Common::SharedArchiveContents();
 		}
 		fvol.seek(off);
 		int32 actual = fvol.read(outptr, rem);
@@ -154,4 +153,5 @@ Common::SharedArchiveContents MpsInstaller::readContentsForPath(const Common::Pa
 	return Common::SharedArchiveContents(uncompressedBuf, desc._uncompressedSize);
 }
 
+} // namespace RexNebular
 } // namespace MADS

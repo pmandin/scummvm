@@ -473,7 +473,6 @@ int pal_allocate(ColorListPtr new_list, ShadowListPtr shadow_list, int pal_flags
 					found = true;
 					best_target_color = target_color;
 					*(RGBcolor *) &master_palette[target_color].r = *(RGBcolor *) & new_list->table[list_color].r;
-					// memcpy(&(master_palette[target_color].r), &(new_list->table[list_color].r), 3);
 				}
 			}
 		}
@@ -564,8 +563,8 @@ void pal_grey(Palette &fixpal, int base_color, int num_colors,
 	int level;
 	word accum = 0;
 
-	dif = (high_grey - low_grey);
-	level = low_grey;
+	dif = (low_grey - high_grey);
+	level = high_grey;
 
 	for (count = 0; count < num_colors; count++) {
 		fixpal[base_color + count].r = (byte)level;

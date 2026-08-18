@@ -352,6 +352,9 @@ bool BaseRenderOpenGL3DShader::setup3D(Camera3D *camera, bool force) {
 	_xmodelShader->setUniform("projMatrix", projectionMatrix);
 	_xmodelShader->setUniform1f("alphaRef", _alphaRef);
 	_xmodelShader->setUniform("alphaTest", true);
+	_xmodelShader->setUniform("effectId", 0);
+	_xmodelShader->setUniform("effectSecondPass", false);
+	_xmodelShader->setUniform1f("borderWidth", 0.0);
 
 	_geometryShader->use();
 	_geometryShader->setUniform("viewMatrix", viewMatrix);
@@ -370,6 +373,9 @@ bool BaseRenderOpenGL3DShader::setup3D(Camera3D *camera, bool force) {
 	_shadowVolumeShader->use();
 	_shadowVolumeShader->setUniform("viewMatrix", viewMatrix);
 	_shadowVolumeShader->setUniform("projMatrix", projectionMatrix);
+
+	projectionMatrix.setData(_projectionMatrix);
+	_xmodelShader->setUniform("d3dProjMatrix", projectionMatrix);
 
 	return true;
 }

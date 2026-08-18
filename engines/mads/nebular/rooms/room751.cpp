@@ -77,7 +77,6 @@ static void room_751_init() {
 		player.commands_allowed = false;
 		kernel_timing_trigger(60, 60);
 	} else if (local._rexHandingLine) {
-		player.walker_visible = false;
 		player.x = 268;
 		player.y = 140;
 		player.facing = FACING_NORTHWEST;
@@ -97,7 +96,7 @@ static void room_751_init() {
 	}
 
 	section_7_music();
-	kernel.quotes = quote_load(0x30A, 0x30B, 0x30C, 0x30D, 0x30E, 0);
+	kernel.quotes = quote_load(778, 779, 780, 781, 782, 0);
 
 	if (global[kTimebombTimer] > 0)
 		global[kTimebombTimer] = 10200;

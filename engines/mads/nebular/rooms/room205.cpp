@@ -80,8 +80,8 @@ static void room_205_init() {
 	}
 
 	local._beingKicked = false;
-	kernel.quotes = quote_load(0x6B, 0x70, 0x71, 0x72, 0x5A, 0x74, 0x75, 0x76, 0x77, 0x78, 0x73, 0x79, 0x7A, 0x7B, 0x7C,
-		0x7D, 0x7E, 0x7F, 0x80, 0xAC, 0xAD, 0xAE, 0x6C, 0x6D, 0x6E, 0x6F, 0x2, 0);
+	kernel.quotes = quote_load(107, 112, 113, 114, 90, 116, 117, 118, 119, 120, 115, 121, 122, 123, 124,
+		125, 126, 127, 128, 172, 173, 174, 108, 109, 110, 111, 2, 0);
 	local._dialog1.setup(0x2A, 0x5A, 0x78, 0x74, 0x75, 0x76, 0x77, 0);
 
 	if (!player.been_here_before)
@@ -173,30 +173,30 @@ static void room_205_parser() {
 			player.commands_allowed = false;
 			kernel_message_add(quote_string(kernel.quotes, player2.words[0]), 0, 0, 0x1110, 120, 1, 18);
 		} else {
-			if ((kernel.trigger > 1) || (player2.words[0] != 0x76))
+			if ((kernel.trigger > 1) || (player2.words[0] != words_eject))
 				player.commands_allowed = true;
 
 			switch (player2.words[0]) {
-			case 0x5A:
+			case words_coral:
 				handleWomanSpeech(0x7A);
 				local._dialog1.write(0x78, true);
 				local._dialog1.write(0x5A, false);
 				break;
 
-			case 0x74:
+			case words_eastern_cliff_face:
 				handleWomanSpeech(0x7C);
 				local._dialog1.write(0x74, false);
 				local._dialog1.write(0x76, true);
 				break;
 
-			case 0x75:
-			case 0x78:
+			case words_eat:
+			case words_engineering_controls:
 				handleWomanSpeech(0x7B);
 				local._dialog1.write(player2.words[0], false);
 				text_show(20501);
 				break;
 
-			case 0x76:
+			case words_eject:
 				if (kernel.trigger == 1) {
 					handleWomanSpeech(0x7D);
 					kernel_timing_trigger(120, 2);
@@ -207,7 +207,7 @@ static void room_205_parser() {
 				}
 				break;
 
-			case 0x77:
+			case words_empty:
 				kernel_message_add(quote_string(kernel.quotes, 0x7F), 186, 27, 0xFBFA, 120, 0, 0);
 				kernel_set_interface_mode(INTER_BUILDING_SENTENCES);
 				break;
@@ -216,7 +216,7 @@ static void room_205_parser() {
 				break;
 			}
 
-			if (player2.words[0] != 0x77)
+			if (player2.words[0] != words_empty)
 				local._dialog1.start();
 		}
 	} else if (player.look_around)

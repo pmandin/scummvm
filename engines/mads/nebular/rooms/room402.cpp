@@ -118,7 +118,7 @@ static void setDialogNode(int node) {
 
 static void handleConversation1() {
 	switch (player2.words[0]) {
-	case 0x214:
+	case words_sack:
 	{
 		int quoteId = 0;
 		int quotePosX = 0;
@@ -153,7 +153,7 @@ static void handleConversation1() {
 	}
 	break;
 
-	case 0x215:
+	case words_limb:
 		kernel_message_purge();
 		kernel_message_add(quote_string(kernel.quotes, 0x1EC), 260, 41, 0xFDFC, INDEFINITE_TIMEOUT, 0, 0);
 		kernel.trigger_setup_mode = KERNEL_TRIGGER_DAEMON;
@@ -163,7 +163,7 @@ static void handleConversation1() {
 		setDialogNode(3);
 		break;
 
-	case 0x237:
+	case words_lie_down_on:
 		kernel_message_purge();
 		kernel_message_add(quote_string(kernel.quotes, 0x1FD), 208, 41, 0xFDFC, 100, 0, 0);
 		setDialogNode(0);
@@ -179,63 +179,63 @@ static void handleConversation1() {
 
 static void handleConversation2() {
 	switch (player2.words[0]) {
-	case 0x216:
+	case words_sink:
 		local._dialog2.write(0x216, false);
 		local._dialog2.write(0x21D, true);
 		break;
 
-	case 0x219:
+	case words_bunk:
 		local._dialog2.write(0x219, false);
 		local._dialog2.write(0x220, true);
 		break;
 
-	case 0x21A:
+	case words_next_cell:
 		local._dialog2.write(0x21A, false);
 		local._dialog2.write(0x223, true);
 		break;
 
-	case 0x21B:
+	case words_toilet:
 		local._dialog2.write(0x21B, false);
 		local._dialog2.write(0x224, true);
 		break;
 
-	case 0x21D:
+	case words_sidewall:
 		local._dialog2.write(0x21D, false);
 		local._dialog2.write(0x227, true);
 		break;
 
-	case 0x220:
+	case words_lighting_fixture:
 		local._dialog2.write(0x220, false);
 		local._dialog2.write(0x22A, true);
 		break;
 
-	case 0x223:
+	case words_neuro_analyzer:
 		local._dialog2.write(0x223, false);
 		local._dialog2.write(0x22D, true);
 		break;
 
-	case 0x224:
+	case words_molecular_recorder:
 		local._dialog2.write(0x224, false);
 		local._dialog2.write(0x230, true);
 		break;
 
-	case 0x227:
+	case words_walk_up:
 		local._dialog2.write(0x227, false);
 		break;
 
-	case 0x22A:
+	case words_dna_inverter:
 		local._dialog2.write(0x22A, false);
 		break;
 
-	case 0x22D:
+	case words_guinea_pig_test_box:
 		local._dialog2.write(0x22D, false);
 		break;
 
-	case 0x230:
+	case words_surgical_boxes:
 		local._dialog2.write(0x230, false);
 		break;
 
-	case 0x21C:
+	case words_monitor_area:
 		setDialogNode(0);
 		break;
 
@@ -244,7 +244,7 @@ static void handleConversation2() {
 
 	}
 
-	if (player2.words[0] != 0x21C) {
+	if (player2.words[0] != words_monitor_area) {
 		switch (g_engine->getRandomNumber(1, 3)) {
 		case 1:
 			kernel.trigger_setup_mode = KERNEL_TRIGGER_DAEMON;
@@ -290,10 +290,10 @@ static void handleConversation2() {
 
 static void handleConversation3() {
 	switch (player2.words[0]) {
-	case 0x233:
-	case 0x234:
-	case 0x235:
-	case 0x236:
+	case words_sterilization_sink:
+	case words_dripolator:
+	case words_shock_machine:
+	case words_interrogation_table:
 		kernel.trigger_setup_mode = KERNEL_TRIGGER_DAEMON;
 		kernel_timing_trigger(1, 86);
 		kernel_message_purge();
@@ -303,7 +303,7 @@ static void handleConversation3() {
 		local._bartenderCurrentQuestion = 2;
 		break;
 
-	case 0x237:
+	case words_lie_down_on:
 		kernel_message_purge();
 		kernel_message_add(quote_string(kernel.quotes, 0x1FD), 208, 41, 0xFDFC, 100, 0, 0);
 		kernel.trigger_setup_mode = KERNEL_TRIGGER_DAEMON;
@@ -319,7 +319,7 @@ static void handleConversation3() {
 
 static void handleConversation4() {
 	switch (player2.words[0]) {
-	case 0x238:
+	case words_decipher:
 		kernel_message_purge();
 		setDialogNode(0);
 		player.commands_allowed = false;
@@ -336,7 +336,7 @@ static void handleConversation4() {
 		local._refuseAlienLiquor = true;
 		break;
 
-	case 0x239:
+	case words_guard:
 		player.commands_allowed = false;
 		local._roxMode = 21;
 		kernel.trigger_setup_mode = KERNEL_TRIGGER_DAEMON;
@@ -345,7 +345,7 @@ static void handleConversation4() {
 		local._conversationFl = false;
 		break;
 
-	case 0x23A:
+	case words_rip_in_floor:
 		setDialogNode(0);
 		player.commands_allowed = false;
 		kernel_message_add(quote_string(kernel.quotes, 0x1F4), 193, 27, 0xFDFC, 150, 0, 0);
@@ -361,7 +361,7 @@ static void handleConversation4() {
 		local._refuseAlienLiquor = true;
 		break;
 
-	case 0x23D:
+	case words_rock_chunk:
 		setDialogNode(0);
 		player.commands_allowed = false;
 		kernel_message_add(quote_string(kernel.quotes, 0x1F6), 153, 27, 0xFDFC, 150, 0, 0);
@@ -377,7 +377,7 @@ static void handleConversation4() {
 		local._refuseAlienLiquor = true;
 		break;
 
-	case 0x23E:
+	case words_bloody_cell_wall:
 		kernel_message_purge();
 		setDialogNode(0);
 		player.commands_allowed = false;
@@ -401,7 +401,7 @@ static void handleDialogs() {
 		kernel_message_purge();
 		player.commands_allowed = false;
 		char *curQuote = quote_string(kernel.quotes, player2.words[0]);
-		if (font_string_width(kernel_message_font, curQuote, kernel_message_spacing) > 200) {
+		if (g_engine->getMessageTextWidth(kernel_message_font, curQuote, kernel_message_spacing) > 200) {
 			static char subQuote1[34], subQuote2[34];
 			quote_split_string(curQuote, subQuote1, subQuote2);
 			kernel_message_add(subQuote1, 230, 42, 0x1110, 140, 0, 32);
@@ -480,12 +480,12 @@ static void room_402_init() {
 		local._conversationFl = false;
 	}
 
-	kernel.quotes = quote_load(0x1D7, 0x1D8, 0x1D9, 0x1DA, 0x1DB, 0x1DC, 0x1DD, 0x1DE, 0x1DF, 0x1E2, 0x1E3, 0x1E6, 0x1E5, 0x1E7,
-		0x1E8, 0x1E9, 0x1EA, 0x1EF, 0x1F0, 0x1F1, 0x1F2, 0x1F3, 0x1F4, 0x1F5, 0x1F6, 0x1F7, 0x1F8, 0x1F9, 0x1FA, 0x1FB,
-		0x1FC, 0x1EB, 0x1EC, 0x1ED, 0x1EE, 0x1E4, 0x1FD, 0x1E0, 0x1E1, 0x1FE, 0x1FF, 0x200, 0x201, 0x202, 0x203, 0x204,
-		0x205, 0x206, 0x207, 0x208, 0x209, 0x20A, 0x20B, 0x20C, 0x20F, 0x20D, 0x20E, 0x210, 0x211, 0x212, 0x213, 0x214,
-		0x215, 0x237, 0x216, 0x219, 0x21A, 0x21B, 0x21C, 0x21D, 0x220, 0x223, 0x224, 0x227, 0x22A, 0x22D, 0x230, 0x233,
-		0x234, 0x235, 0x236, 0x238, 0x239, 0x23A, 0x23D, 0x23E, 0x23F, 0);
+	kernel.quotes = quote_load(471, 472, 473, 474, 475, 476, 477, 478, 479, 482, 483, 486, 485, 487,
+		488, 489, 490, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507,
+		508, 491, 492, 493, 494, 484, 509, 480, 481, 510, 511, 512, 513, 514, 515, 516,
+		517, 518, 519, 520, 521, 522, 523, 524, 527, 525, 526, 528, 529, 530, 531, 532,
+		533, 567, 534, 537, 538, 539, 540, 541, 544, 547, 548, 551, 554, 557, 560, 563,
+		564, 565, 566, 568, 569, 570, 573, 574, 575, 0);
 
 	pal_change_color(250, 47, 41, 40);
 	pal_change_color(251, 50, 63, 55);
@@ -1488,7 +1488,7 @@ static void room_402_daemon() {
 		break;
 
 	case 62:
-	{
+	case 72: {
 		int seqIdx = g_sequence_ids[13];
 		g_sequence_ids[13] = kernel_seq_stamp(g_sprite_ids[13], false, 2);
 		kernel_seq_timeout(seqIdx, g_sequence_ids[13]);
@@ -1585,15 +1585,6 @@ static void room_402_daemon() {
 		if (!player_has(OBJ_REPAIR_LIST))
 			local._activeArrows = true;
 		break;
-
-	case 72:
-	{
-		int seqIdx = g_sequence_ids[13];
-		g_sequence_ids[13] = kernel_seq_stamp(g_sprite_ids[13], false, 2);
-		kernel_seq_timeout(seqIdx, g_sequence_ids[13]);
-		kernel_seq_depth(g_sequence_ids[13], 8);
-	}
-	break;
 
 	case 73:
 		kernel_message_purge();

@@ -1179,6 +1179,7 @@ void conv_system_init() {
 
 void conv_system_cleanup() {
 	delete savedConv;
+	savedConv = nullptr;
 }
 
 
@@ -1346,7 +1347,6 @@ static void conv_generate_message(Conv *convIn, ConvData *convData,
 		int16 *msgList, int msgListSize, int16 *voiceList, int voiceListSize) {
 	Box *priorBox = box;
 	box = &conv_box;
-	conv_control.has_text = 0;
 	int personSpeaking;
 	int messageId;
 	int lineStart, lineCount;
@@ -1412,7 +1412,7 @@ done:
 // engine has a pending player command ready (mirrors player.command_ready in
 // the callers for modes 1 and 2).
 //
-// Status dispatch table (off_2D438):
+// Status dispatch table:
 //   0  (NEXT_NODE)   — advance to next node or build player menu
 //   1  (WAIT_AUTO)   — wait for auto-trigger then advance to EXECUTE
 //   2  (WAIT_ENTRY)  — player chose an option; execute it + show NPC portrait
@@ -1702,8 +1702,6 @@ void conv_flush() {
 	for (i = 0; i < CONV_MAX_SLOTS; ++i) {
 		if (conv_indexes[i] >= 2) {
 			dest = conv_open_write(i);
-			if (!dest)
-				goto done;
 
 			ConvData *convData = conv_data[conv_indexes[i] - 2];
 			errCode = conv_write(dest, convData);
@@ -1802,8 +1800,6 @@ int conv_expand(Common::SeekableReadStream *handle) {
 
 		// Open a temporary file for the conversation
 		Common::WriteStream *dest = conv_open_write(index);
-		if (!dest)
-			break;
 
 		// Read it's data from the savegame
 		convData = conv_read(handle);

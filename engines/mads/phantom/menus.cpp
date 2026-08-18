@@ -221,8 +221,6 @@ static void global_menu_score() {
 		text_index[2] = 7;          /* Star Player */
 	} else if (score <= 250) {
 		text_index[2] = 8;          /* Director */
-	} else {
-		text_index[2] = 9;          /* Bug Finder! */
 	}
 
 	text_show(99);
@@ -330,9 +328,8 @@ static void global_menu_save_restore(int save) {
 			status = global_restore(selection);
 		}
 
-		if (status > 0)
-			// Dummy name to signal save/load went ok
-			Common::strcpy_s(save_game_buf, "OK");
+		// Dummy name to signal save/load went ok
+		Common::strcpy_s(save_game_buf, "OK");
 	}
 
 	if (status >= 0) {
@@ -453,6 +450,8 @@ static void global_menu_options() {
 			break;
 
 		case f1_key:
+		case f5_key:
+		default:
 			kernel.activate_menu = GAME_MAIN_MENU;
 			break;
 
@@ -466,14 +465,6 @@ static void global_menu_options() {
 
 		case f4_key:
 			kernel.activate_menu = GAME_SCORE_MENU;
-			break;
-
-		case f5_key:
-			kernel.activate_menu = GAME_MAIN_MENU;
-			break;
-
-		default:
-			kernel.activate_menu = GAME_MAIN_MENU;
 			break;
 		}
 	}

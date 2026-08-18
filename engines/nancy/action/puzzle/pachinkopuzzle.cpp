@@ -180,13 +180,13 @@ void PachinkoPuzzle::loadMachineImage(Machine &m) {
 	}
 }
 
-// The four holes are the bumper zones (type 0x16) that carry a bell sound. The sound name
-// maps each hole to its climber: Miner/Explosion feed the Gold Digger (win), Yeti/Ouch feed
-// the Yeti (lose).
+// The four holes are the bumper zones that carry a bell sound. The sound name maps each
+// hole to its climber: Miner/Explosion feed the Gold Digger (win), Yeti/Ouch feed the
+// Yeti (lose).
 void PachinkoPuzzle::buildHoles() {
 	_holes.clear();
 	for (const ActionZone &z : _zones) {
-		if (z.type != 0x16 || z._sound.names.empty()) {
+		if (z.type != kZoneBumper || z._sound.names.empty()) {
 			continue;
 		}
 
@@ -212,10 +212,10 @@ void PachinkoPuzzle::buildHoles() {
 		_holes.push_back(hole);
 	}
 
-	// Attach each hole's "lit" sprite from the matching overlay (0x0d) zone, which shares
-	// the hole's rect and names the lit board overlay.
+	// Attach each hole's "lit" sprite from the matching overlay zone, which shares the
+	// hole's rect and names the lit board overlay.
 	for (const ActionZone &z : _zones) {
-		if (z.type != 0x0d || z.overlaySrcRects.empty()) {
+		if (z.type != kZoneOverlay || z.overlaySrcRects.empty()) {
 			continue;
 		}
 		for (Hole &hole : _holes) {
@@ -599,9 +599,7 @@ void PachinkoPuzzle::execute() {
 		// The give-up hotspot and the completion path both route to the exit scene; the
 		// win/lose branch is driven downstream by the solved flag and the puzzle event flag.
 		NancySceneState.setEventFlag(_exitFlag);
-		if (_exitScene.sceneID != kNoScene) {
-			NancySceneState.changeScene(_exitScene);
-		}
+		NancySceneState.changeScene(_exitScene);
 		finishExecution();
 		break;
 	}

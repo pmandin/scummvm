@@ -67,6 +67,7 @@ public:
 		kStop,
 		kTeleport,
 		kSlug,
+		kTunnel1,
 		kTunnel2,
 		kLift,
 		kDrop,
@@ -79,7 +80,8 @@ public:
 		kToilet,
 		kBath,
 		kMars,
-		kBeamMe
+		kBeamMe,
+		kDave
 	};
 
 private:

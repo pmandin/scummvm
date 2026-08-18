@@ -35,7 +35,8 @@ enum {
 };
 
 enum {
-	GF_INSTALLER = 1
+	GF_INSTALLER = 1,
+	GF_BONUS_DISK = 1 << 1
 };
 
 struct MADSGameDescription {
@@ -59,6 +60,9 @@ struct MADSGameDescription {
 #define GAMEOPTION_COPY_PROTECTION     GUIO_GAMEOPTIONS6
 
 #define GAMEOPTION_ORIGINAL_SAVELOAD   GUIO_GAMEOPTIONS7
+
+#define GAMEOPTION_ORIGINAL_MAC_MENUS  GUIO_GAMEOPTIONS8
+#define GAMEOPTION_PAS                 GUIO_GAMEOPTIONS9
 
 } // namespace MADS
 

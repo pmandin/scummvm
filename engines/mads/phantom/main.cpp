@@ -28,7 +28,6 @@
 #include "mads/core/error.h"
 #include "mads/core/fileio.h"
 #include "mads/core/game.h"
-#include "mads/core/himem.h"
 #include "mads/core/kernel.h"
 #include "mads/core/magic.h"
 #include "mads/core/matte.h"
@@ -197,42 +196,6 @@ static void game_main(int argc, const char **argv) {
 	} else {
 		art_hags_are_on_hd = false;
 	}
-
-#if 0
-	if (config_file.cd_version_installed) {
-		strcpy(temp_buf_2, "x:\\forest.exe");
-		temp_buf_2[0] = env_cd_drive;
-		if (!fileio_exist(temp_buf_2)) {
-			problem();
-			printf("Please throw the Once Upon A Forest CD into drive %c:\n", (char)env_cd_drive);
-			printf("and type 'OUAF'. If your CD-ROM drive letter has changed, run\n");
-			printf("INSTALL to reconfigure this option.\n\n");
-			goto done;
-		}
-	}
-
-	if (!fileio_exist("config.for")) {
-		problem();
-		printf("Before you can run Once Upon A Forest, you need to run 'INSTALL' to configure\n");
-		printf("the game for you your hardware.  Type 'INSTALL' and hit 'ENTER' when you have\n");
-		printf("finished reading this.\n\n");
-		goto done;
-	}
-
-	mem_you_got = mem_used + mem_avail_at_start;
-
-	if (mem_you_got < 569000) {
-		need_to_free = 569000 - mem_you_got;
-		problem();
-		printf("You need at least 588,000 bytes of conventional memory to play\n");
-		printf("Once Upon A Forest. You'll need to free up another %6ld bytes.\n\n", need_to_free);
-		/* printf("to play this game.\n\n"); */
-		goto done;
-	}
-#endif
-	himem_startup();
-
-	himem_shutdown();
 
 	if (!mads_mode && (env_search_mode == ENV_SEARCH_MADS_PATH))
 		error("false start");

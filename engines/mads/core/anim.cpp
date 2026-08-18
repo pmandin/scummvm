@@ -22,7 +22,6 @@
 #include "common/algorithm.h"
 #include "common/memstream.h"
 #include "mads/core/anim.h"
-#include "mads/core/himem.h"
 #include "mads/core/env.h"
 #include "mads/core/sprite.h"
 #include "mads/core/room.h"
@@ -30,11 +29,13 @@
 #include "mads/core/fileio.h"
 #include "mads/core/buffer.h"
 #include "mads/core/matte.h"
+#include "mads/core/mem.h"
 #include "mads/core/inter.h"
 #include "mads/core/pal.h"
 #include "mads/core/mads.h"
 #include "mads/core/tile.h"
 #include "mads/core/error.h"
+#include "mads/mads.h"
 
 namespace MADS {
 
@@ -63,7 +64,6 @@ void Speech::load(Common::SeekableReadStream *src) {
 	src->read(misc, 3);
 	src->readMultipleLE(sound);
 
-	speech = nullptr;
 	src->skip(4);
 
 	src->readMultipleLE(x, y, display_condition);
@@ -102,7 +102,7 @@ void SegmentInter::load(Common::SeekableReadStream *src) {
 int anim_load_background(AnimFile *anim_in, Buffer *this_orig,
 		Buffer *this_depth, TileMapHeader *pictureMap, TileMapHeader *depthMap,
 		TileResource *pictureResource, TileResource *depthResource,
-		RoomPtr *room, CycleListPtr cycle_list, int load_flags, int star_search) {
+		RoomPtr *roomPtr, CycleListPtr cycle_list, int load_flags, int star_search) {
 	int error_flag;
 	char temp_buf[80];
 	RoomPtr my_room = NULL;
@@ -126,6 +126,8 @@ int anim_load_background(AnimFile *anim_in, Buffer *this_orig,
 		if (my_room == NULL) {
 			error_flag = true;
 		} else {
+			matte_guard_depth_0 = my_room->format == 2 ? 1 : 0;
+
 			if (cycle_list != NULL) {
 				memcpy(cycle_list, &my_room->cycle_list, sizeof(CycleList));
 			}
@@ -190,7 +192,7 @@ int anim_load_background(AnimFile *anim_in, Buffer *this_orig,
 		if (pictureMap != NULL) tile_map_free(depthMap);
 	}
 
-	if (room != NULL) *room = my_room;
+	if (roomPtr != NULL) *roomPtr = my_room;
 
 	return error_flag;
 }
@@ -200,10 +202,13 @@ void anim_unload(AnimPtr anim) {
 
 	if (anim != NULL) {
 		if (anim->misc_any_packed) {
-			matte_deallocate_series(anim->series_id[anim->misc_packed_series], true);
+			const int seriesId = anim->series_id[anim->misc_packed_series];
+			if (seriesId >= 0)
+				matte_deallocate_series(seriesId, true);
 		}
 		for (count = anim->num_series - 1; count >= 0; count--) {
-			if (!anim->misc_any_packed || (count != anim->misc_packed_series)) {
+			if ((!anim->misc_any_packed || (count != anim->misc_packed_series)) &&
+					anim->series_id[count] >= 0) {
 				matte_deallocate_series(anim->series_id[count], true);
 			}
 		}
@@ -218,14 +223,14 @@ void anim_unload(AnimPtr anim) {
 AnimPtr anim_load(const char *file_name, Buffer *orig, Buffer *depth,
 		TileMapHeader *pictureMap, TileMapHeader *depthMap,
 		TileResource *pictureResource, TileResource *depthResource,
-		RoomPtr *room, CycleListPtr cycle_list, int load_flags) {
+		RoomPtr *roomPtr, CycleListPtr cycle_list, int load_flags) {
 	int count;
 	int error_flag = true;
 	int star_search;
 	char temp_buf[80];
 	char block_name[20];
 	char *mark;
-	int16 *color_slaves = (int16 *)temp_buf;
+	int16 color_slaves[40];
 	word num_color_slaves;
 	long image_size, frame_size, speech_size, anim_size;
 	AnimPtr anim = NULL;
@@ -267,7 +272,7 @@ AnimPtr anim_load(const char *file_name, Buffer *orig, Buffer *depth,
 			orig, depth,
 			pictureMap, depthMap,
 			pictureResource, depthResource,
-			room, cycle_list,
+			roomPtr, cycle_list,
 			load_flags, star_search)) {
 			anim_error = 20000 + room_load_error;
 			goto done;
@@ -404,6 +409,15 @@ AnimPtr anim_load(const char *file_name, Buffer *orig, Buffer *depth,
 	}
 
 	loader_close(&load_handle);
+
+	// The Macintosh AA_INTERFACE loader returns here. Its native resource
+	// forks retain the controllers and backgrounds, but deliberately omit the
+	// DOS-only sprite series named in the controller headers.
+	if (anim_in.background_type == AA_INTERFACE && !g_engine->hasInterfaceAnimations()) {
+		error_flag = false;
+		anim_error = 0;
+		goto done;
+	}
 
 	if (anim->load_flags & AA_LOAD_FONT) {
 		temp_buf[0] = 0;
@@ -567,54 +581,7 @@ int anim_get_header_info(char *file_name,
 }
 
 int anim_himem_preload(char *name, int level) {
-	int error_flag = true;
-	char temp_buf[80];
-	AnimFile anim_in;
-	int count2;
-	int mads_mode;
-
-	mads_mode = (name[0] == '*');
-
-	himem_preload_series(name, level);
-
-	if (anim_get_header_info(name, &anim_in)) goto done;
-
-	if (anim_in.load_flags & AA_LOAD_FONT) {
-		temp_buf[0] = 0;
-		if (mads_mode) Common::strcat_s(temp_buf, "*");
-		Common::strcat_s(temp_buf, anim_in.font_file);
-		himem_preload_series(temp_buf, level);
-	}
-
-	for (count2 = 0; count2 < anim_in.num_series; count2++) {
-		temp_buf[0] = 0;
-		if (mads_mode) Common::strcpy_s(temp_buf, "*");
-		Common::strcat_s(temp_buf, anim_in.series_name[count2]);
-		himem_preload_series(temp_buf, level);
-	}
-
-	if (anim_in.background_type == AA_ROOM) {
-		env_get_level_path(temp_buf, ROOM, ".DAT", 0, anim_in.background_room);
-		himem_preload_series(temp_buf, level);
-		env_get_level_path(temp_buf, ROOM, ".TT", 0, anim_in.background_room);
-		himem_preload_series(temp_buf, level);
-		env_get_level_path(temp_buf, ROOM, ".MM", 0, anim_in.background_room);
-		himem_preload_series(temp_buf, level);
-		env_get_level_path(temp_buf, ROOM, ".TT0", 0, anim_in.background_room);
-		himem_preload_series(temp_buf, level);
-		env_get_level_path(temp_buf, ROOM, ".MM0", 0, anim_in.background_room);
-		himem_preload_series(temp_buf, level);
-	} else if (anim_in.background_type == AA_INTERFACE) {
-		temp_buf[0] = 0;
-		if (mads_mode) Common::strcat_s(temp_buf, "*");
-		Common::strcat_s(temp_buf, anim_in.background_name);
-		himem_preload_series(temp_buf, level);
-	}
-
-	error_flag = false;
-
-done:
-	return error_flag;
+	return false;
 }
 
 void init_anim() {

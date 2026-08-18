@@ -23,11 +23,13 @@
 #include "common/random.h"
 
 #include "engines/nancy/nancy.h"
+#include "engines/nancy/enginedata.h"
 #include "engines/nancy/graphics.h"
 #include "engines/nancy/resource.h"
 #include "engines/nancy/sound.h"
 #include "engines/nancy/input.h"
 #include "engines/nancy/util.h"
+#include "engines/nancy/puzzledata.h"
 
 #include "engines/nancy/state/scene.h"
 #include "engines/nancy/action/puzzle/drivingpuzzle.h"
@@ -78,7 +80,7 @@ void DrivingPuzzle::readBlob(Common::SeekableReadStream &stream) {
 	stream.skip(2);
 	_distanceDivisor = stream.readSint32LE();	// 0x7b
 	_retainState = stream.readByte() != 0;		// 0x7f
-	stream.skip(2);
+	_finishScene = stream.readUint16LE();		// 0x80: the scene to enter when a tire goes flat
 }
 
 void DrivingPuzzle::readData(Common::SeekableReadStream &stream) {
@@ -115,16 +117,17 @@ void DrivingPuzzle::readData(Common::SeekableReadStream &stream) {
 }
 
 void DrivingPuzzle::classifyZones(const Common::Array<ActionZone> &zones) {
-	// The car often spawns already sitting inside its starting location's zone, so
-	// zones are edge-triggered: a zone only fires once the car has left it and driven
-	// back in. Seed each zone's "inside" state from the spawn point.
-	Common::Point spawn(_startX, _startY);
+	// The car often starts already sitting inside a location's zone (its start position,
+	// or a restored parking spot), so zones are edge-triggered: a zone only fires once the
+	// car has left it and driven back in. Seed each zone's "inside" state from where the
+	// car currently is (init() has already restored any saved position).
+	Common::Point spawn((int)(_carX + 0.5), (int)(_carY + 0.5));
 
 	for (uint i = 0; i < zones.size(); ++i) {
 		const ActionZone &z = zones[i];
 		switch (z.type) {
-		case 0x11:		// location entrance
-		case 0x0c: {	// chase finish line
+		case kZoneDestination:		// location entrance
+		case kZoneSceneChange: {	// drive-in scene trigger (chase)
 			DestinationZone dest;
 			dest.rect = z.rect;
 			dest.scene.sceneID = z.specialEffectId;
@@ -135,29 +138,69 @@ void DrivingPuzzle::classifyZones(const Common::Array<ActionZone> &zones) {
 				dest.fadeToBlackTime = z.seFadeToBlackTime;
 				dest.fadeRect = z.seRect;
 			}
-			if (z.type == 0x0c) {
+			if (z.type == kZoneSceneChange) {
 				dest.eventFlag = z.tailId;
 				dest.eventFlagValue = z.tailFlag;
+				dest.autoTrigger = true;	// the chase finish line fires on drive-in, no spacebar
 			}
 			dest.carInside = dest.rect.contains(spawn);
 			_destinations.push_back(dest);
 			break;
 		}
-		case 0x0b: {	// checkpoint: sets an event flag once driven over
+		case kZoneEventFlag: {	// checkpoint: sets an event flag when driven into while armed
 			Checkpoint cp;
 			cp.rect = z.rect;
 			cp.flagId = z.tailId;
 			cp.flagValue = z.tailFlag;
-			cp.carInside = cp.rect.contains(spawn);
+			cp.condFlag = z.val49;
+			cp.condValue = z.val4b;
+			bool cond = cp.condFlag == -1 || NancySceneState.getEventFlag(cp.condFlag, cp.condValue);
+			cp.wasActive = cond && cp.rect.contains(spawn);
 			_checkpoints.push_back(cp);
 			break;
 		}
-		case 0x14:	// play-area boundary
-			_boundaries.push_back(z.rect);
+		case kZoneTerrain: {	// mud puddle: slows the car while inside
+			MudZone mud;
+			mud.rect = z.rect;
+			mud.decel = z.terrainDecel;
+			_mudZones.push_back(mud);
 			break;
+		}
+		case kZoneFlatTire: {	// pothole: damages the tires on entry
+			Pothole hole;
+			hole.rect = z.rect;
+			hole.minDamage = z.flatTireMin;
+			hole.maxDamage = z.flatTireMax;
+			hole.carInside = hole.rect.contains(spawn);
+			_potholes.push_back(hole);
+			break;
+		}
+		case kZoneOverlay: {	// cosmetic map decoration (buildings, cars, potholes, animations)
+			if (z.overlayName.empty() || z.overlaySrcRects.empty() || z.overlayDestRect.isEmpty()) {
+				break;
+			}
+			Overlay ov;
+			ov.imageIndex = overlayImageIndex(z.overlayName);
+			ov.srcRects = z.overlaySrcRects;
+			ov.destRect = z.overlayDestRect;
+			ov.condFlag = z.val49;
+			ov.condValue = z.val4b;
+			ov.aboveCar = z.overlayLayer != 0;
+			if (ov.imageIndex >= 0) {
+				_overlays.push_back(ov);
+			}
+			break;
+		}
+		case kZoneBoundary: {	// flag-gated road obstacle (a cow blocking the road, etc.)
+			Obstacle obs;
+			obs.rect = z.rect;
+			obs.condFlag = z.val49;
+			obs.condValue = z.val4b;
+			_obstacles.push_back(obs);
+			break;
+		}
 		default:
-			// The remaining subtypes (overlays, driving hazards, terrain markers) are
-			// not simulated yet.
+			// The remaining subtypes (terrain markers) are not simulated yet.
 			break;
 		}
 	}
@@ -184,6 +227,27 @@ void DrivingPuzzle::playSoundBlock(const RandomSoundBlock &block) {
 	g_nancy->_sound->playSound(desc);
 }
 
+void DrivingPuzzle::armExit(const DestinationZone &dest) {
+	_exitScene = dest.scene;
+	_exitHasFade = dest.hasFade;
+	_exitFadeType = dest.fadeType;
+	_exitFadeTotalTime = dest.fadeTotalTime;
+	_exitFadeToBlackTime = dest.fadeToBlackTime;
+	_exitFadeRect = dest.fadeRect;
+	_exitFlag = dest.eventFlag;
+	_exitFlagValue = dest.eventFlagValue;
+	_state = kActionTrigger;
+}
+
+void DrivingPuzzle::armExitScene(uint16 sceneID, int16 flag, byte flagValue) {
+	_exitScene = SceneChangeDescription();
+	_exitScene.sceneID = sceneID;
+	_exitHasFade = false;
+	_exitFlag = flag;
+	_exitFlagValue = flagValue;
+	_state = kActionTrigger;
+}
+
 void DrivingPuzzle::init() {
 	Common::Rect vpBounds = NancySceneState.getViewport().getBounds();
 	_drawSurface.create(vpBounds.width(), vpBounds.height(),
@@ -203,12 +267,31 @@ void DrivingPuzzle::init() {
 		_chaseCarImage.setTransparentColor(_drawSurface.getTransparentColor());
 	}
 
+	// The collision mask marks the drivable road in white; everything else is off-road.
+	g_nancy->_resource->loadImage(_collisionName, _collisionMask);
+
 	// Seed the car from the physics parameters decoded from the header blob.
 	_carX = _startX;
 	_carY = _startY;
 	_carHeading = (double)_startAngle * (M_PI / 180.0);
 	_carVelocity = 0.0;
 	_speedCap = _forwardSpeed;
+	_lastPhysicsMs = 0;
+
+	// When the map keeps its state (retainState), resume from where the car was left the
+	// last time this map was driven (i.e. before entering a building), and keep the tire
+	// damage. The first ever visit starts from the header position.
+	if (_retainState) {
+		DrivingData *data = (DrivingData *)NancySceneState.getPuzzleData(DrivingData::getTag());
+		if (data && data->valid) {
+			_carX = data->carX;
+			_carY = data->carY;
+			_carHeading = data->heading;
+			_tireDamage = data->tireDamage;
+			_fuelBurnAccum = data->fuelBurnAccum;
+			_infiniteFuel = data->infiniteFuel;
+		}
+	}
 
 	// Seed the chaser at the start of its recorded path.
 	if (!_chaserPathA.empty()) {
@@ -242,12 +325,126 @@ Common::Point DrivingPuzzle::cameraOffset() const {
 	return Common::Point(camX, camY);
 }
 
+int DrivingPuzzle::overlayImageIndex(const Common::String &name) {
+	for (uint i = 0; i < _overlayImageNames.size(); ++i) {
+		if (_overlayImageNames[i] == name) {
+			return (int)i;
+		}
+	}
+
+	Graphics::ManagedSurface surf;
+	g_nancy->_resource->loadImage(Common::Path(name), surf);
+	if (surf.empty()) {
+		return -1;
+	}
+	surf.setTransparentColor(_drawSurface.getTransparentColor());
+
+	_overlayImages.push_back(Common::move(surf));
+	_overlayImageNames.push_back(name);
+	return (int)_overlayImages.size() - 1;
+}
+
+void DrivingPuzzle::drawOverlays(const Common::Point &cam, bool aboveCar) {
+	if (_overlays.empty()) {
+		return;
+	}
+
+	const int frameMs = 66;		// decoration animation speed (0x42 ms/frame)
+	uint32 nowMs = g_system->getMillis();
+	Common::Rect view(cam.x, cam.y, cam.x + _drawSurface.w, cam.y + _drawSurface.h);
+
+	for (uint i = 0; i < _overlays.size(); ++i) {
+		const Overlay &ov = _overlays[i];
+		if (ov.aboveCar != aboveCar) {
+			continue;
+		}
+		if (ov.imageIndex < 0 || !view.intersects(ov.destRect)) {
+			continue;
+		}
+
+		// Only draw the decoration while its event-flag condition holds (a car appears
+		// once its story flag is set, etc.).
+		if (ov.condFlag != -1 && !NancySceneState.getEventFlag(ov.condFlag, ov.condValue)) {
+			continue;
+		}
+
+		uint frame = ov.srcRects.size() == 1 ? 0 : (nowMs / frameMs) % ov.srcRects.size();
+		_drawSurface.blitFrom(_overlayImages[ov.imageIndex], ov.srcRects[frame],
+			Common::Point(ov.destRect.left - cam.x, ov.destRect.top - cam.y));
+	}
+}
+
+void DrivingPuzzle::saveState() const {
+	if (!_retainState) {
+		return;
+	}
+
+	DrivingData *data = (DrivingData *)NancySceneState.getPuzzleData(DrivingData::getTag());
+	if (data) {
+		data->valid = true;
+		data->carX = (int32)(_carX + 0.5);
+		data->carY = (int32)(_carY + 0.5);
+		data->heading = _carHeading;
+		data->tireDamage = _tireDamage;
+		data->fuelBurnAccum = _fuelBurnAccum;
+		data->infiniteFuel = _infiniteFuel;
+	}
+}
+
+void DrivingPuzzle::refillFuel() {
+	const UIRC *uirc = GetEngineData(UIRC)
+	if (uirc && _frictionIndex >= 0 && (uint)_frictionIndex < uirc->items.size()) {
+		NancySceneState.setUIResource(_frictionIndex, uirc->items[_frictionIndex].id);
+		_fuelBurnAccum = 0.0;
+	}
+}
+
+void DrivingPuzzle::repairTire() {
+	_tireDamage = 0;
+	const UIRC *uirc = GetEngineData(UIRC)
+	if (uirc && kTireResourceIndex < uirc->items.size()) {
+		NancySceneState.setUIResource(kTireResourceIndex, uirc->items[kTireResourceIndex].id);
+	}
+}
+
+bool DrivingPuzzle::isWall(int px, int py) const {
+	if (px < 0 || py < 0 || px >= _collisionMask.w || py >= _collisionMask.h) {
+		return true;	// off the map
+	}
+
+	// The road is white; anything darker is off-road.
+	byte r, g, b;
+	_collisionMask.format.colorToRGB(_collisionMask.getPixel(px, py), r, g, b);
+	return r < 128 || g < 128 || b < 128;
+}
+
+bool DrivingPuzzle::isBlocked(const Common::Point &p) const {
+	if (isWall(p.x, p.y)) {
+		return true;
+	}
+
+	// A cow (or similar) is blocking the road while its story flag is set.
+	for (uint i = 0; i < _obstacles.size(); ++i) {
+		const Obstacle &obs = _obstacles[i];
+		if (obs.rect.contains(p) &&
+			(obs.condFlag == -1 || NancySceneState.getEventFlag(obs.condFlag, obs.condValue))) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void DrivingPuzzle::drawScene() {
 	Common::Point cam = cameraOffset();
 	int camX = cam.x;
 	int camY = cam.y;
 
 	_drawSurface.blitFrom(_image, Common::Rect(camX, camY, camX + _drawSurface.w, camY + _drawSurface.h), Common::Point(0, 0));
+
+	// Ground-level decorations (potholes, parked cars, cows, fountain) lie on the road,
+	// under the cars.
+	drawOverlays(cam, false);
 
 	// The chaser car (kChase), drawn under the player car.
 	if (_variant == kChase && !_frameRects2.empty() && _chaseCarImage.w > 0) {
@@ -265,11 +462,16 @@ void DrivingPuzzle::drawScene() {
 		_drawSurface.blitFrom(_carImage, src, Common::Point(sx, sy));
 	}
 
+	// Tall decorations (buildings, trees, power-line poles, flags) draw over the cars,
+	// so the car passes behind them.
+	drawOverlays(cam, true);
+
 	_needsRedraw = true;
 }
 
 void DrivingPuzzle::updateChaser() {
-	if (_chaserPathA.empty()) {
+	const Common::Array<Waypoint> &path = _chaserOnPathB ? _chaserPathB : _chaserPathA;
+	if (path.empty()) {
 		return;
 	}
 
@@ -282,11 +484,11 @@ void DrivingPuzzle::updateChaser() {
 	// Play the recorded path back in real time: advance to the last waypoint whose
 	// timestamp the elapsed chase time has passed.
 	uint32 elapsed = g_system->getMillis() - _chaseStartTime;
-	while (_chaserWaypoint + 1 < _chaserPathA.size() && _chaserPathA[_chaserWaypoint].timeMs < elapsed) {
+	while (_chaserWaypoint + 1 < path.size() && path[_chaserWaypoint].timeMs < elapsed) {
 		++_chaserWaypoint;
 	}
 
-	const Waypoint &wp = _chaserPathA[_chaserWaypoint];
+	const Waypoint &wp = path[_chaserWaypoint];
 	_chaserX = wp.x;
 	_chaserY = wp.y;
 	_chaserHeading = wp.heading;
@@ -300,71 +502,199 @@ void DrivingPuzzle::updateChaser() {
 	const double slowSlope = 5.0;
 	_speedCap = dist >= slowRadius ? (double)_forwardSpeed : (double)_forwardSpeed - (slowRadius - dist) * slowSlope;
 
-	// TODO: switch onto the second path (_chaserPathB), the event-flag outcomes
-	// (_chaseParams) and the "chaser left the viewport" loss branch are not simulated.
-}
-
-// Per-frame car physics. Throttle is +1 (forward), -1 (reverse) or 0 (coast); the car
-// already faces the cursor (steering happens in handleInput). The acceleration divisors
-// (1.0/0.4) and 0.02 timestep are exact; the velocity decay is a playability stand-in.
-void DrivingPuzzle::updatePhysics(int throttle) {
-	const double timeStep = 0.02;
-	const double decay = 0.98;
-	const double forwardCap = MAX(0.0, _speedCap);
-
-	if (throttle > 0) {
-		_carVelocity += (forwardCap / 1.0) * timeStep;
-	} else if (throttle < 0) {
-		_carVelocity -= ((double)_forwardSpeed / 0.4) * timeStep;
-	} else {
-		_carVelocity *= decay;
-	}
-	_carVelocity = CLIP<double>(_carVelocity, -(double)_reverseSpeed, forwardCap);
-
-	double newX = _carX + cos(_carHeading) * _carVelocity * timeStep;
-	double newY = _carY - sin(_carHeading) * _carVelocity * timeStep;
-
-	// Keep the car on the map and out of the boundary zones (coarse rect test, no mask).
-	newX = CLIP<double>(newX, 0.0, MAX(0, _image.w - 1));
-	newY = CLIP<double>(newY, 0.0, MAX(0, _image.h - 1));
-
-	Common::Point next((int)(newX + 0.5), (int)(newY + 0.5));
-	for (uint i = 0; i < _boundaries.size(); ++i) {
-		if (_boundaries[i].contains(next)) {
-			_carVelocity = 0.0;
+	// Losing Jane off the edge of the map is only a loss during the main pursuit, when the
+	// player must stay right behind her. Once a checkpoint clears the pursuit gate, the chase
+	// enters the shortcut phase: Nancy deliberately lets Jane go and races her to the state
+	// line by another road, so the chaser leaving the view is expected.
+	if (_chaseState == kPursuit) {
+		Common::Point cam = cameraOffset();
+		Common::Rect viewport(0, 0, _drawSurface.w, _drawSurface.h);
+		Common::Rect chaserRect(1, 1);
+		if (!_frameRects2.empty()) {
+			chaserRect = _frameRects2[0];
+		}
+		chaserRect.moveTo((int)(_chaserX + 0.5) - cam.x - chaserRect.width() / 2,
+			(int)(_chaserY + 0.5) - cam.y - chaserRect.height() / 2);
+		if (!chaserRect.intersects(viewport)) {
+			armExitScene(_chaseParams[kChaseOffViewScene], _chaseParams[kChaseOffViewFlag], 1);
 			return;
 		}
 	}
 
-	_carX = newX;
-	_carY = newY;
+	// Chase state machine (mirrors the original): flags gating it are set by the chase's
+	// own checkpoints (zones2 type 0x0b) and by the scene scripts.
+	switch (_chaseState) {
+	case kPursuit:
+		if (_chaseParams[kChaseGate01Flag] != -1 &&
+				NancySceneState.getEventFlag(_chaseParams[kChaseGate01Flag], g_nancy->_false)) {
+			_chaseState = kShortcut;
+		}
+		break;
+	case kShortcut:
+		// Switch onto the second path once Jane is caught.
+		if (_chaseParams[kChaseGate12Flag] != -1 &&
+				NancySceneState.getEventFlag(_chaseParams[kChaseGate12Flag], g_nancy->_true)) {
+			_chaserOnPathB = true;
+			_chaserWaypoint = 0;
+			_chaseStarted = false;
+			_chaseState = kCaught;
+		}
+		break;
+	case kCaught:
+		// The chaser has completed its route (Jane crashes) - the win.
+		if (_chaserWaypoint + 1 >= path.size()) {
+			armExitScene(_chaseParams[kChasePathEndScene], -1, 0);
+			return;
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-	// TODO: burn fuel here - decrement the gas-gauge UI resource (index _frictionIndex)
-	// by distance/_distanceDivisor and stop the car at 0. Deferred: the resource is an
-	// integer, so the rate needs runtime tuning to avoid corrupting the saved value.
+// Per-frame car physics. Throttle is +1 (forward), -1 (reverse) or 0 (coast); the car
+// already faces the cursor (steering happens in handleInput). cursorDist is how far the
+// cursor is from the car, which sets the forward speed. Velocity is in pixels per second
+// and integrated against the real elapsed time, so the car covers the same distance per
+// second at any frame rate - the chaser plays back in real time, so a frame-rate-dependent
+// car speed made the chase unwinnable.
+void DrivingPuzzle::updatePhysics(int throttle, double cursorDist) {
+	const double refStep = 0.02;			// the original's nominal per-frame step
+	const double decay = 0.98;				// coast decay per refStep
+	const int kTireFlatThreshold = 100;		// accumulated pothole damage that blows a tire
 
-	// Driving into a checkpoint (on entry) sets its event flag once.
+	// Cursor distance at which the car reaches top speed. The chase needs Nancy to sustain
+	// full speed to keep pace with Jane's recorded run, so full throttle comes at a much
+	// shorter cursor distance there than in the fuel-economy-minded free-driving map.
+	const double kFullSpeedDist = (_variant == kChase) ? 120.0 : 250.0;
+
+	uint32 nowMs = g_system->getMillis();
+	double dt = (_lastPhysicsMs == 0) ? refStep : CLIP<double>((nowMs - _lastPhysicsMs) / 1000.0, 0.0, 0.1);
+	_lastPhysicsMs = nowMs;
+
+	// The further the cursor, the faster the car; the chase slowdown (_speedCap) caps it.
+	double distanceCap = CLIP<double>(cursorDist / kFullSpeedDist * _forwardSpeed, 0.0, (double)_forwardSpeed);
+	double forwardCap = MIN(distanceCap, MAX(0.0, _speedCap));
+
+	// Mud slows the car (it does not stop it): while sitting in a puddle its top speed is
+	// cut. Jane's car is a recorded playback that ignores the terrain, so the penalty is
+	// kept mild - enough to matter in the free-driving map without making the chase, where
+	// she never slows, unwinnable.
+	Common::Point cur((int)(_carX + 0.5), (int)(_carY + 0.5));
+	for (uint i = 0; i < _mudZones.size(); ++i) {
+		if (_mudZones[i].decel > 0.0 && _mudZones[i].rect.contains(cur)) {
+			forwardCap = MIN(forwardCap, (double)_forwardSpeed * 0.7);
+			break;
+		}
+	}
+
+	if (throttle > 0) {
+		_carVelocity += forwardCap * dt;
+	} else if (throttle < 0) {
+		_carVelocity -= ((double)_forwardSpeed / 0.4) * dt;
+	} else {
+		_carVelocity *= pow(decay, dt / refStep);
+	}
+	_carVelocity = CLIP<double>(_carVelocity, -(double)_reverseSpeed, forwardCap);
+
+	// Move against the collision mask, sub-stepped ~1px at a time so a fast car can't
+	// tunnel through a thin road edge. On hitting off-road, slide along it (keep whichever
+	// single axis stays on the road) instead of stopping dead. If the car somehow starts
+	// the frame off-road, let it move out freely so it can never get wedged.
+	double preX = _carX;
+	double preY = _carY;
+	double moveX = cos(_carHeading) * _carVelocity * dt;
+	double moveY = -sin(_carHeading) * _carVelocity * dt;
+	int steps = MAX(1, (int)(MAX(ABS(moveX), ABS(moveY)) + 0.5));
+	double stepX = moveX / steps;
+	double stepY = moveY / steps;
+	bool escaping = isBlocked(cur);
+
+	for (int s = 0; s < steps; ++s) {
+		double tryX = CLIP<double>(_carX + stepX, 0.0, MAX(0, _image.w - 1));
+		double tryY = CLIP<double>(_carY + stepY, 0.0, MAX(0, _image.h - 1));
+
+		if (escaping || !isBlocked(Common::Point((int)(tryX + 0.5), (int)(tryY + 0.5)))) {
+			_carX = tryX;
+			_carY = tryY;
+		} else if (!isBlocked(Common::Point((int)(tryX + 0.5), (int)(_carY + 0.5)))) {
+			_carX = tryX;
+		} else if (!isBlocked(Common::Point((int)(_carX + 0.5), (int)(tryY + 0.5)))) {
+			_carY = tryY;
+		} else {
+			_carVelocity = 0.0;
+			break;
+		}
+	}
+
+	Common::Point next((int)(_carX + 0.5), (int)(_carY + 0.5));
+
+	// The gas tank empties by the distance the car actually travels this frame divided by
+	// the header's distance divisor. The DT_RESOURCE scene dependency reads the same
+	// resource to warn Nancy when it runs low.
+	if (_distanceDivisor > 0 && !_infiniteFuel) {
+		double moved = sqrt((_carX - preX) * (_carX - preX) + (_carY - preY) * (_carY - preY));
+		_fuelBurnAccum += moved / (double)_distanceDivisor;
+		if (_fuelBurnAccum >= 1.0) {
+			int burn = (int)_fuelBurnAccum;
+			_fuelBurnAccum -= burn;
+			int fuel = NancySceneState.getUIResource(_frictionIndex);
+			NancySceneState.setUIResource(_frictionIndex, MAX(0, fuel - burn));
+		}
+	}
+
+	// Driving into a pothole (on entry) damages the tires by a random amount; at 100 the
+	// tire blows: the damage resets (a fresh spare goes on) and the car leaves for the
+	// flat-tire scene once the blowout sound has played.
+	for (uint i = 0; i < _potholes.size(); ++i) {
+		Pothole &hole = _potholes[i];
+		bool nowInside = hole.rect.contains(next);
+		if (nowInside && !hole.carInside && !_flatTirePending) {
+			int dmg = hole.minDamage;
+			if (hole.maxDamage > hole.minDamage) {
+				dmg += g_nancy->_randomSource->getRandomNumber(hole.maxDamage - hole.minDamage);
+			}
+			_tireDamage += dmg;
+			if (_tireDamage >= kTireFlatThreshold) {
+				_tireDamage = 0;
+				_flatTirePending = true;
+				playSoundBlock(_soundBlocks[0]);	// tire blowout
+			}
+		}
+		hole.carInside = nowInside;
+	}
+
+	// Driving into a checkpoint sets its event flag, but only while the checkpoint's own
+	// condition holds (so the chase phases fire in order). Edge-triggered on entering the
+	// armed state.
 	for (uint i = 0; i < _checkpoints.size(); ++i) {
 		Checkpoint &cp = _checkpoints[i];
-		bool nowInside = cp.rect.contains(next);
-		if (nowInside && !cp.carInside && !cp.triggered && cp.flagId != -1) {
-			cp.triggered = true;
+		bool cond = cp.condFlag == -1 || NancySceneState.getEventFlag(cp.condFlag, cp.condValue);
+		bool active = cond && cp.rect.contains(next);
+		if (active && !cp.wasActive && cp.flagId != -1) {
 			NancySceneState.setEventFlag(cp.flagId, cp.flagValue ? g_nancy->_true : g_nancy->_false);
 		}
-		cp.carInside = nowInside;
+		cp.wasActive = active;
 	}
 
-	// Driving into a location entrance / finish line (on entry) transitions there. The
-	// zone the car spawned inside does not fire until the car leaves and re-enters.
+	// A drive-in destination (the chase finish line) fires on entry; a parking
+	// destination (a location) is only noted here and entered with space in handleInput.
+	_parkedDest = -1;
 	for (uint i = 0; i < _destinations.size(); ++i) {
 		DestinationZone &dest = _destinations[i];
-		bool nowInside = dest.rect.contains(next);
-		if (nowInside && !dest.carInside && _triggeredDest < 0 && dest.scene.sceneID != kNoScene) {
-			_triggeredDest = (int)i;
-			_state = kActionTrigger;
+		bool nowInside = dest.scene.sceneID != kNoScene && dest.rect.contains(next);
+		if (dest.autoTrigger) {
+			if (nowInside && !dest.carInside) {
+				armExit(dest);
+			}
+			dest.carInside = nowInside;
+		} else if (nowInside && _parkedDest < 0) {
+			_parkedDest = (int)i;
 		}
-		dest.carInside = nowInside;
 	}
+
+	// Remember where the car is so it resumes here after a building visit or a save/load.
+	saveState();
 }
 
 void DrivingPuzzle::execute() {
@@ -372,6 +702,12 @@ void DrivingPuzzle::execute() {
 	case kBegin:
 		init();
 		registerGraphics();
+		if (_variant == kChase && _chaseParams[kChaseGate01Flag] != -1) {
+			// Arm the main pursuit: with the gate flag set the chase begins in state 0 (Nancy
+			// must keep Jane in sight). A checkpoint later clears it to start the shortcut. The
+			// original relies on the scene to set this; do it here so the phase is never skipped.
+			NancySceneState.setEventFlag(_chaseParams[kChaseGate01Flag], g_nancy->_true);
+		}
 		classifyZones(_zones);
 		if (_variant == kChase) {
 			classifyZones(_zones2);
@@ -384,16 +720,10 @@ void DrivingPuzzle::execute() {
 		break;
 	case kActionTrigger:
 		g_nancy->_sound->stopSound(_soundBlocks[2].channel);	// stop the engine ambience
-		if (_triggeredDest >= 0 && _triggeredDest < (int)_destinations.size()) {
-			const DestinationZone &dest = _destinations[_triggeredDest];
-			if (dest.eventFlag != -1) {
-				NancySceneState.setEventFlag(dest.eventFlag, dest.eventFlagValue ? g_nancy->_true : g_nancy->_false);
-			}
-			if (dest.hasFade) {
-				NancySceneState.specialEffect(dest.fadeType, dest.fadeTotalTime, dest.fadeToBlackTime, dest.fadeRect);
-			}
-			NancySceneState.changeScene(dest.scene);
-		}
+		NancySceneState.setEventFlag(_exitFlag, _exitFlagValue ? g_nancy->_true : g_nancy->_false);
+		if (_exitHasFade)
+			NancySceneState.specialEffect(_exitFadeType, _exitFadeTotalTime, _exitFadeToBlackTime, _exitFadeRect);
+		NancySceneState.changeScene(_exitScene);
 		finishExecution();
 		break;
 	}
@@ -404,6 +734,50 @@ void DrivingPuzzle::handleInput(NancyInput &input) {
 		return;
 	}
 
+	// Cheats: Ctrl+Shift+G toggles infinite fuel (tops the tank off and stops the drain);
+	// Ctrl+Shift+T repairs the spare tire (clears pothole wear and restores it to good).
+	for (uint i = 0; i < input.otherKbdInput.size(); ++i) {
+		const Common::KeyState &key = input.otherKbdInput[i];
+		if ((key.flags & Common::KBD_CTRL) == 0 || (key.flags & Common::KBD_SHIFT) == 0) {
+			continue;
+		}
+		if (key.keycode == Common::KEYCODE_g) {
+			_infiniteFuel = !_infiniteFuel;
+			if (_infiniteFuel) {
+				refillFuel();
+			}
+			saveState();
+			debug("Gas cheat: infinite fuel %s", _infiniteFuel ? "ON" : "OFF");
+		} else if (key.keycode == Common::KEYCODE_t) {
+			repairTire();
+			saveState();
+			debug("Tire cheat: spare tire repaired");
+		}
+	}
+
+	// A tire has blown: hold the car still until the blowout sound finishes, then leave
+	// for the flat-tire scene (where Nancy fits the spare).
+	if (_flatTirePending) {
+		if (!g_nancy->_sound->isSoundPlaying(_soundBlocks[0].channel)) {
+			saveState();
+			SceneChangeDescription scene;
+			scene.sceneID = _finishScene;
+			NancySceneState.changeScene(scene);
+			finishExecution();
+		}
+		return;
+	}
+
+	// Parked in a location: pressing space gets Nancy out of the car and into it.
+	if (_parkedDest >= 0 && _parkedDest < (int)_destinations.size()) {
+		for (uint i = 0; i < input.otherKbdInput.size(); ++i) {
+			if (input.otherKbdInput[i].keycode == Common::KEYCODE_SPACE) {
+				armExit(_destinations[_parkedDest]);
+				return;
+			}
+		}
+	}
+
 	// Throttle with the mouse buttons: left drives forward, right reverses.
 	int throttle = 0;
 	if (input.input & NancyInput::kLeftMouseButtonHeld) {
@@ -412,13 +786,15 @@ void DrivingPuzzle::handleInput(NancyInput &input) {
 		throttle = -1;
 	}
 
-	// Steer the car to face the cursor while driving (its distance is irrelevant).
+	// Steer the car to face the cursor; its distance sets the driving speed.
+	double cursorDist = 0.0;
 	if (throttle != 0) {
 		Common::Point cam = cameraOffset();
 		Common::Rect mouseVp = NancySceneState.getViewport().convertScreenToViewport(
 			Common::Rect(input.mousePos.x, input.mousePos.y, input.mousePos.x + 1, input.mousePos.y + 1));
 		double dx = (double)mouseVp.left - (_carX - cam.x);
 		double dy = (double)mouseVp.top - (_carY - cam.y);
+		cursorDist = sqrt(dx * dx + dy * dy);
 		if (dx != 0.0 || dy != 0.0) {
 			_carHeading = atan2(-dy, dx);
 			if (_carHeading < 0.0) {
@@ -430,9 +806,12 @@ void DrivingPuzzle::handleInput(NancyInput &input) {
 	// Drive continuously so momentum and the chaser animate every frame.
 	if (_variant == kChase) {
 		updateChaser();
+		if (_state != kRun) {
+			return;	// a chase outcome fired
+		}
 	}
 
-	updatePhysics(throttle);
+	updatePhysics(throttle, cursorDist);
 
 	if (_state == kRun) {
 		drawScene();

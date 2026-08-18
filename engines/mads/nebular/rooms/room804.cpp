@@ -23,6 +23,7 @@
 #include "mads/core/game.h"
 #include "mads/nebular/global.h"
 #include "mads/nebular/nebular.h"
+#include "mads/nebular/copy.h"
 #include "mads/nebular/mads/inventory.h"
 #include "mads/nebular/mads/words.h"
 #include "mads/nebular/rooms/section8.h"
@@ -140,6 +141,11 @@ static void room_804_daemon() {
 				global[kInSpace] = false;
 				global[kBeamIsUp] = true;
 
+				// The DOS release inserts its warning here. The Macintosh
+				// executable proceeds directly from this scene to ending 4.
+				if (global[kCopyProtectFailed] &&
+						g_engine->getPlatform() != Common::kPlatformMacintosh)
+					copy_protection_fail_screen();
 				win_status = WIN_A_HEAD_POW;
 				game.going = false;
 			}
@@ -186,9 +192,8 @@ static void room_804_daemon() {
 			inter_move_object(OBJ_POLYCEMENT, NOWHERE);
 		}
 
-		// FIXME: Original doesn't have resetFrame check. Check why this has been needed
-		if (local._resetFrame == -1 && kernel_anim[0].frame == 1) {
-			int randomVal = g_engine->getRandomNumber(29) + 1;
+		if (kernel_anim[0].frame == 1) {
+			int randomVal = g_engine->getRandomNumber(1, 30);
 			switch (randomVal) {
 			case 1:
 				local._resetFrame = 25;

@@ -58,6 +58,7 @@ class ConsoleText;
 class CommandButton;
 class ImageAsset;
 class Dialog;
+struct InventoryCallbackStruct;
 
 BorderBounds borderBounds(MVWindowType type);
 Graphics::BorderOffsets borderOffsets(MVWindowType type);
@@ -98,6 +99,7 @@ public:
 	void reloadInternals();
 
 	void draw();
+	void markRedraw();
 	void drawMenu();
 	void drawTitle();
 
@@ -129,6 +131,8 @@ public:
 	bool processSelfEvents(WindowClick click, Common::Event &event);
 	bool processExitsEvents(WindowClick click, Common::Event &event);
 	bool processDiplomaEvents(WindowClick click, Common::Event &event);
+	bool processDiplomaKey(Common::Event &event);
+	void printDiploma();
 	bool processInventoryEvents(WindowReference ref, WindowClick click, Common::Event &event);
 
 	const WindowData& getWindowData(WindowReference reference);
@@ -162,6 +166,9 @@ public:
 	void setConsoleText(const Common::String &text);
 
 	void printText(const Common::String &text);
+	void scrollConsoleToRow(uint row);
+	uint getConsoleRowCount();
+	uint getConsoleVisibleRows();
 
 	void setWaitCursor(bool wait);
 
@@ -209,6 +216,7 @@ private: // Attributes
 	struct InventoryWindowData {
 		Graphics::MacWindow *win;
 		WindowReference ref;
+		InventoryCallbackStruct *callbackData;
 	};
 	Common::Array<InventoryWindowData> _inventoryWindows;
 	Common::HashMap<ObjID, WindowReference> _objToInvRef;
@@ -219,6 +227,10 @@ private: // Attributes
 	Container *_graphics;
 	Common::HashMap<ObjID, ImageAsset*> _assets;
 	ImageAsset *_diplomaImage;
+	Common::String _diplomaName;
+	Common::Rect _diplomaNameBounds;
+	uint16 _diplomaFontId;
+	uint16 _diplomaFontSize;
 
 	Common::Array<DraggedObj> _draggedObjects;
 	Common::Array<Graphics::ManagedSurface> _draggedSurfaces;
@@ -226,6 +238,8 @@ private: // Attributes
 	Cursor *_cursor;
 
 	ConsoleText *_consoleText;
+
+	bool _needsRedraw;
 
 	WindowReference _lassoWinRef;
 	Common::Point _lassoStart;
@@ -276,6 +290,7 @@ private: // Methods
 	bool isRectInsideObject(Common::Rect target, ObjID obj);
 	void selectDraggable(ObjID child, WindowReference origin, Common::Point startPos);
 	void handleDragRelease(bool shiftPressed, bool isDoubleClick);
+	Common::Rect calculateLassoRect(Graphics::MacWindow *win);
 	Common::Rect calculateClickRect(Common::Point clickPos, Common::Rect windowBounds);
 	Common::Point localizeTravelledDistance(Common::Point point, WindowReference origin, WindowReference target);
 	void removeInventoryWindow(WindowReference ref);
@@ -329,6 +344,7 @@ private:
 
 	Common::Point _pos;
 	ClickState _state;
+	bool _shiftPressed;
 };
 
 

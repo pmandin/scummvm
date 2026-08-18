@@ -28,6 +28,7 @@
 #include "director/sprite.h"
 #include "director/castmember/castmember.h"
 #include "director/castmember/digitalvideo.h"
+#include "director/castmember/movie.h"
 #include "director/castmember/shape.h"
 #include "director/castmember/text.h"
 
@@ -354,6 +355,11 @@ bool Sprite::respondsToMouse() {
 	if (_cast && _cast->_type == kCastButton)
 		return true;
 
+	// A movie cast member is interactive only when its scripts are enabled:
+	// its embedded movie may then have mouse handlers to route clicks into.
+	if (_cast && _cast->_type == kCastMovie)
+		return ((MovieCastMember *)_cast)->_enableScripts;
+
 	// TODO: Check if we need to check against individual events like below
 	if (g_director->getVersion() >= 600) {
 		if (_behaviors.size() > 0)
@@ -623,6 +629,14 @@ void Sprite::setCast(CastMemberID memberID, bool replaceDims) {
 			switch (_cast->_type) {
 			case kCastShape:
 			case kCastText:
+				break;
+			case kCastDigitalVideo:
+				// A video the score sizes to 0x0 is intentionally invisible (a
+				// hidden timing/audio clock); keep it, don't force native size.
+				if (_width > 0 && _height > 0) {
+					_width = dims.width();
+					_height = dims.height();
+				}
 				break;
 			case kCastBitmap:
 			default:

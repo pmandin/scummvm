@@ -60,6 +60,29 @@ static const char env_slash_string[3] = "\\";
 static const char env_speech1_string[8] = "SPEECH1";
 static const char env_speech2_string[8] = "SPEECH2";
 
+static EnvResourceProvider *env_resource_provider;
+
+void env_set_resource_provider(EnvResourceProvider *provider) {
+	env_resource_provider = provider;
+}
+
+Common::SeekableReadStream *env_open_text(int32 id, uint16 &unpacked_size) {
+	return env_resource_provider ? env_resource_provider->openText(id, unpacked_size) : nullptr;
+}
+
+int env_get_cursor_count() {
+	return env_resource_provider ? env_resource_provider->getCursorCount() : 0;
+}
+
+bool env_set_cursor(int id) {
+	return env_resource_provider ? env_resource_provider->setCursor(id) : false;
+}
+
+void env_update_cursor() {
+	if (env_resource_provider)
+		env_resource_provider->updateCursor();
+}
+
 
 int env_verify() {
 	Common::String str = ConfMan.get(MADS_PRIV_ENV);
@@ -313,6 +336,16 @@ Common::SeekableReadStream *env_open(const char *filename, const char *options) 
 	Concat concat;
 	concat.file_offset = concat.file_size = 0;
 
+	if (env_resource_provider) {
+		handle = env_resource_provider->open(filename);
+		if (handle) {
+			env_concat_file_size = handle->size();
+			return handle;
+		}
+		if (!env_resource_provider->allowsFallback(filename))
+			return nullptr;
+	}
+
 	Common::strcpy_s(file_path, filename);
 	if (env_get_path(load_file, file_path) == NULL) goto done;
 
@@ -485,6 +518,13 @@ int env_exist(const char *filename) {
 	Common::strcpy_s(file_name, filename);
 	mads_strupr(file_name);
 
+	if (env_resource_provider) {
+		if (env_resource_provider->exists(filename))
+			return true;
+		if (!env_resource_provider->allowsFallback(filename))
+			return false;
+	}
+
 	// If CD version and checking RAW or RAC file
 	if (env_search_cd && (strstr(file_name, ".RAW") || strstr(file_name, ".RAC"))) {
 
@@ -538,7 +578,6 @@ char *env_get_level_path(char *out, int item_type, const char *file_spec, int fi
 	if ((item_type == SECTION) || (item_type == ROOM)) {
 		if ((item_type == ROOM) && (first_level == 0)) {
 			first_level = second_level / 100;
-			// first_level = room_get_section (second_level);
 		}
 	}
 
@@ -692,9 +731,7 @@ done:
 }
 
 int env_insert(char *environment, char *variable, char *value) {
-	int  error_flag = true;
 	int  new_size;
-	int  free;
 	int  copy_size;
 	char *target;
 	char *bottom;
@@ -713,10 +750,8 @@ int env_insert(char *environment, char *variable, char *value) {
 	Common::strcat_s(var_string, "=");
 	Common::strcat_s(var_string, value);
 
-	// Get size of string & check of there is space in the environment
+	// Get size of string
 	new_size = strlen(var_string) + 1;
-	free = env_free(environment);
-	if (new_size > free) goto done;
 
 	// Find end of environment (for new string).  Also find end of whole
 	// environment structure (must be moved out of the way).
@@ -733,10 +768,7 @@ int env_insert(char *environment, char *variable, char *value) {
 	memmove(new_home, target, copy_size);
 	memmove(target, var_string, new_size);
 
-	error_flag = false;
-
-done:
-	return error_flag;
+	return false;
 }
 
 } // namespace MADS

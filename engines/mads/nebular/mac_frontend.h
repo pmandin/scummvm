@@ -19,16 +19,23 @@
  *
  */
 
-#include "mads/core/xms.h"
+#ifndef MADS_NEBULAR_MAC_FRONTEND_H
+#define MADS_NEBULAR_MAC_FRONTEND_H
 
 namespace MADS {
+namespace RexNebular {
 
-bool xms_exists = false;
-bool xms_disabled = false;
-word xms_version = 0;
-dword xms_controller = 0;
-word xms_chain_seg = 0;
-word xms_umb_list[XMS_MAX_UMB] = {};
-word xms_umb_mark = 0;
+class RexNebularEngine;
 
+namespace MacFrontend {
+
+void runAnimView(RexNebularEngine &engine, const char *resource);
+void runTextView(RexNebularEngine &engine, const char *resource);
+void runEndingSequence(RexNebularEngine &engine, const char *animation,
+	const char *ending, bool showCredits);
+
+} // namespace MacFrontend
+} // namespace RexNebular
 } // namespace MADS
+
+#endif

@@ -25,6 +25,7 @@
 #include "mads/nebular/mads/inventory.h"
 #include "mads/nebular/mads/words.h"
 #include "mads/nebular/rooms/section7.h"
+#include "mads/nebular/sound/mac_sound.h"
 #include "mads/nebular/rooms/dialog.h"
 
 namespace MADS {
@@ -131,14 +132,16 @@ static void room_705_init() {
 	} else if (previous_room != KERNEL_RESTORING_GAME) {
 		player.commands_allowed = false;
 		kernel_timing_trigger(1, 80);
-		g_engine->_soundManager->command(28, 0);
+		if (!Sound::commandMacintoshSound(Sound::kMacSoundPlay, 7028,
+				0, 0, 0, true))
+			g_engine->_soundManager->command(28, 0);
 	} else
 		g_sequence_ids[3] = kernel_seq_stamp(g_sprite_ids[3], false, 1);
 
 	if (kernel.teleported_in)
 		inter_give_to_player(OBJ_BOTTLE);
 
-	kernel.quotes = quote_load(0x311, 0x312, 0x313, 0x314, 0x315, 0);
+	kernel.quotes = quote_load(785, 786, 787, 788, 789, 0);
 	local._dialog1.setup(0x98, 0x311, 0x312, 0x313, 0x314, 0x315, 0);
 	section_7_music();
 }

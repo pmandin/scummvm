@@ -59,6 +59,8 @@ public:
 		kDragHand				= 23,	// Hand cursor used when dragging an item (Nancy 10+)
 		kDropHand				= 24,	// Drop-hand cursor used while a piece is held over a target (Nancy 10+)
 		kPuzzleArrow			= 25,	// Puzzle arrow cursor shown when hovering a clickable puzzle hotspot (Nancy 10+)
+		kDialCW					= 26,	// Dial turn cursors used by SafeDialPuzzle (Nancy 10+); the older
+		kDialCCW				= 27,	// games use kRotateCW / kRotateCCW instead
 
 		// Cursors in Nancy10 and newer games. The CURS chunk holds 37 system
 		// cursor types in pairs; type T's idle slot is (T*2) and its hotspot
@@ -88,14 +90,20 @@ public:
 		kNewRotateLeft			= 30,	// Type 15 — 360 scenes
 		kNewInvertedRotateRight = 32,	// Type 16 — Inverted 360 rotation
 		kNewInvertedRotateLeft	= 34,	// Type 17 — Inverted 360 rotation
-		kNewUseHand				= 36,	// Type 18 — Hand used while using items
-		kNewDragHand			= 38,	// Type 19 — Hand used while dragging puzzle pieces (e.g. SortPuzzle pickup action sets this)
+		kNewUseHand				= 36,	// Type 18 — Open hand, used while using items and while carrying a puzzle piece
+		kNewUseHandHotspot		= 37,	// Type 18 hotspot — Open hand shown over a slot a carried piece can be dropped into
+		kNewDragHand			= 38,	// Type 19 — Closed hand, used while dragging puzzle pieces
+		kNewDragHandHotspot		= 39,	// Type 19 hotspot — Closed hand shown over a piece that can be picked up
+		kNewRotatePiece			= 40,	// Type 20 — Rotate arrows shown over a rotatable puzzle piece
+		kNewDialCW				= 41,	// Type 20 hotspot — Dial turn cursors, used by SafeDialPuzzle
+		kNewDialCCW				= 43,	// Type 21 hotspot
 		kNewPuzzleArrow			= 45,	// Type 22 hotspot — Arrow cursor shown when hovering a clickable puzzle hotspot
 		kNewPuzzleSlideUp		= 47,	// Type 23 hotspot — Slide-arrow shown over a movable tile in CollisionPuzzle/TileMovePuzzle
 		kNewPuzzleSlideDown		= 49,	// Type 24 hotspot
 		kNewPuzzleSlideLeft		= 51,	// Type 25 hotspot
 		kNewPuzzleSlideRight	= 53,	// Type 26 hotspot
 		kNewDropHand			= 64,	// Type 32 — Hand shown when a held piece is dropped (briefly set on the drop action)
+		kNewBlank				= 72,	// Type 36 — Empty sprite, used while a puzzle draws a carried piece at the mouse itself
 
 		// Cursor types in Nancy13 and newer games. Nancy13 rebuilt the CURS
 		// sheet with 45 system cursor types, each stored as an [idle, hotspot]

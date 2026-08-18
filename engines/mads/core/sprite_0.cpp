@@ -298,7 +298,6 @@ ys = sprite->ys;
 	}
 
 	skip_y = cx;
-	//draw_y = bx;
 	stop_y = cx + bx;
 
 	if (bx <= 0)
@@ -378,7 +377,7 @@ ys = sprite->ys;
 	skip_x = abs_skip_x;
 
 #if three_d
-	byte draw_depth = (byte)target_depth;
+	int8 draw_depth = (int8)target_depth;
 #endif
 
 #if bresenham
@@ -551,7 +550,7 @@ pixel_DUMP_no_attr:;
 #endif
 
 							if (depth_code == 0)                   goto pixel_DUMP_skip_n_pop;
-							if ((byte)draw_depth > depth_code)     goto pixel_DUMP_skip_n_pop;
+							if (draw_depth > depth_code)     goto pixel_DUMP_skip_n_pop;
 						}
 #endif /* three_d */
 
@@ -715,7 +714,7 @@ pixel_RLE_no_attr:;
 #endif
 
 								if (depth_code == 0)               goto pixel_RLE_run_skip_n_pop;
-								if ((byte)draw_depth > depth_code) goto pixel_RLE_run_skip_n_pop;
+								if (draw_depth > depth_code) goto pixel_RLE_run_skip_n_pop;
 							}
 #endif /* three_d */
 
@@ -886,7 +885,7 @@ pixel_IRLE_run_no_attr:;
 #endif
 
 								if (depth_code == 0)               goto pixel_IRLE_run_skip_n_pop;
-								if ((byte)draw_depth > depth_code) goto pixel_IRLE_run_skip_n_pop;
+								if (draw_depth > depth_code) goto pixel_IRLE_run_skip_n_pop;
 							}
 #endif /* three_d */
 
@@ -1027,7 +1026,7 @@ pixel_IRLE_image_no_attr:;
 #endif
 
 							if (depth_code == 0)               goto pixel_IRLE_image_skip_n_pop;
-							if ((byte)draw_depth > depth_code) goto pixel_IRLE_image_skip_n_pop;
+							if (draw_depth > depth_code) goto pixel_IRLE_image_skip_n_pop;
 						}
 #endif /* three_d */
 

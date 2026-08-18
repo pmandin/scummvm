@@ -115,82 +115,82 @@ static int computeQuoteAndQuantity() {
 	int quantity;
 
 	switch (player2.words[0]) {
-	case 0x252:
+	case words_hoop:
 		quoteId = 0x26F;
 		quantity = 0;
 		break;
 
-	case 0x253:
+	case words_cannonballs:
 		quoteId = 0x271;
 		quantity = 0;
 		break;
 
-	case 0x254:
+	case words_water_fountain:
 		quoteId = 0x270;
 		quantity = 0;
 		break;
 
-	case 0x255:
+	case words_hallway_to_east:
 		quoteId = 0x272;
 		quantity = 0;
 		break;
 
-	case 0x256:
+	case words_hallway_to_west:
 		quoteId = 0x267;
 		quantity = 2;
 		break;
 
-	case 0x257:
+	case words_support:
 		quoteId = 0x269;
 		quantity = 2;
 		break;
 
-	case 0x258:
+	case words_backboard:
 		quoteId = 0x268;
 		quantity = 2;
 		break;
 
-	case 0x259:
+	case words_wide_door:
 		quoteId = 0x26A;
 		quantity = 2;
 		break;
 
-	case 0x25A:
+	case words_sign_post:
 		quoteId = 0x26B;
 		quantity = 3;
 		break;
 
-	case 0x25B:
+	case words_fire_extinguisher:
 		quoteId = 0x26D;
 		quantity = 3;
 		break;
 
-	case 0x25C:
+	case words_trash:
 		quoteId = 0x26C;
 		quantity = 3;
 		break;
 
-	case 0x25D:
+	case words_missiles:
 		quoteId = 0x26E;
 		quantity = 3;
 		break;
 
-	case 0x25E:
+	case words_tank:
 		quoteId = 0x263;
 		quantity = 1;
 		break;
 
-	case 0x25F:
+	case words_two_ton_weight:
 		quoteId = 0x265;
 		quantity = 1;
 		break;
 
-	case 0x260:
+	case words_one_ton_tomato:
 		quoteId = 0x264;
 		quantity = 1;
 		break;
 
-	case 0x261:
+	case words_anvil:
 		quoteId = 0x266;
 		quantity = 1;
 		break;
@@ -226,7 +226,7 @@ static void handleKettleAction() {
 }
 
 static void handleDialog() {
-	if ((player2.words[0] != 0x262) && (kernel.trigger == 0)) {
+	if ((player2.words[0] != words_minuteman_iv_icbm) && (kernel.trigger == 0)) {
 		if (player_has(local._newIngredient)) {
 			switch (local._newIngredient) {
 			case OBJ_FORMALDEHYDE:
@@ -263,7 +263,7 @@ static void handleDialog() {
 			local._killRox = true;
 
 		kernel_set_interface_mode(INTER_BUILDING_SENTENCES);
-	} else if (player2.words[0] == 0x262)
+	} else if (player2.words[0] == words_minuteman_iv_icbm)
 		kernel_set_interface_mode(INTER_BUILDING_SENTENCES);
 }
 
@@ -316,9 +316,9 @@ static void room_411_init() {
 	g_sequence_ids[1] = kernel_seq_forward(g_sprite_ids[1], false, 5, 0, 0, 0);
 	g_sequence_ids[2] = kernel_seq_forward(g_sprite_ids[2], false, 50, 0, 0, 0);
 
-	kernel.quotes = quote_load(0x252, 0x25E, 0x25A, 0x256, 0x253, 0x25F, 0x25B, 0x257, 0x254, 0x260, 0x25C, 0x258, 0x255,
-		0x261, 0x25D, 0x259, 0x262, 0x267, 0x263, 0x26B, 0x26F, 0x268, 0x264, 0x26C, 0x270, 0x26A, 0x266, 0x26E,
-		0x272, 0x269, 0x265, 0x26D, 0x271, 0);
+	kernel.quotes = quote_load(594, 606, 602, 598, 595, 607, 603, 599, 596, 608, 604, 600, 597,
+		609, 605, 601, 610, 615, 611, 619, 623, 616, 612, 620, 624, 618, 614, 622,
+		626, 617, 613, 621, 625, 0);
 
 	local._dialog1.setup(0x5B, 0x252, 0x25E, 0x25A, 0x256, 0x262, -1);
 	local._dialog2.setup(0x5C, 0x253, 0x25F, 0x25B, 0x257, 0x262, -1);

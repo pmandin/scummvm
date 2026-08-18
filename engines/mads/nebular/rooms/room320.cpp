@@ -95,59 +95,59 @@ static void setLeftView(int view) {
 
 static void handleButtons() {
 	switch (player2.words[1]) {
-	case 0x2DD:
+	case words_red_button:
 		local._buttonId = 5;
 		break;
 
-	case 0x2DE:
+	case words_green_button:
 		local._buttonId = 4;
 		break;
 
-	case 0x2E0:
+	case words_right_1_key:
 		local._buttonId = 6;
 		break;
 
-	case 0x2E1:
+	case words_right_2_key:
 		local._buttonId = 7;
 		break;
 
-	case 0x2E2:
+	case words_right_3_key:
 		local._buttonId = 8;
 		break;
 
-	case 0x2E3:
+	case words_right_4_key:
 		local._buttonId = 9;
 		break;
 
-	case 0x2E4:
+	case words_right_5_key:
 		local._buttonId = 10;
 		break;
 
-	case 0x2E5:
+	case words_right_6_key:
 		local._buttonId = 11;
 		break;
 
-	case 0x2E6:
+	case words_right_7_key:
 		local._buttonId = 12;
 		break;
 
-	case 0x2E7:
+	case words_right_8_key:
 		local._buttonId = 13;
 		break;
 
-	case 0x2E8:
+	case words_left_1_key:
 		local._buttonId = 0;
 		break;
 
-	case 0x2E9:
+	case words_left_2_key:
 		local._buttonId = 1;
 		break;
 
-	case 0x2EA:
+	case words_left_3_key:
 		local._buttonId = 2;
 		break;
 
-	case 0x2EB:
+	case words_left_4_key:
 		local._buttonId = 3;
 		break;
 
@@ -295,7 +295,7 @@ static void room_320_parser() {
 					g_sprite_ids[9] = kernel_load_series(kernel_name('m', 9), 0);
 					local._blinkFl = false;
 					setLeftView(2);
-					kernel.quotes = quote_load(0xFE, 0);
+					kernel.quotes = quote_load(254, 0);
 					kernel.trigger_setup_mode = KERNEL_TRIGGER_DAEMON;
 					kernel_run_animation(kernel_name('a', -1), 70);
 					g_engine->_soundManager->command(17, 0);

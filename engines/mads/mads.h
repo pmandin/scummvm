@@ -74,7 +74,7 @@ private:
 	void syncGame(Common::Serializer &s);
 	bool isSpecialKey(Common::KeyCode key) const;
 	void updateScreen();
-	
+
 protected:
 	const MADSGameDescription *_gameDescription;
 	Common::RandomSource _randomSource;
@@ -86,6 +86,15 @@ protected:
 	Audio::SoundHandle _speechHandle;
 	TimerFunction _timerFunction = nullptr;
 	uint32 _nextTimerTime = 0;
+	Graphics::Surface _savegameThumbnail;
+
+	virtual Common::Point screenToGame(const Common::Point &point) const;
+	virtual Common::Point gameToScreen(const Common::Point &point) const;
+	virtual void presentScreen(int shakeOffset);
+
+	virtual bool handleMacEvent(Common::Event &event) { return false; }
+	virtual void serviceMacintoshUI() {}
+	virtual void serviceMacintoshSound() {}
 
 	bool hasFeature(EngineFeature f) const override;
 
@@ -125,6 +134,14 @@ public:
 	void flushKeys();
 
 	int getMouseState(int &x, int &y);
+	void warpMouse(int x, int y);
+	void updateDisplay();
+
+	const Graphics::Surface &getSavegameThumbnail() const {
+		return _savegameThumbnail;
+	}
+	void setSavegameThumbnail();
+	void clearSavegameThumbnail();
 
 	/**
 	 * Get the elapsed time in milliseconds
@@ -162,6 +179,31 @@ public:
 	virtual void global_sound_driver() = 0;
 	virtual void global_game_main_loop() {}
 	virtual void global_verb_filter() {}
+
+	int getMessageTextWidth(FontPtr font, const char *text, int spacing) const;
+
+	// Optional Macintosh presentation hooks. Defaults preserve the shared
+	// MADS rendering path used by DOS releases.
+	virtual bool hasInterfaceAnimations() const { return true; }
+	virtual bool drawPopup() { return false; }
+	virtual int editMacintoshPopup(char *, int) { return -1; }
+	virtual void onPopupDestroyed() {}
+	virtual int getMacintoshTextWidth(FontPtr, const char *, int) const {
+		return -1;
+	}
+	virtual bool drawMacintoshText(FontPtr, Buffer *, const char *, int,
+		int, int, int) const { return false; }
+	virtual bool getInterfaceSentenceColor(byte &) const {
+		return false;
+	}
+	virtual bool hasMacintoshInterface() const { return false; }
+	virtual bool setMacintoshPalette(const RGBcolor *, int, int) {
+		return false;
+	}
+	virtual bool getMacintoshPalette(RGBcolor *, int, int) const {
+		return false;
+	}
+
 	virtual void player_keep_walking();
 
 	void playSpeech(Audio::AudioStream *stream);

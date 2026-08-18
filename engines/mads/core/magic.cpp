@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/system.h"
 #include "mads/core/magic.h"
 #include "mads/core/buffer.h"
 #include "mads/core/error.h"
@@ -165,11 +166,11 @@ void magic_map_to_grey_ramp(Palette *pal,
 	for (greys = 0; greys < num_greys; greys++) {
 		for (color = 0; color < 3; color++) {
 			if (magic_color_flags[color]) {
-				shift_sign = (char)magic_color_values[color];
+				shift_sign = (int8)magic_color_values[color];
 				if (shift_sign >= 0) {
 					intensity = grey_intensity[greys] << shift_sign;
 				} else {
-					intensity = grey_intensity[greys] >> abs(shift_sign);
+					intensity = grey_intensity[greys] >> ABS(shift_sign);
 				}
 			} else {
 				intensity = magic_color_values[color];
@@ -179,7 +180,7 @@ void magic_map_to_grey_ramp(Palette *pal,
 	}
 }
 
-void magic_grey_ramp_palette(Palette pal, int num_greys) {
+void magic_grey_ramp_palette(Palette &pal, int num_greys) {
 	int base_grey;
 	int base_color, num_colors;
 	int count;
@@ -196,7 +197,7 @@ void magic_grey_ramp_palette(Palette pal, int num_greys) {
 	}
 }
 
-void magic_fade_to_grey(Palette pal, byte *map_pointer,
+void magic_fade_to_grey(Palette &pal, byte *map_pointer,
 	int base_color, int num_colors,
 	int base_grey, int num_greys,
 	int tick_delay, int steps) {
@@ -240,17 +241,17 @@ void magic_fade_to_grey(Palette pal, byte *map_pointer,
 		index = count - base_color;
 		for (color = 0; color < 3; color++) {
 			if (magic_color_flags[color]) {
-				shift_sign = (char)magic_color_values[color];
+				shift_sign = (int8)magic_color_values[color];
 				if (shift_sign >= 0) {
 					intensity = magic_map[index].intensity << shift_sign;
 				} else {
-					intensity = magic_map[index].intensity >> abs(shift_sign);
+					intensity = magic_map[index].intensity >> ABS(shift_sign);
 				}
 			} else {
 				intensity = magic_color_values[color];
 			}
 			dif = (intensity - pal_color(pal, count, color));
-			*(pal_index + (color << 8) + count) = (byte)abs(dif);
+			*(pal_index + (color << 8) + count) = (byte)ABS(dif);
 			*(signs + (color << 8) + count) = (char)sgn(dif);
 		}
 	}
@@ -271,8 +272,11 @@ void magic_fade_to_grey(Palette pal, byte *map_pointer,
 		}
 
 		mcga_setpal((Palette *)pal);
+		if (g_engine->hasMacintoshInterface())
+			g_system->updateScreen();
 
 		do {
+			g_engine->getScreen()->update();
 			now_timing = timer_read_600();
 		} while (now_timing < (base_timing + tick_delay));
 		base_timing = now_timing;
@@ -337,17 +341,17 @@ void magic_fade_from_grey(RGBcolor *pal, Palette target,
 		index = count - base_color;
 		for (color = 0; color < 3; color++) {
 			if (magic_color_flags[color]) {
-				shift_sign = (char)magic_color_values[color];
+				shift_sign = (int8)magic_color_values[color];
 				if (shift_sign >= 0) {
 					intensity = magic_map[index].intensity << shift_sign;
 				} else {
-					intensity = magic_map[index].intensity >> abs(shift_sign);
+					intensity = magic_map[index].intensity >> ABS(shift_sign);
 				}
 			} else {
 				intensity = magic_color_values[color];
 			}
 			dif = (pal_color(target, count, color) - intensity);
-			*(pal_index + (count * 3) + color) = (byte)abs(dif);
+			*(pal_index + (count * 3) + color) = (byte)ABS(dif);
 			*(signs + (color << 8) + count) = (char)sgn(dif);
 			magic_map[index].accum[color] = 0;
 		}
@@ -369,8 +373,11 @@ void magic_fade_from_grey(RGBcolor *pal, Palette target,
 		}
 
 		mcga_setpal((Palette *)pal);
+		if (g_engine->hasMacintoshInterface())
+			g_system->updateScreen();
 
 		do {
+			g_engine->getScreen()->update();
 			now_timing = timer_read_600();
 		} while (now_timing < (base_timing + tick_delay));
 		base_timing = now_timing;
@@ -382,7 +389,7 @@ done:
 	}
 }
 
-void magic_screen_change_corner(Buffer *new_screen, Palette pal,
+void magic_screen_change_corner(Buffer *new_screen, Palette &pal,
 	int corner_id,
 	int buffer_base_x, int buffer_base_y,
 	int screen_base_x, int screen_base_y,
@@ -434,11 +441,6 @@ void magic_screen_change_corner(Buffer *new_screen, Palette pal,
 
 	delta_x = (start_x ? -1 : 1);
 	delta_y = (start_y ? -1 : 1);
-
-	if (video_mode != mcga_mode) {
-		thru_black = false;
-		set_palette = false;
-	}
 
 	loop_start = (thru_black == MAGIC_THRU_BLACK) ? 0 : 1;
 
@@ -525,7 +527,7 @@ void magic_screen_change_corner(Buffer *new_screen, Palette pal,
 	mouse_show();
 }
 
-void magic_screen_change_edge(Buffer *new_screen, Palette pal,
+void magic_screen_change_edge(Buffer *new_screen, Palette &pal,
 	int edge_id,
 	int buffer_base_x, int buffer_base_y,
 	int screen_base_x, int screen_base_y,
@@ -553,11 +555,6 @@ void magic_screen_change_edge(Buffer *new_screen, Palette pal,
 	}
 
 	delta_x = (start_x ? -1 : 1);
-
-	if (video_mode != mcga_mode) {
-		thru_black = false;
-		set_palette = false;
-	}
 
 	loop_start = (thru_black == MAGIC_THRU_BLACK) ? 0 : 1;
 
@@ -622,7 +619,7 @@ void magic_screen_change_edge(Buffer *new_screen, Palette pal,
 	mouse_show();
 }
 
-void magic_screen_change_circle(Buffer *new_screen, Palette pal,
+void magic_screen_change_circle(Buffer *new_screen, Palette &pal,
 	int inward_flag,
 	int buffer_base_x, int buffer_base_y,
 	int screen_base_x, int screen_base_y,
@@ -671,11 +668,6 @@ void magic_screen_change_circle(Buffer *new_screen, Palette pal,
 	} else {
 		start_radius = 0;
 		delta_radius = pixel_rate;
-	}
-
-	if (video_mode != mcga_mode) {
-		thru_black = false;
-		set_palette = false;
 	}
 
 	loop_start = (thru_black == MAGIC_THRU_BLACK) ? 0 : 1;

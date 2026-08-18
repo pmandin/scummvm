@@ -31,7 +31,6 @@
 #include "mads/core/magic.h"
 #include "mads/core/mcga.h"
 #include "mads/core/tile.h"
-#include "mads/core/ems.h"
 #include "mads/core/keys.h"
 #include "mads/core/timer.h"
 #include "mads/core/sound.h"
@@ -97,16 +96,7 @@ Buffer scr_inter_orig = { 0, 0, NULL }; /* Interface original buffer */
 
 
 int matte_map_work_screen() {
-	int error_flag = false;
-
-	if (work_screen_ems_handle >= 0) {
-		if (ems_mapping_changed) {
-			error_flag = ems_map_buffer(work_screen_ems_handle);
-		}
-		ems_mapping_changed = false;
-	}
-
-	return error_flag;
+	return false;
 }
 
 static void matte_init_series() {
@@ -175,7 +165,6 @@ int matte_load_series(const char *name, int load_flags, int bonus_series_number)
 	}
 
 	if (!found) {
-
 		series = sprite_series_load(name, load_flags);
 		if (series == NULL) {
 			goto done;
@@ -238,12 +227,10 @@ void matte_init(int init_series) {
 int matte_allocate_image() {
 	int result;
 
-	if (image_marker >= IMAGE_LIST_SIZE) {
-		result = -1;
-	} else {
-		result = image_marker++;
-	}
+	if (image_marker >= IMAGE_LIST_SIZE)
+		error("Out of image list space");
 
+	result = image_marker++;
 	return result;
 }
 
@@ -255,7 +242,8 @@ void matte_refresh_work() {
 	image_list[id].segment_id = (byte)-1;
 }
 
-int matte_add_message(FontPtr font, char *text, int x, int y, int message_color, int auto_spacing) {
+int matte_add_message(FontPtr font, char *text, int x, int y,
+		int message_color, int auto_spacing, bool useMacintoshFont) {
 	int message_handle;
 	int count;
 
@@ -267,10 +255,13 @@ int matte_add_message(FontPtr font, char *text, int x, int y, int message_color,
 			message_list[message_handle].y = y;
 			message_list[message_handle].font = font;
 			message_list[message_handle].text = text;
-			message_list[message_handle].xs = font_string_width(font, text, auto_spacing);
+			message_list[message_handle].xs = useMacintoshFont ?
+				g_engine->getMessageTextWidth(font, text, auto_spacing) :
+				font_string_width(font, text, auto_spacing);
 			message_list[message_handle].ys = font ? font->max_y_size : 0;
 			message_list[message_handle].main_color = message_color;
 			message_list[message_handle].spacing = (char)auto_spacing;
+			message_list[message_handle].macintosh_font = useMacintoshFont;
 			message_list[message_handle].status = 1;
 			message_list[message_handle].active = true;
 		}
@@ -662,7 +653,18 @@ void matte_frame(int special_effect, int full_screen) {
 					y -= (sprite->ys - 1);
 				}
 
-				if ((image->depth <= 1) && !matte_guard_depth_0) {
+				if (g_engine->getGameID() == GType_RexNebular) {
+					if (image->depth <= 1)
+						sprite_draw(series_list[image->series_id], image->sprite_id,
+							&scr_orig, x, y);
+					else if (!matte_guard_depth_0)
+						sprite_draw_3d_x16(series_list[image->series_id],
+							image->sprite_id, &scr_orig, &scr_depth, x, y, image->depth);
+					else
+						sprite_draw_3d_big(series_list[image->series_id], image->sprite_id,
+							&scr_orig, &scr_depth, x, y, image->depth, 0, 0);
+
+				} else if ((image->depth <= 1) && !matte_guard_depth_0) {
 					sprite_draw(series_list[image->series_id], image->sprite_id,
 						&scr_orig,
 						x - picture_map.pan_base_x,
@@ -805,6 +807,12 @@ void matte_frame(int special_effect, int full_screen) {
 		if (image_list[id2].series_id == (byte)-1)
 			continue;
 
+		// WORKAROUND: Only allow sprites within limits, avoiding crash in Dragonsphere
+		// Hightower cutscene when attacking monster, and Rex intro
+		const SeriesPtr s = series_list[image_list[id2].series_id];
+		if (image_list[id2].sprite_id > s->num_sprites)
+			continue;
+
 		// Draw the sprite into the work buffer at the appropriate depth
 		if (image_list[id2].scale >= 100) {
 			if (image_list[id2].scale == IMAGE_UNSCALED) {
@@ -816,19 +824,15 @@ void matte_frame(int special_effect, int full_screen) {
 				y = image_list[id2].y - picture_map.pan_y - (sprite->ys - 1);
 			}
 			if ((image_list[id2].depth <= 1) && !matte_guard_depth_0) {
-				// WORKAROUND: Only allow sprites within limits, avoiding crash in Dragonsphere
-				// Hightower cutscene when attacking monster
-				SeriesPtr s = series_list[image_list[id2].series_id];
-				if (image_list[id2].sprite_id <= s->num_sprites)
-					sprite_draw(series_list[image_list[id2].series_id],
-						image_list[id2].sprite_id,
-						&scr_work, x, y);
+				sprite_draw(series_list[image_list[id2].series_id],
+					image_list[id2].sprite_id,
+					&scr_work, x, y);
 			} else {
 				sprite_draw_3d_big(series_list[image_list[id2].series_id],
 					image_list[id2].sprite_id,
 					&scr_work, &scr_depth,
 					x, y,
-					image_list[id2].depth,
+					(int8)image_list[id2].depth,
 					picture_map.pan_offset_x,
 					picture_map.pan_offset_y);
 			}
@@ -838,7 +842,7 @@ void matte_frame(int special_effect, int full_screen) {
 				&scr_work, &scr_depth,
 				image_list[id2].x - picture_map.pan_x,
 				image_list[id2].y - picture_map.pan_y,
-				image_list[id2].depth,
+				(int8)image_list[id2].depth,
 				image_list[id2].scale,
 				picture_map.pan_offset_x,
 				picture_map.pan_offset_y);
@@ -861,9 +865,14 @@ void matte_frame(int special_effect, int full_screen) {
 					high_color,
 					low_color,
 					0);
-				font_write(message->font,
-					&scr_work, message->text,
-					message->x, message->y, message->spacing);
+				if (!message->macintosh_font ||
+						!g_engine->drawMacintoshText(message->font,
+						&scr_work, message->text, message->x, message->y,
+						message->main_color, message->spacing)) {
+					font_write(message->font,
+						&scr_work, message->text,
+						message->x, message->y, message->spacing);
+				}
 			}
 		}
 		message++;

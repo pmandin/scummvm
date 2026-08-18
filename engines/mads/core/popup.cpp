@@ -133,7 +133,10 @@ int popup_create(int horiz_pieces, int x, int y) {
 		box->text_xs = middle_width;
 		box->text_width = horiz_pieces * 2;
 
-		RexNebular::popup_setup_cycle();
+		// Macintosh Rex draws popups in a separate native-style surface. Its
+		// colors must not replace the grayscale ramp used by the game scene.
+		if (g_engine->getPlatform() != Common::kPlatformMacintosh)
+			RexNebular::popup_setup_cycle();
 
 	} else {
 		middle_width = pop_xs(POPUP_UPPER_CENTER) + ((pop_xs(POPUP_TOP) << 1) * horiz_pieces);
@@ -148,6 +151,8 @@ int popup_create(int horiz_pieces, int x, int y) {
 	box->cursor_x = 0;
 	box->text_x = 0;
 	box->text_y = 0;
+	box->ask_x = 0;
+	box->ask_y = 0;
 
 	box->dont_add_space = false;
 
@@ -780,6 +785,8 @@ void popup_destroy() {
 	int x, y;
 	int xs, ys;
 
+	g_engine->onPopupDestroyed();
+
 	if (box->active && box->screen_saved) {
 		// Always restore the screen from scr_main — it spans both the game
 		// area and the interface strip, so no buffer split is required.
@@ -994,6 +1001,17 @@ int popup_ask_string(char *target, int maxlen, int save_screen) {
 
 	if (popup_draw(save_screen, false))
 		goto done;
+	{
+		const int macintoshResult =
+			g_engine->editMacintoshPopup(temp_buf, maxlen);
+		if (macintoshResult >= 0) {
+			error_flag = macintoshResult;
+			popup_esc_key = macintoshResult != 0;
+			popup_destroy();
+			Common::strcpy_s(target, maxlen + 1, temp_buf);
+			return error_flag;
+		}
+	}
 
 	popup_update_ask(temp_buf, maxlen);
 
@@ -2693,7 +2711,8 @@ static int popup_savelist_mouse(PopupItem *item) {
 				}
 			}
 
-			if (mouse_button) update_sign = update_sign << 2;
+			if (mouse_button)
+				update_sign = update_sign * 4;
 
 			if (update_sign && (force_update || (old_status != list->scroll.status))) {
 				list->base_element += update_sign;

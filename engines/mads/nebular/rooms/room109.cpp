@@ -21,7 +21,6 @@
 
 #include "mads/core/config.h"
 #include "mads/core/game.h"
-#include "mads/core/himem.h"
 #include "mads/core/matte.h"
 #include "mads/core/pal.h"
 #include "mads/nebular/global.h"
@@ -106,7 +105,7 @@ static void room_109_init() {
 	pal_change_color(252, 50, 50, 63);
 	pal_change_color(253, 30, 30, 50);
 
-	kernel.quotes = quote_load(0x53, 0x52, 0x54, 0x55, 0x56, 0x57, 0x58, 0);
+	kernel.quotes = quote_load(83, 82, 84, 85, 86, 87, 88, 0);
 	local._eatingFirstFish = (!player.been_here_before) && (previous_room < 110);
 
 	if (local._eatingFirstFish) {
@@ -461,10 +460,6 @@ void room_109_preload() {
 	room_pre_parser_code_pointer = room_109_pre_parser;
 	room_parser_code_pointer = room_109_parser;
 	room_daemon_code_pointer = room_109_daemon;
-
-	for (int count = 0; count < 4; ++count) {
-		himem_preload_series(kernel_full_name(109, 'H', count, nullptr, 0), 3);
-	}
 
 	vocab_make_active(words_dead_purple_monster);
 	vocab_make_active(words_monster_sludge);

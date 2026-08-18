@@ -23,6 +23,7 @@
 #include "graphics/cursorman.h"
 #include "mads/core/general.h"
 #include "mads/core/buffer.h"
+#include "mads/core/env.h"
 #include "mads/core/matte.h"
 #include "mads/core/mouse.h"
 #include "mads/core/timer.h"
@@ -68,7 +69,7 @@ void mouse_hide() {
 }
 
 void mouse_force(int x, int y) {
-	g_system->warpMouse(x, y);
+	g_engine->warpMouse(x, y);
 }
 
 int mouse_in_box(int ul_x, int ul_y, int lr_x, int lr_y) {
@@ -86,6 +87,8 @@ void mouse_init_cycle() {
 }
 
 void mouse_begin_cycle(int double_flag) {
+	env_update_cursor();
+
 	if (double_flag) mouse_check_double();
 
 	mouse_old_x = mouse_x;
@@ -93,7 +96,6 @@ void mouse_begin_cycle(int double_flag) {
 
 	mouse_status = mouse_get_status(&mouse_x, &mouse_y);
 	mouse_clock = timer_read();
-	// mouse_video_mode = mouse_get_video_mode();
 	mouse_stop_stroke = (mouse_latched && (!mouse_status));
 	mouse_start_stroke = (mouse_status && !mouse_stroke_going);
 	mouse_stroke_going = mouse_status;
@@ -124,6 +126,9 @@ void mouse_end_cycle(int double_flag, int timing_flag) {
 }
 
 void mouse_cursor_sprite(SeriesPtr series, int id) {
+	if (env_set_cursor(id))
+		return;
+
 	byte work_area[17][17];
 	Buffer load_buffer = { 17, 17, &work_area[0][0] };
 	int hot_x = 0, hot_y = 0, count;
@@ -244,13 +249,9 @@ void mouse_refresh_done() {
 void mouse_disable_scale() {
 }
 
-void mouse_hard_cursor_mode(int mode, Palette *mypal) {
-}
-
-void mouse_hard_cursor_mode(int mode, Palette mypal) {
+void mouse_hard_cursor_mode(int mode, Palette &mypal) {
+	static const byte RGB[6] = { 0x2d, 0x2d, 0x2d, 0x3f, 0x3f, 0x3f };
+	Common::copy(RGB, RGB + 6, &mypal[253].r);
 }
 
 } // namespace MADS
-
-
-

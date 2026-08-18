@@ -1060,7 +1060,6 @@ static void game_menu_options() {
 		save_config = config_file;
 	} else {
 		write_config_file();
-		//game_load_config_parameters();
 	}
 }
 
@@ -1312,10 +1311,7 @@ static void game_menu_save() {
 					image_marker = 0;
 					first_time = 0;
 
-					if (special_sprite >= 0) {
-						image_list[special_sprite].flags = IMAGE_ERASE;
-					}
-
+					image_list[special_sprite].flags = IMAGE_ERASE;
 					game_menu_changed = false;
 				}
 
@@ -1506,10 +1502,7 @@ static void game_menu_restore() {
 					image_marker = 0;
 					first_time = 0;
 
-					if (special_sprite >= 0) {
-						image_list[special_sprite].flags = IMAGE_ERASE;
-					}
-
+					image_list[special_sprite].flags = IMAGE_ERASE;
 					game_menu_changed = false;
 				}
 
@@ -1733,6 +1726,25 @@ void global_menu_system_shutdown() {
 void global_game_menu() {
 	g_engine->flushKeys();
 
+	// Special handling for direct save/load dialogs when not using the original dialogs. We do it here
+	// before the original code screws up the active screen
+	if (!config_file.original_save_load) {
+		switch (kernel.activate_menu) {
+		case GAME_SAVE_MENU:
+			kernel.activate_menu = GAME_NO_MENU;
+			g_engine->saveGameDialog();
+			return;
+		case GAME_RESTORE_MENU:
+			kernel.activate_menu = GAME_NO_MENU;
+			if (g_engine->loadGameDialog())
+				// Dummy name to flag that load was successful
+				Common::strcpy_s(save_game_buf, "OK");
+			return;
+		default:
+			break;
+		}
+	}
+
 	game_menu_setup();
 
 	game_menu_direct_jump = (kernel.activate_menu != GAME_MAIN_MENU);
@@ -1745,11 +1757,22 @@ void global_game_menu() {
 			break;
 
 		case GAME_SAVE_MENU:
-			game_menu_save();
+			if (config_file.original_save_load) {
+				game_menu_save();
+			} else {
+				kernel.activate_menu = GAME_NO_MENU;
+				g_engine->saveGameDialog();
+			}
 			break;
-
 		case GAME_RESTORE_MENU:
-			game_menu_restore();
+			if (config_file.original_save_load) {
+				game_menu_restore();
+			} else {
+				kernel.activate_menu = GAME_NO_MENU;
+				if (g_engine->loadGameDialog())
+					// Dummy name to flag that load was successful
+					Common::strcpy_s(save_game_buf, "OK");
+			}
 			break;
 
 		case GAME_OPTIONS_MENU:

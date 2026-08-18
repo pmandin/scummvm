@@ -304,7 +304,8 @@ bool Channel::isDirty(Sprite *nextSprite) {
 		isDirtyFlag |= _sprite->_castId != nextSprite->_castId ||
 			_sprite->_ink != nextSprite->_ink || _sprite->_backColor != nextSprite->_backColor ||
 			_sprite->_foreColor != nextSprite->_foreColor ||
-			_sprite->_blendAmount != nextSprite->_blendAmount || _sprite->_thickness != nextSprite->_thickness;
+			_sprite->_blendAmount != nextSprite->_blendAmount ||
+			(_sprite->_thickness & kTThickness) != (nextSprite->_thickness & kTThickness);
 		if (!_sprite->_moveable)
 			isDirtyFlag |= _sprite->getPosition() != nextSprite->getPosition();
 		if (isStretched() && !hasTextCastMember(_sprite))
@@ -728,6 +729,17 @@ bool Channel::canKeepWidget(Sprite *currentSprite, Sprite *nextSprite) {
 // currently, when we are setting hilite, we delete the widget and the re-create it
 // so we may optimize this if this operation takes much time
 void Channel::replaceWidget(CastMemberID previousCastId, bool force) {
+	// An embedded movie is composited via getSubChannels(); its own channels
+	// must not create widgets, or the shared window would draw them at the
+	// embedded movie's native position.
+	if (_score && _score->getMovie() && _score->getMovie()->_isEmbedded) {
+		if (_widget) {
+			delete _widget;
+			_widget = nullptr;
+		}
+		return;
+	}
+
 	// if the castmember is the same, and we are not modifying anything which cannot be handle by channel. Then we don't replace the widget
 	if (!force && canKeepWidget(previousCastId)) {
 		debug(5, "Channel::replaceWidget(): skip deleting %s", _sprite->_castId.asString().c_str());
@@ -774,14 +786,26 @@ bool Channel::updateWidget() {
 		replaceWidget();
 		return true;
 	}
+
+	if (_sprite->_cast && (_sprite->_cast->_type == kCastText) && _sprite->_editable) {
+		if (_widget && _widget->_active) {
+			// small hack: update the castID/scriptID used for keyDown events.
+			// typing happens at the WM level, and this is one of the few places we can intercept it
+			Movie *movie = g_director->getCurrentMovie();
+			movie->_currentKeyDownCastID = _sprite->_castId;
+			movie->_currentKeyDownSpriteScriptID = _sprite->_scriptId;
+			movie->_currentKeyDownSpriteImmediate = _sprite->_immediate;
+		}
+	}
+
 	if (_widget && _widget->needsRedraw()) {
 		if (_sprite->_cast) {
 			_sprite->_cast->updateFromWidget(_widget, _sprite->_editable);
+
 		}
 		_widget->draw();
 		return true;
 	}
-
 	return false;
 }
 

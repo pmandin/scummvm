@@ -22,20 +22,19 @@
 
 #include "base/plugins.h"
 #include "engines/advancedDetector.h"
-
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymapper.h"
 #include "backends/keymapper/standard-actions.h"
-
 #include "common/savefile.h"
 #include "common/str-array.h"
 #include "common/memstream.h"
 #include "common/system.h"
 #include "common/translation.h"
+#include "graphics/scaler.h"
 #include "graphics/surface.h"
-
 #include "mads/detection.h"
 #include "mads/nebular/nebular.h"
+#include "mads/nebular/bonus/bonus.h"
 #include "mads/phantom/phantom.h"
 #include "mads/dragonsphere/dragonsphere.h"
 #include "mads/forest/forest.h"
@@ -117,6 +116,31 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		}
 	},
 
+	{
+		GAMEOPTION_ORIGINAL_MAC_MENUS,
+		{
+			_s("Use original Macintosh menus (experimental)"),
+			_s("Use the Macintosh menu bar and original desktop framing"),
+			"original_mac_menus",
+			false,
+			0,
+			0
+		}
+	},
+
+	{
+		GAMEOPTION_PAS,
+		{
+			_s("Use Pro Audio Spectrum 16 instead of AdLib"),
+			_s("Use the Pro Audio Spectrum 16 driver for music and sound effects "
+				"instead of the AdLib driver."),
+			"use_pas",
+			false,
+			0,
+			0
+		}
+	},
+
 #ifdef USE_TTS
 	{
 		GAMEOPTION_TTS_NARRATOR,
@@ -178,6 +202,7 @@ public:
 	Common::Error createInstance(OSystem *syst, Engine **engine, const MADS::MADSGameDescription *desc) const override;
 	int getMaximumSaveSlot() const override;
 	Common::KeymapArray initKeymaps(const char *target) const override;
+	void getSavegameThumbnail(Graphics::Surface &thumb) override;
 };
 
 bool MADSMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -199,9 +224,12 @@ bool MADS::MADSEngine::hasFeature(EngineFeature f) const {
 }
 
 Common::Error MADSMetaEngine::createInstance(OSystem *syst, Engine **engine, const MADS::MADSGameDescription *desc) const {
-	if (desc->gameID == MADS::GType_RexNebular)
-		*engine = new MADS::RexNebular::RexNebularEngine(syst, desc);
-	else if (desc->gameID == MADS::GType_Phantom)
+	if (desc->gameID == MADS::GType_RexNebular) {
+		if (desc->features & MADS::GF_BONUS_DISK)
+			*engine = new MADS::RexNebular::BonusEngine(syst, desc);
+		else
+			*engine = new MADS::RexNebular::RexNebularEngine(syst, desc);
+	} else if (desc->gameID == MADS::GType_Phantom)
 		*engine = new MADS::Phantom::PhantomEngine(syst, desc);
 	else if (desc->gameID == MADS::GType_Forest)
 		*engine = new MADS::Forest::ForestEngine(syst, desc);
@@ -330,6 +358,18 @@ Common::KeymapArray MADSMetaEngine::initKeymaps(const char *target) const {
 	menuKeyMap->setEnabled(false);
 
 	return keymaps;
+}
+
+void MADSMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
+	const Graphics::Surface &newThumb = MADS::g_engine->getSavegameThumbnail();
+	thumb.free();
+
+	if (newThumb.h == 0)
+		// No provided thumbnail, so just get it from the screen
+		::createThumbnailFromScreen(&thumb);
+	else
+		// Use provided thumbnail
+		thumb.copyFrom(newThumb);
 }
 
 #if PLUGIN_ENABLED_DYNAMIC(MADS)

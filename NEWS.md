@@ -18,6 +18,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Nancy Drew: The Secret of Shadow Ranch.
    - Added support for Nancy Drew: Curse of Blackmoor Manor.
    - Added support for Chamber of the Sci-Mutant Priestess.
+   - Added support for Star Wars: Rebel Assault.
+   - Added support for Star Wars: Rebel Assault II: The Hidden Empire.
 
  General:
    - Optimised mixing and rate converters, for better performance.
@@ -25,6 +27,9 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed bug with inability to specify game overrides for MIDI and MT-32
      devices.
    - Switched Nuked-OPL3 AdLib emulator to Nuked-OPL3-fast fork.
+
+ Asylum:
+   - Fixed missing or incorrect walking sounds in some scenes.
 
  AWE:
    - Fix sound code crash in OpenBSD.
@@ -39,6 +44,9 @@ For a more comprehensive changelog of the latest experimental code, see:
  Freescape:
    - Added support for loading ZX Spectrum games directly from TAP/TZX tape images.
 
+ Hopkins:
+   - Added the missing underwater base 3D first-person shooter.
+
  Kyra:
    - Added support for Korean fan-translation of kyra1 (added in 2026.3.0).
    - Restored non-Korean kyra1 games which got broken ("You're missing the 'KYRA.DAT'
@@ -47,6 +55,11 @@ For a more comprehensive changelog of the latest experimental code, see:
  Lure:
    - Improved character pathfinding.
    - Fix being unable to talk to characters after a one-sided conversation.
+
+ M4:
+   - Numerous Riddle of Master Lu fixes for crashes, missing functionality, and game bugs.
+   - Fixed original game bug where conversations with Wolf could freeze the game.
+   - Added original game cheat codes for bypassing the maze.
 
  MM:
    - Fix multiple M&M1 classic combat crashes.
@@ -66,8 +79,19 @@ For a more comprehensive changelog of the latest experimental code, see:
  SCUMM:
    - Improved cursor scale in early Windows HE games.
 
+ Sherlock:
+   - Vertical movement delta fix for Rose Tattoo.
+
  SLUDGE:
    - Added detection for Shape-Shift Escape.
+
+ TsAGE:
+   - Added General MIDI and MT-32 support to the games
+   - Improved Sound Blaster sample playback
+   - Sound is properly paused when the engine is paused
+
+ Voyeur:
+   - Match original first person movement with mouse when looking at mansion
 
  Atari port:
    - Added integration with nFM library.

@@ -177,11 +177,18 @@ uint CursorManager::resolveNancy10CursorID(CursorType type, int16 itemID, bool s
 	case kMoveDown:             return kNewMoveDown;
 	case kRotateCW:             return kNewRotateCW;
 	case kRotateCCW:            return kNewRotateCCW;
+	case kDialCW:               return kNewDialCW;
+	case kDialCCW:              return kNewDialCCW;
 	case kRotateRight:          return kNewRotateRight;
 	case kRotateLeft:           return kNewRotateLeft;
 	case kInvertedRotateRight:  return kNewInvertedRotateRight;
 	case kInvertedRotateLeft:   return kNewInvertedRotateLeft;
 	case kDragHand:             return kNewDragHand;
+	case kNewDragHandHotspot:   return kNewDragHandHotspot;
+	case kNewUseHand:           return kNewUseHand;
+	case kNewUseHandHotspot:    return kNewUseHandHotspot;
+	case kNewBlank:             return kNewBlank;
+	case kNewRotatePiece:       return kNewRotatePiece;
 	case kPuzzleArrow:          return kNewPuzzleArrow;
 	case kNewPuzzleSlideUp:     return kNewPuzzleSlideUp;
 	case kNewPuzzleSlideDown:   return kNewPuzzleSlideDown;
@@ -233,9 +240,11 @@ uint CursorManager::resolveNancy13CursorID(CursorType type, int16 itemID, bool s
 	case kMoveRight:            sysType = kNancy13MoveRight; break;
 	case kRotateCW:
 	case kRotateRight:
+	case kDialCW:
 	case kInvertedRotateRight:  sysType = kNancy13RotateCW; break;
 	case kRotateCCW:
 	case kRotateLeft:
+	case kDialCCW:
 	case kInvertedRotateLeft:   sysType = kNancy13RotateCCW; break;
 	case kDragHand:
 	case kDropHand:             sysType = kNancy13DropHand; break;
@@ -356,9 +365,11 @@ void CursorManager::setCursor(CursorType type, int16 itemID, bool setFromScript,
 		}
 		break;
 	case kRotateCW:
+	case kDialCW:
 		_curCursorID = kRotateCW;
 		return;
 	case kRotateCCW:
+	case kDialCCW:
 		_curCursorID = kRotateCCW;
 		return;
 	default:

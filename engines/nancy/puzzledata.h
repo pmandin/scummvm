@@ -379,6 +379,42 @@ struct WordFindPuzzleData : public PuzzleData {
 	int16 currentWord = 0;
 };
 
+// Nancy14+ HangmanPuzzle (AR 177). Remembers which words have already been used
+// so a fresh visit picks a new one; once every word has been used the set is
+// cleared and words become available again (matching the original's word-reuse
+// bitmap). Persisted so progress survives leaving the scene and saving.
+struct HangmanData : public PuzzleData {
+	HangmanData() {}
+	virtual ~HangmanData() {}
+
+	static constexpr uint32 getTag() { return MKTAG('H', 'A', 'N', 'G'); }
+	virtual void synchronize(Common::Serializer &ser);
+
+	Common::Array<Common::String> usedWords;
+};
+
+// Nancy12 DrivingPuzzle (AR 160). The car's position, heading and tire state persist
+// across visits to the driving map (driving into a location, then coming back), matching
+// the original's retainState mechanism, which saves the car to globals every frame and
+// restores it on setup. `valid` is false until the car has been driven, so the first
+// visit starts from the header's start position.
+struct DrivingData : public PuzzleData {
+	DrivingData() {}
+	virtual ~DrivingData() {}
+
+	static constexpr uint32 getTag() { return MKTAG('D', 'R', 'V', 'G'); }
+	virtual void synchronize(Common::Serializer &ser);
+
+	bool valid = false;
+	int32 carX = 0;
+	int32 carY = 0;
+	double heading = 0.0;
+	int32 tireDamage = 0;
+	bool flatTire = false;
+	double fuelBurnAccum = 0.0;	// fractional fuel drained but not yet a whole unit
+	bool infiniteFuel = false;	// cheat toggle, kept across building visits
+};
+
 PuzzleData *makePuzzleData(const uint32 tag);
 
 } // End of namespace Nancy

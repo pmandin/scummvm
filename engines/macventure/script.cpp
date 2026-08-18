@@ -475,7 +475,7 @@ bool ScriptEngine::runFunc(EngineFrame *frame) {
 				break;
 			case 0xde: //update screen
 				opdeUPSC(state, frame);
-				break;
+				return true;
 			case 0xdf: //flash main window
 				opdfFMAI(state, frame);
 				return true;
@@ -604,7 +604,7 @@ void ScriptEngine::op8bSGLO(EngineState *state, EngineFrame *frame) {
 
 void ScriptEngine::op8cRAND(EngineState *state, EngineFrame *frame) {
 	int16 max = state->pop();
-	state->push(_engine->randBetween(0, max));
+	state->push(max > 0 ? _engine->randBetween(0, max - 1) : 0);
 }
 
 void ScriptEngine::op8dCOPY(EngineState *state, EngineFrame *frame) {
@@ -966,10 +966,13 @@ bool ScriptEngine::opbcCALL(EngineState *state, EngineFrame *frame, ScriptAsset 
 	ScriptAsset newfun = ScriptAsset(id, _scripts);
 	ScriptAsset current = script;
 	debugC(2, kMVDebugScript, "Call function: %d", id);
+	uint32 depth = frame->scripts.size();
 	if (loadScript(frame, id))
 		return true;
-	frame->scripts.pop_front();
-	script = frame->scripts.front();
+	if (frame->scripts.size() > depth) {
+		frame->scripts.pop_front();
+		script = frame->scripts.front();
+	}
 	debugC(2, kMVDebugScript, "Return from fuction %d", id);
 	return false;
 }
@@ -1147,7 +1150,8 @@ void ScriptEngine::opd8WIN(EngineState *state, EngineFrame *frame) {
 
 void ScriptEngine::opd9SLEEP(EngineState *state, EngineFrame *frame) {
 	int16 ticks = state->pop();
-	g_system->delayMillis((ticks / 60) * 1000);
+	if (ticks > 0)
+		g_system->delayMillis((ticks * 1000) / 60);
 	_engine->preparedToRun();
 }
 
@@ -1170,11 +1174,13 @@ void ScriptEngine::opddRTQ(EngineState *state, EngineFrame *frame) {
 
 void ScriptEngine::opdeUPSC(EngineState *state, EngineFrame *frame) {
 	_engine->updateState(true);
+	_engine->preparedToRun();
 }
 
 void ScriptEngine::opdfFMAI(EngineState *state, EngineFrame *frame) {
 	int16 ticks = state->pop();
-	g_system->delayMillis((ticks / 60) * 1000);
+	if (ticks > 0)
+		g_system->delayMillis((ticks * 1000) / 60);
 	_engine->revert();
 }
 

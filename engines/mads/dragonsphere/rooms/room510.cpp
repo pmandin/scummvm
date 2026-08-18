@@ -236,11 +236,7 @@ static void room_510_init() {
 	if (previous_room != KERNEL_RESTORING_GAME) {
 		local->anim_0_running = false;
 		local->standing_on    = 0;
-		if (global[move_direction_510]) {
-			local->move_counter   = 0;
-		} else {
-			local->move_counter   = 0;
-		}
+		local->move_counter   = 0;
 	}
 
 	ss[fx_n]     = kernel_load_series(kernel_name('b', 0), false);
@@ -310,7 +306,7 @@ static void room_510_init() {
 		kernel_timing_trigger(1, ROOM_510_JUMP);
 		player.commands_allowed = false;
 
-	} else if (previous_room == 509 || previous_room != KERNEL_RESTORING_GAME) {
+	} else if (previous_room != KERNEL_RESTORING_GAME) {
 		aa[0] = kernel_run_animation(kernel_name('p', 1), 0);
 		player.commands_allowed = false;
 		local->anim_0_running   = true;
@@ -447,9 +443,7 @@ static void which_pillar(int *it, int *new_x, int *new_y, int *adjoining) {
 		}
 
 	} else if (*adjoining == 1) {
-		if ((*it == 2) || (*it == 6)) {
-			*adjoining = true;
-		} else {
+		if (!((*it == 2) || (*it == 6))) {
 			*adjoining = false;
 		}
 

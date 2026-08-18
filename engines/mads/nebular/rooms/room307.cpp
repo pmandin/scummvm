@@ -24,6 +24,7 @@
 #include "mads/core/matte.h"
 #include "mads/core/pal.h"
 #include "mads/nebular/global.h"
+#include "mads/nebular/mac_nebular.h"
 #include "mads/nebular/nebular.h"
 #include "mads/nebular/mads/inventory.h"
 #include "mads/nebular/mads/words.h"
@@ -58,7 +59,7 @@ static Scratch local;
 
 static void handleRexDialog(int quote) {
 	char *curQuote = quote_string(kernel.quotes, quote);
-	if (font_string_width(kernel_message_font, curQuote, kernel_message_spacing) > 200) {
+	if (g_engine->getMessageTextWidth(kernel_message_font, curQuote, kernel_message_spacing) > 200) {
 		static char subQuote1[34], subQuote2[34];
 		quote_split_string(curQuote, subQuote1, subQuote2);
 		Common::strcpy_s(local._subQuote2, subQuote2);
@@ -199,15 +200,15 @@ static void setDialogNode(int node) {
 
 static void handlePrisonerEncounter() {
 	switch (player2.words[0]) {
-	case 275:
+	case words_plunger:
 		setDialogNode(5);
 		break;
 
-	case 277:
+	case words_polycement:
 		setDialogNode(4);
 		break;
 
-	case 276:
+	case words_poison_darts:
 		setDialogNode(6);
 		break;
 
@@ -218,39 +219,39 @@ static void handlePrisonerEncounter() {
 
 static void handlePrisonerDialog() {
 	switch (player2.words[0]) {
-	case 0x11A:
+	case words_press:
 		setDialogNode(7);
 		break;
 
-	case 0x11B:
+	case words_pressure_gauge:
 		setDialogNode(8);
 		break;
 
-	case 0x11C:
+	case words_pry:
 		setDialogNode(12);
 		break;
 
-	case 0x11D:
+	case words_raging_river:
 		setDialogNode(9);
 		break;
 
-	case 0x11E:
+	case words_ramolyan_rugby_rats:
 		setDialogNode(10);
 		break;
 
-	case 0x11F:
+	case words_read:
 		setDialogNode(11);
 		break;
 
-	case 0x120:
+	case words_rearview_mirror:
 		setDialogNode(13);
 		break;
 
-	case 0x121:
+	case words_rebreather:
 		setDialogNode(14);
 		break;
 
-	case 0x122:
+	case words_refrigerator:
 		setDialogNode(15);
 		break;
 
@@ -292,13 +293,13 @@ static void room_307_init() {
 
 	kernel_load_variant(1);
 
-	kernel.quotes = quote_load(0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3, 0x10C, 0x104, 0x106, 0x107, 0x108, 0x105,
-		0x109, 0x10A, 0x10B, 0x10D, 0x10E, 0x10F, 0x110, 0x111, 0x112, 0x113, 0x114, 0x115, 0x116, 0x117,
-		0x118, 0x119, 0x11A, 0x11B, 0x11C, 0x11D, 0x11E, 0x11F, 0x120, 0x121, 0x122, 0x123, 0x124, 0x125,
-		0x126, 0x127, 0x128, 0x129, 0x12A, 0x12B, 0x12C, 0x12D, 0x12E, 0x12F, 0x130, 0x131, 0x132, 0x133,
-		0x134, 0x135, 0x136, 0x137, 0x138, 0x139, 0x13A, 0x13B, 0x13C, 0x13D, 0x13E, 0x13F, 0x140, 0x141,
-		0x142, 0x143, 0x144, 0x145, 0x146, 0x147, 0x148, 0x149, 0x14A, 0x14B, 0x14C, 0x14D, 0x14E, 0x14F,
-		0x150, 0x151, 0x152, 0x153, 0);
+	kernel.quotes = quote_load(237, 238, 239, 240, 241, 242, 243, 268, 260, 262, 263, 264, 261,
+		265, 266, 267, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279,
+		280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293,
+		294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307,
+		308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321,
+		322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335,
+		336, 337, 338, 339, 0);
 
 	local._dialog1.setup(0x3F, 0x113, 0x114, 0x115, -1);
 	local._dialog2.setup(0x40, 0x11A, 0x11B, 0x11C, 0x11D, 0x11E, 0x11F, 0x120, 0x121, 0x122, 0);
@@ -362,6 +363,7 @@ static void room_307_init() {
 
 	pal_change_color(252, 63, 30, 20);
 	pal_change_color(253, 45, 15, 12);
+	setMacintoshMessageColors(0, 30, 63, 0, 30, 63);
 
 	section_3_music();
 
