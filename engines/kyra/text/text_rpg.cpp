@@ -163,7 +163,14 @@ void TextDisplayer_rpg::displayText(char *str, ...) {
 	int sdx = _screen->curDimIndex();
 
 	bool sjisTextMode = (_pc98TextMode && (sdx == 3 || sdx == 4 || sdx == 5 || sdx == 15)) ? true : false;
-	Screen::FontId of = (_vm->game() == GI_EOB2 && _vm->gameFlags().platform == Common::kPlatformFMTowns) ? _screen->setFont(Screen::FID_8_FNT) : _screen->_currentFont;
+	Screen::FontId of = _screen->_currentFont;
+
+	if (_vm->game() == GI_EOB2) {
+		if (_vm->gameFlags().platform == Common::kPlatformFMTowns)
+			of = _screen->setFont(Screen::FID_8_FNT);
+		else if (_vm->gameFlags().platform == Common::kPlatformPC98)
+			of = _screen->setFont(Screen::FID_SJIS_FNT);
+	}
 
 	uint16 charsPerLine = (sd->w << 3) / (_screen->getFontWidth() + _screen->_charSpacing);
 
@@ -746,7 +753,7 @@ void TextDisplayer_rpg::textPageBreak() {
 		_screen->fillRect(x, y, x + w - 1, y + _vm->guiSettings()->buttons.height - 1, _textDimData[sdx].color2);
 
 	// Fix border overdraw glitch
-	if (_vm->game() == GI_EOB2 && _isChinese && y + _vm->guiSettings()->buttons.height == 200)
+	if (_vm->game() == GI_EOB2 && (_isChinese || _vm->gameFlags().platform == Common::kPlatformPC98) && y + _vm->guiSettings()->buttons.height == 200)
 		_screen->drawClippedLine(x, 199, x + w - 1, 199, _vm->guiSettings()->colors.frame1);
 
 	clearCurDim();

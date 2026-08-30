@@ -41,6 +41,8 @@
 #endif
 
 #include <features/features_cpu.h> // cpu_features_get_time_usec()
+#include <retro_atomic.h>
+#include <retro_miscellaneous.h> // PATH_MAX_LENGTH
 
 /**
  * Include base/internal_version.h to allow access to SCUMMVM_VERSION.
@@ -53,6 +55,7 @@
 
 #include "backends/platform/libretro/include/libretro-defs.h"
 #include "backends/platform/libretro/include/libretro-core.h"
+#include "backends/platform/libretro/include/libretro-gl-context-handoff.h"
 #include "backends/platform/libretro/include/libretro-threads.h"
 #include "backends/platform/libretro/include/libretro-core-options.h"
 #include "backends/platform/libretro/include/libretro-os.h"
@@ -61,6 +64,10 @@
 
 static struct retro_game_info game_buf;
 static struct retro_game_info *game_buf_ptr;
+/* retro_game_info::path is a frontend-owned pointer; retro_reset() reuses
+ * game_buf_ptr to relaunch, so it must not depend on that pointer staying
+ * valid after the initial retro_load_game() call. Own a stable copy instead. */
+static char game_buf_path[PATH_MAX_LENGTH];
 
 retro_log_printf_t retro_log_cb = NULL;
 retro_input_state_t retro_input_cb = NULL;
@@ -113,10 +120,28 @@ static bool updating_variables = false;
 #ifdef USE_OPENGL
 static struct retro_hw_render_callback hw_render;
 
+/* Set on the frontend thread by context_reset(), consumed on the emulation
+ * thread by retro_consume_context_reset(). */
+static retro_atomic_int_t context_reset_pending = RETRO_ATOMIC_INT_INITIALIZER(0);
+
+void retro_set_context_reset_pending(void) {
+	retro_atomic_store_release_int(&context_reset_pending, 1);
+}
+
+bool retro_consume_context_reset(void) {
+	if (!retro_atomic_load_acquire_int(&context_reset_pending))
+		return false;
+	retro_atomic_store_release_int(&context_reset_pending, 0);
+	return true;
+}
+
 static void context_reset(void) {
 	retro_log_cb(RETRO_LOG_DEBUG, "HW context reset\n");
+	/* The reset re-creates the GL context and reloads all GL entry points,
+	   which must happen on the emulation thread where the context is current.
+	   Defer it instead of calling it here on the frontend thread. */
 	if (retro_emu_thread_started())
-		LIBRETRO_G_SYSTEM->resetGraphicsContext();
+		retro_set_context_reset_pending();
 }
 
 static void context_destroy(void) {
@@ -142,14 +167,27 @@ static void retro_gui_res_reset() {
 }
 #endif
 
+/* Single-producer / single-consumer ring. The producer is ScummVM's MIDI
+   driver, the consumer is retro_midi_queue_drain() in retro_run(). */
 static retro_midi_event_t midi_queue[MIDI_QUEUE_SIZE];
-static volatile uint32 midi_head = 0; /* producer writes */
-static volatile uint32 midi_tail = 0; /* consumer writes */
+static retro_atomic_int_t midi_head = RETRO_ATOMIC_INT_INITIALIZER(0); /* published by producer */
+static retro_atomic_int_t midi_tail = RETRO_ATOMIC_INT_INITIALIZER(0); /* published by consumer */
 
 static void setup_hw_rendering(void) {
 
 	enum retro_pixel_format pixel_fmt;
 #ifdef USE_OPENGL
+	/* ScummVM issues its GL calls from the emulation thread, so the frontend's
+	   context has to travel with control at every thread switch. Without a
+	   backend for that handoff those calls would land on a thread with no
+	   current context, so stay on the software renderer instead. */
+	if ((video_hw_mode & VIDEO_GRAPHIC_MODE_REQUEST_HW) && !retro_gl_context_handoff_available()) {
+		if (retro_log_cb)
+			retro_log_cb(RETRO_LOG_WARN, "No GL context handoff backend available, falling back to software.\n");
+		retro_osd_notification("HW rendering unavailable on this platform.");
+		video_hw_mode = VIDEO_GRAPHIC_MODE_REQUEST_SW;
+	}
+
 	if (video_hw_mode & VIDEO_GRAPHIC_MODE_REQUEST_HW) {
 		pixel_fmt = RETRO_PIXEL_FORMAT_XRGB8888;
 		if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixel_fmt) && retro_log_cb)
@@ -568,7 +606,7 @@ static void update_variables(void) {
 		av_status |= AUDIO_STATUS_UPDATE_LATENCY;
 		audio_buffer_init(sample_rate, (uint16) frame_rate);
 		if (g_system)
-			av_status |= (AV_STATUS_UPDATE_AV_INFO & AV_STATUS_RESET_PENDING);
+			av_status |= (AV_STATUS_UPDATE_AV_INFO | AV_STATUS_RESET_PENDING);
 	}
 
 	if (video_hw_mode & VIDEO_GRAPHIC_MODE_RESET_PENDING) {
@@ -692,6 +730,28 @@ int retro_get_input_device(void) {
 	return retro_input_device;
 }
 
+/* Bounds-checked append to cmd_params: silently drops parameters past the
+ * fixed-size array capacity/width instead of overflowing them. */
+static bool append_command_param(const char *param) {
+	if (cmd_params_num >= ARRAYSIZE(cmd_params)) {
+		if (retro_log_cb)
+			retro_log_cb(RETRO_LOG_ERROR, "[scummvm] Too many command line parameters, ignoring '%s'.\n", param);
+		return false;
+	}
+
+	size_t param_len = strlen(param);
+
+	if (param_len >= sizeof(cmd_params[cmd_params_num])) {
+		if (retro_log_cb)
+			retro_log_cb(RETRO_LOG_ERROR, "[scummvm] Command line parameter too long, ignoring '%s'.\n", param);
+		return false;
+	}
+
+	memcpy(cmd_params[cmd_params_num], param, param_len + 1);
+	cmd_params_num++;
+	return true;
+}
+
 void parse_command_params(char *cmdline) {
 	int j = 0;
 	int cmdlen = strlen(cmdline);
@@ -709,8 +769,7 @@ void parse_command_params(char *cmdline) {
 		case '\"':
 			if (quotes) {
 				cmdline[i] = '\0';
-				strcpy(cmd_params[cmd_params_num], cmdline + j);
-				cmd_params_num++;
+				append_command_param(cmdline + j);
 				quotes = false;
 			} else
 				quotes = true;
@@ -721,8 +780,7 @@ void parse_command_params(char *cmdline) {
 			if (!quotes) {
 				if (i != j && !quotes) {
 					cmdline[i] = '\0';
-					strcpy(cmd_params[cmd_params_num], cmdline + j);
-					cmd_params_num++;
+					append_command_param(cmdline + j);
 				}
 				j = i + 1;
 			}
@@ -910,16 +968,22 @@ const char *retro_get_playlist_dir(void) {
 }
 
 void retro_midi_queue_push(uint8 byte, uint32 delta_us) {
-	uint32 next = (midi_head + 1) & (MIDI_QUEUE_SIZE - 1);
+	/* The producer owns head, so it can read it plainly; tail needs an
+	   acquire load to pair with the consumer's release below. */
+	int head = retro_atomic_load_acquire_int(&midi_head);
+	int next = (head + 1) & (MIDI_QUEUE_SIZE - 1);
 
-	if (next == midi_tail) {
+	if (next == retro_atomic_load_acquire_int(&midi_tail)) {
 		/* Queue full → drop event (acceptable for MIDI) */
 		return;
 	}
 
-	midi_queue[midi_head].byte     = byte;
-	midi_queue[midi_head].delta_us = delta_us;
-	midi_head = next;
+	midi_queue[head].byte     = byte;
+	midi_queue[head].delta_us = delta_us;
+
+	/* Release: the two stores above are visible to any thread that
+	   acquire-loads this index. */
+	retro_atomic_store_release_int(&midi_head, next);
 }
 
 static void retro_midi_queue_drain(void) {
@@ -931,17 +995,47 @@ static void retro_midi_queue_drain(void) {
 		return;
 
 	bool did_write = false;
+	int tail = retro_atomic_load_acquire_int(&midi_tail);
+	int head = retro_atomic_load_acquire_int(&midi_head);
 
-	while (midi_tail != midi_head) {
-		retro_midi_event_t ev = midi_queue[midi_tail];
-		midi_tail = (midi_tail + 1) & (MIDI_QUEUE_SIZE - 1);
+	while (tail != head) {
+		retro_midi_event_t ev = midi_queue[tail];
+		tail = (tail + 1) & (MIDI_QUEUE_SIZE - 1);
 
 		retro_midi_interface->write(ev.byte, ev.delta_us);
 		did_write = true;
 	}
 
-	if (did_write)
+	if (did_write) {
+		/* Publish once: the producer only needs to know the slots are
+		   free, not how far along the drain got. */
+		retro_atomic_store_release_int(&midi_tail, tail);
 		retro_midi_interface->flush();
+	}
+}
+
+/* Authorized storage roots (e.g. Android SAF trees) as granted through the
+ * frontend. */
+static void refresh_authorized_locations(void) {
+	LibRetroFilesystemNode::clearAuthorizedLocations();
+
+	struct retro_vfs_authorized_locations locations;
+	memset(&locations, 0, sizeof(locations));
+
+	if (environ_cb && environ_cb(RETRO_ENVIRONMENT_GET_VFS_AUTHORIZED_LOCATIONS, &locations) &&
+			locations.locations) {
+		if (retro_log_cb)
+			retro_log_cb(RETRO_LOG_DEBUG, "SAF locations count: %zu\n", locations.count);
+		for (size_t i = 0; i < locations.count; ++i) {
+			const char *path = locations.locations[i].path;
+			const char *label = locations.locations[i].label;
+
+			if (path && *path)
+				LibRetroFilesystemNode::addAuthorizedLocation(
+						Common::String(path),
+						label ? Common::String(label) : Common::String());
+		}
+	}
 }
 
 void retro_init(void) {
@@ -950,6 +1044,9 @@ void retro_init(void) {
 		retro_log_cb = log.log;
 	else
 		retro_log_cb = NULL;
+
+	if (retro_log_cb)
+		retro_log_cb(RETRO_LOG_DEBUG, "ScummVM core version: %s\n", __GIT_VERSION);
 
 	struct retro_vfs_interface_info vfs_iface;
 	vfs_iface.required_interface_version = STAT64_REQUIRED_VFS_VERSION;
@@ -963,34 +1060,13 @@ void retro_init(void) {
 		dirent_vfs_init(&vfs_iface);
 	}
 
-	LibRetroFilesystemNode::clearAuthorizedLocations();
-
-	{
-		struct retro_vfs_authorized_locations locations;
-		memset(&locations, 0, sizeof(locations));
-
-		if (environ_cb && environ_cb(RETRO_ENVIRONMENT_GET_VFS_AUTHORIZED_LOCATIONS, &locations) &&
-				locations.locations) {
-			for (size_t i = 0; i < locations.count; ++i) {
-				const char *path = locations.locations[i].path;
-				const char *label = locations.locations[i].label;
-
-				if (path && *path)
-					LibRetroFilesystemNode::addAuthorizedLocation(
-							Common::String(path),
-							label ? Common::String(label) : Common::String());
-			}
-		}
-	}
-
-	if (retro_log_cb)
-		retro_log_cb(RETRO_LOG_DEBUG, "ScummVM core version: %s\n", __GIT_VERSION);
+	refresh_authorized_locations();
 
 	update_variables();
 
 	if (retro_setting_get_browsing_mode_authorized() && !LibRetroFilesystemNode::hasAuthorizedLocations()) {
 		if (retro_log_cb)
-			retro_log_cb(RETRO_LOG_WARN, "[scummvm] Browsing mode set to 'Authorized storage' but no authorized locations are available; falling back to local filesystem. Authorize folders from the frontend and restart the core.\n");
+			retro_log_cb(RETRO_LOG_WARN, "Browsing mode set to 'Authorized storage' but no authorized locations are available; falling back to local filesystem. Authorize folders from the frontend and restart the core.\n");
 		retro_osd_notification("No authorized storage available, using local filesystem.");
 	}
 
@@ -1070,14 +1146,20 @@ bool retro_load_game(const struct retro_game_info *game) {
 	}
 
 #ifdef LIBRETRO_DEBUG
-	char debug_buf [20];
-	sprintf(debug_buf, "--debuglevel=11");
+	char debug_buf[] = "--debuglevel=11";
 	parse_command_params(debug_buf);
 #endif
 
 	if (game) {
 		game_buf_ptr = &game_buf;
 		memcpy(game_buf_ptr, game, sizeof(retro_game_info));
+		if (game->path) {
+			strncpy(game_buf_path, game->path, sizeof(game_buf_path) - 1);
+			game_buf_path[sizeof(game_buf_path) - 1] = '\0';
+		} else {
+			game_buf_path[0] = '\0';
+		}
+		game_buf.path = game_buf_path;
 		// Retrieve the game path.
 		Common::FSNode detect_target = Common::FSNode(game->path);
 		Common::FSNode parent_dir = detect_target.getParent();
@@ -1132,15 +1214,15 @@ bool retro_load_game(const struct retro_game_info *game) {
 		// Preliminary game scan results
 		switch (test_game_status) {
 		case TEST_GAME_OK_ID_FOUND:
-			sprintf(buffer, "-p \"%s\" %s", parent_dir.getPath().toString().c_str(), target_id);
+			snprintf(buffer, sizeof(buffer), "-p \"%s\" %s", parent_dir.getPath().toString().c_str(), target_id);
 			retro_log_cb(RETRO_LOG_DEBUG, "[scummvm] launch via target id and game dir\n");
 			break;
 		case TEST_GAME_OK_TARGET_FOUND:
-			sprintf(buffer, "%s", target_id);
+			snprintf(buffer, sizeof(buffer), "%s", target_id);
 			retro_log_cb(RETRO_LOG_DEBUG, "[scummvm] launch via target id and scummvm.ini\n");
 			break;
 		case TEST_GAME_OK_ID_AUTODETECTED:
-			sprintf(buffer, "-p \"%s\" --auto-detect", parent_dir.getPath().toString().c_str());
+			snprintf(buffer, sizeof(buffer), "-p \"%s\" --auto-detect", parent_dir.getPath().toString().c_str());
 			retro_log_cb(RETRO_LOG_DEBUG, "[scummvm] launch via autodetect\n");
 			break;
 		case TEST_GAME_KO_MULTIPLE_RESULTS:
@@ -1175,6 +1257,12 @@ void retro_run(void) {
 	except in case of core options reset to defaults, for which the following call is needed*/
 	retro_update_options_display();
 
+	if (av_status & AV_STATUS_RESET_PENDING) {
+		av_status &= ~AV_STATUS_RESET_PENDING;
+		retro_reset();
+		return;
+	}
+
 #ifdef USE_HIGHRES
 	if (av_status & AV_STATUS_UPDATE_GUI) {
 		retro_gui_res_reset();
@@ -1203,12 +1291,6 @@ void retro_run(void) {
 		/* This can only be called from within retro_run() */
 		environ_cb(RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY, &audio_latency);
 		av_status &= ~AUDIO_STATUS_UPDATE_LATENCY;
-	}
-
-	if (av_status & AV_STATUS_RESET_PENDING) {
-		av_status &= ~AV_STATUS_RESET_PENDING;
-		retro_reset();
-		return;
 	}
 
 	/* Setting RA's video or audio driver to null will disable video/audio bits */
@@ -1255,7 +1337,9 @@ void retro_unload_game(void) {
 void retro_reset(void) {
 	close_emu_thread();
 	init_command_params();
-	retro_load_game(game_buf_ptr);
+	refresh_authorized_locations();
+	if (!retro_load_game(game_buf_ptr) && retro_log_cb)
+		retro_log_cb(RETRO_LOG_ERROR, "[scummvm] Failed to reinitialize emulation thread on reset.\n");
 	LIBRETRO_G_SYSTEM->resetQuit();
 }
 

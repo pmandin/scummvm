@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2026.3.1git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2026-08-17 13:00+0000\n"
+"POT-Creation-Date: 2026-08-26 13:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -128,7 +128,7 @@ msgstr ""
 #: backends/platform/android/options.cpp:293
 #: backends/platform/wii/options.cpp:47 engines/asylum/asylum.cpp:204
 #: engines/buried/saveload.cpp:83 engines/cine/saveload.cpp:857
-#: engines/colony/intro.cpp:197 engines/director/lingo/xlibs/j/jitdraw3.cpp:123
+#: engines/colony/intro.cpp:196 engines/director/lingo/xlibs/j/jitdraw3.cpp:123
 #: engines/drascula/saveload.cpp:51 engines/grim/inputdialog.cpp:84
 #: engines/hypno/metaengine.cpp:282 engines/mohawk/myst_stacks/menu.cpp:283
 #: engines/mohawk/myst_stacks/menu.cpp:300
@@ -323,12 +323,12 @@ msgstr ""
 #: gui/launcher.cpp:534 gui/launcher.cpp:1970 gui/options.cpp:3500
 #: gui/options.cpp:3874 base/main.cpp:608
 #: backends/events/default/default-events.cpp:207 engines/buried/buried.cpp:598
-#: engines/chamber/metaengine.cpp:95 engines/colony/intro.cpp:195
+#: engines/chamber/metaengine.cpp:95 engines/colony/intro.cpp:194
 #: engines/director/events.cpp:122
 #: engines/director/lingo/xlibs/j/jitdraw3.cpp:139
 #: engines/efh/metaengine.cpp:362 engines/grim/grim.cpp:366
-#: engines/hypno/metaengine.cpp:249 engines/kyra/gui/saveload_eob.cpp:611
-#: engines/kyra/gui/saveload_eob.cpp:644 engines/lab/metaengine.cpp:197
+#: engines/hypno/metaengine.cpp:249 engines/kyra/gui/saveload_eob.cpp:633
+#: engines/kyra/gui/saveload_eob.cpp:666 engines/lab/metaengine.cpp:197
 #: engines/mm/mm1/metaengine.cpp:54 engines/parallaction/metaengine.cpp:169
 #: engines/sci/graphics/controls32.cpp:937 engines/scumm/scumm.cpp:4511
 #: engines/sherlock/metaengine.cpp:638 engines/sherlock/metaengine.cpp:1244
@@ -343,12 +343,12 @@ msgstr ""
 #: gui/fluidsynth-dialog.cpp:210 gui/launcher.cpp:428 gui/launcher.cpp:457
 #: gui/launcher.cpp:534 gui/launcher.cpp:1971 gui/options.cpp:3500
 #: gui/options.cpp:3874 engines/buried/buried.cpp:598
-#: engines/chamber/metaengine.cpp:101 engines/colony/intro.cpp:196
+#: engines/chamber/metaengine.cpp:101 engines/colony/intro.cpp:195
 #: engines/director/events.cpp:122
 #: engines/director/lingo/xlibs/j/jitdraw3.cpp:139
 #: engines/efh/metaengine.cpp:368 engines/grim/grim.cpp:366
-#: engines/hypno/metaengine.cpp:255 engines/kyra/gui/saveload_eob.cpp:611
-#: engines/kyra/gui/saveload_eob.cpp:644 engines/lab/metaengine.cpp:204
+#: engines/hypno/metaengine.cpp:255 engines/kyra/gui/saveload_eob.cpp:633
+#: engines/kyra/gui/saveload_eob.cpp:666 engines/lab/metaengine.cpp:204
 #: engines/mm/mm1/metaengine.cpp:52 engines/parallaction/metaengine.cpp:175
 #: engines/sci/graphics/controls32.cpp:937 engines/scumm/scumm.cpp:4511
 #: engines/sherlock/metaengine.cpp:643 engines/sherlock/metaengine.cpp:1250
@@ -3214,10 +3214,10 @@ msgstr ""
 #: backends/events/default/default-events.cpp:231
 #: backends/events/default/default-events.cpp:372
 #: engines/adl/metaengine.cpp:352 engines/buried/metaengine.cpp:154
-#: engines/chamber/metaengine.cpp:88 engines/colony/intro.cpp:247
-#: engines/colony/intro.cpp:1339 engines/drascula/metaengine.cpp:304
-#: engines/hdb/metaengine.cpp:275 engines/hypno/metaengine.cpp:308
-#: engines/lab/metaengine.cpp:172 engines/mohawk/myst_stacks/menu.cpp:317
+#: engines/chamber/metaengine.cpp:88 engines/colony/intro.cpp:246
+#: engines/drascula/metaengine.cpp:304 engines/hdb/metaengine.cpp:275
+#: engines/hypno/metaengine.cpp:308 engines/lab/metaengine.cpp:172
+#: engines/mohawk/myst_stacks/menu.cpp:317
 #: engines/mohawk/riven_stacks/aspit.cpp:454
 #: engines/neverhood/metaengine.cpp:200 engines/saga/metaengine.cpp:449
 #: engines/scumm/help.cpp:84 engines/scumm/help.cpp:86
@@ -3307,32 +3307,36 @@ msgid "ScummVM Web server"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:52
-msgid "Configuration file could not be parsed"
+msgid "Default voice"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:53
-msgid "Run a game"
+msgid "Configuration file could not be parsed"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:54
-msgid "Search a game"
+msgid "Run a game"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:55
+msgid "Search a game"
+msgstr ""
+
+#: dists/android.strings.xml.cpp:56
 msgid ""
 "No games (yet)\n"
 "Open ScummVM and add your games here."
 msgstr ""
 
-#: dists/android.strings.xml.cpp:56
+#: dists/android.strings.xml.cpp:57
 msgid "Game icon"
 msgstr ""
 
-#: dists/android.strings.xml.cpp:57
+#: dists/android.strings.xml.cpp:58
 msgid "Shortcut label"
 msgstr ""
 
-#: dists/android.strings.xml.cpp:58
+#: dists/android.strings.xml.cpp:59
 msgid "Shortcut icon"
 msgstr ""
 
@@ -3649,11 +3653,11 @@ msgstr ""
 #: engines/draci/metaengine.cpp:200 engines/fool/metaengine.cpp:137
 #: engines/groovie/metaengine.cpp:205 engines/hdb/metaengine.cpp:207
 #: engines/hopkins/metaengine.cpp:213 engines/hugo/metaengine.cpp:134
-#: engines/illusions/metaengine.cpp:94 engines/kyra/engine/eobcommon.cpp:369
+#: engines/illusions/metaengine.cpp:94 engines/kyra/engine/eobcommon.cpp:377
 #: engines/kyra/engine/lol.cpp:505 engines/lure/metaengine.cpp:177
 #: engines/made/metaengine.cpp:137 engines/mads/metaengine.cpp:258
 #: engines/mm/metaengine.cpp:186 engines/mtropolis/metaengine.cpp:161
-#: engines/nancy/input.cpp:181 engines/parallaction/metaengine.cpp:138
+#: engines/nancy/input.cpp:189 engines/parallaction/metaengine.cpp:138
 #: engines/saga/metaengine.cpp:278 engines/sludge/keymapper_tables.h:561
 #: engines/sludge/keymapper_tables.h:580 engines/stark/metaengine.cpp:189
 #: engines/sword1/metaengine.cpp:271 engines/tinsel/metaengine.cpp:246
@@ -3683,10 +3687,10 @@ msgstr ""
 #: engines/draci/metaengine.cpp:206 engines/fool/metaengine.cpp:148
 #: engines/groovie/metaengine.cpp:211 engines/hopkins/metaengine.cpp:219
 #: engines/hugo/metaengine.cpp:141 engines/illusions/metaengine.cpp:101
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:506
+#: engines/kyra/engine/eobcommon.cpp:378 engines/kyra/engine/lol.cpp:506
 #: engines/lure/metaengine.cpp:183 engines/made/metaengine.cpp:144
 #: engines/mads/metaengine.cpp:264 engines/mm/metaengine.cpp:192
-#: engines/mtropolis/metaengine.cpp:167 engines/nancy/input.cpp:188
+#: engines/mtropolis/metaengine.cpp:167 engines/nancy/input.cpp:196
 #: engines/parallaction/metaengine.cpp:144 engines/saga/metaengine.cpp:289
 #: engines/sludge/keymapper_tables.h:567 engines/sludge/keymapper_tables.h:586
 #: engines/stark/metaengine.cpp:195 engines/sword1/metaengine.cpp:277
@@ -4746,12 +4750,12 @@ msgstr ""
 msgid "Magnify Mode Off"
 msgstr ""
 
-#: backends/platform/android/android.cpp:930
+#: backends/platform/android/android.cpp:944
 #: backends/platform/ios7/ios7_osys_misc.mm:246
 msgid "Getting help"
 msgstr ""
 
-#: backends/platform/android/android.cpp:933
+#: backends/platform/android/android.cpp:947
 msgid ""
 "## Help, I'm lost!\n"
 "\n"
@@ -4773,13 +4777,13 @@ msgid ""
 "checking out a game walkthrough. Good luck!\n"
 msgstr ""
 
-#: backends/platform/android/android.cpp:942
+#: backends/platform/android/android.cpp:956
 #: backends/platform/ios7/ios7_osys_misc.mm:258
 #: backends/platform/ios7/ios7_osys_misc.mm:354
 msgid "Touch Controls"
 msgstr ""
 
-#: backends/platform/android/android.cpp:945
+#: backends/platform/android/android.cpp:959
 msgid ""
 "## Touch control modes\n"
 "The touch control mode can be changed by tapping or clicking on the "
@@ -4848,13 +4852,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: backends/platform/android/android.cpp:1001
+#: backends/platform/android/android.cpp:1015
 #: backends/platform/ios7/ios7_osys_misc.mm:333
 #: backends/platform/ios7/ios7_osys_misc.mm:377
 msgid "Adding Games"
 msgstr ""
 
-#: backends/platform/android/android.cpp:1004
+#: backends/platform/android/android.cpp:1018
 msgid ""
 "## Adding Games \n"
 "\n"
@@ -5334,11 +5338,11 @@ msgstr ""
 msgid "Select Playlist directory"
 msgstr ""
 
-#: backends/platform/libretro/src/libretro-os-utils.cpp:247
+#: backends/platform/libretro/src/libretro-os-utils.cpp:245
 msgid "Libretro playlist"
 msgstr ""
 
-#: backends/platform/libretro/src/libretro-os-utils.cpp:250
+#: backends/platform/libretro/src/libretro-os-utils.cpp:248
 msgid ""
 "## Libretro playlists for ScummVM core\n"
 "Playlists used in Libretro frontends (e.g. Retroarch) are plain text lists "
@@ -5354,11 +5358,11 @@ msgid ""
 "The core also supports dedicated per game **hook** plain text files with **."
 msgstr ""
 
-#: backends/platform/libretro/src/libretro-os-utils.cpp:284
+#: backends/platform/libretro/src/libretro-os-utils.cpp:282
 msgid "Android storage"
 msgstr ""
 
-#: backends/platform/libretro/src/libretro-os-utils.cpp:287
+#: backends/platform/libretro/src/libretro-os-utils.cpp:285
 msgid ""
 "## Android storage access\n"
 "On Android modern versions apps can only access folders that have been "
@@ -5804,7 +5808,7 @@ msgstr ""
 #: engines/asylum/metaengine.cpp:198 engines/cine/metaengine.cpp:377
 #: engines/efh/metaengine.cpp:286 engines/hdb/metaengine.cpp:213
 #: engines/hypno/metaengine.cpp:363 engines/hypno/metaengine.cpp:411
-#: engines/nancy/input.cpp:195 engines/tinsel/metaengine.cpp:263
+#: engines/nancy/input.cpp:203 engines/tinsel/metaengine.cpp:263
 #: engines/titanic/metaengine.cpp:324 engines/ultima/ultima8/metaengine.cpp:52
 msgid "Move up"
 msgstr ""
@@ -5814,7 +5818,7 @@ msgstr ""
 #: engines/asylum/metaengine.cpp:205 engines/cine/metaengine.cpp:384
 #: engines/efh/metaengine.cpp:293 engines/hdb/metaengine.cpp:219
 #: engines/hypno/metaengine.cpp:351 engines/hypno/metaengine.cpp:399
-#: engines/nancy/input.cpp:201 engines/tinsel/metaengine.cpp:269
+#: engines/nancy/input.cpp:209 engines/tinsel/metaengine.cpp:269
 #: engines/titanic/metaengine.cpp:330 engines/ultima/ultima8/metaengine.cpp:53
 msgid "Move down"
 msgstr ""
@@ -5825,8 +5829,8 @@ msgstr ""
 #: engines/asylum/metaengine.cpp:212 engines/cine/metaengine.cpp:391
 #: engines/efh/metaengine.cpp:300 engines/hdb/metaengine.cpp:225
 #: engines/hypno/metaengine.cpp:345 engines/hypno/metaengine.cpp:393
-#: engines/kyra/engine/eobcommon.cpp:373 engines/lure/metaengine.cpp:218
-#: engines/nancy/input.cpp:207 engines/tinsel/metaengine.cpp:275
+#: engines/kyra/engine/eobcommon.cpp:381 engines/lure/metaengine.cpp:218
+#: engines/nancy/input.cpp:215 engines/tinsel/metaengine.cpp:275
 #: engines/titanic/metaengine.cpp:312 engines/titanic/metaengine.cpp:390
 #: engines/ultima/ultima8/metaengine.cpp:54
 msgid "Move left"
@@ -5838,8 +5842,8 @@ msgstr ""
 #: engines/asylum/metaengine.cpp:219 engines/cine/metaengine.cpp:398
 #: engines/efh/metaengine.cpp:307 engines/hdb/metaengine.cpp:231
 #: engines/hypno/metaengine.cpp:357 engines/hypno/metaengine.cpp:405
-#: engines/kyra/engine/eobcommon.cpp:374 engines/lure/metaengine.cpp:226
-#: engines/nancy/input.cpp:213 engines/tinsel/metaengine.cpp:281
+#: engines/kyra/engine/eobcommon.cpp:382 engines/lure/metaengine.cpp:226
+#: engines/nancy/input.cpp:221 engines/tinsel/metaengine.cpp:281
 #: engines/titanic/metaengine.cpp:318 engines/titanic/metaengine.cpp:396
 #: engines/ultima/ultima8/metaengine.cpp:55
 msgid "Move right"
@@ -6360,7 +6364,7 @@ msgid "Turn backward"
 msgstr ""
 
 #: engines/agos/metaengine.cpp:228 engines/dm/metaengine.cpp:132
-#: engines/hopkins/metaengine.cpp:269 engines/kyra/engine/eobcommon.cpp:375
+#: engines/hopkins/metaengine.cpp:269 engines/kyra/engine/eobcommon.cpp:383
 #: engines/kyra/engine/lol.cpp:517 engines/lab/metaengine.cpp:257
 #: engines/mm/mm1/metaengine.cpp:102 engines/mohawk/riven.cpp:901
 #: engines/pegasus/pegasus.cpp:2740 engines/twine/metaengine.cpp:353
@@ -6375,7 +6379,7 @@ msgid "Turn left"
 msgstr ""
 
 #: engines/agos/metaengine.cpp:234 engines/dm/metaengine.cpp:152
-#: engines/hopkins/metaengine.cpp:275 engines/kyra/engine/eobcommon.cpp:376
+#: engines/hopkins/metaengine.cpp:275 engines/kyra/engine/eobcommon.cpp:384
 #: engines/kyra/engine/lol.cpp:518 engines/lab/metaengine.cpp:271
 #: engines/mm/mm1/metaengine.cpp:103 engines/mohawk/riven.cpp:907
 #: engines/pegasus/pegasus.cpp:2747 engines/twine/metaengine.cpp:346
@@ -6832,7 +6836,7 @@ msgstr ""
 #: engines/bladerunner/detection_tables.h:101
 #: engines/bladerunner/detection_tables.h:205
 #: engines/bladerunner/detection_tables.h:216
-#: engines/kyra/detection_tables.h:77
+#: engines/kyra/detection_tables.h:89
 msgid ""
 "The fan translator does not wish his translation to be incorporated into "
 "ScummVM."
@@ -7209,7 +7213,7 @@ msgstr ""
 
 #: engines/buried/metaengine.cpp:218 engines/colony/metaengine.cpp:110
 #: engines/dm/metaengine.cpp:142 engines/hopkins/metaengine.cpp:257
-#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:513
+#: engines/kyra/engine/eobcommon.cpp:379 engines/kyra/engine/lol.cpp:513
 #: engines/mohawk/riven.cpp:881 engines/titanic/metaengine.cpp:336
 #: engines/titanic/metaengine.cpp:378 engines/twine/metaengine.cpp:332
 #: engines/ultima/ultima0/metaengine.cpp:78
@@ -7507,19 +7511,19 @@ msgid ""
 "beginning using new savegames."
 msgstr ""
 
-#: engines/colony/intro.cpp:211
+#: engines/colony/intro.cpp:210
 msgid "Save this game?"
 msgstr ""
 
-#: engines/colony/intro.cpp:245 engines/colony/intro.cpp:1340
+#: engines/colony/intro.cpp:244
 msgid "New Game"
 msgstr ""
 
-#: engines/colony/intro.cpp:246 engines/colony/intro.cpp:1338
+#: engines/colony/intro.cpp:245
 msgid "Load Game"
 msgstr ""
 
-#: engines/colony/intro.cpp:1315 engines/colony/intro.cpp:1340
+#: engines/colony/intro.cpp:1309
 msgid "You have been terminated."
 msgstr ""
 
@@ -7877,7 +7881,7 @@ msgstr ""
 msgid "Toggle champion 4 inventory"
 msgstr ""
 
-#: engines/dm/metaengine.cpp:172 engines/kyra/engine/eobcommon.cpp:372
+#: engines/dm/metaengine.cpp:172 engines/kyra/engine/eobcommon.cpp:380
 #: engines/kyra/engine/lol.cpp:514 engines/mohawk/riven.cpp:895
 #: engines/titanic/metaengine.cpp:343 engines/titanic/metaengine.cpp:384
 #: engines/twine/metaengine.cpp:339 engines/wintermute/keymapper_tables.h:179
@@ -7919,7 +7923,7 @@ msgstr ""
 
 #: engines/draci/metaengine.cpp:243 engines/hopkins/metaengine.cpp:302
 #: engines/mohawk/myst.cpp:554 engines/mohawk/riven.cpp:835
-#: engines/nancy/input.cpp:225
+#: engines/nancy/input.cpp:233
 msgid "Open main menu"
 msgstr ""
 
@@ -9777,26 +9781,26 @@ msgstr ""
 msgid "Abort"
 msgstr ""
 
-#: engines/kyra/detection_tables.h:75
+#: engines/kyra/detection_tables.h:87
 msgid "Missing language specific game code and/or resources."
 msgstr ""
 
-#: engines/kyra/detection_tables.h:76
+#: engines/kyra/detection_tables.h:88
 msgid ""
 "Missing language specific game code and/or resources for this fan "
 "translation."
 msgstr ""
 
-#: engines/kyra/detection_tables.h:78
+#: engines/kyra/detection_tables.h:90
 msgid "Demo plays simple animations without using Westwood's Engine."
 msgstr ""
 
-#: engines/kyra/detection_tables.h:1470
+#: engines/kyra/detection_tables.h:1482
 msgid "You added the game incorrectly. Please add the root folder of the game."
 msgstr ""
 
 #. I18N: The file in the game directory needs to be extracted
-#: engines/kyra/detection_tables.h:1486
+#: engines/kyra/detection_tables.h:1498
 msgid ""
 "You added the game incorrectly. The GAME.DAT file is an ISO image and you "
 "need to extract the game data files from it."
@@ -9903,51 +9907,63 @@ msgid ""
 "backpack inventory slots, with thrown weapons only"
 msgstr ""
 
-#: engines/kyra/metaengine.cpp:275
+#: engines/kyra/metaengine.cpp:199 engines/kyra/metaengine.cpp:211
+msgid "Automap (ScummVM feature)"
+msgstr ""
+
+#: engines/kyra/metaengine.cpp:200 engines/kyra/metaengine.cpp:212
+msgid "Enable the in-game automap overlay (toggle in-game with Tab)"
+msgstr ""
+
+#: engines/kyra/metaengine.cpp:299
 msgid "Lands of Lore support is not compiled in"
 msgstr ""
 
-#: engines/kyra/metaengine.cpp:289
+#: engines/kyra/metaengine.cpp:313
 msgid "Eye of Beholder support is not compiled in"
 msgstr ""
 
-#: engines/kyra/engine/eobcommon.cpp:377
-msgid "Open / Close inventory"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:378
-msgid "Switch inventory / Character screen"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:379
-msgid "Camp"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:380 engines/mm/mm1/metaengine.cpp:107
-msgid "Cast spell"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:383
-msgid "Spell level 1"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:384
-msgid "Spell level 2"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:385
-msgid "Spell level 3"
-msgstr ""
-
-#: engines/kyra/engine/eobcommon.cpp:386
-msgid "Spell level 4"
-msgstr ""
-
 #: engines/kyra/engine/eobcommon.cpp:387
-msgid "Spell level 5"
+msgid "Toggle automap"
 msgstr ""
 
 #: engines/kyra/engine/eobcommon.cpp:389
+msgid "Open / Close inventory"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:390
+msgid "Switch inventory / Character screen"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:391
+msgid "Camp"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:392 engines/mm/mm1/metaengine.cpp:107
+msgid "Cast spell"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:394
+msgid "Spell level 1"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:395
+msgid "Spell level 2"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:396
+msgid "Spell level 3"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:397
+msgid "Spell level 4"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:398
+msgid "Spell level 5"
+msgstr ""
+
+#: engines/kyra/engine/eobcommon.cpp:400
 msgid "Spell level 6"
 msgstr ""
 
@@ -9990,7 +10006,7 @@ msgstr ""
 msgid "Choose spell"
 msgstr ""
 
-#: engines/kyra/gui/saveload_eob.cpp:611
+#: engines/kyra/gui/saveload_eob.cpp:633
 #, c-format
 msgid ""
 "The following original saved game file has been found in your game path:\n"
@@ -10001,14 +10017,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: engines/kyra/gui/saveload_eob.cpp:644
+#: engines/kyra/gui/saveload_eob.cpp:666
 #, c-format
 msgid ""
 "A saved game file was found in the specified slot %d. Overwrite?\n"
 "\n"
 msgstr ""
 
-#: engines/kyra/gui/saveload_eob.cpp:677
+#: engines/kyra/gui/saveload_eob.cpp:699
 #, c-format
 msgid ""
 "%d original saved games have been successfully imported into\n"
@@ -10265,31 +10281,31 @@ msgid ""
 "graphical/audio glitches."
 msgstr ""
 
-#: engines/macs2/dialogs.cpp:54 engines/scumm/dialogs.cpp:1172
+#: engines/macs2/dialogs.cpp:55 engines/scumm/dialogs.cpp:1172
 msgid "Audio-visual improvements"
 msgstr ""
 
-#: engines/macs2/dialogs.cpp:55 engines/scumm/dialogs.cpp:1173
+#: engines/macs2/dialogs.cpp:56
 msgid ""
-"Makes adjustments not related to bugs for certain audio and graphics "
-"elements (e.g. version consistency changes)."
+"Optional generated dialogue speech (SPEECH/*.wav) and other audio/visual "
+"polish."
 msgstr ""
 
-#: engines/macs2/dialogs.cpp:58 engines/scumm/dialogs.cpp:1176
+#: engines/macs2/dialogs.cpp:60 engines/scumm/dialogs.cpp:1176
 msgid "Restored content"
 msgstr ""
 
-#: engines/macs2/dialogs.cpp:59 engines/scumm/dialogs.cpp:1177
+#: engines/macs2/dialogs.cpp:61 engines/scumm/dialogs.cpp:1177
 msgid ""
 "Restores dialogs, graphics, and audio elements which were originally cut in "
 "the original release."
 msgstr ""
 
-#: engines/macs2/dialogs.cpp:63 engines/scumm/dialogs.cpp:1180
+#: engines/macs2/dialogs.cpp:65 engines/scumm/dialogs.cpp:1180
 msgid "Modern UI/UX adjustments"
 msgstr ""
 
-#: engines/macs2/dialogs.cpp:64
+#: engines/macs2/dialogs.cpp:66
 msgid "Activates some modern comforts for a smoother user experience."
 msgstr ""
 
@@ -10962,19 +10978,19 @@ msgstr ""
 msgid "Invalid file name for saving"
 msgstr ""
 
-#: engines/nancy/input.cpp:178
+#: engines/nancy/input.cpp:186
 msgid "Nancy Drew"
 msgstr ""
 
-#: engines/nancy/input.cpp:219
+#: engines/nancy/input.cpp:227
 msgid "Fast move modifier"
 msgstr ""
 
-#: engines/nancy/input.cpp:234
+#: engines/nancy/input.cpp:242
 msgid "Nancy Drew - Maze"
 msgstr ""
 
-#: engines/nancy/input.cpp:236
+#: engines/nancy/input.cpp:244
 msgid "Show / hide maze map"
 msgstr ""
 
@@ -11932,6 +11948,12 @@ msgstr ""
 
 #: engines/scumm/dialogs.cpp:1056
 msgid "Expert"
+msgstr ""
+
+#: engines/scumm/dialogs.cpp:1173
+msgid ""
+"Makes adjustments not related to bugs for certain audio and graphics "
+"elements (e.g. version consistency changes)."
 msgstr ""
 
 #: engines/scumm/dialogs.cpp:1181
