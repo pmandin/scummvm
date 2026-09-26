@@ -129,6 +129,11 @@ protected:
 	SoundDescription _sound;
 	SoundDescription _responseGenericSound;
 
+	// Nancy14 added concatenated lines: several sound files that play back to
+	// back as a single line of dialogue. Empty for an ordinary single-sound line.
+	Common::Array<Common::String> _concatSounds;
+	uint _curConcatSound = 0;
+
 	byte _conditionalResponseCharacterID;
 	byte _goodbyeResponseCharacterID;
 	byte _defaultNextScene = kDefaultNextSceneEnabled;
@@ -180,6 +185,7 @@ public:
 	void init() override;
 	void registerGraphics() override;
 	void updateGraphics() override;
+	void onPause(bool pause) override;
 
 	void readData(Common::SeekableReadStream &stream) override;
 
@@ -199,6 +205,9 @@ protected:
 	public:
 		RenderedCel() : RenderObject(9) {}
 		bool isViewportRelative() const override { return true; }
+
+		// Nancy15 head movies: show a decoded movie frame instead of a cel
+		void setMovieFrame(const Graphics::Surface &frame);
 	};
 
 	static const byte kCelOverrideTreeRectsOff	= 1;
@@ -223,6 +232,12 @@ protected:
 
 	Common::Array<Common::Rect> _overrideRectSrcs;
 	Common::Array<Common::Rect> _overrideRectDests;
+
+	// Nancy15 gave every cel tree a destination rect inside the XSheet. A tree that
+	// names a movie instead of a loaded cel archive (the character's head) is played
+	// into that rect; _treeMovies holds one player per such tree, null for cel trees.
+	Common::Array<Common::Rect> _treeRects;
+	Common::Array<Common::SharedPtr<MoviePlayer>> _treeMovies;
 
 	uint _curFrame = 0;
 	uint32 _nextFrameTime = 0;

@@ -46,7 +46,6 @@ const int kBattleSize = 150;   // BSIZE: collision/spawn radius
 const int kMaxQuad = 15;       // pyramids per quadrant
 const int kTankMax = 24;       // turret pincer animation range
 const int kFloor = 160;        // ground z-offset
-const float kBattleFovY = 75.0f;
 
 // =====================================================================
 // Battle color constants (original Mac QuickDraw pattern indices)
@@ -78,9 +77,8 @@ int battleHorizonY(const Common::Rect &screenR, int lookY) {
 	const float centerY = screenR.top + halfHeight;
 	const float clampedLookY = CLIP<float>((float)lookY, -63.5f, 63.5f);
 	const float pitchRad = clampedLookY * 2.0f * (float)M_PI / 256.0f;
-	const float focalY = halfHeight / tanf(kBattleFovY * (float)M_PI / 360.0f);
 
-	return (int)roundf(centerY - focalY * tanf(pitchRad));
+	return (int)roundf(centerY - kProjectionFocalLength * tanf(pitchRad));
 }
 
 int battlePowerLevel(int32 power) {
@@ -126,12 +124,11 @@ bool battleProjectPoint(const Common::Rect &screenR, uint8 look, int8 lookY, con
 	if (eyeZ >= -1.0f)
 		return false;
 
-	const float focal = (screenR.height() * 0.5f) / tanf(kBattleFovY * (float)M_PI / 360.0f);
 	const float centerX = screenR.left + screenR.width() * 0.5f;
 	const float centerY = screenR.top + screenR.height() * 0.5f;
 
-	screenX = (int)roundf(centerX + (eyeX * focal / -eyeZ));
-	screenY = (int)roundf(centerY - (eyeY * focal / -eyeZ));
+	screenX = (int)roundf(centerX + (eyeX * kProjectionFocalLength / -eyeZ));
+	screenY = (int)roundf(centerY - (eyeY * kProjectionFocalLength / -eyeZ));
 	return true;
 }
 
@@ -455,6 +452,7 @@ void ColonyEngine::battleInit() {
 	_battleShip.look = _battleShip.ang = 32;
 
 	_battleRound = 0;
+	_battleSendFarX = false;
 	_projon = false;
 	_pcount = 0;
 
@@ -1076,8 +1074,6 @@ void ColonyEngine::battleCommand(int xnew, int ynew) {
 }
 
 void ColonyEngine::battleShoot() {
-	static bool s_sendFarX = false;
-
 	if (_me.power[0] <= 0 || _weapons <= 0 || _fl)
 		return;
 
@@ -1116,14 +1112,14 @@ void ColonyEngine::battleShoot() {
 	target->power[1] -= battlePowerLevel(_me.power[0]);
 	if (target->power[1] < 0) {
 		target->power[1] = 15 + (_randomSource.getRandomNumber(0x0F) & 0x0F);
-		if (s_sendFarX) {
+		if (_battleSendFarX) {
 			target->xloc = battleNormalizeCoord(_me.xloc + 16000);
 			target->yloc = battleNormalizeCoord(_me.yloc + _randomSource.getRandomNumber(0x7FFF));
 		} else {
 			target->xloc = battleNormalizeCoord(_me.xloc + _randomSource.getRandomNumber(0x7FFF));
 			target->yloc = battleNormalizeCoord(_me.yloc + 16000);
 		}
-		s_sendFarX = !s_sendFarX;
+		_battleSendFarX = !_battleSendFarX;
 		_sound->play(Sound::kExplode);
 	}
 }

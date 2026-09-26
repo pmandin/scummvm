@@ -52,6 +52,16 @@ static Common::String joinDebugStrings(const Common::StringArray &strings) {
 	return result;
 }
 
+static Common::String joinTtsLines(const Common::Array<Common::String> &lines) {
+	Common::String text;
+	for (const Common::String &line : lines) {
+		if (!text.empty())
+			text += " ";
+		text += line;
+	}
+	return text;
+}
+
 #define ScriptNoEntry debugC(kDebugScript, "Unhandled case in script handling.");
 #define STR_HELPER(x) #x
 
@@ -91,7 +101,6 @@ Common::String ScriptExecutor::identifyHelperOpcode(uint8 opcode, uint16 value) 
 inline void ScriptExecutor::scriptSkipBlock() {
 	_lastOpcodeTriggeredSkip = true;
 
-	_isSkipping = true;
 	if (_expectedEndLocation != _stream->pos()) {
 		warning("Macs2::ScriptExecutor::scriptSkipBlock resyncing stream from %u to %u",
 				(uint32)_expectedEndLocation, (uint32)_stream->pos());
@@ -127,11 +136,9 @@ inline void ScriptExecutor::scriptSkipBlock() {
 
 	// Fix up the expected location after skipping
 	_expectedEndLocation = _stream->pos();
-	_isSkipping = false;
 }
 
 void ScriptExecutor::scriptSkipAlternate() {
-	_isSkipping = true;
 	if (_expectedEndLocation != _stream->pos()) {
 		warning("Macs2::ScriptExecutor::scriptSkipAlternate resyncing stream from %u to %u",
 				(uint32)_expectedEndLocation, (uint32)_stream->pos());
@@ -164,7 +171,6 @@ void ScriptExecutor::scriptSkipAlternate() {
 
 	// Fix up the expected location after skipping
 	_expectedEndLocation = _stream->pos();
-	_isSkipping = false;
 }
 
 bool ScriptExecutor::skipToEndOfSkippableSection() {
@@ -309,18 +315,7 @@ OpcodeResult ScriptExecutor::scriptChangeAnimation() {
 uint16 ScriptExecutor::getAreaAtPoint(uint16 x, uint16 y) {
 	// getAreaAtPoint (1008:101d). Reads the pathfinding map pixel and applies
 	// the area override table at sceneData + value*5 + 0x4EA8.
-	if (x >= (uint16)_engine->screenWidth() || y >= (uint16)_engine->gameHeight() ||
-		_engine->_pathfindingMap.w == 0) {
-		return 0;
-	}
-	uint16 result = _engine->_pathfindingMap.getPixel(x, y);
-	if (result >= AREA_OVERRIDE_MIN && result < 250) {
-		uint16 overrideValue = _engine->getPathfindingOverride2(result);
-		if (overrideValue >= AREA_OVERRIDE_MIN) {
-			result = overrideValue;
-		}
-	}
-	return result;
+	return _engine->_pathfinding.areaAt(x, y);
 }
 
 bool ScriptExecutor::loadIndexedResource(Common::Array<uint8> &outData, uint8 resourceIndex, uint16 /*objectTableOffset*/) {
@@ -418,7 +413,8 @@ void ScriptExecutor::scriptPrintString(bool alignRight) {
 	int stringBoxX = x;
 	const int stringBoxY = y;
 	if (alignRight) {
-		const int totalWidth = g_engine->measureStrings(strings) + g_engine->dialogPadW();
+		Text *text = &g_engine->_text;
+		const int totalWidth = text->measureStrings(strings) + g_engine->dialogPadW();
 		stringBoxX -= totalWidth;
 	}
 
@@ -427,8 +423,9 @@ void ScriptExecutor::scriptPrintString(bool alignRight) {
 		currentView->_stringBoxPosition = Common::Point(stringBoxX, stringBoxY);
 		currentView->_drawnStringBox = strings;
 		currentView->_isShowingTextBox = true;
-		currentView->currentSpeechActData.speaker = nullptr;
+		currentView->_currentSpeechActData.speaker = nullptr;
 		currentView->_continueScriptAfterUI = true;
+		_engine->sayText(joinTtsLines(strings), Common::TextToSpeechManager::INTERRUPT);
 		currentView->redraw();
 	}
 
@@ -480,9 +477,10 @@ void ScriptExecutor::clearScriptUiWaitState() {
 }
 
 void ScriptExecutor::recordScriptErrorPosition() {
-	if (!hasScriptError() || !_stream)
+	if (!hasScriptError() || !_stream) {
 		return;
-	// Binary LAB_1008_e3bd: save position and scene/object context on halt.
+	}
+	// save position and scene/object context on halt.
 	_errorScriptPosition = (uint32)_stream->pos();
 	if (_executingScriptObjectId == 0) {
 		_errorScriptContext = Scenes::instance()._currentSceneIndex;
@@ -507,8 +505,9 @@ void ScriptExecutor::runSceneScriptPass(bool initRun, bool repeatRun) {
 	const ExecutorState previousState = _state;
 	_state = ExecutorState::Executing;
 	step();
-	if (_state != ExecutorState::WaitingForCallback)
+	if (_state != ExecutorState::WaitingForCallback) {
 		_state = previousState;
+	}
 }
 
 void ScriptExecutor::beginSceneEntryInitPass() {
@@ -524,13 +523,15 @@ void ScriptExecutor::beginSceneEntryInitPass() {
 }
 
 void ScriptExecutor::finishSceneEntryRepeatPass(bool terminateOuterScript) {
-	if (!_initPassComplete || hasScriptError())
+	if (!_initPassComplete || hasScriptError()) {
 		return;
+	}
 	// Binary scriptChangeScene / loadResourceFile: set script position to end and
 	// executingObjectId=0x201 to stop outer object iteration, then repeat pass.
 	if (terminateOuterScript) {
-		if (_stream)
+		if (_stream) {
 			_stream->seek(_stream->size(), SEEK_SET);
+		}
 		_executingScriptObjectId = 0x201;
 		_terminateOuterScriptBeforeRepeat = false;
 	}
@@ -576,7 +577,7 @@ void ScriptExecutor::debugLogActorWalkState(const char *context) {
 	const int16 x = actor->_position.x;
 	const int16 y = actor->_position.y;
 	const uint16 area = getAreaAtPoint((uint16)x, (uint16)y);
-	const uint16 walk = _engine->getWalkabilityAt(y, x);
+	const uint16 walk = _engine->_pathfinding.walkabilityAt(y, x);
 	View1 *view = (View1 *)_engine->findView("View1");
 	Character *character = view ? view->getCharacterByIndex(actorIndex) : nullptr;
 
@@ -584,7 +585,7 @@ void ScriptExecutor::debugLogActorWalkState(const char *context) {
 		   "%s: actor=(%d,%d) area=%u walk=%u/0x%04x int16=%d walkable=%s var[122]=%u "
 		   "cursor=0x%02x executorState=%u walkWaitObj=%u frameWait=%u soundWait=%d musicWait=%d "
 		   "pendingVMotion=%s vOff=%u motionTgt=%u motionProg=%u/%u repeatRun=%d",
-		   context, x, y, area, walk, walk, (int16)walk, Macs2Engine::isWalkabilityWalkable(walk) ? "yes" : "NO",
+		   context, x, y, area, walk, walk, (int16)walk, Pathfinding::isWalkabilityWalkable(walk) ? "yes" : "NO",
 		   getVariableValue(122), (uint)_cursorMode, (uint)_state, _walkTargetObjectIndex,
 		   _frameWaitTicksRemaining, _waitForPcmSound ? 1 : 0, _waitForMusicControl ? 1 : 0,
 		   (character && character->hasPendingVerticalMotion()) ? "yes" : "no",
@@ -616,11 +617,9 @@ void ScriptExecutor::step() {
 			// Continue execution
 
 			// Check if the currently executing script is at the end
-			if (_stream && _stream->pos() >= effectiveScriptEnd()) {
+			if (!_stream || _stream->pos() >= effectiveScriptEnd()) {
 				syncScriptIsExecutingFlag();
-				// Binary (runScriptExecutor 1008:e3e7): if script finishes while
-				// g_wScriptSkippable is still set, treat as error 0x11 and abort.
-				if (_scriptSkippable) {
+				if (_stream && _scriptSkippable) {
 					setScriptError(0x11);
 					_scriptSkippable = false;
 					shouldContinue = false;
@@ -648,7 +647,7 @@ void ScriptExecutor::step() {
 					return;
 				}
 				syncScriptIsExecutingFlag();
-				if (_stream && _stream->pos() >= effectiveScriptEnd()) {
+				if (_stream->pos() >= effectiveScriptEnd()) {
 					if (_scriptSkippable) {
 						setScriptError(0x11);
 						_scriptSkippable = false;
@@ -947,7 +946,6 @@ OpcodeResult Script::ScriptExecutor::scriptNop09() {
 }
 
 OpcodeResult Script::ScriptExecutor::scriptPrintStringLeft() {
-	// l0037_DDE8:
 	debugC(kDebugScript, "SCRIPT::printStringLeft()");
 	scriptPrintString();
 	// Ends execution (confirmed: jumps to e3bd in disassembly).
@@ -1115,6 +1113,8 @@ OpcodeResult Script::ScriptExecutor::scriptMoveObject() {
 			}
 		}
 	}
+	if (currentView->_inventorySource != nullptr)
+		currentView->setInventorySource(currentView->_inventorySource);
 
 	// Check from sortObjectsByDepth (1008:0da6): if the moved object is the active
 	// inventory item cursor, clear it and reset cursor mode from UseInventory to Use.
@@ -1362,7 +1362,7 @@ OpcodeResult Script::ScriptExecutor::scriptShowDialogue() {
 
 	_dialogueSpeakerObjectID = objectID;
 	currentView->showSpeechAct(objectID, strings, Common::Point(x, y), side);
-	tryPlayGeneratedDialogueSpeech((uint16)offset);
+	tryPlayDialogueSpeech((uint16)offset, strings);
 
 	_waitingForUiClick = true;
 
@@ -1415,25 +1415,7 @@ OpcodeResult Script::ScriptExecutor::scriptWalkToPosition() {
 		c = &stackCharacter;
 	}
 
-	const Common::Point current = c->getPosition();
-	const Common::Point target(x, y);
-
-	c->_currentPathIndex = 0;
-	c->_path.clear();
-	c->_pathFinalDestination = target;
-
-	bool directPath = _engine->isPathWalkable(y, x, current.y, current.x);
-	if (!directPath && Macs2Engine::isWalkabilityWalkable(_engine->getWalkabilityAt(y, x))) {
-		c->calculatePath(target);
-	}
-	if (c->_path.empty()) {
-		c->_targetPosition = c->_pathFinalDestination;
-	}
-
-	c->_stepDeltaX = (int16)ABS((int32)c->_targetPosition.x - current.x);
-	c->_stepDeltaY = (int16)ABS((int32)c->_targetPosition.y - current.y);
-	c->_stepError = 0;
-	c->_stepDirectionSet = false;
+	c->setWalkTarget(Common::Point(x, y), false);
 
 	// Binary loadObjectData seeds runtime+0x21D from the object table vertical offset;
 	// scriptWalkToPosition does not change it. Match that so waitForWalk can complete
@@ -1826,7 +1808,7 @@ OpcodeResult Script::ScriptExecutor::scriptTestPathfinding() {
 		setScriptError(2);
 		return OpcodeResult::Continue;
 	}
-	_pathWalkableResult = _engine->isPathWalkable(y, x, object->_position.y, object->_position.x);
+	_pathWalkableResult = _engine->_pathfinding.isLineWalkable(y, x, object->_position.y, object->_position.x);
 	return OpcodeResult::Continue;
 }
 
@@ -1850,7 +1832,7 @@ Character *Script::ScriptExecutor::getOrCreateCharacter(uint16 objectID) {
 	return c;
 }
 
-void Script::ScriptExecutor::saveWalkRuntime(const Character *c, GameObject *o) {
+void Script::ScriptExecutor::saveWalkRuntime(const Character *c, GameObject *o) const {
 	if (c == nullptr || o == nullptr)
 		return;
 	GameObject::StoredWalkRuntime &s = o->_storedWalkRuntime;
@@ -1966,7 +1948,6 @@ void Script::ScriptExecutor::restoreOpenInventoryScriptContext() {
 	_scriptClickY = _savedScriptClickY;
 	_scriptClickResult = _savedScriptClickResult;
 	_state = ExecutorState::Executing;
-	_isRunningScript = true;
 }
 
 OpcodeResult Script::ScriptExecutor::scriptSetYOffset() {
@@ -2047,12 +2028,12 @@ OpcodeResult Script::ScriptExecutor::scriptSetOrientation() {
 		setScriptError(0x19);
 		return OpcodeResult::Continue;
 	}
-	if (animIndex < 9 || animIndex > 0x10) {
+	if (animIndex < OrientationStandingNorth || animIndex > OrientationStandingNorthWest) {
 		setScriptError(0x14);
 		return OpcodeResult::Continue;
 	}
 
-	object->_orientation = animIndex;
+	object->_orientation = (ObjectOrientation)animIndex;
 	return OpcodeResult::Continue;
 }
 
@@ -2083,8 +2064,8 @@ OpcodeResult Script::ScriptExecutor::scriptMoveToPosition() {
 
 	const Common::Point target(x, y);
 	// Binary scriptMoveToPosition (1008:bafc): isPathWalkable(targetY, targetX, objY, objX).
-	if (!_engine->isPathWalkable(y, x, object->_position.y, object->_position.x) &&
-		Macs2Engine::isWalkabilityWalkable(_engine->getWalkabilityAt(target))) {
+	if (!_engine->_pathfinding.isLineWalkable(y, x, object->_position.y, object->_position.x) &&
+		Pathfinding::isWalkabilityWalkable(_engine->_pathfinding.walkabilityAt(target))) {
 		setScriptError(0x15);
 		return OpcodeResult::Continue;
 	}
@@ -2768,15 +2749,15 @@ OpcodeResult Script::ScriptExecutor::scriptSetPathfinding() {
 	uint16 overrideValue = scriptReadValue16();
 	debugC(kDebugScript, "SCRIPT::setPathfinding(areaID=%u, active=%u, overrideValue=%u/0x%04x int16=%d walkable=%s)",
 		   areaID, active, overrideValue, overrideValue, (int16)overrideValue,
-		   (!active || Macs2Engine::isWalkabilityWalkable(overrideValue)) ? "yes" : "NO");
+		   (!active || Pathfinding::isWalkabilityWalkable(overrideValue)) ? "yes" : "NO");
 	if (areaID < 200 || areaID > 0xEF) {
 		setScriptError(0x0D);
 		return OpcodeResult::Continue;
 	}
 	if (active) {
-		g_engine->setPathfindingOverride(areaID, overrideValue);
+		g_engine->_pathfinding.setWalkOverride(areaID, overrideValue);
 	} else {
-		g_engine->removePathfindingOverride(areaID);
+		g_engine->_pathfinding.removeWalkOverride(areaID);
 	}
 	debugLogActorWalkState("after setPathfinding");
 	return OpcodeResult::Continue;
@@ -3118,7 +3099,7 @@ OpcodeResult Script::ScriptExecutor::scriptSetPathfindingRemap() {
 		setScriptError(0x0D);
 		return OpcodeResult::Continue;
 	}
-	g_engine->_areaOverrides[sourceValue - AREA_OVERRIDE_MIN] = targetValue;
+	g_engine->_pathfinding._areaOverrides[sourceValue - AREA_OVERRIDE_MIN] = targetValue;
 	return OpcodeResult::Continue;
 }
 
@@ -3308,28 +3289,33 @@ Common::Path ScriptExecutor::resolveMidiFilePath(const Common::String &fileName)
 	return Common::Path();
 }
 
-void ScriptExecutor::tryPlayGeneratedDialogueSpeech(uint16 stringOffset) {
-	const bool enhOn = _engine->enhancementEnabled(kEnhAudioChanges);
-	Common::String baseName;
+void ScriptExecutor::tryPlayDialogueSpeech(uint16 stringOffset, const Common::Array<Common::String> &lines) {
+	Common::String speechFile;
 	if (_executingScriptObjectId == 0) {
-		baseName = Common::String::format("s%02x_%04x",
+		speechFile = Common::String::format("s%02x_%04x",
 										  Scenes::instance()._currentSceneIndex, stringOffset);
 	} else {
-		baseName = Common::String::format("o%03x_%04x",
+		speechFile = Common::String::format("o%03x_%04x",
 										  _executingScriptObjectId, stringOffset);
 	}
-	const Common::Path basename = Common::Path("SPEECH").join(baseName);
+	const Common::Path &speechPath = Common::Path("SPEECH").join(speechFile);
 
+	const bool enhOn = _engine->enhancementEnabled(kEnhAudioChanges);
 	debugC(kDebugScript,
 		   "tryPlayGeneratedDialogueSpeech: looking for '%s'.* (enhAudio=%d soundEnabled=%d "
 		   "scriptObject=%u scene=%u offset=%u)",
-		   basename.toString().c_str(), enhOn ? 1 : 0, _soundEnabled ? 1 : 0,
+		   speechPath.toString().c_str(), enhOn ? 1 : 0, _soundEnabled ? 1 : 0,
 		   _executingScriptObjectId, Scenes::instance()._currentSceneIndex, stringOffset);
 
-	if (!_soundEnabled || !enhOn)
-		return;
+	if (_soundEnabled && enhOn)
+		_engine->playAudioFile(speechPath, true);
 
-	_engine->playDigitalAudioFile(basename, true);
+	if (_engine->isSpeechPlaying()) {
+		_engine->stopTextToSpeech();
+		return;
+	}
+
+	_engine->sayText(joinTtsLines(lines), Common::TextToSpeechManager::INTERRUPT, _dialogueSpeakerObjectID);
 }
 
 OpcodeResult ScriptExecutor::scriptNopSkipRemainder() {
@@ -3352,7 +3338,7 @@ OpcodeResult ScriptExecutor::scriptPlaySfx() {
 		return OpcodeResult::Continue;
 	}
 	const bool speechBus = path.toString('/').hasPrefixIgnoreCase("SPEECH/");
-	_engine->playDigitalAudioFile(path, speechBus);
+	_engine->playAudioFile(path, speechBus);
 	return OpcodeResult::Continue;
 }
 
@@ -3830,19 +3816,11 @@ OpcodeResult ScriptExecutor::scriptShowActionBar() {
 	if (currentView == nullptr)
 		return OpcodeResult::Continue;
 
-	if (_engine->hasNativeHudAssets()) {
-		// Dialect-v2: if MenuMode==0 -> MenuMode=1, restore saved cursor, redraw.
-		if (_engine->_menuMode == 0) {
-			_engine->setBottomHudVisible(true);
-			_engine->setCursorMode(_engine->_savedMenuCursorMode);
-			currentView->updateCursor();
-			currentView->redraw();
-		}
-		return OpcodeResult::Continue;
-	}
-
-	if (currentView->hasPersistentActionBar()) {
+	// v2 opcode 0x65. v1 tables end at waitForAdlib; kEnhUIUX uses the same
+	// setBottomHudVisible switch (MenuMode Hidden -> Main + cursor restore).
+	if (_engine->hasNativeHudAssets() || currentView->hasPersistentActionBar()) {
 		_engine->setBottomHudVisible(true);
+		currentView->updateCursor();
 		currentView->redraw();
 		return OpcodeResult::Continue;
 	}
@@ -3858,16 +3836,8 @@ OpcodeResult ScriptExecutor::scriptHideActionBar() {
 	if (currentView == nullptr)
 		return OpcodeResult::Continue;
 
-	if (_engine->hasNativeHudAssets()) {
-		// Dialect-v2: save cursor when leaving main HUD, set MenuMode=0.
-		if (_engine->_menuMode == 1)
-			_engine->_savedMenuCursorMode = _cursorMode;
-		_engine->setBottomHudVisible(false);
-		currentView->redraw();
-		return OpcodeResult::Continue;
-	}
-
-	if (currentView->hasPersistentActionBar()) {
+	// v2 opcode 0x66. Same flag as show; classic v1 popup is a separate path.
+	if (_engine->hasNativeHudAssets() || currentView->hasPersistentActionBar()) {
 		_engine->setBottomHudVisible(false);
 		currentView->redraw();
 		return OpcodeResult::Continue;
@@ -3957,7 +3927,7 @@ OpcodeResult ScriptExecutor::scriptLoadWalkMask() {
 	const bool halfRes = _engine->isV2();
 	const int w = halfRes ? kScreenWidth : _engine->screenWidth();
 	const int h = halfRes ? kGameHeight : _engine->gameHeight();
-	if (!_engine->loadMaskFromResource(resourceIndex, _executingScriptObjectId, _engine->_pathfindingMap,
+	if (!_engine->loadMaskFromResource(resourceIndex, _executingScriptObjectId, _engine->_pathfinding._map,
 									   w, h, halfRes))
 		warning("loadWalkMask: failed resource %u", resourceIndex);
 	return OpcodeResult::Continue;
@@ -4043,7 +4013,7 @@ OpcodeResult ScriptExecutor::scriptTalkTo() {
 	if (_soundEnabled && !voiceFile.empty()) {
 		const Common::Path path = resolveAudioFilePath(voiceFile, true);
 		if (!path.empty()) {
-			_engine->playDigitalAudioFile(path, true);
+			_engine->playAudioFile(path, true);
 			playingVoice = _engine->isSpeechPlaying();
 		} else {
 			warning("talkTo: missing voice %s (looked in SPEECH/SOUNDFX)", voiceFile.c_str());
@@ -4055,11 +4025,15 @@ OpcodeResult ScriptExecutor::scriptTalkTo() {
 	enterBlockingWaitCursor();
 
 	if (playingVoice) {
+		_engine->stopTextToSpeech();
 		_engine->getMusic()->setSmfDucked(true, _engine->_talkVol);
 		_waitForPcmSound = true;
 		endFrameWait();
 		return OpcodeResult::WaitForCallback;
 	}
+
+	if (_textEnabled)
+		_engine->sayText(joinTtsLines(strings), Common::TextToSpeechManager::INTERRUPT, (uint16)actorIndex);
 
 	uint16 waitFrames = talkTime;
 	if (waitFrames == 0) {
@@ -4189,7 +4163,6 @@ const uint ScriptExecutor::kV2OpcodeTableSize = ARRAYSIZE(ScriptExecutor::kV2Opc
 
 OpcodeResult Script::ScriptExecutor::executeOpcodes() {
 	debugC(kDebugScript, "----- Scripting function entered - scene: %.2x 1014: %.2x 1012: %.2x", Scenes::instance()._currentSceneIndex, _isSceneInitRun, _repeatRunFlag);
-	_isRunningScript = true;
 	// Confirmed: no interrupt mechanism exists. Wait states (frameWait, walkTarget,
 	// pcmSound, musicControl, adlibReady) are resolved by gameTick externally.
 
@@ -4263,7 +4236,6 @@ OpcodeResult Script::ScriptExecutor::executeOpcodes() {
 		if (opcodeResult == OpcodeResult::FinishScript)
 			break;
 	}
-	_isRunningScript = false;
 	if (hasScriptError())
 		recordScriptErrorPosition();
 	debugC(kDebugScript, "----- Scripting function left");
@@ -4307,7 +4279,10 @@ void ScriptExecutor::run(bool firstRun) {
 	}
 	_state = ExecutorState::Executing;
 	step();
-	syncScriptIsExecutingFlag();
+	// step() rewinds the scene script to 0 when it goes Idle. A pos<end check
+	// would then mark g_wScriptIsExecuting again and steal every scene click.
+	if (_state != ExecutorState::Idle)
+		syncScriptIsExecutingFlag();
 }
 
 uint32 ScriptExecutor::effectiveScriptEnd() const {

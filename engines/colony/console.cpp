@@ -116,6 +116,7 @@ Debugger::Debugger(ColonyEngine *vm) : GUI::Debugger(), _vm(vm) {
 	registerCmd("goals", WRAP_METHOD(Debugger, cmdGoals));
 	registerCmd("win", WRAP_METHOD(Debugger, cmdWin));
 	registerCmd("robots", WRAP_METHOD(Debugger, cmdRobots));
+	registerCmd("eradicate", WRAP_METHOD(Debugger, cmdEradicate));
 	registerCmd("map", WRAP_METHOD(Debugger, cmdMap));
 	registerCmd("give", WRAP_METHOD(Debugger, cmdGive));
 	registerCmd("power", WRAP_METHOD(Debugger, cmdPower));
@@ -337,20 +338,19 @@ bool Debugger::cmdTeleport(int argc, const char **argv) {
 		}
 	}
 
-	// Clear player from current robot array position
-	if (_vm->_me.xindex >= 0 && _vm->_me.xindex < 32 &&
-		_vm->_me.yindex >= 0 && _vm->_me.yindex < 32)
-		_vm->_robotArray[_vm->_me.xindex][_vm->_me.yindex] = 0;
+	_vm->clearPlayerCellMarker();
 
 	// Load the target level
-	if (level != _vm->_level)
+	if (level != _vm->_level) {
 		_vm->loadMap(level);
+		_vm->clearPlayerCellMarker();
+	}
 
 	// If no coordinates given, scan for an entry point (stairs/tunnel/elevator)
 	if (targetX < 0) {
 		for (int x = 0; x < 31 && targetX < 0; x++) {
 			for (int y = 0; y < 31 && targetX < 0; y++) {
-				for (int d = 0; d < 5; d++) {
+				for (int d = 0; d < 4; d++) {
 					int feat = _vm->_mapData[x][y][d][0];
 					if (feat == kWallFeatureUpStairs || feat == kWallFeatureDnStairs ||
 						feat == kWallFeatureTunnel || feat == kWallFeatureElevator) {
@@ -377,8 +377,8 @@ bool Debugger::cmdTeleport(int argc, const char **argv) {
 	_vm->_me.xloc = (targetX << 8) + 128;
 	_vm->_me.yloc = (targetY << 8) + 128;
 
-	// Register player in robot array
-	_vm->_robotArray[targetX][targetY] = kMeNum;
+	_vm->setPlayerCellMarker();
+	_vm->_bumpedObject = 0;
 
 	debugPrintf("Teleported to level %d at (%d, %d)\n", _vm->_level, targetX, targetY);
 	return false;
@@ -441,7 +441,7 @@ bool Debugger::cmdGoals(int argc, const char **argv) {
 }
 
 bool Debugger::cmdWin(int argc, const char **argv) {
-	static const char *const endingDescriptions[] = {
+	const char *const endingDescriptions[] = {
 		"planet destroyed, all 6 cryos recovered",
 		"planet destroyed, some cryos recovered",
 		"planet destroyed, no cryos recovered",
@@ -486,6 +486,52 @@ bool Debugger::cmdRobots(int argc, const char **argv) {
 		debugPrintf("No active robots on level %d\n", _vm->_level);
 	else
 		debugPrintf("Total: %d active robots\n", count);
+	return true;
+}
+
+bool Debugger::cmdEradicate(int argc, const char **argv) {
+	if (argc != 1) {
+		debugPrintf("Usage: eradicate\n");
+		debugPrintf("Kills all monsters and eggs on every level.\n");
+		return true;
+	}
+
+	auto isCreature = [this](uint objectNum) {
+		if (objectNum == 0 || objectNum == kMeNum || objectNum > _vm->_objects.size())
+			return false;
+		const int type = _vm->_objects[objectNum - 1].type;
+		return type >= kRobEye && type <= kRobSnoop;
+	};
+
+	for (uint i = 0; i < _vm->_objects.size(); i++) {
+		if (isCreature(i + 1)) {
+			_vm->_objects[i].alive = 0;
+			_vm->_objects[i].visible = 0;
+		}
+	}
+	for (int x = 0; x < 32; x++) {
+		for (int y = 0; y < 32; y++) {
+			if (isCreature(_vm->_robotArray[x][y]))
+				_vm->_robotArray[x][y] = 0;
+			if (isCreature(_vm->_foodArray[x][y]))
+				_vm->_foodArray[x][y] = 0;
+		}
+	}
+	if (isCreature(_vm->_bumpedObject))
+		_vm->_bumpedObject = 0;
+	_vm->_insight = false;
+	_vm->_allGrow = false;
+
+	// Restore empty populations on later visits, including the first visit to
+	// a level. Keep the saved wall and airlock state in each LevelData intact.
+	for (uint i = 0; i < ARRAYSIZE(_vm->_levelData); i++) {
+		LevelData &ld = _vm->_levelData[i];
+		ld.visit = 1;
+		ld.queen = 0;
+		memset(ld.object, 0, sizeof(ld.object));
+	}
+
+	debugPrintf("Eradicated all monsters and eggs from all levels.\n");
 	return true;
 }
 
@@ -697,6 +743,7 @@ bool Debugger::cmdForklift(int argc, const char **argv) {
 			return true;
 		}
 		_vm->_fl = state;
+		_vm->_bumpedObject = 0;
 		if (state > 0)
 			_vm->_me.lookY = 0; // reset vertical look
 		if (state == 0) {

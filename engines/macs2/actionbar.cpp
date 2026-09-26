@@ -23,32 +23,34 @@
 
 #include "common/debug.h"
 #include "common/system.h"
+#include "common/translation.h"
 #include "engines/savestate.h"
 #include "gui/message.h"
 #include "macs2/detection.h"
 #include "macs2/gameobjects.h"
+#include "macs2/hotspot_names.h"
 #include "macs2/macs2.h"
 #include "macs2/music.h"
 #include "macs2/view1.h"
 
 namespace Macs2 {
 
-static Common::String getObjectDisplayName(const GameObject *obj) {
-	if (!obj)
-		return Common::String();
+namespace {
 
-	const GameObjects &objects = GameObjects::instance();
-	if (obj->_index < objects._objectNames.size() && !objects._objectNames[obj->_index].empty())
-		return objects._objectNames[obj->_index];
-
-	return Common::String();
+// German source keys for macs2_translation.dat msgctxt "uilabel".
+Common::String uiText(const char *source) {
+	if (g_engine)
+		return g_engine->translateUiLabel(source);
+	return source;
 }
 
+} // namespace
+
 const ActionBar::VerbDef ActionBar::kVerbs[4] = {
-	{"Walk", Script::MouseMode::Walk},
-	{"Look", Script::MouseMode::Look},
-	{"Use", Script::MouseMode::Use},
-	{"Talk", Script::MouseMode::Talk}
+	{"Gehe", Script::MouseMode::Walk},
+	{"Schaue", Script::MouseMode::Look},
+	{"Benutze", Script::MouseMode::Use},
+	{"Rede", Script::MouseMode::Talk}
 };
 
 ActionBar::ActionBar(View1 *view)
@@ -58,7 +60,7 @@ ActionBar::ActionBar(View1 *view)
 
 bool ActionBar::isPointInUI(const Common::Point &pos) const {
 	if (useNativeSkin()) {
-		if (g_engine->_menuMode == 0)
+		if (g_engine->_menuMode == MenuMode::Hidden)
 			return false;
 		return pos.y >= (int16)g_engine->_panelTopY;
 	}
@@ -76,15 +78,25 @@ void ActionBar::syncInventory() {
 
 void ActionBar::rebuildProtagonistItems() {
 	_protagonistItems.clear();
-
-	if (_view->isInventorySourceProtagonist()) {
-		_protagonistItems = _view->_inventoryItems;
-		return;
-	}
-
 	const uint16 invScene = Scenes::instance()._currentActorIndex + 0x400;
-	for (GameObject *obj : GameObjects::instance()._objects) {
+
+	// Keep the engine list order, then append any inventory objects it missed
+	// (pickup / moveObject can update sceneIndex before _inventoryItems).
+	for (GameObject *obj : _view->_inventoryItems) {
 		if (obj && obj->_sceneIndex == invScene)
+			_protagonistItems.push_back(obj);
+	}
+	for (GameObject *obj : GameObjects::instance()._objects) {
+		if (!obj || obj->_sceneIndex != invScene)
+			continue;
+		bool listed = false;
+		for (GameObject *listedObj : _protagonistItems) {
+			if (listedObj == obj) {
+				listed = true;
+				break;
+			}
+		}
+		if (!listed)
 			_protagonistItems.push_back(obj);
 	}
 }
@@ -165,43 +177,36 @@ void ActionBar::drawUIButton(const Common::Rect &rect, bool pressed, Graphics::M
 							   style, false, false, s);
 }
 
+void ActionBar::actionBarFont(const GlyphData *&font, uint16 &glyphCount, int &glyphH) const {
+	const bool usePanelFont = g_engine->_text.numPanelGlyphs > 0;
+	font = usePanelFont ? g_engine->_text._panelGlyphs : g_engine->_text._glyphs;
+	glyphCount = usePanelFont ? g_engine->_text.numPanelGlyphs : g_engine->_text._numGlyphs;
+	glyphH = usePanelFont ? (int)g_engine->_text.maxPanelGlyphHeight : (int)g_engine->_text._maxGlyphHeight;
+}
+
 void ActionBar::drawSentenceLine(Graphics::ManagedSurface &s) {
-	Common::String sentence;
-	const Script::MouseMode mode = g_engine->_scriptExecutor->_cursorMode;
-
-	if (mode == Script::MouseMode::UseInventory && _view->_activeInventoryItem) {
-		sentence = "Use";
-		const Common::String itemName = getObjectDisplayName(_view->_activeInventoryItem);
-		if (!itemName.empty())
-			sentence += " " + itemName;
-	} else if (_activeVerbIndex >= 0 && _activeVerbIndex < 4) {
-		sentence = kVerbs[_activeVerbIndex].label;
-	}
-	if (!_sentenceObject.empty()) {
-		if (!sentence.empty()) {
-			if (mode == Script::MouseMode::UseInventory)
-				sentence += " with ";
-			else
-				sentence += " ";
-		}
-		sentence += _sentenceObject;
-	}
-
+	Common::String sentence = buildSentenceLine();
 	if (sentence.empty())
 		return;
 
-	const bool usePanelFont = g_engine->numPanelGlyphs > 0;
-	const GlyphData *font = usePanelFont ? g_engine->_panelGlyphs : g_engine->_glyphs;
-	const uint16 fontCount = usePanelFont ? g_engine->numPanelGlyphs : g_engine->numGlyphs;
-	const int glyphH = usePanelFont ? g_engine->maxPanelGlyphHeight : g_engine->maxGlyphHeight;
-	if (usePanelFont)
-		sentence.toUppercase();
+	// Dialogue Font1 has German glyphs; the panel/save-load font does not.
+	const GlyphData *font = g_engine->_text._glyphs;
+	uint16 glyphCount = g_engine->_text._numGlyphs;
+	int glyphH = (int)g_engine->_text._maxGlyphHeight;
+	if (glyphCount == 0)
+		actionBarFont(font, glyphCount, glyphH);
+
 	const int textY = kUITop + MAX(0, (kSentenceH - glyphH) / 2);
-	const int textX = MAX(0, (kScreenWidth - _view->measureStringWithFont(sentence, font, fontCount)) / 2);
-	_view->renderStringWithFontTo(textX, textY, sentence, font, fontCount, s);
+	const int textX = MAX(0, (kScreenWidth - _view->measureStringWithFont(sentence, font, glyphCount)) / 2);
+	_view->renderStringWithFontTo(textX, textY, sentence, font, glyphCount, s);
 }
 
 void ActionBar::drawVerbBar(Graphics::ManagedSurface &s) {
+	const GlyphData *font = nullptr;
+	uint16 fontCount = 0;
+	int glyphH = 0;
+	actionBarFont(font, fontCount, glyphH);
+
 	for (int i = 0; i < ARRAYSIZE(kVerbs); i++) {
 		const Common::Rect r = getVerbRect(i);
 		const bool isActive = (i == _activeVerbIndex);
@@ -209,9 +214,13 @@ void ActionBar::drawVerbBar(Graphics::ManagedSurface &s) {
 
 		drawUIButton(r, isActive || isHovered, s);
 
-		const int textX = r.left + (r.width() - (int)strlen(kVerbs[i].label) * 6) / 2;
-		const int textY = r.top + (r.height() - (int)g_engine->maxGlyphHeight) / 2;
-		_view->renderStringTo(textX, textY, kVerbs[i].label, s);
+		Common::String label = uiText(kVerbs[i].label);
+		if (g_engine->_text.numPanelGlyphs > 0)
+			label.toUppercase();
+		const int textW = _view->measureStringWithFont(label, font, fontCount);
+		const int textX = r.left + (r.width() - textW) / 2;
+		const int textY = r.top + (r.height() - glyphH) / 2;
+		_view->renderStringWithFontTo(textX, textY, label, font, fontCount, s);
 	}
 }
 
@@ -227,7 +236,13 @@ int ActionBar::getScrollButtonWidth() const {
 }
 
 int ActionBar::getInvArrowX() const {
-	return kInvX;
+	return kBarPadX + kVerbCols * kVerbW + kVerbInvGap;
+}
+
+int ActionBar::getInvItemWidth() const {
+	const int scrollW = getScrollButtonWidth();
+	const int available = kScreenWidth - getInvArrowX() - kBarPadX - 2 * scrollW;
+	return MAX(24, available / kInvCols);
 }
 
 void ActionBar::drawScrollButton(Graphics::ManagedSurface &s, const Common::Rect &rect,
@@ -431,6 +446,7 @@ void ActionBar::handleMouseMoveScumm(const Common::Point &pos) {
 					break;
 				if (getInvItemRect(i).contains(pos)) {
 					_hoveredItemIndex = i;
+					updateSentenceLine(lookupObjectHotspotName(items[itemIdx]->_index));
 					break;
 				}
 			}
@@ -454,7 +470,7 @@ void ActionBar::clearSentenceObject() {
 Common::Rect ActionBar::getVerbRect(int index) const {
 	const int col = index % kVerbCols;
 	const int row = index / kVerbCols;
-	const int x = col * kVerbW;
+	const int x = kBarPadX + col * kVerbW;
 	const int y = kVerbY + row * kVerbH;
 	return Common::Rect(x, y, x + kVerbW, y + kVerbH);
 }
@@ -463,9 +479,10 @@ Common::Rect ActionBar::getInvItemRect(int index) const {
 	const int col = index % kInvCols;
 	const int row = index / kInvCols;
 	const int scrollW = getScrollButtonWidth();
-	const int x = getInvArrowX() + scrollW + col * kInvItemW;
+	const int itemW = getInvItemWidth();
+	const int x = getInvArrowX() + scrollW + col * itemW;
 	const int y = kVerbY + row * kInvItemH;
-	return Common::Rect(x, y, x + kInvItemW, y + kInvItemH);
+	return Common::Rect(x, y, x + itemW, y + kInvItemH);
 }
 
 Common::Rect ActionBar::getInvScrollLeftRect() const {
@@ -482,7 +499,7 @@ bool ActionBar::isPointInInventoryStrip(const Common::Point &pos) const {
 
 Common::Rect ActionBar::getInvScrollRightRect() const {
 	const int scrollW = getScrollButtonWidth();
-	const int x = getInvArrowX() + scrollW + kInvCols * kInvItemW;
+	const int x = getInvArrowX() + scrollW + kInvCols * getInvItemWidth();
 	return Common::Rect(x, kVerbY, x + scrollW, kVerbY + kVerbH * kVerbRows);
 }
 
@@ -497,53 +514,76 @@ void ActionBar::refreshSaveSlotNames() {
 		if (desc.getSaveSlot() != -1 && !desc.getDescription().empty())
 			g_engine->_saveSlotNames.push_back(desc.getDescription());
 		else
-			g_engine->_saveSlotNames.push_back(Common::String::format("--- Slot %d ---", slot + 1));
+			g_engine->_saveSlotNames.push_back(Common::String::format(uiText("--- Platz %d ---").c_str(), slot + 1));
 	}
 }
 
-Common::String ActionBar::buildNativeSentenceLine() const {
-	const Script::MouseMode mode = g_engine->_scriptExecutor->_cursorMode;
-	const char *verb = "Walk";
-	if (mode == Script::MouseMode::Look)
-		verb = "Look";
-	else if (mode == Script::MouseMode::Talk)
-		verb = "Talk";
-	else if (mode == Script::MouseMode::Use || mode == Script::MouseMode::UseInventory)
-		verb = "Use";
-	else if (mode == Script::MouseMode::PanelCursor || mode == Script::MouseMode::Disabled)
+Common::String ActionBar::translatedVerbLabel(Script::MouseMode mode) const {
+	if (mode == Script::MouseMode::UseInventory) {
+		mode = Script::MouseMode::Use;
+	}
+	for (int i = 0; i < ARRAYSIZE(kVerbs); i++) {
+		if (kVerbs[i].mode == mode) {
+			return uiText(kVerbs[i].label);
+		}
+	}
+	return uiText("Gehe");
+}
+
+Common::String ActionBar::currentTargetDisplayName() const {
+	if (!_sentenceObject.empty())
+		return _sentenceObject;
+
+	const Common::Point mouse = g_system->getEventManager()->getMousePos();
+	if (isPointInUI(mouse))
 		return Common::String();
 
-	Common::String line(verb);
+	if (_view->_uiPanelState == View1::kUiPanelContainerInventory ||
+		_view->_uiPanelState == View1::kUiPanelInventory) {
+		GameObject *hovered = _view->getClickedInventoryItem(mouse);
+		if (hovered != nullptr)
+			return lookupObjectHotspotName(hovered->_index);
+		return Common::String();
+	}
+
+	uint16 hoverId = _view->getHitObjectID(mouse);
+	if (hoverId == 0)
+		hoverId = g_engine->getHotspotAtPoint(mouse);
+	return lookupInteractionDisplayName(hoverId);
+}
+
+Common::String ActionBar::buildSentenceLine() const {
+	const Script::MouseMode mode = g_engine->_scriptExecutor->_cursorMode;
+	if (mode == Script::MouseMode::PanelCursor || mode == Script::MouseMode::Disabled) {
+		return Common::String();
+	}
+
+	const Common::String targetName = currentTargetDisplayName();
+	Common::String itemName;
 	if (_view->_activeInventoryItem != nullptr) {
-		const Common::String itemName = getObjectDisplayName(_view->_activeInventoryItem);
-		if (!itemName.empty()) {
-			line += " ";
-			line += itemName;
-			line += " with";
+		itemName = lookupObjectHotspotName(_view->_activeInventoryItem->_index);
+	}
+
+	if (mode == Script::MouseMode::UseInventory && !itemName.empty()) {
+		if (!targetName.empty())
+			return Common::String::format(uiText("Benutze %s mit %s").c_str(), itemName.c_str(), targetName.c_str());
+		return Common::String::format(uiText("Benutze %s").c_str(), itemName.c_str());
+	}
+
+	if (!targetName.empty()) {
+		switch (mode) {
+		case Script::MouseMode::Look:
+			return Common::String::format(uiText("Schaue an %s").c_str(), targetName.c_str());
+		case Script::MouseMode::Talk:
+			return Common::String::format(uiText("Rede mit %s").c_str(), targetName.c_str());
+		case Script::MouseMode::Use:
+			return Common::String::format(uiText("Benutze %s").c_str(), targetName.c_str());
+		default:
+			return Common::String::format(uiText("Gehe zu %s").c_str(), targetName.c_str());
 		}
 	}
 
-	uint16 hoverId = 0;
-	const Common::Point mouse = g_system->getEventManager()->getMousePos();
-	if (!isPointInUI(mouse)) {
-		hoverId = _view->getHitObjectID(mouse);
-		if (hoverId == 0)
-			hoverId = g_engine->getHotspotAtPoint(mouse);
-	}
-	if (hoverId >= 0x400) {
-		const uint16 objIndex = hoverId - 0x400;
-		if (objIndex < GameObjects::instance()._objectNames.size() &&
-			!GameObjects::instance()._objectNames[objIndex].empty()) {
-			line += " ";
-			line += GameObjects::instance()._objectNames[objIndex];
-		}
-	} else if (_view->_hoverHotspotId != 0 &&
-			   _view->_hoverHotspotId < GameObjects::instance()._objectNames.size() &&
-			   !GameObjects::instance()._objectNames[_view->_hoverHotspotId].empty()) {
-		line += " ";
-		line += GameObjects::instance()._objectNames[_view->_hoverHotspotId];
-	}
-	return line;
+	return translatedVerbLabel(mode);
 }
 
 const HudButton *ActionBar::findHudButtonAt(const Common::Point &pos, int *outIndex) const {
@@ -552,10 +592,10 @@ const HudButton *ActionBar::findHudButtonAt(const Common::Point &pos, int *outIn
 	if (!isPointInUI(pos))
 		return nullptr;
 	const uint16 panelTop = g_engine->_panelTopY;
-	const uint16 menuMode = g_engine->_menuMode;
+	const MenuMode menuMode = g_engine->_menuMode;
 	for (uint i = 0; i < g_engine->_hudButtons.size(); i++) {
 		const HudButton &btn = g_engine->_hudButtons[i];
-		if (btn.menuId != menuMode || btn.frame._data.empty())
+		if (btn.menuId != (uint16)menuMode || btn.frame._data.empty())
 			continue;
 		const AnimFrame &hitFrame = btn.frame;
 		const Common::Point local(pos.x - btn.x, pos.y - (int)panelTop - btn.y);
@@ -575,11 +615,11 @@ const HudButton *ActionBar::findHudButtonAt(const Common::Point &pos, int *outIn
 void ActionBar::drawNative(Graphics::ManagedSurface &s) {
 	if (!g_engine->hasNativeHudAssets())
 		return;
-	if (g_engine->_menuMode == 0)
+	if (g_engine->_menuMode == MenuMode::Hidden)
 		return;
 
 	const uint16 panelTop = g_engine->_panelTopY;
-	const uint16 menuMode = g_engine->_menuMode;
+	const MenuMode menuMode = g_engine->_menuMode;
 	const int megaIndex = (int)menuMode - 1;
 	if (megaIndex >= 0 && megaIndex < 6 && g_engine->_hudMegapicLoaded[megaIndex]) {
 		const Graphics::ManagedSurface &mega = g_engine->_hudMegapics[megaIndex];
@@ -589,20 +629,20 @@ void ActionBar::drawNative(Graphics::ManagedSurface &s) {
 	}
 
 	for (const HudButton &btn : g_engine->_hudButtons) {
-		if (btn.menuId != menuMode || btn.frame._data.empty())
+		if (btn.menuId != (uint16)menuMode || btn.frame._data.empty())
 			continue;
 		const AnimFrame *frame = &btn.frame;
 		const Script::MouseMode mode = g_engine->_scriptExecutor->_cursorMode;
 		const bool selected =
-			(menuMode == 1 &&
+			(menuMode == MenuMode::Main &&
 			 ((btn.buttonId == 1 && mode == Script::MouseMode::Walk) ||
 			  (btn.buttonId == 2 && mode == Script::MouseMode::Look) ||
 			  (btn.buttonId == 3 && mode == Script::MouseMode::Talk) ||
 			  (btn.buttonId == 4 && (mode == Script::MouseMode::Use ||
 									mode == Script::MouseMode::UseInventory)))) ||
-			(menuMode == 2 &&
-			 ((btn.buttonId == 0x1e && g_engine->_optionsSubMode == 1) ||
-			  (btn.buttonId == 0x1f && g_engine->_optionsSubMode == 2)));
+			(menuMode == MenuMode::Options &&
+			 ((btn.buttonId == 30 && g_engine->_optionsSubMode == OptionsSubMode::Save) ||
+			  (btn.buttonId == 31 && g_engine->_optionsSubMode == OptionsSubMode::Load)));
 		const bool pressed = (_pressedButtonId != 0 && btn.buttonId == _pressedButtonId);
 		const bool hovered = (_hoveredButtonId != 0 && btn.buttonId == _hoveredButtonId);
 
@@ -621,10 +661,10 @@ void ActionBar::drawNative(Graphics::ManagedSurface &s) {
 	const uint16 optTextMaxW = g_engine->_hudTextLayout[2] ? g_engine->_hudTextLayout[2] : 212;
 	const uint16 lineCount = g_engine->_hudTextLayout[3] ? g_engine->_hudTextLayout[3] : 9;
 	const uint16 linePitch = g_engine->_hudTextLayout[4] ? g_engine->_hudTextLayout[4] : 10;
-	const GlyphData *panelFont = g_engine->numPanelGlyphs ? g_engine->_panelGlyphs : g_engine->_glyphs;
-	const uint16 panelFontCount = g_engine->numPanelGlyphs ? g_engine->numPanelGlyphs : g_engine->numGlyphs;
+	const GlyphData *panelGlyph = g_engine->_text.numPanelGlyphs ? g_engine->_text._panelGlyphs : g_engine->_text._glyphs;
+	const uint16 panelGlyphCount = g_engine->_text.numPanelGlyphs ? g_engine->_text.numPanelGlyphs : g_engine->_text._numGlyphs;
 
-	if (menuMode == 1) {
+	if (menuMode == MenuMode::Main) {
 		if (_view->_inventorySource == nullptr ||
 			_view->_inventorySource->_index != Scenes::instance()._currentActorIndex)
 			_view->setInventorySource(GameObjects::instance().getProtagonistObject());
@@ -661,39 +701,39 @@ void ActionBar::drawNative(Graphics::ManagedSurface &s) {
 			delete icon;
 		}
 
-		const GlyphData *font = g_engine->numGlyphs ? g_engine->_glyphs : panelFont;
-		const uint16 fontCount = g_engine->numGlyphs ? g_engine->numGlyphs : panelFontCount;
-		if (fontCount != 0) {
-			Common::String sentence = buildNativeSentenceLine();
+		const GlyphData *font = g_engine->_text._numGlyphs ? g_engine->_text._glyphs : panelGlyph;
+		const uint16 glyphCount = g_engine->_text._numGlyphs ? g_engine->_text._numGlyphs : panelGlyphCount;
+		if (glyphCount != 0) {
+			Common::String sentence = buildSentenceLine();
 			if (!sentence.empty()) {
 				const uint16 maxW = (uint16)(g_engine->screenWidth() - 16);
 				while (sentence.size() > 1) {
-					if ((uint16)_view->measureStringWithFont(sentence, font, fontCount) <= maxW)
+					if ((uint16)_view->measureStringWithFont(sentence, font, glyphCount) <= maxW)
 						break;
 					sentence.deleteLastChar();
 				}
-				const int textW = _view->measureStringWithFont(sentence, font, fontCount);
+				const int textW = _view->measureStringWithFont(sentence, font, glyphCount);
 				const int textX = MAX(0, (g_engine->screenWidth() - textW) / 2);
-				const int glyphH = g_engine->maxGlyphHeight ? (int)g_engine->maxGlyphHeight : 12;
+				const int glyphH = g_engine->_text._maxGlyphHeight ? (int)g_engine->_text._maxGlyphHeight : 12;
 				const int textY = MAX(0, (int)panelTop - glyphH - 2);
-				_view->renderStringWithFontTo((uint16)textX, (uint16)textY, sentence, font, fontCount, s);
+				_view->renderStringWithFontTo((uint16)textX, (uint16)textY, sentence, font, glyphCount, s);
 			}
 		}
-	} else if (menuMode == 2 && panelFontCount != 0) {
+	} else if (menuMode == MenuMode::Options && panelGlyphCount != 0) {
 		if (g_engine->_saveSlotNames.empty())
 			refreshSaveSlotNames();
 		for (uint i = 0; i < g_engine->_saveSlotNames.size() && i < lineCount; i++) {
 			Common::String name = g_engine->_saveSlotNames[i];
 			while (name.size() > 1) {
-				if ((uint16)_view->measureStringWithFont(name, panelFont, panelFontCount) <= optTextMaxW)
+				if ((uint16)_view->measureStringWithFont(name, panelGlyph, panelGlyphCount) <= optTextMaxW)
 					break;
 				name.deleteLastChar();
 			}
 			_view->renderStringWithFontTo(optTextX, panelTop + optTextY + (int)i * linePitch,
-										  name, panelFont, panelFontCount, s);
+										  name, panelGlyph, panelGlyphCount, s);
 		}
-	} else if (menuMode == 4 && panelFontCount != 0 && _view->_isDialogueChoiceInputActive) {
-		// Dialogue choice list at layout[5..6]; wired when assets set menuMode 4.
+	} else if (menuMode == MenuMode::DialogueList && panelGlyphCount != 0 && _view->_isDialogueChoiceInputActive) {
+		// Dialogue choice list at layout[5..6]; wired when assets set DialogueList.
 		const uint16 dlgX = g_engine->_hudTextLayout[5];
 		const uint16 dlgY = g_engine->_hudTextLayout[6];
 		const uint16 pitch = g_engine->_hudTextLayout[4] ? g_engine->_hudTextLayout[4] : 10;
@@ -703,7 +743,7 @@ void ActionBar::drawNative(Graphics::ManagedSurface &s) {
 							  line < _view->_drawnStringBox.size();
 				 li++, line++) {
 				_view->renderStringWithFontTo(dlgX, panelTop + dlgY + (int)line * pitch,
-											  _view->_drawnStringBox[line], panelFont, panelFontCount, s);
+											  _view->_drawnStringBox[line], panelGlyph, panelGlyphCount, s);
 			}
 		}
 	}
@@ -715,9 +755,9 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 
 	const uint16 panelTop = g_engine->_panelTopY;
 	const int localY = pos.y - (int)panelTop;
-	const uint16 menuMode = g_engine->_menuMode;
+	const MenuMode menuMode = g_engine->_menuMode;
 
-	if (menuMode == 1) {
+	if (menuMode == MenuMode::Main) {
 		const uint16 cols = g_engine->_inventCols;
 		const uint16 rows = g_engine->_inventRows;
 		const uint16 slotW = g_engine->_inventSlotW;
@@ -761,7 +801,7 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 		}
 	}
 
-	if (menuMode == 2 && g_engine->_optionsSubMode != 0) {
+	if (menuMode == MenuMode::Options && g_engine->_optionsSubMode != OptionsSubMode::None) {
 		const uint16 textX = g_engine->_hudTextLayout[0];
 		const uint16 textY = g_engine->_hudTextLayout[1];
 		const uint16 textMaxW = g_engine->_hudTextLayout[2] ? g_engine->_hudTextLayout[2] : 212;
@@ -772,10 +812,10 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 			const uint16 row = (uint16)((localY - textY) / linePitch);
 			const uint16 start = g_engine->_saveListScroll == 0 ? 1 : g_engine->_saveListScroll;
 			const int slot = (int)start - 1 + (int)row;
-			if (g_engine->_optionsSubMode == 2) {
+			if (g_engine->_optionsSubMode == OptionsSubMode::Load) {
 				g_engine->loadGameState(slot);
-			} else if (g_engine->_optionsSubMode == 1) {
-				Common::String name = Common::String::format("Save %d", slot + 1);
+			} else if (g_engine->_optionsSubMode == OptionsSubMode::Save) {
+				Common::String name = Common::String::format(uiText("Spielstand %d").c_str(), slot + 1);
 				if (row < g_engine->_saveSlotNames.size() &&
 					!g_engine->_saveSlotNames[row].empty() &&
 					!g_engine->_saveSlotNames[row].hasPrefix("---"))
@@ -788,13 +828,14 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 		}
 	}
 
-	if (menuMode == 4 && _view->_isDialogueChoiceInputActive) {
+	if (menuMode == MenuMode::DialogueList && _view->_isDialogueChoiceInputActive) {
 		const uint16 dlgX = g_engine->_hudTextLayout[5];
 		const uint16 dlgY = g_engine->_hudTextLayout[6];
 		const uint16 pitch = g_engine->_hudTextLayout[4] ? g_engine->_hudTextLayout[4] : 10;
 		uint totalLines = 0;
-		for (uint n : _view->_dialogueChoiceLineCounts)
+		for (uint n : _view->_dialogueChoiceLineCounts) {
 			totalLines += n;
+		}
 		if (totalLines > 0 && pos.x >= (int)dlgX &&
 			localY >= (int)dlgY && localY < (int)(dlgY + totalLines * pitch)) {
 			const int clickedLine = (localY - (int)dlgY) / (int)pitch;
@@ -812,8 +853,9 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 	}
 
 	const HudButton *btn = findHudButtonAt(pos);
-	if (btn == nullptr)
+	if (btn == nullptr) {
 		return true;
+	}
 
 	_pressedButtonId = btn->buttonId;
 	const uint16 id = btn->buttonId;
@@ -827,40 +869,38 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 		g_engine->setCursorMode(Script::MouseMode::Talk);
 	} else if (id == 4) {
 		g_engine->setCursorMode(Script::MouseMode::Use);
-	} else if (id == 0x33) {
+	} else if (id == 51) {
 		g_engine->_savedMenuCursorMode = g_engine->_scriptExecutor->_cursorMode;
-		g_engine->_menuMode = 2;
-		g_engine->_optionsSubMode = 0;
+		g_engine->_menuMode = MenuMode::Options;
+		g_engine->_optionsSubMode = OptionsSubMode::None;
 		g_engine->_saveListScroll = 1;
 		refreshSaveSlotNames();
 		g_engine->setCursorMode(Script::MouseMode::PanelCursor);
-	} else if (id == 0x32) {
-		g_engine->_menuMode = 1;
-		g_engine->_optionsSubMode = 0;
+	} else if (id == 50) {
+		g_engine->_menuMode = MenuMode::Main;
+		g_engine->_optionsSubMode = OptionsSubMode::None;
 		g_engine->setCursorMode(g_engine->_savedMenuCursorMode);
-	} else if (id == 0x1e) {
-		g_engine->_optionsSubMode = 1;
+	} else if (id == 30) {
+		g_engine->_optionsSubMode = OptionsSubMode::Save;
 		refreshSaveSlotNames();
-	} else if (id == 0x1f) {
-		g_engine->_optionsSubMode = 2;
+	} else if (id == 31) {
+		g_engine->_optionsSubMode = OptionsSubMode::Load;
 		refreshSaveSlotNames();
-	} else if (id == 0x20) {
+	} else if (id == 32) {
 		g_engine->softRestart();
 		return true;
-	} else if (id == 0x21) {
-		::GUI::MessageDialog quitDialog(
-			Common::U32String("Quit the game?"),
-			Common::U32String("Quit"), Common::U32String("Cancel"));
+	} else if (id == 33) {
+		::GUI::MessageDialog quitDialog(_("Quit the game?"), _("Quit"), _("Cancel"));
 		if (quitDialog.runModal() == ::GUI::kMessageOK)
 			Engine::quitGame();
-	} else if (id == 0x14 || id == 0x16) {
-		const uint16 page = (id == 0x14) ? 1 : (g_engine->_inventCols * g_engine->_inventRows);
+	} else if (id == 20 || id == 22) {
+		const uint16 page = (id == 20) ? 1 : (g_engine->_inventCols * g_engine->_inventRows);
 		if (g_engine->_inventScroll > page)
 			g_engine->_inventScroll = (uint16)(g_engine->_inventScroll - page);
 		else
 			g_engine->_inventScroll = 1;
-	} else if (id == 0x15 || id == 0x17) {
-		const uint16 page = (id == 0x15) ? 1 : (g_engine->_inventCols * g_engine->_inventRows);
+	} else if (id == 21 || id == 23) {
+		const uint16 page = (id == 21) ? 1 : (g_engine->_inventCols * g_engine->_inventRows);
 		const uint16 maxStart = _view->_inventoryItems.empty() ? 1
 			: (uint16)((_view->_inventoryItems.size() > page) ? (_view->_inventoryItems.size() - page + 1) : 1);
 		uint16 next = (uint16)(g_engine->_inventScroll + page);
@@ -869,43 +909,43 @@ bool ActionBar::handleClickNative(const Common::Point &pos) {
 		if (next < 1)
 			next = 1;
 		g_engine->_inventScroll = next;
-	} else if (id == 0x2a) {
+	} else if (id == 42) {
 		const uint16 page = g_engine->_hudTextLayout[3] ? g_engine->_hudTextLayout[3] : 9;
 		if (g_engine->_saveListScroll > page)
 			g_engine->_saveListScroll = (uint16)(g_engine->_saveListScroll - page);
 		else
 			g_engine->_saveListScroll = 1;
 		refreshSaveSlotNames();
-	} else if (id == 0x2b) {
+	} else if (id == 43) {
 		const uint16 page = g_engine->_hudTextLayout[3] ? g_engine->_hudTextLayout[3] : 9;
 		g_engine->_saveListScroll = (uint16)(g_engine->_saveListScroll + page);
 		if (g_engine->_saveListScroll > 100)
 			g_engine->_saveListScroll = 100;
 		refreshSaveSlotNames();
-	} else if (id == 0x42) {
+	} else if (id == 66) {
 		g_engine->_skipSpeed = 1;
-	} else if (id == 0x43) {
+	} else if (id == 67) {
 		g_engine->_skipSpeed = 2;
-	} else if (id == 0x44) {
+	} else if (id == 68) {
 		g_engine->_skipSpeed = 3;
-	} else if (id == 0x45) {
+	} else if (id == 69) {
 		g_engine->_skipSpeed = 4;
-	} else if (id == 0x3c) {
+	} else if (id == 60) {
 		g_engine->_scriptExecutor->_musicEnabled = true;
-	} else if (id == 0x3d) {
+	} else if (id == 61) {
 		g_engine->_scriptExecutor->_musicEnabled = false;
 		g_engine->getMusic()->stopMusic();
-	} else if (id == 0x3e) {
+	} else if (id == 62) {
 		g_engine->_scriptExecutor->_soundEnabled = true;
-	} else if (id == 0x3f) {
+	} else if (id == 63) {
 		g_engine->_scriptExecutor->_soundEnabled = false;
 		g_engine->stopSample();
-	} else if (id == 0x40) {
+	} else if (id == 64) {
 		g_engine->_scriptExecutor->_textEnabled = true;
-	} else if (id == 0x41) {
+	} else if (id == 65) {
 		g_engine->_scriptExecutor->_textEnabled = false;
 	} else {
-		debugC(1, kDebugScript, "ActionBar: unhandled button id=0x%x menu=%u", id, menuMode);
+		debugC(1, kDebugScript, "ActionBar: unhandled button id=0x%x menu=%u", id, (uint)menuMode);
 	}
 	_view->updateCursor();
 	_view->redraw();

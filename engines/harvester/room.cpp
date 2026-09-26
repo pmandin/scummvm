@@ -31,6 +31,7 @@
 #include "graphics/fontman.h"
 #include "graphics/framelimiter.h"
 #include "harvester/cft_font.h"
+#include "harvester/cheats.h"
 #include "harvester/detection.h"
 #include "harvester/fst_player.h"
 #include "harvester/harvester.h"
@@ -146,15 +147,6 @@ static const CftFontResource *findStartupFontByName(const HarvesterEngine &engin
 	}
 
 	return nullptr;
-}
-
-static Common::String buildUseItemPrompt(const Common::String &itemLabel, const Common::String &targetLabel) {
-	if (itemLabel.empty())
-		return Common::String();
-	if (targetLabel.empty())
-		return Common::String::format("Use %s on ...", itemLabel.c_str());
-
-	return Common::String::format("Use %s on %s", itemLabel.c_str(), targetLabel.c_str());
 }
 
 static Common::String resolveStartupNpcLabel(const NpcRecord &npc) {
@@ -331,8 +323,8 @@ static void setScaledRoomPalette(Graphics::Screen &screen, const byte *palette, 
 }
 
 RoomSystem::RoomSystem(HarvesterEngine &engine, Common::Point &mousePos,
-		InventorySystem &inventory)
-	: _engine(engine), _mousePos(mousePos), _inventory(inventory) {
+		InventorySystem &inventory, CheatSystem &cheats)
+	: _engine(engine), _mousePos(mousePos), _inventory(inventory), _cheats(cheats) {
 }
 
 Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetName,
@@ -485,8 +477,18 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 		Common::Array<RoomCombatDamagePopupState> damagePopupStates;
 		uint nextCombatEffectId = 0;
 		ResolvedText inspectText;
+		Common::String currentInteractionPromptText;
 		bool showingInspectText = false;
 		bool inspectCanDismiss = false;
+		auto beginInspectText = [&](const ObjectRecord &object, const ResolvedText &text) {
+			inspectText = text;
+			showingInspectText = true;
+			inspectCanDismiss = false;
+			debugC(2, kDebugRoom,
+				"Harvester: showing IDENT object='%s' prompt='%s' box='%s' text='%s'",
+				object.objectName.c_str(), currentInteractionPromptText.c_str(),
+				inspectText.boxName.c_str(), inspectText.value.c_str());
+		};
 		ResolvedText combatLoadoutStatusText;
 		uint32 combatLoadoutStatusHideTick = 0;
 		bool closeInventoryAfterCombatLoadoutStatus = false;
@@ -854,15 +856,19 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 			if (!entityManager || !shouldSpawnNpc)
 				return nullptr;
 
-			const int initialFrame = preservedCorpse ? npc.runtimeState : 0;
 			Entity *entity = entityManager->spawnSceneActorEntity(
-				npc.npcName, npc.modelPath, Common::Point(npc.posX, npc.posY), (float)npc.posZ, initialFrame);
+				npc.npcName, npc.modelPath, Common::Point(npc.posX, npc.posY), (float)npc.posZ, 0);
 			if (!entity)
 				return nullptr;
 
 			entity->setClassId(kRuntimeEntityClassNpc);
 			entity->setZExtent(kNativeNpcMonsterZExtent);
 			entity->setHitTestMode(preservedCorpse ? kRuntimeEntityHitTestNone : kRuntimeEntityHitTestOpaquePixels);
+			entity->setVisible(true);
+			if (!applyRoomNpcPlacement(*entity, npc)) {
+				removeSceneEntityByName(npc.npcName);
+				return nullptr;
+			}
 			if (preservedCorpse) {
 				const int corpseFrame = MIN(entity->getLastFrame(), npc.runtimeState);
 				entity->setAnimationFrameRange(corpseFrame, corpseFrame, false);
@@ -872,11 +878,6 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 			} else {
 				entity->setAnimationFrameRange(0, MIN(entity->getLastFrame(), kRoomNpcAmbientLastFrame), true);
 				entity->setAnimationRate(npc.frameDelay > 0 ? npc.frameDelay : 0);
-			}
-			entity->setVisible(true);
-			if (!applyRoomNpcPlacement(*entity, npc)) {
-				removeSceneEntityByName(npc.npcName);
-				return nullptr;
 			}
 			entityManager->reinsertSceneEntity(entity);
 			return entity;
@@ -1457,12 +1458,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 			if (!entityManager)
 				return;
 
-			for (const NpcRecord &npc : scene.state.roomNpcs) {
-				Entity *entity = entityManager->findSceneEntityByName(npc.npcName);
-				if (!entity)
-					continue;
-				(void)applyRoomNpcPlacement(*entity, npc);
-			}
+			// Class-4 NPCs retain their spawn base through ambient and death animation banks.
 			for (const MonsterRecord &monster : scene.state.roomMonsters) {
 				Entity *entity = entityManager->findSceneEntityByName(monster.monsterName);
 				if (!entity)
@@ -2520,7 +2516,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 
 			const RoomHoverState hoverState = resolveRoomHoverState(
 				_engine, scene.state, scene.sceneObjects, scene.state.roomNpcs, scene.sceneRegions,
-				_mousePos, &flow._dialogue);
+				_mousePos, flow._menuTextConfig, &flow._dialogue);
 			if (hoverState.npc) {
 				playerState.attackTargetName = hoverState.npc->npcName;
 				playerState.attackTargetClassId = kRuntimeEntityClassNpc;
@@ -3048,14 +3044,18 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 							monster.monsterName.c_str(), currentFrame, script.getPlayerCurrentHitPoints());
 					} else {
 						const int playerHitPointsBefore = script.getPlayerCurrentHitPoints();
-						const bool changed = script.adjustPlayerCurrentHitPoints(-monster.damageAmount);
+						const bool damageDisabled = _cheats.isPlayerDamageDisabled();
+						const bool changed = damageDisabled
+							? false
+							: script.adjustPlayerCurrentHitPoints(-monster.damageAmount);
 						const int playerHitPointsAfter = script.getPlayerCurrentHitPoints();
 						const int damageLanded = playerHitPointsBefore - playerHitPointsAfter;
 						debugC(1, kDebugCombat,
-							"Harvester: combat monster attack hit monster='%s' frame=%d damage=%d damage_type='%s' player_hp=%d->%d changed=%d",
+							"Harvester: combat monster attack hit monster='%s' frame=%d damage=%d damage_type='%s' player_hp=%d->%d changed=%d damage_disabled=%d",
 							monster.monsterName.c_str(), currentFrame, monster.damageAmount,
 							Player::describeCombatDamageType(monster.damageType),
-							playerHitPointsBefore, playerHitPointsAfter, changed);
+							playerHitPointsBefore, playerHitPointsAfter, changed,
+							damageDisabled ? 1 : 0);
 						if (damageLanded > 0 && playerState.entity) {
 							spawnCombatDamagePopup(*playerState.entity, playerState.entity->getName(), damageLanded);
 							if (idleState.entity) {
@@ -3505,7 +3505,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 	captureCurrentSaveState();
 
 	if (shouldRunStartupRoomProbe())
-		logStartupRoomProbe(_engine, scene, currentRoomTarget, _mousePos);
+		logStartupRoomProbe(_engine, scene, currentRoomTarget, _mousePos, flow._menuTextConfig);
 
 	while (!_engine.shouldQuit()) {
 		if (flow.hasPendingMainMenuReturn())
@@ -3593,7 +3593,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 			RoomHoverState hoverState = suppressHover
 				? RoomHoverState()
 				: resolveRoomHoverState(_engine, scene.state, scene.sceneObjects, scene.state.roomNpcs,
-					scene.sceneRegions, _mousePos, &flow._dialogue);
+					scene.sceneRegions, _mousePos, flow._menuTextConfig, &flow._dialogue);
 			if (!suppressHover && inventorySelectionActive && !hoverState.npc) {
 				if (ObjectRecord *selectedTarget = findSelectedInventoryRoomTarget(_mousePos))
 					hoverState.object = selectedTarget;
@@ -3624,10 +3624,11 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 					targetLabel = resolveCarryTargetLabel();
 				}
 				if (inventorySelectionActive) {
-					promptText = _inventory.buildSelectedPrompt(targetLabel);
+					promptText = _inventory.buildSelectedPrompt(targetLabel, flow._menuTextConfig);
 					_inventory.setPromptText(promptText);
 				} else {
-					promptText = buildUseItemPrompt(carriedRoomItemLabel, targetLabel);
+					promptText = buildUseItemPrompt(
+						flow._menuTextConfig, carriedRoomItemLabel, targetLabel);
 				}
 				hoverState.cursorSequence = 7;
 			} else if (_inventory.isOpen()) {
@@ -3642,6 +3643,8 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 			} else {
 				promptText = hoverState.promptText;
 			}
+			if (!showingInspectText)
+				currentInteractionPromptText = promptText;
 			if (Entity *cursor = entityManager ? entityManager->getCursorEntity() : nullptr) {
 				cursor->setAnimationSequence(
 					(showingInspectText || idleState.active || idleState.exiting ||
@@ -3659,7 +3662,8 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 			}
 			if (_inventory.isOpen()) {
 				_inventory.drawOverlay(*activeScreen);
-				drawInventoryWeekday(*activeScreen, *inventoryTooltipFont, _inventory.resolveWeekdayLabel());
+				drawInventoryWeekday(*activeScreen, *inventoryTooltipFont,
+					_inventory.resolveWeekdayLabel(flow._menuTextConfig));
 			}
 			if (inventorySelectionActive) {
 				_inventory.drawSelectedDragItem(*activeScreen, _mousePos);
@@ -3671,6 +3675,9 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 
 			if (showingInspectText) {
 				drawRoomInspectText(*activeScreen, *art, *inspectFont, inspectText, useNativeInspectFont);
+				if (!currentInteractionPromptText.empty())
+					drawRoomPrompt(*activeScreen, *promptFont,
+						currentInteractionPromptText, useNativePromptFont);
 			} else if (!combatLoadoutStatusText.value.empty()) {
 				drawRoomInspectText(*activeScreen, *art, *inspectFont, combatLoadoutStatusText,
 					useNativeInspectFont);
@@ -3906,7 +3913,8 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 								"Harvester: inventory left click selecting object='%s'",
 								inventoryHover->object.objectName.c_str());
 							_inventory.selectItem(inventoryHover->object.objectName);
-							_inventory.setPromptText(_inventory.buildSelectedPrompt(Common::String()));
+							_inventory.setPromptText(_inventory.buildSelectedPrompt(
+								Common::String(), flow._menuTextConfig));
 							needsRedraw = true;
 							break;
 						}
@@ -3937,7 +3945,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 
 				const RoomHoverState hoverState = resolveRoomHoverState(
 					_engine, scene.state, scene.sceneObjects, scene.state.roomNpcs, scene.sceneRegions,
-					_mousePos, &flow._dialogue);
+					_mousePos, flow._menuTextConfig, &flow._dialogue);
 				ObjectRecord *selectedRoomTarget = nullptr;
 				if (_inventory.hasSelection() && !hoverState.npc)
 					selectedRoomTarget = findSelectedInventoryRoomTarget(_mousePos);
@@ -4097,9 +4105,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 					clickedObject->identShown = true;
 					_engine.getScript()->markObjectIdentShown(*clickedObject);
 					if (canShowInspectText) {
-						inspectText = resolvedInspectText;
-						showingInspectText = true;
-						inspectCanDismiss = false;
+						beginInspectText(*clickedObject, resolvedInspectText);
 					} else if (hasInspectText) {
 						debug(1, "Harvester: unsupported IDENT textbox '%s' for object '%s'",
 							resolvedInspectText.boxName.c_str(), clickedObject->objectName.c_str());
@@ -4136,9 +4142,7 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 				if (!_engine.getScript()->resolveObjectInteraction(
 						*clickedObject, interaction, scene.state.roomName)) {
 					if (canShowInspectText) {
-						inspectText = resolvedInspectText;
-						showingInspectText = true;
-						inspectCanDismiss = false;
+						beginInspectText(*clickedObject, resolvedInspectText);
 					} else if (hasInspectText) {
 						debug(1, "Harvester: unsupported IDENT textbox '%s' for object '%s'",
 							resolvedInspectText.boxName.c_str(), clickedObject->objectName.c_str());
@@ -4176,6 +4180,37 @@ Common::Error RoomSystem::runRoomLoop(Flow &flow, const Common::String &targetNa
 					if (Player::requestIdleAnimationExit(scene.state, playerState, idleState))
 						needsRedraw = true;
 					break;
+				}
+
+				if (Script *script = _engine.getScript()) {
+					InteractionResult cheatInteraction;
+					CheatActivation cheatActivation;
+					const CheatInputResult cheatInputResult = _cheats.processKey(
+						event.kbd, *script, scene.state.roomName,
+						cheatInteraction, cheatActivation);
+					if (cheatInputResult != kCheatInputIgnored) {
+						if (cheatInputResult == kCheatInputComplete && cheatActivation.activated) {
+							if (cheatActivation.clearInteractionState && _inventory.clearSelection())
+								needsRedraw = true;
+							if (cheatActivation.inventoryChanged && _inventory.isOpen() &&
+									!_inventory.refresh()) {
+								return Common::kReadingFailed;
+							}
+							if (cheatActivation.hasInteraction) {
+								if (_inventory.isOpen())
+									(void)_inventory.close();
+								bool didTransition = false;
+								Common::Error cheatError = interactionProcessor.handleInteractionResult(
+									cheatInteraction, didTransition, Common::String());
+								if (cheatError.getCode() != Common::kNoError)
+									return cheatError;
+								if (flow.hasPendingMainMenuReturn())
+									return Common::kNoError;
+							}
+							needsRedraw = true;
+						}
+						break;
+					}
 				}
 
 				if (_inventory.isOpen()) {

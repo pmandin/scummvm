@@ -22,6 +22,8 @@
 #ifndef MACS2_CONSTANTS_H
 #define MACS2_CONSTANTS_H
 
+#include "common/scummsys.h"
+
 namespace Macs2 {
 
 // V1 (AHFFMACS0100) viewport - default engine dimensions.
@@ -65,6 +67,7 @@ static constexpr uint32 kMcsV1ShadingTableSize = 0x800;
 static constexpr uint kMcsV1CursorImageCount = 0x21;
 static constexpr uint kMcsV1MapSceneOffsetCount = 256;
 static constexpr uint32 kMcsV1MapSceneOffsetsSize = kMcsV1MapSceneOffsetCount * 4; // 0x400
+static constexpr uint kPathNodeSlots = 16;
 
 static constexpr uint32 kMcsV2ActorIndexOffset = 0x20E;
 static constexpr uint32 kMcsV2DirectoryOffset = 0x212;

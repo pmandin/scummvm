@@ -49,6 +49,25 @@ static uint selectRandomSound(Common::Array<Common::String> &soundNames) {
 	return g_nancy->_randomSource->getRandomNumber(soundNames.size() - 1);
 }
 
+// Some entries hold nothing but markup: "silence", which scenes play as a
+// placeholder, is just "<n>". Showing one would clear the textbox and put a
+// blank line in it, wiping whatever caption is up.
+static bool hasVisibleText(const Common::String &text) {
+	bool inToken = false;
+
+	for (uint i = 0; i < text.size(); ++i) {
+		if (text[i] == '<') {
+			inToken = true;
+		} else if (text[i] == '>') {
+			inToken = false;
+		} else if (!inToken && !Common::isSpace(text[i])) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 // Nancy13+ subtitles are no longer stored inside the sound record. Instead, the
 // engine looks the played sound's name up in the CVTX text chunks when the sound
 // starts and, if a matching entry exists, shows it in the game textbox. The
@@ -61,14 +80,17 @@ static Common::String resolveSoundSubtitle(const Common::String &soundName) {
 	const CVTX *autotext = (const CVTX *)g_nancy->getEngineData("AUTOTEXT");
 	if (autotext) {
 		Common::String text = autotext->texts.getValOrDefault(soundName, "");
-		if (!text.empty()) {
+		if (hasVisibleText(text)) {
 			return text;
 		}
 	}
 
 	const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
 	if (convo) {
-		return convo->texts.getValOrDefault(soundName, "");
+		Common::String text = convo->texts.getValOrDefault(soundName, "");
+		if (hasVisibleText(text)) {
+			return text;
+		}
 	}
 
 	return Common::String();
@@ -188,30 +210,36 @@ void PlaySound::readData(Common::SeekableReadStream &stream) {
 	stream.skip(2); // VIDEO_STOP_RENDERING, VIDEO_CONTINUE_RENDERING
 }
 
-void PlaySound::readDataNancy13(Common::SeekableReadStream &stream) {
-	// The sound is a set of candidate names, one picked at random (0 = no sound).
+void readMultiNameSound(Common::SeekableReadStream &stream, SoundDescription &sound, Common::String &ccText) {
 	const uint16 numNames = stream.readUint16LE();
-	if (numNames > 0) {
-		Common::Array<Common::String> names;
-		names.resize(numNames);
-		for (uint16 i = 0; i < numNames; ++i) {
-			readFilename(stream, names[i]);
-		}
-
-		_sound.channelID = stream.readUint16LE();
-		_sound.numLoops = stream.readUint32LE();
-		_sound.volume = stream.readUint16LE();
-
-		_sound.name = names[selectRandomSound(names)];
-
-		// Subtitles are keyed by the played sound's name in the CVTX chunks.
-		_ccText = resolveSoundSubtitle(_sound.name);
+	if (numNames == 0) {
+		return;
 	}
+
+	Common::Array<Common::String> names;
+	names.resize(numNames);
+	for (uint16 i = 0; i < numNames; ++i) {
+		readFilename(stream, names[i]);
+	}
+
+	sound.channelID = stream.readUint16LE();
+	sound.numLoops = stream.readUint32LE();
+	sound.volume = stream.readUint16LE();
+
+	sound.name = names[selectRandomSound(names)];
+
+	// Subtitles are keyed by the played sound's name in the CVTX chunks.
+	ccText = resolveSoundSubtitle(sound.name);
+}
+
+void PlaySound::readDataNancy13(Common::SeekableReadStream &stream) {
+	readMultiNameSound(stream, _sound, _ccText);
 
 	// No inline SoundEffectDescription anymore, and the scene change is just a
 	// scene ID (frame/vertical offset stay 0).
 	_changeSceneImmediately = stream.readByte();
 	_sceneChange.sceneID = stream.readUint16LE();
+	_sceneChange.continueSceneSound = kContinueSceneSound;	// sounds keep playing into the new scene
 	_afterSoundAction = stream.readByte();	// overlay-refresh control; unused
 
 	// The single event flag became a list of { label, value } pairs.
@@ -290,6 +318,28 @@ void PlaySound::applyAfterSoundAction() {
 	if (g_nancy->getGameType() >= kGameTypeNancy13 && _afterSoundAction == 1) {
 		NancySceneState.getTextbox().clear();
 	}
+}
+
+Common::String PlaySound::getRecordExtraInfo() const {
+	Common::String info = Common::String::format("Sound %s, channel %u, loops %u, volume %u, scene %d%s",
+		_sound.name.c_str(), _sound.channelID, _sound.numLoops, _sound.volume, _sceneChange.sceneID,
+		_changeSceneImmediately ? " (without waiting)" : "");
+
+	Common::Array<FlagDescription> flags = _flags;
+	if (flags.empty()) {
+		flags.push_back(_flag);
+	}
+
+	for (uint i = 0; i < flags.size(); ++i) {
+		if (flags[i].label == kFlagNoLabel) {
+			continue;
+		}
+
+		info += Common::String::format("; flag %d, %s -> %s", flags[i].label,
+			g_nancy->getEventFlagName(flags[i].label).c_str(), flags[i].flag == g_nancy->_true ? "true" : "false");
+	}
+
+	return info;
 }
 
 Common::String PlaySound::getRecordTypeName() const {
@@ -540,7 +590,7 @@ void ConcatMultiSound::readData(Common::SeekableReadStream &stream) {
 	_sound.numLoops = (uint16)stream.readSint32LE();	// stored as an int32 on disk
 	_sound.volume = stream.readUint16LE();
 	_exitSceneID = stream.readSint16LE();
-	_field35 = stream.readByte();
+	_subtitleMode = stream.readByte();
 
 	// MultiSound: one shared set of flag pairs.
 	if (!perGroupFlags()) {
@@ -555,6 +605,32 @@ void ConcatMultiSound::readData(Common::SeekableReadStream &stream) {
 	_sound.name = "NO SOUND";
 }
 
+void ConcatMultiSound::showGroupSubtitle() {
+	if (_subtitleMode == kSubtitleModeNone) {
+		return;
+	}
+
+	// A group is captioned as a single block: the text of each of its sounds, in
+	// playback order, with a line break after every sound whose flag is set.
+	// Sounds with no text of their own contribute nothing.
+	Common::String text;
+	for (const SequencedSound &sound : _groups[_currentGroup].sounds) {
+		Common::String part = resolveSoundSubtitle(sound.name);
+		if (part.empty()) {
+			continue;
+		}
+
+		text += part;
+		if (sound.flag) {
+			text += "<n>";
+		}
+	}
+
+	if (!text.empty()) {
+		showSubtitle(text + "<e>");
+	}
+}
+
 void ConcatMultiSound::startCurrentSound() {
 	SoundGroup &group = _groups[_currentGroup];
 	SequencedSound &sound = group.sounds[_currentSound];
@@ -564,6 +640,11 @@ void ConcatMultiSound::startCurrentSound() {
 		for (const FlagDescription &flag : group.flags) {
 			NancySceneState.setEventFlag(flag);
 		}
+	}
+
+	// The whole group is subtitled at once, as its first sound starts.
+	if (_currentSound == 0) {
+		showGroupSubtitle();
 	}
 
 	_sound.name = sound.name;
@@ -622,6 +703,7 @@ void ConcatMultiSound::execute() {
 		if (_exitSceneID != kNoScene) {
 			SceneChangeDescription desc;
 			desc.sceneID = _exitSceneID;
+			desc.continueSceneSound = kContinueSceneSound;
 			NancySceneState.changeScene(desc);
 		}
 

@@ -372,6 +372,28 @@ bool ColonyEngine::loadAnimation(const Common::String &name) {
 	return true;
 }
 
+bool ColonyEngine::loadLiftAnimation(int objectType) {
+	switch (objectType) {
+	case kObjTeleport:
+		_liftObject = 1;
+		break;
+	case kObjBox1:
+	case kObjBox2:
+		_liftObject = 2;
+		break;
+	case kObjCryo:
+		_liftObject = 3;
+		break;
+	case kObjReactor:
+		_liftObject = 4;
+		break;
+	default:
+		return false;
+	}
+
+	return loadAnimation("lift");
+}
+
 void ColonyEngine::deleteAnimation() {
 	delete _backgroundMask;
 	_backgroundMask = nullptr;
@@ -409,6 +431,9 @@ void ColonyEngine::playAnimation() {
 	_coderWin = Common::Rect();
 	_coderPressed = -1;
 	_coderPressInside = false;
+	const bool useSquarePixelViewport = !isMacRenderMode();
+	if (useSquarePixelViewport)
+		_gfx->setSquarePixelViewport(true);
 	_system->lockMouse(false);
 	warpMouseLogical(_centerX, _centerY);
 	const char *cursorName = "default arrow cursor";
@@ -548,28 +573,10 @@ void ColonyEngine::playAnimation() {
 			setObjectOnOff(4, false);
 		}
 	} else if (_animationName == "lift") {
-		// Original DoLift: set up initial state based on forklift mode.
-		// _fl==1 → picking up (up=0, object starts at bottom)
-		// _fl==2 → putting down (up=1, object starts at top)
-		// Object sprite mapping: BOX1/BOX2→2, TELEPORT→1, CRYO→3, REACTOR→4
+		if (getPlatform() == Common::kPlatformMacintosh)
+			_sound->stop();
+
 		_liftUp = (_fl == 2);
-		switch (_fl == 2 ? _carryType : 0) {
-		case kObjBox1: case kObjBox2: _liftObject = 2; break;
-		case kObjTeleport: _liftObject = 1; break;
-		case kObjCryo: _liftObject = 3; break;
-		case kObjReactor: _liftObject = 4; break;
-		default: _liftObject = 2; break; // pickup: we don't know yet, but dolSprite handles it
-		}
-		// For pickup, determine object from what we're about to pick up
-		if (!_liftUp) {
-			// The interaction code sets _carryType AFTER the animation,
-			// but the object type is in the Thing we're interacting with.
-			// We can infer from which sprites are visible.
-			for (int i = 1; i <= 4; i++) {
-				if (i < (int)_lSprites.size() && _lSprites[i - 1] && _lSprites[i - 1]->onoff)
-					_liftObject = i;
-			}
-		}
 		// Hide all object sprites except the active one
 		for (int i = 1; i <= 4; i++) {
 			if (i != _liftObject)
@@ -599,7 +606,7 @@ void ColonyEngine::playAnimation() {
 		while (_system->getEventManager()->pollEvent(event)) {
 			if (event.type == Common::EVENT_QUIT || event.type == Common::EVENT_RETURN_TO_LAUNCHER) {
 				_animationRunning = false;
-				return;
+				break;
 			} else if (event.type == Common::EVENT_SCREEN_CHANGED) {
 				_gfx->computeScreenViewport();
 				needsDraw = true;
@@ -700,6 +707,8 @@ void ColonyEngine::playAnimation() {
 				}
 			}
 		}
+		if (!_animationRunning || shouldQuit())
+			break;
 
 		// updateAnimation has its own 50ms throttle; only redraw when we know
 		// the visible state changed (click feedback) or the cadence is due.
@@ -720,6 +729,15 @@ void ColonyEngine::playAnimation() {
 		_system->delayMillis(2);
 	}
 
+	if (_animationName == "lift" && getPlatform() == Common::kPlatformMacintosh) {
+		// Mac KillTSound waits for the lift sample before returning.
+		while (_sound->isPlaying() && !shouldQuit())
+			responsiveAnimationDelay(_system, 10);
+		_sound->stop();
+	}
+
+	if (useSquarePixelViewport)
+		_gfx->setSquarePixelViewport(false);
 	_system->lockMouse(true);
 	CursorMan.showMouse(false);
 	CursorMan.popAllCursors();
@@ -999,7 +1017,7 @@ void ColonyEngine::loadCoderTiles() {
 		delete imgs[i];
 }
 
-static void drawCoderTile(Graphics::ManagedSurface &s, const Image *img, int x, int y, uint32 fg, uint32 bg) {
+void drawCoderTile(Graphics::ManagedSurface &s, const Image *img, int x, int y, uint32 fg, uint32 bg) {
 	if (!img || !img->data)
 		return;
 	for (int r = 0; r < img->height; r++) {
@@ -1036,7 +1054,7 @@ void ColonyEngine::drawColonyCoder(int animOx, int animOy) {
 	const int contentW = 172;
 	const char *instrText = (_animationName == "security")
 		? "Press the symbols as shown on the display to determine the correct value."
-		: "Press the symbols from the desk in reverse order to determine the correct value.";
+		: "Enter the appropriate symbol sequence to determine this reactor's code.";
 	Common::Array<Common::U32String> instrLines;
 	instrFont->wordWrapText(Common::U32String(instrText), contentW - 16, instrLines);
 	const int instrLineH = instrFont->getFontHeight() + 1;
@@ -1471,6 +1489,7 @@ void ColonyEngine::handleAnimationClick(int item) {
 		// item 8 = lower button (active when _liftUp)
 		// item 9 = raise button (active when !_liftUp)
 		if (item == 8 && _liftUp) {
+			_sound->play(Sound::kDrop);
 			// Lower the object: animate states 5→1
 			setObjectState(8, 2); // lower arrow OFF
 			setObjectState(9, 1); // raise arrow ON
@@ -1481,8 +1500,8 @@ void ColonyEngine::handleAnimationClick(int item) {
 				responsiveAnimationDelay(_system, 50);
 			}
 			_liftUp = false;
-			_animationResult = 1;
 		} else if (item == 9 && !_liftUp) {
+			_sound->play(Sound::kLift);
 			// Raise the object: animate states 1→5
 			setObjectState(9, 2); // raise arrow OFF
 			setObjectState(8, 1); // lower arrow ON
@@ -1493,8 +1512,8 @@ void ColonyEngine::handleAnimationClick(int item) {
 				responsiveAnimationDelay(_system, 50);
 			}
 			_liftUp = true;
-			_animationResult = 1;
 		}
+		_animationResult = (_liftUp != (_fl == 2));
 	}
 }
 

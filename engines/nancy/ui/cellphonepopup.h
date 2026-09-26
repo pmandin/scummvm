@@ -112,6 +112,7 @@ private:
 		kMessageScreen    = 17   // a transient message tile (SENT / DELETED / FULL)
 	};
 
+	Common::Rect zoomedChromeSrc() const;
 	void drawChrome();
 	void drawScreenContent();
 	void drawStatusIcons(bool includeSignal = true);
@@ -274,6 +275,10 @@ private:
 	// so they don't consume a list row. Kept as a hook in case a game
 	// needs an in-LCD title row.
 	uint listTitleRows() const { return 0; }
+
+	// Whether the phone itself takes and shows pictures, i.e. whether the Menu
+	// screen offers "View Pictures" and the top row carries the Cam label.
+	bool hasCameraFeature() const;
 
 	// Layout for the two clickable labels on the Online hub.
 	Common::Rect hubEmailRect() const;

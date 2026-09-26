@@ -27,6 +27,12 @@
 namespace Nancy {
 namespace Action {
 
+// Reads a Nancy13+ sound block: a list of candidate names, one of which is picked
+// at random, followed by the shared channel/loop/volume fields. A block with no
+// names carries no sound at all and stops after the count. Also resolves the
+// picked sound's subtitle, which Nancy13+ keys off the sound name.
+void readMultiNameSound(Common::SeekableReadStream &stream, SoundDescription &sound, Common::String &ccText);
+
 // Sets the volume for a particular channel.
 class SetVolume : public ActionRecord {
 public:
@@ -35,6 +41,8 @@ public:
 
 	uint16 channel = 0;
 	byte volume = 0;
+
+	Common::String getRecordExtraInfo() const override { return Common::String::format("Channel %u, volume %u", channel, volume); }
 
 protected:
 	Common::String getRecordTypeName() const override { return "SetVolume"; }
@@ -133,7 +141,7 @@ public:
 	// it explicitly in the closed-caption records below.
 	Common::String _ccText;
 
-	Common::String getRecordExtraInfo() const override { return Common::String::format("Scene %d", _sceneChange.sceneID); }
+	Common::String getRecordExtraInfo() const override;
 
 protected:
 	Common::String getRecordTypeName() const override;
@@ -277,7 +285,7 @@ public:
 protected:
 	struct SequencedSound {
 		Common::String name;
-		byte flag = 0;
+		byte flag = 0;		// when set, this sound's subtitle ends its line
 		int16 delay = 0;	// seconds to hold after the sound starts
 	};
 
@@ -286,16 +294,22 @@ protected:
 		Common::Array<FlagDescription> flags;	// ConcatSound only
 	};
 
+	// Selects how a group's subtitle is presented. The original picks between two
+	// textbox surfaces, which are the same textbox here, so only the value that
+	// suppresses the subtitle entirely is acted on.
+	static const byte kSubtitleModeNone = 3;
+
 	// Flags stored per group (ConcatSound) or as one shared set (MultiSound).
 	virtual bool perGroupFlags() const = 0;
 
+	void showGroupSubtitle();
 	void startCurrentSound();
 
 	Common::Array<SoundGroup> _groups;
 	Common::Array<FlagDescription> _sharedFlags;	// MultiSound only
 	SoundDescription _sound;
 	int16 _exitSceneID = kNoScene;
-	byte _field35 = 0;
+	byte _subtitleMode = 0;
 
 	// Runtime state
 	uint _currentGroup = 0;

@@ -132,6 +132,8 @@ public:
 		kNancy13PuzzleRotateCCW		= 26,
 		kNancy13PuzzleDragHand		= 28,
 		kNancy13PuzzleDropHand		= 29,
+		kNancy13PuzzleMoveUp		= 30,
+		kNancy13PuzzleMoveDown		= 31,
 		kNancy13PuzzleArrow			= 34
 	};
 
@@ -186,6 +188,8 @@ private:
 
 	Common::Point _warpedMousePos;
 	CursorType _curCursorType;
+	bool _curSetFromScript;
+	bool _curHotspotVariant;
 	int16 _curItemID;
 	uint _curCursorID;
 	uint _lastCursorID;

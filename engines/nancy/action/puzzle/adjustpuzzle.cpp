@@ -37,7 +37,7 @@ namespace Action {
 
 void AdjustPuzzle::readData(Common::SeekableReadStream &stream) {
 	readFilename(stream, _imageName);		// 0x1c0
-	_field3d = stream.readSint16LE();		// 0x3d
+	_testCursorType = stream.readUint16LE();	// 0x3d
 
 	int16 numPieces = stream.readSint16LE();
 	_pieces.resize(numPieces);				// 0x3f
@@ -66,7 +66,7 @@ void AdjustPuzzle::readData(Common::SeekableReadStream &stream) {
 		_adjustSound.readData(stream);		// 0x12f
 	}
 
-	_field18a = stream.readSint16LE();		// 0x18a
+	_animCursorType = stream.readUint16LE();	// 0x18a
 
 	int16 numOverlays = stream.readSint16LE();
 	_overlayNames.resize(numOverlays);		// 0x18c
@@ -100,24 +100,7 @@ void AdjustPuzzle::readData(Common::SeekableReadStream &stream) {
 	// Trailing count-prefixed array of 23-byte give-up hotspots
 	// {Rect, uint16 cursorType, uint16 sceneID, int16 flagLabel, byte flagValue}.
 	// The exit always jumps to the scene's first frame.
-	int16 numExitZones = stream.readSint16LE();
-	for (int16 i = 0; i < numExitZones; ++i) {
-		Common::Rect r;
-		readRect(stream, r);
-		uint16 cursorType = stream.readUint16LE();
-		uint16 sceneID = stream.readUint16LE();
-		int16 flagLabel = stream.readSint16LE();
-		byte flagValue = stream.readByte();
-
-		if (i == 0) {
-			_exitHotspot = r;
-			_exitCursorType = cursorType;
-			_exitScene.sceneID = sceneID;
-			_exitScene.frameID = 0;
-			_exitFlag.label = flagLabel;
-			_exitFlag.flag = flagValue;
-		}
-	}
+	readExitHotspot(stream);
 }
 
 void AdjustPuzzle::init() {
@@ -129,8 +112,7 @@ void AdjustPuzzle::init() {
 	setVisible(true);
 	moveTo(vpBounds);
 
-	g_nancy->_resource->loadImage(_imageName, _image);
-	_image.setTransparentColor(_drawSurface.getTransparentColor());
+	loadImage();
 
 	_overlayImages.resize(_overlayNames.size());
 	for (uint i = 0; i < _overlayNames.size(); ++i) {
@@ -245,9 +227,7 @@ void AdjustPuzzle::handleInput(NancyInput &input) {
 	const bool click = (input.input & NancyInput::kLeftMouseButtonUp) != 0;
 
 	// Give-up hotspot: leave the puzzle.
-	if (!_exitHotspot.isEmpty() &&
-			NancySceneState.getViewport().convertViewportToScreen(_exitHotspot).contains(input.mousePos)) {
-		g_nancy->_cursor->setCursorType((CursorManager::CursorType)_exitCursorType, true);
+	if (hoverExitHotspot(input)) {
 		if (click) {
 			_exitRequested = true;
 		}
@@ -273,7 +253,7 @@ void AdjustPuzzle::handleInput(NancyInput &input) {
 	// The "test" control: evaluate the current settings.
 	if (!_rectB5.isEmpty() &&
 			NancySceneState.getViewport().convertViewportToScreen(_rectB5).contains(input.mousePos)) {
-		g_nancy->_cursor->setCursorType(CursorManager::kHotspot);
+		g_nancy->_cursor->setCursorType((CursorManager::CursorType)_testCursorType, true);
 		if (click) {
 			runTest();
 		}
@@ -290,8 +270,7 @@ void AdjustPuzzle::execute() {
 		break;
 	case kRun:
 		if (_exitRequested) {
-			NancySceneState.setEventFlag(_exitFlag);
-			NancySceneState.changeScene(_exitScene);
+			_exitScene.execute();
 			break;
 		}
 		if ((_solved || _lost) && !_outcomeApplied) {

@@ -30,10 +30,6 @@
 
 class MidiParser;
 
-namespace Common {
-class MemoryReadStream;
-}
-
 namespace OPL {
 class OPL;
 }
@@ -94,14 +90,13 @@ public:
 	bool isMidiFilePlaying() const;
 	bool hasAdlibBackend() const { return _opl != nullptr; }
 
-	void readDataFromExecutable(Common::MemoryReadStream *fileStream);
-
 	// MidiDriver_BASE interface
 	void send(uint32 b) override;
 	void metaEvent(byte type, const byte *data, uint16 length) override;
 
 	// Debug state for ImGui visualization
 	static constexpr int kDebugRingSize = 512;
+	static constexpr int kChannels = 9;
 	struct VoiceDebugState {
 		uint8 note = 0xFF;
 		uint8 channel = 0xFF;
@@ -109,13 +104,13 @@ public:
 		bool active = false;
 	};
 	struct DebugState {
-		VoiceDebugState voices[9];
+		VoiceDebugState voices[kChannels];
 		uint8 masterVolume = 0;
 		uint16 activeMusicSlot = 0;
 		uint8 statusFlags = 0;
 		uint32 nextEventTimer = 0;
 		uint16 numOplChannels = 0;
-		float regHistory[9][kDebugRingSize] = {};
+		float regHistory[kChannels][kDebugRingSize] = {};
 		int ringPos = 0;
 	};
 	DebugState _debug;
@@ -146,10 +141,10 @@ private:
 	uint8 _numOplChannels;
 
 	// Voice allocation (age-based, matching original)
-	uint8 _voiceAge[9];
-	uint8 _voiceMidiChannel[9];
-	uint8 _voiceInstrument[9];
-	uint8 _voiceNote[9];
+	uint8 _voiceAge[kChannels];
+	uint8 _voiceMidiChannel[kChannels];
+	uint8 _voiceInstrument[kChannels];
+	uint8 _voiceNote[kChannels];
 
 	// Channel state
 	uint8 _channelPrograms[16];
@@ -169,18 +164,6 @@ private:
 	void stopAdlibPlayback();
 	void stopSmfPlayback();
 	bool ensureSmfPlayer();
-
-	// Lookup tables from EXE
-	Common::Array<uint8> _opSlotTable;
-	Common::Array<uint8> _opMap1;
-	Common::Array<uint8> _opMap2;
-	Common::Array<uint8> _freqTableLo;
-	Common::Array<uint8> _freqTableHi;
-	Common::Array<uint8> _percVolTable;
-	Common::Array<uint8> _percOpMap;
-	Common::Array<uint8> _percFreqChannel;
-
-	void loadData(Common::MemoryReadStream *stream, int64 pos, uint16 size, void *target);
 };
 
 } // End of namespace Macs2

@@ -579,7 +579,7 @@ Common::Error EoBCoreEngine::init() {
 
 	// Always create this, regardless of whether the launcher option is enabled or not. Otherwise the map would
 	// be incomplete if the option is enabled later on in the game.
-	_automap = new Automap_EoB(_system, &_levelBlockProperties, _wllWallFlags, _specialWallTypes, _flags.gameID, _flags.lang, _configAutomap);
+	_automap = new Automap_EoB(_system, &_levelBlockProperties, _wllWallFlags, _specialWallTypes, _wllShapeMap, _flags.gameID, _flags.lang, _configAutomap);
 	assert(_automap);
 
 	return Common::kNoError;
@@ -1406,7 +1406,7 @@ void EoBCoreEngine::neutralizePoison(int character) {
 	_characters[character].flags &= ~2;
 	_characters[character].effectFlags &= ~0x2000;
 	deleteCharEventTimer(character, -34);
-	gui_drawCharPortraitWithStats(character);
+	gui_drawCharPortraitWithStats(character, false);
 }
 
 void EoBCoreEngine::npcSequence(int npcIndex) {

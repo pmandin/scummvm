@@ -44,11 +44,12 @@ class EoBCoreEngine; // TODO: REMOVE
 
 class Automap_EoB {
 public:
-	Automap_EoB(OSystem *system, LevelBlockProperty **blockData, const uint8 *wllFlags, const uint8 *specialWallTypes, int gameID, int lang, bool featureEnabled);
+	Automap_EoB(OSystem *system, LevelBlockProperty **blockData, const uint8 *wllFlags, const uint8 *specialWallTypes, const int8 *wllShapeMap, int gameID, int lang, bool featureEnabled);
 	~Automap_EoB();
 
 	void markVisited(uint16 block);
 	void markSeen(uint16 block, int8 dir);
+
 	void draw(int level, uint16 partyBlock, int8 partyDirection);
 
 private:
@@ -64,31 +65,42 @@ private:
 	};
 
 	struct TranslateableStrings {
-		const char *const legendStrings[14];
-		const char *const controlStrings[3];
+		const char *const legendStrings[15];
+		const char *const controlStrings[6];
 		const char *const levelNames[2][16];
 	};
 
 	AutomapLayout createLayout() const;
 	void createColors();
 	void redrawBackground(const AutomapLayout &l, int width, int height);
+	void drawLegend(const AutomapLayout &l, uint flags);
 	uint16 calcNewBlockPosition(uint16 block, int8 dir) const;
 	bool isVisited(uint16 block) const;
 	bool isSeen(uint16 block) const;
-	bool isBreakableBlockObject(uint16 block) const;
+
+	enum BreakableObjectType {
+		kNoBreakableObject = 0,
+		kBreakableBlockObject,
+		kBreakableBarrierNS,
+		kBreakableBarrierEW,
+		kBrokenBarrier
+	};
+
+	int checkForBreakableObjectType(uint16 block) const;
+	bool isCenteredSwitch(uint16 block) const;
 
 	bool _visible;
 
 	LevelBlockProperty *&_blockData;
 	const uint8 *const _wllWallFlags;
 	const uint8 *const _specialWallTypes;
+	const int8 *const _wllShapeMap;
 	const uint8 *_specialBlockIDs;
 	int _numSpecialBlockIDs;
 	const uint8 _wallOfForceID;
 	const uint8 *_portalParams;
 	int _portalParamsLen;
 	const bool _enabled;
-	const bool _gameSupportsBreakables;
 
 	static const TranslateableStrings _stringTable[];
 	const char *const *_legendStrings;

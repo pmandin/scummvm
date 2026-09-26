@@ -35,7 +35,6 @@
 #include "mads/core/mouse.h"
 #include "mads/core/pal.h"
 #include "mads/core/player.h"
-#include "mads/core/quote.h"
 #include "mads/core/speech.h"
 #include "mads/dragonsphere/main_menu.h"
 #include "mads/dragonsphere/menus.h"
@@ -47,7 +46,16 @@ namespace Dragonsphere {
 constexpr bool SHOW_LINES = true;
 constexpr byte LINE_COLOR = 2;
 
-char *quotes;
+static void runAnimView(const char *resource) {
+	AnimView::Presentation presentation;
+	presentation.bufferHeight = 0;
+	presentation.boundaryLines = AnimView::kBoundaryLinesFromResource;
+	presentation.serviceFramesInline = false;
+	if (ConfMan.hasKey("animview_boundary_lines"))
+		presentation.boundaryLines = ConfMan.getBool("animview_boundary_lines") ?
+			AnimView::kBoundaryLinesShown : AnimView::kBoundaryLinesHidden;
+	AnimView::animview_main(resource, presentation);
+}
 
 static void main_menu_main() {
 	auto &screen = *g_engine->getScreen();
@@ -105,7 +113,6 @@ static void main_menu_main() {
 			}
 		}
 
-		free(quotes);
 		kernel_unload_sound_driver();
 		kernel_game_shutdown();
 	}
@@ -257,7 +264,7 @@ void dragonsphere_main() {
 			return;
 
 		case 3:
-			AnimView::animview_main("@dragon");
+			runAnimView("@dragon");
 			selected_item = g_engine->isDemo() ? 0 : -1;
 			break;
 
@@ -267,7 +274,7 @@ void dragonsphere_main() {
 
 		case 9:
 			// Demo
-			AnimView::animview_main("@demodisk");
+			runAnimView("@demodisk");
 			selected_item = 0;
 			break;
 
