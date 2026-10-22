@@ -4,6 +4,7 @@ MODULE_OBJS := \
 	detection.o \
 	metaengine.o \
 	hd/arc.o \
+	hd/texture.o \
 	reevengi.o \
 	formats/adt.o \
 	formats/ard.o \

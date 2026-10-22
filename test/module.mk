@@ -42,7 +42,7 @@ TEST_LIBS +=	audio/libaudio.a math/libmath.a common/libcommon.a common/formats/l
 
 ifeq ($(ENABLE_REEVENGI), STATIC_PLUGIN)
 	TESTS += $(srcdir)/test/engines/reevengi/*.h
-	TEST_LIBS := engines/reevengi/hd/arc.o $(TEST_LIBS)
+	TEST_LIBS := engines/reevengi/hd/arc.o engines/reevengi/hd/texture.o $(TEST_LIBS)
 endif
 
 ifeq ($(ENABLE_WINTERMUTE), STATIC_PLUGIN)
