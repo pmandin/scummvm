@@ -42,6 +42,8 @@ MODULE_OBJS := \
 	re3/entity_pld.o \
 	re3/room.o
 
+MODULE_OBJS += hd/camera.o
+
 # This module can be built as a plugin
 ifeq ($(ENABLE_REEVENGI), DYNAMIC_PLUGIN)
 PLUGIN := 1
