@@ -3,6 +3,7 @@ MODULE := engines/reevengi
 MODULE_OBJS := \
 	detection.o \
 	metaengine.o \
+	hd/arc.o \
 	reevengi.o \
 	formats/adt.o \
 	formats/ard.o \
