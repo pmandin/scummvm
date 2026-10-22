@@ -57,6 +57,11 @@ ifeq ($(ENABLE_TWINE), STATIC_PLUGIN)
 	TEST_LIBS += engines/twine/libtwine.a
 endif
 
+ifeq ($(ENABLE_REEVENGI), STATIC_PLUGIN)
+	TESTS += $(srcdir)/test/engines/reevengi/hd/camera.h
+	TEST_LIBS := engines/reevengi/hd/camera.o $(TEST_LIBS)
+endif
+
 #
 TEST_FLAGS   := --runner=StdioPrinter --no-std --no-eh
 TEST_CFLAGS  := $(CFLAGS) -I$(srcdir)/test/cxxtest
